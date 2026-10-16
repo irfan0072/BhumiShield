@@ -200,9 +200,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
             >
               {currentUser ? <UserCheck className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
               <span className="hidden sm:inline">
-                {currentUser
-                  ? currentUser.username
-                  : t('লগইন / নিবন্ধন', 'Sign In')}
+                {currentUser ? currentUser.username : t('লগইন / নিবন্ধন', 'Sign In')}
               </span>
             </button>
 
