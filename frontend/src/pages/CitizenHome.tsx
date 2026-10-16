@@ -12,6 +12,10 @@ import {
   Send,
   QrCode,
   Search,
+  X,
+  Printer,
+  UserCheck,
+  AlertTriangle,
 } from 'lucide-react';
 
 export const CitizenHome: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNavigate }) => {
@@ -22,6 +26,12 @@ export const CitizenHome: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
   const [stats, setStats] = useState<any>(null);
   const [actionMsg, setActionMsg] = useState('');
 
+  // NID Switcher State
+  const [activeNid, setActiveNid] = useState<string>(user?.nid_mock || '9900001001');
+  const [nidInput, setNidInput] = useState<string>(user?.nid_mock || '9900001001');
+  const [selectedDeedModal, setSelectedDeedModal] = useState<any | null>(null);
+  const [loadingDeedModal, setLoadingDeedModal] = useState(false);
+
   // Citizen Dispute Form State
   const [disputePlotId, setDisputePlotId] = useState<number>(1);
   const [disputeType, setDisputeType] = useState('FORGERY_CLAIM');
@@ -30,11 +40,10 @@ export const CitizenHome: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
   );
   const [submittingDispute, setSubmittingDispute] = useState(false);
 
-  const loadCitizenData = () => {
-    const nid = user?.nid_mock || '9900001001';
-    BhumiApi.getMyVault(nid)
+  const loadCitizenData = (nidToUse = activeNid) => {
+    BhumiApi.getMyVault(nidToUse)
       .then((res) => setVault(res))
-      .catch(() => {});
+      .catch(() => setVault({ found: false, person: null, owned_plots: [], deeds: [] }));
     BhumiApi.listDisputes()
       .then((res) => setDisputes(res))
       .catch(() => {});
@@ -50,8 +59,37 @@ export const CitizenHome: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
   };
 
   useEffect(() => {
-    loadCitizenData();
+    const targetNid = user?.nid_mock || '9900001001';
+    setActiveNid(targetNid);
+    setNidInput(targetNid);
+    loadCitizenData(targetNid);
   }, [user]);
+
+  const handleNidSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanNid = nidInput.trim();
+    if (!cleanNid) return;
+    setActiveNid(cleanNid);
+    loadCitizenData(cleanNid);
+  };
+
+  const handleSelectPresetNid = (presetNid: string) => {
+    setNidInput(presetNid);
+    setActiveNid(presetNid);
+    loadCitizenData(presetNid);
+  };
+
+  const handleOpenDeedModal = async (deedNo: string) => {
+    setLoadingDeedModal(true);
+    try {
+      const res = await BhumiApi.verifyDeedByCode(deedNo);
+      setSelectedDeedModal(res);
+    } catch {
+      // fallback
+    } finally {
+      setLoadingDeedModal(false);
+    }
+  };
 
   const handleToggleLock = async (plotId: number) => {
     setActionMsg('');
@@ -100,8 +138,75 @@ export const CitizenHome: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
         </div>
       )}
 
+      {/* NID Search & Demo Citizen Switcher Bar */}
+      <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <UserCheck className="w-5 h-5 text-[#006A4E]" />
+            <div>
+              <span className="text-xs font-bold text-slate-800">
+                {t('নাগরিক এনআইডি অনুসন্ধান ও ভল্ট নির্বাচন:', 'Citizen NID Lookup & Vault Switcher:')}
+              </span>
+              <div className="text-[11px] text-slate-500">
+                {t('এনআইডি নম্বর দিয়ে যেকারো বিএস খতিয়ান মালিকানা, বিক্রয় লক ও রেজিস্ট্রিকৃত দলিল দেখুন:', 'Enter an NID to load registered plots, sale locks, and signed deeds:')}
+              </div>
+            </div>
+          </div>
+          <form onSubmit={handleNidSearch} className="flex gap-2">
+            <input
+              type="text"
+              value={nidInput}
+              onChange={(e) => setNidInput(e.target.value)}
+              placeholder="9900001001"
+              className="p-2 rounded-lg border border-slate-300 font-mono text-xs font-bold w-36"
+            />
+            <button
+              type="submit"
+              className="px-3.5 py-2 rounded-lg bg-[#006A4E] text-white text-xs font-bold hover:bg-[#00553e] cursor-pointer min-h-[36px]"
+            >
+              {t('খুঁজুন', 'Lookup')}
+            </button>
+          </form>
+        </div>
+
+        {/* Quick Demo NID Presets */}
+        <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-100 text-xs">
+          <span className="text-slate-500 font-medium text-[11px] mr-1">{t('ডেমো প্রোফাইল:', 'Demo Profiles:')}</span>
+          <button
+            onClick={() => handleSelectPresetNid('9900001001')}
+            className={`px-2.5 py-1 rounded-md text-[11px] font-bold cursor-pointer min-h-[28px] ${
+              activeNid === '9900001001'
+                ? 'bg-[#006A4E] text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            {t('মোঃ আব্দুর রহিম শেখ (৩টি দাগ, ১টি লক)', 'Abdur Rahim (3 plots, 1 lock)')}
+          </button>
+          <button
+            onClick={() => handleSelectPresetNid('9900001002')}
+            className={`px-2.5 py-1 rounded-md text-[11px] font-bold cursor-pointer min-h-[28px] ${
+              activeNid === '9900001002'
+                ? 'bg-[#006A4E] text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            {t('মেহেরুন নেছা (ওয়ারিশ দাগ)', 'Meherun Nesa (Heir Plot)')}
+          </button>
+          <button
+            onClick={() => handleSelectPresetNid('9900001003')}
+            className={`px-2.5 py-1 rounded-md text-[11px] font-bold cursor-pointer min-h-[28px] ${
+              activeNid === '9900001003'
+                ? 'bg-[#006A4E] text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            {t('তানভীর আহমেদ (বন্ধক দাগ)', 'Tanvir Ahmed (Mortgaged)')}
+          </button>
+        </div>
+      </div>
+
       {/* Citizen Control 1: My Land Vault + Plot Sale Protection Lock (🔒 বিক্রয় লক) */}
-      {vault?.found && (
+      {vault?.found && vault.person ? (
         <div className="bg-white rounded-xl p-6 border border-slate-200/90 shadow-2xs space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-4">
             <div>
@@ -147,67 +252,84 @@ export const CitizenHome: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
                   'Your Recorded Plots (Latest BS Khatian):'
                 )}
               </h3>
-              <div className="space-y-3">
-                {vault.owned_plots.map((op: any, i: number) => {
-                  const isLocked = Number(op.owner_sale_locked) === 1;
-                  return (
-                    <div
-                      key={i}
-                      className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                        isLocked
-                          ? 'bg-rose-50/50 border-rose-200'
-                          : 'bg-slate-50/70 border-slate-200'
-                      }`}
-                    >
-                      <div>
-                        <div className="font-bold text-sm text-slate-800 flex items-center gap-2">
-                          <span>
-                            {lang === 'bn' ? op.mouza_bn : op.mouza_en} — {t('দাগ নং', 'Dag')}{' '}
-                            {toBanglaDigits(op.dag_no, lang)}
-                          </span>
-                          <span
-                            className={`text-[11px] px-2 py-0.5 rounded-full font-extrabold ${
-                              isLocked
-                                ? 'bg-[#F42A41] text-white'
-                                : 'bg-[#006A4E] text-white'
-                            }`}
-                          >
-                            {isLocked
-                              ? t('🔒 বিক্রয় লক সক্রিয়', '🔒 SALE LOCKED')
-                              : t('🔓 লেনদেন খোলা', '🔓 UNLOCKED')}
-                          </span>
-                        </div>
-                        <div className="text-xs text-slate-500 mt-1">
-                          {t('বিএস খতিয়ান:', 'BS Khatian:')} {toBanglaDigits(op.khatian_no, lang)} •{' '}
-                          {t('অংশ:', 'Share:')} {toBanglaDigits(op.share_fraction, lang)} (
-                          {toBanglaDigits(op.share_area_decimal, lang)} {t('শতাংশ', 'dec')})
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => handleToggleLock(op.plot_id)}
-                        className={`px-3.5 py-2 rounded-lg font-extrabold text-xs flex items-center gap-1.5 shrink-0 cursor-pointer min-h-[38px] ${
+              {vault.owned_plots.length === 0 ? (
+                <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 text-center space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center mx-auto">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div className="font-bold text-xs text-slate-800">
+                    {t('কোনো বিএস খতিয়ান দাগ রেকর্ড পাওয়া যায়নি', 'No Recorded Plots Found for this NID')}
+                  </div>
+                  <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
+                    {t(
+                      'যদি সম্প্রতি জমি ক্রয় বা ওয়ারিশসূত্রে প্রাপ্ত হয়ে থাকেন, তবে এসি ল্যান্ড অফিসে নামজারির আবেদন জমা দিন।',
+                      'If you recently purchased land or inherited shares, submit an e-mutation application to AC Land.'
+                    )}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {vault.owned_plots.map((op: any, i: number) => {
+                    const isLocked = Number(op.owner_sale_locked) === 1;
+                    return (
+                      <div
+                        key={i}
+                        className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                           isLocked
-                            ? 'bg-[#006A4E] text-white hover:bg-[#00553e]'
-                            : 'bg-[#F42A41] text-white hover:bg-red-700'
+                            ? 'bg-rose-50/50 border-rose-200'
+                            : 'bg-slate-50/70 border-slate-200'
                         }`}
                       >
-                        {isLocked ? (
-                          <>
-                            <Unlock className="w-3.5 h-3.5" />
-                            <span>{t('আনলক করুন', 'Unlock Plot')}</span>
-                          </>
-                        ) : (
-                          <>
-                            <Lock className="w-3.5 h-3.5" />
-                            <span>{t('🔒 বিক্রয় লক করুন', '🔒 Lock Against Sale')}</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
+                        <div>
+                          <div className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                            <span>
+                              {lang === 'bn' ? op.mouza_bn : op.mouza_en} — {t('দাগ নং', 'Dag')}{' '}
+                              {toBanglaDigits(op.dag_no, lang)}
+                            </span>
+                            <span
+                              className={`text-[11px] px-2 py-0.5 rounded-full font-extrabold ${
+                                isLocked
+                                  ? 'bg-[#F42A41] text-white'
+                                  : 'bg-[#006A4E] text-white'
+                              }`}
+                            >
+                              {isLocked
+                                ? t('🔒 বিক্রয় লক সক্রিয়', '🔒 SALE LOCKED')
+                                : t('🔓 লেনদেন খোলা', '🔓 UNLOCKED')}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-500 mt-1">
+                            {t('বিএস খতিয়ান:', 'BS Khatian:')} {toBanglaDigits(op.khatian_no, lang)} •{' '}
+                            {t('অংশ:', 'Share:')} {toBanglaDigits(op.share_fraction, lang)} (
+                            {toBanglaDigits(op.share_area_decimal, lang)} {t('শতাংশ', 'dec')})
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleToggleLock(op.plot_id)}
+                          className={`px-3.5 py-2 rounded-lg font-extrabold text-xs flex items-center gap-1.5 shrink-0 cursor-pointer min-h-[38px] ${
+                            isLocked
+                              ? 'bg-[#006A4E] text-white hover:bg-[#00553e]'
+                              : 'bg-[#F42A41] text-white hover:bg-red-700'
+                          }`}
+                        >
+                          {isLocked ? (
+                            <>
+                              <Unlock className="w-3.5 h-3.5" />
+                              <span>{t('আনলক করুন', 'Unlock Plot')}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Lock className="w-3.5 h-3.5" />
+                              <span>{t('🔒 বিক্রয় লক করুন', '🔒 Lock Against Sale')}</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Citizen Deed History (5 cols) */}
@@ -216,29 +338,57 @@ export const CitizenHome: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
                 {t('হ্যাশ লেজারে নিবন্ধিত দলিলের তালিকা:', 'Registered Deeds in Hash Ledger:')}
               </h3>
               <div className="space-y-2.5">
-                {vault.deeds.slice(0, 5).map((d: any) => (
-                  <div
-                    key={d.id}
-                    className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between"
-                  >
-                    <div>
-                      <div className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                        <FileText className="w-4 h-4 text-[#006A4E]" />
-                        <span>{d.deed_no}</span>
+                {vault.deeds.length === 0 ? (
+                  <p className="text-xs text-slate-500 p-4 bg-slate-50 rounded-xl border">
+                    {t('কোনো নিবন্ধিত দলিল পাওয়া যায়নি।', 'No deeds found for this citizen.')}
+                  </p>
+                ) : (
+                  vault.deeds.slice(0, 5).map((d: any) => (
+                    <div
+                      key={d.id}
+                      className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between hover:bg-slate-100/70 transition-colors"
+                    >
+                      <div>
+                        <div className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                          <FileText className="w-4 h-4 text-[#006A4E]" />
+                          <span>{d.deed_no}</span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-0.5">
+                          {t('দাগ:', 'Dag:')} {toBanglaDigits(d.dag_no, lang)} •{' '}
+                          {toBanglaDigits(d.area_decimal, lang)} {t('শতাংশ', 'dec')}
+                        </div>
                       </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
-                        {t('দাগ:', 'Dag:')} {toBanglaDigits(d.dag_no, lang)} •{' '}
-                        {toBanglaDigits(d.area_decimal, lang)} {t('শতাংশ', 'dec')}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#E6F2EE] text-[#006A4E]">
+                          {d.status}
+                        </span>
+                        <button
+                          onClick={() => handleOpenDeedModal(d.deed_no)}
+                          title={t('QR কোড ও প্রমাণ দেখুন', 'View Deed QR & Proof')}
+                          className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-[#E6F2EE] text-slate-700 hover:text-[#006A4E] cursor-pointer min-h-[30px]"
+                        >
+                          <QrCode className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
-                    <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#E6F2EE] text-[#006A4E]">
-                      {d.status}
-                    </span>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl p-8 border border-slate-200 text-center space-y-3">
+          <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto" />
+          <h3 className="text-base font-extrabold text-slate-800">
+            {t('এনআইডি নম্বর পাওয়া যায়নি', 'NID Profile Not Found')}
+          </h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            {t(
+              'অনুসন্ধানকৃত এনআইডি নম্বরের বিপরীতে কোনো নাগরিক রেকর্ড মেলেনি। উপরের ডেমো প্রোফাইলগুলো থেকে নির্বাচন করে পরীক্ষা করুন।',
+              'No citizen record matches this NID. Please select one of the demo profiles above.'
+            )}
+          </p>
         </div>
       )}
 

@@ -23,6 +23,7 @@ import {
   PhoneCall,
   Layers,
   LayoutDashboard,
+  X,
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -110,6 +111,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [switchingRole, setSwitchingRole] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
   const [stats, setStats] = useState<any>(null);
 
@@ -624,7 +626,17 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         {/* TOP WHITE VELZON HEADER BAR */}
         <header className="h-16 bg-white border-b border-slate-200 px-4 lg:px-6 flex items-center justify-between gap-4 sticky top-0 z-20 shadow-2xs">
           {/* Left: Sidebar Toggle + Search Input */}
-          <div className="flex items-center gap-3 flex-1 max-w-xl">
+          <div className="flex items-center gap-2 md:gap-3 flex-1 max-w-xl">
+            {/* Mobile Drawer Trigger */}
+            <button
+              onClick={() => setMobileDrawerOpen(true)}
+              className="md:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 cursor-pointer min-h-[38px]"
+              aria-label="Open Navigation Drawer"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            {/* Desktop Sidebar Toggle */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="hidden md:flex p-2 rounded-lg text-slate-600 hover:bg-slate-100 cursor-pointer min-h-[38px]"
@@ -790,6 +802,170 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
 
         <InstitutionalFooter lang={lang} t={t} />
       </div>
+
+      {/* Mobile Drawer Slide-Over Menu */}
+      {mobileDrawerOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex" role="dialog" aria-modal="true">
+          <div
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setMobileDrawerOpen(false)}
+          />
+          <aside className="relative w-72 max-w-[85vw] bg-[#253656] text-slate-200 flex flex-col h-full shadow-2xl z-10 overflow-y-auto">
+            <div className="h-16 px-4 flex items-center justify-between border-b border-white/10 shrink-0">
+              <button
+                onClick={() => {
+                  setMobileDrawerOpen(false);
+                  setActiveTab('landing');
+                }}
+                className="flex items-center gap-2.5 text-left cursor-pointer min-h-0"
+              >
+                <img
+                  src="/assets/bhumishield-emblem.svg"
+                  alt="Emblem"
+                  className="w-8 h-8 rounded-lg shrink-0"
+                />
+                <div>
+                  <div className="font-extrabold text-white text-sm tracking-wide">BHUMISHIELD</div>
+                  <div className="text-[10px] text-emerald-300 font-semibold leading-tight">
+                    {t('ভূমি সুরক্ষা • জাতীয় লেজার', 'National Land Ledger')}
+                  </div>
+                </div>
+              </button>
+              <button
+                onClick={() => setMobileDrawerOpen(false)}
+                className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 cursor-pointer min-h-[36px]"
+                aria-label="Close Drawer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="px-4 py-3 border-b border-white/10 bg-[#1d2b45] shrink-0">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                {t('সক্রিয় দাপ্তরিক প্যানেল', 'ACTIVE ROLE WORKSPACE')}
+              </div>
+              <div className="mt-1 font-extrabold text-sm text-white flex items-center justify-between">
+                <span>{lang === 'bn' ? currentRoleMeta.titleBn : currentRoleMeta.titleEn}</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              </div>
+              <div className="text-[11px] text-slate-300 mt-0.5 truncate">
+                {lang === 'bn' ? currentRoleMeta.deptBn : currentRoleMeta.deptEn}
+              </div>
+            </div>
+
+            <div className="flex-1 py-4 px-3 space-y-5 overflow-y-auto">
+              <div>
+                <div className="px-3 mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  {t('মেনু ও অপারেশন', 'WORKSPACE MENU')}
+                </div>
+                <div className="space-y-1">
+                  {sidebarItems.map((item) => {
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setMobileDrawerOpen(false);
+                          setActiveTab(item.id);
+                        }}
+                        className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer min-h-[40px] ${
+                          isActive
+                            ? 'bg-[#006A4E] text-white'
+                            : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 truncate">
+                          {item.icon}
+                          <span className="truncate">{item.label}</span>
+                        </div>
+                        {item.badge && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-400/20 text-emerald-200 font-bold">
+                            {item.badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className="px-3 mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>{t('৫টি রোল প্যানেল (PANELS)', 'ROLE WORKSPACES')}</span>
+                </div>
+                <div className="space-y-1">
+                  {(
+                    [
+                      {
+                        r: 'citizen' as UserRole,
+                        tab: 'home',
+                        label: t('নাগরিক ভল্ট প্যানেল', 'Citizen Vault Panel'),
+                      },
+                      {
+                        r: 'sub_registrar' as UserRole,
+                        tab: 'registrar',
+                        label: t('সাব-রেজিস্ট্রার প্যানেল', 'Sub-Registrar Panel'),
+                      },
+                      {
+                        r: 'ac_land' as UserRole,
+                        tab: 'acland',
+                        label: t('এসি ল্যান্ড প্যানেল', 'AC Land Panel'),
+                      },
+                      {
+                        r: 'bank_officer' as UserRole,
+                        tab: 'bank',
+                        label: t('ব্যাংক মর্টগেজ প্যানেল', 'Bank Officer Panel'),
+                      },
+                      {
+                        r: 'admin' as UserRole,
+                        tab: 'admin',
+                        label: t('জাতীয় অ্যাডমিন প্যানেল', 'System Admin Panel'),
+                      },
+                    ] as const
+                  ).map((rp) => (
+                    <button
+                      key={rp.r}
+                      onClick={() => {
+                        setMobileDrawerOpen(false);
+                        handleRoleChange(rp.r, true);
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between transition-colors cursor-pointer min-h-[38px] ${
+                        role === rp.r && activeTab === rp.tab
+                          ? 'bg-white/15 text-white font-bold border-l-4 border-emerald-400'
+                          : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            role === rp.r ? 'bg-emerald-400' : 'bg-slate-500'
+                          }`}
+                        />
+                        <span className="truncate">{rp.label}</span>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3 border-t border-white/10 shrink-0">
+              <button
+                onClick={() => {
+                  setMobileDrawerOpen(false);
+                  setActiveTab('landing');
+                }}
+                className="w-full px-3 py-2.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-bold text-white flex items-center justify-center gap-2 cursor-pointer min-h-[40px]"
+              >
+                <Home className="w-4 h-4 text-emerald-300" />
+                <span>{t('পাবলিক পোর্টালে ফিরুন', 'Public National Portal')}</span>
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
 
       {/* Mobile Bottom Navigation Bar */}
       <nav

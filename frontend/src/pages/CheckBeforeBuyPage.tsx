@@ -4,7 +4,21 @@ import { BhumiApi, RiskReportResponse } from '../api/client';
 import { toBanglaDigits } from '../theme/tokens';
 import { ResultHeroBanner } from '../components/ResultHeroBanner';
 import { KhatianChainTimeline } from '../components/KhatianChainTimeline';
-import { Search, ArrowLeft, ArrowRight, Layers, RotateCcw } from 'lucide-react';
+import {
+  Search,
+  ArrowLeft,
+  ArrowRight,
+  Layers,
+  RotateCcw,
+  Printer,
+  FileBadge,
+  CheckCircle,
+  ShieldAlert,
+  X,
+  AlertCircle,
+  Lock,
+  Unlock,
+} from 'lucide-react';
 
 export const CheckBeforeBuyPage: React.FC = () => {
   const { lang, t } = useAppUI();
@@ -23,6 +37,7 @@ export const CheckBeforeBuyPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [report, setReport] = useState<RiskReportResponse | null>(null);
+  const [showCertModal, setShowCertModal] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -91,6 +106,10 @@ export const CheckBeforeBuyPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const currentSelectedPlot = plots.find((p) => Number(p.id) === Number(selectedPlotId));
+  const currentSelectedMouza = locations.find((l) => Number(l.id) === Number(selectedMouzaId));
+  const currentSeller = persons.find((p) => Number(p.id) === Number(sellerId));
 
   return (
     <div className="space-y-6">
@@ -204,6 +223,44 @@ export const CheckBeforeBuyPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Selected Plot Live Metadata Card */}
+          {currentSelectedPlot && (
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+              <div>
+                <span className="text-slate-500 font-medium">{t('নির্বাচিত মৌজা:', 'Jurisdiction:')}</span>
+                <div className="font-bold text-slate-800 mt-0.5">
+                  {lang === 'bn' ? currentSelectedMouza?.mouza_bn : currentSelectedMouza?.mouza_en} (JL {currentSelectedMouza?.jl_no})
+                </div>
+              </div>
+              <div>
+                <span className="text-slate-500 font-medium">{t('জমির শ্রেণী:', 'Land Class:')}</span>
+                <div className="font-bold text-slate-800 mt-0.5">{currentSelectedPlot.land_type}</div>
+              </div>
+              <div>
+                <span className="text-slate-500 font-medium">{t('দাগের মোট আয়তন:', 'Total Plot Area:')}</span>
+                <div className="font-extrabold text-[#006A4E] mt-0.5">
+                  {toBanglaDigits(currentSelectedPlot.total_area_decimal, lang)} {t('শতাংশ', 'Decimal')}
+                </div>
+              </div>
+              <div>
+                <span className="text-slate-500 font-medium">{t('বিক্রয় লক অবস্থা:', 'Sale Lock Status:')}</span>
+                <div className="mt-0.5">
+                  {Number(currentSelectedPlot.owner_sale_locked) === 1 ? (
+                    <span className="inline-flex items-center gap-1 font-extrabold text-xs text-[#F42A41]">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>{t('🔒 বিক্রয় লক সক্রিয়', '🔒 SALE LOCKED')}</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 font-extrabold text-xs text-[#006A4E]">
+                      <Unlock className="w-3.5 h-3.5" />
+                      <span>{t('🔓 লেনদেন উন্মুক্ত', '🔓 UNLOCKED')}</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex justify-end pt-2">
             <button
               onClick={() => setStep(2)}
@@ -254,6 +311,24 @@ export const CheckBeforeBuyPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Seller Preview Card */}
+          {currentSeller && (
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div>
+                <span className="text-slate-500">{t('বিক্রেতার নাম ও এনআইডি:', 'Selected Seller:')}</span>
+                <div className="font-bold text-slate-800">
+                  {lang === 'bn' ? currentSeller.name_bn : currentSeller.name_en} • NID: {currentSeller.nid_mock}
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-slate-500">{t('প্রস্তাবিত ক্রয়ের পরিমাণ:', 'Requested Area:')}</span>
+                <div className="font-extrabold text-[#006A4E] text-sm">
+                  {toBanglaDigits(proposedArea, lang)} {t('শতাংশ (Decimal)', 'Decimal')}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
             <button
               onClick={() => setStep(1)}
@@ -282,6 +357,17 @@ export const CheckBeforeBuyPage: React.FC = () => {
       {/* STEP 3: Result Hero Banner + Khatian Lineage Timeline */}
       {step === 3 && report && (
         <div className="space-y-6">
+          {/* Top Actions: Print / Official Verification Certificate */}
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setShowCertModal(true)}
+              className="px-4 py-2.5 rounded-xl bg-[#006A4E] text-white font-extrabold text-xs flex items-center gap-2 shadow-xs hover:bg-[#00553e] cursor-pointer min-h-[38px]"
+            >
+              <FileBadge className="w-4 h-4" />
+              <span>{t('অফিসিয়াল যাচাই সনদ দেখুন ও প্রিন্ট করুন', 'Official Verification Certificate')}</span>
+            </button>
+          </div>
+
           <ResultHeroBanner report={report} />
 
           {report.khatian_chain && <KhatianChainTimeline chain={report.khatian_chain} />}
@@ -353,6 +439,115 @@ export const CheckBeforeBuyPage: React.FC = () => {
                   {t('কোনো পূর্ববর্তী দলিল পাওয়া যায়নি।', 'No prior deeds recorded.')}
                 </p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Official Land Verification Certificate Modal */}
+      {showCertModal && report && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 md:p-8 shadow-2xl border-4 border-[#006A4E] space-y-5 relative max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setShowCertModal(false)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center justify-between border-b-2 border-[#006A4E] pb-4">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/assets/bhumishield-emblem.svg"
+                  alt="Gov Emblem"
+                  className="w-12 h-12 rounded-xl"
+                />
+                <div>
+                  <div className="text-[10px] font-extrabold uppercase tracking-widest text-[#006A4E]">
+                    {t('গণপ্রজাতন্ত্রী বাংলাদেশ সরকার • ভূমি মন্ত্রণালয়', 'Government of Bangladesh • Ministry of Land')}
+                  </div>
+                  <h3 className="text-lg md:text-xl font-extrabold text-slate-900 mt-0.5">
+                    {t('ভূমি মালিকানা ও প্রাক-নিবন্ধন যাচাই সনদ', 'Land Ownership & Pre-Registration Verification Certificate')}
+                  </h3>
+                  <p className="text-[11px] text-slate-500">
+                    Certificate Ref: BS-CERT-2026-{toBanglaDigits(selectedPlotId, lang)} • Ed25519 Verified
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Verdict Box */}
+            <div
+              className={`p-4 rounded-xl text-white font-bold flex items-center justify-between ${
+                report.status === 'SAFE'
+                  ? 'bg-[#006A4E]'
+                  : report.status === 'WARNING'
+                  ? 'bg-[#B7791F]'
+                  : 'bg-[#F42A41]'
+              }`}
+            >
+              <div>
+                <div className="text-base font-extrabold">
+                  {lang === 'bn' ? report.badge_bn : report.badge_en}
+                </div>
+                <div className="text-xs opacity-90 mt-0.5">
+                  {lang === 'bn' ? report.summary_bn : report.summary_en}
+                </div>
+              </div>
+              <span className="text-xs px-2.5 py-1 rounded bg-white/20 border border-white/30 font-mono">
+                {report.status}
+              </span>
+            </div>
+
+            {/* Details Grid */}
+            <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div>
+                <strong>{t('মৌজা ও জেএল:', 'Mouza & JL:')}</strong>{' '}
+                {lang === 'bn' ? currentSelectedMouza?.mouza_bn : currentSelectedMouza?.mouza_en} (JL {currentSelectedMouza?.jl_no})
+              </div>
+              <div>
+                <strong>{t('দাগ নম্বর:', 'Dag / Plot No:')}</strong>{' '}
+                {toBanglaDigits(currentSelectedPlot?.dag_no, lang)}
+              </div>
+              <div>
+                <strong>{t('বিক্রেতা:', 'Seller Name:')}</strong>{' '}
+                {lang === 'bn' ? currentSeller?.name_bn : currentSeller?.name_en}
+              </div>
+              <div>
+                <strong>{t('এনআইডি:', 'Seller NID:')}</strong> {currentSeller?.nid_mock}
+              </div>
+              <div>
+                <strong>{t('প্রস্তাবিত জমি:', 'Verified Area:')}</strong>{' '}
+                {toBanglaDigits(proposedArea, lang)} {t('শতাংশ', 'Decimal')}
+              </div>
+              <div>
+                <strong>{t('খতিয়ান চেইন অবস্থা:', 'Khatian Lineage:')}</strong>{' '}
+                <span className="text-[#006A4E] font-bold">CS → SA → RS → BS Verified</span>
+              </div>
+            </div>
+
+            {/* Next Step Box */}
+            <div className="p-3.5 rounded-xl bg-[#E6F2EE] border border-[#006A4E] text-xs">
+              <div className="font-extrabold text-[#006A4E]">
+                {t('সুপারিশ ও পরবর্তী পদক্ষেপ:', 'Recommendation & Next Steps:')}
+              </div>
+              <div className="text-slate-700 mt-1">
+                {lang === 'bn' ? report.next_step_bn : report.next_step_en}
+              </div>
+            </div>
+
+            <div className="text-[10px] text-slate-400 font-mono text-center">
+              SHA-256 HASH CHAIN PROTECTED • BHUMISHIELD TRUST LAYER 2026
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => window.print()}
+                className="px-5 py-2.5 rounded-lg bg-[#006A4E] text-white text-xs font-extrabold flex items-center gap-2 cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                <span>{t('সনদ প্রিন্ট / PDF সংরক্ষণ', 'Print / Save PDF')}</span>
+              </button>
             </div>
           </div>
         </div>
