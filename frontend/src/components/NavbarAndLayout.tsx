@@ -10,10 +10,16 @@ import {
   Contrast,
   WifiOff,
   HelpCircle,
+  Sparkles,
+  LogIn,
+  UserCheck,
+  PhoneCall,
 } from 'lucide-react';
 import { useI18n } from '../i18n';
 
 export type ActiveTab =
+  | 'landing'
+  | 'auth'
   | 'home'
   | 'verify'
   | 'check_buy'
@@ -28,6 +34,8 @@ interface LayoutProps {
   setActiveTab: (tab: ActiveTab) => void;
   currentRole: string;
   setCurrentRole: (role: string) => void;
+  currentUser?: any | null;
+  siteSettings?: Record<string, any>;
   children: React.ReactNode;
 }
 
@@ -36,6 +44,8 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
   setActiveTab,
   currentRole,
   setCurrentRole,
+  currentUser,
+  siteSettings,
   children,
 }) => {
   const { lang, toggleLang, stepFontSize, highContrast, toggleHighContrast, t } = useI18n();
@@ -63,11 +73,48 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
     if (role === 'admin') setActiveTab('admin');
   };
 
+  const portalTitleBn = siteSettings?.portal_title_bn || 'ভূমি সুরক্ষা (BhumiShield)';
+  const portalTitleEn = siteSettings?.portal_title_en || 'BhumiShield';
+  const helpline = siteSettings?.helpline_number || '১৬১২২ (ভূমি সেবা হটলাইন - ডেমো)';
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFBFA] text-[#1A1A1A] pb-24 md:pb-0">
-      {/* Signature Bangladesh National Flag Thin Top Bar */}
-      <div className="h-2 w-full bg-[#006A4E] flex items-center justify-center relative">
-        <div className="w-12 h-2 bg-[#F42A41] rounded-full" />
+      {/* Top Government-Grade Utility Bar */}
+      <div className="no-print bg-[#004D38] text-white text-xs px-4 py-1.5">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#F42A41]" />
+            <span className="font-semibold">
+              {t(
+                'জাতীয় ডিজিটাল ভূমি নিবন্ধন ও নামজারি ট্রাস্ট লেয়ার — LandTech 2026',
+                'National Digital Land Registration & Mutation Trust Layer — LandTech 2026'
+              )}
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="hidden sm:inline-flex items-center gap-1">
+              <PhoneCall className="w-3.5 h-3.5 text-green-300" />
+              <span>{helpline}</span>
+            </span>
+            {currentUser ? (
+              <button
+                type="button"
+                onClick={() => setActiveTab('auth')}
+                className="font-bold text-green-200 hover:underline cursor-pointer"
+              >
+                👤 {t(currentUser.full_name_bn, currentUser.full_name_en)} ({currentUser.role})
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setActiveTab('auth')}
+                className="font-bold text-green-200 hover:underline cursor-pointer"
+              >
+                🔑 {t('লগইন / নিবন্ধন করুন', 'Sign In / Register')}
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Offline PWA Banner */}
@@ -89,19 +136,21 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
       {/* Main Header */}
       <header className="no-print bg-white border-b border-gray-200 sticky top-0 z-30 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-          {/* Brand Logo with Flag Green & Subtle Red Circle */}
+          {/* Brand Logo with Custom Emblem SVG */}
           <button
             type="button"
-            onClick={() => setActiveTab('home')}
+            onClick={() => setActiveTab('landing')}
             className="flex items-center gap-3 text-left cursor-pointer group min-h-[48px]"
           >
-            <div className="w-11 h-11 rounded-xl bg-[#006A4E] flex items-center justify-center shadow-xs shrink-0">
-              <div className="w-5 h-5 rounded-full bg-[#F42A41] ring-2 ring-white/80" />
-            </div>
+            <img
+              src="/assets/bhumishield-emblem.svg"
+              alt="BhumiShield Emblem"
+              className="w-11 h-11 shrink-0"
+            />
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xl sm:text-2xl font-bold text-[#006A4E] tracking-tight">
-                  {t('ভূমি সুরক্ষা', 'BhumiShield')}
+                  {t(portalTitleBn, portalTitleEn)}
                 </span>
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#E6F2EE] text-[#006A4E] border border-[#006A4E]/30">
                   {t('ডেমো', 'DEMO')}
@@ -116,7 +165,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
             </div>
           </button>
 
-          {/* Accessibility & Role Controls */}
+          {/* Accessibility, Auth & Role Controls */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Role Switcher for Hackathon Demo */}
             <label className="flex items-center gap-1.5 text-sm font-medium bg-[#E6F2EE] text-[#006A4E] px-3 py-1.5 rounded-xl border border-[#006A4E]/30 min-h-[48px]">
@@ -135,9 +184,27 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                 <option value="bank_officer">
                   {t('🏦 ব্যাংক কর্মকর্তা (Bank)', '🏦 Bank Officer')}
                 </option>
-                <option value="admin">{t('🛡️ অ্যাডমিন ও লেজার (Admin)', '🛡️ Admin & Ledger')}</option>
+                <option value="admin">{t('🛡️ অ্যাডমিন ও সেটিংস (Admin)', '🛡️ Admin & Settings')}</option>
               </select>
             </label>
+
+            {/* Login / User Profile Button */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('auth')}
+              className={`min-h-[48px] px-3.5 rounded-xl border font-bold text-sm flex items-center gap-1.5 cursor-pointer ${
+                currentUser
+                  ? 'bg-[#E6F2EE] text-[#006A4E] border-[#006A4E]/40'
+                  : 'bg-white text-[#1A1A1A] border-gray-300 hover:bg-gray-100'
+              }`}
+            >
+              {currentUser ? <UserCheck className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
+              <span className="hidden sm:inline">
+                {currentUser
+                  ? currentUser.username
+                  : t('লগইন / নিবন্ধন', 'Sign In')}
+              </span>
+            </button>
 
             {/* A- / A+ Text Size Controls */}
             <div
@@ -148,7 +215,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
               <button
                 type="button"
                 onClick={() => stepFontSize(-1)}
-                className="min-w-[44px] min-h-[48px] px-2.5 font-bold text-sm hover:bg-gray-100 cursor-pointer"
+                className="min-w-[42px] min-h-[48px] px-2 font-bold text-sm hover:bg-gray-100 cursor-pointer"
                 title={t('লেখা ছোট করুন (A−)', 'Decrease text size (A−)')}
               >
                 A−
@@ -156,7 +223,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
               <button
                 type="button"
                 onClick={() => stepFontSize(1)}
-                className="min-w-[44px] min-h-[48px] px-2.5 font-bold text-base border-l border-gray-300 hover:bg-gray-100 cursor-pointer"
+                className="min-w-[42px] min-h-[48px] px-2 font-bold text-base border-l border-gray-300 hover:bg-gray-100 cursor-pointer"
                 title={t('লেখা বড় করুন (A+)', 'Increase text size (A+)')}
               >
                 A+
@@ -176,7 +243,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
               title={t('উচ্চ কনট্রাস্ট মোড', 'High Contrast Mode')}
             >
               <Contrast className="w-4 h-4" />
-              <span className="hidden lg:inline">{t('কনট্রাস্ট', 'Contrast')}</span>
+              <span className="hidden xl:inline">{t('কনট্রাস্ট', 'Contrast')}</span>
             </button>
 
             {/* Language Toggle (Bangla Default / English) */}
@@ -197,10 +264,16 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         >
           <div className="max-w-7xl mx-auto px-4 flex items-center gap-1 overflow-x-auto py-1.5">
             <NavBtn
+              active={activeTab === 'landing'}
+              onClick={() => setActiveTab('landing')}
+              icon={<Sparkles className="w-4 h-4" />}
+              label={t('ল্যান্ডিং পেজ', 'Landing Page')}
+            />
+            <NavBtn
               active={activeTab === 'home'}
               onClick={() => setActiveTab('home')}
               icon={<Home className="w-4 h-4" />}
-              label={t('নাগরিক হোম', 'Citizen Home')}
+              label={t('নাগরিক ড্যাশবোর্ড', 'Citizen Home')}
             />
             <NavBtn
               active={activeTab === 'verify'}
@@ -236,7 +309,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
               active={activeTab === 'admin'}
               onClick={() => setActiveTab('admin')}
               icon={<Shield className="w-4 h-4" />}
-              label={t('লেজার ও ৮টি ডেমো সিনারিও', 'Ledger & 8 Scenarios')}
+              label={t('অ্যাডমিন, ইউজার ও সেটিংস', 'Admin, Users & Settings')}
             />
             <NavBtn
               active={activeTab === 'help'}
@@ -280,7 +353,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         className="no-print md:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-[#006A4E]/20 z-40 grid grid-cols-4 shadow-lg"
       >
         <MobileNavBtn
-          active={activeTab === 'home'}
+          active={activeTab === 'landing' || activeTab === 'home'}
           onClick={() => setActiveTab('home')}
           icon={<Home className="w-6 h-6" />}
           label={t('হোম', 'Home')}
@@ -298,10 +371,10 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
           label={t('জমি যাচাই', 'Plot Check')}
         />
         <MobileNavBtn
-          active={['registrar', 'acland', 'bank', 'admin'].includes(activeTab)}
+          active={['registrar', 'acland', 'bank', 'admin', 'auth'].includes(activeTab)}
           onClick={() => setActiveTab('admin')}
           icon={<Shield className="w-6 h-6" />}
-          label={t('ডেমো/অফিসার', 'Officers')}
+          label={t('ড্যাশবোর্ড', 'Dashboards')}
         />
       </nav>
     </div>

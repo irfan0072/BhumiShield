@@ -1,49 +1,84 @@
-import React, { useState } from 'react';
-import { QrCode, Search, HelpCircle, X, ShieldCheck, ArrowRight } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import {
+  QrCode,
+  Search,
+  HelpCircle,
+  X,
+  ShieldCheck,
+  ArrowRight,
+  MapPin,
+  FileText,
+  UserCheck,
+} from 'lucide-react';
+import { apiClient } from '../api/client';
 import { useI18n } from '../i18n';
 import { ActiveTab } from '../components/NavbarAndLayout';
 
 interface CitizenHomeProps {
+  currentUser?: any | null;
   onNavigate: (tab: ActiveTab, params?: { deedId?: string; plotId?: number }) => void;
 }
 
-export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
+export const CitizenHome: React.FC<CitizenHomeProps> = ({ currentUser, onNavigate }) => {
   const { t, n } = useI18n();
   const [showGuide, setShowGuide] = useState<boolean>(() => {
     return localStorage.getItem('bhumishield_hide_guide') !== 'true';
   });
+  const [myProps, setMyProps] = useState<any | null>(null);
+  const [lookupNid, setLookupNid] = useState<string>(currentUser?.nid || '9900001001');
 
   const dismissGuide = () => {
     setShowGuide(false);
     localStorage.setItem('bhumishield_hide_guide', 'true');
   };
 
+  const loadMyProperties = (nidVal: string) => {
+    apiClient
+      .get(`/citizen/my-properties?nid=${encodeURIComponent(nidVal.trim())}`)
+      .then((res) => setMyProps(res.data))
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    const nidToLoad = currentUser?.nid || '9900001001';
+    setLookupNid(nidToLoad);
+    loadMyProperties(nidToLoad);
+  }, [currentUser]);
+
   return (
     <div className="space-y-8">
       {/* Calm Hero Introduction */}
       <section className="rounded-3xl bg-[#006A4E] text-white p-6 sm:p-8 shadow-md relative overflow-hidden">
-        <div className="max-w-3xl space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/15 text-sm font-semibold">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#F42A41]" />
-            <span>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="max-w-3xl space-y-3">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/15 text-sm font-semibold">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#F42A41]" />
+              <span>
+                {t(
+                  'নাগরিক সেবা ও প্রাক-ক্রয় যাচাই ড্যাশবোর্ড',
+                  'Citizen Service & Pre-Purchase Verification Dashboard'
+                )}
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-4xl font-bold leading-tight">
               {t(
-                'নিবন্ধন ও নামজারির মধ্যকার স্বাধীন বিশ্বাস স্তর (Trust Layer)',
-                'Independent Trust Layer Between Registration & Mutation'
+                'জমি কেনার আগে ও দলিল নিবন্ধনের পরে—নিজেই যাচাই করুন আপনার ভূমির নিরাপত্তা',
+                'Verify Any Deed or Land Plot Before You Buy — Plain Language, Zero Jargon'
               )}
-            </span>
+            </h1>
+            <p className="text-base sm:text-lg text-white/90 leading-relaxed">
+              {t(
+                'জাল দলিল, একই জমি দুইবার বিক্রি, ব্যাংক বন্ধক বা খতিয়ানের অমিল সহজ বাংলায় তাৎক্ষণিক দেখুন।',
+                'Catch fake deeds, double sales, hidden mortgages, and khatian discrepancies before registration.'
+              )}
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-4xl font-bold leading-tight">
-            {t(
-              'জমি কেনার আগে ও দলিল নিবন্ধনের পরে—নিজেই যাচাই করুন আপনার ভূমির নিরাপত্তা',
-              'Verify Any Deed or Land Plot Before You Buy — Plain Language, Zero Jargon'
-            )}
-          </h1>
-          <p className="text-base sm:text-lg text-white/90 leading-relaxed">
-            {t(
-              'জাল দলিল, একই জমি দুইবার বিক্রি, ব্যাংক বন্ধক বা খতিয়ানের অমিল সহজ বাংলায় তাৎক্ষণিক দেখুন।',
-              'Catch fake deeds, double sales, hidden mortgages, and khatian discrepancies before registration.'
-            )}
-          </p>
+
+          <img
+            src="/assets/bhumishield-emblem.svg"
+            alt="BhumiShield Shield"
+            className="w-24 h-24 hidden lg:block shrink-0"
+          />
         </div>
       </section>
 
@@ -68,7 +103,6 @@ export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Step 1 SVG Card */}
             <div className="bg-white rounded-xl p-4 border border-gray-200 flex items-start gap-3.5">
               <svg className="w-12 h-12 shrink-0" viewBox="0 0 48 48" fill="none" aria-hidden="true">
                 <rect width="48" height="48" rx="12" fill="#E6F2EE" />
@@ -93,7 +127,6 @@ export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
               </div>
             </div>
 
-            {/* Step 2 SVG Card */}
             <div className="bg-white rounded-xl p-4 border border-gray-200 flex items-start gap-3.5">
               <svg className="w-12 h-12 shrink-0" viewBox="0 0 48 48" fill="none" aria-hidden="true">
                 <rect width="48" height="48" rx="12" fill="#E6F2EE" />
@@ -120,7 +153,6 @@ export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
               </div>
             </div>
 
-            {/* Step 3 SVG Card */}
             <div className="bg-white rounded-xl p-4 border border-gray-200 flex items-start gap-3.5">
               <svg className="w-12 h-12 shrink-0" viewBox="0 0 48 48" fill="none" aria-hidden="true">
                 <rect width="48" height="48" rx="12" fill="#E6F2EE" />
@@ -148,10 +180,9 @@ export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
         </section>
       )}
 
-      {/* CITIZEN HOME: Strictly Three Huge Action Cards */}
+      {/* CITIZEN HOME: Three Huge Primary Action Cards */}
       <section aria-label={t('প্রধান নাগরিক সেবা', 'Main Citizen Actions')}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Huge Card 1: Scan QR to Verify Deed */}
           <button
             type="button"
             onClick={() => onNavigate('verify')}
@@ -180,7 +211,6 @@ export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
             </div>
           </button>
 
-          {/* Huge Card 2: Check Before You Buy */}
           <button
             type="button"
             onClick={() => onNavigate('check_buy')}
@@ -209,7 +239,6 @@ export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
             </div>
           </button>
 
-          {/* Huge Card 3: Help & Demo Scenarios */}
           <button
             type="button"
             onClick={() => onNavigate('help')}
@@ -239,6 +268,126 @@ export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
           </button>
         </div>
       </section>
+
+      {/* Citizen's Own NID-Linked Properties & Deeds Portfolio */}
+      {myProps && (
+        <section className="daisy-card p-6 space-y-5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-[#E6F2EE] text-[#006A4E] flex items-center justify-center">
+                <UserCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="daisy-badge daisy-badge-success">
+                  {t('এনআইডি সংযুক্ত নাগরিক পোর্টফোলিও', 'Mock NID Linked Citizen Portfolio')}
+                </span>
+                <h2 className="text-xl font-bold text-[#1A1A1A] mt-0.5">
+                  {t(myProps.person?.name_bn || '', myProps.person?.name_en || '')} —{' '}
+                  {t('আমার খতিয়ান ও নিবন্ধিত দলিল', 'My Recorded Plots & Deeds')}
+                </h2>
+              </div>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                loadMyProperties(lookupNid);
+              }}
+              className="flex items-center gap-2"
+            >
+              <input
+                type="text"
+                value={lookupNid}
+                onChange={(e) => setLookupNid(e.target.value)}
+                aria-label={t('ডেমো এনআইডি নম্বর', 'Mock NID Number')}
+                placeholder="9900001001"
+                className="min-h-[44px] px-3.5 py-1.5 rounded-xl border border-gray-300 bg-[#FAFBFA] text-sm font-semibold w-40"
+              />
+              <button
+                type="submit"
+                className="min-h-[44px] px-4 py-1.5 rounded-xl bg-[#006A4E] text-white font-bold text-xs cursor-pointer"
+              >
+                {t('এনআইডি খুঁজুন', 'Lookup NID')}
+              </button>
+            </form>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Owned Plots */}
+            <div className="space-y-3">
+              <h3 className="font-bold text-base text-[#1A1A1A] flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-[#006A4E]" />
+                <span>
+                  {t('সর্বশেষ বিএস খতিয়ানে মালিকানাধীন দাগসমূহ', 'Owned Plots on Latest BS Khatian')} (
+                  {n(myProps.owned_plots?.length || 0)})
+                </span>
+              </h3>
+              <div className="space-y-2.5">
+                {myProps.owned_plots?.map((op: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="p-4 rounded-2xl bg-[#FAFBFA] border border-gray-200 flex items-center justify-between gap-3"
+                  >
+                    <div>
+                      <div className="font-bold text-[#1A1A1A]">
+                        {t(op.mouza_bn, op.mouza_en)} — {t('দাগ নং', 'Dag')} {n(op.dag_no)}
+                      </div>
+                      <div className="text-xs text-[#5F6B66]">
+                        {t('বিএস খতিয়ান:', 'BS Khatian:')} {n(op.khatian_no)} •{' '}
+                        {t('অংশ:', 'Share:')} {n(op.share_fraction)} ({n(op.area_decimal)}{' '}
+                        {t('শতাংশ', 'Decimals')})
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate('check_buy', { plotId: op.plot_id })}
+                      className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-[#E6F2EE] text-[#006A4E] font-bold text-xs hover:bg-[#006A4E] hover:text-white transition cursor-pointer shrink-0"
+                    >
+                      {t('বিস্তারিত রিপোর্ট →', 'Full Report ->')}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Linked Deeds */}
+            <div className="space-y-3">
+              <h3 className="font-bold text-base text-[#1A1A1A] flex items-center gap-2">
+                <FileText className="w-5 h-5 text-[#006A4E]" />
+                <span>
+                  {t('সংশ্লিষ্ট নিবন্ধিত দলিলসমূহ', 'Linked Registered Deeds')} (
+                  {n(myProps.deeds?.length || 0)})
+                </span>
+              </h3>
+              <div className="space-y-2.5">
+                {myProps.deeds?.slice(0, 4).map((d: any) => (
+                  <div
+                    key={d.id}
+                    className="p-4 rounded-2xl bg-[#FAFBFA] border border-gray-200 flex items-center justify-between gap-3"
+                  >
+                    <div>
+                      <div className="font-bold text-[#1A1A1A]">
+                        {d.deed_no} ({t('দাগ', 'Dag')} {n(d.dag_no)})
+                      </div>
+                      <div className="text-xs text-[#5F6B66]">
+                        {t(d.seller_name_bn, d.seller_name_en)} → {t(d.buyer_name_bn, d.buyer_name_en)} •{' '}
+                        {n(d.area_decimal)} {t('শতাংশ', 'Decimals')}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onNavigate('verify', { deedId: d.deed_no })}
+                      className="min-h-[40px] px-3.5 py-1.5 rounded-xl bg-[#006A4E] text-white font-bold text-xs hover:bg-[#00543D] cursor-pointer shrink-0"
+                    >
+                      {t('QR যাচাই', 'Verify QR')}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Quick Officer / Judge Demo Strip */}
       <section className="rounded-2xl bg-white border border-gray-200 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hc-card">
@@ -272,7 +421,7 @@ export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
             onClick={() => onNavigate('admin')}
             className="min-h-[48px] px-4 py-2 rounded-xl bg-[#006A4E] text-white font-bold text-sm cursor-pointer hover:bg-[#00563F] transition"
           >
-            {t('৮টি ডেমো সিনারিও ও লেজার', 'All 8 Scenarios & Ledger')}
+            {t('অ্যাডমিন, ইউজার ও সেটিংস কনসোল', 'Admin, Users & Settings Console')}
           </button>
         </div>
       </section>

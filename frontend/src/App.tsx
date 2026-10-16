@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { apiClient } from './api/client';
 import { I18nProvider } from './i18n';
 import { ActiveTab, NavbarAndLayout } from './components/NavbarAndLayout';
+import { LandingPage } from './pages/LandingPage';
+import { AuthPage } from './pages/AuthPage';
 import { CitizenHome } from './pages/CitizenHome';
 import { VerifyDeedPage } from './pages/VerifyDeedPage';
 import { CheckBeforeYouBuyPage } from './pages/CheckBeforeYouBuyPage';
@@ -11,11 +14,29 @@ import { BankOfficerPage } from './pages/BankOfficerPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
 
 export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('home');
-  const [currentRole, setCurrentRole] = useState<string>('citizen');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('landing');
+  const [currentUser, setCurrentUser] = useState<any | null>(() => {
+    try {
+      const saved = localStorage.getItem('bhumishield_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [currentRole, setCurrentRole] = useState<string>(currentUser?.role || 'citizen');
+  const [siteSettings, setSiteSettings] = useState<Record<string, any>>({});
   const [selectedDeedId, setSelectedDeedId] = useState<string | undefined>(undefined);
   const [selectedPlotId, setSelectedPlotId] = useState<number | undefined>(undefined);
   const [selectedScenario, setSelectedScenario] = useState<any | undefined>(undefined);
+
+  useEffect(() => {
+    apiClient
+      .get('/settings')
+      .then((res) => {
+        if (res.data?.settings) setSiteSettings(res.data.settings);
+      })
+      .catch(() => {});
+  }, []);
 
   // Support public URL paths `/verify/{deed_id}` and query params `?plot={plot_id}` without login
   useEffect(() => {
@@ -53,6 +74,23 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleAuthSuccess = (user: any, _token: string, redirectTab?: ActiveTab) => {
+    setCurrentUser(user);
+    setCurrentRole(user.role);
+    if (redirectTab) {
+      setActiveTab(redirectTab);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('bhumishield_token');
+    localStorage.removeItem('bhumishield_user');
+    setCurrentUser(null);
+    setCurrentRole('citizen');
+    setActiveTab('landing');
+  };
+
   return (
     <I18nProvider>
       <NavbarAndLayout
@@ -63,8 +101,35 @@ export const App: React.FC = () => {
         }}
         currentRole={currentRole}
         setCurrentRole={setCurrentRole}
+        currentUser={currentUser}
+        siteSettings={siteSettings}
       >
-        {activeTab === 'home' && <CitizenHome onNavigate={handleCitizenNavigate} />}
+        {activeTab === 'landing' && (
+          <LandingPage
+            siteSettings={siteSettings}
+            onNavigate={handleCitizenNavigate}
+            onSelectRoleAndGo={(role, tab) => {
+              setCurrentRole(role);
+              setActiveTab(tab);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        )}
+
+        {activeTab === 'auth' && (
+          <AuthPage
+            currentUser={currentUser}
+            onAuthSuccess={handleAuthSuccess}
+            onLogout={handleLogout}
+          />
+        )}
+
+        {activeTab === 'home' && (
+          <CitizenHome
+            currentUser={currentUser}
+            onNavigate={handleCitizenNavigate}
+          />
+        )}
 
         {activeTab === 'verify' && (
           <VerifyDeedPage
@@ -123,6 +188,7 @@ export const App: React.FC = () => {
               setSelectedDeedId(deedNo);
               setActiveTab('verify');
             }}
+            onSettingsUpdated={(updated) => setSiteSettings(updated)}
           />
         )}
       </NavbarAndLayout>
