@@ -88,7 +88,7 @@ export const AppContent: React.FC = () => {
           deptEn="Central Cryptographic Ledger Governance"
           onNavigate={setActiveTab}
         >
-          <AdminDashboardPage />
+          <AdminDashboardPage onNavigate={setActiveTab} />
         </AuthGuard>
       )}
 

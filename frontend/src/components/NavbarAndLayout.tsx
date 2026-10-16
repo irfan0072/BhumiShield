@@ -24,7 +24,9 @@ import {
   Layers,
   LayoutDashboard,
   X,
-  FileText
+  FileText,
+  ShieldAlert,
+  ArrowLeft
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -115,9 +117,60 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
     };
   }, []);
 
+  const [isSuperAdminMode, setIsSuperAdminMode] = useState<boolean>(
+    () => localStorage.getItem('bs_superadmin_mode') === '1'
+  );
+
+  const handleSuperAdminDirectLogin = async (targetRole: UserRole) => {
+    // Only permit if currently admin or in super admin oversight mode
+    if (user?.role !== 'admin' && !isSuperAdminMode && role !== 'admin') {
+      return;
+    }
+    // Store original admin token if entering oversight mode
+    if (!isSuperAdminMode && token) {
+      localStorage.setItem('bs_admin_original_token', token);
+    }
+    try {
+      const res = await BhumiApi.switchDemoRole(targetRole);
+      if (res?.access_token && res?.user) {
+        localStorage.setItem('bs_superadmin_mode', '1');
+        setIsSuperAdminMode(true);
+        setToken(res.access_token);
+        setUser(res.user);
+        setRole(targetRole);
+        setActiveTab(ROLE_DASHBOARD_MAP[targetRole] || 'home');
+      }
+    } catch (err: any) {
+      console.error('Super Admin direct login failed', err);
+    }
+  };
+
+  const handleReturnToSuperAdmin = async () => {
+    const originalAdminToken = localStorage.getItem('bs_admin_original_token');
+    try {
+      const res = await BhumiApi.switchDemoRole('admin');
+      if (res?.access_token && res?.user) {
+        setToken(res.access_token);
+        setUser(res.user);
+        setRole('admin');
+      }
+    } catch {
+      if (originalAdminToken) {
+        setToken(originalAdminToken);
+      }
+    } finally {
+      localStorage.removeItem('bs_superadmin_mode');
+      localStorage.removeItem('bs_admin_original_token');
+      setIsSuperAdminMode(false);
+      setRole('admin');
+      setActiveTab('admin');
+    }
+  };
+
   const handleRoleChange = (newRole: UserRole, navigateToRole = true) => {
-    if (user?.role === 'admin') {
-      setRole(newRole);
+    if (user?.role === 'admin' || isSuperAdminMode) {
+      handleSuperAdminDirectLogin(newRole);
+      return;
     }
     if (navigateToRole) {
       setActiveTab(ROLE_DASHBOARD_MAP[newRole] || 'home');
@@ -135,7 +188,8 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
     }
   };
 
-  const isPublicPage = ['landing', 'check', 'qr', 'help', 'auth'].includes(activeTab);
+  // Nagorik portal (home) matches frontside consumer design
+  const isPublicPage = ['landing', 'home', 'check', 'qr', 'help', 'auth'].includes(activeTab);
   const currentRoleMeta = ROLE_META[role] || ROLE_META['citizen'];
 
   const getRoleSidebarItems = () => {
@@ -184,15 +238,37 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
 
   const sidebarItems = getRoleSidebarItems();
 
+  const superAdminOversightBanner = isSuperAdminMode ? (
+    <div className="sticky top-0 z-50 bg-amber-400 text-slate-950 px-4 py-2 shadow-md flex flex-wrap items-center justify-between gap-2 border-b-2 border-amber-600">
+      <div className="flex items-center gap-2 text-xs font-black">
+        <span className="flex h-2.5 w-2.5 rounded-full bg-red-600 animate-ping" />
+        <ShieldAlert className="w-4 h-4 text-slate-950 shrink-0" />
+        <span>
+          {t(
+            `সুপার অ্যাডমিন নিরীক্ষা মোড: আপনি পাসওয়ার্ড ছাড়াই সরাসরি '${currentRoleMeta.titleBn}' ড্যাশবোর্ড পর্যবেক্ষণে রয়েছেন।`,
+            `Super Admin Oversight Mode: Directly inspecting '${currentRoleMeta.titleEn}' without password.`
+          )}
+        </span>
+      </div>
+      <button
+        onClick={handleReturnToSuperAdmin}
+        className="px-3 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 text-amber-300 text-xs font-black flex items-center gap-1.5 transition cursor-pointer shadow-xs border border-amber-400/40"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        <span>{t('সুপার অ্যাডমিনে ফিরুন ↩', 'Return to Super Admin ↩')}</span>
+      </button>
+    </div>
+  ) : null;
+
   const roleSwitcher = (
     <div className="space-y-1">
       {(
         [
-          { r: 'citizen' as UserRole, tab: 'home', label: t('নাগরিক ভল্ট', 'Citizen Vault') },
-          { r: 'sub_registrar' as UserRole, tab: 'registrar', label: t('সাব-রেজিস্ট্রার', 'Sub-Registrar') },
-          { r: 'ac_land' as UserRole, tab: 'acland', label: t('এসি ল্যান্ড', 'AC Land') },
-          { r: 'bank_officer' as UserRole, tab: 'bank', label: t('ব্যাংক অফিসার', 'Bank Officer') },
-          { r: 'admin' as UserRole, tab: 'admin', label: t('সিস্টেম অ্যাডমিন', 'System Admin') },
+          { r: 'citizen' as UserRole, tab: 'home', label: t('নাগরিক ভল্ট (Citizen)', 'Citizen Vault') },
+          { r: 'sub_registrar' as UserRole, tab: 'registrar', label: t('সাব-রেজিস্ট্রার (Law)', 'Sub-Registrar') },
+          { r: 'ac_land' as UserRole, tab: 'acland', label: t('এসি ল্যান্ড (Land)', 'AC Land') },
+          { r: 'bank_officer' as UserRole, tab: 'bank', label: t('ব্যাংক অফিসার (Bank)', 'Bank Officer') },
+          { r: 'admin' as UserRole, tab: 'admin', label: t('সুপার অ্যাডমিন (Admin)', 'Super Admin') },
         ] as const
       ).map((rp) => {
         const active = role === rp.r && activeTab === rp.tab;
@@ -201,13 +277,14 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
             key={rp.r}
             onClick={() => {
               setMobileDrawerOpen(false);
-              handleRoleChange(rp.r, true);
+              handleSuperAdminDirectLogin(rp.r);
             }}
             className={`w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between cursor-pointer min-h-[38px] transition-colors ${
               active
-                ? 'bg-emerald-500/20 text-emerald-300 border-l-2 border-emerald-400 font-bold'
+                ? 'bg-amber-500/20 text-amber-300 border-l-2 border-amber-400 font-bold'
                 : 'text-white/70 hover:bg-white/10 hover:text-white'
             }`}
+            title={t('পাসওয়ার্ড ছাড়া সরাসরি লগইন করুন', 'Direct Login Without Password')}
           >
             <span className="truncate">{rp.label}</span>
             <ChevronRight className="w-3.5 h-3.5 opacity-60" />
@@ -223,6 +300,8 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
       <div className="min-h-screen flex flex-col bg-white text-slate-800 pb-16 lg:pb-0">
         {/* Top Accent Gradient Bar — Exactly like bcc.zohirrayhan.com */}
         <div className="h-1 bg-gradient-to-r from-emerald-700 via-emerald-600 to-amber-500" />
+
+        {superAdminOversightBanner}
 
         {/* Clean Header Bar */}
         <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur">
@@ -361,7 +440,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         <main className={`flex-1 w-full ${activeTab === 'landing' ? '' : 'py-8 px-4 max-w-7xl mx-auto'}`}>{children}</main>
 
         {/* Clean Footer (bcc.zohirrayhan.com style) */}
-        <InstitutionalFooter t={t} onNavigate={setActiveTab} onRoleSelect={handleRoleChange} />
+        <InstitutionalFooter t={t} onNavigate={setActiveTab} />
 
         {/* Mobile Slide-Over Drawer */}
         {mobileDrawerOpen && (
@@ -427,12 +506,15 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                   </button>
                 </div>
 
-                <div className="border-t border-white/10 pt-3">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-white/40 px-3 mb-2">
-                    {t('দাপ্তরিক ও নাগরিক ওয়ার্কস্পেস', 'Role Workspaces')}
+                {(user?.role === 'admin' || isSuperAdminMode) && (
+                  <div className="border-t border-white/10 pt-3">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-amber-400 px-3 mb-2 flex items-center gap-1.5">
+                      <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                      {t('সুপার অ্যাডমিন ডাইরেক্ট এক্সেস', 'Super Admin Direct Access')}
+                    </div>
+                    {roleSwitcher}
                   </div>
-                  {roleSwitcher}
-                </div>
+                )}
               </div>
             </aside>
           </div>
@@ -476,15 +558,17 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
           })}
         </div>
       </div>
-      <div>
-        {sidebarOpen && (
-          <div className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-white/40 flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5" />
-            {t('রোল প্যানেল', 'Roles')}
-          </div>
-        )}
-        {sidebarOpen && roleSwitcher}
-      </div>
+      {(user?.role === 'admin' || isSuperAdminMode) && (
+        <div className="pt-2 border-t border-slate-800">
+          {sidebarOpen && (
+            <div className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+              {t('সুপার অ্যাডমিন ডাইরেক্ট এক্সেস', 'Super Admin Direct Access')}
+            </div>
+          )}
+          {sidebarOpen && roleSwitcher}
+        </div>
+      )}
     </>
   );
 
@@ -522,6 +606,17 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
             <Menu className="w-4 h-4" />
           </button>
         </div>
+
+        {sidebarOpen && (
+          <div className="px-4 py-2.5 bg-slate-800/60 border-b border-slate-800 text-[11px]">
+            <div className="font-bold text-emerald-400 truncate">
+              {lang === 'bn' ? currentRoleMeta.titleBn : currentRoleMeta.titleEn}
+            </div>
+            <div className="text-[10px] text-slate-400 truncate">
+              {lang === 'bn' ? currentRoleMeta.deptBn : currentRoleMeta.deptEn}
+            </div>
+          </div>
+        )}
 
         <div className="flex-1 py-4 px-3 space-y-6 overflow-y-auto">
           {renderSidebarNav()}
@@ -574,6 +669,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
 
       {/* Main Area */}
       <div className="flex-1 flex flex-col min-w-0 pt-1">
+        {superAdminOversightBanner}
         {/* Top Navbar */}
         <header className="sticky top-1 z-20 h-16 bg-white/95 backdrop-blur border-b border-slate-200 px-4 lg:px-6 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -662,7 +758,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         </main>
 
         {/* Clean Footer */}
-        <InstitutionalFooter t={t} onNavigate={setActiveTab} onRoleSelect={handleRoleChange} />
+        <InstitutionalFooter t={t} onNavigate={setActiveTab} />
       </div>
 
       {/* Mobile Slide-Over Drawer for Authenticated View */}
@@ -701,8 +797,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
 const InstitutionalFooter: React.FC<{
   t: (bn: string, en: string) => string;
   onNavigate: (tab: string) => void;
-  onRoleSelect: (role: UserRole) => void;
-}> = ({ t, onNavigate, onRoleSelect }) => (
+}> = ({ t, onNavigate }) => (
   <footer className="mt-16 border-t border-gray-200 bg-white text-slate-700">
     <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4">
       {/* Col 1: Brand Info & Location */}
@@ -755,7 +850,7 @@ const InstitutionalFooter: React.FC<{
           </li>
           <li>
             <button
-              onClick={() => onRoleSelect('citizen')}
+              onClick={() => onNavigate('home')}
               className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
             >
               {t('নাগরিক ভল্ট ও বিক্রয় লক', 'Citizen Sale Lock Vault')}
@@ -763,7 +858,7 @@ const InstitutionalFooter: React.FC<{
           </li>
           <li>
             <button
-              onClick={() => onRoleSelect('sub_registrar')}
+              onClick={() => onNavigate('help')}
               className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
             >
               {t('১১-রুল গেটকিপার ও শুল্ক হিসাব', '11-Rule Gatekeeper')}
@@ -771,7 +866,7 @@ const InstitutionalFooter: React.FC<{
           </li>
           <li>
             <button
-              onClick={() => onRoleSelect('ac_land')}
+              onClick={() => onNavigate('help')}
               className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
             >
               {t('স্বয়ংক্রিয় ই-মিউটেশন কিউ', 'e-Mutation Queue')}
@@ -786,7 +881,7 @@ const InstitutionalFooter: React.FC<{
         <ul className="space-y-2 text-xs">
           <li>
             <button
-              onClick={() => onRoleSelect('sub_registrar')}
+              onClick={() => onNavigate('registrar')}
               className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
             >
               {t('সাব-রেজিস্ট্রার কনসোল', 'Sub-Registrar Panel')}
@@ -794,7 +889,7 @@ const InstitutionalFooter: React.FC<{
           </li>
           <li>
             <button
-              onClick={() => onRoleSelect('ac_land')}
+              onClick={() => onNavigate('acland')}
               className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
             >
               {t('এসি ল্যান্ড ট্রাইব্যুনাল', 'AC Land Tribunal')}
@@ -802,7 +897,7 @@ const InstitutionalFooter: React.FC<{
           </li>
           <li>
             <button
-              onClick={() => onRoleSelect('bank_officer')}
+              onClick={() => onNavigate('bank')}
               className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
             >
               {t('ব্যাংক জামানত ও ডিজিটাল NOC', 'Bank Lien & NOC')}
@@ -810,7 +905,7 @@ const InstitutionalFooter: React.FC<{
           </li>
           <li>
             <button
-              onClick={() => onRoleSelect('admin')}
+              onClick={() => onNavigate('admin')}
               className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
             >
               {t('জাতীয় লেজার ও RBAC অডিট', 'National Ledger & Audit')}

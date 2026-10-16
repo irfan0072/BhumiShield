@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\RoleControlController;
 use App\Http\Controllers\Api\V1\SystemAdminController;
 use App\Http\Controllers\Api\V1\WorkflowController;
 use App\Http\Middleware\RoleMiddleware;
+use App\Services\JwtAuthService;
 use App\Support\DB;
 use Database\Seeders\DatabaseSeeder;
 
@@ -67,12 +68,21 @@ return static function (string $method, string $uri, array $query, array $body):
         return SystemAdminController::registerUser($body);
     }
     if ($method === 'POST' && $sub === '/auth/switch-demo-role') {
+        $supervisorToken = $_SERVER['HTTP_X_ADMIN_SUPERVISOR_TOKEN'] ?? null;
+        if ($supervisorToken) {
+            $supUser = JwtAuthService::getAuthenticatedUser('Bearer ' . $supervisorToken);
+            if ($supUser && ($supUser['role'] ?? '') === 'admin') {
+                return RoleControlController::switchDemoRole($body);
+            }
+        }
+        RoleMiddleware::authorize(['admin']);
         return RoleControlController::switchDemoRole($body);
     }
     if ($method === 'GET' && $sub === '/auth/permissions') {
         return RoleControlController::getPermissionsInfo();
     }
     if ($method === 'GET' && $sub === '/auth/demo-users') {
+        RoleMiddleware::authorize(['admin']);
         return WorkflowController::listDemoUsers();
     }
     if ($method === 'GET' && $sub === '/auth/me') {

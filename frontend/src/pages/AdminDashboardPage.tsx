@@ -19,8 +19,16 @@ import {
   KeyRound,
 } from 'lucide-react';
 
-export const AdminDashboardPage: React.FC = () => {
-  const { lang, role, setRole, setUser, setToken, t } = useAppUI();
+const ROLE_DASHBOARD_MAP: Record<UserRole, string> = {
+  citizen: 'home',
+  sub_registrar: 'registrar',
+  ac_land: 'acland',
+  bank_officer: 'bank',
+  admin: 'admin',
+};
+
+export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNavigate }) => {
+  const { lang, role, setRole, user, setUser, token, setToken, t } = useAppUI();
   const [subTab, setSubTab] = useState<
     'rbac' | 'ledger' | 'scenarios' | 'users' | 'settings' | 'audit'
   >('rbac');
@@ -77,12 +85,19 @@ export const AdminDashboardPage: React.FC = () => {
   }, []);
 
   const switchToAdminRole = async (targetRole: UserRole = 'admin') => {
+    if (!localStorage.getItem('bs_superadmin_mode') && token) {
+      localStorage.setItem('bs_admin_original_token', token);
+    }
     const res = await BhumiApi.switchDemoRole(targetRole);
     if (res?.access_token && res?.user) {
+      localStorage.setItem('bs_superadmin_mode', '1');
       setToken(res.access_token);
       setUser(res.user);
+      setRole(targetRole);
+      onNavigate?.(ROLE_DASHBOARD_MAP[targetRole] || 'home');
     } else {
       setRole(targetRole);
+      onNavigate?.(ROLE_DASHBOARD_MAP[targetRole] || 'home');
     }
     refreshAll();
   };
@@ -326,9 +341,11 @@ export const AdminDashboardPage: React.FC = () => {
                     </span>
                     <button
                       onClick={() => switchToAdminRole(rKey as UserRole)}
-                      className="px-3 py-1.5 rounded-lg bg-[#062823] hover:bg-[#0D6B5C] text-white text-xs font-bold cursor-pointer min-h-[32px]"
+                      className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black flex items-center gap-1.5 cursor-pointer min-h-[32px] shadow-xs"
+                      title={t('পাসওয়ার্ড ছাড়া সরাসরি লগইন করুন', 'Direct Login Without Password')}
                     >
-                      {t('এই প্যানেলে সুইচ করুন', 'Switch Session')}
+                      <KeyRound className="w-3.5 h-3.5 text-slate-950" />
+                      <span>{t('পাসওয়ার্ডহীন সরাসরি এক্সেস', 'Direct Login (No Password)')}</span>
                     </button>
                   </div>
                 </div>

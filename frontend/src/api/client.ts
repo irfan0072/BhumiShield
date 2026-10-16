@@ -12,6 +12,10 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  const supToken = localStorage.getItem('bs_admin_original_token');
+  if (supToken) {
+    config.headers['X-Admin-Supervisor-Token'] = supToken;
+  }
   return config;
 });
 
