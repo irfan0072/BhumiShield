@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+*.db
+*.sqlite3
+node_modules/
+frontend/dist/
+.DS_Store
+.env
+.pytest_cache/
