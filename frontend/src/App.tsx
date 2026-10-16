@@ -12,6 +12,7 @@ import { BankOfficerPage } from './pages/BankOfficerPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { HelpPage } from './pages/HelpPage';
 import { AuthPage } from './pages/AuthPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 export const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('landing');
@@ -107,9 +108,11 @@ export const AppContent: React.FC = () => {
 
 export function App() {
   return (
-    <AppUIProvider>
-      <AppContent />
-    </AppUIProvider>
+    <ErrorBoundary>
+      <AppUIProvider>
+        <AppContent />
+      </AppUIProvider>
+    </ErrorBoundary>
   );
 }
 

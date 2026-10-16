@@ -93,6 +93,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
     setRole,
     user,
     setUser,
+    token,
     setToken,
     logout,
     t,
@@ -135,7 +136,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
   };
 
   const isPublicLanding = activeTab === 'landing';
-  const currentRoleMeta = ROLE_META[role];
+  const currentRoleMeta = ROLE_META[role] || ROLE_META['citizen'];
 
   const getRoleSidebarItems = () => {
     if (role === 'citizen') {
