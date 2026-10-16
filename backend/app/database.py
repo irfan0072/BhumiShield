@@ -14,13 +14,28 @@ SCHEMA_DDL = """
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE,
     full_name_bn TEXT NOT NULL,
     full_name_en TEXT NOT NULL,
     role TEXT NOT NULL,
     office_bn TEXT NOT NULL,
     office_en TEXT NOT NULL,
+    phone_dummy TEXT DEFAULT '01700-000000',
+    nid TEXT DEFAULT '9900001001',
+    is_active INTEGER NOT NULL DEFAULT 1,
     password_hash TEXT NOT NULL,
+    last_login_at TEXT,
     created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS site_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    setting_key TEXT UNIQUE NOT NULL,
+    setting_value_json TEXT NOT NULL,
+    description_bn TEXT NOT NULL,
+    description_en TEXT NOT NULL,
+    updated_by TEXT NOT NULL,
+    updated_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS locations (
@@ -276,6 +291,7 @@ def init_db(reset: bool = False) -> None:
                 "plots",
                 "persons",
                 "locations",
+                "site_settings",
                 "users",
             ]
             for tbl in tables:

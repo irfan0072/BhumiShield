@@ -46,48 +46,151 @@ def verify_password(password: str, stored_hash: str) -> bool:
 DEMO_USERS = [
     {
         "username": "citizen",
+        "email": "rafiqul.citizen@demo.bhumishield.gov.bd",
         "password": "demo123",
         "full_name_bn": "মো. রফিকুল ইসলাম (নাগরিক)",
         "full_name_en": "Md. Rafiqul Islam (Citizen)",
         "role": "citizen",
         "office_bn": "নাগরিক পোর্টাল — সাভার, ঢাকা",
         "office_en": "Citizen Portal — Savar, Dhaka",
+        "phone_dummy": "01700-001001",
+        "nid": "9900001001",
+        "is_active": 1,
     },
     {
         "username": "registrar",
+        "email": "sr.savar@demo.bhumishield.gov.bd",
         "password": "demo123",
         "full_name_bn": "ফারহানা ইয়াসমিন (সাব-রেজিস্ট্রার)",
         "full_name_en": "Farhana Yasmin (Sub-Registrar)",
         "role": "sub_registrar",
         "office_bn": "সাব-রেজিস্ট্রি অফিস, সাভার, ঢাকা",
         "office_en": "Sub-Registry Office, Savar, Dhaka",
+        "phone_dummy": "01700-002001",
+        "nid": "9900002001",
+        "is_active": 1,
     },
     {
         "username": "acland",
+        "email": "acland.savar@demo.bhumishield.gov.bd",
         "password": "demo123",
         "full_name_bn": "তানভীর আহমেদ (সহকারী কমিশনার - ভূমি)",
         "full_name_en": "Tanvir Ahmed (AC Land)",
         "role": "ac_land",
         "office_bn": "উপজেলা ভূমি অফিস, সাভার, ঢাকা",
         "office_en": "Upazila Land Office, Savar, Dhaka",
+        "phone_dummy": "01700-003001",
+        "nid": "9900003001",
+        "is_active": 1,
     },
     {
         "username": "bank",
+        "email": "credit.sonalibank@demo.bhumishield.gov.bd",
         "password": "demo123",
         "full_name_bn": "নাজমুল হাসান (ব্যাংক কর্মকর্তা)",
         "full_name_en": "Nazmul Hasan (Bank Officer)",
         "role": "bank_officer",
         "office_bn": "সোনালী ব্যাংক পিএলসি, সাভার শাখা (ডেমো)",
         "office_en": "Sonali Bank PLC, Savar Branch (Demo)",
+        "phone_dummy": "01700-004001",
+        "nid": "9900004001",
+        "is_active": 1,
     },
     {
         "username": "admin",
+        "email": "auditor.admin@demo.bhumishield.gov.bd",
         "password": "demo123",
         "full_name_bn": "সিস্টেম অডিটর (ভূমি সুরক্ষা অ্যাডমিন)",
         "full_name_en": "System Auditor (BhumiShield Admin)",
         "role": "admin",
         "office_bn": "কেন্দ্রীয় লেজার মনিটরিং সেল (ডেমো)",
         "office_en": "Central Ledger Monitoring Cell (Demo)",
+        "phone_dummy": "01700-005001",
+        "nid": "9900005001",
+        "is_active": 1,
+    },
+    {
+        "username": "rabeya",
+        "email": "rabeya.citizen@demo.bhumishield.gov.bd",
+        "password": "demo123",
+        "full_name_bn": "মোসা. রাবেয়া খাতুন (নাগরিক)",
+        "full_name_en": "Mst. Rabeya Khatun (Citizen)",
+        "role": "citizen",
+        "office_bn": "নাগরিক পোর্টাল — বিরুলিয়া, সাভার",
+        "office_en": "Citizen Portal — Birulia, Savar",
+        "phone_dummy": "01700-001002",
+        "nid": "9900001002",
+        "is_active": 1,
+    },
+    {
+        "username": "registrar_gazipur",
+        "email": "sr.gazipur@demo.bhumishield.gov.bd",
+        "password": "demo123",
+        "full_name_bn": "মো. শফিকুল আলম (সাব-রেজিস্ট্রার)",
+        "full_name_en": "Md. Shafiqul Alam (Sub-Registrar)",
+        "role": "sub_registrar",
+        "office_bn": "সাব-রেজিস্ট্রি অফিস, গাজীপুর সদর",
+        "office_en": "Sub-Registry Office, Gazipur Sadar",
+        "phone_dummy": "01700-002002",
+        "nid": "9900002002",
+        "is_active": 1,
+    },
+]
+
+DEFAULT_SITE_SETTINGS = [
+    {
+        "setting_key": "portal_title_bn",
+        "setting_value_json": '"ভূমি সুরক্ষা (BhumiShield)"',
+        "description_bn": "পোর্টালের প্রধান বাংলা শিরোনাম",
+        "description_en": "Primary Bangla Portal Title",
+    },
+    {
+        "setting_key": "portal_title_en",
+        "setting_value_json": '"BhumiShield — National Land Trust Layer"',
+        "description_bn": "পোর্টালের প্রধান ইংরেজি শিরোনাম",
+        "description_en": "Primary English Portal Title",
+    },
+    {
+        "setting_key": "ministry_banner_bn",
+        "setting_value_json": '"আইন মন্ত্রণালয় (সাব-রেজিস্ট্রি) ও ভূমি মন্ত্রণালয় (এসি ল্যান্ড)-এর আন্তঃসংযোগ ট্রাস্ট লেয়ার (ডেমো)"',
+        "description_bn": "সরকারি আন্তঃসংযোগ ব্যানার টেক্সট",
+        "description_en": "Inter-ministry bridge banner text",
+    },
+    {
+        "setting_key": "helpline_number",
+        "setting_value_json": '"১৬১২২ (ভূমি সেবা হটলাইন - ডেমো)"',
+        "description_bn": "নাগরিক সহায়তা হটলাইন নম্বর",
+        "description_en": "Citizen Helpline Number",
+    },
+    {
+        "setting_key": "rapid_resale_days",
+        "setting_value_json": "30",
+        "description_bn": "দ্রুত হাতবদল (Rapid Resale) সতর্কতার সময়সীমা (দিন)",
+        "description_en": "Rapid resale warning window (in days)",
+    },
+    {
+        "setting_key": "require_mock_nid_check",
+        "setting_value_json": "true",
+        "description_bn": "নিবন্ধন-পূর্বে এনআইডি যাচাই বাধ্যতামূলক রাখুন",
+        "description_en": "Enforce Mock NID verification before deed registration",
+    },
+    {
+        "setting_key": "auto_queue_emutation",
+        "setting_value_json": "true",
+        "description_bn": "দলিল নিবন্ধনের সাথে সাথে স্বয়ংক্রিয় ই-নামজারি কেস তৈরি",
+        "description_en": "Automatically create AC Land e-Mutation case on deed registration",
+    },
+    {
+        "setting_key": "public_qr_verification_enabled",
+        "setting_value_json": "true",
+        "description_bn": "লগইন ছাড়া নাগরিকদের জন্য পাবলিক QR যাচাই চালু",
+        "description_en": "Allow public QR verification without login",
+    },
+    {
+        "setting_key": "office_hours_bn",
+        "setting_value_json": '"রবিবার – বৃহস্পতিবার, সকাল ৯:০০ – বিকাল ৫:০০"',
+        "description_bn": "কার্যালয়ের সময়সূচি",
+        "description_en": "Official Service Hours",
     },
 ]
 
@@ -317,19 +420,42 @@ def seed_all(reset: bool = True) -> dict[str, int]:
             db.insert(
                 """
                 INSERT INTO users (
-                    username, full_name_bn, full_name_en, role,
-                    office_bn, office_en, password_hash, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    username, email, full_name_bn, full_name_en, role,
+                    office_bn, office_en, phone_dummy, nid, is_active,
+                    password_hash, last_login_at, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     u["username"],
+                    u.get("email", f"{u['username']}@demo.bhumishield.gov.bd"),
                     u["full_name_bn"],
                     u["full_name_en"],
                     u["role"],
                     u["office_bn"],
                     u["office_en"],
+                    u.get("phone_dummy", "01700-001000"),
+                    u.get("nid", "9900001001"),
+                    u.get("is_active", 1),
                     hash_password(u["password"]),
+                    "2026-10-16T09:00:00+06:00",
                     "2026-01-01T09:00:00+06:00",
+                ),
+            )
+
+        # 1b. Seed Site Settings
+        for st in DEFAULT_SITE_SETTINGS:
+            db.insert(
+                """
+                INSERT INTO site_settings (
+                    setting_key, setting_value_json, description_bn, description_en,
+                    updated_by, updated_at
+                ) VALUES (?, ?, ?, ?, 'admin', '2026-10-16T09:00:00+06:00')
+                """,
+                (
+                    st["setting_key"],
+                    st["setting_value_json"],
+                    st["description_bn"],
+                    st["description_en"],
                 ),
             )
 

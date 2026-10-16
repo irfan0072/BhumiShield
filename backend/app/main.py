@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import CORS_ORIGINS
 from app.database import db_session, init_db
+from app.routers.system_admin import router as system_admin_router
 from app.routers.verify_ledger import router as verify_router
 from app.routers.workflows import router as workflows_router
 from app.seed.seed_data import seed_all
@@ -35,7 +36,7 @@ app = FastAPI(
         "and plain-language citizen 'Check Before You Buy' API for LandTech Innovation Hackathon 2026. "
         "**DEMO / DUMMY DATA ONLY — Never calls live government systems.**"
     ),
-    version="1.0.0",
+    version="2.0.0",
     lifespan=lifespan,
 )
 
@@ -89,3 +90,4 @@ def health_check() -> dict[str, str]:
 app.include_router(verify_router, prefix="/api/v1")
 app.include_router(verify_router, prefix="/api")
 app.include_router(workflows_router, prefix="/api/v1")
+app.include_router(system_admin_router, prefix="/api/v1")

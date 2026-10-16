@@ -1,4 +1,4 @@
-"""Comprehensive test suite for BhumiShield's Fraud Rules Engine, Hash-Chained Ledger, and 8 Demo Scenarios.
+"""Comprehensive test suite for BhumiShield's Fraud Rules Engine, Hash-Chained Ledger, Auth, User Management, Site Settings & 8 Demo Scenarios.
 
 Run with:
     pytest
@@ -11,7 +11,6 @@ import os
 import tempfile
 import unittest
 
-# Use an isolated temporary SQLite DB for tests so test runs are fast and repeatable
 _TEMP_DB = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
 _TEMP_DB.close()
 os.environ["BHUMISHIELD_TEST_DB"] = _TEMP_DB.name
@@ -20,11 +19,21 @@ from app.database import db_session
 from app.ledger.crypto import (
     GENESIS_HASH,
     compute_deed_hash,
-    compute_merkle_root,
     sign_hash,
-    verify_deed_record,
-    verify_entire_ledger,
     verify_signature,
+)
+from app.routers.system_admin import (
+    AdminUpdateUserRequest,
+    RegisterUserRequest,
+    UpdateSettingsRequest,
+    admin_delete_user,
+    admin_list_users,
+    admin_update_user,
+    get_analytics_summary,
+    get_citizen_linked_properties,
+    get_site_settings,
+    register_user,
+    update_site_settings,
 )
 from app.routers.verify_ledger import (
     restore_tampered_deed,
@@ -34,16 +43,12 @@ from app.routers.verify_ledger import (
 )
 from app.routers.workflows import (
     CollateralCheckRequest,
-    CreateMortgageRequest,
-    MutationDecisionRequest,
-    PreRegistrationCheckRequest,
+    LoginRequest,
     RegisterDeedRequest,
     bank_collateral_check,
     citizen_check_before_you_buy,
-    create_mortgage_lien,
-    decide_mutation_case,
     list_demo_scenarios,
-    sub_registrar_pre_check,
+    login,
     sub_registrar_register_deed,
 )
 from app.rules.engine import (
@@ -85,7 +90,6 @@ class TestBhumiShieldRulesAndLedger(unittest.TestCase):
         assert flag["rule_id"] == "SELLER_NOT_OWNER"
         assert flag["severity"] == "HIGH_RISK"
 
-        # Clean when actual owner sells
         clean = check_seller_not_owner(
             seller_id=8,
             latest_ownerships=latest_ownerships,
@@ -110,7 +114,6 @@ class TestBhumiShieldRulesAndLedger(unittest.TestCase):
         assert flag["rule_id"] == "AREA_EXCEEDS_OWNED"
         assert flag["severity"] == "HIGH_RISK"
 
-        # Within owned share passes
         clean = check_area_exceeds_owned(
             seller_id=6,
             requested_area_decimal=10.0,
@@ -174,7 +177,6 @@ class TestBhumiShieldRulesAndLedger(unittest.TestCase):
         }
         assert check_deed_tampered([intact_row]) is None
 
-        # Alter area_decimal from 10.0 to 25.0 without re-signing
         tampered_row = dict(intact_row)
         tampered_row["content_json"] = '{"area_decimal":25.0,"buyer_id":2,"deed_no":"DL-TEST-1","seller_id":1}'
         flag = check_deed_tampered([tampered_row])
@@ -258,30 +260,25 @@ class TestBhumiShieldRulesAndLedger(unittest.TestCase):
     def test_12_live_tamper_and_restore_workflow(self) -> None:
         """Verifies live deed tampering breaks verification and restoring heals the ledger."""
         with db_session() as db:
-            # Verify Deed #1 is initially SAFE & intact
             before = verify_single_deed("1", db=db)
             assert before["verification"]["is_valid"] is True
             assert before["verification"]["verdict"] == "SAFE"
 
-            # Tamper Deed #1
             tampered = simulate_deed_tampering(1, db=db)
             assert tampered["verification"]["is_valid"] is False
             assert tampered["verification"]["verdict"] == "HIGH_RISK"
             assert len(tampered["verification"]["tampered_fields"]) >= 1
 
-            # Restore Deed #1
             restored = restore_tampered_deed(1, db=db)
             assert restored["verification"]["is_valid"] is True
             assert restored["verification"]["verdict"] == "SAFE"
 
-            # Also test restoring Deed #5 (Scenario 5) so the entire 80-deed ledger passes 100%, then re-tamper #5
             restore_tampered_deed(5, db=db)
             full_clean = verify_full_ledger_endpoint(db=db)
             assert full_clean["is_valid"] is True
             assert full_clean["broken_count"] == 0
             assert len(full_clean["merkle_root"]) == 64
 
-            # Re-tamper Deed #5 back to 25.0 decimals for Scenario #5
             simulate_deed_tampering(5, db=db)
             full_broken = verify_full_ledger_endpoint(db=db)
             assert full_broken["is_valid"] is False
@@ -290,11 +287,9 @@ class TestBhumiShieldRulesAndLedger(unittest.TestCase):
     def test_13_end_to_end_role_workflows(self) -> None:
         """Tests Citizen report, Sub-Registrar registration, AC Land mutation, and Bank double-mortgage block."""
         with db_session() as db:
-            # 1. Citizen Check Before You Buy on Plot #1
             c_rep = citizen_check_before_you_buy(1, requested_area_decimal=5.0, db=db)
             assert c_rep["risk_report"]["verdict"] == "SAFE"
 
-            # 2. Sub-Registrar registers a clean sale on Plot #13 (Person 1 owns 100%, sells 4.0 dec to Person 2)
             reg_req = RegisterDeedRequest(
                 plot_id=13,
                 seller_id=1,
@@ -306,13 +301,72 @@ class TestBhumiShieldRulesAndLedger(unittest.TestCase):
             assert reg_res["status"] == "PENDING_MUTATION"
             assert reg_res["qr_svg_data_uri"].startswith("data:image/svg+xml;base64,")
 
-            # 3. Bank officer attempts double mortgage on Plot #6 (already mortgaged to Sonali Bank)
             col_check = bank_collateral_check(
                 CollateralCheckRequest(plot_id=6, borrower_id=11, requested_loan_bdt=1000000, area_mortgaged_decimal=10.0),
                 db=db,
             )
             assert col_check["can_create_lien"] is False
             assert col_check["risk_report"]["verdict"] == "HIGH_RISK"
+
+    def test_14_user_registration_login_and_admin_management(self) -> None:
+        """Tests user registration, login, admin user update/role change, and deletion."""
+        with db_session() as db:
+            reg = register_user(
+                RegisterUserRequest(
+                    username="new_union_officer",
+                    email="union@demo.bhumishield.gov.bd",
+                    password="secret123",
+                    full_name_bn="মো. আরিফুল ইসলাম",
+                    full_name_en="Md. Ariful Islam",
+                    role="citizen",
+                    office_bn="বিরুলিয়া ইউনিয়ন ভূমি অফিস",
+                    office_en="Birulia Union Land Office",
+                    phone_dummy="01700-008888",
+                    nid="9900008888",
+                ),
+                db=db,
+            )
+            assert reg["access_token"]
+            uid = reg["user"]["id"]
+
+            # Login with the new user
+            logged = login(LoginRequest(username="new_union_officer", password="secret123"), db=db)
+            assert logged["user"]["username"] == "new_union_officer"
+
+            # Promote role via Admin User Management
+            updated = admin_update_user(
+                uid,
+                AdminUpdateUserRequest(role="sub_registrar", is_active=1),
+                user={"username": "admin", "role": "admin"},
+                db=db,
+            )
+            assert updated["user"]["role"] == "sub_registrar"
+
+            # List users and delete test user
+            users_list = admin_list_users(q="new_union_officer", db=db)
+            assert users_list["total"] == 1
+            deleted = admin_delete_user(uid, user={"username": "admin", "role": "admin"}, db=db)
+            assert deleted["deleted_id"] == uid
+
+    def test_15_site_settings_and_analytics_summary(self) -> None:
+        """Tests dynamic site settings update and analytics KPI summary."""
+        with db_session() as db:
+            st = get_site_settings(db=db)
+            assert st["settings"]["rapid_resale_days"] == 30
+
+            upd = update_site_settings(
+                UpdateSettingsRequest(settings={"rapid_resale_days": 45, "helpline_number": "16122"}),
+                user={"username": "admin", "role": "admin"},
+                db=db,
+            )
+            assert upd["settings"]["rapid_resale_days"] == 45
+
+            summary = get_analytics_summary(db=db)
+            assert summary["kpis"]["total_plots"] == 60
+            assert summary["kpis"]["total_khatians"] == 240
+
+            props = get_citizen_linked_properties(nid="9900001001", db=db)
+            assert len(props["owned_plots"]) >= 1
 
 
 if __name__ == "__main__":

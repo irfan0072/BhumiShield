@@ -160,8 +160,12 @@ def _load_plot_bundle(db: DBConnection, plot_id: int) -> dict[str, Any]:
 
 @router.post("/auth/login")
 def login(req: LoginRequest, db: DBConnection = Depends(get_db)) -> dict[str, Any]:
-    """Authenticates a demo user and returns a signed JWT bearer token."""
-    user = db.fetchone("SELECT * FROM users WHERE username = ?", (req.username.strip().lower(),))
+    """Authenticates a user by username or email and returns a signed JWT bearer token."""
+    ident = req.username.strip().lower()
+    user = db.fetchone(
+        "SELECT * FROM users WHERE LOWER(username) = ? OR LOWER(email) = ?",
+        (ident, ident),
+    )
     if not user or not verify_password(req.password, user["password_hash"]):
         raise HTTPException(
             status_code=401,
@@ -171,6 +175,18 @@ def login(req: LoginRequest, db: DBConnection = Depends(get_db)) -> dict[str, An
                 "message_en": "Invalid username or password. Use 'demo123' for demo accounts.",
             },
         )
+    if int(user.get("is_active", 1)) == 0:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "ACCOUNT_SUSPENDED",
+                "message_bn": "আপনার অ্যাকাউন্টটি বর্তমানে স্থগিত রয়েছে। সিস্টেম অ্যাডমিনের সাথে যোগাযোগ করুন।",
+                "message_en": "Your account is currently suspended. Please contact the system administrator.",
+            },
+        )
+    now_iso = datetime.now(timezone.utc).isoformat()
+    db.execute("UPDATE users SET last_login_at = ? WHERE id = ?", (now_iso, user["id"]))
+    db.commit()
     token = create_access_token({"sub": user["username"], "role": user["role"]})
     return {
         "access_token": token,
@@ -178,11 +194,16 @@ def login(req: LoginRequest, db: DBConnection = Depends(get_db)) -> dict[str, An
         "user": {
             "id": user["id"],
             "username": user["username"],
+            "email": user.get("email") or f"{user['username']}@demo.bhumishield.gov.bd",
             "full_name_bn": user["full_name_bn"],
             "full_name_en": user["full_name_en"],
             "role": user["role"],
             "office_bn": user["office_bn"],
             "office_en": user["office_en"],
+            "phone_dummy": user.get("phone_dummy", "01700-001001"),
+            "nid": user.get("nid", "9900001001"),
+            "is_active": int(user.get("is_active", 1)),
+            "last_login_at": now_iso,
         },
     }
 
