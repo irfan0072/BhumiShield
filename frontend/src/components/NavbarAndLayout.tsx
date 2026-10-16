@@ -135,7 +135,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
     }
   };
 
-  const isPublicLanding = activeTab === 'landing';
+  const isPublicPage = ['landing', 'check', 'qr', 'help', 'auth'].includes(activeTab);
   const currentRoleMeta = ROLE_META[role] || ROLE_META['citizen'];
 
   const getRoleSidebarItems = () => {
@@ -218,7 +218,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
   );
 
   // Clean Public Header & Layout (Modeled after bcc.zohirrayhan.com)
-  if (isPublicLanding) {
+  if (isPublicPage) {
     return (
       <div className="min-h-screen flex flex-col bg-white text-slate-800 pb-16 lg:pb-0">
         {/* Top Accent Gradient Bar — Exactly like bcc.zohirrayhan.com */}
@@ -358,7 +358,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 w-full">{children}</main>
+        <main className={`flex-1 w-full ${activeTab === 'landing' ? '' : 'py-8 px-4 max-w-7xl mx-auto'}`}>{children}</main>
 
         {/* Clean Footer (bcc.zohirrayhan.com style) */}
         <InstitutionalFooter t={t} onNavigate={setActiveTab} onRoleSelect={handleRoleChange} />

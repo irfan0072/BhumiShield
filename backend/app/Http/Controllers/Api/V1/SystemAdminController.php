@@ -55,8 +55,15 @@ final class SystemAdminController
             ], JSON_UNESCAPED_UNICODE));
         }
 
-        $allowedRoles = ['citizen', 'sub_registrar', 'ac_land', 'bank_officer', 'admin'];
-        $role = in_array($req['role'] ?? 'citizen', $allowedRoles, true) ? (string) $req['role'] : 'citizen';
+        // Security check: Only an authenticated Admin can provision officer or admin accounts.
+        // Public self-registration is strictly restricted to 'citizen' role.
+        $currentUser = JwtAuthService::getAuthenticatedUser();
+        if ($currentUser && ($currentUser['role'] ?? '') === 'admin') {
+            $allowedRoles = ['citizen', 'sub_registrar', 'ac_land', 'bank_officer', 'admin'];
+            $role = in_array($req['role'] ?? 'citizen', $allowedRoles, true) ? (string) $req['role'] : 'citizen';
+        } else {
+            $role = 'citizen';
+        }
         $nowIso = gmdate('c');
         $email = strtolower(trim((string) ($req['email'] ?? "{$uname}@demo.bhumishield.gov.bd")));
         $nameBn = trim((string) ($req['full_name_bn'] ?? $uname));
