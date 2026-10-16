@@ -192,11 +192,15 @@ export const SubRegistrarPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <header className="page-intro animate-rise">
+        <h1>{t('সাব-রেজিস্ট্রার কনসোল', 'Sub-Registrar Console')}</h1>
+        <p>{t('প্রাক-নিবন্ধন গেটকিপার, হোল্ড কিউ ও স্ট্যাম্প শুল্ক — দাপ্তরিক দলিল নিয়ন্ত্রণ।', 'Pre-registration gatekeeper, hold queue, and stamp fees — official deed control.')}</p>
+      </header>
       {/* RBAC Guard Notice if not logged in as sub_registrar or admin */}
       {role !== 'sub_registrar' && role !== 'admin' && (
         <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 flex flex-wrap items-center justify-between gap-3 shadow-xs">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
-            <KeyRound className="w-4 h-4 text-[#B7791F]" />
+          <div className="flex items-center gap-2 text-xs font-bold text-[#0A1F1C]">
+            <KeyRound className="w-4 h-4 text-[#C4891A]" />
             <span>
               {t(
                 'দাপ্তরিক অ্যাক্সেস নোটিউট: সাব-রেজিস্ট্রার কন্ট্রোল পূর্ণাঙ্গভাবে ব্যবহার করতে সাব-রেজিস্ট্রার সেশনে প্রবেশ করুন।',
@@ -206,14 +210,14 @@ export const SubRegistrarPage: React.FC = () => {
           </div>
           <button
             onClick={switchToRegistrarRole}
-            className="px-4 py-2 rounded-lg bg-[#253656] hover:bg-[#1a263d] text-white font-bold text-xs cursor-pointer min-h-[36px] transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#062823] hover:bg-[#041A1C] text-white font-bold text-xs cursor-pointer min-h-[36px] transition-colors"
           >
             {t('সাব-রেজিস্ট্রার প্যানেলে প্রবেশ করুন →', 'Activate Sub-Registrar Session →')}
           </button>
         </div>
       )}
 
-      {/* Velzon Executive Overview Grid for Sub-Registrar */}
+      {/* Registry overview */}
       <VelzonOverviewSection
         role="sub_registrar"
         stats={stats}
@@ -221,11 +225,11 @@ export const SubRegistrarPage: React.FC = () => {
       />
 
       {/* Operational Controlling Card */}
-      <div className="bg-white rounded-xl p-6 border border-slate-200/90 shadow-2xs space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+      <div className="panel p-6 space-y-6 animate-rise-delay">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#0D6B5C]/10 pb-4">
           <div>
-            <h2 className="text-lg md:text-xl font-extrabold text-slate-800 flex items-center gap-2">
-              <FileSpreadsheet className="w-5 h-5 text-[#006A4E]" />
+            <h2 className="font-display text-lg md:text-xl text-[#062823] flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-[#0D6B5C]" />
               <span>
                 {t(
                   'সাব-রেজিস্ট্রার প্রাক-নিবন্ধন গেটকিপার ও দলিল রেজিস্টার কন্ট্রোল',
@@ -233,7 +237,7 @@ export const SubRegistrarPage: React.FC = () => {
                 )}
               </span>
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-[#5F7A74] mt-0.5">
               {t(
                 'দলিল সম্পাদনের পূর্বে ১১টি রুল পরীক্ষা, স্থগিত দলিল (HELD) শুনানি নিষ্পত্তি এবং সরকারি রাজস্ব হিসাব:',
                 'Run 11 pre-registration fraud checks, manage HELD deeds, and calculate government fees:'
@@ -246,8 +250,8 @@ export const SubRegistrarPage: React.FC = () => {
               onClick={() => setSubTab('wizard')}
               className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[38px] transition-colors ${
                 subTab === 'wizard'
-                  ? 'bg-[#253656] text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  ? 'bg-[#0D6B5C] text-white shadow-xs'
+                  : 'bg-[#EDF4F1] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
               }`}
             >
               <FileSpreadsheet className="w-4 h-4" />
@@ -257,8 +261,8 @@ export const SubRegistrarPage: React.FC = () => {
               onClick={() => setSubTab('deeds')}
               className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[38px] transition-colors ${
                 subTab === 'deeds'
-                  ? 'bg-[#253656] text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  ? 'bg-[#0D6B5C] text-white shadow-xs'
+                  : 'bg-[#EDF4F1] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
               }`}
             >
               <ListChecks className="w-4 h-4" />
@@ -271,8 +275,8 @@ export const SubRegistrarPage: React.FC = () => {
               onClick={() => setSubTab('fees')}
               className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[38px] transition-colors ${
                 subTab === 'fees'
-                  ? 'bg-[#253656] text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  ? 'bg-[#0D6B5C] text-white shadow-xs'
+                  : 'bg-[#EDF4F1] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
               }`}
             >
               <Calculator className="w-4 h-4" />
@@ -282,7 +286,7 @@ export const SubRegistrarPage: React.FC = () => {
         </div>
 
         {statusMsg && (
-          <div className="p-4 rounded-xl bg-[#E6F2EE] border-l-4 border-[#006A4E] text-[#006A4E] font-bold text-xs flex items-center gap-2">
+          <div className="p-4 rounded-xl bg-[#E8F5F1] border-l-4 border-[#0D6B5C] text-[#0D6B5C] font-bold text-xs flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span>{statusMsg}</span>
           </div>
@@ -294,13 +298,13 @@ export const SubRegistrarPage: React.FC = () => {
             {/* Form Inputs */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="label">
                   {t('দাগ নম্বর (Plot / Dag):', 'Plot / Dag No:')}
                 </label>
                 <select
                   value={plotId}
                   onChange={(e) => setPlotId(Number(e.target.value))}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
+                  className="field text-xs font-semibold bg-[#F5FAF8]"
                 >
                   {plots.slice(0, 25).map((p) => (
                     <option key={p.id} value={p.id}>
@@ -313,13 +317,13 @@ export const SubRegistrarPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="label">
                   {t('বিক্রেতা (Seller + NID):', 'Seller (with NID):')}
                 </label>
                 <select
                   value={sellerId}
                   onChange={(e) => setSellerId(Number(e.target.value))}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
+                  className="field text-xs font-semibold bg-[#F5FAF8]"
                 >
                   {persons.slice(0, 15).map((per) => (
                     <option key={per.id} value={per.id}>
@@ -330,13 +334,13 @@ export const SubRegistrarPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="label">
                   {t('ক্রেতা (Buyer + NID):', 'Buyer (with NID):')}
                 </label>
                 <select
                   value={buyerId}
                   onChange={(e) => setBuyerId(Number(e.target.value))}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
+                  className="field text-xs font-semibold bg-[#F5FAF8]"
                 >
                   {persons.slice(0, 15).map((per) => (
                     <option key={per.id} value={per.id}>
@@ -347,7 +351,7 @@ export const SubRegistrarPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="label">
                   {t('হস্তান্তরিত জমি (শতাংশ):', 'Transfer Area (Decimal):')}
                 </label>
                 <input
@@ -355,40 +359,40 @@ export const SubRegistrarPage: React.FC = () => {
                   step="0.01"
                   value={areaDecimal}
                   onChange={(e) => setAreaDecimal(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
+                  className="field text-xs font-bold"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="label">
                   {t('অংশের ভগ্নাংশ (Share Fraction):', 'Share Fraction:')}
                 </label>
                 <input
                   type="text"
                   value={shareFraction}
                   onChange={(e) => setShareFraction(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
+                  className="field font-mono text-xs"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="label">
                   {t('দলিলের ঘোষিত মূল্য (টাকা):', 'Declared Value (BDT):')}
                 </label>
                 <input
                   type="number"
                   value={declaredValue}
                   onChange={(e) => setDeclaredValue(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
+                  className="field text-xs font-bold"
                 />
               </div>
             </div>
 
             {/* Quick Context Summary Box */}
-            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="p-3.5 bg-[#EDF4F1]/80 rounded-xl border border-[#0D6B5C]/12 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-700">{t('নির্বাচিত প্লট:', 'Selected Plot:')}</span>
-                <span className="px-2 py-0.5 rounded bg-white border border-slate-300 font-bold text-slate-800">
+                <span className="font-bold text-[#0A1F1C]/90">{t('নির্বাচিত প্লট:', 'Selected Plot:')}</span>
+                <span className="px-2 py-0.5 rounded bg-white border border-[#0D6B5C]/20 font-bold text-[#0A1F1C]">
                   {lang === 'bn' ? selectedPlot?.mouza_bn : selectedPlot?.mouza_en || 'ধানমন্ডি'} • {t('দাগ', 'Dag')} {selectedPlot?.dag_no || '101'}
                 </span>
                 {Number(selectedPlot?.owner_sale_locked) === 1 && (
@@ -398,27 +402,27 @@ export const SubRegistrarPage: React.FC = () => {
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-slate-500">{t('বিক্রেতা:', 'Seller:')}</span>
-                <span className="font-bold text-slate-800">{selectedSeller?.name_bn || 'বিক্রেতা'}</span>
-                <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-                <span className="text-slate-500">{t('ক্রেতা:', 'Buyer:')}</span>
-                <span className="font-bold text-slate-800">{selectedBuyer?.name_bn || 'ক্রেতা'}</span>
+                <span className="text-[#5F7A74]">{t('বিক্রেতা:', 'Seller:')}</span>
+                <span className="font-bold text-[#0A1F1C]">{selectedSeller?.name_bn || 'বিক্রেতা'}</span>
+                <ArrowRight className="w-3.5 h-3.5 text-[#5F7A74]/80" />
+                <span className="text-[#5F7A74]">{t('ক্রেতা:', 'Buyer:')}</span>
+                <span className="font-bold text-[#0A1F1C]">{selectedBuyer?.name_bn || 'ক্রেতা'}</span>
               </div>
             </div>
 
             {/* Gatekeeper 11-Rule Preview Checklist */}
             <div className="space-y-2">
-              <h4 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-[#006A4E]" />
+              <h4 className="text-xs font-extrabold text-[#0A1F1C]/90 uppercase tracking-wider flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-[#0D6B5C]" />
                 <span>{t('স্বয়ংক্রিয় ১১টি গেটকিপার রুলস ইঞ্জিন:', 'Automated 11-Rule Gatekeeper Engine:')}</span>
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-[11px]">
                 {gatekeeperRules.map((rule) => (
                   <div
                     key={rule.id}
-                    className="p-2.5 rounded-lg border border-slate-200 bg-white flex items-center gap-2 text-slate-700"
+                    className="p-2.5 rounded-lg border border-[#0D6B5C]/12 bg-white flex items-center gap-2 text-[#0A1F1C]/90"
                   >
-                    <span className="w-5 h-5 rounded-full bg-[#E6F2EE] text-[#006A4E] font-bold text-[10px] flex items-center justify-center shrink-0">
+                    <span className="w-5 h-5 rounded-full bg-[#E8F5F1] text-[#0D6B5C] font-bold text-[10px] flex items-center justify-center shrink-0">
                       {rule.id}
                     </span>
                     <span className="font-medium truncate">
@@ -434,7 +438,7 @@ export const SubRegistrarPage: React.FC = () => {
               <button
                 onClick={handleRunPreCheck}
                 disabled={loading}
-                className="px-5 py-2.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-extrabold cursor-pointer min-h-[42px] shadow-sm flex items-center gap-2 transition-all disabled:opacity-50"
+                className="btn-primary text-xs cursor-pointer min-h-[42px] shadow-sm flex items-center gap-2 transition-all disabled:opacity-50"
               >
                 {loading ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -447,7 +451,7 @@ export const SubRegistrarPage: React.FC = () => {
               <button
                 onClick={handleRegisterDeed}
                 disabled={loading}
-                className="px-5 py-2.5 rounded-lg bg-[#253656] hover:bg-[#1a263d] text-white text-xs font-extrabold cursor-pointer min-h-[42px] shadow-sm flex items-center gap-2 transition-all disabled:opacity-50"
+                className="px-5 py-2.5 rounded-lg bg-[#062823] hover:bg-[#041A1C] text-white text-xs font-extrabold cursor-pointer min-h-[42px] shadow-sm flex items-center gap-2 transition-all disabled:opacity-50"
               >
                 <KeyRound className="w-4 h-4" />
                 <span>
@@ -465,15 +469,15 @@ export const SubRegistrarPage: React.FC = () => {
         {subTab === 'deeds' && (
           <div className="space-y-4">
             {/* Search and Status Filters */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#EDF4F1]/80 p-3 rounded-xl border border-[#0D6B5C]/12">
               <div className="relative flex-1 max-w-sm">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <Search className="w-4 h-4 text-[#5F7A74]/80 absolute left-3 top-3" />
                 <input
                   type="text"
                   value={deedSearch}
                   onChange={(e) => setDeedSearch(e.target.value)}
                   placeholder={t('দলিল নং, দাগ বা নাম খুঁজুন...', 'Search deed, dag or party...')}
-                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#0D6B5C]/20 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#0D6B5C]/30"
                 />
               </div>
 
@@ -484,8 +488,8 @@ export const SubRegistrarPage: React.FC = () => {
                     onClick={() => setDeedStatusFilter(st)}
                     className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-colors cursor-pointer min-h-[32px] ${
                       deedStatusFilter === st
-                        ? 'bg-[#253656] text-white shadow-xs'
-                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                        ? 'bg-[#0D6B5C] text-white shadow-xs'
+                        : 'bg-white text-[#5F7A74] border border-[#0D6B5C]/12 hover:bg-[#EDF4F1]'
                     }`}
                   >
                     {st === 'ALL'
@@ -503,10 +507,10 @@ export const SubRegistrarPage: React.FC = () => {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
-              <table className="w-full text-left border-collapse text-xs">
+            <div className="overflow-x-auto rounded-xl border border-[#0D6B5C]/12">
+              <table className="table-modern text-xs">
                 <thead>
-                  <tr className="bg-slate-100/80 border-b border-slate-200 text-slate-600 uppercase text-[11px]">
+                  <tr className="">
                     <th className="py-3 px-3 font-bold">{t('দলিল নং', 'Deed ID')}</th>
                     <th className="py-3 px-3 font-bold">{t('মৌজা ও দাগ', 'Mouza & Dag')}</th>
                     <th className="py-3 px-3 font-bold">{t('বিক্রেতা → ক্রেতা', 'Parties')}</th>
@@ -517,44 +521,44 @@ export const SubRegistrarPage: React.FC = () => {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
+                <tbody className="divide-y divide-[#0D6B5C]/10 bg-white">
                   {filteredDeeds.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-slate-500">
+                      <td colSpan={6} className="py-8 text-center text-[#5F7A74]">
                         {t('কোনো দলিল পাওয়া যায়নি।', 'No deeds found matching criteria.')}
                       </td>
                     </tr>
                   ) : (
                     filteredDeeds.map((d) => (
-                      <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="py-3 px-3 font-mono font-bold text-[#253656]">
+                      <tr key={d.id} className="hover:bg-[#EDF4F1]/80 transition-colors">
+                        <td className="py-3 px-3 font-mono font-bold text-[#062823]">
                           <div>{d.deed_no}</div>
-                          <div className="text-[10px] text-slate-400 font-sans">
+                          <div className="text-[10px] text-[#5F7A74]/80 font-sans">
                             Block #{d.chain_index} • {d.deed_type || 'SAF_KABALA'}
                           </div>
                         </td>
-                        <td className="py-3 px-3 font-semibold text-slate-700">
+                        <td className="py-3 px-3 font-semibold text-[#0A1F1C]/90">
                           {lang === 'bn' ? d.mouza_bn : d.mouza_en} — {t('দাগ', 'Dag')} {d.dag_no}
                         </td>
-                        <td className="py-3 px-3 text-slate-600">
+                        <td className="py-3 px-3 text-[#5F7A74]">
                           <div>
-                            <span className="text-slate-400 text-[10px] mr-1">{t('বিক্রেতা:', 'From:')}</span>
+                            <span className="text-[#5F7A74]/80 text-[10px] mr-1">{t('বিক্রেতা:', 'From:')}</span>
                             {d.seller_name_bn}
                           </div>
                           <div>
-                            <span className="text-slate-400 text-[10px] mr-1">{t('ক্রেতা:', 'To:')}</span>
+                            <span className="text-[#5F7A74]/80 text-[10px] mr-1">{t('ক্রেতা:', 'To:')}</span>
                             <strong>{d.buyer_name_bn}</strong>
                           </div>
                         </td>
-                        <td className="py-3 px-3 font-semibold text-slate-700">
+                        <td className="py-3 px-3 font-semibold text-[#0A1F1C]/90">
                           <div>{toBanglaDigits(d.area_decimal, lang)} {t('শতাংশ', 'dec')}</div>
-                          <div className="text-[11px] text-slate-500 font-mono">
+                          <div className="text-[11px] text-[#5F7A74] font-mono">
                             ৳{Number(d.price_bdt || 0).toLocaleString()}
                           </div>
                         </td>
                         <td className="py-3 px-3">
                           <span
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold inline-block ${
+                            className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold inline-block ${
                               d.status === 'HELD'
                                 ? 'bg-amber-100 text-amber-800 border border-amber-300'
                                 : d.status === 'REJECTED'
@@ -570,7 +574,7 @@ export const SubRegistrarPage: React.FC = () => {
                             {d.status !== 'PENDING_MUTATION' && d.status !== 'MUTATED' && (
                               <button
                                 onClick={() => handleUpdateDeedStatus(d.id, 'REGISTERED')}
-                                className="px-2.5 py-1 rounded bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-[11px] cursor-pointer min-h-[30px] transition-colors"
+                                className="px-2.5 py-1 rounded bg-[#0D6B5C] hover:bg-[#0A5549] text-white font-bold text-[11px] cursor-pointer min-h-[30px] transition-colors"
                               >
                                 ✔ {t('রিলিজ', 'Release')}
                               </button>
@@ -578,7 +582,7 @@ export const SubRegistrarPage: React.FC = () => {
                             {d.status !== 'REJECTED' && (
                               <button
                                 onClick={() => handleUpdateDeedStatus(d.id, 'REJECTED')}
-                                className="px-2.5 py-1 rounded bg-[#F42A41] hover:bg-[#d01c31] text-white font-bold text-[11px] cursor-pointer min-h-[30px] transition-colors"
+                                className="px-2.5 py-1 rounded bg-[#FF3B4A] hover:bg-[#E02E3C] text-white font-bold text-[11px] cursor-pointer min-h-[30px] transition-colors"
                               >
                                 ✖ {t('বাতিল', 'Reject')}
                               </button>
@@ -599,13 +603,13 @@ export const SubRegistrarPage: React.FC = () => {
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="label">
                   {t('দলিলের ধরন (Deed Type):', 'Deed Type:')}
                 </label>
                 <select
                   value={deedTypeFee}
                   onChange={(e) => setDeedTypeFee(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
+                  className="field text-xs font-semibold bg-[#F5FAF8]"
                 >
                   <option value="SALE">{t('সাফ কবলা (Sale Deed)', 'Sale Deed (Saf Kabala)')}</option>
                   <option value="HIBA">{t('হেবা ঘোষণা (Hiba / Family Gift)', 'Hiba (Family Gift)')}</option>
@@ -613,20 +617,20 @@ export const SubRegistrarPage: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="label">
                   {t('জমির বাজার মূল্য (টাকা):', 'Declared Market Value (BDT):')}
                 </label>
                 <input
                   type="number"
                   value={declaredValue}
                   onChange={(e) => setDeclaredValue(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
+                  className="field text-xs font-bold"
                 />
               </div>
               <div className="flex items-end gap-2">
                 <button
                   onClick={handleCalculateCustomFee}
-                  className="flex-1 py-2.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-extrabold cursor-pointer min-h-[40px] shadow-sm transition-colors"
+                  className="flex-1 py-2.5 rounded-lg bg-[#0D6B5C] hover:bg-[#0A5549] text-white text-xs font-extrabold cursor-pointer min-h-[40px] shadow-sm transition-colors"
                 >
                   {t('ফি হিসাব করুন', 'Calculate Official Fees')}
                 </button>
@@ -642,40 +646,40 @@ export const SubRegistrarPage: React.FC = () => {
 
             {/* Fee Breakdown Cards */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-2">
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="text-[11px] text-slate-500">{t('স্ট্যাম্প শুল্ক (১.৫%)', 'Stamp Duty (1.5%)')}</div>
-                <div className="text-base font-extrabold text-slate-800 mt-1">
+              <div className="p-4 rounded-xl bg-[#EDF4F1]/80 border border-[#0D6B5C]/12">
+                <div className="text-[11px] text-[#5F7A74]">{t('স্ট্যাম্প শুল্ক (১.৫%)', 'Stamp Duty (1.5%)')}</div>
+                <div className="text-base font-extrabold text-[#0A1F1C] mt-1">
                   ৳{toBanglaDigits(feeBreakdown.breakdown.stamp_duty_bdt.toLocaleString(), lang)}
                 </div>
-                <div className="text-[10px] text-slate-400 mt-1">কোড: 1-1101-0025-2671</div>
+                <div className="text-[10px] text-[#5F7A74]/80 mt-1">কোড: 1-1101-0025-2671</div>
               </div>
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="text-[11px] text-slate-500">{t('রেজিস্ট্রেশন ফি (১%)', 'Registration Fee (1%)')}</div>
-                <div className="text-base font-extrabold text-slate-800 mt-1">
+              <div className="p-4 rounded-xl bg-[#EDF4F1]/80 border border-[#0D6B5C]/12">
+                <div className="text-[11px] text-[#5F7A74]">{t('রেজিস্ট্রেশন ফি (১%)', 'Registration Fee (1%)')}</div>
+                <div className="text-base font-extrabold text-[#0A1F1C] mt-1">
                   ৳{toBanglaDigits(feeBreakdown.breakdown.registration_fee_bdt.toLocaleString(), lang)}
                 </div>
-                <div className="text-[10px] text-slate-400 mt-1">কোড: 1-2101-0001-1801</div>
+                <div className="text-[10px] text-[#5F7A74]/80 mt-1">কোড: 1-2101-0001-1801</div>
               </div>
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="text-[11px] text-slate-500">{t('স্থানীয় সরকার কর (৩%)', 'Local Govt Tax (3%)')}</div>
-                <div className="text-base font-extrabold text-slate-800 mt-1">
+              <div className="p-4 rounded-xl bg-[#EDF4F1]/80 border border-[#0D6B5C]/12">
+                <div className="text-[11px] text-[#5F7A74]">{t('স্থানীয় সরকার কর (৩%)', 'Local Govt Tax (3%)')}</div>
+                <div className="text-base font-extrabold text-[#0A1F1C] mt-1">
                   ৳{toBanglaDigits(feeBreakdown.breakdown.local_govt_tax_bdt.toLocaleString(), lang)}
                 </div>
-                <div className="text-[10px] text-slate-400 mt-1">উপজেলা / পৌরসভা তহবিল</div>
+                <div className="text-[10px] text-[#5F7A74]/80 mt-1">উপজেলা / পৌরসভা তহবিল</div>
               </div>
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="text-[11px] text-slate-500">{t('উৎস কর / গেইন ট্যাক্স (২%)', 'Capital Gain AIT (2%)')}</div>
-                <div className="text-base font-extrabold text-slate-800 mt-1">
+              <div className="p-4 rounded-xl bg-[#EDF4F1]/80 border border-[#0D6B5C]/12">
+                <div className="text-[11px] text-[#5F7A74]">{t('উৎস কর / গেইন ট্যাক্স (২%)', 'Capital Gain AIT (2%)')}</div>
+                <div className="text-base font-extrabold text-[#0A1F1C] mt-1">
                   ৳{toBanglaDigits(feeBreakdown.breakdown.ait_gain_tax_bdt.toLocaleString(), lang)}
                 </div>
-                <div className="text-[10px] text-slate-400 mt-1">জাতীয় রাজস্ব বোর্ড (NBR)</div>
+                <div className="text-[10px] text-[#5F7A74]/80 mt-1">জাতীয় রাজস্ব বোর্ড (NBR)</div>
               </div>
-              <div className="p-4 rounded-xl bg-[#E6F2EE] border-2 border-[#006A4E]">
-                <div className="text-[11px] font-bold text-[#006A4E]">{t('সর্বমোট সরকারি ফি', 'Total Payable Fee')}</div>
-                <div className="text-lg font-extrabold text-[#006A4E] mt-1">
+              <div className="p-4 rounded-xl bg-[#E8F5F1] border-2 border-[#0D6B5C]">
+                <div className="text-[11px] font-bold text-[#0D6B5C]">{t('সর্বমোট সরকারি ফি', 'Total Payable Fee')}</div>
+                <div className="text-lg font-extrabold text-[#0D6B5C] mt-1">
                   ৳{toBanglaDigits(feeBreakdown.total_payable_bdt.toLocaleString(), lang)}
                 </div>
-                <div className="text-[10px] text-[#006A4E]/80 mt-1 font-bold">ই-চালান যোগ্য</div>
+                <div className="text-[10px] text-[#0D6B5C]/80 mt-1 font-bold">ই-চালান যোগ্য</div>
               </div>
             </div>
           </div>
@@ -688,17 +692,17 @@ export const SubRegistrarPage: React.FC = () => {
         <div
           className={`p-6 rounded-xl border-2 ${
             createdDeedResult.deed.status === 'REGISTERED'
-              ? 'bg-[#E6F2EE] border-[#006A4E]'
-              : 'bg-[#FEECEE] border-[#F42A41]'
+              ? 'bg-[#E8F5F1] border-[#0D6B5C]'
+              : 'bg-[#FFF0F1] border-[#FF3B4A]'
           }`}
         >
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 font-extrabold text-lg">
                 {createdDeedResult.deed.status === 'REGISTERED' ? (
-                  <CheckCircle2 className="w-6 h-6 text-[#006A4E]" />
+                  <CheckCircle2 className="w-6 h-6 text-[#0D6B5C]" />
                 ) : (
-                  <ShieldAlert className="w-6 h-6 text-[#F42A41]" />
+                  <ShieldAlert className="w-6 h-6 text-[#FF3B4A]" />
                 )}
                 <span>
                   {lang === 'bn' ? createdDeedResult.message_bn : createdDeedResult.message_en}
@@ -709,13 +713,13 @@ export const SubRegistrarPage: React.FC = () => {
                 <strong>Status:</strong> {createdDeedResult.deed.status} |{' '}
                 <strong>Chain Block:</strong> #{createdDeedResult.deed.chain_index}
               </p>
-              <p className="font-mono text-[11px] break-all text-slate-600">
+              <p className="font-mono text-[11px] break-all text-[#5F7A74]">
                 <strong>SHA-256 Hash:</strong> {createdDeedResult.deed.content_hash}
               </p>
             </div>
 
             {createdDeedResult.qr_data_uri && (
-              <div className="bg-white p-2 rounded-xl border border-slate-300 shrink-0">
+              <div className="bg-white p-2 rounded-xl border border-[#0D6B5C]/20 shrink-0">
                 <img
                   src={createdDeedResult.qr_data_uri}
                   alt="Deed QR"
@@ -730,36 +734,36 @@ export const SubRegistrarPage: React.FC = () => {
       {/* Printable Treasury Fee Challan Modal */}
       {showChallanModal && feeBreakdown && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl relative my-8 border border-slate-200">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl relative my-8 border border-[#0D6B5C]/12">
             <div className="flex items-center justify-between border-b pb-3 mb-4 print:hidden">
               <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-[#006A4E]" />
-                <h3 className="font-extrabold text-slate-800 text-sm">
+                <FileText className="w-5 h-5 text-[#0D6B5C]" />
+                <h3 className="font-extrabold text-[#0A1F1C] text-sm">
                   {t('সরকারি রাজস্ব চালান ফরম (টিআর ফরম নং ৭)', 'Treasury Challan Form (TR Form 7)')}
                 </h3>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => window.print()}
-                  className="px-3.5 py-1.5 rounded-lg bg-[#006A4E] text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-lg bg-[#0D6B5C] text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>{t('প্রিন্ট চালান', 'Print Challan')}</span>
                 </button>
                 <button
                   onClick={() => setShowChallanModal(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  className="p-1.5 rounded-lg text-[#5F7A74]/80 hover:text-[#5F7A74] hover:bg-[#EDF4F1] cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
-            <div className="p-5 border-2 border-slate-300 rounded-xl space-y-4 text-xs text-slate-800">
+            <div className="p-5 border-2 border-[#0D6B5C]/20 rounded-xl space-y-4 text-xs text-[#0A1F1C]">
               <div className="text-center border-b pb-3 space-y-0.5">
-                <p className="font-bold text-slate-900">গণপ্রজাতন্ত্রী বাংলাদেশ সরকার</p>
-                <p className="font-extrabold text-[#006A4E]">ভূমি নিবন্ধন ও রাজস্ব জমা চালান</p>
-                <p className="text-[10px] text-slate-500 font-mono">
+                <p className="font-bold text-[#0A1F1C]">গণপ্রজাতন্ত্রী বাংলাদেশ সরকার</p>
+                <p className="font-extrabold text-[#0D6B5C]">ভূমি নিবন্ধন ও রাজস্ব জমা চালান</p>
+                <p className="text-[10px] text-[#5F7A74] font-mono">
                   CHALLAN ID: BHM-CHLN-{Date.now().toString().slice(-8)}
                 </p>
               </div>
@@ -771,15 +775,15 @@ export const SubRegistrarPage: React.FC = () => {
                 <div>চালানের উৎস: <strong>ভূমি সুরক্ষা সাব-রেজিস্ট্রি</strong></div>
               </div>
 
-              <table className="w-full border-collapse text-[11px] border border-slate-200">
+              <table className="w-full border-collapse text-[11px] border border-[#0D6B5C]/12">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200">
+                  <tr className="bg-[#EDF4F1]/80 border-b border-[#0D6B5C]/12">
                     <th className="p-2 text-left">ফি/শুল্কের খাত</th>
                     <th className="p-2 text-right">হার</th>
                     <th className="p-2 text-right">পরিমাণ (টাকা)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-[#0D6B5C]/10">
                   <tr>
                     <td className="p-2">স্ট্যাম্প শুল্ক (Stamp Duty)</td>
                     <td className="p-2 text-right">১.৫%</td>
@@ -808,7 +812,7 @@ export const SubRegistrarPage: React.FC = () => {
                       ৳{feeBreakdown.breakdown.ait_gain_tax_bdt.toLocaleString()}
                     </td>
                   </tr>
-                  <tr className="bg-[#E6F2EE] font-bold text-[#006A4E]">
+                  <tr className="bg-[#E8F5F1] font-bold text-[#0D6B5C]">
                     <td className="p-2" colSpan={2}>সর্বমোট প্রদেয় সরকারি রাজস্ব:</td>
                     <td className="p-2 text-right font-mono text-sm">
                       ৳{feeBreakdown.total_payable_bdt.toLocaleString()}
@@ -817,13 +821,13 @@ export const SubRegistrarPage: React.FC = () => {
                 </tbody>
               </table>
 
-              <div className="flex justify-between items-end pt-4 border-t text-[10px] text-slate-500">
+              <div className="flex justify-between items-end pt-4 border-t text-[10px] text-[#5F7A74]">
                 <div>
                   <p>জমাদানকারী ব্যাংক: বাংলাদেশ ব্যাংক / সোনালী ব্যাংক</p>
                   <p>স্বয়ংক্রিয় ই-চালান সিস্টেম দ্বারা যাচাইকৃত</p>
                 </div>
                 <div className="text-right">
-                  <div className="font-mono font-bold text-[#006A4E]">[Digital Treasury Seal]</div>
+                  <div className="font-mono font-bold text-[#0D6B5C]">[Digital Treasury Seal]</div>
                   <p>সাব-রেজিস্ট্রার কার্যালয়</p>
                 </div>
               </div>

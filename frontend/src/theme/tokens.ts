@@ -1,13 +1,23 @@
 export const THEME = {
-  flagGreen: '#006A4E',
+  ink: '#062823',
+  inkDeep: '#041A1C',
+  teal: '#0D6B5C',
+  tealHover: '#0A5549',
+  leaf: '#7CDB6A',
+  seal: '#FF3B4A',
+  warn: '#C4891A',
+  fog: '#EDF4F1',
+  mist: '#F5FAF8',
+  textMain: '#0A1F1C',
+  textMuted: '#5F7A74',
+  // legacy aliases used by older call sites
+  flagGreen: '#0D6B5C',
   flagGreenLight: '#E6F2EE',
-  flagRed: '#F42A41',
-  flagRedLight: '#FEECEE',
-  amberWarn: '#B7791F',
+  flagRed: '#FF3B4A',
+  flagRedLight: '#FFE8EA',
+  amberWarn: '#C4891A',
   amberLight: '#FEF3C7',
-  bgPage: '#FAFBFA',
-  textMain: '#1A1A1A',
-  textMuted: '#5F6B66',
+  bgPage: '#EDF4F1',
 };
 
 export function toBanglaDigits(input: string | number, lang: 'bn' | 'en'): string {

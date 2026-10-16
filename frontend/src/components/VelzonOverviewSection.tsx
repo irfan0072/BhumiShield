@@ -98,7 +98,7 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
       : user.full_name_en
     : t('দাপ্তরিক কর্মকর্তা', 'Authorized Officer');
 
-  // Role-specific KPI card definitions matching Velzon style
+  // Role-specific KPI cards (Monsoon Ledger registry console)
   const getRoleKpiCards = () => {
     if (role === 'sub_registrar') {
       return [
@@ -109,8 +109,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           value: toBanglaDigits(kpis.total_deeds, lang),
           linkText: t('দলিল রেজিস্টার দেখুন', 'View deed register'),
           targetTab: 'registrar',
-          icon: <FileSpreadsheet className="w-5 h-5 text-[#006A4E]" />,
-          iconBg: 'bg-[#E6F2EE]',
+          icon: <FileSpreadsheet className="w-5 h-5 text-[#0D6B5C]" />,
+          iconBg: 'bg-[#E8F5F1]',
         },
         {
           label: t('আদায়কৃত সরকারি রাজস্ব ও শুল্ক', 'GOVT STAMP & TAX REVENUE'),
@@ -119,8 +119,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           value: `৳${toBanglaDigits('3.64', lang)} Cr`,
           linkText: t('শুল্ক বিবরণী দেখুন', 'Calculate stamp fees'),
           targetTab: 'registrar',
-          icon: <Landmark className="w-5 h-5 text-blue-600" />,
-          iconBg: 'bg-blue-50',
+          icon: <Landmark className="w-5 h-5 text-[#0D6B5C]" />,
+          iconBg: 'bg-[#E8F5F1]',
         },
         {
           label: t('ঝুঁকিপূর্ণ ও স্থগিত দলিল (HELD)', 'HELD / FLAGGED DEEDS'),
@@ -129,8 +129,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           value: toBanglaDigits(6, lang),
           linkText: t('হোল্ড কিউ পর্যালোচনা', 'Review held deeds'),
           targetTab: 'registrar',
-          icon: <AlertTriangle className="w-5 h-5 text-amber-600" />,
-          iconBg: 'bg-amber-50',
+          icon: <AlertTriangle className="w-5 h-5 text-[#C4891A]" />,
+          iconBg: 'bg-[#FBF3E0]',
         },
         {
           label: t('ক্রিপ্টোগ্রাফিক লেজার অখণ্ডতা', 'HASH LEDGER INTEGRITY'),
@@ -139,8 +139,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           value: `${toBanglaDigits('98.8', lang)}%`,
           linkText: t('হ্যাশ চেইন যাচাই করুন', 'Verify hash chain'),
           targetTab: 'qr',
-          icon: <ShieldCheck className="w-5 h-5 text-emerald-700" />,
-          iconBg: 'bg-emerald-100',
+          icon: <ShieldCheck className="w-5 h-5 text-[#0D6B5C]" />,
+          iconBg: 'bg-[#E8F5F1]',
         },
       ];
     }
@@ -154,8 +154,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           value: toBanglaDigits(kpis.pending_mutations || 8, lang),
           linkText: t('নামজারি কিউ দেখুন', 'Process mutations'),
           targetTab: 'acland',
-          icon: <Clock className="w-5 h-5 text-amber-600" />,
-          iconBg: 'bg-amber-50',
+          icon: <Clock className="w-5 h-5 text-[#C4891A]" />,
+          iconBg: 'bg-[#FBF3E0]',
         },
         {
           label: t('সমন্বিত খতিয়ান রেকর্ড (CS-BS)', 'RECONCILED KHATIAN RECORDS'),
@@ -164,8 +164,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           value: toBanglaDigits(kpis.total_khatians, lang),
           linkText: t('খতিয়ান চেইন দেখুন', 'Reconcile khatians'),
           targetTab: 'acland',
-          icon: <Landmark className="w-5 h-5 text-[#006A4E]" />,
-          iconBg: 'bg-[#E6F2EE]',
+          icon: <Landmark className="w-5 h-5 text-[#0D6B5C]" />,
+          iconBg: 'bg-[#E8F5F1]',
         },
         {
           label: t('নাগরিক আপত্তি ও বিরোধ ট্রাইব্যুনাল', 'OPEN CITIZEN DISPUTES'),
@@ -174,8 +174,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           value: toBanglaDigits(kpis.open_disputes_count || 3, lang),
           linkText: t('শুনানি ও নিষ্পত্তি করুন', 'Resolve disputes'),
           targetTab: 'acland',
-          icon: <AlertTriangle className="w-5 h-5 text-rose-600" />,
-          iconBg: 'bg-rose-50',
+          icon: <AlertTriangle className="w-5 h-5 text-[#FF3B4A]" />,
+          iconBg: 'bg-[#FFF0F1]',
         },
         {
           label: t('অনুমোদিত নামজারি ও খতিয়ান হালনাগাদ', 'APPROVED MUTATIONS'),
@@ -184,8 +184,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           value: toBanglaDigits(kpis.approved_mutations || 52, lang),
           linkText: t('হালনাগাদ রেকর্ড দেখুন', 'View mutated records'),
           targetTab: 'acland',
-          icon: <CheckCircle2 className="w-5 h-5 text-blue-600" />,
-          iconBg: 'bg-blue-50',
+          icon: <CheckCircle2 className="w-5 h-5 text-[#0D6B5C]" />,
+          iconBg: 'bg-[#E8F5F1]',
         },
       ];
     }
@@ -200,8 +200,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           value: `৳${toBanglaDigits(crVal, lang)} Cr`,
           linkText: t('সকল লিয়েন দেখুন', 'View active liens'),
           targetTab: 'bank',
-          icon: <Building2 className="w-5 h-5 text-[#006A4E]" />,
-          iconBg: 'bg-[#E6F2EE]',
+          icon: <Building2 className="w-5 h-5 text-[#0D6B5C]" />,
+          iconBg: 'bg-[#E8F5F1]',
         },
         {
           label: t('নিবন্ধিত ব্যাংক লিয়েন লক', 'ACTIVE COLLATERAL LIENS'),
@@ -210,8 +210,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           value: toBanglaDigits(kpis.active_mortgages_count || 6, lang),
           linkText: t('নতুন লিয়েন লক করুন', 'Register new lien'),
           targetTab: 'bank',
-          icon: <Lock className="w-5 h-5 text-blue-600" />,
-          iconBg: 'bg-blue-50',
+          icon: <Lock className="w-5 h-5 text-[#0D6B5C]" />,
+          iconBg: 'bg-[#E8F5F1]',
         },
         {
           label: t('দ্বৈত মর্টগেজ জালিয়াতি প্রতিরোধ', 'DOUBLE-MORTGAGE BLOCKED'),
@@ -220,8 +220,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           value: toBanglaDigits(5, lang),
           linkText: t('জামানত যাচাই করুন', 'Verify collateral'),
           targetTab: 'bank',
-          icon: <ShieldCheck className="w-5 h-5 text-rose-600" />,
-          iconBg: 'bg-rose-50',
+          icon: <ShieldCheck className="w-5 h-5 text-[#FF3B4A]" />,
+          iconBg: 'bg-[#FFF0F1]',
         },
         {
           label: t('ইস্যুকৃত ডিজিটাল ছাড়পত্র (NOC)', 'ISSUED DIGITAL NOCs'),
@@ -230,8 +230,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           value: toBanglaDigits(kpis.released_mortgages_count || 4, lang),
           linkText: t('ডিজিটাল NOC ডাউনলোড', 'Download NOC certificate'),
           targetTab: 'bank',
-          icon: <FileSpreadsheet className="w-5 h-5 text-amber-600" />,
-          iconBg: 'bg-amber-50',
+          icon: <FileSpreadsheet className="w-5 h-5 text-[#C4891A]" />,
+          iconBg: 'bg-[#FBF3E0]',
         },
       ];
     }
@@ -245,8 +245,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           value: toBanglaDigits(4, lang),
           linkText: t('আমার ভল্ট দেখুন', 'View my land vault'),
           targetTab: 'home',
-          icon: <ShieldCheck className="w-5 h-5 text-[#006A4E]" />,
-          iconBg: 'bg-[#E6F2EE]',
+          icon: <ShieldCheck className="w-5 h-5 text-[#0D6B5C]" />,
+          iconBg: 'bg-[#E8F5F1]',
         },
         {
           label: t('বিক্রয় লককৃত সুরক্ষিত দাগ', 'SALE-LOCKED PLOTS'),
@@ -255,8 +255,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           value: toBanglaDigits(kpis.locked_plots_count || 2, lang),
           linkText: t('বিক্রয় লক নিয়ন্ত্রণ করুন', 'Manage plot locks'),
           targetTab: 'home',
-          icon: <Lock className="w-5 h-5 text-rose-600" />,
-          iconBg: 'bg-rose-50',
+          icon: <Lock className="w-5 h-5 text-[#FF3B4A]" />,
+          iconBg: 'bg-[#FFF0F1]',
         },
         {
           label: t('ক্রয়ের পূর্বে দাগ যাচাই সেবা', 'PRE-PURCHASE PLOT CHECKS'),
@@ -265,8 +265,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           value: toBanglaDigits(kpis.total_plots, lang),
           linkText: t('জমি কেনার আগে যাচাই', 'Check plot before buying'),
           targetTab: 'check',
-          icon: <FileSpreadsheet className="w-5 h-5 text-blue-600" />,
-          iconBg: 'bg-blue-50',
+          icon: <FileSpreadsheet className="w-5 h-5 text-[#0D6B5C]" />,
+          iconBg: 'bg-[#E8F5F1]',
         },
         {
           label: t('ডিজিটাল স্বাক্ষরিত দলিল সনদ', 'SIGNED DEED CERTIFICATES'),
@@ -275,8 +275,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           value: toBanglaDigits(kpis.total_deeds, lang),
           linkText: t('QR দলিল যাচাই করুন', 'Verify QR deed'),
           targetTab: 'qr',
-          icon: <Landmark className="w-5 h-5 text-amber-600" />,
-          iconBg: 'bg-amber-50',
+          icon: <Landmark className="w-5 h-5 text-[#C4891A]" />,
+          iconBg: 'bg-[#FBF3E0]',
         },
       ];
     }
@@ -290,8 +290,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
         value: toBanglaDigits(kpis.total_deeds, lang),
         linkText: t('লেজার অখণ্ডতা দেখুন', 'Inspect hash ledger'),
         targetTab: 'admin',
-        icon: <FileSpreadsheet className="w-5 h-5 text-[#006A4E]" />,
-        iconBg: 'bg-[#E6F2EE]',
+        icon: <FileSpreadsheet className="w-5 h-5 text-[#0D6B5C]" />,
+        iconBg: 'bg-[#E8F5F1]',
       },
       {
         label: t('সমন্বিত খতিয়ান চেইন (CS→BS)', 'UNIFIED KHATIAN RECORDS'),
@@ -300,8 +300,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
         value: toBanglaDigits(kpis.total_khatians, lang),
         linkText: t('খতিয়ান পরম্পরা দেখুন', 'See khatian lineage'),
         targetTab: 'check',
-        icon: <Landmark className="w-5 h-5 text-blue-600" />,
-        iconBg: 'bg-blue-50',
+        icon: <Landmark className="w-5 h-5 text-[#0D6B5C]" />,
+        iconBg: 'bg-[#E8F5F1]',
       },
       {
         label: t('সুরক্ষিত মৌজা দাগ ও বিক্রয় লক', 'PROTECTED PLOTS & LOCKS'),
@@ -310,8 +310,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
         value: toBanglaDigits(kpis.total_plots, lang),
         linkText: t('সকল দাগ অনুসন্ধান', 'Explore all plots'),
         targetTab: 'check',
-        icon: <Lock className="w-5 h-5 text-amber-600" />,
-        iconBg: 'bg-amber-50',
+        icon: <Lock className="w-5 h-5 text-[#C4891A]" />,
+        iconBg: 'bg-[#FBF3E0]',
       },
       {
         label: t('সক্রিয় ব্যাংক মর্টগেজ লিয়েন ভ্যালু', 'PROTECTED MORTGAGE LIENS'),
@@ -320,15 +320,15 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
         value: `৳${toBanglaDigits(((kpis.active_mortgages_bdt || 18500000) / 10000000).toFixed(2), lang)} Cr`,
         linkText: t('মর্টগেজ রেজিস্টার দেখুন', 'View mortgage registry'),
         targetTab: 'bank',
-        icon: <Building2 className="w-5 h-5 text-indigo-600" />,
-        iconBg: 'bg-indigo-50',
+        icon: <Building2 className="w-5 h-5 text-[#0D6B5C]" />,
+        iconBg: 'bg-[#E8F5F1]',
       },
     ];
   };
 
   const kpiCards = getRoleKpiCards();
 
-  // Compute SVG coordinates for the Velzon Combo Bar + Line Chart
+  // SVG coordinates for registry analytics chart
   const maxVal = 90;
   const chartHeight = 175;
   const chartWidth = 660;
@@ -351,14 +351,14 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
     .join(' ');
 
   return (
-    <div className="space-y-5">
-      {/* Row 1: Velzon Greeting + Date Pill + Action Button */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200/90 shadow-2xs">
+    <div className="space-y-5 animate-rise">
+      {/* Row 1: Registry console greeting */}
+      <div className="panel p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg md:text-xl font-bold text-slate-800">
+          <h2 className="font-display text-lg md:text-xl text-[#062823]">
             {t(`স্বাগতম, ${displayName}!`, `Welcome back, ${displayName}!`)}
           </h2>
-          <p className="text-xs md:text-sm text-slate-500 mt-0.5">
+          <p className="text-xs md:text-sm text-[#5F7A74] mt-0.5">
             {t(
               'আজকের প্রাক-নিবন্ধন দলিল যাচাই, খতিয়ান পরম্পরা ও অপরিবর্তনীয় হ্যাশ-চেইন লেজারের সর্বশেষ পরিসংখ্যান।',
               "Here's what's happening across your land verification and cryptographic ledger workspace today."
@@ -367,17 +367,17 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Date Range Picker Pill */}
-          <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg overflow-hidden text-xs font-semibold text-slate-700">
+          {/* Date range */}
+          <div className="flex items-center bg-[#EDF4F1]/80 border border-[#0D6B5C]/12 rounded-lg overflow-hidden text-xs font-semibold text-[#0A1F1C]/90">
             <span className="px-3 py-2">01 Oct, 2026 to 16 Oct, 2026</span>
-            <span className="bg-[#293e61] text-white px-2.5 py-2 flex items-center justify-center">
+            <span className="bg-[#062823] text-white px-2.5 py-2 flex items-center justify-center">
               <Calendar className="w-3.5 h-3.5" />
             </span>
           </div>
 
           <button
             onClick={() => onQuickAction('check')}
-            className="px-3.5 py-2 rounded-lg bg-[#006A4E]/10 hover:bg-[#006A4E] text-[#006A4E] hover:text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer min-h-[36px]"
+            className="px-3.5 py-2 rounded-lg bg-[#0D6B5C]/10 hover:bg-[#0D6B5C] text-[#0D6B5C] hover:text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer min-h-[36px]"
           >
             <PlusCircle className="w-4 h-4" />
             <span>{t('নতুন দাগ / দলিল যাচাই', 'New Verification')}</span>
@@ -386,27 +386,27 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           <button
             onClick={() => onQuickAction('qr')}
             title={t('লাইভ লেজার পালস', 'Live Ledger Pulse')}
-            className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 cursor-pointer min-h-[36px]"
+            className="p-2 rounded-lg bg-[#E8F5F1] text-[#0D6B5C] hover:bg-[#E8F5F1] cursor-pointer min-h-[36px]"
           >
             <Activity className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* Row 2: 4 Velzon KPI Stat Cards */}
+      {/* Row 2: Registry KPI strip */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {kpiCards.map((card, idx) => (
           <div
             key={idx}
-            className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs hover:shadow-md transition-shadow flex flex-col justify-between"
+            className="panel p-4 hover:shadow-md transition-shadow flex flex-col justify-between"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
                 {card.label}
               </span>
               <span
                 className={`text-xs font-bold flex items-center gap-0.5 ${
-                  card.up ? 'text-[#006A4E]' : 'text-[#F42A41]'
+                  card.up ? 'text-[#0D6B5C]' : 'text-[#FF3B4A]'
                 }`}
               >
                 {card.up ? (
@@ -418,14 +418,14 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
               </span>
             </div>
 
-            <div className="my-3 text-2xl font-extrabold text-slate-800 tracking-tight">
+            <div className="my-3 text-2xl font-extrabold text-[#0A1F1C] tracking-tight">
               {card.value}
             </div>
 
             <div className="flex items-end justify-between pt-1">
               <button
                 onClick={() => onQuickAction(card.targetTab)}
-                className="text-xs font-semibold text-slate-600 hover:text-[#006A4E] underline cursor-pointer min-h-0"
+                className="text-xs font-semibold text-[#5F7A74] hover:text-[#0D6B5C] underline cursor-pointer min-h-0"
               >
                 {card.linkText}
               </button>
@@ -437,12 +437,12 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
         ))}
       </div>
 
-      {/* Row 3: Velzon 8-Col Analytics Combo Chart + 4-Col Mouza Coverage Map */}
+      {/* Row 3: Analytics + Mouza coverage */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Left 8 Cols: Registration & Verification Combo Chart */}
-        <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
-          <div className="px-5 py-3.5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
-            <h3 className="font-bold text-slate-800 text-sm md:text-base">
+        <div className="lg:col-span-8 panel overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-[#0D6B5C]/10 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="font-bold text-[#0A1F1C] text-sm md:text-base">
               {t(
                 'দলিল নিবন্ধন, ই-নামজারি ও ঝুঁকি প্রতিরোধ পরিসংখ্যান (২০২৬)',
                 'Deed Registration, e-Mutation & Risk Prevention Analytics'
@@ -455,8 +455,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
                   onClick={() => setChartRange(rng)}
                   className={`px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer min-h-0 ${
                     chartRange === rng
-                      ? 'bg-[#293e61] text-white'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-[#062823] text-white'
+                      : 'bg-[#EDF4F1] text-[#5F7A74] hover:bg-[#E4EFEA]'
                   }`}
                 >
                   {rng}
@@ -465,37 +465,37 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
             </div>
           </div>
 
-          {/* 4 Summary Metrics Strip Inside Chart Card (Velzon Style) */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 border-b border-slate-100 bg-slate-50/60 text-center">
-            <div className="p-3 border-r border-slate-100">
-              <div className="text-base font-extrabold text-slate-800">
+          {/* Summary metrics strip */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 border-b border-[#0D6B5C]/10 bg-[#EDF4F1]/60 text-center">
+            <div className="p-3 border-r border-[#0D6B5C]/10">
+              <div className="text-base font-extrabold text-[#0A1F1C]">
                 {toBanglaDigits(kpis.total_deeds, lang)}
               </div>
-              <div className="text-[11px] text-slate-500">
+              <div className="text-[11px] text-[#5F7A74]">
                 {t('নিবন্ধিত দলিল', 'Registered Deeds')}
               </div>
             </div>
-            <div className="p-3 border-r border-slate-100">
-              <div className="text-base font-extrabold text-slate-800">
+            <div className="p-3 border-r border-[#0D6B5C]/10">
+              <div className="text-base font-extrabold text-[#0A1F1C]">
                 {toBanglaDigits(kpis.total_khatians, lang)}
               </div>
-              <div className="text-[11px] text-slate-500">
+              <div className="text-[11px] text-[#5F7A74]">
                 {t('খতিয়ান চেইন রেকর্ড', 'Khatian Records')}
               </div>
             </div>
-            <div className="p-3 border-r border-slate-100">
-              <div className="text-base font-extrabold text-slate-800">
+            <div className="p-3 border-r border-[#0D6B5C]/10">
+              <div className="text-base font-extrabold text-[#0A1F1C]">
                 {toBanglaDigits(11, lang)}
               </div>
-              <div className="text-[11px] text-slate-500">
+              <div className="text-[11px] text-[#5F7A74]">
                 {t('সক্রিয় জালিয়াতি রুল', 'Active Fraud Rules')}
               </div>
             </div>
             <div className="p-3">
-              <div className="text-base font-extrabold text-[#006A4E]">
+              <div className="text-base font-extrabold text-[#0D6B5C]">
                 {toBanglaDigits('98.75', lang)}%
               </div>
-              <div className="text-[11px] text-slate-500">
+              <div className="text-[11px] text-[#5F7A74]">
                 {t('লেজার যাচাই অনুপাত', 'Verification Ratio')}
               </div>
             </div>
@@ -543,8 +543,8 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
                         width={colWidth * 0.44}
                         height={barH}
                         rx={3}
-                        fill="#10b981"
-                        opacity={0.88}
+                        fill="#0D6B5C"
+                        opacity={0.85}
                       />
                       <text
                         x={i * colWidth + colWidth / 2}
@@ -563,7 +563,7 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
                 {/* Solid Line for Mutations Synced */}
                 <polyline
                   fill="none"
-                  stroke="#293e61"
+                  stroke="#7CDB6A"
                   strokeWidth="2.5"
                   points={linePointsMutations}
                 />
@@ -571,7 +571,7 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
                 {/* Dashed Line for Blocked Fraud Risks */}
                 <polyline
                   fill="none"
-                  stroke="#F42A41"
+                  stroke="#FF3B4A"
                   strokeWidth="2"
                   strokeDasharray="5 4"
                   points={linePointsRisks}
@@ -580,32 +580,32 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
             </div>
 
             {/* Chart Legend */}
-            <div className="flex flex-wrap items-center justify-center gap-6 pt-2 text-xs font-semibold text-slate-600">
+            <div className="flex flex-wrap items-center justify-center gap-6 pt-2 text-xs font-semibold text-[#5F7A74]">
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-[#10b981]" />
+                <span className="w-3 h-3 rounded-lg bg-[#0D6B5C]" />
                 <span>{t('নিবন্ধিত দলিল (Registered Deeds)', 'Registered Deeds')}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-[#293e61]" />
+                <span className="w-3 h-3 rounded-lg bg-[#7CDB6A]" />
                 <span>{t('সম্পন্ন ই-মিউটেশন (Mutations Synced)', 'Mutations Synced')}</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-[#F42A41]" />
+                <span className="w-3 h-3 rounded-lg bg-[#FF3B4A]" />
                 <span>{t('প্রতিরোধকৃত জালিয়াতি (Blocked Fraud Risks)', 'Blocked Fraud Risks')}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right 4 Cols: Verification Coverage by Mouza (Velzon "Sales by Locations" Style) */}
-        <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-          <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-bold text-slate-800 text-sm md:text-base">
+        {/* Mouza verification coverage */}
+        <div className="lg:col-span-4 panel flex flex-col justify-between">
+          <div className="px-5 py-3.5 border-b border-[#0D6B5C]/10 flex items-center justify-between">
+            <h3 className="font-bold text-[#0A1F1C] text-sm md:text-base">
               {t('মৌজা ভিত্তিক যাচাই অগ্রগতি', 'Coverage by Mouza')}
             </h3>
             <button
               onClick={() => window.print()}
-              className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer min-h-0"
+              className="px-2.5 py-1 rounded bg-[#EDF4F1] hover:bg-[#E4EFEA] text-[#0A1F1C]/90 text-[11px] font-bold flex items-center gap-1 cursor-pointer min-h-0"
             >
               <Download className="w-3 h-3" />
               <span>{t('রিপোর্ট', 'Export Report')}</span>
@@ -614,31 +614,31 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
 
           {/* Stylized Mouza Map Visualization */}
           <div className="p-4">
-            <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+            <div className="bg-[#EDF4F1]/80 rounded-xl p-3 border border-[#0D6B5C]/10">
               <svg viewBox="0 0 280 135" className="w-full h-32">
                 <path
                   d="M25,30 Q80,10 135,28 T250,35 Q265,75 235,110 Q160,128 95,115 Q35,105 25,30 Z"
-                  fill="#e2e8f0"
-                  stroke="#cbd5e1"
+                  fill="#D7E8E2"
+                  stroke="#A8C9BF"
                   strokeWidth="1.5"
                 />
                 {/* Savar Node */}
-                <circle cx="90" cy="52" r="9" fill="#10b981" opacity="0.25" />
-                <circle cx="90" cy="52" r="4.5" fill="#006A4E" />
+                <circle cx="90" cy="52" r="9" fill="#0D6B5C" opacity="0.25" />
+                <circle cx="90" cy="52" r="4.5" fill="#0D6B5C" />
                 <text x="102" y="55" fontSize="10" fontWeight="700" fill="#1e293b">
                   {lang === 'bn' ? 'সাভার সদর' : 'Savar Sadar'}
                 </text>
 
                 {/* Birulia Node */}
-                <circle cx="170" cy="44" r="9" fill="#10b981" opacity="0.25" />
-                <circle cx="170" cy="44" r="4.5" fill="#006A4E" />
+                <circle cx="170" cy="44" r="9" fill="#0D6B5C" opacity="0.25" />
+                <circle cx="170" cy="44" r="4.5" fill="#0D6B5C" />
                 <text x="182" y="47" fontSize="10" fontWeight="700" fill="#1e293b">
                   {lang === 'bn' ? 'বিরুলিয়া' : 'Birulia'}
                 </text>
 
                 {/* Dhamrai Node */}
-                <circle cx="128" cy="92" r="9" fill="#293e61" opacity="0.25" />
-                <circle cx="128" cy="92" r="4.5" fill="#293e61" />
+                <circle cx="128" cy="92" r="9" fill="#062823" opacity="0.25" />
+                <circle cx="128" cy="92" r="4.5" fill="#062823" />
                 <text x="140" y="95" fontSize="10" fontWeight="700" fill="#1e293b">
                   {lang === 'bn' ? 'ধামরাই দক্ষিণ' : 'Dhamrai South'}
                 </text>
@@ -651,16 +651,16 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
                 const pct = m.verification_coverage_pct || (idx === 0 ? 92 : idx === 1 ? 84 : 78);
                 return (
                   <div key={m.id || idx}>
-                    <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
+                    <div className="flex justify-between text-xs font-bold text-[#0A1F1C]/90 mb-1">
                       <span>
                         {lang === 'bn' ? m.mouza_bn : m.mouza_en} ({toBanglaDigits(m.plot_count || 20, lang)}{' '}
                         {t('দাগ', 'plots')})
                       </span>
                       <span>{toBanglaDigits(pct, lang)}%</span>
                     </div>
-                    <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div className="w-full h-2 rounded bg-[#EDF4F1] overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-[#293e61]"
+                        className="h-full rounded bg-[#0D6B5C]"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -671,15 +671,15 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
           </div>
 
           {/* Cryptographic System Trust Rating Box (Bottom of Right Column) */}
-          <div className="px-5 py-3.5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between">
-            <div className="flex items-center gap-1 text-amber-500">
-              <Star className="w-4 h-4 fill-amber-400" />
-              <Star className="w-4 h-4 fill-amber-400" />
-              <Star className="w-4 h-4 fill-amber-400" />
-              <Star className="w-4 h-4 fill-amber-400" />
-              <Star className="w-4 h-4 fill-amber-400" />
+          <div className="px-5 py-3.5 bg-[#EDF4F1]/70 border-t border-[#0D6B5C]/10 flex items-center justify-between">
+            <div className="flex items-center gap-1 text-[#C4891A]">
+              <Star className="w-4 h-4 fill-[#C4891A]" />
+              <Star className="w-4 h-4 fill-[#C4891A]" />
+              <Star className="w-4 h-4 fill-[#C4891A]" />
+              <Star className="w-4 h-4 fill-[#C4891A]" />
+              <Star className="w-4 h-4 fill-[#C4891A]" />
             </div>
-            <span className="text-xs font-extrabold text-slate-700">
+            <span className="text-xs font-extrabold text-[#0A1F1C]/90">
               {t('৪.৯ / ৫.০ লেজার ট্রাস্ট স্কোর', '4.9 / 5.0 Ledger Trust Score')}
             </span>
           </div>
@@ -689,12 +689,12 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
       {/* Row 4: Recent Ledger Activity Strip & Top Fraud Risk Triggers */}
       {recentActivity.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <div className="lg:col-span-8 bg-white rounded-xl border border-slate-200/90 shadow-2xs p-5">
+          <div className="lg:col-span-8 panel p-5">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-slate-800 text-sm">
+              <h3 className="font-bold text-[#0A1F1C] text-sm">
                 {t('সাম্প্রতিক লেজার ও দাপ্তরিক কার্যক্রম (Recent Activity)', 'Recent Ledger & Registry Activity')}
               </h3>
-              <span className="text-[11px] font-mono text-[#006A4E] bg-[#E6F2EE] px-2.5 py-0.5 rounded-full font-bold">
+              <span className="chip status-safe font-mono">
                 SHA-256 Append-Only
               </span>
             </div>
@@ -702,17 +702,17 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
               {recentActivity.slice(0, 4).map((act: any) => (
                 <div
                   key={act.id}
-                  className="p-3 rounded-lg bg-slate-50 border border-slate-200/70 flex items-start gap-3"
+                  className="p-3 rounded-lg bg-[#EDF4F1]/80 border border-[#0D6B5C]/10 flex items-start gap-3"
                 >
-                  <div className="w-8 h-8 rounded-full bg-[#E6F2EE] text-[#006A4E] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#E8F5F1] text-[#0D6B5C] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
                     ✔
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-800 truncate">{act.action}</div>
-                    <div className="text-[11px] text-slate-500">
+                    <div className="text-xs font-bold text-[#0A1F1C] truncate">{act.action}</div>
+                    <div className="text-[11px] text-[#5F7A74]">
                       Actor: <span className="font-semibold">{act.actor_username}</span> ({act.actor_role})
                     </div>
-                    <div className="text-[10px] font-mono text-slate-400 truncate mt-0.5">
+                    <div className="text-[10px] font-mono text-[#5F7A74]/80 truncate mt-0.5">
                       Hash: {act.entry_hash}
                     </div>
                   </div>
@@ -721,30 +721,30 @@ export const VelzonOverviewSection: React.FC<VelzonOverviewProps> = ({
             </div>
           </div>
 
-          <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200/90 shadow-2xs p-5">
-            <h3 className="font-bold text-slate-800 text-sm mb-3">
+          <div className="lg:col-span-4 panel p-5">
+            <h3 className="font-bold text-[#0A1F1C] text-sm mb-3">
               {t('প্রধান ঝুঁকি ও যাচাই সূচকসমূহ', 'Top Fraud Prevention Rules')}
             </h3>
             <div className="space-y-2 text-xs">
-              <div className="flex justify-between text-slate-700">
+              <div className="flex justify-between text-[#0A1F1C]/90">
                 <span>1. DOUBLE_SALE (দ্বৈত বিক্রয় রোধ)</span>
-                <span className="font-bold text-slate-500">(95 pts)</span>
+                <span className="font-bold text-[#5F7A74]">(95 pts)</span>
               </div>
-              <div className="flex justify-between text-slate-700">
+              <div className="flex justify-between text-[#0A1F1C]/90">
                 <span>2. DEED_TAMPERED (হ্যাশ অমিল সনাক্ত)</span>
-                <span className="font-bold text-slate-500">(100 pts)</span>
+                <span className="font-bold text-[#5F7A74]">(100 pts)</span>
               </div>
-              <div className="flex justify-between text-slate-700">
+              <div className="flex justify-between text-[#0A1F1C]/90">
                 <span>3. OWNER_SALE_LOCKED (নাগরিক বিক্রয় লক)</span>
-                <span className="font-bold text-slate-500">(100 pts)</span>
+                <span className="font-bold text-[#5F7A74]">(100 pts)</span>
               </div>
-              <div className="flex justify-between text-slate-700">
+              <div className="flex justify-between text-[#0A1F1C]/90">
                 <span>4. PLOT_MORTGAGED (ব্যাংক লিয়েন লক)</span>
-                <span className="font-bold text-slate-500">(85 pts)</span>
+                <span className="font-bold text-[#5F7A74]">(85 pts)</span>
               </div>
-              <div className="flex justify-between text-slate-700">
+              <div className="flex justify-between text-[#0A1F1C]/90">
                 <span>5. KHATIAN_CHAIN_BREAK (CS→BS অমিল)</span>
-                <span className="font-bold text-slate-500">(50 pts)</span>
+                <span className="font-bold text-[#5F7A74]">(50 pts)</span>
               </div>
             </div>
           </div>

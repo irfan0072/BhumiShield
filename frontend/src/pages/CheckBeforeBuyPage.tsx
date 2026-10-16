@@ -113,10 +113,14 @@ export const CheckBeforeBuyPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <header className="page-intro animate-rise">
+        <h1>{t('কেনার আগে যাচাই', 'Check Before Buy')}</h1>
+        <p>{t('মৌজা, দাগ ও বিক্রেতা নির্বাচন করে প্রাক-ক্রয় ঝুঁকি ও খতিয়ান চেইন যাচাই করুন।', 'Select mouza, plot and seller to run pre-purchase risk and khatian lineage checks.')}</p>
+      </header>
       {/* Reference Verification Case Presets Bar */}
-      <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs">
-        <div className="flex items-center gap-2 text-xs font-bold text-slate-600 mb-2.5">
-          <Layers className="w-4 h-4 text-[#006A4E]" />
+      <div className="panel p-4">
+        <div className="flex items-center gap-2 text-xs font-bold text-[#5F7A74] mb-2.5">
+          <Layers className="w-4 h-4 text-[#0D6B5C]" />
           <span>
             {t(
               'রেফারেন্স যাচাই কেসসমূহ (১-ক্লিকে বিভিন্ন ধরনের মালিকানা ও ঝুঁকি পরিস্থিতি পরীক্ষা করুন):',
@@ -128,10 +132,10 @@ export const CheckBeforeBuyPage: React.FC = () => {
           {scenarios.map((sc) => {
             const btnColor =
               sc.badge_type === 'SAFE'
-                ? 'bg-emerald-50 text-[#006A4E] border-emerald-200 hover:bg-[#006A4E] hover:text-white'
+                ? 'bg-emerald-50 text-[#0D6B5C] border-emerald-200 hover:bg-[#0D6B5C] hover:text-white'
                 : sc.badge_type === 'WARNING'
-                ? 'bg-amber-50 text-[#B7791F] border-amber-200 hover:bg-[#B7791F] hover:text-white'
-                : 'bg-rose-50 text-[#F42A41] border-rose-200 hover:bg-[#F42A41] hover:text-white';
+                ? 'bg-amber-50 text-[#C4891A] border-amber-200 hover:bg-[#C4891A] hover:text-white'
+                : 'bg-rose-50 text-[#FF3B4A] border-rose-200 hover:bg-[#FF3B4A] hover:text-white';
             return (
               <button
                 key={sc.code}
@@ -146,8 +150,8 @@ export const CheckBeforeBuyPage: React.FC = () => {
       </div>
 
       {/* Wizard Progress Indicator */}
-      <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex items-center justify-between">
-        <div className="font-extrabold text-base text-[#253656]">
+      <div className="panel p-4 flex items-center justify-between">
+        <div className="font-display text-base text-[#062823]">
           {t(`ধাপ ${toBanglaDigits(step, 'bn')} / ৩`, `Step ${step} of 3`)}:{' '}
           {step === 1
             ? t('মৌজা ও দাগ নির্বাচন করুন', 'Select Mouza & Plot')
@@ -158,7 +162,7 @@ export const CheckBeforeBuyPage: React.FC = () => {
         {step > 1 && (
           <button
             onClick={() => setStep(1)}
-            className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold flex items-center gap-1.5 hover:bg-slate-100 cursor-pointer min-h-[34px]"
+            className="btn-ghost text-xs !min-h-[34px] py-1.5 px-3"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>{t('নতুন দাগ অনুসন্ধান', 'New Search')}</span>
@@ -167,17 +171,17 @@ export const CheckBeforeBuyPage: React.FC = () => {
       </div>
 
       {errorMsg && (
-        <div className="p-4 rounded-xl bg-[#FEECEE] border-l-8 border-[#F42A41] text-[#1A1A1A] font-bold text-xs">
+        <div className="p-4 rounded-xl bg-[#FFF0F1] border-l-8 border-[#FF3B4A] text-[#0A1F1C] font-bold text-xs">
           {errorMsg}
         </div>
       )}
 
       {/* STEP 1: Select Location & Plot */}
       {step === 1 && (
-        <div className="bg-white rounded-xl p-6 border border-slate-200/90 shadow-2xs space-y-6">
+        <div className="panel p-6 space-y-6 animate-rise-delay">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-2">
+              <label className="label">
                 {t(
                   '১. বিভাগ / জেলা / উপজেলা / মৌজা নির্বাচন করুন:',
                   '1. Select Division / District / Upazila / Mouza:'
@@ -191,7 +195,7 @@ export const CheckBeforeBuyPage: React.FC = () => {
                   const firstPlot = plots.find((p) => Number(p.mouza_id) === mId);
                   if (firstPlot) setSelectedPlotId(firstPlot.id);
                 }}
-                className="w-full p-3 rounded-lg border border-slate-300 font-semibold text-sm bg-slate-50"
+                className="field font-semibold text-sm bg-[#F5FAF8]"
               >
                 {locations.map((loc) => (
                   <option key={loc.id} value={loc.id}>
@@ -204,13 +208,13 @@ export const CheckBeforeBuyPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-2">
+              <label className="label">
                 {t('২. দাগ নম্বর (Plot / Dag No.) নির্বাচন করুন:', '2. Select Plot / Dag Number:')}
               </label>
               <select
                 value={selectedPlotId}
                 onChange={(e) => setSelectedPlotId(Number(e.target.value))}
-                className="w-full p-3 rounded-lg border border-slate-300 font-semibold text-sm bg-slate-50"
+                className="field font-semibold text-sm bg-[#F5FAF8]"
               >
                 {filteredPlots.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -225,33 +229,33 @@ export const CheckBeforeBuyPage: React.FC = () => {
 
           {/* Selected Plot Live Metadata Card */}
           {currentSelectedPlot && (
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+            <div className="p-4 rounded-xl bg-[#EDF4F1]/80 border border-[#0D6B5C]/12 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
               <div>
-                <span className="text-slate-500 font-medium">{t('নির্বাচিত মৌজা:', 'Jurisdiction:')}</span>
-                <div className="font-bold text-slate-800 mt-0.5">
+                <span className="text-[#5F7A74] font-medium">{t('নির্বাচিত মৌজা:', 'Jurisdiction:')}</span>
+                <div className="font-bold text-[#0A1F1C] mt-0.5">
                   {lang === 'bn' ? currentSelectedMouza?.mouza_bn : currentSelectedMouza?.mouza_en} (JL {currentSelectedMouza?.jl_no})
                 </div>
               </div>
               <div>
-                <span className="text-slate-500 font-medium">{t('জমির শ্রেণী:', 'Land Class:')}</span>
-                <div className="font-bold text-slate-800 mt-0.5">{currentSelectedPlot.land_type}</div>
+                <span className="text-[#5F7A74] font-medium">{t('জমির শ্রেণী:', 'Land Class:')}</span>
+                <div className="font-bold text-[#0A1F1C] mt-0.5">{currentSelectedPlot.land_type}</div>
               </div>
               <div>
-                <span className="text-slate-500 font-medium">{t('দাগের মোট আয়তন:', 'Total Plot Area:')}</span>
-                <div className="font-extrabold text-[#006A4E] mt-0.5">
+                <span className="text-[#5F7A74] font-medium">{t('দাগের মোট আয়তন:', 'Total Plot Area:')}</span>
+                <div className="font-extrabold text-[#0D6B5C] mt-0.5">
                   {toBanglaDigits(currentSelectedPlot.total_area_decimal, lang)} {t('শতাংশ', 'Decimal')}
                 </div>
               </div>
               <div>
-                <span className="text-slate-500 font-medium">{t('বিক্রয় লক অবস্থা:', 'Sale Lock Status:')}</span>
+                <span className="text-[#5F7A74] font-medium">{t('বিক্রয় লক অবস্থা:', 'Sale Lock Status:')}</span>
                 <div className="mt-0.5">
                   {Number(currentSelectedPlot.owner_sale_locked) === 1 ? (
-                    <span className="inline-flex items-center gap-1 font-extrabold text-xs text-[#F42A41]">
+                    <span className="inline-flex items-center gap-1 font-extrabold text-xs text-[#FF3B4A]">
                       <Lock className="w-3.5 h-3.5" />
                       <span>{t('🔒 বিক্রয় লক সক্রিয়', '🔒 SALE LOCKED')}</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 font-extrabold text-xs text-[#006A4E]">
+                    <span className="inline-flex items-center gap-1 font-extrabold text-xs text-[#0D6B5C]">
                       <Unlock className="w-3.5 h-3.5" />
                       <span>{t('🔓 লেনদেন উন্মুক্ত', '🔓 UNLOCKED')}</span>
                     </span>
@@ -264,7 +268,7 @@ export const CheckBeforeBuyPage: React.FC = () => {
           <div className="flex justify-end pt-2">
             <button
               onClick={() => setStep(2)}
-              className="px-6 py-3 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-extrabold text-sm flex items-center gap-2 shadow-xs cursor-pointer"
+              className="btn-primary text-sm flex items-center gap-2 shadow-xs cursor-pointer"
             >
               <span>{t('পরবর্তী ধাপ (বিক্রেতার তথ্য)', 'Next Step (Seller Details)')}</span>
               <ArrowRight className="w-4 h-4" />
@@ -275,16 +279,16 @@ export const CheckBeforeBuyPage: React.FC = () => {
 
       {/* STEP 2: Enter Seller & Proposed Area */}
       {step === 2 && (
-        <div className="bg-white rounded-xl p-6 border border-slate-200/90 shadow-2xs space-y-6">
+        <div className="panel p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-2">
+              <label className="label">
                 {t('বিক্রেতা (Seller + NID) নির্বাচন করুন:', 'Select Seller (with NID):')}
               </label>
               <select
                 value={sellerId}
                 onChange={(e) => setSellerId(Number(e.target.value))}
-                className="w-full p-3 rounded-lg border border-slate-300 font-semibold text-sm bg-slate-50"
+                className="field font-semibold text-sm bg-[#F5FAF8]"
               >
                 {persons.slice(0, 20).map((per) => (
                   <option key={per.id} value={per.id}>
@@ -295,7 +299,7 @@ export const CheckBeforeBuyPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-2">
+              <label className="label">
                 {t(
                   'প্রস্তাবিত ক্রয়ের পরিমাণ (শতাংশ / Decimal):',
                   'Proposed Purchase Area (in Decimal / শতাংশ):'
@@ -306,23 +310,23 @@ export const CheckBeforeBuyPage: React.FC = () => {
                 step="0.01"
                 value={proposedArea}
                 onChange={(e) => setProposedArea(e.target.value)}
-                className="w-full p-3 rounded-lg border border-slate-300 font-bold text-sm"
+                className="field font-bold text-sm"
               />
             </div>
           </div>
 
           {/* Seller Preview Card */}
           {currentSeller && (
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="p-4 rounded-xl bg-[#EDF4F1]/80 border border-[#0D6B5C]/12 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div>
-                <span className="text-slate-500">{t('বিক্রেতার নাম ও এনআইডি:', 'Selected Seller:')}</span>
-                <div className="font-bold text-slate-800">
+                <span className="text-[#5F7A74]">{t('বিক্রেতার নাম ও এনআইডি:', 'Selected Seller:')}</span>
+                <div className="font-bold text-[#0A1F1C]">
                   {lang === 'bn' ? currentSeller.name_bn : currentSeller.name_en} • NID: {currentSeller.nid_mock}
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-slate-500">{t('প্রস্তাবিত ক্রয়ের পরিমাণ:', 'Requested Area:')}</span>
-                <div className="font-extrabold text-[#006A4E] text-sm">
+                <span className="text-[#5F7A74]">{t('প্রস্তাবিত ক্রয়ের পরিমাণ:', 'Requested Area:')}</span>
+                <div className="font-extrabold text-[#0D6B5C] text-sm">
                   {toBanglaDigits(proposedArea, lang)} {t('শতাংশ (Decimal)', 'Decimal')}
                 </div>
               </div>
@@ -332,7 +336,7 @@ export const CheckBeforeBuyPage: React.FC = () => {
           <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
             <button
               onClick={() => setStep(1)}
-              className="px-5 py-2.5 rounded-lg border border-slate-300 font-bold text-xs flex items-center gap-1.5 hover:bg-slate-100 cursor-pointer"
+              className="btn-ghost text-xs"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>{t('পিছনে যান', 'Back')}</span>
@@ -341,7 +345,7 @@ export const CheckBeforeBuyPage: React.FC = () => {
             <button
               onClick={() => runVerification()}
               disabled={loading}
-              className="px-6 py-3 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-extrabold text-sm flex items-center gap-2 shadow-sm cursor-pointer"
+              className="btn-primary text-sm flex items-center gap-2 shadow-sm cursor-pointer"
             >
               <Search className="w-4 h-4" />
               <span>
@@ -361,7 +365,7 @@ export const CheckBeforeBuyPage: React.FC = () => {
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setShowCertModal(true)}
-              className="px-4 py-2.5 rounded-xl bg-[#006A4E] text-white font-extrabold text-xs flex items-center gap-2 shadow-xs hover:bg-[#00553e] cursor-pointer min-h-[38px]"
+              className="btn-primary text-xs flex items-center gap-2 shadow-xs hover:bg-[#0A5549] cursor-pointer min-h-[38px]"
             >
               <FileBadge className="w-4 h-4" />
               <span>{t('অফিসিয়াল যাচাই সনদ দেখুন ও প্রিন্ট করুন', 'Official Verification Certificate')}</span>
@@ -374,8 +378,8 @@ export const CheckBeforeBuyPage: React.FC = () => {
 
           {/* Active Mortgages & Deed History Summary */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl p-5 border border-slate-200/90 shadow-2xs">
-              <h3 className="text-base font-bold text-slate-800 mb-3">
+            <div className="panel p-5">
+              <h3 className="text-base font-bold text-[#0A1F1C] mb-3">
                 {t('ব্যাংক মর্টগেজ / দায়বদ্ধতার তথ্য', 'Bank Mortgage & Lien Status')}
               </h3>
               {report.active_mortgages && report.active_mortgages.length > 0 ? (
@@ -383,12 +387,12 @@ export const CheckBeforeBuyPage: React.FC = () => {
                   {report.active_mortgages.map((m) => (
                     <div
                       key={m.id}
-                      className="p-3 rounded-lg bg-[#FEECEE] border border-[#F42A41] text-xs"
+                      className="p-3 rounded-lg bg-[#FFF0F1] border border-[#FF3B4A] text-xs"
                     >
-                      <div className="font-bold text-[#F42A41]">
+                      <div className="font-bold text-[#FF3B4A]">
                         ✖ {lang === 'bn' ? m.bank_name_bn : m.bank_name_en} ({m.branch_name})
                       </div>
-                      <div className="font-semibold text-slate-900 mt-1">
+                      <div className="font-semibold text-[#0A1F1C] mt-1">
                         {t('ঋণের পরিমাণ:', 'Loan Amount:')} ৳
                         {toBanglaDigits(m.loan_amount_bdt.toLocaleString(), lang)} ({m.status})
                       </div>
@@ -396,46 +400,46 @@ export const CheckBeforeBuyPage: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <div className="p-4 rounded-lg bg-[#E6F2EE] text-[#006A4E] font-bold text-xs">
+                <div className="p-4 rounded-lg bg-[#E8F5F1] text-[#0D6B5C] font-bold text-xs">
                   ✔ {t('এই দাগে কোনো সক্রিয় ব্যাংক মর্টগেজ নেই।', 'No active bank mortgage found on this plot.')}
                 </div>
               )}
             </div>
 
-            <div className="bg-white rounded-xl p-5 border border-slate-200/90 shadow-2xs">
-              <h3 className="text-base font-bold text-slate-800 mb-3">
+            <div className="panel p-5">
+              <h3 className="text-base font-bold text-[#0A1F1C] mb-3">
                 {t('পূর্ববর্তী নিবন্ধিত দলিলের ইতিহাস (হ্যাশ লেজার)', 'Registered Deed History (Hash Ledger)')}
               </h3>
               {report.deed_history && report.deed_history.length > 0 ? (
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {report.deed_history.map((d) => (
-                    <div key={d.id} className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs">
-                      <div className="flex justify-between font-bold text-slate-800">
+                    <div key={d.id} className="p-3 rounded-lg bg-[#EDF4F1]/80 border border-[#0D6B5C]/12 text-xs">
+                      <div className="flex justify-between font-bold text-[#0A1F1C]">
                         <span>{d.deed_no}</span>
                         <span
                           className={
                             d.is_tampered_demo
-                              ? 'text-[#F42A41]'
+                              ? 'text-[#FF3B4A]'
                               : d.status === 'REGISTERED' || d.status === 'MUTATED'
-                              ? 'text-[#006A4E]'
-                              : 'text-[#B7791F]'
+                              ? 'text-[#0D6B5C]'
+                              : 'text-[#C4891A]'
                           }
                         >
                           {d.is_tampered_demo ? '✖ TAMPERED' : d.status}
                         </span>
                       </div>
-                      <div className="mt-1 text-slate-600">
+                      <div className="mt-1 text-[#5F7A74]">
                         {d.seller_name_bn} → {d.buyer_name_bn} ({toBanglaDigits(d.area_decimal, lang)}{' '}
                         {t('শতাংশ', 'dec')})
                       </div>
-                      <div className="mt-1 font-mono text-[10px] text-slate-400 truncate">
+                      <div className="mt-1 font-mono text-[10px] text-[#5F7A74]/80 truncate">
                         SHA256: {d.content_hash}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-[#5F7A74]">
                   {t('কোনো পূর্ববর্তী দলিল পাওয়া যায়নি।', 'No prior deeds recorded.')}
                 </p>
               )}
@@ -447,15 +451,15 @@ export const CheckBeforeBuyPage: React.FC = () => {
       {/* Official Land Verification Certificate Modal */}
       {showCertModal && report && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 md:p-8 shadow-2xl border-4 border-[#006A4E] space-y-5 relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 md:p-8 shadow-2xl border-4 border-[#0D6B5C] space-y-5 relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setShowCertModal(false)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-slate-100 hover:bg-slate-200 cursor-pointer"
+              className="absolute top-4 right-4 p-2 rounded-full bg-[#EDF4F1] hover:bg-[#E4EFEA] cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center justify-between border-b-2 border-[#006A4E] pb-4">
+            <div className="flex items-center justify-between border-b-2 border-[#0D6B5C] pb-4">
               <div className="flex items-center gap-3">
                 <img
                   src="/assets/bhumishield-emblem.svg"
@@ -463,13 +467,13 @@ export const CheckBeforeBuyPage: React.FC = () => {
                   className="w-12 h-12 rounded-xl"
                 />
                 <div>
-                  <div className="text-[10px] font-extrabold uppercase tracking-widest text-[#006A4E]">
+                  <div className="text-[10px] font-extrabold uppercase tracking-widest text-[#0D6B5C]">
                     {t('গণপ্রজাতন্ত্রী বাংলাদেশ সরকার • ভূমি মন্ত্রণালয়', 'Government of Bangladesh • Ministry of Land')}
                   </div>
-                  <h3 className="text-lg md:text-xl font-extrabold text-slate-900 mt-0.5">
+                  <h3 className="text-lg md:text-xl font-extrabold text-[#0A1F1C] mt-0.5">
                     {t('ভূমি মালিকানা ও প্রাক-নিবন্ধন যাচাই সনদ', 'Land Ownership & Pre-Registration Verification Certificate')}
                   </h3>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-[#5F7A74]">
                     Certificate Ref: BS-CERT-2026-{toBanglaDigits(selectedPlotId, lang)} • Ed25519 Verified
                   </p>
                 </div>
@@ -480,10 +484,10 @@ export const CheckBeforeBuyPage: React.FC = () => {
             <div
               className={`p-4 rounded-xl text-white font-bold flex items-center justify-between ${
                 report.status === 'SAFE'
-                  ? 'bg-[#006A4E]'
+                  ? 'bg-[#0D6B5C]'
                   : report.status === 'WARNING'
-                  ? 'bg-[#B7791F]'
-                  : 'bg-[#F42A41]'
+                  ? 'bg-[#C4891A]'
+                  : 'bg-[#FF3B4A]'
               }`}
             >
               <div>
@@ -500,7 +504,7 @@ export const CheckBeforeBuyPage: React.FC = () => {
             </div>
 
             {/* Details Grid */}
-            <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div className="grid grid-cols-2 gap-3 text-xs bg-[#EDF4F1]/80 p-4 rounded-xl border border-[#0D6B5C]/12">
               <div>
                 <strong>{t('মৌজা ও জেএল:', 'Mouza & JL:')}</strong>{' '}
                 {lang === 'bn' ? currentSelectedMouza?.mouza_bn : currentSelectedMouza?.mouza_en} (JL {currentSelectedMouza?.jl_no})
@@ -522,28 +526,28 @@ export const CheckBeforeBuyPage: React.FC = () => {
               </div>
               <div>
                 <strong>{t('খতিয়ান চেইন অবস্থা:', 'Khatian Lineage:')}</strong>{' '}
-                <span className="text-[#006A4E] font-bold">CS → SA → RS → BS Verified</span>
+                <span className="text-[#0D6B5C] font-bold">CS → SA → RS → BS Verified</span>
               </div>
             </div>
 
             {/* Next Step Box */}
-            <div className="p-3.5 rounded-xl bg-[#E6F2EE] border border-[#006A4E] text-xs">
-              <div className="font-extrabold text-[#006A4E]">
+            <div className="p-3.5 rounded-xl bg-[#E8F5F1] border border-[#0D6B5C] text-xs">
+              <div className="font-extrabold text-[#0D6B5C]">
                 {t('সুপারিশ ও পরবর্তী পদক্ষেপ:', 'Recommendation & Next Steps:')}
               </div>
-              <div className="text-slate-700 mt-1">
+              <div className="text-[#0A1F1C]/90 mt-1">
                 {lang === 'bn' ? report.next_step_bn : report.next_step_en}
               </div>
             </div>
 
-            <div className="text-[10px] text-slate-400 font-mono text-center">
+            <div className="text-[10px] text-[#5F7A74]/80 font-mono text-center">
               SHA-256 HASH CHAIN PROTECTED • BHUMISHIELD TRUST LAYER 2026
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => window.print()}
-                className="px-5 py-2.5 rounded-lg bg-[#006A4E] text-white text-xs font-extrabold flex items-center gap-2 cursor-pointer"
+                className="btn-primary text-xs flex items-center gap-2 cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
                 <span>{t('সনদ প্রিন্ট / PDF সংরক্ষণ', 'Print / Save PDF')}</span>

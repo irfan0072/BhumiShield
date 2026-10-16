@@ -1,49 +1,72 @@
 @import "tailwindcss";
 
 :root {
-  --flag-green: #006A4E;
-  --flag-green-light: #E6F2EE;
-  --flag-red: #F42A41;
-  --flag-red-light: #FEECEE;
-  --amber-warn: #B7791F;
-  --amber-light: #FEF3C7;
-  --bg-page: #FAFBFA;
-  --text-main: #1A1A1A;
-  --text-muted: #5F6B66;
-  --base-font-size: 18px;
+  --ink: #062823;
+  --ink-deep: #041A1C;
+  --teal: #0D6B5C;
+  --teal-hover: #0A5549;
+  --leaf: #7CDB6A;
+  --leaf-dim: #B8E8AE;
+  --seal: #FF3B4A;
+  --warn: #C4891A;
+  --fog: #EDF4F1;
+  --mist: #F5FAF8;
+  --paper: #FFFFFF;
+  --text-main: #0A1F1C;
+  --text-muted: #5F7A74;
+  --line: rgba(13, 107, 92, 0.14);
+  --base-font-size: 17px;
+  --font-display: "Noto Serif Bengali", "Fraunces", Georgia, serif;
+  --font-ui: "Manrope", "Hind Siliguri", system-ui, sans-serif;
+  --font-bn: "Hind Siliguri", "Noto Sans Bengali", sans-serif;
+  --radius: 12px;
+  --shadow-panel: 0 1px 0 rgba(13, 107, 92, 0.06), 0 18px 48px -28px rgba(6, 40, 35, 0.45);
 }
 
 html {
-  font-family: 'Noto Sans Bengali', 'Hind Siliguri', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-ui);
   font-size: var(--base-font-size);
-  line-height: 1.6;
-  background-color: var(--bg-page);
+  line-height: 1.55;
+  background-color: var(--fog);
   color: var(--text-main);
   overflow-x: hidden;
+}
+
+html[lang="bn"],
+html:lang(bn) {
+  font-family: var(--font-bn);
 }
 
 body {
   margin: 0;
   overflow-x: hidden;
-  background-color: var(--bg-page);
+  background-color: var(--fog);
   color: var(--text-main);
+  background-image:
+    radial-gradient(ellipse 120% 80% at 10% -20%, rgba(124, 219, 106, 0.18), transparent 55%),
+    radial-gradient(ellipse 90% 60% at 100% 0%, rgba(13, 107, 92, 0.12), transparent 50%),
+    linear-gradient(180deg, var(--mist) 0%, var(--fog) 40%, #E4EFEA 100%);
+  background-attachment: fixed;
 }
 
 html.high-contrast {
-  --bg-page: #FFFFFF;
+  --fog: #FFFFFF;
+  --mist: #FFFFFF;
   --text-main: #000000;
   --text-muted: #111111;
-  --flag-green: #004D38;
-  --flag-red: #C8001A;
+  --teal: #004D38;
+  --seal: #C8001A;
+  --ink: #000000;
 }
 
+html.high-contrast .panel,
 html.high-contrast .card-surface {
   border: 2px solid #000000 !important;
   box-shadow: none !important;
 }
 
 *:focus-visible {
-  outline: 3px solid #006A4E;
+  outline: 3px solid var(--leaf);
   outline-offset: 2px;
 }
 
@@ -51,28 +74,297 @@ html.high-contrast .card-surface {
   min-height: 44px;
 }
 
-/* Custom subtle scrollbar */
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.font-ui {
+  font-family: var(--font-ui);
+}
+
+/* Cadastral mesh atmosphere */
+.mesh-bg {
+  background-color: var(--ink-deep);
+  background-image:
+    linear-gradient(rgba(124, 219, 106, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 219, 106, 0.04) 1px, transparent 1px),
+    radial-gradient(ellipse at 20% 30%, rgba(13, 107, 92, 0.55), transparent 55%),
+    radial-gradient(ellipse at 80% 70%, rgba(124, 219, 106, 0.12), transparent 50%);
+  background-size: 48px 48px, 48px 48px, 100% 100%, 100% 100%;
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: blur(10px);
+}
+
+.panel-ink {
+  background: linear-gradient(145deg, #0A3D36 0%, var(--ink) 55%, #041A1C 100%);
+  color: #F2FBF7;
+  border: 1px solid rgba(124, 219, 106, 0.18);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 10px;
+  background: var(--teal);
+  color: #fff;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 24px -12px rgba(13, 107, 92, 0.7);
+}
+
+.btn-primary:hover {
+  background: var(--teal-hover);
+  transform: translateY(-1px);
+}
+
+.btn-leaf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 10px;
+  background: var(--leaf);
+  color: var(--ink-deep);
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.btn-leaf:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.15rem;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--teal);
+  font-weight: 650;
+  border: 1.5px solid rgba(13, 107, 92, 0.28);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-ghost:hover {
+  background: rgba(13, 107, 92, 0.06);
+  border-color: var(--teal);
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.15rem;
+  border-radius: 10px;
+  background: var(--seal);
+  color: #fff;
+  font-weight: 650;
+  border: none;
+  cursor: pointer;
+}
+
+.field {
+  width: 100%;
+  border-radius: 10px;
+  border: 1.5px solid rgba(13, 107, 92, 0.2);
+  background: #fff;
+  padding: 0.65rem 0.9rem;
+  color: var(--text-main);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field::placeholder {
+  color: var(--text-muted);
+}
+
+.field:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(124, 219, 106, 0.28);
+}
+
+.label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+  letter-spacing: 0.02em;
+}
+
+.page-intro {
+  margin-bottom: 1.5rem;
+}
+
+.page-intro h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.55rem, 2.4vw, 2.1rem);
+  line-height: 1.25;
+  color: var(--ink);
+  margin: 0 0 0.4rem;
+}
+
+.page-intro p {
+  margin: 0;
+  max-width: 42rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.status-safe {
+  background: rgba(13, 107, 92, 0.1);
+  color: var(--teal);
+  border: 1px solid rgba(13, 107, 92, 0.25);
+}
+
+.status-warn {
+  background: rgba(196, 137, 26, 0.12);
+  color: #8A5F0F;
+  border: 1px solid rgba(196, 137, 26, 0.3);
+}
+
+.status-danger {
+  background: rgba(255, 59, 74, 0.1);
+  color: #C41E2A;
+  border: 1px solid rgba(255, 59, 74, 0.28);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drift {
+  from {
+    background-position: 0 0, 0 0, 0 0, 0 0;
+  }
+  to {
+    background-position: 48px 48px, 48px 48px, 0 0, 0 0;
+  }
+}
+
+@keyframes brand-glow {
+  0%,
+  100% {
+    text-shadow: 0 0 0 transparent;
+  }
+  50% {
+    text-shadow: 0 0 28px rgba(124, 219, 106, 0.35);
+  }
+}
+
+.animate-rise {
+  animation: rise 0.55s ease-out both;
+}
+
+.animate-rise-delay {
+  animation: rise 0.65s ease-out 0.12s both;
+}
+
+.animate-rise-delay-2 {
+  animation: rise 0.7s ease-out 0.22s both;
+}
+
+.mesh-drift {
+  animation: drift 28s linear infinite;
+}
+
+.brand-glow {
+  animation: brand-glow 4.5s ease-in-out infinite;
+}
+
+.table-modern {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-modern th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: rgba(13, 107, 92, 0.04);
+}
+
+.table-modern td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid rgba(13, 107, 92, 0.08);
+  vertical-align: middle;
+}
+
+.table-modern tr:hover td {
+  background: rgba(124, 219, 106, 0.06);
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: rgba(13, 107, 92, 0.35);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgba(13, 107, 92, 0.55);
 }
 
-/* Print Optimization for Land Deeds, Verification Reports & NOCs */
 @media print {
-  header, aside, nav, .no-print, button:not(.printable-btn) {
+  header,
+  aside,
+  nav,
+  .no-print,
+  button:not(.printable-btn) {
     display: none !important;
   }
-  body, html {
+  body,
+  html {
     background: #ffffff !important;
     color: #000000 !important;
     font-size: 14px !important;
@@ -86,7 +378,9 @@ html.high-contrast .card-surface {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after {
+  *,
+  ::before,
+  ::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
