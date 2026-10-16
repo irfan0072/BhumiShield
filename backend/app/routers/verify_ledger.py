@@ -247,10 +247,11 @@ def simulate_deed_tampering(
         "UPDATE deeds SET content_json = ?, area_decimal = ? WHERE id = ?",
         (json.dumps(content, sort_keys=True, ensure_ascii=False), tampered_area, deed_id),
     )
+    user_dict = user if isinstance(user, dict) else {}
     append_audit_entry(
         db,
-        actor_username=(user or {}).get("username", "admin"),
-        actor_role=(user or {}).get("role", "admin"),
+        actor_username=user_dict.get("username", "admin"),
+        actor_role=user_dict.get("role", "admin"),
         action="DEMO_SIMULATE_TAMPER",
         entity_type="deed",
         entity_id=str(deed_id),
@@ -290,10 +291,11 @@ def restore_tampered_deed(
         "UPDATE deeds SET content_json = ?, area_decimal = ? WHERE id = ?",
         (deed["original_content_json"], orig_area, deed_id),
     )
+    user_dict = user if isinstance(user, dict) else {}
     append_audit_entry(
         db,
-        actor_username=(user or {}).get("username", "admin"),
-        actor_role=(user or {}).get("role", "admin"),
+        actor_username=user_dict.get("username", "admin"),
+        actor_role=user_dict.get("role", "admin"),
         action="DEMO_RESTORE_DEED",
         entity_type="deed",
         entity_id=str(deed_id),
