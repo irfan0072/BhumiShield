@@ -11,8 +11,10 @@ import {
   Building2,
   Lock,
   ArrowRight,
-  LogIn,
-  KeyRound,
+  Bell,
+  CheckCircle2,
+  FileCheck2,
+  Layers,
 } from 'lucide-react';
 
 const ROLE_ROUTE: Record<UserRole, string> = {
@@ -26,10 +28,22 @@ const ROLE_ROUTE: Record<UserRole, string> = {
 export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNavigate }) => {
   const { lang, setRole, setUser, setToken, t } = useAppUI();
   const [stats, setStats] = useState<any>(null);
+  const [locations, setLocations] = useState<any[]>([]);
+  const [plots, setPlots] = useState<any[]>([]);
+
+  // Live Hero Search Box state
+  const [searchMode, setSearchMode] = useState<'plot' | 'deed'>('plot');
+  const [selectedMouza, setSelectedMouza] = useState<number>(1);
+  const [selectedPlot, setSelectedPlot] = useState<number>(1);
+  const [deedNoInput, setDeedNoInput] = useState<string>('DL-2026-1001');
 
   useEffect(() => {
-    BhumiApi.getStatsSummary()
-      .then((res) => setStats(res))
+    Promise.all([BhumiApi.getStatsSummary(), BhumiApi.getLocations(), BhumiApi.getPlots()])
+      .then(([st, locs, plts]) => {
+        setStats(st);
+        setLocations(locs);
+        setPlots(plts);
+      })
       .catch(() => {});
   }, []);
 
@@ -48,180 +62,306 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
     onNavigate(ROLE_ROUTE[targetRole]);
   };
 
+  const filteredPlots = plots.filter((p) => Number(p.mouza_id) === Number(selectedMouza));
+
   return (
-    <div className="space-y-10">
-      {/* Hero Section */}
-      <section className="rounded-3xl bg-gradient-to-br from-[#006A4E] via-[#00573F] to-[#003D2C] text-white p-6 md:p-10 shadow-xl relative overflow-hidden">
+    <div className="space-y-8">
+      {/* Official Government Notice & Circulars Ticker (BCC / National Portal Style) */}
+      <div className="bg-white rounded-xl border border-slate-200 px-4 py-2.5 flex items-center gap-3 shadow-2xs">
+        <span className="px-2.5 py-1 rounded bg-[#006A4E] text-white text-xs font-extrabold flex items-center gap-1.5 shrink-0">
+          <Bell className="w-3.5 h-3.5" />
+          <span>{t('সরকারি বিজ্ঞপ্তি', 'OFFICIAL NOTICE')}</span>
+        </span>
+        <div className="text-xs md:text-sm font-medium text-slate-700 truncate">
+          {t(
+            'পরিপত্র নং ২০২৬/ভূমি-১১৪: সাব-রেজিস্ট্রি অফিসে দলিল নিবন্ধনের পূর্বে CS→SA→RS→BS খতিয়ান পরম্পরা, নাগরিক বিক্রয় লক ও তফসিলি ব্যাংক লিয়েন অনলাইনে যাচাই বাধ্যতামূলক।',
+            'Circular 2026/Land-114: Pre-registration verification of CS→SA→RS→BS khatian lineage, owner sale locks, and bank mortgage liens is mandatory across all offices.'
+          )}
+        </div>
+      </div>
+
+      {/* Authoritative Institutional Hero + Live Public Verification Widget */}
+      <section className="rounded-2xl bg-gradient-to-br from-[#0b3b2d] via-[#00573F] to-[#1a2b49] text-white p-6 md:p-10 shadow-lg relative overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          {/* Left 7 Cols: Institutional Headline & Key Pillars */}
           <div className="lg:col-span-7 space-y-5">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/25 text-xs md:text-sm font-bold">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#F42A41]" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-emerald-100">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
               <span>
                 {t(
-                  'LandTech Innovation Hackathon 2026 • Laravel 11 + RBAC Middleware',
-                  'LandTech Innovation Hackathon 2026 • Laravel 11 + RBAC Middleware'
+                  'জাতীয় ডিজিটাল ভূমি দলিল যাচাই ও ক্রিপ্টোগ্রাফিক লেজার সিস্টেম',
+                  'National Digital Land Verification & Cryptographic Ledger System'
                 )}
               </span>
             </div>
 
-            <h1 className="text-3xl md:text-5xl font-extrabold leading-tight">
+            <h1 className="text-2xl md:text-4xl lg:text-[40px] font-extrabold leading-tight tracking-tight">
               {t(
-                'নিবন্ধন ও নামজারির মাঝে আস্থার সেতু — দলিল জালিয়াতি রোধে ভূমি সুরক্ষা',
-                'The Trust Layer Between Registration & Mutation — BhumiShield'
+                'নিবন্ধন ও নামজারির সমন্বিত আস্থার স্তর — স্বচ্ছ ও জালিয়াতিমুক্ত ভূমি ব্যবস্থাপনা',
+                'Unified Pre-Registration Verification & Tamper-Evident Land Ledger'
               )}
             </h1>
 
-            <p className="text-base md:text-lg text-emerald-50 leading-relaxed">
+            <p className="text-sm md:text-base text-slate-200 leading-relaxed">
               {t(
-                'সাব-রেজিস্ট্রি অফিস এবং এসি ল্যান্ড অফিসের মধ্যে তাৎক্ষণিক সংযোগ। দলিল রেজিস্ট্রির আগেই CS → SA → RS → BS খতিয়ান চেইন, মালিকের বিক্রয় লক, চলমান বিরোধ ও ব্যাংক মর্টগেজ যাচাই করুন এবং Ed25519 স্বাক্ষরিত অপরিবর্তনীয় হ্যাশ-চেইন লেজারে সংরক্ষণ করুন।',
-                'Real-time verification across Sub-Registry, AC Land, and Banks. Check CS → SA → RS → BS khatian lineage, owner sale locks, active disputes, and mortgages before registration with an Ed25519 hash-chained ledger.'
+                'আইন মন্ত্রণালয়ের সাব-রেজিস্ট্রি অফিস, ভূমি মন্ত্রণালয়ের এসি ল্যান্ড অফিস এবং তফসিলি ব্যাংকের মধ্যে তাৎক্ষণিক আন্তঃসংযোগ। দলিল সম্পাদনের পূর্বেই খতিয়ান পরম্পরা, অংশের ভগ্নাংশ, বিক্রয় লক ও মর্টগেজ যাচাই করুন।',
+                'Real-time interoperability between Sub-Registry (Ministry of Law), AC Land (Ministry of Land), and Scheduled Banks. Verify khatian lineage, fractional shares, sale locks, and mortgages prior to deed execution.'
               )}
             </p>
 
-            {/* Primary CTA Buttons */}
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <button
-                onClick={() => onNavigate('check')}
-                className="px-6 py-3.5 rounded-xl bg-white text-[#006A4E] font-extrabold text-base md:text-lg shadow-md hover:bg-emerald-50 flex items-center gap-2 cursor-pointer"
-              >
-                <Search className="w-5 h-5" />
-                <span>{t('জমি কেনার আগে যাচাই করুন', 'Check Land Before You Buy')}</span>
-              </button>
-
-              <button
-                onClick={() => onNavigate('qr')}
-                className="px-5 py-3.5 rounded-xl bg-[#F42A41] text-white font-extrabold text-base md:text-lg shadow-md hover:bg-red-700 flex items-center gap-2 cursor-pointer"
-              >
-                <QrCode className="w-5 h-5" />
-                <span>{t('QR দলিল যাচাই', 'Scan / Verify Deed QR')}</span>
-              </button>
-
-              <button
-                onClick={() => onNavigate('auth')}
-                className="px-5 py-3.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/30 text-white font-bold text-base flex items-center gap-2 cursor-pointer"
-              >
-                <LogIn className="w-5 h-5" />
-                <span>{t('লগইন / অ্যাকাউন্ট', 'Login / Register')}</span>
-              </button>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+              <div className="p-3 rounded-xl bg-white/10 border border-white/15 flex items-center gap-2.5">
+                <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0" />
+                <div className="text-xs">
+                  <div className="font-bold">{t('১১টি স্বয়ংক্রিয় রুল', '11 Verification Rules')}</div>
+                  <div className="text-slate-300">{t('প্রাক-নিবন্ধন ঝুঁকি পরীক্ষা', 'Pre-registration gatekeeper')}</div>
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-white/10 border border-white/15 flex items-center gap-2.5">
+                <FileCheck2 className="w-5 h-5 text-emerald-300 shrink-0" />
+                <div className="text-xs">
+                  <div className="font-bold">{t('Ed25519 ডিজিটাল স্বাক্ষর', 'Ed25519 Signatures')}</div>
+                  <div className="text-slate-300">{t('SHA-256 হ্যাশ-চেইন লেজার', 'SHA-256 hash-chained blocks')}</div>
+                </div>
+              </div>
+              <div className="p-3 rounded-xl bg-white/10 border border-white/15 flex items-center gap-2.5">
+                <Layers className="w-5 h-5 text-emerald-300 shrink-0" />
+                <div className="text-xs">
+                  <div className="font-bold">{t('৫টি ডেডিকেটেড প্যানেল', '5 Role Workspaces')}</div>
+                  <div className="text-slate-300">{t('রোল-ভিত্তিক পূর্ণ নিয়ন্ত্রণ', 'Strict RBAC middleware')}</div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Right Hero SVG Illustration */}
-          <div className="lg:col-span-5 flex justify-center">
-            <img
-              src="/assets/hero-land-ledger.svg"
-              alt="BhumiShield Architecture Illustration"
-              className="w-full max-w-md rounded-2xl shadow-2xl border-2 border-white/20 bg-white/5"
-            />
+          {/* Right 5 Cols: Instant Public Verification Search Box */}
+          <div className="lg:col-span-5 bg-white text-slate-800 rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex border-b border-slate-200 pb-3 gap-2">
+              <button
+                onClick={() => setSearchMode('plot')}
+                className={`flex-1 py-2 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer min-h-[38px] ${
+                  searchMode === 'plot'
+                    ? 'bg-[#006A4E] text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span>{t('দাগ ও খতিয়ান যাচাই', 'Check Plot Lineage')}</span>
+              </button>
+              <button
+                onClick={() => setSearchMode('deed')}
+                className={`flex-1 py-2 px-3 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer min-h-[38px] ${
+                  searchMode === 'deed'
+                    ? 'bg-[#006A4E] text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <QrCode className="w-3.5 h-3.5" />
+                <span>{t('দলিল ও QR যাচাই', 'Verify Deed / QR')}</span>
+              </button>
+            </div>
+
+            {searchMode === 'plot' ? (
+              <div className="space-y-3.5">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">
+                    {t('বিভাগ / জেলা / উপজেলা / মৌজা নির্বাচন করুন:', 'Select Mouza (Jurisdiction):')}
+                  </label>
+                  <select
+                    value={selectedMouza}
+                    onChange={(e) => {
+                      const mId = Number(e.target.value);
+                      setSelectedMouza(mId);
+                      const first = plots.find((p) => Number(p.mouza_id) === mId);
+                      if (first) setSelectedPlot(first.id);
+                    }}
+                    className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 text-xs font-semibold"
+                  >
+                    {locations.map((loc) => (
+                      <option key={loc.id} value={loc.id}>
+                        {lang === 'bn'
+                          ? `${loc.district_bn} • ${loc.upazila_bn} • মৌজা: ${loc.mouza_bn} (JL ${loc.jl_no})`
+                          : `${loc.district_en} • ${loc.upazila_en} • Mouza: ${loc.mouza_en} (JL ${loc.jl_no})`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">
+                    {t('দাগ নম্বর (Plot / Dag No.):', 'Select Plot / Dag Number:')}
+                  </label>
+                  <select
+                    value={selectedPlot}
+                    onChange={(e) => setSelectedPlot(Number(e.target.value))}
+                    className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 text-xs font-semibold"
+                  >
+                    {filteredPlots.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {t('দাগ নং', 'Dag')} {toBanglaDigits(p.dag_no, lang)} — {p.land_type} (
+                        {toBanglaDigits(p.total_area_decimal, lang)} {t('শতাংশ', 'Decimal')})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  onClick={() => onNavigate('check')}
+                  className="w-full py-3 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                >
+                  <Search className="w-4 h-4" />
+                  <span>
+                    {t('মালিকানা চেইন ও ঝুঁকি প্রতিবেদন দেখুন', 'Verify Ownership & Encumbrances')}
+                  </span>
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3.5">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">
+                    {t(
+                      'ডিজিটাল দলিল নম্বর লিখুন (যেমন: DL-2026-1001 বা DL-2026-1005):',
+                      'Enter Digital Deed Number (e.g., DL-2026-1001 or DL-2026-1005):'
+                    )}
+                  </label>
+                  <input
+                    type="text"
+                    value={deedNoInput}
+                    onChange={(e) => setDeedNoInput(e.target.value)}
+                    placeholder="DL-2026-1001"
+                    className="w-full p-2.5 rounded-lg border border-slate-300 bg-slate-50 font-mono text-sm font-bold"
+                  />
+                </div>
+                <button
+                  onClick={() => onNavigate('qr')}
+                  className="w-full py-3 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                >
+                  <QrCode className="w-4 h-4" />
+                  <span>
+                    {t('ক্রিপ্টোগ্রাফিক স্বাক্ষর ও লেজার যাচাই করুন', 'Verify Deed Signature & Hash')}
+                  </span>
+                </button>
+              </div>
+            )}
+
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+              <span>{t('তাৎক্ষণিক পাবলিক ভেরিফিকেশন গেটওয়ে', 'Instant Public Verification Gateway')}</span>
+              <span className="font-mono font-bold text-[#006A4E]">SHA-256 + Ed25519</span>
+            </div>
           </div>
         </div>
 
-        {/* Live Telemetry Stats Bar */}
+        {/* National Ledger Live Telemetry Strip */}
         {stats && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mt-8 pt-6 border-t border-white/20">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-8 pt-6 border-t border-white/15">
             <StatPill
-              label={t('মোট দাগ (Plots)', 'Total Plots')}
-              value={toBanglaDigits(stats.counts.plots, lang)}
+              label={t('মোট সংরক্ষিত দাগ', 'Recorded Plots')}
+              value={toBanglaDigits(stats.kpis?.total_plots ?? 60, lang)}
             />
             <StatPill
-              label={t('খতিয়ান চেইন', 'Khatian Records')}
-              value={toBanglaDigits(stats.counts.khatians, lang)}
+              label={t('সমন্বিত খতিয়ান রেকর্ড', 'Khatian Records')}
+              value={toBanglaDigits(stats.kpis?.total_khatians ?? 240, lang)}
             />
             <StatPill
-              label={t('নিবন্ধিত দলিল', 'Chained Deeds')}
-              value={toBanglaDigits(stats.counts.deeds, lang)}
+              label={t('হ্যাশ-চেইন দলিল', 'Signed Deeds')}
+              value={toBanglaDigits(stats.kpis?.total_deeds ?? 80, lang)}
             />
             <StatPill
-              label={t('সক্রিয় মর্টগেজ', 'Active Liens')}
-              value={toBanglaDigits(stats.counts.active_mortgages, lang)}
+              label={t('সক্রিয় ব্যাংক লিয়েন', 'Active Bank Liens')}
+              value={toBanglaDigits(stats.kpis?.active_mortgages_count ?? 6, lang)}
             />
             <StatPill
-              label={t('পেন্ডিং নামজারি', 'Pending Mutations')}
-              value={toBanglaDigits(stats.counts.pending_mutations, lang)}
+              label={t('প্রক্রিয়াধীন ই-মিউটেশন', 'Pending Mutations')}
+              value={toBanglaDigits(stats.kpis?.pending_mutations ?? 8, lang)}
             />
             <StatPill
-              label={t('সিস্টেম ইউজার', 'System Users')}
-              value={toBanglaDigits(stats.counts.users, lang)}
+              label={t('দাপ্তরিক ও নাগরিক ইউজার', 'System Accounts')}
+              value={toBanglaDigits(stats.kpis?.total_users ?? 7, lang)}
             />
           </div>
         )}
       </section>
 
-      {/* Role-Based Portals & Controlling Systems */}
+      {/* Dedicated Role-Wise Enterprise Workspaces Section */}
       <section className="space-y-4">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-2">
           <div>
-            <h2 className="text-2xl md:text-3xl font-extrabold text-[#1A1A1A] flex items-center gap-2">
-              <KeyRound className="w-7 h-7 text-[#006A4E]" />
-              <span>
-                {t(
-                  '৫টি রোল-ভিত্তিক ডেডিকেটেড ড্যাশবোর্ড ও কন্ট্রোলিং সিস্টেম',
-                  '5 Dedicated Role-Based Dashboards & Controlling Consoles'
-                )}
-              </span>
-            </h2>
-            <p className="text-sm text-[#5F6B66]">
+            <span className="text-xs font-extrabold uppercase tracking-wider text-[#006A4E]">
+              {t('দাপ্তরিক ও নাগরিক ই-গভর্ন্যান্স পোর্টালসমূহ', 'ROLE-BASED ENTERPRISE WORKSPACES')}
+            </span>
+            <h2 className="text-2xl font-extrabold text-slate-800 mt-0.5">
               {t(
-                'যেকোনো কার্ডে ক্লিক করলে স্বয়ংক্রিয়ভাবে সেই রোলের JWT সেশন ও RBAC পারমিশন সহ ড্যাশবোর্ড খুলবে:',
-                'Click any card to switch into that role with a real JWT session and RBAC middleware controls:'
+                '৫টি স্বতন্ত্র রোল প্যানেল ও পূর্ণাঙ্গ নিয়ন্ত্রণ সিস্টেম',
+                '5 Separate Role Panels with Dedicated Controlling Systems'
               )}
-            </p>
+            </h2>
           </div>
+          <p className="text-xs text-slate-500">
+            {t(
+              'যেকোনো প্যানেলে ক্লিক করলে সংশ্লিষ্ট রোলের ডেডিকেটেড ড্যাশবোর্ড, সাইডবার ও অপারেশনাল টুলস ওপেন হবে:',
+              'Select any workspace below to open its dedicated sidebar panel, analytics, and operational controls:'
+            )}
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <RoleCard
-            icon={<ShieldCheck className="w-7 h-7 text-[#006A4E]" />}
-            badge={t('নাগরিক (Citizen)', 'Citizen Role')}
-            title={t('নাগরিক ভল্ট ও বিক্রয় লক', 'Citizen Vault & Sale Lock')}
-            desc={t(
-              'নিজের জমির দাগ লক করুন (বিক্রয় লক), অভিযোগ দাখিল করুন, QR দলিল যাচাই ও কেনার আগে ঝুঁকি পরীক্ষা করুন।',
-              'Lock plots against unauthorized sale, file land disputes, verify QR deeds & check plots before buying.'
-            )}
+          <RoleGatewayCard
+            icon={<ShieldCheck className="w-6 h-6 text-[#006A4E]" />}
+            dept={t('নাগরিক সেবা পোর্টাল', 'Citizen Services')}
+            title={t('নাগরিক ভল্ট ও বিক্রয় লক প্যানেল', 'Citizen Land Vault Panel')}
+            features={[
+              t('নিজস্ব দাগে বিক্রয় লক (Sale Lock)', 'Plot Sale Protection Lock'),
+              t('জালিয়াতি বা ওয়ারিশ আপত্তি দাখিল', 'File Ownership Objections'),
+              t('ক্রয়-পূর্ব ঝুঁকি ও QR সনদ যাচাই', 'Pre-Purchase & QR Check'),
+            ]}
             onClick={() => enterRolePortal('citizen')}
           />
 
-          <RoleCard
-            icon={<FileSpreadsheet className="w-7 h-7 text-[#006A4E]" />}
-            badge={t('সাব-রেজিস্ট্রার', 'Sub-Registrar')}
-            title={t('দলিল নিবন্ধন ও ফি ক্যালকুলেটর', 'Deed Registry & Fee Control')}
-            desc={t(
-              '১১টি জালিয়াতি রুল চেক, সরকারি স্ট্যাম্প ও নিবন্ধন ফি ক্যালকুলেটর, এবং স্থগিত (HELD) দলিল রিলিজ/বাতিল কন্ট্রোল।',
-              'Run 11 fraud rules, calculate stamp/registration fees, and release or reject HELD deeds.'
-            )}
+          <RoleGatewayCard
+            icon={<FileSpreadsheet className="w-6 h-6 text-sky-700" />}
+            dept={t('আইন মন্ত্রণালয়', 'Ministry of Law')}
+            title={t('সাব-রেজিস্ট্রার কন্ট্রোল প্যানেল', 'Sub-Registrar Panel')}
+            features={[
+              t('১১-রুল প্রাক-নিবন্ধন গেটকিপার', '11-Rule Pre-Reg Gatekeeper'),
+              t('স্থগিত (HELD) দলিল রিলিজ/বাতিল', 'HELD Deed Release / Reject'),
+              t('সরকারি স্ট্যাম্প ও কর ক্যালকুলেটর', 'Official Stamp & Tax Calc'),
+            ]}
             onClick={() => enterRolePortal('sub_registrar')}
           />
 
-          <RoleCard
-            icon={<Landmark className="w-7 h-7 text-[#006A4E]" />}
-            badge={t('এসি ল্যান্ড', 'AC Land Officer')}
-            title={t('নামজারি, খতিয়ান ও বিরোধ নিষ্পত্তি', 'Mutation, Khatian & Disputes')}
-            desc={t(
-              'স্বয়ংক্রিয় ই-মিউটেশন অনুমোদন, ত্রুটিপূর্ণ খতিয়ান চেইন ও ওয়ারিশ সমন্বয় এবং নাগরিকদের অভিযোগ নিষ্পত্তি।',
-              'Approve e-mutations, reconcile broken khatian chains & heirs, and resolve citizen disputes.'
-            )}
+          <RoleGatewayCard
+            icon={<Landmark className="w-6 h-6 text-amber-700" />}
+            dept={t('ভূমি মন্ত্রণালয়', 'Ministry of Land')}
+            title={t('এসি ল্যান্ড ও ট্রাইব্যুনাল প্যানেল', 'AC Land Officer Panel')}
+            features={[
+              t('ই-মিউটেশন অনুমোদন ও খতিয়ান আপডেট', 'e-Mutation Approval Queue'),
+              t('ত্রুটিপূর্ণ খতিয়ান ও ওয়ারিশ সমন্বয়', 'Khatian Chain Reconciliation'),
+              t('নাগরিক বিরোধ ও শুনানি নিষ্পত্তি', 'Dispute Resolution Tribunal'),
+            ]}
             onClick={() => enterRolePortal('ac_land')}
           />
 
-          <RoleCard
-            icon={<Building2 className="w-7 h-7 text-[#006A4E]" />}
-            badge={t('ব্যাংক কর্মকর্তা', 'Bank Officer')}
-            title={t('মর্টগেজ লিয়েন ও ডিজিটাল NOC', 'Mortgage Lien & Digital NOC')}
-            desc={t(
-              'দ্বৈত মর্টগেজ রোধ, নতুন ব্যাংক লিয়েন এন্ট্রি এবং ঋণ পরিশোধে QR সহ ডিজিটাল ছাড়পত্র (NOC) ইস্যু।',
-              'Prevent double-mortgaging, register bank liens, and issue QR-signed Digital NOC release certificates.'
-            )}
+          <RoleGatewayCard
+            icon={<Building2 className="w-6 h-6 text-purple-700" />}
+            dept={t('আর্থিক প্রতিষ্ঠান বিভাগ', 'Scheduled Banks')}
+            title={t('ব্যাংক মর্টগেজ ও লিয়েন প্যানেল', 'Bank Officer Panel')}
+            features={[
+              t('জামানত যাচাই ও দ্বৈত ঋণ প্রতিরোধ', 'Collateral & Prior Lien Check'),
+              t('নতুন মর্টগেজ লিয়েন লক ও অবমুক্তি', 'Register & Release Liens'),
+              t('QR স্বাক্ষরিত ডিজিটাল NOC ইস্যু', 'Signed Digital NOC Generator'),
+            ]}
             onClick={() => enterRolePortal('bank_officer')}
           />
 
-          <RoleCard
-            icon={<Lock className="w-7 h-7 text-[#F42A41]" />}
-            badge={t('অ্যাডমিন ও অডিটর', 'Admin & Auditor')}
-            title={t('RBAC ম্যাট্রিক্স, ইউজার ও সেটিংস', 'RBAC Matrix, Users & Ledger')}
-            desc={t(
-              'RBAC পারমিশন ম্যাট্রিক্স, ইউজার CRUD, রুল ইঞ্জিন থ্রেশহোল্ড, ৮টি ডেমো সিনারিও এবং হ্যাশ-চেইন ট্যাম্পার সিমুলেটর।',
-              'Manage RBAC matrix, users CRUD, rules engine thresholds, 8 demo scenarios & live tamper simulator.'
-            )}
+          <RoleGatewayCard
+            icon={<Lock className="w-6 h-6 text-rose-700" />}
+            dept={t('কেন্দ্রীয় গভর্ন্যান্স', 'National Governance')}
+            title={t('জাতীয় অ্যাডমিন ও অডিট প্যানেল', 'System Admin Panel')}
+            features={[
+              t('RBAC পারমিশন ম্যাট্রিক্স ও ইউজার CRUD', 'RBAC Matrix & Users CRUD'),
+              t('হ্যাশ-চেইন অডিট ও টেম্পার ল্যাব', 'Hash-Chain Integrity Lab'),
+              t('সিস্টেম পলিসি ও রুল ইঞ্জিন সেটিংস', 'Dynamic Policy & Rules Config'),
+            ]}
             onClick={() => enterRolePortal('admin')}
           />
         </div>
@@ -232,40 +372,47 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
 
 const StatPill: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="bg-white/10 rounded-xl p-3 border border-white/15">
-    <div className="text-2xl font-extrabold text-white">{value}</div>
-    <div className="text-xs text-emerald-100 font-medium">{label}</div>
+    <div className="text-xl md:text-2xl font-extrabold text-white">{value}</div>
+    <div className="text-[11px] text-emerald-100 font-medium">{label}</div>
   </div>
 );
 
-const RoleCard: React.FC<{
+const RoleGatewayCard: React.FC<{
   icon: React.ReactNode;
-  badge: string;
+  dept: string;
   title: string;
-  desc: string;
+  features: string[];
   onClick: () => void;
-}> = ({ icon, badge, title, desc, onClick }) => {
+}> = ({ icon, dept, title, features, onClick }) => {
   const { t } = useAppUI();
   return (
     <button
       onClick={onClick}
-      className="card-surface text-left bg-white rounded-2xl p-5 border-2 border-gray-200 hover:border-[#006A4E] shadow-xs hover:shadow-md transition-all flex flex-col justify-between group cursor-pointer"
+      className="text-left bg-white rounded-xl p-5 border border-slate-200 hover:border-[#006A4E] shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group cursor-pointer"
     >
       <div>
         <div className="flex items-center justify-between mb-3">
-          <div className="w-12 h-12 rounded-xl bg-[#E6F2EE] flex items-center justify-center">
+          <div className="w-11 h-11 rounded-xl bg-slate-100 group-hover:bg-[#E6F2EE] flex items-center justify-center transition-colors">
             {icon}
           </div>
-          <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-gray-100 text-gray-800">
-            {badge}
+          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+            {dept}
           </span>
         </div>
-        <h3 className="text-lg font-extrabold text-[#1A1A1A] group-hover:text-[#006A4E]">
+        <h3 className="text-base font-extrabold text-slate-800 group-hover:text-[#006A4E]">
           {title}
         </h3>
-        <p className="text-xs text-[#5F6B66] mt-1.5 leading-relaxed">{desc}</p>
+        <ul className="mt-3 space-y-1.5">
+          {features.map((f, i) => (
+            <li key={i} className="text-xs text-slate-600 flex items-start gap-1.5">
+              <span className="text-[#006A4E] font-bold">•</span>
+              <span>{f}</span>
+            </li>
+          ))}
+        </ul>
       </div>
-      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs font-extrabold text-[#006A4E]">
-        <span>{t('ড্যাশবোর্ডে প্রবেশ করুন', 'Open Role Console')}</span>
+      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-extrabold text-[#006A4E]">
+        <span>{t('প্যানেল ওপেন করুন', 'Open Workspace')}</span>
         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
       </div>
     </button>

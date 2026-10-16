@@ -16,9 +16,11 @@ export const AuthPage: React.FC<{
   onSuccessNavigate: (tab: string) => void;
 }> = ({ mode = 'login', onSuccessNavigate }) => {
   const { lang, user, setUser, setToken, t } = useAppUI();
-  const [tab, setTab] = useState<'login' | 'register' | 'profile'>(user && mode === 'profile' ? 'profile' : 'login');
+  const [tab, setTab] = useState<'login' | 'register' | 'profile'>(
+    user && mode === 'profile' ? 'profile' : 'login'
+  );
 
-  const [username, setUsername] = useState('citizen_rahim');
+  const [username, setUsername] = useState('citizen');
   const [password, setPassword] = useState('demo123');
 
   const [regUsername, setRegUsername] = useState('');
@@ -26,9 +28,9 @@ export const AuthPage: React.FC<{
   const [regNameBn, setRegNameBn] = useState('');
   const [regNameEn, setRegNameEn] = useState('');
   const [regRole, setRegRole] = useState<UserRole>('citizen');
-  const [regNid, setRegNid] = useState('1992123456099');
-  const [regPhone, setRegPhone] = useState('01700000999');
-  const [regOffice, setRegOffice] = useState('নাগরিক পোর্টাল');
+  const [regNid, setRegNid] = useState('9900001099');
+  const [regPhone, setRegPhone] = useState('01700-000999');
+  const [regOffice, setRegOffice] = useState('নাগরিক পোর্টাল — ঢাকা');
 
   const [profNameBn, setProfNameBn] = useState(user?.full_name_bn || '');
   const [profNameEn, setProfNameEn] = useState(user?.full_name_en || '');
@@ -48,10 +50,10 @@ export const AuthPage: React.FC<{
       const res = await BhumiApi.login(u, p);
       setToken(res.access_token);
       setUser(res.user);
-      setSuccessMsg(t('সফলভাবে লগইন হয়েছে!', 'Logged in!'));
+      setSuccessMsg(t('সফলভাবে লগইন হয়েছে!', 'Signed in!'));
       setTimeout(() => {
         onSuccessNavigate(ROLE_ROUTE[res.user.role as UserRole] || 'home');
-      }, 300);
+      }, 250);
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       setErrorMsg(
@@ -59,7 +61,7 @@ export const AuthPage: React.FC<{
           ? lang === 'bn'
             ? detail.message_bn
             : detail.message_en
-          : t('লগইন ব্যর্থ হয়েছে। ইউজারনেম ও পাসওয়ার্ড যাচাই করুন।', 'Login failed. Check credentials.')
+          : t('লগইন ব্যর্থ হয়েছে। ইউজারনেম ও পাসওয়ার্ড যাচাই করুন।', 'Sign in failed. Check credentials.')
       );
     } finally {
       setLoading(false);
@@ -77,9 +79,9 @@ export const AuthPage: React.FC<{
         full_name_bn: regNameBn,
         full_name_en: regNameEn || regNameBn,
         role: regRole,
-        nid_mock: regNid,
-        phone_mock: regPhone,
-        office_name: regOffice,
+        nid: regNid,
+        phone_dummy: regPhone,
+        office_bn: regOffice,
       });
       setToken(res.access_token);
       setUser(res.user);
@@ -120,31 +122,31 @@ export const AuthPage: React.FC<{
     }
   };
 
-  const demoAccounts = [
-    { u: 'citizen_rahim', roleBn: 'নাগরিক (আব্দুর রহিম)', roleEn: 'Citizen (Abdur Rahim)' },
-    { u: 'registrar_savar', roleBn: 'সাব-রেজিস্ট্রার (সাভার)', roleEn: 'Sub-Registrar (Savar)' },
-    { u: 'acland_savar', roleBn: 'এসি ল্যান্ড (সাভার)', roleEn: 'AC Land (Savar)' },
-    { u: 'bank_sonali', roleBn: 'ব্যাংক কর্মকর্তা (সোনালী ব্যাংক)', roleEn: 'Bank Officer (Sonali Bank)' },
-    { u: 'admin_auditor', roleBn: 'অ্যাডমিন ও অডিটর', roleEn: 'System Admin & Auditor' },
+  const roleAccounts = [
+    { u: 'citizen', roleBn: 'নাগরিক পোর্টাল (আবুল কালাম আজাদ)', roleEn: 'Citizen Portal (Abul Kalam Azad)' },
+    { u: 'registrar', roleBn: 'সাব-রেজিস্ট্রার প্যানেল (মেহেরুন নেছা)', roleEn: 'Sub-Registrar Panel (Meherun Nesa)' },
+    { u: 'acland', roleBn: 'এসি ল্যান্ড প্যানেল (তানভীর আহমেদ)', roleEn: 'AC Land Panel (Tanvir Ahmed)' },
+    { u: 'bank', roleBn: 'ব্যাংক কর্মকর্তা প্যানেল (সোনালী ব্যাংক)', roleEn: 'Bank Officer Panel (Sonali Bank)' },
+    { u: 'admin', roleBn: 'জাতীয় অ্যাডমিন ও অডিটর প্যানেল', roleEn: 'System Admin & Auditor Panel' },
   ];
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-200 shadow-xs">
-        <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-4 mb-6">
+      <div className="bg-white rounded-xl p-6 md:p-8 border border-slate-200/90 shadow-2xs">
+        <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-4 mb-6">
           <button
             onClick={() => setTab('login')}
-            className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 cursor-pointer ${
-              tab === 'login' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
+            className={`px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[38px] ${
+              tab === 'login' ? 'bg-[#253656] text-white' : 'bg-slate-100 text-slate-700'
             }`}
           >
             <LogIn className="w-4 h-4" />
-            <span>{t('লগইন (Login)', 'Login')}</span>
+            <span>{t('পোর্টাল লগইন (Sign In)', 'Sign In')}</span>
           </button>
           <button
             onClick={() => setTab('register')}
-            className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 cursor-pointer ${
-              tab === 'register' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
+            className={`px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[38px] ${
+              tab === 'register' ? 'bg-[#253656] text-white' : 'bg-slate-100 text-slate-700'
             }`}
           >
             <UserPlus className="w-4 h-4" />
@@ -153,8 +155,8 @@ export const AuthPage: React.FC<{
           {user && (
             <button
               onClick={() => setTab('profile')}
-              className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 cursor-pointer ${
-                tab === 'profile' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
+              className={`px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[38px] ${
+                tab === 'profile' ? 'bg-[#253656] text-white' : 'bg-slate-100 text-slate-700'
               }`}
             >
               <UserCheck className="w-4 h-4" />
@@ -164,14 +166,14 @@ export const AuthPage: React.FC<{
         </div>
 
         {errorMsg && (
-          <div className="p-4 mb-4 rounded-xl bg-[#FEECEE] border-l-8 border-[#F42A41] text-[#1A1A1A] font-bold flex items-center gap-2">
+          <div className="p-4 mb-4 rounded-xl bg-[#FEECEE] border-l-8 border-[#F42A41] text-[#1A1A1A] font-bold text-xs flex items-center gap-2">
             <ShieldAlert className="w-5 h-5 text-[#F42A41]" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {successMsg && (
-          <div className="p-4 mb-4 rounded-xl bg-[#E6F2EE] border-l-8 border-[#006A4E] text-[#006A4E] font-bold flex items-center gap-2">
+          <div className="p-4 mb-4 rounded-xl bg-[#E6F2EE] border-l-8 border-[#006A4E] text-[#006A4E] font-bold text-xs flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5" />
             <span>{successMsg}</span>
           </div>
@@ -186,55 +188,55 @@ export const AuthPage: React.FC<{
               }}
               className="md:col-span-6 space-y-4"
             >
-              <h2 className="text-2xl font-extrabold text-[#006A4E]">
-                {t('অ্যাকাউন্টে প্রবেশ করুন', 'Sign In to BhumiShield')}
+              <h2 className="text-xl font-extrabold text-slate-800">
+                {t('দাপ্তরিক ও নাগরিক পোর্টালে প্রবেশ করুন', 'Sign In to BhumiShield Workspace')}
               </h2>
               <div>
-                <label className="block font-bold mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
                   {t('ইউজারনেম (Username):', 'Username:')}
                 </label>
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full p-3 rounded-xl border-2 border-gray-300 font-mono"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-sm"
                   required
                 />
               </div>
               <div>
-                <label className="block font-bold mb-1">
+                <label className="block text-xs font-bold text-slate-700 mb-1">
                   {t('পাসওয়ার্ড (Password):', 'Password:')}
                 </label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-3 rounded-xl border-2 border-gray-300 font-mono"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-sm"
                   required
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-extrabold text-lg cursor-pointer"
+                className="w-full py-3 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-extrabold text-sm cursor-pointer"
               >
                 {loading ? t('যাচাই হচ্ছে...', 'Signing in...') : t('লগইন করুন', 'Sign In')}
               </button>
             </form>
 
-            {/* Quick Demo Login Cards */}
-            <div className="md:col-span-6 bg-[#E6F2EE]/60 rounded-2xl p-5 border border-[#006A4E]/20 space-y-3">
-              <div className="flex items-center gap-2 font-extrabold text-[#006A4E]">
-                <KeyRound className="w-5 h-5" />
+            {/* Quick Workspace Role Selector */}
+            <div className="md:col-span-6 bg-slate-50 rounded-xl p-5 border border-slate-200 space-y-3">
+              <div className="flex items-center gap-2 font-extrabold text-xs text-[#253656]">
+                <KeyRound className="w-4 h-4 text-[#006A4E]" />
                 <span>
                   {t(
-                    'হ্যাকাথন বিচারকদের জন্য ১-ক্লিক রোল লগইন (পাসওয়ার্ড: demo123)',
-                    '1-Click Role Login for Judges (Password: demo123)'
+                    'রোল-ভিত্তিক কুইক সেশন অ্যাক্সেস (ডিফল্ট পাসওয়ার্ড: demo123)',
+                    'Quick Role Workspace Access (Password: demo123)'
                   )}
                 </span>
               </div>
               <div className="space-y-2">
-                {demoAccounts.map((acc) => (
+                {roleAccounts.map((acc) => (
                   <button
                     key={acc.u}
                     type="button"
@@ -243,16 +245,16 @@ export const AuthPage: React.FC<{
                       setPassword('demo123');
                       handleLogin(acc.u, 'demo123');
                     }}
-                    className="w-full p-3 rounded-xl bg-white hover:bg-[#006A4E] hover:text-white border border-gray-200 text-left flex items-center justify-between transition-colors cursor-pointer group"
+                    className="w-full p-3 rounded-lg bg-white hover:bg-[#253656] hover:text-white border border-slate-200 text-left flex items-center justify-between transition-colors cursor-pointer group min-h-[44px]"
                   >
                     <div>
-                      <div className="font-bold text-sm">
+                      <div className="font-bold text-xs">
                         {lang === 'bn' ? acc.roleBn : acc.roleEn}
                       </div>
-                      <div className="text-xs font-mono opacity-75">{acc.u}</div>
+                      <div className="text-[11px] font-mono opacity-70">@{acc.u}</div>
                     </div>
-                    <span className="text-xs font-extrabold px-2.5 py-1 rounded bg-[#E6F2EE] text-[#006A4E] group-hover:bg-white">
-                      {t('১-ক্লিক লগইন →', '1-Click Login →')}
+                    <span className="text-[11px] font-extrabold px-2.5 py-1 rounded bg-[#E6F2EE] text-[#006A4E] group-hover:bg-white">
+                      {t('প্রবেশ করুন →', 'Open Panel →')}
                     </span>
                   </button>
                 ))}
@@ -263,58 +265,58 @@ export const AuthPage: React.FC<{
 
         {tab === 'register' && (
           <form onSubmit={handleRegister} className="space-y-4">
-            <h2 className="text-2xl font-extrabold text-[#006A4E]">
-              {t('নতুন ব্যবহারকারী নিবন্ধন (Mock NID সহ)', 'Register New User (with Mock NID)')}
+            <h2 className="text-xl font-extrabold text-slate-800">
+              {t('নতুন ব্যবহারকারী নিবন্ধন (এনআইডি যাচাই সহ)', 'Register New Account (with NID Verification)')}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block font-bold mb-1">{t('ইউজারনেম:', 'Username:')}</label>
+                <label className="block text-xs font-bold mb-1">{t('ইউজারনেম:', 'Username:')}</label>
                 <input
                   type="text"
                   value={regUsername}
                   onChange={(e) => setRegUsername(e.target.value)}
                   placeholder="citizen_new"
-                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
                   required
                 />
               </div>
               <div>
-                <label className="block font-bold mb-1">{t('পাসওয়ার্ড:', 'Password:')}</label>
+                <label className="block text-xs font-bold mb-1">{t('পাসওয়ার্ড:', 'Password:')}</label>
                 <input
                   type="password"
                   value={regPassword}
                   onChange={(e) => setRegPassword(e.target.value)}
-                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
                   required
                 />
               </div>
               <div>
-                <label className="block font-bold mb-1">{t('পূর্ণ নাম (বাংলা):', 'Full Name (Bangla):')}</label>
+                <label className="block text-xs font-bold mb-1">{t('পূর্ণ নাম (বাংলা):', 'Full Name (Bangla):')}</label>
                 <input
                   type="text"
                   value={regNameBn}
                   onChange={(e) => setRegNameBn(e.target.value)}
                   placeholder="মোঃ সাইফুল ইসলাম"
-                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
                   required
                 />
               </div>
               <div>
-                <label className="block font-bold mb-1">{t('পূর্ণ নাম (ইংরেজি):', 'Full Name (English):')}</label>
+                <label className="block text-xs font-bold mb-1">{t('পূর্ণ নাম (ইংরেজি):', 'Full Name (English):')}</label>
                 <input
                   type="text"
                   value={regNameEn}
                   onChange={(e) => setRegNameEn(e.target.value)}
                   placeholder="Md. Saiful Islam"
-                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
               <div>
-                <label className="block font-bold mb-1">{t('ভূমিকা (Role):', 'User Role:')}</label>
+                <label className="block text-xs font-bold mb-1">{t('ভূমিকা (Role):', 'User Role:')}</label>
                 <select
                   value={regRole}
                   onChange={(e) => setRegRole(e.target.value as UserRole)}
-                  className="w-full p-3 rounded-xl border-2 border-gray-300 bg-white font-semibold"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold"
                 >
                   <option value="citizen">{t('নাগরিক (Citizen)', 'Citizen')}</option>
                   <option value="sub_registrar">{t('সাব-রেজিস্ট্রার (Sub-Registrar)', 'Sub-Registrar')}</option>
@@ -323,38 +325,38 @@ export const AuthPage: React.FC<{
                 </select>
               </div>
               <div>
-                <label className="block font-bold mb-1">{t('মক এনআইডি নম্বর (Mock NID):', 'Mock NID Number:')}</label>
+                <label className="block text-xs font-bold mb-1">{t('এনআইডি নম্বর:', 'NID Number:')}</label>
                 <input
                   type="text"
                   value={regNid}
                   onChange={(e) => setRegNid(e.target.value)}
-                  className="w-full p-3 rounded-xl border-2 border-gray-300 font-mono"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs"
                   required
                 />
               </div>
               <div>
-                <label className="block font-bold mb-1">{t('মোবাইল নম্বর (ডেমো):', 'Phone (Mock):')}</label>
+                <label className="block text-xs font-bold mb-1">{t('মোবাইল নম্বর:', 'Phone:')}</label>
                 <input
                   type="text"
                   value={regPhone}
                   onChange={(e) => setRegPhone(e.target.value)}
-                  className="w-full p-3 rounded-xl border-2 border-gray-300 font-mono"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs"
                 />
               </div>
               <div>
-                <label className="block font-bold mb-1">{t('অফিস / ঠিকানা:', 'Office / Location:')}</label>
+                <label className="block text-xs font-bold mb-1">{t('অফিস / ঠিকানা:', 'Office / Location:')}</label>
                 <input
                   type="text"
                   value={regOffice}
                   onChange={(e) => setRegOffice(e.target.value)}
-                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="px-8 py-3.5 rounded-xl bg-[#006A4E] text-white font-extrabold text-lg cursor-pointer"
+              className="px-6 py-3 rounded-lg bg-[#006A4E] text-white font-extrabold text-xs cursor-pointer"
             >
               {t('নিবন্ধন সম্পন্ন করুন', 'Complete Registration')}
             </button>
@@ -363,48 +365,48 @@ export const AuthPage: React.FC<{
 
         {tab === 'profile' && user && (
           <form onSubmit={handleProfileSave} className="space-y-4">
-            <h2 className="text-2xl font-extrabold text-[#006A4E]">
+            <h2 className="text-xl font-extrabold text-slate-800">
               {t('প্রোফাইল ও নিরাপত্তা সেটিংস', 'Profile & Security Settings')}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block font-bold mb-1">{t('পূর্ণ নাম (বাংলা):', 'Full Name (Bangla):')}</label>
+                <label className="block text-xs font-bold mb-1">{t('পূর্ণ নাম (বাংলা):', 'Full Name (Bangla):')}</label>
                 <input
                   type="text"
                   value={profNameBn}
                   onChange={(e) => setProfNameBn(e.target.value)}
-                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
               <div>
-                <label className="block font-bold mb-1">{t('পূর্ণ নাম (ইংরেজি):', 'Full Name (English):')}</label>
+                <label className="block text-xs font-bold mb-1">{t('পূর্ণ নাম (ইংরেজি):', 'Full Name (English):')}</label>
                 <input
                   type="text"
                   value={profNameEn}
                   onChange={(e) => setProfNameEn(e.target.value)}
-                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
               <div>
-                <label className="block font-bold mb-1">{t('মোবাইল নম্বর:', 'Phone:')}</label>
+                <label className="block text-xs font-bold mb-1">{t('মোবাইল নম্বর:', 'Phone:')}</label>
                 <input
                   type="text"
                   value={profPhone}
                   onChange={(e) => setProfPhone(e.target.value)}
-                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
               <div>
-                <label className="block font-bold mb-1">{t('অফিস / কর্মস্থল:', 'Office Name:')}</label>
+                <label className="block text-xs font-bold mb-1">{t('অফিস / কর্মস্থল:', 'Office Name:')}</label>
                 <input
                   type="text"
                   value={profOffice}
                   onChange={(e) => setProfOffice(e.target.value)}
-                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
               <div>
-                <label className="block font-bold mb-1">
+                <label className="block text-xs font-bold mb-1">
                   {t('নতুন পাসওয়ার্ড (ঐচ্ছিক):', 'New Password (Optional):')}
                 </label>
                 <input
@@ -412,14 +414,14 @@ export const AuthPage: React.FC<{
                   value={profNewPass}
                   onChange={(e) => setProfNewPass(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-3 rounded-xl bg-[#006A4E] text-white font-extrabold cursor-pointer"
+              className="px-5 py-2.5 rounded-lg bg-[#006A4E] text-white font-extrabold text-xs cursor-pointer"
             >
               {t('প্রোফাইল সংরক্ষণ করুন', 'Save Profile')}
             </button>

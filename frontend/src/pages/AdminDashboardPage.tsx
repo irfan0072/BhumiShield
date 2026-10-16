@@ -3,6 +3,7 @@ import { useAppUI, UserRole } from '../i18n';
 import { BhumiApi, RiskReportResponse } from '../api/client';
 import { toBanglaDigits } from '../theme/tokens';
 import { ResultHeroBanner } from '../components/ResultHeroBanner';
+import { VelzonOverviewSection } from '../components/VelzonOverviewSection';
 import {
   Lock,
   Flame,
@@ -30,6 +31,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [ocrSample, setOcrSample] = useState<any | null>(null);
   const [activeScenarioReport, setActiveScenarioReport] = useState<RiskReportResponse | null>(null);
   const [permissionsData, setPermissionsData] = useState<any | null>(null);
+  const [stats, setStats] = useState<any>(null);
 
   // Users Management state
   const [usersList, setUsersList] = useState<any[]>([]);
@@ -37,7 +39,7 @@ export const AdminDashboardPage: React.FC = () => {
   const [newNameBn, setNewNameBn] = useState('');
   const [newNameEn, setNewNameEn] = useState('');
   const [newRole, setNewRole] = useState<UserRole>('sub_registrar');
-  const [newNid, setNewNid] = useState('1988123456888');
+  const [newNid, setNewNid] = useState('9900008888');
   const [newOffice, setNewOffice] = useState('সাভার সাব-রেজিস্ট্রি অফিস');
 
   // Site Settings state
@@ -54,16 +56,18 @@ export const AdminDashboardPage: React.FC = () => {
       BhumiApi.listUsers(),
       BhumiApi.getSettings(),
       BhumiApi.getPermissions(),
+      BhumiApi.getStatsSummary(),
     ])
-      .then(([ldg, scns, logs, ocr, usrs, stgs, perms]) => {
+      .then(([ldg, scns, logs, ocr, usrs, stgs, perms, st]) => {
         setLedgerState(ldg);
         setScenarios(scns);
         setAuditLogs(logs);
         setOcrSample(ocr);
         setUsersList(usrs);
         setSettingsList(stgs.items || []);
-        setSettingsMap(stgs.map || {});
+        setSettingsMap(stgs.map || stgs.settings || {});
         setPermissionsData(perms);
+        setStats(st);
       })
       .catch(() => {});
   };
@@ -84,13 +88,12 @@ export const AdminDashboardPage: React.FC = () => {
   };
 
   const handleTamper = async () => {
-    await BhumiApi.tamperDeedDemo('DEED-2026-0001', 99.0);
+    await BhumiApi.tamperDeedDemo('DL-2026-1001', 99.0);
     refreshAll();
   };
 
   const handleRestore = async () => {
-    await BhumiApi.restoreDeedDemo('DEED-2026-0001');
-    await BhumiApi.restoreDeedDemo('DEED-2026-0005');
+    await BhumiApi.restoreDeedDemo('DL-2026-1001');
     refreshAll();
   };
 
@@ -107,9 +110,10 @@ export const AdminDashboardPage: React.FC = () => {
       full_name_bn: newNameBn,
       full_name_en: newNameEn || newNameBn,
       role: newRole,
-      nid_mock: newNid,
-      phone_mock: '01711000111',
-      office_name: newOffice,
+      nid: newNid,
+      phone_dummy: '01711-000111',
+      office_bn: newOffice,
+      office_en: newOffice,
     });
     setNewUsername('');
     setNewNameBn('');
@@ -121,7 +125,7 @@ export const AdminDashboardPage: React.FC = () => {
     await BhumiApi.updateUser(u.id, {
       role: u.role,
       is_active: u.is_active ? 0 : 1,
-      office_name: u.office_name,
+      office_bn: u.office_name,
     });
     refreshAll();
   };
@@ -130,7 +134,7 @@ export const AdminDashboardPage: React.FC = () => {
     await BhumiApi.updateUser(u.id, {
       role: updatedRole,
       is_active: u.is_active,
-      office_name: u.office_name,
+      office_bn: u.office_name,
     });
     refreshAll();
   };
@@ -145,146 +149,165 @@ export const AdminDashboardPage: React.FC = () => {
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     await BhumiApi.updateSettings(settingsMap);
-    setSaveMsg(t('সাইট ও রুল ইঞ্জিন সেটিংস সফলভাবে সংরক্ষিত হয়েছে!', 'Site settings saved!'));
+    setSaveMsg(t('সিস্টেম ও রুল ইঞ্জিন পলিসি সফলভাবে সংরক্ষিত হয়েছে!', 'System policy settings saved!'));
     refreshAll();
     setTimeout(() => setSaveMsg(''), 3000);
   };
 
   return (
-    <div className="space-y-8">
-      {/* Sub-navigation Tabs */}
-      <div className="bg-white rounded-2xl p-4 border border-gray-200 flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-6">
+      {/* Velzon Executive Overview Grid for System Admin */}
+      <VelzonOverviewSection
+        role="admin"
+        stats={stats}
+        onQuickAction={() => setSubTab('ledger')}
+      />
+
+      {/* Governance Sub-navigation Tabs */}
+      <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex flex-wrap items-center justify-between gap-3">
         <div>
-          <span className="text-xs font-extrabold uppercase px-2.5 py-1 rounded-full bg-[#E6F2EE] text-[#006A4E]">
-            {t('অ্যাডমিন, RBAC মিডলওয়্যার ও সিস্টেম কন্ট্রোল', 'System Admin, RBAC Middleware & Governance')}
-          </span>
-          <h1 className="text-xl md:text-2xl font-extrabold text-[#1A1A1A] mt-1">
+          <h2 className="text-base md:text-lg font-extrabold text-slate-800">
             {t(
-              'RBAC পারমিশন ম্যাট্রিক্স, ইউজার ম্যানেজমেন্ট, সাইট সেটিংস ও হ্যাশ লেজার',
-              'RBAC Permission Matrix, Users CRUD, Site Settings & Hash Ledger'
+              'কেন্দ্রীয় গভর্ন্যান্স, RBAC ম্যাট্রিক্স, ইউজার ডিরেক্টরি ও ক্রিপ্টোগ্রাফিক অডিট',
+              'Central Governance, RBAC Matrix, Officers Directory & Cryptographic Audit'
             )}
-          </h1>
+          </h2>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           <button
             onClick={() => setSubTab('rbac')}
-            className={`px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer ${
-              subTab === 'rbac' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
+            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+              subTab === 'rbac'
+                ? 'bg-[#253656] text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
-            <KeyRound className="w-4 h-4" />
-            <span>{t('RBAC মিডলওয়্যার', 'RBAC Matrix')}</span>
+            <KeyRound className="w-3.5 h-3.5" />
+            <span>{t('RBAC ম্যাট্রিক্স', 'RBAC Matrix')}</span>
           </button>
           <button
             onClick={() => setSubTab('ledger')}
-            className={`px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer ${
-              subTab === 'ledger' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
+            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+              subTab === 'ledger'
+                ? 'bg-[#253656] text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
-            <Lock className="w-4 h-4" />
-            <span>{t('হ্যাশ লেজার', 'Hash Ledger')}</span>
+            <Lock className="w-3.5 h-3.5" />
+            <span>{t('হ্যাশ লেজার ল্যাব', 'Hash Ledger Lab')}</span>
           </button>
           <button
             onClick={() => setSubTab('scenarios')}
-            className={`px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer ${
-              subTab === 'scenarios' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
+            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+              subTab === 'scenarios'
+                ? 'bg-[#253656] text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
-            <FileSearch className="w-4 h-4" />
-            <span>{t('৮টি ডেমো ও OCR', '8 Demos & OCR')}</span>
+            <FileSearch className="w-3.5 h-3.5" />
+            <span>{t('যাচাই কেস ও OCR', 'Case Library & OCR')}</span>
           </button>
           <button
             onClick={() => setSubTab('users')}
-            className={`px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer ${
-              subTab === 'users' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
+            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+              subTab === 'users'
+                ? 'bg-[#253656] text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
-            <Users className="w-4 h-4" />
-            <span>{t('ইউজার ম্যানেজমেন্ট', 'Users CRUD')}</span>
+            <Users className="w-3.5 h-3.5" />
+            <span>{t('ইউজার ডিরেক্টরি', 'Officers CRUD')}</span>
           </button>
           <button
             onClick={() => setSubTab('settings')}
-            className={`px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer ${
-              subTab === 'settings' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
+            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+              subTab === 'settings'
+                ? 'bg-[#253656] text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
-            <Settings className="w-4 h-4" />
-            <span>{t('সাইট সেটিংস', 'Site Settings')}</span>
+            <Settings className="w-3.5 h-3.5" />
+            <span>{t('সিস্টেম পলিসি', 'Policy Settings')}</span>
           </button>
           <button
             onClick={() => setSubTab('audit')}
-            className={`px-3.5 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer ${
-              subTab === 'audit' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
+            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+              subTab === 'audit'
+                ? 'bg-[#253656] text-white'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
             }`}
           >
-            <History className="w-4 h-4" />
-            <span>{t('অডিট লগ', 'Audit Log')}</span>
+            <History className="w-3.5 h-3.5" />
+            <span>{t('অডিট লগ', 'Audit Trail')}</span>
           </button>
         </div>
       </div>
 
       {/* TAB 1: RBAC Middleware Permission Matrix */}
       {subTab === 'rbac' && permissionsData && (
-        <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-200 shadow-xs space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-200 pb-4">
+        <div className="bg-white rounded-xl p-6 border border-slate-200/90 shadow-2xs space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
-              <h2 className="text-xl md:text-2xl font-extrabold text-[#006A4E] flex items-center gap-2">
-                <KeyRound className="w-6 h-6" />
+              <h2 className="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+                <KeyRound className="w-5 h-5 text-[#006A4E]" />
                 <span>
                   {t(
-                    'রোল-ভিত্তিক মিডলওয়্যার ও কন্ট্রোলিং ম্যাট্রিক্স (RoleMiddleware.php)',
+                    'রোল-ভিত্তিক অ্যাক্সেস কন্ট্রোল ও কন্ট্রোলিং ম্যাট্রিক্স (RoleMiddleware.php)',
                     'Role-Based Access Control (RBAC) Middleware Matrix'
                   )}
                 </span>
               </h2>
-              <p className="text-sm text-[#5F6B66]">
+              <p className="text-xs text-slate-500 mt-0.5">
                 {t(
-                  'প্রতিটি রোলের জন্য নির্ধারিত ড্যাশবোর্ড রুট এবং অনুমোদিত কন্ট্রোলিং ক্ষমতা:',
-                  'Dedicated dashboards and granular capabilities enforced by Laravel RoleMiddleware:'
+                  'প্রতিটি দাপ্তরিক ও নাগরিক রোলের জন্য নির্ধারিত প্যানেল এবং অনুমোদিত কন্ট্রোলিং ক্ষমতা:',
+                  'Dedicated workspaces and granular permissions enforced by Laravel RoleMiddleware:'
                 )}
               </p>
             </div>
-            <div className="px-4 py-2 rounded-xl bg-[#E6F2EE] text-[#006A4E] font-extrabold text-sm">
-              {t('সক্রিয় রোল:', 'Current Active Role:')} {role.toUpperCase()}
+            <div className="px-3.5 py-1.5 rounded-lg bg-[#E6F2EE] text-[#006A4E] font-extrabold text-xs">
+              {t('সক্রিয় রোল:', 'Active Session Role:')} {role.toUpperCase()}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Object.entries(permissionsData.matrix || {}).map(([rKey, rData]: [string, any]) => {
               const isCurrent = rKey === role;
+              const permsList = rData.permissions || rData.capabilities || [];
               return (
                 <div
                   key={rKey}
-                  className={`p-5 rounded-2xl border-2 flex flex-col justify-between ${
+                  className={`p-5 rounded-xl border flex flex-col justify-between ${
                     isCurrent
-                      ? 'border-[#006A4E] bg-[#E6F2EE]/40'
-                      : 'border-gray-200 bg-[#FAFBFA]'
+                      ? 'border-[#006A4E] bg-[#E6F2EE]/30'
+                      : 'border-slate-200 bg-slate-50/60'
                   }`}
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-mono font-extrabold text-xs px-2.5 py-1 rounded bg-[#006A4E] text-white">
+                      <span className="font-mono font-extrabold text-[11px] px-2.5 py-0.5 rounded bg-[#253656] text-white">
                         {rKey}
                       </span>
                       {isCurrent && (
-                        <span className="text-xs font-extrabold text-[#006A4E]">
-                          ● {t('সক্রিয় সেশন', 'ACTIVE SESSION')}
+                        <span className="text-[11px] font-extrabold text-[#006A4E]">
+                          ● {t('সক্রিয় সেশন', 'ACTIVE')}
                         </span>
                       )}
                     </div>
-                    <h3 className="text-lg font-extrabold text-[#1A1A1A]">
-                      {lang === 'bn' ? rData.label_bn : rData.label_en}
+                    <h3 className="text-base font-extrabold text-slate-800">
+                      {lang === 'bn'
+                        ? rData.title_bn || rData.label_bn
+                        : rData.title_en || rData.label_en}
                     </h3>
                     <div className="mt-3 space-y-1.5">
-                      <div className="text-xs font-bold text-gray-500">
-                        {t('অনুমোদিত কন্ট্রোলিং ফিচারসমূহ:', 'Allowed Controlling Capabilities:')}
+                      <div className="text-[11px] font-bold text-slate-500">
+                        {t('অনুমোদিত কন্ট্রোলিং ক্ষমতা:', 'Authorized Capabilities:')}
                       </div>
                       <div className="flex flex-wrap gap-1.5">
-                        {(rData.capabilities || []).map((cap: string) => (
+                        {permsList.map((cap: string) => (
                           <span
                             key={cap}
-                            className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-white border border-gray-300 text-gray-800"
+                            className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700"
                           >
                             ✔ {cap}
                           </span>
@@ -293,15 +316,15 @@ export const AdminDashboardPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-gray-200 flex items-center justify-between">
-                    <span className="text-xs font-mono text-gray-500">
-                      Tab: {rData.dashboard_route}
+                  <div className="mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between">
+                    <span className="text-[11px] font-mono text-slate-500">
+                      Panel: {rData.dashboard_tab || rData.dashboard_route || rKey}
                     </span>
                     <button
                       onClick={() => switchToAdminRole(rKey as UserRole)}
-                      className="px-3 py-1.5 rounded-lg bg-[#006A4E] text-white text-xs font-extrabold cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-[#253656] hover:bg-[#006A4E] text-white text-xs font-bold cursor-pointer min-h-[32px]"
                     >
-                      {t('এই রোলে টেস্ট করুন', 'Switch & Test Role')}
+                      {t('এই প্যানেলে সুইচ করুন', 'Switch Session')}
                     </button>
                   </div>
                 </div>
@@ -311,24 +334,24 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 2: Live Hash-Chain & Tamper Detection Simulator */}
+      {/* TAB 2: Live Hash-Chain & Tamper Detection Lab */}
       {subTab === 'ledger' && (
-        <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-200 shadow-xs space-y-6">
+        <div className="bg-white rounded-xl p-6 border border-slate-200/90 shadow-2xs space-y-5">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-extrabold text-[#1A1A1A] flex items-center gap-2">
-                <Lock className="w-7 h-7 text-[#006A4E]" />
+              <h2 className="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+                <Lock className="w-5 h-5 text-[#006A4E]" />
                 <span>
                   {t(
-                    'লাইভ হ্যাশ-চেইন লেজার ও টেম্পার সিমুলেটর (Tamper Demo)',
-                    'Live Hash-Chain Ledger & Tamper Detection Simulator'
+                    'ক্রিপ্টোগ্রাফিক হ্যাশ-চেইন লেজার ও ইন্টিগ্রিটি অডিট ল্যাব',
+                    'Cryptographic Hash-Chain Ledger & Integrity Audit Lab'
                   )}
                 </span>
               </h2>
-              <p className="text-[#5F6B66] mt-1">
+              <p className="text-xs text-slate-500 mt-0.5">
                 {t(
-                  'হ্যাকাথন বিচারকদের দেখান: ডাটাবেজে সরাসরি জমির পরিমাণ পরিবর্তন করলে কীভাবে SHA-256 হ্যাশ-চেইন তা সাথে সাথে ধরে ফেলে।',
-                  'Show hackathon judges how mutating a deed in the database immediately breaks the SHA-256 hash chain.'
+                  'ডাটাবেজে সরাসরি জমির পরিমাণ পরিবর্তন করলে কীভাবে SHA-256 হ্যাশ-চেইন তা সাথে সাথে সনাক্ত করে তার পরীক্ষা:',
+                  'Verify how mutating a deed record in storage immediately invalidates the SHA-256 hash chain:'
                 )}
               </p>
             </div>
@@ -336,23 +359,23 @@ export const AdminDashboardPage: React.FC = () => {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={handleTamper}
-                className="px-4 py-2.5 rounded-xl bg-[#F42A41] hover:bg-red-700 text-white font-bold flex items-center gap-2 cursor-pointer"
+                className="px-4 py-2 rounded-lg bg-[#F42A41] hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer min-h-[38px]"
               >
                 <Flame className="w-4 h-4" />
                 <span>
                   {t(
-                    'DEED-2026-0001 জালিয়াতি করুন (Tamper DB)',
-                    'Tamper DEED-2026-0001 in DB'
+                    'DL-2026-1001 আন-অথরাইজড মিউটেশন টেস্ট',
+                    'Simulate Storage Tamper (DL-2026-1001)'
                   )}
                 </span>
               </button>
               <button
                 onClick={handleRestore}
-                className="px-4 py-2.5 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold flex items-center gap-2 cursor-pointer"
+                className="px-4 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer min-h-[38px]"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>
-                  {t('সব দলিল আসল অবস্থায় ফিরিয়ে আনুন', 'Restore All Deeds to Authentic')}
+                  {t('মূল স্বাক্ষরিত তথ্য পুনরুদ্ধার করুন', 'Restore Signed Ledger State')}
                 </span>
               </button>
             </div>
@@ -360,18 +383,18 @@ export const AdminDashboardPage: React.FC = () => {
 
           {ledgerState && (
             <div
-              className={`p-5 rounded-2xl border-2 ${
+              className={`p-5 rounded-xl border-2 ${
                 ledgerState.chain_intact
                   ? 'bg-[#E6F2EE] border-[#006A4E]'
                   : 'bg-[#FEECEE] border-[#F42A41]'
               }`}
             >
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="font-extrabold text-xl flex items-center gap-2">
+                <div className="font-extrabold text-base flex items-center gap-2">
                   {ledgerState.chain_intact ? (
-                    <CheckCircle2 className="w-7 h-7 text-[#006A4E]" />
+                    <CheckCircle2 className="w-6 h-6 text-[#006A4E]" />
                   ) : (
-                    <XOctagon className="w-7 h-7 text-[#F42A41]" />
+                    <XOctagon className="w-6 h-6 text-[#F42A41]" />
                   )}
                   <span>
                     {ledgerState.chain_intact
@@ -388,7 +411,7 @@ export const AdminDashboardPage: React.FC = () => {
                         )}
                   </span>
                 </div>
-                <span className="font-mono text-xs bg-white px-3 py-1 rounded-lg border">
+                <span className="font-mono text-[11px] bg-white px-3 py-1 rounded border">
                   DAILY_MERKLE_ROOT: {ledgerState.daily_merkle_root?.slice(0, 28)}...
                 </span>
               </div>
@@ -398,7 +421,7 @@ export const AdminDashboardPage: React.FC = () => {
                   {ledgerState.broken_blocks.map((b: any) => (
                     <div
                       key={b.deed_no}
-                      className="p-3 rounded-xl bg-white border border-[#F42A41] font-mono text-xs"
+                      className="p-3 rounded-lg bg-white border border-[#F42A41] font-mono text-xs"
                     >
                       <div className="font-bold text-[#F42A41]">
                         ✖ BLOCK #{b.chain_index} ({b.deed_no}) — HASH_MISMATCH
@@ -414,14 +437,14 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 3: 8 Demo Scenarios & OCR Assist */}
+      {/* TAB 3: Verification Case Library & OCR Assist */}
       {subTab === 'scenarios' && (
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 space-y-4">
-            <h2 className="text-xl font-bold text-[#1A1A1A]">
+          <div className="bg-white rounded-xl p-6 border border-slate-200/90 shadow-2xs space-y-4">
+            <h2 className="text-lg font-extrabold text-slate-800">
               {t(
-                'হ্যাকাথনের ৮টি নির্ধারিত ডেমো সিনারিও (১-ক্লিকে পরীক্ষা করুন)',
-                'All 8 Mandatory Hackathon Demo Scenarios (1-Click Runner)'
+                'প্রাক-নিবন্ধন যাচাই কেস লাইব্রেরি (৮টি স্ট্যান্ডার্ড ভেরিফিকেশন কেস)',
+                'Pre-Registration Verification Case Library (8 Reference Scenarios)'
               )}
             </h2>
 
@@ -429,35 +452,35 @@ export const AdminDashboardPage: React.FC = () => {
               {scenarios.map((sc) => (
                 <div
                   key={sc.code}
-                  className="p-4 rounded-xl bg-[#FAFBFA] border border-gray-200 flex flex-col justify-between gap-3"
+                  className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between gap-3"
                 >
                   <div>
                     <div className="flex items-center justify-between">
-                      <span className="font-extrabold text-[#1A1A1A]">
+                      <span className="font-extrabold text-sm text-slate-800">
                         #{toBanglaDigits(sc.code, lang)}{' '}
                         {lang === 'bn' ? sc.title_bn : sc.title_en}
                       </span>
                       <span
-                        className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${
+                        className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
                           sc.badge_type === 'SAFE'
-                            ? 'bg-[#E6F2EE] text-[#006A4E]'
+                            ? 'bg-emerald-100 text-emerald-800'
                             : sc.badge_type === 'WARNING'
-                            ? 'bg-[#FEF3C7] text-[#B7791F]'
-                            : 'bg-[#FEECEE] text-[#F42A41]'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-rose-100 text-rose-800'
                         }`}
                       >
                         {sc.badge_type}
                       </span>
                     </div>
-                    <p className="text-sm text-[#5F6B66] mt-1">
+                    <p className="text-xs text-slate-600 mt-1">
                       {lang === 'bn' ? sc.description_bn : sc.description_en}
                     </p>
                   </div>
                   <button
                     onClick={() => handleRunScenario(sc.code)}
-                    className="self-start px-4 py-2 rounded-lg bg-[#006A4E] text-white text-xs font-bold cursor-pointer"
+                    className="self-start px-3.5 py-1.5 rounded-lg bg-[#253656] hover:bg-[#006A4E] text-white text-xs font-bold cursor-pointer min-h-[34px]"
                   >
-                    {t('এই সিনারিও রান করুন →', 'Run Scenario →')}
+                    {t('কেস বিশ্লেষণ দেখুন →', 'Inspect Case Report →')}
                   </button>
                 </div>
               ))}
@@ -467,13 +490,13 @@ export const AdminDashboardPage: React.FC = () => {
           {activeScenarioReport && <ResultHeroBanner report={activeScenarioReport} />}
 
           {ocrSample && (
-            <div className="bg-white rounded-2xl p-6 border border-gray-200 space-y-4">
+            <div className="bg-white rounded-xl p-6 border border-slate-200/90 shadow-2xs space-y-4">
               <div className="flex items-center gap-2">
-                <FileSearch className="w-6 h-6 text-[#006A4E]" />
-                <h2 className="text-xl font-bold text-[#1A1A1A]">
+                <FileSearch className="w-5 h-5 text-[#006A4E]" />
+                <h2 className="text-lg font-extrabold text-slate-800">
                   {t(
-                    'পুরাতন স্ক্যানকৃত খতিয়ান ডিজিটাইজেশন সহায়ক (OCR Assist + মানব যাচাই)',
-                    'Legacy Khatian Digitization Assist (OCR + Human Confirmation)'
+                    'পুরাতন স্ক্যানকৃত খতিয়ান ডিজিটাইজেশন সহায়ক (Bangla OCR Assist + মানব যাচাই)',
+                    'Legacy Khatian Digitization Assist (Bangla OCR + Officer Review)'
                   )}
                 </h2>
               </div>
@@ -483,19 +506,19 @@ export const AdminDashboardPage: React.FC = () => {
                     key={key}
                     className={`p-3 rounded-xl border ${
                       val.low_confidence
-                        ? 'bg-[#FEF3C7] border-[#B7791F]'
-                        : 'bg-gray-50 border-gray-200'
+                        ? 'bg-amber-50 border-amber-300'
+                        : 'bg-slate-50 border-slate-200'
                     }`}
                   >
-                    <div className="text-xs font-bold uppercase text-gray-500">{key}</div>
+                    <div className="text-[11px] font-bold uppercase text-slate-500">{key}</div>
                     <input
                       type="text"
                       defaultValue={val.value}
-                      className="w-full mt-1 p-2 rounded bg-white border border-gray-300 font-bold"
+                      className="w-full mt-1 p-2 rounded bg-white border border-slate-300 text-xs font-bold"
                     />
-                    <div className="text-xs mt-1 font-semibold">
+                    <div className="text-[11px] mt-1 font-semibold">
                       Confidence: {Math.round(val.confidence * 100)}%{' '}
-                      {val.low_confidence && t('⚠ মানব যাচাই প্রয়োজন', '⚠ Needs Human Review')}
+                      {val.low_confidence && t('⚠ মানব যাচাই প্রয়োজন', '⚠ Officer Review Needed')}
                     </div>
                   </div>
                 ))}
@@ -508,20 +531,20 @@ export const AdminDashboardPage: React.FC = () => {
       {/* TAB 4: Users CRUD Management */}
       {subTab === 'users' && (
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 space-y-4">
-            <h2 className="text-xl font-bold text-[#006A4E] flex items-center gap-2">
-              <UserPlus className="w-6 h-6" />
+          <div className="bg-white rounded-xl p-6 border border-slate-200/90 shadow-2xs space-y-4">
+            <h2 className="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-[#006A4E]" />
               <span>
-                {t('নতুন কর্মকর্তা / ব্যবহারকারী যুক্ত করুন', 'Create New Officer / System User')}
+                {t('নতুন কর্মকর্তা / ব্যবহারকারী যুক্ত করুন', 'Add New Officer / System Account')}
               </span>
             </h2>
-            <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <input
                 type="text"
                 placeholder={t('ইউজারনেম (যেমন: registrar_dhamrai)', 'Username')}
                 value={newUsername}
                 onChange={(e) => setNewUsername(e.target.value)}
-                className="p-3 rounded-xl border-2 border-gray-300"
+                className="p-2.5 rounded-lg border border-slate-300 text-xs"
                 required
               />
               <input
@@ -529,13 +552,13 @@ export const AdminDashboardPage: React.FC = () => {
                 placeholder={t('পূর্ণ নাম (বাংলা)', 'Full Name (Bangla)')}
                 value={newNameBn}
                 onChange={(e) => setNewNameBn(e.target.value)}
-                className="p-3 rounded-xl border-2 border-gray-300"
+                className="p-2.5 rounded-lg border border-slate-300 text-xs"
                 required
               />
               <select
                 value={newRole}
                 onChange={(e) => setNewRole(e.target.value as UserRole)}
-                className="p-3 rounded-xl border-2 border-gray-300 bg-white font-bold"
+                className="p-2.5 rounded-lg border border-slate-300 bg-white text-xs font-bold"
               >
                 <option value="citizen">Citizen (নাগরিক)</option>
                 <option value="sub_registrar">Sub-Registrar (সাব-রেজিস্ট্রার)</option>
@@ -545,10 +568,10 @@ export const AdminDashboardPage: React.FC = () => {
               </select>
               <input
                 type="text"
-                placeholder={t('মক এনআইডি', 'Mock NID')}
+                placeholder={t('এনআইডি নম্বর', 'NID Number')}
                 value={newNid}
                 onChange={(e) => setNewNid(e.target.value)}
-                className="p-3 rounded-xl border-2 border-gray-300 font-mono"
+                className="p-2.5 rounded-lg border border-slate-300 font-mono text-xs"
                 required
               />
               <input
@@ -556,45 +579,45 @@ export const AdminDashboardPage: React.FC = () => {
                 placeholder={t('অফিসের নাম', 'Office Name')}
                 value={newOffice}
                 onChange={(e) => setNewOffice(e.target.value)}
-                className="p-3 rounded-xl border-2 border-gray-300"
+                className="p-2.5 rounded-lg border border-slate-300 text-xs"
               />
               <button
                 type="submit"
-                className="px-6 py-3 rounded-xl bg-[#006A4E] text-white font-extrabold cursor-pointer"
+                className="px-5 py-2.5 rounded-lg bg-[#006A4E] text-white text-xs font-extrabold cursor-pointer min-h-[40px]"
               >
-                + {t('ব্যবহারকারী তৈরি করুন', 'Add User')}
+                + {t('ব্যবহারকারী তৈরি করুন', 'Create Officer Account')}
               </button>
             </form>
           </div>
 
-          <div className="bg-white rounded-2xl p-6 border border-gray-200 space-y-4">
-            <h2 className="text-xl font-bold text-[#1A1A1A]">
-              {t('সকল নিবন্ধিত ব্যবহারকারী ও রোল নিয়ন্ত্রণ তালিকা', 'All System Users & Role Assignment Table')} (
-              {toBanglaDigits(usersList.length, lang)})
+          <div className="bg-white rounded-xl p-6 border border-slate-200/90 shadow-2xs space-y-4">
+            <h2 className="text-base font-extrabold text-slate-800">
+              {t('সকল নিবন্ধিত কর্মকর্তা ও রোল নিয়ন্ত্রণ ডিরেক্টরি', 'Registered Officers & Role Assignment Directory')}{' '}
+              ({toBanglaDigits(usersList.length, lang)})
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {usersList.map((u) => (
                 <div
                   key={u.id}
-                  className="p-4 rounded-xl bg-gray-50 border border-gray-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                  className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
                 >
                   <div>
-                    <div className="font-bold text-lg text-[#1A1A1A] flex items-center gap-2">
+                    <div className="font-bold text-sm text-slate-800 flex items-center gap-2">
                       <span>{lang === 'bn' ? u.full_name_bn : u.full_name_en}</span>
-                      <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-[#E6F2EE] text-[#006A4E] font-bold">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#253656] text-white font-bold">
                         {u.role}
                       </span>
                       <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                           u.is_active
                             ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-red-100 text-red-800'
+                            : 'bg-rose-100 text-rose-800'
                         }`}
                       >
                         {u.is_active ? 'ACTIVE' : 'DISABLED'}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-600 font-mono mt-1">
+                    <div className="text-xs text-slate-500 font-mono mt-1">
                       @{u.username} • NID: {u.nid_mock} • Office: {u.office_name}
                     </div>
                   </div>
@@ -603,7 +626,7 @@ export const AdminDashboardPage: React.FC = () => {
                     <select
                       value={u.role}
                       onChange={(e) => handleChangeUserRole(u, e.target.value)}
-                      className="px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-bold min-h-[36px]"
+                      className="px-2.5 py-1 rounded border border-slate-300 bg-white text-xs font-bold min-h-[34px]"
                     >
                       <option value="citizen">citizen</option>
                       <option value="sub_registrar">sub_registrar</option>
@@ -613,7 +636,7 @@ export const AdminDashboardPage: React.FC = () => {
                     </select>
                     <button
                       onClick={() => handleToggleUserStatus(u)}
-                      className="px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-bold hover:bg-gray-200 cursor-pointer min-h-[36px]"
+                      className="px-3 py-1 rounded border border-slate-300 text-xs font-bold hover:bg-slate-200 cursor-pointer min-h-[34px]"
                     >
                       {u.is_active
                         ? t('নিষ্ক্রিয় করুন', 'Disable')
@@ -622,7 +645,7 @@ export const AdminDashboardPage: React.FC = () => {
                     {u.id > 5 && (
                       <button
                         onClick={() => handleDeleteUser(u.id)}
-                        className="p-2 rounded-lg text-[#F42A41] hover:bg-red-50 cursor-pointer min-h-[36px]"
+                        className="p-1.5 rounded text-[#F42A41] hover:bg-rose-50 cursor-pointer min-h-[34px]"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -637,53 +660,61 @@ export const AdminDashboardPage: React.FC = () => {
 
       {/* TAB 5: Site Settings & Rules Engine Configuration */}
       {subTab === 'settings' && (
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 space-y-6">
+        <div className="bg-white rounded-xl p-6 border border-slate-200/90 shadow-2xs space-y-5">
           <div>
-            <h2 className="text-xl font-bold text-[#006A4E] flex items-center gap-2">
-              <Settings className="w-6 h-6" />
+            <h2 className="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+              <Settings className="w-5 h-5 text-[#006A4E]" />
               <span>
                 {t(
-                  'সিস্টেম কনফিগারেশন, RBAC এনফোর্সমেন্ট ও জালিয়াতি রুল ইঞ্জিন সেটিংস',
-                  'Site Configuration, RBAC Enforcement & Fraud Rules Engine Thresholds'
+                  'সিস্টেম কনফিগারেশন, RBAC পলিসি ও জালিয়াতি রুল ইঞ্জিন থ্রেশহোল্ড',
+                  'System Policy Configuration, RBAC Enforcement & Rules Engine Thresholds'
                 )}
               </span>
             </h2>
-            <p className="text-sm text-[#5F6B66]">
-              {t(
-                'এখান থেকে RBAC মিডলওয়্যার মোড, দ্রুত পুনঃবিক্রয় সতর্কতার দিন সংখ্যা, স্বয়ংক্রিয় হোল্ড এবং সিস্টেম ব্যানার নিয়ন্ত্রণ করুন।',
-                'Configure RBAC strict mode, rapid-resale warning days, auto-hold rules, and site banners.'
-              )}
-            </p>
           </div>
 
           {saveMsg && (
-            <div className="p-4 rounded-xl bg-[#E6F2EE] text-[#006A4E] font-bold">{saveMsg}</div>
+            <div className="p-4 rounded-xl bg-[#E6F2EE] text-[#006A4E] font-bold text-xs">
+              {saveMsg}
+            </div>
           )}
 
           <form onSubmit={handleSaveSettings} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {settingsList.map((st) => (
-                <div key={st.setting_key} className="p-4 rounded-xl bg-gray-50 border border-gray-200">
-                  <label className="block font-bold text-sm text-[#1A1A1A] mb-1">
-                    {lang === 'bn' ? st.label_bn : st.label_en}
+                <div
+                  key={st.setting_key || st.key}
+                  className="p-4 rounded-xl bg-slate-50 border border-slate-200"
+                >
+                  <label className="block font-bold text-xs text-slate-800 mb-1">
+                    {lang === 'bn' ? st.label_bn || st.description_bn : st.label_en || st.description_en}
                   </label>
-                  <div className="text-xs font-mono text-gray-500 mb-2">{st.setting_key}</div>
+                  <div className="text-[11px] font-mono text-slate-400 mb-2">
+                    {st.setting_key || st.key}
+                  </div>
                   <input
                     type="text"
-                    value={settingsMap[st.setting_key] ?? st.setting_value}
-                    onChange={(e) =>
-                      setSettingsMap({ ...settingsMap, [st.setting_key]: e.target.value })
+                    value={
+                      settingsMap[st.setting_key || st.key] ??
+                      st.setting_value ??
+                      String(st.value ?? '')
                     }
-                    className="w-full p-2.5 rounded-lg bg-white border border-gray-300 font-semibold"
+                    onChange={(e) =>
+                      setSettingsMap({
+                        ...settingsMap,
+                        [st.setting_key || st.key]: e.target.value,
+                      })
+                    }
+                    className="w-full p-2 rounded-lg bg-white border border-slate-300 text-xs font-semibold"
                   />
                 </div>
               ))}
             </div>
             <button
               type="submit"
-              className="px-8 py-3.5 rounded-xl bg-[#006A4E] text-white font-extrabold cursor-pointer"
+              className="px-6 py-2.5 rounded-lg bg-[#006A4E] text-white text-xs font-extrabold cursor-pointer min-h-[40px]"
             >
-              {t('সেটিংস সংরক্ষণ করুন', 'Save Site Settings')}
+              {t('পলিসি সংরক্ষণ করুন', 'Save System Policies')}
             </button>
           </form>
         </div>
@@ -691,11 +722,14 @@ export const AdminDashboardPage: React.FC = () => {
 
       {/* TAB 6: Append-Only Hash-Chained Audit Log */}
       {subTab === 'audit' && (
-        <div className="bg-white rounded-2xl p-6 border border-gray-200 space-y-4">
+        <div className="bg-white rounded-xl p-6 border border-slate-200/90 shadow-2xs space-y-4">
           <div className="flex items-center gap-2">
-            <History className="w-6 h-6 text-[#006A4E]" />
-            <h2 className="text-xl font-bold text-[#1A1A1A]">
-              {t('অপরিবর্তনীয় হ্যাশ-চেইন অডিট লগ (Append-Only Audit Log)', 'Append-Only Hash-Chained Audit Log')}
+            <History className="w-5 h-5 text-[#006A4E]" />
+            <h2 className="text-lg font-extrabold text-slate-800">
+              {t(
+                'অপরিবর্তনীয় হ্যাশ-চেইন অডিট লগ (Append-Only Cryptographic Audit Trail)',
+                'Append-Only Hash-Chained Audit Trail'
+              )}
             </h2>
           </div>
 
@@ -703,14 +737,14 @@ export const AdminDashboardPage: React.FC = () => {
             {auditLogs.map((log) => (
               <div
                 key={log.id}
-                className="p-3 rounded-xl bg-gray-50 border border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-2"
+                className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-2"
               >
                 <div>
                   <span className="font-bold text-[#006A4E]">[{log.action}]</span>{' '}
-                  <span className="text-gray-800">{log.actor_role}</span> — {log.target_ref} (
+                  <span className="text-slate-800">{log.actor_role}</span> — {log.target_ref} (
                   {log.detail})
                 </div>
-                <div className="text-gray-500 truncate max-w-xs">HASH: {log.entry_hash}</div>
+                <div className="text-slate-400 truncate max-w-xs">HASH: {log.entry_hash}</div>
               </div>
             ))}
           </div>

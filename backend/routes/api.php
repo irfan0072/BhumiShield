@@ -44,10 +44,10 @@ return static function (string $method, string $uri, array $query, array $body):
     }
 
     // 1. Public & Admin Ledger Verification Routes
-    if ($method === 'GET' && preg_match('#^/verify/deed/([^/]+)$#', $sub, $m)) {
+    if ($method === 'GET' && (preg_match('#^/verify/deed/([^/]+)$#', $sub, $m) || preg_match('#^/deeds/verify/([^/]+)$#', $sub, $m))) {
         return LedgerVerificationController::verifySingleDeed(urldecode($m[1]), $query['h'] ?? null);
     }
-    if ($method === 'GET' && $sub === '/ledger/verify') {
+    if ($method === 'GET' && ($sub === '/ledger/verify' || $sub === '/ledger/verify-chain')) {
         return LedgerVerificationController::verifyFullLedger((int) ($query['limit'] ?? 25));
     }
     if ($method === 'POST' && preg_match('#^/ledger/tamper/(\d+)$#', $sub, $m)) {
@@ -89,10 +89,19 @@ return static function (string $method, string $uri, array $query, array $body):
     if ($method === 'GET' && $sub === '/locations') {
         return WorkflowController::listLocations();
     }
+    if ($method === 'GET' && $sub === '/plots') {
+        $locData = WorkflowController::listLocations();
+        $plots = $locData['plots'] ?? [];
+        if (!empty($query['location_id']) || !empty($query['mouza_id'])) {
+            $lid = (int) ($query['location_id'] ?? $query['mouza_id']);
+            $plots = array_values(array_filter($plots, fn(array $p) => (int) $p['location_id'] === $lid));
+        }
+        return ['items' => $plots, 'total' => count($plots)];
+    }
     if ($method === 'GET' && $sub === '/persons') {
         return WorkflowController::listPersons();
     }
-    if ($method === 'GET' && $sub === '/citizen/my-properties') {
+    if ($method === 'GET' && ($sub === '/citizen/my-properties' || $sub === '/citizen/my-vault')) {
         return SystemAdminController::getCitizenLinkedProperties($query['nid'] ?? null);
     }
     if ($method === 'POST' && preg_match('#^/citizen/plots/(\d+)/toggle-lock$#', $sub, $m)) {
@@ -111,7 +120,7 @@ return static function (string $method, string $uri, array $query, array $body):
     }
 
     // 4. Sub-Registrar Controlling Routes (Protected by RoleMiddleware)
-    if ($method === 'GET' && $sub === '/scenarios') {
+    if ($method === 'GET' && ($sub === '/scenarios' || $sub === '/demo-scenarios')) {
         return WorkflowController::listDemoScenarios();
     }
     if ($method === 'POST' && $sub === '/registrar/pre-check') {
@@ -130,15 +139,22 @@ return static function (string $method, string $uri, array $query, array $body):
         return RoleControlController::updateDeedStatus((int) $m[1], $body);
     }
     if ($method === 'GET' && $sub === '/registrar/calculate-fees') {
-        return RoleControlController::calculateFees((int) ($query['price_bdt'] ?? 1500000), (string) ($query['deed_type'] ?? 'SALE'));
+        $val = (int) ($query['price_bdt'] ?? ($query['declared_value_bdt'] ?? 1500000));
+        return RoleControlController::calculateFees($val, (string) ($query['deed_type'] ?? 'SALE'));
     }
 
     // 5. AC Land Controlling Routes (Protected by RoleMiddleware)
     if ($method === 'GET' && $sub === '/mutations') {
         return WorkflowController::listMutations($query['status'] ?? null);
     }
-    if ($method === 'POST' && preg_match('#^/mutations/(\d+)/decide$#', $sub, $m)) {
+    if ($method === 'POST' && (preg_match('#^/mutations/(\d+)/decide$#', $sub, $m) || preg_match('#^/mutations/(\d+)/decision$#', $sub, $m))) {
         $actor = RoleMiddleware::authorize(['ac_land', 'admin']);
+        if (isset($body['status']) && !isset($body['decision'])) {
+            $body['decision'] = $body['status'];
+        }
+        if (isset($body['decision_note_bn']) && !isset($body['reason_bn'])) {
+            $body['reason_bn'] = $body['decision_note_bn'];
+        }
         return WorkflowController::decideMutationCase((int) $m[1], $body, $actor);
     }
     if ($method === 'GET' && $sub === '/acland/flagged-khatians') {
@@ -173,25 +189,25 @@ return static function (string $method, string $uri, array $query, array $body):
     }
 
     // 7. Audit Log, Bangla OCR & System Admin Routes
-    if ($method === 'GET' && $sub === '/audit-log') {
+    if ($method === 'GET' && ($sub === '/audit-log' || $sub === '/audit-logs')) {
         return WorkflowController::getAuditLog();
     }
-    if ($method === 'POST' && $sub === '/ocr/khatian-demo') {
-        return WorkflowController::parseDummyKhatianOcr($body);
+    if (($method === 'POST' || $method === 'GET') && ($sub === '/ocr/khatian-demo' || $sub === '/ocr-assist/sample')) {
+        return WorkflowController::parseDummyKhatianOcr($body ?: $query);
     }
-    if ($method === 'GET' && $sub === '/admin/users') {
+    if ($method === 'GET' && ($sub === '/admin/users' || $sub === '/users')) {
         RoleMiddleware::authorize(['admin']);
         return SystemAdminController::adminListUsers($query['role'] ?? null, $query['q'] ?? null);
     }
-    if ($method === 'POST' && $sub === '/admin/users') {
+    if ($method === 'POST' && ($sub === '/admin/users' || $sub === '/users')) {
         RoleMiddleware::authorize(['admin']);
         return SystemAdminController::registerUser($body);
     }
-    if ($method === 'PUT' && preg_match('#^/admin/users/(\d+)$#', $sub, $m)) {
+    if ($method === 'PUT' && (preg_match('#^/admin/users/(\d+)$#', $sub, $m) || preg_match('#^/users/(\d+)$#', $sub, $m))) {
         $actor = RoleMiddleware::authorize(['admin']);
         return SystemAdminController::adminUpdateUser((int) $m[1], $body, $actor);
     }
-    if ($method === 'DELETE' && preg_match('#^/admin/users/(\d+)$#', $sub, $m)) {
+    if ($method === 'DELETE' && (preg_match('#^/admin/users/(\d+)$#', $sub, $m) || preg_match('#^/users/(\d+)$#', $sub, $m))) {
         $actor = RoleMiddleware::authorize(['admin']);
         return SystemAdminController::adminDeleteUser((int) $m[1], $actor);
     }
@@ -202,7 +218,7 @@ return static function (string $method, string $uri, array $query, array $body):
         $actor = RoleMiddleware::authorize(['admin']);
         return SystemAdminController::updateSiteSettings($body, $actor);
     }
-    if ($method === 'GET' && $sub === '/analytics/summary') {
+    if ($method === 'GET' && ($sub === '/analytics/summary' || $sub === '/stats/summary')) {
         return SystemAdminController::getAnalyticsSummary();
     }
 

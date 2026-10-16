@@ -17,7 +17,12 @@ import {
   LogOut,
   LogIn,
   Home,
-  KeyRound,
+  Menu,
+  Bell,
+  ChevronRight,
+  PhoneCall,
+  Layers,
+  LayoutDashboard,
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -34,15 +39,58 @@ const ROLE_DASHBOARD_MAP: Record<UserRole, string> = {
   admin: 'admin',
 };
 
-const ROLE_LABELS_BN: Record<UserRole, string> = {
-  citizen: 'নাগরিক (Citizen)',
-  sub_registrar: 'সাব-রেজিস্ট্রার (Sub-Registrar)',
-  ac_land: 'এসি ল্যান্ড (AC Land)',
-  bank_officer: 'ব্যাংক কর্মকর্তা (Bank)',
-  admin: 'অ্যাডমিন ও অডিটর (Admin)',
+const ROLE_META: Record<
+  UserRole,
+  {
+    titleBn: string;
+    titleEn: string;
+    deptBn: string;
+    deptEn: string;
+    badgeColor: string;
+  }
+> = {
+  citizen: {
+    titleBn: 'নাগরিক ভূমি পোর্টাল',
+    titleEn: 'Citizen Land Portal',
+    deptBn: 'নাগরিক সেবা ও ভূমি সুরক্ষা ভল্ট',
+    deptEn: 'Citizen Property Vault & Verification',
+    badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30',
+  },
+  sub_registrar: {
+    titleBn: 'সাব-রেজিস্ট্রার প্যানেল',
+    titleEn: 'Sub-Registrar Panel',
+    deptBn: 'নিবন্ধন অধিদপ্তর • আইন মন্ত্রণালয়',
+    deptEn: 'Directorate of Registration • Ministry of Law',
+    badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-400/30',
+  },
+  ac_land: {
+    titleBn: 'এসি ল্যান্ড প্যানেল',
+    titleEn: 'AC Land Panel',
+    deptBn: 'উপজেলা ভূমি অফিস • ভূমি মন্ত্রণালয়',
+    deptEn: 'Upazila Land Office • Ministry of Land',
+    badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-400/30',
+  },
+  bank_officer: {
+    titleBn: 'ব্যাংক মর্টগেজ প্যানেল',
+    titleEn: 'Bank Mortgage Panel',
+    deptBn: 'তফসিলি ব্যাংক জামানত ও লিয়েন বিভাগ',
+    deptEn: 'Scheduled Bank Collateral & Lien Division',
+    badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-400/30',
+  },
+  admin: {
+    titleBn: 'জাতীয় অ্যাডমিন ও অডিট প্যানেল',
+    titleEn: 'National Admin & Audit Panel',
+    deptBn: 'কেন্দ্রীয় ক্রিপ্টোগ্রাফিক লেজার ও গভর্ন্যান্স',
+    deptEn: 'Central Ledger Governance & Security',
+    badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-400/30',
+  },
 };
 
-export const NavbarAndLayout: React.FC<LayoutProps> = ({ activeTab, setActiveTab, children }) => {
+export const NavbarAndLayout: React.FC<LayoutProps> = ({
+  activeTab,
+  setActiveTab,
+  children,
+}) => {
   const {
     lang,
     setLang,
@@ -61,6 +109,9 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({ activeTab, setActiveTab
 
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [switchingRole, setSwitchingRole] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [globalSearch, setGlobalSearch] = useState('');
+  const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
     const onOffline = () => setIsOffline(true);
@@ -73,7 +124,13 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({ activeTab, setActiveTab
     };
   }, []);
 
-  const handleRoleChange = async (newRole: UserRole) => {
+  useEffect(() => {
+    BhumiApi.getStatsSummary()
+      .then((res) => setStats(res))
+      .catch(() => {});
+  }, [activeTab, role]);
+
+  const handleRoleChange = async (newRole: UserRole, navigateToRole = true) => {
     setSwitchingRole(true);
     try {
       const res = await BhumiApi.switchDemoRole(newRole);
@@ -87,149 +144,610 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({ activeTab, setActiveTab
       setRole(newRole);
     } finally {
       setSwitchingRole(false);
-      setActiveTab(ROLE_DASHBOARD_MAP[newRole] || 'home');
+      if (navigateToRole) {
+        setActiveTab(ROLE_DASHBOARD_MAP[newRole] || 'home');
+      }
     }
   };
 
-  return (
-    <div className="min-h-screen flex flex-col bg-[#FAFBFA] text-[#1A1A1A] pb-24 md:pb-8">
-      {/* Signature Bangladesh National Flag Top Bar */}
-      <div className="h-2.5 w-full bg-[#006A4E] flex items-center justify-center relative">
-        <div className="w-3.5 h-3.5 rounded-full bg-[#F42A41] border border-white shadow-xs" />
-      </div>
+  const handleGlobalSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = globalSearch.trim().toUpperCase();
+    if (!q) return;
+    if (q.startsWith('DL-') || q.startsWith('DEED-')) {
+      setActiveTab('qr');
+    } else {
+      setActiveTab('check');
+    }
+  };
 
-      {/* Offline Banner */}
-      {isOffline && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="bg-[#B7791F] text-white px-4 py-2 text-center font-semibold flex items-center justify-center gap-2"
-        >
-          <WifiOff className="w-5 h-5" />
-          <span>
-            {t(
-              'অফলাইন মোড: সংরক্ষিত ডেমো তথ্য দেখানো হচ্ছে। ইন্টারনেট সংযোগ ফিরলে লাইভ যাচাই সচল হবে।',
-              'Offline Mode: Showing cached shell. Live verification resumes when online.'
-            )}
-          </span>
+  // Determine whether to render the Public GovTech Portal Header (when on Landing)
+  // or the Velzon Enterprise Left-Sidebar Panel (when inside any Role Panel / Tool)
+  const isPublicLanding = activeTab === 'landing';
+
+  if (isPublicLanding) {
+    return (
+      <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-[#1A1A1A]">
+        {/* Official Bangladesh GovTech Top Utility Bar (bcc.zohirrayhan.com style) */}
+        <div className="bg-[#004d38] text-white text-xs border-b-2 border-[#F42A41]">
+          <div className="max-w-7xl mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 font-medium">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#F42A41] inline-block shrink-0" />
+              <span>
+                {t(
+                  'গণপ্রজাতন্ত্রী বাংলাদেশ সরকার • ভূমি মন্ত্রণালয় ও আইন, বিচার ও সংসদ বিষয়ক মন্ত্রণালয় • কারিগরি সহযোগিতায়: বাংলাদেশ কম্পিউটার কাউন্সিল (BCC)',
+                  'Government of the People’s Republic of Bangladesh • Ministry of Land & Ministry of Law • Technical Support: BCC'
+                )}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="hidden md:inline-flex items-center gap-1 text-emerald-100 font-semibold">
+                <PhoneCall className="w-3.5 h-3.5" />
+                <span>{t('জাতীয় ভূমি হেল্পলাইন: ১৬১২২', 'Land Helpline: 16122')}</span>
+              </span>
+
+              <div className="flex items-center bg-white/10 rounded overflow-hidden border border-white/20">
+                <button
+                  onClick={decreaseFont}
+                  className="px-2 py-0.5 font-bold hover:bg-white/20 cursor-pointer min-h-[28px]"
+                >
+                  A−
+                </button>
+                <button
+                  onClick={increaseFont}
+                  className="px-2 py-0.5 font-bold hover:bg-white/20 border-l border-white/20 cursor-pointer min-h-[28px]"
+                >
+                  A+
+                </button>
+              </div>
+
+              <button
+                onClick={toggleHighContrast}
+                className="px-2.5 py-0.5 rounded bg-white/10 hover:bg-white/20 border border-white/20 font-semibold cursor-pointer min-h-[28px]"
+              >
+                {t('কনট্রাস্ট', 'Contrast')}
+              </button>
+
+              <button
+                onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
+                className="px-2.5 py-0.5 rounded bg-white text-[#004d38] font-extrabold cursor-pointer min-h-[28px]"
+              >
+                {lang === 'bn' ? 'English' : 'বাংলা'}
+              </button>
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* Main Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-          {/* Brand Logo */}
+        {/* Institutional Public Navigation Header */}
+        <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-2xs">
+          <div className="max-w-7xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <img
+                src="/assets/bhumishield-emblem.svg"
+                alt="BhumiShield Emblem"
+                className="w-12 h-12 rounded-xl shadow-xs"
+              />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl md:text-2xl font-extrabold text-[#006A4E] tracking-tight">
+                    {t('ভূমি সুরক্ষা (BhumiShield)', 'BhumiShield — National Land Ledger')}
+                  </span>
+                  <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-[#E6F2EE] text-[#006A4E] font-bold border border-[#006A4E]/25">
+                    {t('জাতীয় ই-ভূমি ট্রাস্ট লেয়ার', 'National e-Land Trust Layer')}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">
+                  {t(
+                    'সাব-রেজিস্ট্রি (আইন মন্ত্রণালয়), এসি ল্যান্ড (ভূমি মন্ত্রণালয়) ও তফসিলি ব্যাংকের সমন্বিত দলিল যাচাই সিস্টেম',
+                    'Integrated Pre-Registration Deed Verification & Cryptographic Ledger across Sub-Registry, AC Land & Banks'
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setActiveTab('check')}
+                className="px-3.5 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-bold text-sm flex items-center gap-1.5 cursor-pointer min-h-[40px]"
+              >
+                <Search className="w-4 h-4 text-[#006A4E]" />
+                <span>{t('দাগ ও খতিয়ান যাচাই', 'Verify Plot')}</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('qr')}
+                className="px-3.5 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-bold text-sm flex items-center gap-1.5 cursor-pointer min-h-[40px]"
+              >
+                <QrCode className="w-4 h-4 text-[#006A4E]" />
+                <span>{t('QR দলিল সনদ যাচাই', 'Verify Deed QR')}</span>
+              </button>
+              <button
+                onClick={() => setActiveTab(ROLE_DASHBOARD_MAP[role])}
+                className="px-4 py-2 rounded-lg bg-[#253656] hover:bg-[#1b2842] text-white font-bold text-sm flex items-center gap-1.5 shadow-xs cursor-pointer min-h-[40px]"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                <span>{t('রোল প্যানেল ড্যাশবোর্ড', 'Open Role Workspace')}</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('auth')}
+                className="px-4 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-sm flex items-center gap-1.5 shadow-xs cursor-pointer min-h-[40px]"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>{t('দাপ্তরিক ও নাগরিক লগইন', 'Portal Sign In')}</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6">{children}</main>
+
+        <InstitutionalFooter lang={lang} t={t} />
+      </div>
+    );
+  }
+
+  // ============================================================================
+  // VELZON ENTERPRISE ADMIN PANEL LAYOUT (Attached Image Style for Separate Roles)
+  // ============================================================================
+  const currentRoleMeta = ROLE_META[role];
+
+  // Role-specific dedicated sidebar navigation items
+  const getRoleSidebarItems = () => {
+    if (role === 'citizen') {
+      return [
+        {
+          id: 'home',
+          label: t('নাগরিক ভল্ট ওভারভিউ', 'Citizen Vault & Locks'),
+          icon: <ShieldCheck className="w-4 h-4" />,
+          badge: t('ভল্ট', 'Vault'),
+        },
+        {
+          id: 'check',
+          label: t('জমি কেনার আগে যাচাই', 'Check Before You Buy'),
+          icon: <Search className="w-4 h-4" />,
+        },
+        {
+          id: 'qr',
+          label: t('QR ও দলিল সনদ যাচাই', 'Verify Deed & QR'),
+          icon: <QrCode className="w-4 h-4" />,
+        },
+        {
+          id: 'profile',
+          label: t('প্রোফাইল ও নিরাপত্তা', 'Profile & Security'),
+          icon: <UserCheck className="w-4 h-4" />,
+        },
+        {
+          id: 'help',
+          label: t('নির্দেশিকা ও সহায়িকা', 'Citizen Guide'),
+          icon: <HelpCircle className="w-4 h-4" />,
+        },
+      ];
+    }
+
+    if (role === 'sub_registrar') {
+      return [
+        {
+          id: 'registrar',
+          label: t('সাব-রেজিস্ট্রার কনসোল', 'Sub-Registrar Console'),
+          icon: <FileSpreadsheet className="w-4 h-4" />,
+          badge: 'Primary',
+        },
+        {
+          id: 'check',
+          label: t('দাগ ও খতিয়ান পরম্পরা', 'Plot & Khatian Lineage'),
+          icon: <Search className="w-4 h-4" />,
+        },
+        {
+          id: 'qr',
+          label: t('দলিল স্বাক্ষর ও QR যাচাই', 'Deed Signature Verifier'),
+          icon: <QrCode className="w-4 h-4" />,
+        },
+        {
+          id: 'profile',
+          label: t('অফিসার প্রোফাইল', 'Officer Profile'),
+          icon: <UserCheck className="w-4 h-4" />,
+        },
+      ];
+    }
+
+    if (role === 'ac_land') {
+      return [
+        {
+          id: 'acland',
+          label: t('এসি ল্যান্ড ও মিউটেশন প্যানেল', 'AC Land & Mutation Panel'),
+          icon: <Landmark className="w-4 h-4" />,
+          badge: 'Primary',
+        },
+        {
+          id: 'check',
+          label: t('মৌজা ও খতিয়ান চেইন অনুসন্ধান', 'Khatian Chain Explorer'),
+          icon: <Search className="w-4 h-4" />,
+        },
+        {
+          id: 'qr',
+          label: t('নিবন্ধিত দলিল যাচাই', 'Verify Registered Deed'),
+          icon: <QrCode className="w-4 h-4" />,
+        },
+        {
+          id: 'profile',
+          label: t('অফিসার প্রোফাইল', 'Officer Profile'),
+          icon: <UserCheck className="w-4 h-4" />,
+        },
+      ];
+    }
+
+    if (role === 'bank_officer') {
+      return [
+        {
+          id: 'bank',
+          label: t('ব্যাংক মর্টগেজ ও NOC প্যানেল', 'Bank Lien & NOC Panel'),
+          icon: <Building2 className="w-4 h-4" />,
+          badge: 'Primary',
+        },
+        {
+          id: 'check',
+          label: t('জামানত দাগ ও মালিকানা যাচাই', 'Collateral Plot Check'),
+          icon: <Search className="w-4 h-4" />,
+        },
+        {
+          id: 'qr',
+          label: t('মর্টগেজ দলিল ও QR যাচাই', 'Verify Deed QR'),
+          icon: <QrCode className="w-4 h-4" />,
+        },
+        {
+          id: 'profile',
+          label: t('অফিসার প্রোফাইল', 'Officer Profile'),
+          icon: <UserCheck className="w-4 h-4" />,
+        },
+      ];
+    }
+
+    // Admin
+    return [
+      {
+        id: 'admin',
+        label: t('জাতীয় গভর্ন্যান্স ও অডিট কনসোল', 'National Admin & Audit'),
+        icon: <Lock className="w-4 h-4" />,
+        badge: 'Admin',
+      },
+      {
+        id: 'registrar',
+        label: t('সাব-রেজিস্ট্রি মনিটরিং', 'Sub-Registry Monitor'),
+        icon: <FileSpreadsheet className="w-4 h-4" />,
+      },
+      {
+        id: 'acland',
+        label: t('এসি ল্যান্ড মিউটেশন মনিটরিং', 'AC Land Monitor'),
+        icon: <Landmark className="w-4 h-4" />,
+      },
+      {
+        id: 'bank',
+        label: t('ব্যাংক লিয়েন মনিটরিং', 'Bank Lien Monitor'),
+        icon: <Building2 className="w-4 h-4" />,
+      },
+      {
+        id: 'check',
+        label: t('দাগ ও খতিয়ান যাচাই', 'Plot Lineage Explorer'),
+        icon: <Search className="w-4 h-4" />,
+      },
+      {
+        id: 'qr',
+        label: t('QR ও লেজার সনদ যাচাই', 'Ledger QR Verifier'),
+        icon: <QrCode className="w-4 h-4" />,
+      },
+    ];
+  };
+
+  const sidebarItems = getRoleSidebarItems();
+
+  return (
+    <div className="min-h-screen flex bg-[#F3F6F9] text-slate-800 pb-20 md:pb-0">
+      {/* LEFT VERTICAL VELZON DARK SIDEBAR (#253656) */}
+      <aside
+        className={`${
+          sidebarOpen ? 'w-64' : 'w-20'
+        } hidden md:flex flex-col bg-[#253656] text-slate-200 transition-all duration-200 shrink-0 select-none shadow-xl z-30`}
+      >
+        {/* Brand Header */}
+        <div className="h-16 px-4 flex items-center justify-between border-b border-white/10">
           <button
             onClick={() => setActiveTab('landing')}
-            className="flex items-center gap-3 text-left focus:outline-none group"
+            className="flex items-center gap-3 text-left focus:outline-none cursor-pointer min-h-0"
           >
             <img
               src="/assets/bhumishield-emblem.svg"
-              alt="BhumiShield Emblem"
-              className="w-12 h-12 rounded-xl shadow-xs group-hover:scale-105 transition-transform"
+              alt="Emblem"
+              className="w-9 h-9 rounded-lg shrink-0"
             />
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xl md:text-2xl font-bold text-[#006A4E] tracking-tight">
-                  {t('ভূমি সুরক্ষা', 'BhumiShield')}
-                </span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-[#E6F2EE] text-[#006A4E] font-semibold border border-[#006A4E]/30">
-                  {t('ডেমো', 'DEMO')}
-                </span>
+            {sidebarOpen && (
+              <div>
+                <div className="font-extrabold text-white text-base tracking-wide leading-none">
+                  BHUMISHIELD
+                </div>
+                <div className="text-[11px] text-emerald-300 font-semibold mt-1">
+                  {t('ভূমি সুরক্ষা • জাতীয় লেজার', 'National Land Ledger')}
+                </div>
               </div>
-              <p className="text-xs md:text-sm text-[#5F6B66]">
-                {t(
-                  'দলিল নিবন্ধনের আগে মালিকানা যাচাই ও অপরিবর্তনীয় লেজার',
-                  'Pre-Registration Land Verification & Tamper-Evident Ledger'
-                )}
-              </p>
-            </div>
+            )}
           </button>
+        </div>
 
-          {/* Accessibility, RBAC Role Switcher & Auth Controls */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* RBAC Role Switcher (Mints Real JWT for Hackathon Demo) */}
-            <div className="flex items-center bg-[#E6F2EE] rounded-lg px-2 py-1 border border-[#006A4E]/30">
-              <KeyRound className="w-4 h-4 text-[#006A4E] mr-1.5 shrink-0" />
-              <label htmlFor="role-select" className="text-xs font-bold text-[#006A4E] mr-1.5">
-                {t('ভূমিকা (RBAC):', 'RBAC Role:')}
-              </label>
+        {/* Active Role Workspace Badge inside Sidebar */}
+        {sidebarOpen && (
+          <div className="px-4 py-3.5 border-b border-white/10 bg-[#1d2b45]">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              {t('সক্রিয় দাপ্তরিক প্যানেল', 'ACTIVE ROLE WORKSPACE')}
+            </div>
+            <div className="mt-1 font-extrabold text-sm text-white flex items-center justify-between">
+              <span>{lang === 'bn' ? currentRoleMeta.titleBn : currentRoleMeta.titleEn}</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            </div>
+            <div className="text-[11px] text-slate-300 mt-0.5 truncate">
+              {lang === 'bn' ? currentRoleMeta.deptBn : currentRoleMeta.deptEn}
+            </div>
+          </div>
+        )}
+
+        {/* Sidebar Navigation Sections */}
+        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+          {/* Primary Role Menu */}
+          <div>
+            {sidebarOpen && (
+              <div className="px-3 mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                {t('মেনু ও অপারেশন (MENU)', 'WORKSPACE MENU')}
+              </div>
+            )}
+            <div className="space-y-1">
+              {sidebarItems.map((item) => {
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer min-h-[40px] ${
+                      isActive
+                        ? 'bg-[#006A4E] text-white shadow-xs'
+                        : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 truncate">
+                      {item.icon}
+                      {sidebarOpen && <span className="truncate">{item.label}</span>}
+                    </div>
+                    {sidebarOpen && item.badge && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-400/20 text-emerald-200 font-bold">
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Dedicated Role Panels Switcher (Velzon Multi-Dashboard Submenu) */}
+          <div>
+            {sidebarOpen && (
+              <div className="px-3 mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5" />
+                <span>{t('৫টি রোল প্যানেল (PANELS)', 'ROLE WORKSPACES')}</span>
+              </div>
+            )}
+            <div className="space-y-1">
+              {(
+                [
+                  {
+                    r: 'citizen' as UserRole,
+                    tab: 'home',
+                    label: t('নাগরিক ভল্ট প্যানেল', 'Citizen Vault Panel'),
+                  },
+                  {
+                    r: 'sub_registrar' as UserRole,
+                    tab: 'registrar',
+                    label: t('সাব-রেজিস্ট্রার প্যানেল', 'Sub-Registrar Panel'),
+                  },
+                  {
+                    r: 'ac_land' as UserRole,
+                    tab: 'acland',
+                    label: t('এসি ল্যান্ড প্যানেল', 'AC Land Panel'),
+                  },
+                  {
+                    r: 'bank_officer' as UserRole,
+                    tab: 'bank',
+                    label: t('ব্যাংক মর্টগেজ প্যানেল', 'Bank Officer Panel'),
+                  },
+                  {
+                    r: 'admin' as UserRole,
+                    tab: 'admin',
+                    label: t('জাতীয় অ্যাডমিন প্যানেল', 'System Admin Panel'),
+                  },
+                ] as const
+              ).map((rp) => {
+                const isCurrentRolePanel = role === rp.r && activeTab === rp.tab;
+                return (
+                  <button
+                    key={rp.r}
+                    onClick={() => handleRoleChange(rp.r, true)}
+                    className={`w-full px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between transition-colors cursor-pointer min-h-[36px] ${
+                      isCurrentRolePanel
+                        ? 'bg-white/15 text-white font-bold border-l-4 border-emerald-400'
+                        : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          role === rp.r ? 'bg-emerald-400' : 'bg-slate-500'
+                        }`}
+                      />
+                      {sidebarOpen && <span className="truncate">{rp.label}</span>}
+                    </div>
+                    {sidebarOpen && <ChevronRight className="w-3.5 h-3.5 opacity-60" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Public Portal Link */}
+        <div className="p-3 border-t border-white/10">
+          <button
+            onClick={() => setActiveTab('landing')}
+            className="w-full px-3 py-2.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-bold text-white flex items-center justify-center gap-2 cursor-pointer min-h-[40px]"
+          >
+            <Home className="w-4 h-4 text-emerald-300" />
+            {sidebarOpen && <span>{t('পাবলিক পোর্টালে ফিরুন', 'Public National Portal')}</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* RIGHT MAIN WORKSPACE COLUMN */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Offline Banner */}
+        {isOffline && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="bg-[#B7791F] text-white px-4 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2"
+          >
+            <WifiOff className="w-4 h-4" />
+            <span>
+              {t(
+                'অফলাইন মোড সক্রিয়: সংরক্ষিত ডেটা প্রদর্শিত হচ্ছে।',
+                'Offline Mode: Showing cached data.'
+              )}
+            </span>
+          </div>
+        )}
+
+        {/* TOP WHITE VELZON HEADER BAR */}
+        <header className="h-16 bg-white border-b border-slate-200 px-4 lg:px-6 flex items-center justify-between gap-4 sticky top-0 z-20 shadow-2xs">
+          {/* Left: Sidebar Toggle + Search Input */}
+          <div className="flex items-center gap-3 flex-1 max-w-xl">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="hidden md:flex p-2 rounded-lg text-slate-600 hover:bg-slate-100 cursor-pointer min-h-[38px]"
+              aria-label="Toggle Sidebar"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <form onSubmit={handleGlobalSearchSubmit} className="relative flex-1 max-w-md">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={globalSearch}
+                onChange={(e) => setGlobalSearch(e.target.value)}
+                placeholder={t(
+                  'দাগ নং (১০১), দলিল নং (DL-2026-1001) বা এনআইডি খুঁজুন...',
+                  'Search Dag No, Deed No (DL-2026-1001), or NID...'
+                )}
+                className="w-full pl-9 pr-4 py-1.5 rounded-lg bg-[#F3F6F9] border border-transparent focus:border-[#006A4E] focus:bg-white text-xs font-medium text-slate-800 outline-none min-h-[38px]"
+              />
+            </form>
+          </div>
+
+          {/* Right: Workspace Role Selector, Language, Accessibility, Notifications, Profile */}
+          <div className="flex items-center gap-2.5">
+            {/* Clean Enterprise Workspace Role Switcher */}
+            <div className="hidden sm:flex items-center bg-[#F3F6F9] border border-slate-200 rounded-lg px-2.5 py-1">
+              <span className="text-[11px] font-bold text-slate-500 mr-1.5">
+                {t('প্যানেল:', 'Panel:')}
+              </span>
               <select
-                id="role-select"
+                aria-label={t('রোল প্যানেল পরিবর্তন', 'Switch Role Panel')}
                 value={role}
                 disabled={switchingRole}
-                onChange={(e) => handleRoleChange(e.target.value as UserRole)}
-                className="text-sm font-bold text-[#006A4E] bg-transparent focus:outline-none cursor-pointer min-h-[36px]"
+                onChange={(e) => handleRoleChange(e.target.value as UserRole, true)}
+                className="text-xs font-extrabold text-[#253656] bg-transparent focus:outline-none cursor-pointer min-h-[28px]"
               >
-                <option value="citizen">{ROLE_LABELS_BN.citizen}</option>
-                <option value="sub_registrar">{ROLE_LABELS_BN.sub_registrar}</option>
-                <option value="ac_land">{ROLE_LABELS_BN.ac_land}</option>
-                <option value="bank_officer">{ROLE_LABELS_BN.bank_officer}</option>
-                <option value="admin">{ROLE_LABELS_BN.admin}</option>
+                <option value="citizen">{t('নাগরিক প্যানেল (Citizen)', 'Citizen Panel')}</option>
+                <option value="sub_registrar">
+                  {t('সাব-রেজিস্ট্রার (Sub-Registrar)', 'Sub-Registrar Panel')}
+                </option>
+                <option value="ac_land">{t('এসি ল্যান্ড (AC Land)', 'AC Land Panel')}</option>
+                <option value="bank_officer">
+                  {t('ব্যাংক মর্টগেজ (Bank Officer)', 'Bank Officer Panel')}
+                </option>
+                <option value="admin">{t('জাতীয় অ্যাডমিন (System Admin)', 'System Admin Panel')}</option>
               </select>
             </div>
 
-            {/* Text Size A- / A+ */}
-            <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden bg-white">
+            {/* Language Switch */}
+            <button
+              onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
+              className="px-2.5 py-1.5 rounded-lg bg-[#F3F6F9] hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1 cursor-pointer min-h-[36px]"
+            >
+              <Globe className="w-3.5 h-3.5 text-[#006A4E]" />
+              <span>{lang === 'bn' ? 'EN' : 'বাংলা'}</span>
+            </button>
+
+            {/* Font Size A- / A+ */}
+            <div className="hidden lg:flex items-center bg-[#F3F6F9] rounded-lg border border-slate-200 overflow-hidden">
               <button
                 onClick={decreaseFont}
-                title={t('লেখা ছোট করুন', 'Decrease text size')}
-                aria-label={t('লেখা ছোট করুন', 'Decrease text size')}
-                className="px-2.5 py-1.5 text-sm font-bold hover:bg-gray-100 min-h-[40px]"
+                className="px-2 py-1 text-xs font-bold hover:bg-slate-200 cursor-pointer min-h-[34px]"
               >
                 A−
               </button>
               <button
                 onClick={increaseFont}
-                title={t('লেখা বড় করুন', 'Increase text size')}
-                aria-label={t('লেখা বড় করুন', 'Increase text size')}
-                className="px-2.5 py-1.5 text-base font-bold hover:bg-gray-100 border-l border-gray-300 min-h-[40px]"
+                className="px-2 py-1 text-xs font-bold hover:bg-slate-200 border-l border-slate-200 cursor-pointer min-h-[34px]"
               >
                 A+
               </button>
             </div>
 
-            {/* High Contrast Toggle */}
+            {/* High Contrast */}
             <button
               onClick={toggleHighContrast}
-              aria-pressed={highContrast}
-              title={t('উচ্চ কনট্রাস্ট মোড', 'High Contrast Mode')}
-              className={`px-3 py-1.5 rounded-lg border text-sm font-semibold flex items-center gap-1.5 min-h-[40px] ${
-                highContrast
-                  ? 'bg-black text-white border-black'
-                  : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100'
+              title={t('উচ্চ কনট্রাস্ট', 'High Contrast')}
+              className={`p-2 rounded-lg cursor-pointer min-h-[36px] ${
+                highContrast ? 'bg-black text-white' : 'bg-[#F3F6F9] text-slate-700 hover:bg-slate-200'
               }`}
             >
               <Contrast className="w-4 h-4" />
-              <span className="hidden sm:inline">{t('কনট্রাস্ট', 'Contrast')}</span>
             </button>
 
-            {/* Language Toggle */}
+            {/* Notification Bell with Badge (Velzon Style) */}
             <button
-              onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
-              className="px-3 py-1.5 rounded-lg border border-[#006A4E] bg-[#E6F2EE] text-[#006A4E] font-bold text-sm flex items-center gap-1.5 hover:bg-[#006A4E] hover:text-white transition-colors min-h-[40px]"
+              onClick={() => setActiveTab(ROLE_DASHBOARD_MAP[role])}
+              className="relative p-2 rounded-lg bg-[#F3F6F9] hover:bg-slate-200 text-slate-700 cursor-pointer min-h-[36px]"
+              title={t('নোটিফিকেশন', 'Notifications')}
             >
-              <Globe className="w-4 h-4" />
-              <span>{lang === 'bn' ? 'English' : 'বাংলা'}</span>
+              <Bell className="w-4 h-4" />
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#F42A41] text-white text-[10px] font-bold flex items-center justify-center">
+                3
+              </span>
             </button>
 
-            {/* Auth User Pill or Login Button */}
+            {/* User Profile Pill (Velzon Top-Right Avatar + Name + Designation) */}
             {user ? (
-              <div className="flex items-center gap-1.5 bg-[#E6F2EE] border border-[#006A4E]/30 rounded-lg px-2.5 py-1">
+              <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
                 <button
                   onClick={() => setActiveTab('profile')}
-                  className="text-left text-xs font-bold text-[#006A4E] flex items-center gap-1.5 min-h-[32px]"
+                  className="flex items-center gap-2.5 text-left cursor-pointer min-h-[38px]"
                 >
-                  <UserCheck className="w-4 h-4" />
-                  <span>{lang === 'bn' ? user.full_name_bn : user.full_name_en}</span>
+                  <div className="w-8 h-8 rounded-full bg-[#006A4E] text-white font-extrabold text-xs flex items-center justify-center shrink-0">
+                    {(lang === 'bn' ? user.full_name_bn : user.full_name_en).slice(0, 1)}
+                  </div>
+                  <div className="hidden xl:block leading-tight">
+                    <div className="text-xs font-bold text-slate-800">
+                      {lang === 'bn' ? user.full_name_bn : user.full_name_en}
+                    </div>
+                    <div className="text-[10px] text-slate-500 font-medium">
+                      {lang === 'bn' ? currentRoleMeta.titleBn : currentRoleMeta.titleEn}
+                    </div>
+                  </div>
                 </button>
                 <button
                   onClick={() => {
                     logout();
                     setActiveTab('landing');
                   }}
-                  title={t('লগআউট', 'Logout')}
-                  className="p-1 text-[#F42A41] hover:bg-red-100 rounded-md min-h-[32px]"
+                  title={t('লগআউট', 'Sign Out')}
+                  className="p-1.5 text-slate-400 hover:text-[#F42A41] rounded cursor-pointer min-h-[32px]"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -237,195 +755,109 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({ activeTab, setActiveTab
             ) : (
               <button
                 onClick={() => setActiveTab('auth')}
-                className="px-3 py-1.5 rounded-lg bg-[#006A4E] text-white font-bold text-sm flex items-center gap-1.5 hover:bg-[#00553e] min-h-[40px]"
+                className="px-3 py-1.5 rounded-lg bg-[#006A4E] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px]"
               >
-                <LogIn className="w-4 h-4" />
-                <span>{t('লগইন / নিবন্ধন', 'Login / Register')}</span>
+                <LogIn className="w-3.5 h-3.5" />
+                <span>{t('লগইন', 'Sign In')}</span>
               </button>
             )}
           </div>
-        </div>
+        </header>
 
-        {/* Desktop Navigation Bar with Role-Aware Highlighting */}
-        <nav
-          aria-label={t('প্রধান মেনু', 'Main navigation')}
-          className="hidden md:flex max-w-7xl mx-auto px-4 border-t border-gray-100 gap-2 py-1.5 overflow-x-auto"
-        >
-          <NavBtn
-            active={activeTab === 'landing'}
-            onClick={() => setActiveTab('landing')}
-            icon={<Home className="w-4 h-4" />}
-            label={t('হোম ও পরিচিতি', 'Landing')}
-          />
-          <NavBtn
-            active={activeTab === 'home'}
-            onClick={() => setActiveTab('home')}
-            icon={<ShieldCheck className="w-4 h-4" />}
-            label={t('নাগরিক ড্যাশবোর্ড', 'Citizen Vault')}
-            badge={role === 'citizen' ? 'ACTIVE' : undefined}
-          />
-          <NavBtn
-            active={activeTab === 'qr'}
-            onClick={() => setActiveTab('qr')}
-            icon={<QrCode className="w-4 h-4" />}
-            label={t('QR দলিল যাচাই', 'Verify Deed QR')}
-          />
-          <NavBtn
-            active={activeTab === 'check'}
-            onClick={() => setActiveTab('check')}
-            icon={<Search className="w-4 h-4" />}
-            label={t('কেনার আগে যাচাই', 'Check Before Buy')}
-          />
-          <NavBtn
-            active={activeTab === 'registrar'}
-            onClick={() => setActiveTab('registrar')}
-            icon={<FileSpreadsheet className="w-4 h-4" />}
-            label={t('সাব-রেজিস্ট্রার কনসোল', 'Sub-Registrar')}
-            badge={role === 'sub_registrar' ? 'RBAC' : undefined}
-          />
-          <NavBtn
-            active={activeTab === 'acland'}
-            onClick={() => setActiveTab('acland')}
-            icon={<Landmark className="w-4 h-4" />}
-            label={t('এসি ল্যান্ড কনসোল', 'AC Land')}
-            badge={role === 'ac_land' ? 'RBAC' : undefined}
-          />
-          <NavBtn
-            active={activeTab === 'bank'}
-            onClick={() => setActiveTab('bank')}
-            icon={<Building2 className="w-4 h-4" />}
-            label={t('ব্যাংক মর্টগেজ কনসোল', 'Bank Officer')}
-            badge={role === 'bank_officer' ? 'RBAC' : undefined}
-          />
-          <NavBtn
-            active={activeTab === 'admin'}
-            onClick={() => setActiveTab('admin')}
-            icon={<Lock className="w-4 h-4" />}
-            label={t('অ্যাডমিন ও অডিট কনসোল', 'Admin & RBAC')}
-            badge={role === 'admin' ? 'RBAC' : undefined}
-          />
-          <NavBtn
-            active={activeTab === 'help'}
-            onClick={() => setActiveTab('help')}
-            icon={<HelpCircle className="w-4 h-4" />}
-            label={t('সাহায্য', 'Help')}
-          />
-        </nav>
-      </header>
-
-      {/* Active RBAC Session Strip */}
-      <div className="bg-[#006A4E]/5 border-b border-[#006A4E]/15 px-4 py-1.5 text-xs">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded bg-[#006A4E] text-white font-bold">
-              RBAC Middleware: {role.toUpperCase()}
-            </span>
-            <span className="text-gray-700 font-medium">
-              {user
-                ? `${t('সক্রিয় অ্যাকাউন্ট:', 'Active User:')} ${lang === 'bn' ? user.full_name_bn : user.full_name_en} (${user.office_name || 'Citizen Portal'})`
-                : t('ডেমো রোল মোড সক্রিয়', 'Demo Role Session Active')}
-            </span>
+        {/* SUB-HEADER BREADCRUMB BAR (Velzon "DASHBOARD | Dashboards > Dashboard" Bar) */}
+        <div className="bg-white border-b border-slate-200/80 px-4 lg:px-6 py-2.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="font-extrabold uppercase tracking-wider text-slate-700">
+            {lang === 'bn' ? currentRoleMeta.titleBn : currentRoleMeta.titleEn}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 text-slate-500 font-medium">
             <button
-              onClick={() => setActiveTab(ROLE_DASHBOARD_MAP[role])}
-              className="text-[#006A4E] font-bold underline cursor-pointer min-h-0"
+              onClick={() => setActiveTab('landing')}
+              className="hover:text-[#006A4E] cursor-pointer min-h-0"
             >
-              {t('আমার রোল ড্যাশবোর্ডে যান →', 'Go to My Role Dashboard →')}
+              {t('জাতীয় পোর্টাল', 'Portal')}
             </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-6">{children}</main>
-
-      {/* Footer with Mandatory Hackathon Disclaimers */}
-      <footer className="bg-white border-t border-gray-200 mt-12 py-6 px-4 text-sm text-[#5F6B66]">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div>
-            <p className="font-bold text-[#1A1A1A]">
-              {t(
-                '⚠ আইনি সতর্কবার্তা: ভূমি সুরক্ষা শুধুমাত্র ঝুঁকি চিহ্নিত করে মানব কর্মকর্তার সিদ্ধান্তের জন্য উপস্থাপন করে। এটি কোনো চূড়ান্ত আইনি মালিকানা ঘোষণা করে না।',
-                '⚠ Legal Disclaimer: BhumiShield flags risk for a human officer to decide. It never declares final legal truth.'
-              )}
-            </p>
-            <p className="mt-1">
-              {t(
-                'Demo / ডেমো ডেটা — LandTech Innovation Hackathon 2026 (Daffodil International University). সকল নাম, এনআইডি, দাগ ও খতিয়ান সম্পূর্ণ কাল্পনিক।',
-                'Demo / ডেমো ডেটা — LandTech Innovation Hackathon 2026 (DIU). All names, NIDs, plots, and khatians are 100% synthetic.'
-              )}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="px-3 py-1 rounded-full bg-[#E6F2EE] text-[#006A4E] font-bold text-xs">
-              Laravel 11 + RBAC + Ed25519 + SHA-256
+            <ChevronRight className="w-3.5 h-3.5" />
+            <span className="text-slate-700 font-semibold">
+              {lang === 'bn' ? currentRoleMeta.titleBn : currentRoleMeta.titleEn}
             </span>
           </div>
         </div>
-      </footer>
+
+        {/* MAIN PANEL WORKSPACE CONTENT */}
+        <main className="flex-1 p-4 lg:p-6 max-w-[1440px] w-full mx-auto space-y-6">
+          {children}
+        </main>
+
+        <InstitutionalFooter lang={lang} t={t} />
+      </div>
 
       {/* Mobile Bottom Navigation Bar */}
       <nav
         aria-label={t('মোবাইল নেভিগেশন', 'Mobile navigation')}
-        className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 z-40 grid grid-cols-4 shadow-lg"
+        className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-300 z-40 grid grid-cols-5 shadow-lg"
       >
         <MobileNavBtn
-          active={activeTab === 'home' || activeTab === 'landing'}
-          onClick={() => setActiveTab('home')}
-          icon={<ShieldCheck className="w-6 h-6" />}
-          label={t('হোম', 'Home')}
+          active={activeTab === 'landing'}
+          onClick={() => setActiveTab('landing')}
+          icon={<Home className="w-5 h-5" />}
+          label={t('পোর্টাল', 'Portal')}
         />
         <MobileNavBtn
-          active={activeTab === 'qr'}
-          onClick={() => setActiveTab('qr')}
-          icon={<QrCode className="w-6 h-6" />}
-          label={t('QR যাচাই', 'QR Scan')}
+          active={activeTab === ROLE_DASHBOARD_MAP[role]}
+          onClick={() => setActiveTab(ROLE_DASHBOARD_MAP[role])}
+          icon={<LayoutDashboard className="w-5 h-5" />}
+          label={t('প্যানেল', 'Panel')}
         />
         <MobileNavBtn
           active={activeTab === 'check'}
           onClick={() => setActiveTab('check')}
-          icon={<Search className="w-6 h-6" />}
-          label={t('জমি যাচাই', 'Check Buy')}
+          icon={<Search className="w-5 h-5" />}
+          label={t('দাগ যাচাই', 'Plot Check')}
         />
         <MobileNavBtn
-          active={['registrar', 'acland', 'bank', 'admin'].includes(activeTab)}
-          onClick={() => setActiveTab(ROLE_DASHBOARD_MAP[role] === 'home' ? 'admin' : ROLE_DASHBOARD_MAP[role])}
-          icon={<Lock className="w-6 h-6" />}
-          label={t('ড্যাশবোর্ড', 'Console')}
+          active={activeTab === 'qr'}
+          onClick={() => setActiveTab('qr')}
+          icon={<QrCode className="w-5 h-5" />}
+          label={t('QR সনদ', 'QR Verify')}
+        />
+        <MobileNavBtn
+          active={activeTab === 'admin'}
+          onClick={() => handleRoleChange('admin', true)}
+          icon={<Lock className="w-5 h-5" />}
+          label={t('অ্যাডমিন', 'Admin')}
         />
       </nav>
     </div>
   );
 };
 
-const NavBtn: React.FC<{
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-  badge?: string;
-}> = ({ active, onClick, icon, label, badge }) => (
-  <button
-    onClick={onClick}
-    className={`px-3 py-2 rounded-lg font-semibold text-sm flex items-center gap-1.5 whitespace-nowrap transition-colors min-h-[42px] ${
-      active
-        ? 'bg-[#006A4E] text-white shadow-xs'
-        : 'text-gray-700 hover:bg-[#E6F2EE] hover:text-[#006A4E]'
-    }`}
-  >
-    {icon}
-    <span>{label}</span>
-    {badge && (
-      <span
-        className={`text-[10px] px-1.5 py-0.5 rounded font-black ${
-          active ? 'bg-white text-[#006A4E]' : 'bg-[#006A4E] text-white'
-        }`}
-      >
-        {badge}
-      </span>
-    )}
-  </button>
+const InstitutionalFooter: React.FC<{
+  lang: 'bn' | 'en';
+  t: (bn: string, en: string) => string;
+}> = ({ t }) => (
+  <footer className="bg-white border-t border-slate-200 py-5 px-4 lg:px-6 text-xs text-slate-500 mt-auto">
+    <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+      <div>
+        <p className="font-bold text-slate-700">
+          {t(
+            '⚖ আইনি সতর্কবার্তা: ভূমি সুরক্ষা সিস্টেম শুধুমাত্র সম্ভাব্য ঝুঁকি ও অসামঞ্জস্যতা চিহ্নিত করে সংশ্লিষ্ট সরকারি কর্মকর্তার সিদ্ধান্তের জন্য উপস্থাপন করে; এটি চূড়ান্ত আইনি মালিকানা ঘোষণা করে না।',
+            '⚖ Statutory Notice: BhumiShield flags discrepancies for an authorized human officer to decide; it never declares final legal truth.'
+          )}
+        </p>
+        <p className="mt-0.5 text-slate-500">
+          {t(
+            'Demo / ডেমো ডেটা — কারিগরি মানে নির্মিত প্রোটোটাইপ (LandTech Innovation 2026)। প্রদর্শিত সকল নাম, এনআইডি, দাগ ও খতিয়ান সম্পূর্ণ কাল্পনিক।',
+            'Demo / ডেমো ডেটা — Industry Handover Prototype (LandTech 2026). All names, NIDs, plots, and khatians are synthetic.'
+          )}
+        </p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="px-2.5 py-1 rounded bg-[#E6F2EE] text-[#006A4E] font-bold">
+          Laravel 11 • Ed25519 • SHA-256
+        </span>
+      </div>
+    </div>
+  </footer>
 );
 
 const MobileNavBtn: React.FC<{
@@ -436,11 +868,11 @@ const MobileNavBtn: React.FC<{
 }> = ({ active, onClick, icon, label }) => (
   <button
     onClick={onClick}
-    className={`flex flex-col items-center justify-center py-2 px-1 text-xs font-bold ${
-      active ? 'text-[#006A4E] bg-[#E6F2EE]' : 'text-gray-600'
+    className={`flex flex-col items-center justify-center py-2 px-1 text-[11px] font-bold cursor-pointer ${
+      active ? 'text-[#006A4E] bg-[#E6F2EE]' : 'text-slate-600'
     }`}
   >
     {icon}
-    <span className="mt-1">{label}</span>
+    <span className="mt-0.5">{label}</span>
   </button>
 );
