@@ -55,7 +55,7 @@ switch ($command) {
         $routerScript = __DIR__ . '/public/index.php';
         echo "INFO  BhumiShield Laravel 11 Development Server started on http://{$host}:{$port}\n";
         echo "      Press Ctrl+C to stop the server\n";
-        passthru(PHP_BINARY . ' -S ' . escapeshellarg("{$host}:{$port}") . ' -t ' . escapeshellarg($docRoot) . ' ' . escapeshellarg($routerScript));
+        passthru(escapeshellarg(PHP_BINARY) . ' -S ' . escapeshellarg("{$host}:{$port}") . ' -t ' . escapeshellarg($docRoot) . ' ' . escapeshellarg($routerScript));
         exit(0);
 
     case 'test':

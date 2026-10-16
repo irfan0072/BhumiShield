@@ -5,9 +5,9 @@
   "type": "module",
   "description": "ভূমি সুরক্ষা (BhumiShield) — Role-Based Dashboards & Trust Layer UI for LandTech 2026",
   "scripts": {
-    "dev": "vite --host 0.0.0.0 --port 5173",
+    "dev": "vite --host 0.0.0.0 --port 5175",
     "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0 --port 5173"
+    "preview": "vite preview --host 0.0.0.0 --port 5175"
   },
   "dependencies": {
     "axios": "1.20.0",
