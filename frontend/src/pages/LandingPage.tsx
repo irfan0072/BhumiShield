@@ -61,18 +61,7 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
       .catch(() => {});
   }, []);
 
-  const enterRolePortal = async (targetRole: UserRole) => {
-    try {
-      const res = await BhumiApi.switchDemoRole(targetRole);
-      if (res?.access_token && res?.user) {
-        setToken(res.access_token);
-        setUser(res.user);
-      } else {
-        setRole(targetRole);
-      }
-    } catch {
-      setRole(targetRole);
-    }
+  const enterRolePortal = (targetRole: UserRole) => {
     onNavigate(ROLE_ROUTE[targetRole]);
   };
 

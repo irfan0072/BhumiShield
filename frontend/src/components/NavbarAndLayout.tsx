@@ -99,7 +99,6 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
   } = useAppUI();
 
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
-  const [switchingRole, setSwitchingRole] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
@@ -115,23 +114,12 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
     };
   }, []);
 
-  const handleRoleChange = async (newRole: UserRole, navigateToRole = true) => {
-    setSwitchingRole(true);
-    try {
-      const res = await BhumiApi.switchDemoRole(newRole);
-      if (res?.access_token && res?.user) {
-        setToken(res.access_token);
-        setUser(res.user);
-      } else {
-        setRole(newRole);
-      }
-    } catch {
+  const handleRoleChange = (newRole: UserRole, navigateToRole = true) => {
+    if (user?.role === 'admin') {
       setRole(newRole);
-    } finally {
-      setSwitchingRole(false);
-      if (navigateToRole) {
-        setActiveTab(ROLE_DASHBOARD_MAP[newRole] || 'home');
-      }
+    }
+    if (navigateToRole) {
+      setActiveTab(ROLE_DASHBOARD_MAP[newRole] || 'home');
     }
   };
 
@@ -282,8 +270,12 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                 {t('দলিল QR', 'Verify Deed')}
               </button>
               <button
-                onClick={() => handleRoleChange('citizen', true)}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer min-h-[38px]"
+                onClick={() => setActiveTab('home')}
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer min-h-[38px] ${
+                  activeTab === 'home'
+                    ? 'text-[#006A4E] bg-emerald-50 font-bold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
               >
                 {t('নাগরিক ভল্ট', 'Citizen Vault')}
               </button>
@@ -314,21 +306,42 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                 <Contrast className="w-4 h-4" />
               </button>
 
-              <button
-                onClick={() => setActiveTab(ROLE_DASHBOARD_MAP[role])}
-                className="h-9 px-3.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
-              >
-                <LayoutDashboard className="w-3.5 h-3.5" />
-                <span>{t('ওয়ার্কস্পেস', 'Workspace')}</span>
-              </button>
+              {user && token ? (
+                <>
+                  <button
+                    onClick={() => setActiveTab(ROLE_DASHBOARD_MAP[user.role] || 'home')}
+                    className="h-9 px-3.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                  >
+                    <LayoutDashboard className="w-3.5 h-3.5" />
+                    <span>{t('ওয়ার্কস্পেস', 'Workspace')}</span>
+                  </button>
 
-              <button
-                onClick={() => setActiveTab('auth')}
-                className="hidden sm:flex h-9 px-3 rounded-lg border border-gray-300 text-xs font-bold text-slate-700 hover:bg-slate-50 items-center gap-1 cursor-pointer"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>{t('লগইন', 'Sign In')}</span>
-              </button>
+                  <div className="hidden sm:flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-900 px-2.5 py-1.5 rounded-lg text-xs font-bold">
+                    <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                    <span className="truncate max-w-[120px]">{user.full_name_bn || user.username}</span>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      logout();
+                      setActiveTab('landing');
+                    }}
+                    className="h-9 px-3 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-bold flex items-center gap-1 transition cursor-pointer"
+                    title={t('লগআউট করুন', 'Sign Out')}
+                  >
+                    <LogOut className="w-3.5 h-3.5 text-red-600" />
+                    <span className="hidden sm:inline">{t('লগআউট', 'Sign Out')}</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setActiveTab('auth')}
+                  className="h-9 px-3.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>{t('লগইন করুন', 'Sign In')}</span>
+                </button>
+              )}
 
               {/* Mobile Menu Hamburger */}
               <button
@@ -524,12 +537,27 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                 <Home className="w-3.5 h-3.5" />
                 <span>{t('পাবলিক পোর্টাল', 'Public Portal')}</span>
               </button>
-              <button
-                onClick={() => setActiveTab('auth')}
-                className="hover:text-white cursor-pointer"
-              >
-                <UserCheck className="w-3.5 h-3.5" />
-              </button>
+              {user && token ? (
+                <button
+                  onClick={() => {
+                    logout();
+                    setActiveTab('landing');
+                  }}
+                  className="hover:text-red-400 text-red-300 flex items-center gap-1 cursor-pointer font-bold"
+                  title={t('লগআউট', 'Sign Out')}
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>{t('লগআউট', 'Sign Out')}</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setActiveTab('auth')}
+                  className="hover:text-emerald-300 text-emerald-400 flex items-center gap-1 cursor-pointer font-bold"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>{t('লগইন', 'Sign In')}</span>
+                </button>
+              )}
             </>
           ) : (
             <button
@@ -593,6 +621,37 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
             >
               <Contrast className="w-3.5 h-3.5" />
             </button>
+
+            {user && token ? (
+              <div className="flex items-center gap-1.5 pl-1">
+                <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                  <span className="truncate max-w-[130px]">{user.full_name_bn || user.username}</span>
+                  <span className="text-[10px] font-mono uppercase bg-emerald-200/70 px-1 rounded text-emerald-800">
+                    {user.role}
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    logout();
+                    setActiveTab('landing');
+                  }}
+                  className="h-8 px-2.5 rounded-lg border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 text-xs font-bold flex items-center gap-1 cursor-pointer transition"
+                  title={t('লগআউট', 'Sign Out')}
+                >
+                  <LogOut className="w-3.5 h-3.5 text-red-600" />
+                  <span className="hidden sm:inline">{t('লগআউট', 'Sign Out')}</span>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setActiveTab('auth')}
+                className="h-8 px-3 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1 cursor-pointer shadow-xs transition"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>{t('লগইন', 'Sign In')}</span>
+              </button>
+            )}
           </div>
         </header>
 

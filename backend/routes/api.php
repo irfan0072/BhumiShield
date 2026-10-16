@@ -102,15 +102,18 @@ return static function (string $method, string $uri, array $query, array $body):
         return WorkflowController::listPersons();
     }
     if ($method === 'GET' && ($sub === '/citizen/my-properties' || $sub === '/citizen/my-vault')) {
+        RoleMiddleware::authorize(['citizen', 'admin']);
         return SystemAdminController::getCitizenLinkedProperties($query['nid'] ?? null);
     }
     if ($method === 'POST' && preg_match('#^/citizen/plots/(\d+)/toggle-lock$#', $sub, $m)) {
+        RoleMiddleware::authorize(['citizen', 'admin']);
         return RoleControlController::togglePlotSaleLock((int) $m[1], $body);
     }
     if ($method === 'GET' && $sub === '/citizen/disputes') {
         return RoleControlController::listDisputes(isset($query['plot_id']) ? (int) $query['plot_id'] : null);
     }
     if ($method === 'POST' && $sub === '/citizen/disputes') {
+        RoleMiddleware::authorize(['citizen', 'admin']);
         return RoleControlController::createDispute($body);
     }
     if ($method === 'GET' && preg_match('#^/plots/(\d+)/check-before-you-buy$#', $sub, $m)) {
@@ -136,6 +139,7 @@ return static function (string $method, string $uri, array $query, array $body):
         return RoleControlController::listRegistrarDeeds($query['status'] ?? null, $query['q'] ?? null);
     }
     if ($method === 'POST' && preg_match('#^/registrar/deeds/(\d+)/status$#', $sub, $m)) {
+        RoleMiddleware::authorize(['sub_registrar', 'admin']);
         return RoleControlController::updateDeedStatus((int) $m[1], $body);
     }
     if ($method === 'GET' && $sub === '/registrar/calculate-fees') {
@@ -145,6 +149,7 @@ return static function (string $method, string $uri, array $query, array $body):
 
     // 5. AC Land Controlling Routes (Protected by RoleMiddleware)
     if ($method === 'GET' && $sub === '/mutations') {
+        RoleMiddleware::authorize(['ac_land', 'admin']);
         return WorkflowController::listMutations($query['status'] ?? null);
     }
     if ($method === 'POST' && (preg_match('#^/mutations/(\d+)/decide$#', $sub, $m) || preg_match('#^/mutations/(\d+)/decision$#', $sub, $m))) {
@@ -162,14 +167,17 @@ return static function (string $method, string $uri, array $query, array $body):
         return RoleControlController::listFlaggedKhatians();
     }
     if ($method === 'POST' && preg_match('#^/acland/khatians/(\d+)/reconcile$#', $sub, $m)) {
+        RoleMiddleware::authorize(['ac_land', 'admin']);
         return RoleControlController::reconcileKhatianPlot((int) $m[1], $body);
     }
     if ($method === 'POST' && preg_match('#^/acland/disputes/(\d+)/resolve$#', $sub, $m)) {
+        RoleMiddleware::authorize(['ac_land', 'admin']);
         return RoleControlController::resolveDispute((int) $m[1], $body);
     }
 
     // 6. Bank Officer Controlling Routes (Protected by RoleMiddleware)
     if ($method === 'GET' && $sub === '/mortgages') {
+        RoleMiddleware::authorize(['bank_officer', 'admin']);
         return WorkflowController::listMortgages();
     }
     if ($method === 'POST' && $sub === '/mortgages/collateral-check') {
@@ -190,6 +198,7 @@ return static function (string $method, string $uri, array $query, array $body):
 
     // 7. Audit Log, Bangla OCR & System Admin Routes
     if ($method === 'GET' && ($sub === '/audit-log' || $sub === '/audit-logs')) {
+        RoleMiddleware::authorize(['admin']);
         return WorkflowController::getAuditLog();
     }
     if (($method === 'POST' || $method === 'GET') && ($sub === '/ocr/khatian-demo' || $sub === '/ocr-assist/sample')) {
