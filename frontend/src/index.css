@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+:root {
+  --flag-green: #006A4E;
+  --flag-green-light: #E6F2EE;
+  --flag-red: #F42A41;
+  --amber-warn: #B7791F;
+  --bg-neutral: #FAFBFA;
+  --text-primary: #1A1A1A;
+  --text-secondary: #5F6B66;
+  --base-font-size: 18px;
+}
+
+html {
+  font-family: 'Noto Sans Bengali', 'Hind Siliguri', system-ui, -apple-system, sans-serif;
+  font-size: var(--base-font-size);
+  line-height: 1.6;
+  background-color: var(--bg-neutral);
+  color: var(--text-primary);
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* 3-Step Text Size Accessibility Controls */
+html[data-font-scale="normal"] {
+  --base-font-size: 18px;
+}
+html[data-font-scale="large"] {
+  --base-font-size: 20px;
+}
+html[data-font-scale="xlarge"] {
+  --base-font-size: 22px;
+}
+
+/* High-Contrast Mode (WCAG AAA+) */
+html[data-high-contrast="true"] {
+  --bg-neutral: #FFFFFF;
+  --text-primary: #000000;
+  --text-secondary: #111111;
+}
+
+html[data-high-contrast="true"] body {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+}
+
+html[data-high-contrast="true"] .hc-card {
+  border-width: 2px !important;
+  border-color: #000000 !important;
+  background-color: #FFFFFF !important;
+}
+
+/* Visible keyboard focus rings for accessibility */
+*:focus-visible {
+  outline: 3px solid #006A4E !important;
+  outline-offset: 2px !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #FFFFFF !important;
+  }
+}
