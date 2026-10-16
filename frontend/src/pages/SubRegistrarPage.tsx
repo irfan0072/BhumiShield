@@ -1,465 +1,522 @@
-import React, { useEffect, useState } from 'react';
-import { FileCheck2, ShieldAlert, CheckCircle2, QrCode } from 'lucide-react';
-import { apiClient, extractErrorMessage } from '../api/client';
-import { useI18n } from '../i18n';
-import { VerdictBanner } from '../components/VerdictBanner';
+import React, { useState, useEffect } from 'react';
+import { useAppUI } from '../i18n';
+import { BhumiApi, RiskReportResponse } from '../api/client';
+import { toBanglaDigits } from '../theme/tokens';
+import { ResultHeroBanner } from '../components/ResultHeroBanner';
+import {
+  FileSpreadsheet,
+  ShieldAlert,
+  CheckCircle2,
+  Calculator,
+  ListChecks,
+  KeyRound,
+} from 'lucide-react';
 
-interface SubRegistrarPageProps {
-  initialScenario?: any;
-  onOpenDeedVerify: (deedNo: string) => void;
-}
+export const SubRegistrarPage: React.FC = () => {
+  const { lang, role, setRole, setUser, setToken, t } = useAppUI();
+  const [subTab, setSubTab] = useState<'wizard' | 'deeds' | 'fees'>('wizard');
 
-export const SubRegistrarPage: React.FC<SubRegistrarPageProps> = ({
-  initialScenario,
-  onOpenDeedVerify,
-}) => {
-  const { lang, t, n } = useI18n();
   const [plots, setPlots] = useState<any[]>([]);
   const [persons, setPersons] = useState<any[]>([]);
-  const [scenarios, setScenarios] = useState<any[]>([]);
+  const [deedsList, setDeedsList] = useState<any[]>([]);
 
-  const [plotId, setPlotId] = useState<number>(initialScenario?.plot_id || 1);
-  const [sellerId, setSellerId] = useState<number>(initialScenario?.seller_id || 1);
-  const [buyerId, setBuyerId] = useState<number>(initialScenario?.buyer_id || 2);
-  const [areaDecimal, setAreaDecimal] = useState<string>(
-    String(initialScenario?.requested_area_decimal || 10)
-  );
-  const [priceBdt, setPriceBdt] = useState<string>('1800000');
-  const [sellerNid, setSellerNid] = useState<string>('');
-  const [checkRapid, setCheckRapid] = useState<boolean>(true);
+  const [plotId, setPlotId] = useState<number>(1);
+  const [sellerId, setSellerId] = useState<number>(1);
+  const [buyerId, setBuyerId] = useState<number>(2);
+  const [areaDecimal, setAreaDecimal] = useState<string>('10');
+  const [shareFraction, setShareFraction] = useState<string>('1/2');
+  const [declaredValue, setDeclaredValue] = useState<string>('1500000');
 
-  const [checkResult, setCheckResult] = useState<any | null>(null);
-  const [registeredDeed, setRegisteredDeed] = useState<any | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [preCheckReport, setPreCheckReport] = useState<RiskReportResponse | null>(null);
+  const [createdDeedResult, setCreatedDeedResult] = useState<any | null>(null);
+  const [feeBreakdown, setFeeBreakdown] = useState<any | null>(null);
+  const [deedTypeFee, setDeedTypeFee] = useState('SALE');
+  const [loading, setLoading] = useState(false);
+  const [statusMsg, setStatusMsg] = useState('');
+
+  const loadRegistrarData = () => {
+    Promise.all([BhumiApi.getPlots(), BhumiApi.getPersons(), BhumiApi.listRegistrarDeeds()])
+      .then(([plts, pers, dds]) => {
+        setPlots(plts);
+        setPersons(pers);
+        setDeedsList(dds);
+      })
+      .catch(() => {});
+  };
 
   useEffect(() => {
-    Promise.all([
-      apiClient.get('/locations'),
-      apiClient.get('/persons'),
-      apiClient.get('/scenarios'),
-    ])
-      .then(([locRes, perRes, scRes]) => {
-        setPlots(locRes.data.plots || []);
-        setPersons(perRes.data.items || []);
-        setScenarios(scRes.data.items || []);
-      })
+    loadRegistrarData();
+    BhumiApi.calculateFees(1500000, 'SALE')
+      .then((res) => setFeeBreakdown(res))
       .catch(() => {});
   }, []);
 
-  const runPreCheck = async (
-    pId = plotId,
-    sId = sellerId,
-    bId = buyerId,
-    area = areaDecimal,
-    nidOverride = sellerNid
-  ) => {
+  const switchToRegistrarRole = async () => {
+    const res = await BhumiApi.switchDemoRole('sub_registrar');
+    if (res?.access_token && res?.user) {
+      setToken(res.access_token);
+      setUser(res.user);
+    } else {
+      setRole('sub_registrar');
+    }
+  };
+
+  const selectedSeller = persons.find((p) => Number(p.id) === Number(sellerId));
+
+  const handleRunPreCheck = async () => {
     setLoading(true);
-    setError(null);
-    setRegisteredDeed(null);
+    setCreatedDeedResult(null);
     try {
-      const res = await apiClient.post('/registrar/pre-check', {
-        plot_id: Number(pId),
-        seller_id: Number(sId),
-        buyer_id: Number(bId),
-        requested_area_decimal: Number(area),
-        price_bdt: Number(priceBdt),
-        seller_nid: nidOverride.trim() || null,
-        check_rapid_resale: checkRapid,
-      });
-      setCheckResult(res.data);
-    } catch (err) {
-      setError(extractErrorMessage(err, lang));
+      const [rep, fees] = await Promise.all([
+        BhumiApi.checkBeforeBuy({
+          plot_id: Number(plotId),
+          seller_nid: selectedSeller?.nid_mock,
+          proposed_area_decimal: Number(areaDecimal),
+          deed_type: 'SALE',
+        }),
+        BhumiApi.calculateFees(Number(declaredValue) || 1000000, 'SALE'),
+      ]);
+      setPreCheckReport(rep);
+      setFeeBreakdown(fees);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (initialScenario) {
-      setPlotId(initialScenario.plot_id);
-      setSellerId(initialScenario.seller_id);
-      setBuyerId(initialScenario.buyer_id);
-      setAreaDecimal(String(initialScenario.requested_area_decimal));
-      runPreCheck(
-        initialScenario.plot_id,
-        initialScenario.seller_id,
-        initialScenario.buyer_id,
-        String(initialScenario.requested_area_decimal),
-        initialScenario.seller_nid_override || ''
-      );
-    }
-  }, [initialScenario]);
-
-  const handleRegisterDeed = async (forceHold: boolean) => {
+  const handleRegisterDeed = async () => {
     setLoading(true);
-    setError(null);
     try {
-      const res = await apiClient.post('/registrar/register-deed', {
+      const res = await BhumiApi.createDeed({
+        deed_type: 'SALE',
         plot_id: Number(plotId),
         seller_id: Number(sellerId),
         buyer_id: Number(buyerId),
-        requested_area_decimal: Number(areaDecimal),
-        price_bdt: Number(priceBdt),
-        seller_nid: sellerNid.trim() || null,
-        check_rapid_resale: checkRapid,
-        force_hold: forceHold,
+        area_decimal: Number(areaDecimal),
+        share_fraction: shareFraction,
+        declared_value_bdt: Number(declaredValue),
       });
-      setRegisteredDeed(res.data);
-    } catch (err) {
-      setError(extractErrorMessage(err, lang));
+      setCreatedDeedResult(res);
+      loadRegistrarData();
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUpdateDeedStatus = async (
+    deedId: number,
+    newStatus: 'REGISTERED' | 'HELD' | 'REJECTED'
+  ) => {
+    setStatusMsg('');
+    try {
+      const res = await BhumiApi.updateRegistrarDeedStatus(deedId, {
+        status: newStatus,
+        officer_note:
+          newStatus === 'REGISTERED'
+            ? 'সাব-রেজিস্ট্রার কর্তৃক শুনানি শেষে অনুমোদিত ও ই-মিউটেশনে প্রেরিত'
+            : 'সাব-রেজিস্ট্রার কর্তৃক জালিয়াতি ঝুঁকির কারণে বাতিল',
+      });
+      setStatusMsg(lang === 'bn' ? res.message_bn : res.message_en);
+      loadRegistrarData();
+    } catch {
+      setStatusMsg(t('স্ট্যাটাস পরিবর্তন করতে সমস্যা হয়েছে।', 'Failed to update deed status.'));
+    }
+  };
+
+  const handleCalculateCustomFee = async () => {
+    const res = await BhumiApi.calculateFees(Number(declaredValue) || 1000000, deedTypeFee);
+    setFeeBreakdown(res);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header + 1-Click Scenario Presets */}
-      <section className="rounded-3xl bg-white border border-gray-200 p-6 shadow-xs space-y-4 hc-card">
+      {/* RBAC Guard Notice if not logged in as sub_registrar or admin */}
+      {role !== 'sub_registrar' && role !== 'admin' && (
+        <div className="p-4 rounded-2xl bg-[#FEF3C7] border-2 border-[#B7791F] flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 font-bold text-[#1A1A1A]">
+            <KeyRound className="w-5 h-5 text-[#B7791F]" />
+            <span>
+              {t(
+                'RBAC মিডলওয়্যার বিজ্ঞপ্তি: আপনি বর্তমানে "' + role + '" রোলে আছেন। সাব-রেজিস্ট্রার কন্ট্রোল ব্যবহার করতে রোলে সুইচ করুন।',
+                `RBAC Middleware Notice: You are currently in "${role}" role. Switch to Sub-Registrar for full control.`
+              )}
+            </span>
+          </div>
+          <button
+            onClick={switchToRegistrarRole}
+            className="px-4 py-2 rounded-xl bg-[#006A4E] text-white font-extrabold text-xs cursor-pointer"
+          >
+            {t('সাব-রেজিস্ট্রার রোলে সুইচ করুন →', 'Switch to Sub-Registrar Role →')}
+          </button>
+        </div>
+      )}
+
+      <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-xs space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <span className="text-xs font-bold uppercase px-3 py-1 rounded-full bg-[#E6F2EE] text-[#006A4E]">
-              {t('সাব-রেজিস্ট্রার ড্যাশবোর্ড (আইন মন্ত্রণালয়)', 'Sub-Registrar Office (Ministry of Law)')}
+            <span className="text-xs font-extrabold uppercase px-2.5 py-1 rounded-full bg-[#E6F2EE] text-[#006A4E]">
+              {t('সাব-রেজিস্ট্রার কন্ট্রোল ড্যাশবোর্ড (আইন মন্ত্রণালয়)', 'Sub-Registrar Control Console (Ministry of Law)')}
             </span>
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] mt-2 flex items-center gap-2.5">
-              <FileCheck2 className="w-8 h-8 text-[#006A4E]" />
+            <h1 className="text-2xl md:text-3xl font-extrabold text-[#1A1A1A] mt-2 flex items-center gap-2">
+              <FileSpreadsheet className="w-7 h-7 text-[#006A4E]" />
               <span>
                 {t(
-                  'প্রাক-নিবন্ধন দলিল ও মালিকানা চেইন যাচাই উইজার্ড',
-                  'Pre-Registration Deed & Ownership Chain Verification Wizard'
+                  'প্রাক-নিবন্ধন যাচাই, দলিল নিয়ন্ত্রণ ও সরকারি ফি ক্যালকুলেটর',
+                  'Pre-Registration Gatekeeper, Deed Control & Fee Calculator'
                 )}
               </span>
             </h1>
-            <p className="text-sm text-[#5F6B66] mt-1">
-              {t(
-                'দলিল নিবন্ধনের পূর্বেই বিক্রেতার মালিকানা, অংশ, পূর্ববর্তী ডাবল সেল, ব্যাংক বন্ধক এবং এনআইডি যাচাই করুন।',
-                'Check seller ownership, share fraction, double sales, active bank liens, and Mock NID before registering a deed.'
-              )}
-            </p>
           </div>
-        </div>
 
-        {/* Quick Preset Buttons for Scenarios 1..8 */}
-        <div className="pt-2 border-t border-gray-100">
-          <div className="text-xs font-bold uppercase text-[#5F6B66] mb-2">
-            {t(
-              'ডেমো সিনারিও এক ক্লিকে ফর্মে লোড করুন:',
-              '1-Click Load Hackathon Scenarios into Wizard:'
-            )}
-          </div>
           <div className="flex flex-wrap gap-2">
-            {scenarios.map((sc) => (
-              <button
-                key={sc.id}
-                type="button"
-                onClick={() => {
-                  setPlotId(sc.plot_id);
-                  setSellerId(sc.seller_id);
-                  setBuyerId(sc.buyer_id);
-                  setAreaDecimal(String(sc.requested_area_decimal));
-                  setSellerNid('');
-                  runPreCheck(
-                    sc.plot_id,
-                    sc.seller_id,
-                    sc.buyer_id,
-                    String(sc.requested_area_decimal),
-                    ''
-                  );
-                }}
-                className={`min-h-[44px] px-3.5 py-1.5 rounded-xl font-bold text-xs border cursor-pointer transition ${
-                  sc.expected_verdict === 'SAFE'
-                    ? 'bg-[#E6F2EE] text-[#006A4E] border-[#006A4E]/30 hover:bg-[#006A4E] hover:text-white'
-                    : sc.expected_verdict === 'REVIEW'
-                    ? 'bg-[#FEF6E7] text-[#8C580C] border-[#B7791F]/40 hover:bg-[#B7791F] hover:text-white'
-                    : 'bg-[#FEECEE] text-[#C81E32] border-[#F42A41]/40 hover:bg-[#F42A41] hover:text-white'
-                }`}
-              >
-                {t(`সিনারিও ${n(sc.scenario_no)}: ${sc.badge_bn}`, `Scenario ${sc.scenario_no}: ${sc.code}`)}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pre-Registration Check Input Form */}
-      <section className="rounded-3xl bg-white border border-gray-200 p-6 shadow-xs hc-card">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            runPreCheck();
-          }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-        >
-          <div>
-            <label htmlFor="sr-plot" className="block text-sm font-bold text-[#1A1A1A] mb-1.5">
-              {t('১. মৌজা ও দাগ নম্বর (Plot / Dag)', '1. Select Mouza & Plot (Dag)')}
-            </label>
-            <select
-              id="sr-plot"
-              value={plotId}
-              onChange={(e) => setPlotId(Number(e.target.value))}
-              className="w-full min-h-[50px] px-3.5 py-2 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
-            >
-              {plots.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {lang === 'bn'
-                    ? `${p.mouza_bn} — দাগ ${p.dag_no_bn} (${n(p.total_area_decimal)} শতাংশ)`
-                    : `${p.mouza_en} — Dag ${p.dag_no} (${p.total_area_decimal} Dec)`}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="sr-seller" className="block text-sm font-bold text-[#1A1A1A] mb-1.5">
-              {t('২. বিক্রেতা (Seller / দাতা)', '2. Seller (Transferor)')}
-            </label>
-            <select
-              id="sr-seller"
-              value={sellerId}
-              onChange={(e) => setSellerId(Number(e.target.value))}
-              className="w-full min-h-[50px] px-3.5 py-2 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
-            >
-              {persons.map((per) => (
-                <option key={per.id} value={per.id}>
-                  {lang === 'bn'
-                    ? `${per.name_bn} (এনআইডি: ${n(per.nid)})`
-                    : `${per.name_en} (NID: ${per.nid})`}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="sr-buyer" className="block text-sm font-bold text-[#1A1A1A] mb-1.5">
-              {t('৩. ক্রেতা (Buyer / গ্রহীতা)', '3. Buyer (Transferee)')}
-            </label>
-            <select
-              id="sr-buyer"
-              value={buyerId}
-              onChange={(e) => setBuyerId(Number(e.target.value))}
-              className="w-full min-h-[50px] px-3.5 py-2 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
-            >
-              {persons.map((per) => (
-                <option key={per.id} value={per.id}>
-                  {lang === 'bn'
-                    ? `${per.name_bn} (এনআইডি: ${n(per.nid)})`
-                    : `${per.name_en} (NID: ${per.nid})`}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="sr-area" className="block text-sm font-bold text-[#1A1A1A] mb-1.5">
-              {t('৪. হস্তান্তরিত জমি (শতাংশ / Decimal)', '4. Area to Transfer (Decimals)')}
-            </label>
-            <input
-              id="sr-area"
-              type="number"
-              step="0.25"
-              min="0.25"
-              value={areaDecimal}
-              onChange={(e) => setAreaDecimal(e.target.value)}
-              className="w-full min-h-[50px] px-3.5 py-2 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="sr-price" className="block text-sm font-bold text-[#1A1A1A] mb-1.5">
-              {t('৫. দলিলের মূল্য (টাকা / BDT)', '5. Consideration Value (BDT)')}
-            </label>
-            <input
-              id="sr-price"
-              type="number"
-              step="10000"
-              value={priceBdt}
-              onChange={(e) => setPriceBdt(e.target.value)}
-              className="w-full min-h-[50px] px-3.5 py-2 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="sr-nid" className="block text-sm font-bold text-[#1A1A1A] mb-1.5">
-              {t(
-                '৬. বিক্রেতার এনআইডি যাচাই (ঐচ্ছিক ভুল এনআইডি টেস্ট)',
-                '6. Seller NID Check (Leave blank or test mismatch)'
-              )}
-            </label>
-            <input
-              id="sr-nid"
-              type="text"
-              value={sellerNid}
-              onChange={(e) => setSellerNid(e.target.value)}
-              placeholder={t('স্বয়ংক্রিয় বা ভুল এনআইডি লিখুন (যেমন 9999)', 'Blank for auto or enter wrong NID')}
-              className="w-full min-h-[50px] px-3.5 py-2 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
-            />
-          </div>
-
-          <div className="md:col-span-2 lg:col-span-3 flex flex-wrap items-center justify-between gap-4 pt-2">
-            <label className="flex items-center gap-2 text-sm font-semibold text-[#1A1A1A] cursor-pointer">
-              <input
-                type="checkbox"
-                checked={checkRapid}
-                onChange={(e) => setCheckRapid(e.target.checked)}
-                className="w-5 h-5 accent-[#006A4E]"
-              />
-              <span>
-                {t(
-                  'দ্রুত হাতবদল (৩০ দিনের মধ্যে পুনরায় বিক্রয়) নিয়ম সক্রিয় রাখুন',
-                  'Enable Rapid Resale (< 30 days) check'
-                )}
-              </span>
-            </label>
-
             <button
-              type="submit"
-              disabled={loading}
-              className="min-h-[52px] px-7 py-3 rounded-xl bg-[#006A4E] text-white font-bold text-lg hover:bg-[#00563F] transition cursor-pointer shadow-sm"
+              onClick={() => setSubTab('wizard')}
+              className={`px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer ${
+                subTab === 'wizard' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
+              }`}
             >
-              {loading
-                ? t('যাচাই করা হচ্ছে...', 'Running Fraud Rules...')
-                : t('🔍 নিবন্ধন-পূর্ব ঝুঁকি যাচাই করুন', '🔍 Run Pre-Registration Check')}
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>{t('নতুন দলিল ও যাচাই', 'New Deed Gatekeeper')}</span>
+            </button>
+            <button
+              onClick={() => setSubTab('deeds')}
+              className={`px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer ${
+                subTab === 'deeds' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              <ListChecks className="w-4 h-4" />
+              <span>{t('দলিল রেজিস্ট্রি ও হোল্ড কন্ট্রোল', 'Deed Registry & Hold Control')}</span>
+            </button>
+            <button
+              onClick={() => setSubTab('fees')}
+              className={`px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer ${
+                subTab === 'fees' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              <Calculator className="w-4 h-4" />
+              <span>{t('সরকারি ফি ও কর ক্যালকুলেটর', 'Stamp & Reg Fee Calculator')}</span>
             </button>
           </div>
-        </form>
-      </section>
-
-      {error && (
-        <div className="p-5 rounded-2xl bg-[#FEECEE] border-2 border-[#F42A41] text-[#C81E32] font-semibold">
-          {error}
         </div>
-      )}
 
-      {/* Pre-Check Verdict & Officer Decision Actions */}
-      {checkResult && (
-        <div className="space-y-6">
-          <VerdictBanner
-            verdict={checkResult.risk_report.verdict}
-            riskScore={checkResult.risk_report.risk_score}
-            titleBn={checkResult.risk_report.summary_bn}
-            titleEn={checkResult.risk_report.summary_en}
-            reasonsBn={
-              checkResult.risk_report.flags.length > 0
-                ? checkResult.risk_report.flags.map((f: any) => `[${f.rule_id}] ${f.title_bn} — ${f.message_bn}`)
-                : [
-                    `বিক্রেতা (${checkResult.seller.name_bn}) সর্বশেষ বিএস খতিয়ানের বৈধ মালিক।`,
-                    `হস্তান্তরিত জমি (${n(areaDecimal)} শতাংশ) বিক্রেতার প্রাপ্য অংশের মধ্যে রয়েছে।`,
-                    `কোনো ডাবল সেল, ব্যাংক বন্ধক বা খতিয়ান চেইন ব্রেক পাওয়া যায়নি।`,
-                  ]
-            }
-            reasonsEn={
-              checkResult.risk_report.flags.length > 0
-                ? checkResult.risk_report.flags.map((f: any) => `[${f.rule_id}] ${f.title_en} — ${f.message_en}`)
-                : [
-                    `Seller (${checkResult.seller.name_en}) is verified on the latest BS Khatian.`,
-                    `Requested area (${areaDecimal} decimals) is within available owned share.`,
-                    `Zero double-sale, mortgage lien, or survey chain discrepancies.`,
-                  ]
-            }
-            nextStepsBn={checkResult.risk_report.next_steps_bn}
-            nextStepsEn={checkResult.risk_report.next_steps_en}
-            technicalDetails={checkResult.risk_report}
-          />
+        {statusMsg && (
+          <div className="p-4 rounded-xl bg-[#E6F2EE] border-l-8 border-[#006A4E] text-[#006A4E] font-bold">
+            {statusMsg}
+          </div>
+        )}
 
-          {/* Sub-Registrar Action Card: Approve & Sign Deed vs Hold */}
-          <section className="rounded-2xl bg-white border-2 border-[#006A4E]/30 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hc-card">
-            <div>
-              <h3 className="text-xl font-bold text-[#1A1A1A]">
-                {t('সাব-রেজিস্ট্রারের চূড়ান্ত সিদ্ধান্ত (মানব কর্মকর্তা)', 'Sub-Registrar Officer Decision')}
-              </h3>
-              <p className="text-sm text-[#5F6B66]">
+        {/* TAB 1: New Deed Pre-Registration Wizard */}
+        {subTab === 'wizard' && (
+          <div className="space-y-6 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-bold mb-1">
+                  {t('দাগ নম্বর (Plot):', 'Plot / Dag No:')}
+                </label>
+                <select
+                  value={plotId}
+                  onChange={(e) => setPlotId(Number(e.target.value))}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300 bg-white font-semibold"
+                >
+                  {plots.slice(0, 25).map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {lang === 'bn' ? p.mouza_bn : p.mouza_en} — {t('দাগ', 'Dag')} {p.dag_no} ({p.total_area_decimal} dec)
+                      {Number(p.owner_sale_locked) === 1 ? ' [🔒 LOCKED]' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold mb-1">
+                  {t('বিক্রেতা (Seller + Mock NID):', 'Seller (with Mock NID):')}
+                </label>
+                <select
+                  value={sellerId}
+                  onChange={(e) => setSellerId(Number(e.target.value))}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300 bg-white font-semibold"
+                >
+                  {persons.slice(0, 15).map((per) => (
+                    <option key={per.id} value={per.id}>
+                      {lang === 'bn' ? per.name_bn : per.name_en} ({per.nid_mock})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold mb-1">
+                  {t('ক্রেতা (Buyer + Mock NID):', 'Buyer (with Mock NID):')}
+                </label>
+                <select
+                  value={buyerId}
+                  onChange={(e) => setBuyerId(Number(e.target.value))}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300 bg-white font-semibold"
+                >
+                  {persons.slice(0, 15).map((per) => (
+                    <option key={per.id} value={per.id}>
+                      {lang === 'bn' ? per.name_bn : per.name_en} ({per.nid_mock})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold mb-1">
+                  {t('হস্তান্তরিত জমি (শতাংশ):', 'Transfer Area (Decimal):')}
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={areaDecimal}
+                  onChange={(e) => setAreaDecimal(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300 font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold mb-1">
+                  {t('অংশের ভগ্নাংশ (Share Fraction):', 'Share Fraction:')}
+                </label>
+                <input
+                  type="text"
+                  value={shareFraction}
+                  onChange={(e) => setShareFraction(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold mb-1">
+                  {t('দলিলের ঘোষিত মূল্য (টাকা):', 'Declared Value (BDT):')}
+                </label>
+                <input
+                  type="number"
+                  value={declaredValue}
+                  onChange={(e) => setDeclaredValue(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300 font-bold"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={handleRunPreCheck}
+                disabled={loading}
+                className="px-6 py-3.5 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-extrabold cursor-pointer"
+              >
+                {t('১. নিবন্ধন-পূর্ব ঝুঁকি ও ফি পরীক্ষা করুন', '1. Run Pre-Registration Risk & Fee Check')}
+              </button>
+
+              <button
+                onClick={handleRegisterDeed}
+                disabled={loading}
+                className="px-6 py-3.5 rounded-xl bg-gray-900 hover:bg-black text-white font-extrabold cursor-pointer"
+              >
                 {t(
-                  'নিবন্ধন অনুমোদন করলে Ed25519 ডিজিটাল স্বাক্ষর ও QR কোডসহ হ্যাশ-চেইন লেজারে দলিল যুক্ত হবে এবং এসি ল্যান্ডের নিকট ই-নামজারি কেস যাবে।',
-                  'Approving signs the deed with Ed25519, appends it to the hash chain with a QR code, and queues an AC Land e-Mutation case.'
+                  '২. লেজারে দলিল নিবন্ধন ও QR সনদ তৈরি করুন',
+                  '2. Register Deed in Hash Ledger & Mint QR'
                 )}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: Deed Registry & Hold / Release Control */}
+        {subTab === 'deeds' && (
+          <div className="space-y-4 pt-2">
+            <h2 className="text-lg font-extrabold text-[#1A1A1A]">
+              {t(
+                'নিবন্ধিত ও স্থগিত (HELD) দলিলের তালিকা — সাব-রেজিস্ট্রার সিদ্ধান্ত কন্ট্রোল',
+                'Deed Registry & HELD Deed Release/Reject Controls'
+              )}
+            </h2>
+            <div className="space-y-3">
+              {deedsList.map((d) => (
+                <div
+                  key={d.id}
+                  className={`p-4 rounded-xl border-2 flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                    d.status === 'HELD'
+                      ? 'bg-[#FEF3C7]/50 border-[#B7791F]'
+                      : d.status === 'REJECTED'
+                      ? 'bg-[#FEECEE]/50 border-[#F42A41]'
+                      : 'bg-gray-50 border-gray-200'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-extrabold text-base text-[#006A4E]">
+                        {d.deed_no}
+                      </span>
+                      <span
+                        className={`text-xs px-2.5 py-0.5 rounded-full font-extrabold ${
+                          d.status === 'REGISTERED'
+                            ? 'bg-[#006A4E] text-white'
+                            : d.status === 'HELD'
+                            ? 'bg-[#B7791F] text-white'
+                            : 'bg-[#F42A41] text-white'
+                        }`}
+                      >
+                        {d.status}
+                      </span>
+                    </div>
+                    <p className="text-sm font-bold text-[#1A1A1A] mt-1">
+                      {lang === 'bn' ? d.mouza_bn : d.mouza_en} — {t('দাগ', 'Dag')} {d.dag_no} •{' '}
+                      {d.seller_name_bn} → {d.buyer_name_bn} ({toBanglaDigits(d.area_decimal, lang)}{' '}
+                      {t('শতাংশ', 'dec')})
+                    </p>
+                    <p className="text-xs font-mono text-gray-500 mt-0.5">
+                      Block #{d.chain_index} • SHA256: {String(d.content_hash).slice(0, 28)}...
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 shrink-0">
+                    {d.status !== 'REGISTERED' && (
+                      <button
+                        onClick={() => handleUpdateDeedStatus(d.id, 'REGISTERED')}
+                        className="px-3.5 py-2 rounded-xl bg-[#006A4E] text-white text-xs font-extrabold cursor-pointer"
+                      >
+                        ✔ {t('শুনানি শেষে রিলিজ (Approve)', 'Release & Register')}
+                      </button>
+                    )}
+                    {d.status !== 'REJECTED' && (
+                      <button
+                        onClick={() => handleUpdateDeedStatus(d.id, 'REJECTED')}
+                        className="px-3.5 py-2 rounded-xl bg-[#F42A41] text-white text-xs font-extrabold cursor-pointer"
+                      >
+                        ✖ {t('বাতিল (Reject)', 'Reject Deed')}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: Official Stamp Duty & Registration Fee Calculator */}
+        {subTab === 'fees' && feeBreakdown && (
+          <div className="space-y-4 pt-2">
+            <h2 className="text-lg font-extrabold text-[#006A4E]">
+              {t(
+                'সরকারি স্ট্যাম্প শুল্ক, রেজিস্ট্রেশন ফি ও উৎস কর ক্যালকুলেটর',
+                'Government Stamp Duty, Registration Fee & AIT Calculator'
+              )}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-bold mb-1">
+                  {t('দলিলের ধরন (Deed Type):', 'Deed Type:')}
+                </label>
+                <select
+                  value={deedTypeFee}
+                  onChange={(e) => setDeedTypeFee(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300 bg-white font-semibold"
+                >
+                  <option value="SALE">{t('সাফ কবলা (Sale Deed)', 'Sale Deed (Saf Kabala)')}</option>
+                  <option value="HIBA">{t('হেবা ঘোষণা (Hiba / Family Gift)', 'Hiba (Family Gift)')}</option>
+                  <option value="MORTGAGE">{t('ব্যাংক মর্টগেজ দলিল', 'Bank Mortgage Deed')}</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold mb-1">
+                  {t('জমির বাজার মূল্য (টাকা):', 'Declared Market Value (BDT):')}
+                </label>
+                <input
+                  type="number"
+                  value={declaredValue}
+                  onChange={(e) => setDeclaredValue(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300 font-bold"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={handleCalculateCustomFee}
+                  className="w-full py-3 rounded-xl bg-[#006A4E] text-white font-extrabold cursor-pointer"
+                >
+                  {t('ফি হিসাব করুন', 'Calculate Official Fees')}
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-2">
+              <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
+                <div className="text-xs text-gray-500">{t('স্ট্যাম্প শুল্ক (১.৫%)', 'Stamp Duty')}</div>
+                <div className="text-lg font-extrabold text-[#1A1A1A]">
+                  ৳{toBanglaDigits(feeBreakdown.breakdown.stamp_duty_bdt.toLocaleString(), lang)}
+                </div>
+              </div>
+              <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
+                <div className="text-xs text-gray-500">{t('রেজিস্ট্রেশন ফি (১%)', 'Registration Fee')}</div>
+                <div className="text-lg font-extrabold text-[#1A1A1A]">
+                  ৳{toBanglaDigits(feeBreakdown.breakdown.registration_fee_bdt.toLocaleString(), lang)}
+                </div>
+              </div>
+              <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
+                <div className="text-xs text-gray-500">{t('স্থানীয় সরকার কর (৩%)', 'Local Govt Tax')}</div>
+                <div className="text-lg font-extrabold text-[#1A1A1A]">
+                  ৳{toBanglaDigits(feeBreakdown.breakdown.local_govt_tax_bdt.toLocaleString(), lang)}
+                </div>
+              </div>
+              <div className="p-4 rounded-xl bg-gray-50 border border-gray-200">
+                <div className="text-xs text-gray-500">{t('উৎস কর / গেইন ট্যাক্স (৫%)', 'Capital Gain AIT')}</div>
+                <div className="text-lg font-extrabold text-[#1A1A1A]">
+                  ৳{toBanglaDigits(feeBreakdown.breakdown.ait_gain_tax_bdt.toLocaleString(), lang)}
+                </div>
+              </div>
+              <div className="p-4 rounded-xl bg-[#E6F2EE] border-2 border-[#006A4E]">
+                <div className="text-xs font-bold text-[#006A4E]">{t('সর্বমোট সরকারি ফি', 'Total Payable Fee')}</div>
+                <div className="text-xl font-extrabold text-[#006A4E]">
+                  ৳{toBanglaDigits(feeBreakdown.total_payable_bdt.toLocaleString(), lang)}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {preCheckReport && subTab === 'wizard' && <ResultHeroBanner report={preCheckReport} />}
+
+      {createdDeedResult && (
+        <div
+          className={`p-6 rounded-2xl border-2 ${
+            createdDeedResult.deed.status === 'REGISTERED'
+              ? 'bg-[#E6F2EE] border-[#006A4E]'
+              : 'bg-[#FEECEE] border-[#F42A41]'
+          }`}
+        >
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 font-extrabold text-2xl">
+                {createdDeedResult.deed.status === 'REGISTERED' ? (
+                  <CheckCircle2 className="w-8 h-8 text-[#006A4E]" />
+                ) : (
+                  <ShieldAlert className="w-8 h-8 text-[#F42A41]" />
+                )}
+                <span>
+                  {lang === 'bn' ? createdDeedResult.message_bn : createdDeedResult.message_en}
+                </span>
+              </div>
+              <p className="font-mono text-sm">
+                <strong>Deed No:</strong> {createdDeedResult.deed.deed_no} |{' '}
+                <strong>Status:</strong> {createdDeedResult.deed.status} |{' '}
+                <strong>Chain Block:</strong> #{createdDeedResult.deed.chain_index}
+              </p>
+              <p className="font-mono text-xs break-all">
+                <strong>SHA-256 Hash:</strong> {createdDeedResult.deed.content_hash}
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3 shrink-0">
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => handleRegisterDeed(true)}
-                className="min-h-[50px] px-5 py-2.5 rounded-xl bg-[#F42A41] text-white font-bold flex items-center gap-2 hover:bg-[#D01F34] cursor-pointer"
-              >
-                <ShieldAlert className="w-5 h-5" />
-                <span>{t('স্থগিত রাখুন (Hold / Block)', 'Place on HOLD')}</span>
-              </button>
-
-              {checkResult.risk_report.verdict !== 'HIGH_RISK' && (
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => handleRegisterDeed(false)}
-                  className="min-h-[50px] px-6 py-2.5 rounded-xl bg-[#006A4E] text-white font-bold flex items-center gap-2 hover:bg-[#00563F] cursor-pointer shadow-sm"
-                >
-                  <CheckCircle2 className="w-5 h-5" />
-                  <span>
-                    {t(
-                      '✔ অনুমোদন ও ডিজিটাল স্বাক্ষরসহ নিবন্ধন করুন',
-                      '✔ Approve & Register Signed Deed'
-                    )}
-                  </span>
-                </button>
-              )}
-            </div>
-          </section>
+            {createdDeedResult.qr_data_uri && (
+              <div className="bg-white p-2 rounded-xl border border-gray-300 shrink-0">
+                <img
+                  src={createdDeedResult.qr_data_uri}
+                  alt="Deed QR"
+                  className="w-28 h-28"
+                />
+              </div>
+            )}
+          </div>
         </div>
-      )}
-
-      {/* Newly Registered Signed Deed & QR Receipt */}
-      {registeredDeed && (
-        <section className="rounded-3xl bg-[#E6F2EE] border-2 border-[#006A4E] p-6 shadow-md grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-3">
-            <span className="inline-block px-3 py-1 rounded-full bg-[#006A4E] text-white text-xs font-bold">
-              {registeredDeed.status === 'HELD'
-                ? t('✖ স্থগিত (HELD)', '✖ HELD FOR FRAUD RISK')
-                : t('✔ হ্যাশ-চেইন লেজারে নিবন্ধিত', '✔ APPENDED TO HASH-CHAIN LEDGER')}
-            </span>
-            <h2 className="text-2xl font-bold text-[#1A1A1A]">
-              {t(registeredDeed.message_bn, registeredDeed.message_en)}
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm bg-white p-4 rounded-2xl border border-gray-200">
-              <div>
-                <span className="text-[#5F6B66] font-bold">{t('দলিল নম্বর:', 'Deed No:')}</span>{' '}
-                <span className="font-bold">{registeredDeed.deed_no}</span>
-              </div>
-              <div>
-                <span className="text-[#5F6B66] font-bold">{t('চেইন ইনডেক্স:', 'Chain Index:')}</span>{' '}
-                <span className="font-bold">#{n(registeredDeed.chain_index)}</span>
-              </div>
-              <div className="sm:col-span-2 break-all font-mono text-xs">
-                <span className="text-[#5F6B66] font-bold">SHA-256 Hash: </span>
-                <span className="text-[#006A4E]">{registeredDeed.content_hash}</span>
-              </div>
-              <div className="sm:col-span-2 break-all font-mono text-xs">
-                <span className="text-[#5F6B66] font-bold">Ed25519 Signature: </span>
-                <span>{registeredDeed.signature}</span>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => onOpenDeedVerify(registeredDeed.deed_no)}
-              className="min-h-[48px] px-5 py-2.5 rounded-xl bg-[#006A4E] text-white font-bold text-sm flex items-center gap-2 hover:bg-[#00563F] cursor-pointer"
-            >
-              <QrCode className="w-4 h-4" />
-              <span>{t('পাবলিক ভেরিফিকেশন পেজে খুলুন', 'Open Public Verification Page')}</span>
-            </button>
-          </div>
-
-          <div className="bg-white rounded-2xl p-4 flex flex-col items-center justify-center text-center border border-gray-200">
-            <img
-              src={registeredDeed.qr_svg_data_uri}
-              alt="Signed Deed QR"
-              className="w-36 h-36"
-            />
-            <span className="text-xs font-bold text-[#006A4E] mt-2">
-              {t('দলিলের কিউআর কোড', 'Deed Verification QR')}
-            </span>
-          </div>
-        </section>
       )}
     </div>
   );

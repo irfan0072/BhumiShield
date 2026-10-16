@@ -5,14 +5,9 @@
       <stop offset="100%" stop-color="#004D38" />
     </linearGradient>
   </defs>
-  <!-- Outer Shield -->
   <path d="M80 10L140 34V78C140 116.5 114.4 143.8 80 152C45.6 143.8 20 116.5 20 78V34L80 10Z" fill="url(#shieldGrad)" stroke="#E6F2EE" stroke-width="5"/>
-  <!-- Inner Gold/Light Border -->
   <path d="M80 22L128 41V77C128 109.2 106.8 132.4 80 139.8C53.2 132.4 32 109.2 32 77V41L80 22Z" stroke="#E6F2EE" stroke-width="2" stroke-dasharray="4 3" fill="none"/>
-  <!-- Land Plot Grid Lines -->
   <path d="M46 98H114M56 112H104M80 90V124" stroke="#E6F2EE" stroke-opacity="0.45" stroke-width="2.5" stroke-linecap="round"/>
-  <!-- Bangladesh Flag Red Sun Disc -->
   <circle cx="80" cy="68" r="24" fill="#F42A41" stroke="#FFFFFF" stroke-width="3"/>
-  <!-- Checkmark Inside Disc -->
   <path d="M70 68.5L77 75.5L91 61.5" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

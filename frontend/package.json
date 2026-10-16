@@ -1,9 +1,9 @@
 {
   "name": "bhumishield-web",
   "private": true,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
-  "description": "ভূমি সুরক্ষা (BhumiShield) — Citizen & Officer Trust Layer UI for LandTech 2026",
+  "description": "ভূমি সুরক্ষা (BhumiShield) — Role-Based Dashboards & Trust Layer UI for LandTech 2026",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "vite build",

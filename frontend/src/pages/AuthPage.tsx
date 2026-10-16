@@ -1,103 +1,66 @@
-import React, { useEffect, useState } from 'react';
-import {
-  LogIn,
-  UserPlus,
-  UserCheck,
-  KeyRound,
-  LogOut,
-  Shield,
-  Save,
-  CheckCircle2,
-} from 'lucide-react';
-import { apiClient, extractErrorMessage } from '../api/client';
-import { useI18n } from '../i18n';
-import { ActiveTab } from '../components/NavbarAndLayout';
+import React, { useState } from 'react';
+import { useAppUI, UserRole } from '../i18n';
+import { BhumiApi } from '../api/client';
+import { LogIn, UserPlus, KeyRound, CheckCircle2, ShieldAlert, UserCheck } from 'lucide-react';
 
-interface AuthPageProps {
-  currentUser: any | null;
-  onAuthSuccess: (user: any, token: string, redirectTab?: ActiveTab) => void;
-  onLogout: () => void;
-}
+const ROLE_ROUTE: Record<UserRole, string> = {
+  citizen: 'home',
+  sub_registrar: 'registrar',
+  ac_land: 'acland',
+  bank_officer: 'bank',
+  admin: 'admin',
+};
 
-export const AuthPage: React.FC<AuthPageProps> = ({
-  currentUser,
-  onAuthSuccess,
-  onLogout,
-}) => {
-  const { lang, t, n } = useI18n();
-  const [mode, setMode] = useState<'login' | 'register' | 'profile'>(
-    currentUser ? 'profile' : 'login'
-  );
-  const [demoUsers, setDemoUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+export const AuthPage: React.FC<{
+  mode?: 'login' | 'profile';
+  onSuccessNavigate: (tab: string) => void;
+}> = ({ mode = 'login', onSuccessNavigate }) => {
+  const { lang, user, setUser, setToken, t } = useAppUI();
+  const [tab, setTab] = useState<'login' | 'register' | 'profile'>(user && mode === 'profile' ? 'profile' : 'login');
 
-  // Login State
-  const [loginUsername, setLoginUsername] = useState<string>('citizen');
-  const [loginPassword, setLoginPassword] = useState<string>('demo123');
+  const [username, setUsername] = useState('citizen_rahim');
+  const [password, setPassword] = useState('demo123');
 
-  // Registration State
-  const [regUsername, setRegUsername] = useState<string>('');
-  const [regEmail, setRegEmail] = useState<string>('');
-  const [regPassword, setRegPassword] = useState<string>('');
-  const [regNameBn, setRegNameBn] = useState<string>('');
-  const [regNameEn, setRegNameEn] = useState<string>('');
-  const [regRole, setRegRole] = useState<string>('citizen');
-  const [regOfficeBn, setRegOfficeBn] = useState<string>('নাগরিক পোর্টাল — সাভার, ঢাকা');
-  const [regPhone, setRegPhone] = useState<string>('01700-001050');
-  const [regNid, setRegNid] = useState<string>('9900001050');
+  const [regUsername, setRegUsername] = useState('');
+  const [regPassword, setRegPassword] = useState('demo123');
+  const [regNameBn, setRegNameBn] = useState('');
+  const [regNameEn, setRegNameEn] = useState('');
+  const [regRole, setRegRole] = useState<UserRole>('citizen');
+  const [regNid, setRegNid] = useState('1992123456099');
+  const [regPhone, setRegPhone] = useState('01700000999');
+  const [regOffice, setRegOffice] = useState('নাগরিক পোর্টাল');
 
-  // Profile Edit State
-  const [profNameBn, setProfNameBn] = useState<string>(currentUser?.full_name_bn || '');
-  const [profNameEn, setProfNameEn] = useState<string>(currentUser?.full_name_en || '');
-  const [profEmail, setProfEmail] = useState<string>(currentUser?.email || '');
-  const [profPhone, setProfPhone] = useState<string>(currentUser?.phone_dummy || '');
-  const [profOfficeBn, setProfOfficeBn] = useState<string>(currentUser?.office_bn || '');
-  const [currPass, setCurrPass] = useState<string>('');
-  const [newPass, setNewPass] = useState<string>('');
+  const [profNameBn, setProfNameBn] = useState(user?.full_name_bn || '');
+  const [profNameEn, setProfNameEn] = useState(user?.full_name_en || '');
+  const [profPhone, setProfPhone] = useState(user?.phone_mock || '');
+  const [profOffice, setProfOffice] = useState(user?.office_name || '');
+  const [profNewPass, setProfNewPass] = useState('');
 
-  useEffect(() => {
-    apiClient
-      .get('/auth/demo-users')
-      .then((res) => setDemoUsers(res.data.items || []))
-      .catch(() => {});
-  }, []);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
-  useEffect(() => {
-    if (currentUser) {
-      setProfNameBn(currentUser.full_name_bn || '');
-      setProfNameEn(currentUser.full_name_en || '');
-      setProfEmail(currentUser.email || '');
-      setProfPhone(currentUser.phone_dummy || '');
-      setProfOfficeBn(currentUser.office_bn || '');
-    }
-  }, [currentUser]);
-
-  const roleToTab = (role: string): ActiveTab => {
-    if (role === 'sub_registrar') return 'registrar';
-    if (role === 'ac_land') return 'acland';
-    if (role === 'bank_officer') return 'bank';
-    if (role === 'admin') return 'admin';
-    return 'home';
-  };
-
-  const handleLogin = async (usernameArg?: string, passwordArg?: string) => {
-    const u = usernameArg ?? loginUsername;
-    const p = passwordArg ?? loginPassword;
+  const handleLogin = async (u = username, p = password) => {
     setLoading(true);
-    setError(null);
-    setFeedback(null);
+    setErrorMsg('');
+    setSuccessMsg('');
     try {
-      const res = await apiClient.post('/auth/login', {
-        username: u,
-        password: p,
-      });
-      localStorage.setItem('bhumishield_token', res.data.access_token);
-      localStorage.setItem('bhumishield_user', JSON.stringify(res.data.user));
-      onAuthSuccess(res.data.user, res.data.access_token, roleToTab(res.data.user.role));
-    } catch (err) {
-      setError(extractErrorMessage(err, lang));
+      const res = await BhumiApi.login(u, p);
+      setToken(res.access_token);
+      setUser(res.user);
+      setSuccessMsg(t('সফলভাবে লগইন হয়েছে!', 'Logged in!'));
+      setTimeout(() => {
+        onSuccessNavigate(ROLE_ROUTE[res.user.role as UserRole] || 'home');
+      }, 300);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setErrorMsg(
+        detail
+          ? lang === 'bn'
+            ? detail.message_bn
+            : detail.message_en
+          : t('লগইন ব্যর্থ হয়েছে। ইউজারনেম ও পাসওয়ার্ড যাচাই করুন।', 'Login failed. Check credentials.')
+      );
     } finally {
       setLoading(false);
     }
@@ -106,545 +69,363 @@ export const AuthPage: React.FC<AuthPageProps> = ({
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-    setFeedback(null);
+    setErrorMsg('');
     try {
-      const res = await apiClient.post('/auth/register', {
+      const res = await BhumiApi.register({
         username: regUsername,
-        email: regEmail || `${regUsername}@demo.bhumishield.gov.bd`,
         password: regPassword,
         full_name_bn: regNameBn,
         full_name_en: regNameEn || regNameBn,
         role: regRole,
-        office_bn: regOfficeBn,
-        office_en: regOfficeBn,
-        phone_dummy: regPhone,
-        nid: regNid,
+        nid_mock: regNid,
+        phone_mock: regPhone,
+        office_name: regOffice,
       });
-      localStorage.setItem('bhumishield_token', res.data.access_token);
-      localStorage.setItem('bhumishield_user', JSON.stringify(res.data.user));
-      onAuthSuccess(res.data.user, res.data.access_token, roleToTab(res.data.user.role));
-    } catch (err) {
-      setError(extractErrorMessage(err, lang));
+      setToken(res.access_token);
+      setUser(res.user);
+      onSuccessNavigate(ROLE_ROUTE[res.user.role as UserRole] || 'home');
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setErrorMsg(
+        detail
+          ? lang === 'bn'
+            ? detail.message_bn
+            : detail.message_en
+          : t('নিবন্ধন ব্যর্থ হয়েছে।', 'Registration failed.')
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUpdateProfile = async (e: React.FormEvent) => {
+  const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-    setFeedback(null);
+    setErrorMsg('');
+    setSuccessMsg('');
     try {
-      const res = await apiClient.put('/auth/profile', {
+      const res = await BhumiApi.updateProfile({
         full_name_bn: profNameBn,
         full_name_en: profNameEn,
-        email: profEmail,
-        phone_dummy: profPhone,
-        office_bn: profOfficeBn,
+        phone_mock: profPhone,
+        office_name: profOffice,
+        new_password: profNewPass || undefined,
       });
-      localStorage.setItem('bhumishield_user', JSON.stringify(res.data.user));
-      onAuthSuccess(res.data.user, localStorage.getItem('bhumishield_token') || '');
-      setFeedback(t(res.data.message_bn, res.data.message_en));
-    } catch (err) {
-      setError(extractErrorMessage(err, lang));
+      setUser(res.user);
+      setSuccessMsg(t('প্রোফাইল সফলভাবে আপডেট হয়েছে।', 'Profile updated.'));
+    } catch {
+      setErrorMsg(t('প্রোফাইল আপডেট করতে সমস্যা হয়েছে।', 'Failed to update profile.'));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setFeedback(null);
-    try {
-      const res = await apiClient.post('/auth/change-password', {
-        current_password: currPass,
-        new_password: newPass,
-      });
-      setCurrPass('');
-      setNewPass('');
-      setFeedback(t(res.data.message_bn, res.data.message_en));
-    } catch (err) {
-      setError(extractErrorMessage(err, lang));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const demoAccounts = [
+    { u: 'citizen_rahim', roleBn: 'নাগরিক (আব্দুর রহিম)', roleEn: 'Citizen (Abdur Rahim)' },
+    { u: 'registrar_savar', roleBn: 'সাব-রেজিস্ট্রার (সাভার)', roleEn: 'Sub-Registrar (Savar)' },
+    { u: 'acland_savar', roleBn: 'এসি ল্যান্ড (সাভার)', roleEn: 'AC Land (Savar)' },
+    { u: 'bank_sonali', roleBn: 'ব্যাংক কর্মকর্তা (সোনালী ব্যাংক)', roleEn: 'Bank Officer (Sonali Bank)' },
+    { u: 'admin_auditor', roleBn: 'অ্যাডমিন ও অডিটর', roleEn: 'System Admin & Auditor' },
+  ];
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* Top Mode Tabs */}
-      <div className="daisy-card p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="bg-white rounded-2xl p-6 md:p-8 border border-gray-200 shadow-xs">
+        <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-4 mb-6">
           <button
-            type="button"
-            onClick={() => {
-              setMode('login');
-              setError(null);
-              setFeedback(null);
-            }}
-            className={`daisy-btn text-sm ${
-              mode === 'login' ? 'daisy-btn-primary' : 'bg-gray-100 text-[#1A1A1A]'
+            onClick={() => setTab('login')}
+            className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 cursor-pointer ${
+              tab === 'login' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
             }`}
           >
             <LogIn className="w-4 h-4" />
-            <span>{t('লগইন (Sign In)', 'Sign In')}</span>
+            <span>{t('লগইন (Login)', 'Login')}</span>
           </button>
-
           <button
-            type="button"
-            onClick={() => {
-              setMode('register');
-              setError(null);
-              setFeedback(null);
-            }}
-            className={`daisy-btn text-sm ${
-              mode === 'register' ? 'daisy-btn-primary' : 'bg-gray-100 text-[#1A1A1A]'
+            onClick={() => setTab('register')}
+            className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 cursor-pointer ${
+              tab === 'register' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
             }`}
           >
             <UserPlus className="w-4 h-4" />
-            <span>{t('নতুন অ্যাকাউন্ট নিবন্ধন (Register)', 'Register Account')}</span>
+            <span>{t('নতুন অ্যাকাউন্ট নিবন্ধন', 'Register Account')}</span>
           </button>
-
-          {currentUser && (
+          {user && (
             <button
-              type="button"
-              onClick={() => {
-                setMode('profile');
-                setError(null);
-                setFeedback(null);
-              }}
-              className={`daisy-btn text-sm ${
-                mode === 'profile' ? 'daisy-btn-primary' : 'bg-gray-100 text-[#1A1A1A]'
+              onClick={() => setTab('profile')}
+              className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 cursor-pointer ${
+                tab === 'profile' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
               }`}
             >
               <UserCheck className="w-4 h-4" />
-              <span>{t('আমার প্রোফাইল ও পাসওয়ার্ড', 'My Profile & Security')}</span>
+              <span>{t('আমার প্রোফাইল', 'My Profile')}</span>
             </button>
           )}
         </div>
 
-        {currentUser && (
-          <button
-            type="button"
-            onClick={onLogout}
-            className="daisy-btn daisy-btn-error text-sm"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>{t('লগআউট করুন', 'Sign Out')}</span>
-          </button>
+        {errorMsg && (
+          <div className="p-4 mb-4 rounded-xl bg-[#FEECEE] border-l-8 border-[#F42A41] text-[#1A1A1A] font-bold flex items-center gap-2">
+            <ShieldAlert className="w-5 h-5 text-[#F42A41]" />
+            <span>{errorMsg}</span>
+          </div>
         )}
-      </div>
 
-      {feedback && (
-        <div className="p-4 rounded-2xl bg-[#E6F2EE] border-2 border-[#006A4E] text-[#006A4E] font-bold flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5" />
-          <span>{feedback}</span>
-        </div>
-      )}
+        {successMsg && (
+          <div className="p-4 mb-4 rounded-xl bg-[#E6F2EE] border-l-8 border-[#006A4E] text-[#006A4E] font-bold flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5" />
+            <span>{successMsg}</span>
+          </div>
+        )}
 
-      {error && (
-        <div className="p-4 rounded-2xl bg-[#FEECEE] border-2 border-[#F42A41] text-[#C81E32] font-bold">
-          ✖ {error}
-        </div>
-      )}
-
-      {/* MODE 1: LOGIN + 1-CLICK DEMO ACCOUNTS */}
-      {mode === 'login' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <section className="lg:col-span-5 daisy-card p-6 sm:p-7 space-y-5">
-            <div className="flex items-center gap-3">
-              <img src="/assets/bhumishield-emblem.svg" alt="Emblem" className="w-11 h-11" />
-              <div>
-                <h1 className="text-2xl font-bold text-[#1A1A1A]">
-                  {t('পোর্টালে লগইন করুন', 'Sign In to BhumiShield')}
-                </h1>
-                <p className="text-xs text-[#5F6B66]">
-                  {t('JWT সিকিউর অথেনটিকেশন ও রোল গার্ড', 'JWT Bearer Authentication & RBAC')}
-                </p>
-              </div>
-            </div>
-
+        {tab === 'login' && (
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 handleLogin();
               }}
-              className="space-y-4"
+              className="md:col-span-6 space-y-4"
             >
+              <h2 className="text-2xl font-extrabold text-[#006A4E]">
+                {t('অ্যাকাউন্টে প্রবেশ করুন', 'Sign In to BhumiShield')}
+              </h2>
               <div>
-                <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                  {t('ইউজারনেম অথবা ইমেইল', 'Username or Email')}
+                <label className="block font-bold mb-1">
+                  {t('ইউজারনেম (Username):', 'Username:')}
                 </label>
                 <input
                   type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300 font-mono"
                   required
-                  value={loginUsername}
-                  onChange={(e) => setLoginUsername(e.target.value)}
-                  className="w-full min-h-[50px] px-4 py-2.5 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                  {t('পাসওয়ার্ড', 'Password')}
+                <label className="block font-bold mb-1">
+                  {t('পাসওয়ার্ড (Password):', 'Password:')}
                 </label>
                 <input
                   type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300 font-mono"
                   required
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full min-h-[50px] px-4 py-2.5 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
                 />
               </div>
-
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full daisy-btn daisy-btn-primary text-base"
+                className="w-full py-3.5 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-extrabold text-lg cursor-pointer"
               >
-                <LogIn className="w-5 h-5" />
-                <span>{loading ? t('লগইন হচ্ছে...', 'Signing in...') : t('লগইন করুন', 'Sign In')}</span>
+                {loading ? t('যাচাই হচ্ছে...', 'Signing in...') : t('লগইন করুন', 'Sign In')}
               </button>
             </form>
-          </section>
 
-          {/* 1-Click Hackathon Demo Accounts */}
-          <section className="lg:col-span-7 daisy-card p-6 sm:p-7 space-y-4">
-            <div>
-              <span className="daisy-badge daisy-badge-success">
-                {t('বিচারক ও পরীক্ষকদের জন্য ১-ক্লিক লগইন', '1-Click Judge Demo Credentials')}
-              </span>
-              <h2 className="text-xl font-bold text-[#1A1A1A] mt-1">
-                {t(
-                  'যেকোনো ভূমিকায় এক ক্লিকে সরাসরি লগইন করুন (পাসওয়ার্ড: demo123)',
-                  'Click Any Role Account Below to Sign In Immediately (Password: demo123)'
-                )}
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {demoUsers.map((u) => (
-                <div
-                  key={u.username}
-                  className="p-4 rounded-2xl bg-[#FAFBFA] border border-gray-200 flex flex-col justify-between gap-3"
-                >
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-bold text-sm text-[#006A4E]">{u.username}</span>
-                      <span className="text-[11px] font-bold uppercase px-2 py-0.5 rounded-full bg-[#E6F2EE] text-[#006A4E]">
-                        {u.role}
-                      </span>
-                    </div>
-                    <div className="font-bold text-[#1A1A1A] mt-1">
-                      {t(u.full_name_bn, u.full_name_en)}
-                    </div>
-                    <div className="text-xs text-[#5F6B66]">{t(u.office_bn, u.office_en)}</div>
-                  </div>
+            {/* Quick Demo Login Cards */}
+            <div className="md:col-span-6 bg-[#E6F2EE]/60 rounded-2xl p-5 border border-[#006A4E]/20 space-y-3">
+              <div className="flex items-center gap-2 font-extrabold text-[#006A4E]">
+                <KeyRound className="w-5 h-5" />
+                <span>
+                  {t(
+                    'হ্যাকাথন বিচারকদের জন্য ১-ক্লিক রোল লগইন (পাসওয়ার্ড: demo123)',
+                    '1-Click Role Login for Judges (Password: demo123)'
+                  )}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {demoAccounts.map((acc) => (
                   <button
+                    key={acc.u}
                     type="button"
                     onClick={() => {
-                      setLoginUsername(u.username);
-                      setLoginPassword('demo123');
-                      handleLogin(u.username, 'demo123');
+                      setUsername(acc.u);
+                      setPassword('demo123');
+                      handleLogin(acc.u, 'demo123');
                     }}
-                    className="w-full min-h-[42px] px-3 py-1.5 rounded-xl bg-[#006A4E] text-white font-bold text-xs hover:bg-[#00543D] cursor-pointer"
+                    className="w-full p-3 rounded-xl bg-white hover:bg-[#006A4E] hover:text-white border border-gray-200 text-left flex items-center justify-between transition-colors cursor-pointer group"
                   >
-                    {t(`${u.username} হিসেবে লগইন করুন →`, `Sign in as ${u.username} ->`)}
+                    <div>
+                      <div className="font-bold text-sm">
+                        {lang === 'bn' ? acc.roleBn : acc.roleEn}
+                      </div>
+                      <div className="text-xs font-mono opacity-75">{acc.u}</div>
+                    </div>
+                    <span className="text-xs font-extrabold px-2.5 py-1 rounded bg-[#E6F2EE] text-[#006A4E] group-hover:bg-white">
+                      {t('১-ক্লিক লগইন →', '1-Click Login →')}
+                    </span>
                   </button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </section>
-        </div>
-      )}
-
-      {/* MODE 2: NEW USER REGISTRATION */}
-      {mode === 'register' && (
-        <section className="daisy-card p-6 sm:p-8 space-y-6">
-          <div>
-            <span className="daisy-badge daisy-badge-success">
-              {t('নাগরিক ও কর্মকর্তা নিবন্ধন', 'Citizen & Officer Registration')}
-            </span>
-            <h1 className="text-2xl font-bold text-[#1A1A1A] mt-1">
-              {t(
-                'নতুন ব্যবহারকারী অ্যাকাউন্ট তৈরি করুন (মক এনআইডি সংযুক্ত)',
-                'Create a New Account (Linked with Mock NID Registry)'
-              )}
-            </h1>
           </div>
+        )}
 
-          <form onSubmit={handleRegister} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                {t('ইউজারনেম (Username) *', 'Username *')}
-              </label>
-              <input
-                type="text"
-                required
-                value={regUsername}
-                onChange={(e) => setRegUsername(e.target.value)}
-                placeholder="e.g. karim_savar"
-                className="w-full min-h-[50px] px-4 py-2 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
-              />
+        {tab === 'register' && (
+          <form onSubmit={handleRegister} className="space-y-4">
+            <h2 className="text-2xl font-extrabold text-[#006A4E]">
+              {t('নতুন ব্যবহারকারী নিবন্ধন (Mock NID সহ)', 'Register New User (with Mock NID)')}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block font-bold mb-1">{t('ইউজারনেম:', 'Username:')}</label>
+                <input
+                  type="text"
+                  value={regUsername}
+                  onChange={(e) => setRegUsername(e.target.value)}
+                  placeholder="citizen_new"
+                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-bold mb-1">{t('পাসওয়ার্ড:', 'Password:')}</label>
+                <input
+                  type="password"
+                  value={regPassword}
+                  onChange={(e) => setRegPassword(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-bold mb-1">{t('পূর্ণ নাম (বাংলা):', 'Full Name (Bangla):')}</label>
+                <input
+                  type="text"
+                  value={regNameBn}
+                  onChange={(e) => setRegNameBn(e.target.value)}
+                  placeholder="মোঃ সাইফুল ইসলাম"
+                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-bold mb-1">{t('পূর্ণ নাম (ইংরেজি):', 'Full Name (English):')}</label>
+                <input
+                  type="text"
+                  value={regNameEn}
+                  onChange={(e) => setRegNameEn(e.target.value)}
+                  placeholder="Md. Saiful Islam"
+                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                />
+              </div>
+              <div>
+                <label className="block font-bold mb-1">{t('ভূমিকা (Role):', 'User Role:')}</label>
+                <select
+                  value={regRole}
+                  onChange={(e) => setRegRole(e.target.value as UserRole)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300 bg-white font-semibold"
+                >
+                  <option value="citizen">{t('নাগরিক (Citizen)', 'Citizen')}</option>
+                  <option value="sub_registrar">{t('সাব-রেজিস্ট্রার (Sub-Registrar)', 'Sub-Registrar')}</option>
+                  <option value="ac_land">{t('এসি ল্যান্ড (AC Land)', 'AC Land')}</option>
+                  <option value="bank_officer">{t('ব্যাংক কর্মকর্তা (Bank Officer)', 'Bank Officer')}</option>
+                </select>
+              </div>
+              <div>
+                <label className="block font-bold mb-1">{t('মক এনআইডি নম্বর (Mock NID):', 'Mock NID Number:')}</label>
+                <input
+                  type="text"
+                  value={regNid}
+                  onChange={(e) => setRegNid(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300 font-mono"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-bold mb-1">{t('মোবাইল নম্বর (ডেমো):', 'Phone (Mock):')}</label>
+                <input
+                  type="text"
+                  value={regPhone}
+                  onChange={(e) => setRegPhone(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300 font-mono"
+                />
+              </div>
+              <div>
+                <label className="block font-bold mb-1">{t('অফিস / ঠিকানা:', 'Office / Location:')}</label>
+                <input
+                  type="text"
+                  value={regOffice}
+                  onChange={(e) => setRegOffice(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                />
+              </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                {t('ইমেইল (Email)', 'Email Address')}
-              </label>
-              <input
-                type="email"
-                value={regEmail}
-                onChange={(e) => setRegEmail(e.target.value)}
-                placeholder="karim@demo.bhumishield.gov.bd"
-                className="w-full min-h-[50px] px-4 py-2 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                {t('পূর্ণ নাম (বাংলায়) *', 'Full Name (Bangla) *')}
-              </label>
-              <input
-                type="text"
-                required
-                value={regNameBn}
-                onChange={(e) => setRegNameBn(e.target.value)}
-                placeholder="যেমন: মো. করিম উদ্দিন"
-                className="w-full min-h-[50px] px-4 py-2 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                {t('পূর্ণ নাম (ইংরেজিতে) *', 'Full Name (English) *')}
-              </label>
-              <input
-                type="text"
-                required
-                value={regNameEn}
-                onChange={(e) => setRegNameEn(e.target.value)}
-                placeholder="e.g. Md. Karim Uddin"
-                className="w-full min-h-[50px] px-4 py-2 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                {t('ডেমো এনআইডি নম্বর (১০ সংখ্যা) *', 'Mock NID Number (10 digits) *')}
-              </label>
-              <input
-                type="text"
-                required
-                value={regNid}
-                onChange={(e) => setRegNid(e.target.value)}
-                placeholder="9900001050"
-                className="w-full min-h-[50px] px-4 py-2 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                {t('মোবাইল নম্বর (ডেমো) *', 'Phone Number (Dummy) *')}
-              </label>
-              <input
-                type="text"
-                required
-                value={regPhone}
-                onChange={(e) => setRegPhone(e.target.value)}
-                placeholder="01700-001050"
-                className="w-full min-h-[50px] px-4 py-2 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                {t('ব্যবহারকারীর ভূমিকা (Role) *', 'Account Role *')}
-              </label>
-              <select
-                value={regRole}
-                onChange={(e) => setRegRole(e.target.value)}
-                className="w-full min-h-[50px] px-4 py-2 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
-              >
-                <option value="citizen">{t('👤 নাগরিক (Citizen)', '👤 Citizen')}</option>
-                <option value="sub_registrar">{t('🖋️ সাব-রেজিস্ট্রার (Sub-Registrar)', '🖋️ Sub-Registrar')}</option>
-                <option value="ac_land">{t('🏛️ এসি ল্যান্ড (AC Land)', '🏛️ AC Land Officer')}</option>
-                <option value="bank_officer">{t('🏦 ব্যাংক কর্মকর্তা (Bank Officer)', '🏦 Bank Officer')}</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                {t('কার্যালয় / ঠিকানা *', 'Office / Address *')}
-              </label>
-              <input
-                type="text"
-                required
-                value={regOfficeBn}
-                onChange={(e) => setRegOfficeBn(e.target.value)}
-                className="w-full min-h-[50px] px-4 py-2 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                {t('পাসওয়ার্ড (কমপক্ষে ৪ অক্ষর) *', 'Password (min 4 chars) *')}
-              </label>
-              <input
-                type="password"
-                required
-                minLength={4}
-                value={regPassword}
-                onChange={(e) => setRegPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full min-h-[50px] px-4 py-2 rounded-xl border-2 border-gray-300 bg-[#FAFBFA] font-semibold"
-              />
-            </div>
-
-            <div className="md:col-span-2 pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="daisy-btn daisy-btn-primary w-full sm:w-auto px-8 text-base"
-              >
-                <UserPlus className="w-5 h-5" />
-                <span>
-                  {loading
-                    ? t('অ্যাকাউন্ট তৈরি হচ্ছে...', 'Creating Account...')
-                    : t('নিবন্ধন সম্পন্ন করুন ও লগইন করুন', 'Register & Sign In')}
-                </span>
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-8 py-3.5 rounded-xl bg-[#006A4E] text-white font-extrabold text-lg cursor-pointer"
+            >
+              {t('নিবন্ধন সম্পন্ন করুন', 'Complete Registration')}
+            </button>
           </form>
-        </section>
-      )}
+        )}
 
-      {/* MODE 3: LOGGED-IN USER PROFILE & PASSWORD CHANGE */}
-      {mode === 'profile' && currentUser && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <section className="lg:col-span-7 daisy-card p-6 sm:p-7 space-y-5">
-            <div className="flex items-center justify-between border-b border-gray-200 pb-4">
+        {tab === 'profile' && user && (
+          <form onSubmit={handleProfileSave} className="space-y-4">
+            <h2 className="text-2xl font-extrabold text-[#006A4E]">
+              {t('প্রোফাইল ও নিরাপত্তা সেটিংস', 'Profile & Security Settings')}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <span className="daisy-badge daisy-badge-success">{currentUser.role}</span>
-                <h2 className="text-2xl font-bold text-[#1A1A1A] mt-1">
-                  {t(currentUser.full_name_bn, currentUser.full_name_en)}
-                </h2>
-                <p className="text-xs text-[#5F6B66]">
-                  {t('ইউজারনেম:', 'Username:')} <strong>{currentUser.username}</strong> •{' '}
-                  {t('এনআইডি:', 'NID:')} <strong>{n(currentUser.nid)}</strong>
-                </p>
+                <label className="block font-bold mb-1">{t('পূর্ণ নাম (বাংলা):', 'Full Name (Bangla):')}</label>
+                <input
+                  type="text"
+                  value={profNameBn}
+                  onChange={(e) => setProfNameBn(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                />
               </div>
-              <Shield className="w-10 h-10 text-[#006A4E]" />
+              <div>
+                <label className="block font-bold mb-1">{t('পূর্ণ নাম (ইংরেজি):', 'Full Name (English):')}</label>
+                <input
+                  type="text"
+                  value={profNameEn}
+                  onChange={(e) => setProfNameEn(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                />
+              </div>
+              <div>
+                <label className="block font-bold mb-1">{t('মোবাইল নম্বর:', 'Phone:')}</label>
+                <input
+                  type="text"
+                  value={profPhone}
+                  onChange={(e) => setProfPhone(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                />
+              </div>
+              <div>
+                <label className="block font-bold mb-1">{t('অফিস / কর্মস্থল:', 'Office Name:')}</label>
+                <input
+                  type="text"
+                  value={profOffice}
+                  onChange={(e) => setProfOffice(e.target.value)}
+                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                />
+              </div>
+              <div>
+                <label className="block font-bold mb-1">
+                  {t('নতুন পাসওয়ার্ড (ঐচ্ছিক):', 'New Password (Optional):')}
+                </label>
+                <input
+                  type="password"
+                  value={profNewPass}
+                  onChange={(e) => setProfNewPass(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full p-3 rounded-xl border-2 border-gray-300"
+                />
+              </div>
             </div>
-
-            <form onSubmit={handleUpdateProfile} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                    {t('নাম (বাংলা)', 'Full Name (Bangla)')}
-                  </label>
-                  <input
-                    type="text"
-                    value={profNameBn}
-                    onChange={(e) => setProfNameBn(e.target.value)}
-                    className="w-full min-h-[48px] px-3.5 py-2 rounded-xl border border-gray-300 bg-[#FAFBFA] font-semibold"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                    {t('নাম (ইংরেজি)', 'Full Name (English)')}
-                  </label>
-                  <input
-                    type="text"
-                    value={profNameEn}
-                    onChange={(e) => setProfNameEn(e.target.value)}
-                    className="w-full min-h-[48px] px-3.5 py-2 rounded-xl border border-gray-300 bg-[#FAFBFA] font-semibold"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                    {t('ইমেইল', 'Email')}
-                  </label>
-                  <input
-                    type="email"
-                    value={profEmail}
-                    onChange={(e) => setProfEmail(e.target.value)}
-                    className="w-full min-h-[48px] px-3.5 py-2 rounded-xl border border-gray-300 bg-[#FAFBFA] font-semibold"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                    {t('ফোন নম্বর (ডেমো)', 'Phone (Dummy)')}
-                  </label>
-                  <input
-                    type="text"
-                    value={profPhone}
-                    onChange={(e) => setProfPhone(e.target.value)}
-                    className="w-full min-h-[48px] px-3.5 py-2 rounded-xl border border-gray-300 bg-[#FAFBFA] font-semibold"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                    {t('কার্যালয় / ঠিকানা', 'Office / Location')}
-                  </label>
-                  <input
-                    type="text"
-                    value={profOfficeBn}
-                    onChange={(e) => setProfOfficeBn(e.target.value)}
-                    className="w-full min-h-[48px] px-3.5 py-2 rounded-xl border border-gray-300 bg-[#FAFBFA] font-semibold"
-                  />
-                </div>
-              </div>
-              <button type="submit" disabled={loading} className="daisy-btn daisy-btn-primary text-sm">
-                <Save className="w-4 h-4" />
-                <span>{t('প্রোফাইল সংরক্ষণ করুন', 'Save Profile Changes')}</span>
-              </button>
-            </form>
-          </section>
-
-          <section className="lg:col-span-5 daisy-card p-6 sm:p-7 space-y-4">
-            <h3 className="text-xl font-bold text-[#1A1A1A] flex items-center gap-2">
-              <KeyRound className="w-5 h-5 text-[#006A4E]" />
-              <span>{t('পাসওয়ার্ড পরিবর্তন করুন', 'Change Password')}</span>
-            </h3>
-            <form onSubmit={handleChangePassword} className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                  {t('বর্তমান পাসওয়ার্ড', 'Current Password')}
-                </label>
-                <input
-                  type="password"
-                  required
-                  value={currPass}
-                  onChange={(e) => setCurrPass(e.target.value)}
-                  className="w-full min-h-[48px] px-3.5 py-2 rounded-xl border border-gray-300 bg-[#FAFBFA]"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-[#1A1A1A] mb-1">
-                  {t('নতুন পাসওয়ার্ড', 'New Password')}
-                </label>
-                <input
-                  type="password"
-                  required
-                  minLength={4}
-                  value={newPass}
-                  onChange={(e) => setNewPass(e.target.value)}
-                  className="w-full min-h-[48px] px-3.5 py-2 rounded-xl border border-gray-300 bg-[#FAFBFA]"
-                />
-              </div>
-              <button type="submit" disabled={loading} className="daisy-btn daisy-btn-outline w-full text-sm">
-                <KeyRound className="w-4 h-4" />
-                <span>{t('পাসওয়ার্ড আপডেট করুন', 'Update Password')}</span>
-              </button>
-            </form>
-          </section>
-        </div>
-      )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-6 py-3 rounded-xl bg-[#006A4E] text-white font-extrabold cursor-pointer"
+            >
+              {t('প্রোফাইল সংরক্ষণ করুন', 'Save Profile')}
+            </button>
+          </form>
+        )}
+      </div>
     </div>
   );
 };

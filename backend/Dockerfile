@@ -1,19 +1,20 @@
-FROM python:3.12-slim
+FROM php:8.4-cli-alpine
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libpq-dev \
+RUN apk add --no-cache \
+    postgresql-dev \
+    sqlite-dev \
+    libsodium-dev \
+    qrencode \
     tesseract-ocr \
-    tesseract-ocr-ben \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+    tesseract-ocr-data-ben \
+    && docker-php-ext-install pdo pdo_pgsql pdo_sqlite sodium
 
 COPY . .
 
+RUN php artisan migrate:fresh --seed
+
 EXPOSE 8000
 
-CMD ["sh", "-c", "python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]

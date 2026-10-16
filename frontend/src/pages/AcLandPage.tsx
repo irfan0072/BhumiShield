@@ -1,225 +1,372 @@
-import React, { useEffect, useState } from 'react';
-import { Landmark, CheckCircle2, XCircle, QrCode } from 'lucide-react';
-import { apiClient, extractErrorMessage } from '../api/client';
-import { useI18n } from '../i18n';
-import { getVerdictStyle } from '../theme/tokens';
+import React, { useState, useEffect } from 'react';
+import { useAppUI } from '../i18n';
+import { BhumiApi } from '../api/client';
+import { toBanglaDigits } from '../theme/tokens';
+import {
+  Landmark,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  GitCompareArrows,
+  AlertOctagon,
+  KeyRound,
+} from 'lucide-react';
 
-interface AcLandPageProps {
-  onOpenDeedVerify: (deedNo: string) => void;
-}
+export const AcLandPage: React.FC = () => {
+  const { lang, role, setRole, setUser, setToken, t } = useAppUI();
+  const [subTab, setSubTab] = useState<'mutations' | 'khatians' | 'disputes'>('mutations');
 
-export const AcLandPage: React.FC<AcLandPageProps> = ({ onOpenDeedVerify }) => {
-  const { lang, t, n } = useI18n();
   const [mutations, setMutations] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [reasonInputs, setReasonInputs] = useState<Record<number, string>>({});
+  const [flaggedKhatians, setFlaggedKhatians] = useState<any[]>([]);
+  const [disputes, setDisputes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [actionMsg, setActionMsg] = useState('');
 
-  const loadMutations = async () => {
+  const loadAcLandData = () => {
     setLoading(true);
-    try {
-      const res = await apiClient.get('/mutations');
-      setMutations(res.data.items || []);
-    } catch (err) {
-      setError(extractErrorMessage(err, lang));
-    } finally {
-      setLoading(false);
-    }
+    Promise.all([
+      BhumiApi.getMutations(),
+      BhumiApi.listFlaggedKhatians(),
+      BhumiApi.listDisputes(),
+    ])
+      .then(([muts, khats, dsps]) => {
+        setMutations(muts);
+        setFlaggedKhatians(khats);
+        setDisputes(dsps);
+      })
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    loadMutations();
+    loadAcLandData();
   }, []);
 
-  const handleDecision = async (mutId: number, decision: 'APPROVED' | 'REJECTED') => {
-    const defaultReasonBn =
-      decision === 'APPROVED'
-        ? 'সাব-রেজিস্ট্রি লেজারের ডিজিটাল স্বাক্ষর ও মালিকানা অংশ সঠিক থাকায় ই-নামজারি অনুমোদিত।'
-        : 'দলিলের হ্যাশ অমিল বা মালিকানা ঝুঁকির কারণে ই-নামজারি আবেদন না-মঞ্জুর করা হলো।';
-    const reasonBn = reasonInputs[mutId]?.trim() || defaultReasonBn;
-
-    setLoading(true);
-    setError(null);
-    setFeedback(null);
-    try {
-      const res = await apiClient.post(`/mutations/${mutId}/decide`, {
-        decision,
-        reason_bn: reasonBn,
-      });
-      setFeedback(t(res.data.message_bn, res.data.message_en));
-      await loadMutations();
-    } catch (err) {
-      setError(extractErrorMessage(err, lang));
-    } finally {
-      setLoading(false);
+  const switchToAcLandRole = async () => {
+    const res = await BhumiApi.switchDemoRole('ac_land');
+    if (res?.access_token && res?.user) {
+      setToken(res.access_token);
+      setUser(res.user);
+    } else {
+      setRole('ac_land');
     }
+  };
+
+  const handleDecision = async (mutationId: number, status: 'APPROVED' | 'REJECTED') => {
+    const note =
+      status === 'APPROVED'
+        ? 'এসি ল্যান্ড কর্তৃক অনুমোদিত এবং বিএস খতিয়ান স্বয়ংক্রিয়ভাবে হালনাগাদ করা হয়েছে।'
+        : 'এসি ল্যান্ড কর্তৃক কাগজপত্রের অসামঞ্জস্যতার কারণে নামজারি না-মঞ্জুর।';
+    const res = await BhumiApi.decideMutation(mutationId, status, note);
+    setActionMsg(lang === 'bn' ? res.message_bn : res.message_en);
+    loadAcLandData();
+  };
+
+  const handleReconcileKhatian = async (plotId: number, currentArea: number) => {
+    const res = await BhumiApi.reconcileKhatian(plotId, {
+      resolution_note_bn:
+        'এসি ল্যান্ড শুনানি ও মাঠ জরিপের মাধ্যমে আরএস-বিএস খতিয়ান চেইন ও ওয়ারিশ অংশ সমন্বয় করা হলো।',
+      updated_area_decimal: currentArea,
+    });
+    setActionMsg(lang === 'bn' ? res.message_bn : res.message_en);
+    loadAcLandData();
+  };
+
+  const handleResolveDispute = async (
+    disputeId: number,
+    status: 'RESOLVED_DISMISSED' | 'UPHELD_FROZEN'
+  ) => {
+    const note =
+      status === 'UPHELD_FROZEN'
+        ? 'অভিযোগের প্রাথমিক সত্যতা পাওয়ায় আদালতের চূড়ান্ত নিষ্পত্তি না হওয়া পর্যন্ত এই দাগের সকল হস্তান্তর স্থগিত (Frozen) করা হলো।'
+        : 'উভয় পক্ষের শুনানি শেষে অভিযোগের ভিত্তি না থাকায় তা নিষ্পত্তি ও খারিজ করা হলো।';
+    const res = await BhumiApi.resolveDispute(disputeId, {
+      status,
+      resolution_note_bn: note,
+    });
+    setActionMsg(lang === 'bn' ? res.message_bn : res.message_en);
+    loadAcLandData();
   };
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl bg-white border border-gray-200 p-6 shadow-xs hc-card">
-        <span className="text-xs font-bold uppercase px-3 py-1 rounded-full bg-[#E6F2EE] text-[#006A4E]">
-          {t('সহকারী কমিশনার (ভূমি) — ভূমি মন্ত্রণালয়', 'AC Land Office — Ministry of Land')}
-        </span>
-        <h1 className="text-2xl sm:text-3xl font-bold text-[#1A1A1A] mt-2 flex items-center gap-2.5">
-          <Landmark className="w-8 h-8 text-[#006A4E]" />
-          <span>
-            {t(
-              'ই-নামজারি (মিউটেশন) কিউ ও স্বয়ংক্রিয় দলিল সত্যতা যাচাই',
-              'e-Mutation Queue with Live Deed Ledger & Fraud Verification'
-            )}
-          </span>
-        </h1>
-        <p className="text-sm text-[#5F6B66] mt-1">
-          {t(
-            'সাব-রেজিস্ট্রি অফিস হতে আগত প্রতিটি দলিলের ডিজিটাল স্বাক্ষর ও ঝুঁকি ফ্ল্যাগ দেখে নামজারি অনুমোদন বা বাতিল করুন। অনুমোদন করলে স্বয়ংক্রিয়ভাবে বিএস খতিয়ান ও হ্যাশ-চেইন অডিট লগ হালনাগাদ হবে।',
-            'Review incoming registered deeds with live SHA-256 verification and risk flags. Approving updates BS Khatian ownership and appends to the hash-chained audit log.'
-          )}
-        </p>
-      </section>
-
-      {feedback && (
-        <div className="p-4 rounded-2xl bg-[#E6F2EE] border-2 border-[#006A4E] text-[#006A4E] font-bold">
-          ✔ {feedback}
+      {role !== 'ac_land' && role !== 'admin' && (
+        <div className="p-4 rounded-2xl bg-[#FEF3C7] border-2 border-[#B7791F] flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 font-bold text-[#1A1A1A]">
+            <KeyRound className="w-5 h-5 text-[#B7791F]" />
+            <span>
+              {t(
+                'RBAC মিডলওয়্যার বিজ্ঞপ্তি: এসি ল্যান্ড কন্ট্রোল ব্যবহার করতে এসি ল্যান্ড রোলে সুইচ করুন।',
+                'RBAC Middleware Notice: Switch to AC Land role for mutation & khatian controls.'
+              )}
+            </span>
+          </div>
+          <button
+            onClick={switchToAcLandRole}
+            className="px-4 py-2 rounded-xl bg-[#006A4E] text-white font-extrabold text-xs cursor-pointer"
+          >
+            {t('এসি ল্যান্ড রোলে সুইচ করুন →', 'Switch to AC Land Role →')}
+          </button>
         </div>
       )}
 
-      {error && (
-        <div className="p-4 rounded-2xl bg-[#FEECEE] border-2 border-[#F42A41] text-[#C81E32] font-bold">
-          ✖ {error}
-        </div>
-      )}
+      <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-xs space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span className="text-xs font-extrabold uppercase px-2.5 py-1 rounded-full bg-[#E6F2EE] text-[#006A4E]">
+              {t('এসি ল্যান্ড কন্ট্রোল ড্যাশবোর্ড (ভূমি মন্ত্রণালয়)', 'AC Land Control Console (Ministry of Land)')}
+            </span>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-[#1A1A1A] mt-2 flex items-center gap-2">
+              <Landmark className="w-7 h-7 text-[#006A4E]" />
+              <span>
+                {t(
+                  'ই-মিউটেশন কিউ, খতিয়ান চেইন সমন্বয় ও বিরোধ নিষ্পত্তি সিস্টেম',
+                  'e-Mutation Queue, Khatian Chain Reconciliation & Dispute Resolution'
+                )}
+              </span>
+            </h1>
+          </div>
 
-      <div className="space-y-4">
-        {mutations.map((item) => {
-          const deedValid = item.deed_verification?.is_valid;
-          const riskVerdict = deedValid ? item.risk_report?.verdict : 'HIGH_RISK';
-          const st = getVerdictStyle(riskVerdict);
-
-          return (
-            <section
-              key={item.id}
-              className={`rounded-2xl bg-white border-2 ${st.border} p-5 sm:p-6 shadow-xs space-y-4 hc-card`}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setSubTab('mutations')}
+              className={`px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer ${
+                subTab === 'mutations' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
+              }`}
             >
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 pb-3">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-lg font-bold text-[#1A1A1A]">{item.case_no}</span>
-                    <span className={`px-3 py-0.5 rounded-full text-xs font-bold text-white ${st.bg}`}>
-                      {deedValid
-                        ? t('✔ দলিলের হ্যাশ ও স্বাক্ষর সঠিক', '✔ Deed Hash & Signature Valid')
-                        : t('✖ দলিল টেম্পারড (হ্যাশ অমিল)!', '✖ DEED TAMPERED (HASH MISMATCH)!')}
+              <Clock className="w-4 h-4" />
+              <span>{t('ই-মিউটেশন কিউ', 'e-Mutation Queue')}</span>
+            </button>
+            <button
+              onClick={() => setSubTab('khatians')}
+              className={`px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer ${
+                subTab === 'khatians' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              <GitCompareArrows className="w-4 h-4" />
+              <span>
+                {t('খতিয়ান চেইন ও ওয়ারিশ সমন্বয়', 'Khatian & Heirs Reconcile')} ({flaggedKhatians.length})
+              </span>
+            </button>
+            <button
+              onClick={() => setSubTab('disputes')}
+              className={`px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-1.5 cursor-pointer ${
+                subTab === 'disputes' ? 'bg-[#006A4E] text-white' : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              <AlertOctagon className="w-4 h-4" />
+              <span>
+                {t('নাগরিক অভিযোগ নিষ্পত্তি', 'Citizen Disputes')} ({disputes.length})
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {actionMsg && (
+          <div className="p-4 rounded-xl bg-[#E6F2EE] border-l-8 border-[#006A4E] text-[#006A4E] font-bold">
+            {actionMsg}
+          </div>
+        )}
+
+        {loading && <p>{t('লোড হচ্ছে...', 'Loading...')}</p>}
+
+        {/* TAB 1: e-Mutation Queue */}
+        {subTab === 'mutations' && (
+          <div className="space-y-4 pt-2">
+            {mutations.map((m) => (
+              <div
+                key={m.id}
+                className="bg-gray-50 rounded-2xl p-5 border border-gray-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono font-bold text-sm px-2.5 py-0.5 rounded bg-gray-100">
+                      Mutation #{toBanglaDigits(m.id, lang)}
                     </span>
-                    <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-[#1A1A1A]">
-                      {item.status === 'PENDING'
-                        ? t('⏳ সিদ্ধান্তের অপেক্ষায়', '⏳ PENDING')
-                        : item.status === 'APPROVED'
-                        ? t('✔ নামজারি অনুমোদিত', '✔ APPROVED')
-                        : t('✖ না-মঞ্জুর', '✖ REJECTED')}
+                    <span className="font-bold text-[#006A4E]">{m.deed_no}</span>
+                    <span
+                      className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${
+                        m.status === 'APPROVED'
+                          ? 'bg-[#E6F2EE] text-[#006A4E]'
+                          : m.status === 'REJECTED'
+                          ? 'bg-[#FEECEE] text-[#F42A41]'
+                          : 'bg-[#FEF3C7] text-[#B7791F]'
+                      }`}
+                    >
+                      {m.status}
                     </span>
                   </div>
-                  <div className="text-sm text-[#5F6B66] mt-1">
-                    {t('দলিল নং:', 'Deed No:')} <strong>{item.deed_no}</strong> •{' '}
-                    {t('মৌজা:', 'Mouza:')} {t(item.mouza_bn, item.mouza_en)} •{' '}
-                    {t('দাগ নং:', 'Dag:')} {n(item.dag_no)} •{' '}
-                    {t('জমির পরিমাণ:', 'Area:')} {n(item.area_decimal)} {t('শতাংশ', 'Decimals')}
-                  </div>
+
+                  <p className="font-bold text-lg text-[#1A1A1A]">
+                    {lang === 'bn' ? m.mouza_bn : m.mouza_en} — {t('দাগ নং', 'Dag')}{' '}
+                    {toBanglaDigits(m.dag_no, lang)} ({toBanglaDigits(m.area_decimal, lang)}{' '}
+                    {t('শতাংশ', 'Decimal')})
+                  </p>
+                  <p className="text-sm text-[#5F6B66]">
+                    {t('হস্তান্তর:', 'Transfer:')} {m.seller_name_bn} →{' '}
+                    <strong>{m.buyer_name_bn}</strong> ({t('অংশ:', 'Share:')} {m.share_fraction})
+                  </p>
+                  <p className="text-xs font-semibold text-gray-600">{m.decision_note_bn}</p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => onOpenDeedVerify(item.deed_no)}
-                  className="min-h-[44px] px-3.5 py-2 rounded-xl border border-[#006A4E] text-[#006A4E] font-bold text-xs flex items-center gap-1.5 hover:bg-[#E6F2EE] cursor-pointer"
-                >
-                  <QrCode className="w-4 h-4" />
-                  <span>{t('দলিলের হ্যাশ যাচাই দেখুন', 'Inspect Deed Ledger')}</span>
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div className="p-3.5 rounded-xl bg-[#FAFBFA] border border-gray-200">
-                  <span className="text-xs font-bold text-[#5F6B66]">
-                    {t('দাতা / বিক্রেতা:', 'Seller:')}
-                  </span>
-                  <div className="font-bold text-[#1A1A1A]">
-                    {t(item.seller_name_bn, item.seller_name_en)} (NID: {n(item.seller_nid)})
-                  </div>
-                </div>
-                <div className="p-3.5 rounded-xl bg-[#FAFBFA] border border-gray-200">
-                  <span className="text-xs font-bold text-[#5F6B66]">
-                    {t('গ্রহীতা / ক্রেতা (নামজারি আবেদনকারী):', 'Buyer (Mutation Applicant):')}
-                  </span>
-                  <div className="font-bold text-[#1A1A1A]">
-                    {t(item.buyer_name_bn, item.buyer_name_en)} (NID: {n(item.buyer_nid)})
-                  </div>
-                </div>
-              </div>
-
-              {/* Show Any Risk Flags */}
-              {(!deedValid || (item.risk_report?.flags && item.risk_report.flags.length > 0)) && (
-                <div className="p-4 rounded-xl bg-[#FEECEE] border border-[#F42A41]/40 space-y-1.5">
-                  <div className="font-bold text-sm text-[#C81E32]">
-                    {t('শনাক্তকৃত ঝুঁকি ও সতর্কবার্তা:', 'Detected Risk Flags:')}
-                  </div>
-                  {!deedValid && (
-                    <p className="text-sm text-[#C81E32] font-semibold">
-                      ✖ {t(item.deed_verification.message_bn, item.deed_verification.message_en)}
-                    </p>
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  {m.status === 'PENDING' ? (
+                    <>
+                      <button
+                        onClick={() => handleDecision(m.id, 'APPROVED')}
+                        className="px-4 py-2.5 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>{t('অনুমোদন ও খতিয়ান আপডেট', 'Approve & Update Khatian')}</span>
+                      </button>
+                      <button
+                        onClick={() => handleDecision(m.id, 'REJECTED')}
+                        className="px-4 py-2.5 rounded-xl bg-[#F42A41] hover:bg-red-700 text-white font-bold flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        <span>{t('না-মঞ্জুর', 'Reject')}</span>
+                      </button>
+                    </>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-sm font-bold text-gray-500">
+                      <Clock className="w-4 h-4" />
+                      <span>{t('সিদ্ধান্ত সম্পন্ন', 'Decision Recorded')}</span>
+                    </div>
                   )}
-                  {item.risk_report?.flags?.map((fl: any, i: number) => (
-                    <p key={i} className="text-sm text-[#1A1A1A]">
-                      • <strong>{t(fl.title_bn, fl.title_en)}:</strong> {t(fl.message_bn, fl.message_en)}
-                    </p>
-                  ))}
                 </div>
-              )}
+              </div>
+            ))}
+          </div>
+        )}
 
-              {/* Decision Controls for Pending Cases */}
-              {item.status === 'PENDING' ? (
-                <div className="pt-2 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-                  <input
-                    type="text"
-                    value={reasonInputs[item.id] || ''}
-                    onChange={(e) =>
-                      setReasonInputs((prev) => ({ ...prev, [item.id]: e.target.value }))
-                    }
-                    placeholder={t(
-                      'এসি ল্যান্ডের মন্তব্য / আদেশের কারণ লিখুন (ঐচ্ছিক)...',
-                      'Enter AC Land order reason (optional)...'
-                    )}
-                    className="flex-1 min-h-[48px] px-4 py-2 rounded-xl border border-gray-300 bg-[#FAFBFA] text-sm"
-                  />
-                  <div className="flex gap-2">
+        {/* TAB 2: Khatian Chain & Heirs Reconciliation Control */}
+        {subTab === 'khatians' && (
+          <div className="space-y-4 pt-2">
+            <h2 className="text-lg font-extrabold text-[#1A1A1A]">
+              {t(
+                'ত্রুটিপূর্ণ বিএস খতিয়ান চেইন (CHAIN_BREAK) ও অমীমাংসিত ওয়ারিশ (UNRESOLVED_HEIRS) সমন্বয় প্যানেল',
+                'Flagged BS Khatian Chain Break & Unresolved Heirs Reconciliation'
+              )}
+            </h2>
+            {flaggedKhatians.length === 0 ? (
+              <div className="p-6 rounded-xl bg-[#E6F2EE] text-[#006A4E] font-bold">
+                ✔ {t('সকল ত্রুটিপূর্ণ খতিয়ান সমন্বয় সম্পন্ন হয়েছে!', 'All flagged khatians have been reconciled!')}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {flaggedKhatians.map((fk) => (
+                  <div
+                    key={fk.id}
+                    className="p-4 rounded-xl bg-[#FEF3C7]/60 border-2 border-[#B7791F] flex flex-col md:flex-row md:items-center justify-between gap-4"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-[#1A1A1A]">
+                          {lang === 'bn' ? fk.mouza_bn : fk.mouza_en} — {t('দাগ নং', 'Dag')}{' '}
+                          {toBanglaDigits(fk.dag_no, lang)} ({fk.khatian_no})
+                        </span>
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#B7791F] text-white font-extrabold">
+                          {fk.reconcile_status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-800 mt-1">
+                        {lang === 'bn' ? fk.anomaly_note_bn : fk.anomaly_note_en}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-0.5">
+                        {t('বিএস রেকর্ডকৃত এরিয়া:', 'BS Recorded Area:')}{' '}
+                        {toBanglaDigits(fk.recorded_area_decimal, lang)} {t('শতাংশ', 'dec')} |{' '}
+                        {t('দাগের মূল এরিয়া:', 'Plot Total Area:')}{' '}
+                        {toBanglaDigits(fk.total_area_decimal, lang)} {t('শতাংশ', 'dec')}
+                      </p>
+                    </div>
+
                     <button
-                      type="button"
-                      disabled={loading}
-                      onClick={() => handleDecision(item.id, 'REJECTED')}
-                      className="min-h-[48px] px-4 py-2 rounded-xl bg-[#F42A41] text-white font-bold text-sm flex items-center gap-1.5 hover:bg-[#D01F34] cursor-pointer"
+                      onClick={() => handleReconcileKhatian(fk.plot_id, Number(fk.total_area_decimal))}
+                      className="px-4 py-2.5 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-extrabold text-xs shrink-0 cursor-pointer"
                     >
-                      <XCircle className="w-4 h-4" />
-                      <span>{t('না-মঞ্জুর করুন', 'Reject Mutation')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      disabled={loading || !deedValid}
-                      onClick={() => handleDecision(item.id, 'APPROVED')}
-                      className="min-h-[48px] px-5 py-2 rounded-xl bg-[#006A4E] disabled:bg-gray-400 text-white font-bold text-sm flex items-center gap-1.5 hover:bg-[#00563F] cursor-pointer"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>{t('নামজারি অনুমোদন করুন', 'Approve & Update Khatian')}</span>
+                      ✔ {t('শুনানি ও জরিপের মাধ্যমে চেইন সমন্বয় করুন', 'Reconcile Khatian Chain')}
                     </button>
                   </div>
-                </div>
-              ) : (
-                <div className="text-sm text-[#5F6B66] bg-[#FAFBFA] p-3 rounded-xl border border-gray-200">
-                  <strong>{t('এসি ল্যান্ডের আদেশ:', 'AC Land Order:')}</strong>{' '}
-                  {t(item.decision_reason_bn || '', item.decision_reason_en || '')}
-                </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 3: Citizen Dispute Resolution Control */}
+        {subTab === 'disputes' && (
+          <div className="space-y-4 pt-2">
+            <h2 className="text-lg font-extrabold text-[#1A1A1A]">
+              {t(
+                'নাগরিকদের দাখিলকৃত অভিযোগ ও আপত্তি নিষ্পত্তি (AC Land Dispute Tribunal)',
+                'Citizen Land Objections & Dispute Resolution Controls'
               )}
-            </section>
-          );
-        })}
+            </h2>
+            <div className="space-y-3">
+              {disputes.map((dsp) => (
+                <div
+                  key={dsp.id}
+                  className={`p-4 rounded-xl border-2 flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                    dsp.status === 'OPEN'
+                      ? 'bg-[#FEF3C7]/50 border-[#B7791F]'
+                      : dsp.status === 'UPHELD_FROZEN'
+                      ? 'bg-[#FEECEE]/50 border-[#F42A41]'
+                      : 'bg-gray-50 border-gray-200'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-[#1A1A1A]">
+                        {lang === 'bn' ? dsp.mouza_bn : dsp.mouza_en} — {t('দাগ নং', 'Dag')} {dsp.dag_no}
+                      </span>
+                      <span className="text-xs px-2 py-0.5 rounded bg-gray-800 text-white font-mono">
+                        {dsp.dispute_type}
+                      </span>
+                      <span
+                        className={`text-xs px-2.5 py-0.5 rounded-full font-extrabold ${
+                          dsp.status === 'OPEN'
+                            ? 'bg-[#B7791F] text-white'
+                            : dsp.status === 'UPHELD_FROZEN'
+                            ? 'bg-[#F42A41] text-white'
+                            : 'bg-[#006A4E] text-white'
+                        }`}
+                      >
+                        {dsp.status}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium text-gray-900 mt-1">{dsp.description_bn}</p>
+                    <p className="text-xs text-gray-600 mt-0.5">
+                      {t('অভিযোগকারী:', 'Complainant:')} {dsp.complainant_name_bn} (NID: {dsp.complainant_nid})
+                    </p>
+                    {dsp.resolution_note_bn && (
+                      <p className="text-xs font-bold text-[#006A4E] mt-1">
+                        {t('সিদ্ধান্ত নোট:', 'Resolution:')} {dsp.resolution_note_bn}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 shrink-0">
+                    {dsp.status === 'OPEN' && (
+                      <>
+                        <button
+                          onClick={() => handleResolveDispute(dsp.id, 'UPHELD_FROZEN')}
+                          className="px-3.5 py-2 rounded-xl bg-[#F42A41] text-white font-extrabold text-xs cursor-pointer"
+                        >
+                          🔒 {t('অভিযোগ বহাল ও দাগ ফ্রিজ (Freeze Plot)', 'Uphold & Freeze Plot')}
+                        </button>
+                        <button
+                          onClick={() => handleResolveDispute(dsp.id, 'RESOLVED_DISMISSED')}
+                          className="px-3.5 py-2 rounded-xl bg-[#006A4E] text-white font-extrabold text-xs cursor-pointer"
+                        >
+                          ✔ {t('নিষ্পত্তি ও খারিজ (Dismiss)', 'Resolve & Dismiss')}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

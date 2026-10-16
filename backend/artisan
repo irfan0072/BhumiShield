@@ -1,0 +1,73 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+use Database\Migrations\CreateBhumishieldTables;
+use Database\Seeders\DatabaseSeeder;
+use Tests\Feature\RulesAndLedgerTest;
+
+$args = array_slice($argv, 1);
+$command = $args[0] ?? 'list';
+
+switch ($command) {
+    case 'migrate':
+        $fresh = in_array('--fresh', $args, true);
+        (new CreateBhumishieldTables())->up($fresh);
+        echo "INFO  Running Laravel migrations... DONE\n";
+        if (in_array('--seed', $args, true)) {
+            $summary = (new DatabaseSeeder())->run(false);
+            echo 'INFO  Database seeded successfully: ' . json_encode($summary) . "\n";
+        }
+        exit(0);
+
+    case 'migrate:fresh':
+        $seed = in_array('--seed', $args, true);
+        if ($seed) {
+            $summary = (new DatabaseSeeder())->run(true);
+            echo "INFO  Dropped all tables, ran migrations, and seeded BhumiShield demo database:\n";
+            echo '      ' . json_encode($summary) . "\n";
+        } else {
+            (new CreateBhumishieldTables())->up(true);
+            echo "INFO  Dropped all tables and re-ran migrations.\n";
+        }
+        exit(0);
+
+    case 'db:seed':
+        $summary = (new DatabaseSeeder())->run(true);
+        echo 'INFO  BhumiShield Demo Database Seeded Successfully: ' . json_encode($summary) . "\n";
+        exit(0);
+
+    case 'serve':
+        $host = '0.0.0.0';
+        $port = '8000';
+        foreach ($args as $arg) {
+            if (str_starts_with($arg, '--host=')) {
+                $host = substr($arg, 7);
+            }
+            if (str_starts_with($arg, '--port=')) {
+                $port = substr($arg, 7);
+            }
+        }
+        $docRoot = __DIR__ . '/public';
+        $routerScript = __DIR__ . '/public/index.php';
+        echo "INFO  BhumiShield Laravel 11 Development Server started on http://{$host}:{$port}\n";
+        echo "      Press Ctrl+C to stop the server\n";
+        passthru(PHP_BINARY . ' -S ' . escapeshellarg("{$host}:{$port}") . ' -t ' . escapeshellarg($docRoot) . ' ' . escapeshellarg($routerScript));
+        exit(0);
+
+    case 'test':
+        $code = RulesAndLedgerTest::runAll();
+        exit($code);
+
+    default:
+        echo "BhumiShield Laravel 11 Artisan Console (PHP " . PHP_VERSION . ")\n\n";
+        echo "Available commands:\n";
+        echo "  php artisan migrate:fresh --seed   Drop tables, run migrations, and seed 60 plots + 8 scenarios\n";
+        echo "  php artisan db:seed                Seed the BhumiShield demo database\n";
+        echo "  php artisan serve --port=8000      Start the Laravel API server on port 8000\n";
+        echo "  php artisan test                   Run the 15-test Fraud Rules & Ledger test suite\n";
+        exit(0);
+}
