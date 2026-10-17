@@ -21,7 +21,7 @@ services:
       - key: REGISTRAR_ED25519_SEED_HEX
         value: 4268756d69536869656c644c616e64546563683230323644656d6f5365656421
       - key: PUBLIC_VERIFY_BASE_URL
-        value: https://bhumishield.vercel.app
+        value: https://bhumishield-web.onrender.com
 
   # BhumiShield React Frontend (Optional static site on Render if not using Vercel)
   - type: web
@@ -36,6 +36,7 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
+        value: https://bhumishield-api.onrender.com/api/v1
         fromService:
           type: web
           name: bhumishield-api
