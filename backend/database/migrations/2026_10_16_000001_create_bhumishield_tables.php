@@ -829,10 +829,12 @@ SQL,
                 // Column or index already exists
             }
         }
+        (new CreateSimulatorTables())->up($fresh);
     }
 
     public function down(): void
     {
+        (new CreateSimulatorTables())->down();
         $tables = [
             'sla_dispatches',
             'field_reports',

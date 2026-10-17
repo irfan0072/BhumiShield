@@ -296,6 +296,71 @@ return static function (string $method, string $uri, array $query, array $body):
         return \App\Http\Controllers\Api\V1\FieldOperationsController::createSlaDispatch($body);
     }
 
+    // 3f. Provider Boundary Endpoints (Prompt v3 Section 5)
+    if ($method === 'GET' && ($sub === '/dev/outbox' || $sub === '/admin/dev/outbox')) {
+        if (strtolower((string) env('APP_ENV', 'development')) === 'production') {
+            throw new \RuntimeException(json_encode([
+                'status' => 403,
+                'code' => 'OUTBOX_VIEWER_DISABLED',
+                'message_bn' => 'প্রোডাকশন পরিবেশে এসএমএস আউটবক্স ভিউয়ার নিষ্ক্রিয়।',
+                'message_en' => 'SMS outbox viewer is disabled in production environment.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+        $limit = isset($query['limit']) ? max(1, min(100, (int) $query['limit'])) : 50;
+        $phone = isset($query['phone']) ? (string) $query['phone'] : null;
+        $items = \App\Services\ProviderManager::getSmsProvider()->getOutbox($limit, $phone);
+        return [
+            'status' => 200,
+            'items' => $items,
+            'count' => count($items),
+            'environment' => env('APP_ENV', 'development'),
+        ];
+    }
+    if ($method === 'POST' && $sub === '/biometrics/session') {
+        $actor = RoleMiddleware::authorize(['service_point_operator', 'sub_registrar', 'registry_data_officer', 'admin']);
+        $partyType = (string) ($body['party_type'] ?? 'SELLER');
+        $nationalId = (string) ($body['national_id'] ?? '');
+        $terminalId = (string) ($body['terminal_id'] ?? 'TRM-01');
+        $transferId = isset($body['transfer_id']) ? (int) $body['transfer_id'] : null;
+        return \App\Services\ProviderManager::getBiometricProvider()->createSession(
+            $partyType,
+            $nationalId,
+            $terminalId,
+            (int) ($actor['id'] ?? 1),
+            $transferId
+        );
+    }
+    if ($method === 'POST' && $sub === '/biometrics/verify') {
+        $sessionId = (string) ($body['session_id'] ?? '');
+        $presentationToken = (string) ($body['presentation_token'] ?? '');
+        $overrideReason = isset($body['override_reason']) ? (string) $body['override_reason'] : null;
+        $supervisorUserId = isset($body['supervisor_user_id']) ? (int) $body['supervisor_user_id'] : null;
+        return \App\Services\ProviderManager::getBiometricProvider()->verifyPresentation(
+            $sessionId,
+            $presentationToken,
+            $overrideReason,
+            $supervisorUserId
+        );
+    }
+    if ($method === 'POST' && $sub === '/payments/initiate') {
+        $actor = RoleMiddleware::authorize(['citizen', 'admin']);
+        $payableType = (string) ($body['payable_type'] ?? 'MUTATION_FEE');
+        $payableId = (string) ($body['payable_id'] ?? '1');
+        $amountBdt = (float) ($body['amount_bdt'] ?? 1150.0);
+        $phone = (string) ($body['payer_phone'] ?? ($actor['phone_dummy'] ?? '01700-001001'));
+        $gateway = (string) ($body['gateway_method'] ?? 'BKASH');
+        return \App\Services\ProviderManager::getPaymentProvider()->initiatePayment(
+            $payableType,
+            $payableId,
+            $amountBdt,
+            $phone,
+            $gateway
+        );
+    }
+    if ($method === 'POST' && preg_match('#^/payments/verify/([^/]+)$#', $sub, $m)) {
+        return \App\Services\ProviderManager::getPaymentProvider()->verifyPayment(urldecode($m[1]));
+    }
+
     // 4. Sub-Registrar Controlling Routes (Protected by RoleMiddleware)
     if ($method === 'POST' && $sub === '/registrar/pre-check') {
         RoleMiddleware::authorize(['sub_registrar', 'admin']);

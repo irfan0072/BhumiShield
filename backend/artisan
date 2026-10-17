@@ -11,6 +11,7 @@ use Tests\Feature\AppointmentBookingTest;
 use Tests\Feature\CheckBeforeBuyRouteTest;
 use Tests\Feature\FieldOperationsAndSlaTest;
 use Tests\Feature\ListingBadgeDerivationTest;
+use Tests\Feature\ProviderBoundariesTest;
 use Tests\Feature\RoleAuditRegressionTest;
 use Tests\Feature\RoleRoutingAndSubtabTest;
 use Tests\Feature\RulesAndLedgerTest;
@@ -23,7 +24,8 @@ use Tests\Feature\UiEnvelopeAdapterTest;
 $args = array_slice($argv, 1);
 $command = $args[0] ?? 'list';
 
-if (strtolower((string) env('APP_ENV', 'development')) === 'production'
+$currentEnv = strtolower((string) (getenv('APP_ENV') ?: ($_ENV['APP_ENV'] ?? 'development')));
+if ($currentEnv === 'production'
     && (in_array($command, ['migrate:fresh', 'db:seed'], true)
         || in_array('--fresh', $args, true) || in_array('--seed', $args, true))) {
     fwrite(STDERR, "Destructive migration and synthetic seeding are disabled in production.\n");
@@ -107,6 +109,32 @@ switch ($command) {
         echo 'INFO  BhumiShield Demo Database Seeded Successfully: ' . json_encode($summary) . "\n";
         exit(0);
 
+    case 'bhumi:seed-world':
+        if ($currentEnv === 'production') {
+            fwrite(STDERR, "ERROR: Synthetic world seeding is disabled in production environment.\n");
+            exit(1);
+        }
+        $profile = 'pilot';
+        $seed = 2026;
+        $fresh = in_array('--fresh', $args, true);
+        foreach ($args as $arg) {
+            if (str_starts_with($arg, '--profile=')) {
+                $profile = substr($arg, 10);
+            }
+            if (str_starts_with($arg, '--seed=')) {
+                $seed = (int) substr($arg, 7);
+            }
+        }
+        try {
+            $summary = \App\Services\WorldSeedService::seedWorld($profile, $seed, $fresh);
+            echo "SUCCESS: Synthetic World Seeded Successfully:\n";
+            echo '         ' . json_encode($summary, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n";
+            exit(0);
+        } catch (\Throwable $e) {
+            fwrite(STDERR, "ERROR: Seed world failed: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n");
+            exit(1);
+        }
+
     case 'serve':
         $host = '0.0.0.0';
         $port = '8000';
@@ -138,11 +166,11 @@ switch ($command) {
         $c10 = RoleRoutingAndSubtabTest::runAll();
         $c11 = SignedNoticePdfTest::runAll();
         $c12 = ListingBadgeDerivationTest::runAll();
-        exit(($c1 === 0 && $c2 === 0 && $c3 === 0 && $c4 === 0 && $c5 === 0 && $c6 === 0 && $c7 === 0 && $c8 === 0 && $c9 === 0 && $c10 === 0 && $c11 === 0 && $c12 === 0) ? 0 : 1);
+        $c13 = ProviderBoundariesTest::runAll();
+        exit(($c1 === 0 && $c2 === 0 && $c3 === 0 && $c4 === 0 && $c5 === 0 && $c6 === 0 && $c7 === 0 && $c8 === 0 && $c9 === 0 && $c10 === 0 && $c11 === 0 && $c12 === 0 && $c13 === 0) ? 0 : 1);
 
     case 'bhumi:drill:tamper':
-        $env = strtolower((string) env('APP_ENV', 'development'));
-        if ($env === 'production') {
+        if ($currentEnv === 'production') {
             fwrite(STDERR, "ERROR: Storage integrity drill is strictly prohibited in production environment (APP_ENV=production).\n");
             exit(1);
         }
@@ -182,8 +210,7 @@ switch ($command) {
         }
 
     case 'bhumi:drill:restore':
-        $env = strtolower((string) env('APP_ENV', 'development'));
-        if ($env === 'production') {
+        if ($currentEnv === 'production') {
             fwrite(STDERR, "ERROR: Storage integrity drill is strictly prohibited in production environment (APP_ENV=production).\n");
             exit(1);
         }
@@ -223,6 +250,7 @@ switch ($command) {
         echo "  php artisan migrate                Run additive migrations safely without dropping data\n";
         echo "  php artisan migrate:fresh --seed   Drop tables, run migrations, and seed demo database (requires --force in production)\n";
         echo "  php artisan db:seed                Seed the BhumiShield demo database\n";
+        echo "  php artisan bhumi:seed-world       Synthetic Data Factory: seed world (--profile=pilot|fast --seed=2026 [--fresh])\n";
         echo "  php artisan bhumi:drill:tamper     Storage integrity drill: flip byte to prove tamper detection (non-prod only)\n";
         echo "  php artisan bhumi:drill:restore    Restore deed to authentic signed state after drill\n";
         echo "  php artisan serve --port=8000      Start the API server on port 8000\n";

@@ -31,8 +31,10 @@ export interface AuthUser {
   full_name_bn: string;
   full_name_en: string;
   role: UserRole;
-  nid_mock: string;
-  phone_mock: string;
+  nid?: string;
+  nid_mock?: string;
+  phone_dummy?: string;
+  phone_mock?: string;
   office_name?: string;
   office_bn?: string;
   office_en?: string;

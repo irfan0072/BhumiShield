@@ -121,7 +121,8 @@ final class PdfSealService
         }
 
         $lines = [];
-        $lines[] = 'BHUMISHIELD LAND RECORDS AUTHORITY';
+        $lines[] = '*** SYNTHETIC SAMPLE — NOT AN OFFICIAL DOCUMENT ***';
+        $lines[] = 'BHUMISHIELD LAND RECORDS TRUST SYSTEM';
         $lines[] = 'Government-Signed Notice Attachment';
         $lines[] = '==================================';
         $lines[] = "Title    : {$title}";
@@ -154,6 +155,7 @@ final class PdfSealService
         $lines[] = 'Bangla text was transliterated to ? because Adobe base-14';
         $lines[] = 'Helvetica cannot render Bengali. The digital signature is';
         $lines[] = 'the trust anchor — see SHA-256 + Ed25519 above.';
+        $lines[] = '*** SYNTHETIC SAMPLE — NOT AN OFFICIAL DOCUMENT ***';
 
         // Build the PDF content stream (BT ... ET text objects at y=750).
         $stream = "BT\n/F1 10 Tf\n14 TL\n72 750 Td\n";

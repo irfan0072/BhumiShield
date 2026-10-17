@@ -2061,11 +2061,16 @@ const InstitutionalFooter: React.FC<{
     </div>
 
     {/* Bottom Copyright Bar */}
-    <div className="border-t border-gray-100 py-4 text-center text-xs text-slate-500">
-      {t(
-        '© ২০২৬ ভূমি সুরক্ষা (BhumiShield) · LandTech Hackathon Innovation. সর্বস্বত্ব সংরক্ষিত।',
-        '© 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.'
-      )}
+    <div className="border-t border-gray-100 py-4 text-center text-xs text-slate-500 space-y-1">
+      <div>
+        {t(
+          '© ২০২৬ ভূমি সুরক্ষা (BhumiShield) · LandTech Hackathon Innovation. সর্বস্বত্ব সংরক্ষিত।',
+          '© 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.'
+        )}
+      </div>
+      <div className="text-[11px] text-slate-400">
+        {t('সিনথেটিক ডেটা পরিবেশ / Synthetic data environment', 'Synthetic data environment / সিনথেটিক ডেটা পরিবেশ')}
+      </div>
     </div>
   </footer>
 );

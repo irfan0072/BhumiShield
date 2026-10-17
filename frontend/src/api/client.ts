@@ -987,5 +987,32 @@ export const BhumiApi = {
     const payload = typeof dataOrStatus === 'string' ? { status: dataOrStatus, decision_note_bn: note || '' } : dataOrStatus;
     return api.post(`/appeals/${idOrCode}/decide`, payload).then((r) => r.data);
   },
+  // Provider Boundary Methods (SMS Outbox, Counter Biometrics, Simulated Payments)
+  listSmsOutbox: (params?: { limit?: number; phone?: string }): Promise<{ status: number; items: any[]; count: number; environment: string }> =>
+    api.get('/admin/dev/outbox', { params }).then((r) => r.data),
+  createBiometricSession: (data: {
+    party_type: 'SELLER' | 'BUYER' | 'HEIR';
+    national_id: string;
+    terminal_id?: string;
+    transfer_id?: number;
+  }): Promise<{ session_id: string; challenge_nonce: string; expires_at: string; terminal_id: string; party_type: string }> =>
+    api.post('/biometrics/session', data).then((r) => r.data),
+  verifyBiometrics: (data: {
+    session_id: string;
+    presentation_token: string;
+    override_reason?: string;
+    supervisor_user_id?: number;
+  }): Promise<{ verified: boolean; score: number; match_status: string; attempts_count: number; session_id: string; message_bn: string; message_en: string }> =>
+    api.post('/biometrics/verify', data).then((r) => r.data),
+  initiatePayment: (data: {
+    payable_type: string;
+    payable_id: string | number;
+    amount_bdt: number;
+    payer_phone?: string;
+    gateway_method?: 'BKASH' | 'NAGAD' | 'ROCKET' | 'EKPAY';
+  }): Promise<{ payment_id: string; redirect_url: string; amount_bdt: number; expires_at: string }> =>
+    api.post('/payments/initiate', data).then((r) => r.data),
+  verifyPayment: (paymentId: string): Promise<{ payment_id: string; status: string; transaction_trx_id: string; amount_bdt: number; receipt_no: string; paid_at: string }> =>
+    api.post(`/payments/verify/${encodeURIComponent(paymentId)}`).then((r) => r.data),
 };
 
