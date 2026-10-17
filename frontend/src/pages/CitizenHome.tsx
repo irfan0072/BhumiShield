@@ -28,11 +28,13 @@ import {
   Printer,
   Building2,
   Phone,
+  Mail,
   Eye,
   SlidersHorizontal,
   PlusCircle,
   Menu
 } from 'lucide-react';
+import { ProfileCompletionModal } from '../components/ProfileCompletionModal';
 
 interface CitizenHomeProps {
   onNavigate: (tab: string) => void;
@@ -47,7 +49,22 @@ const TRANSFER_STAGES = [
 ];
 
 export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
-  const { lang, user, t, formatNumber } = useAppUI();
+  const { lang, user, setUser, logout, t, formatNumber } = useAppUI();
+
+  const [refreshingApprovalStatus, setRefreshingApprovalStatus] = useState<boolean>(false);
+  const handleRefreshApprovalStatus = async () => {
+    setRefreshingApprovalStatus(true);
+    try {
+      const res = await BhumiApi.getMe();
+      if (res?.user) {
+        setUser(res.user);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setRefreshingApprovalStatus(false);
+    }
+  };
 
   // Active navigation section state
   const [activeSection, setActiveSection] = useState<
@@ -587,6 +604,110 @@ export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
             3. SECTION VIEWS (Rendered selectively based on activeSection)
             ===================================================================== */}
         <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+          {/* Gated Pending Verification View for Self-Registered Citizens */}
+          {user?.role === 'citizen' && Number(user?.is_identity_verified) === 0 ? (
+            <div className="space-y-6 animate-fadeIn">
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-3xl p-6 sm:p-10 shadow-lg text-amber-950 space-y-6">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-amber-200">
+                  <div className="flex items-start gap-4">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                      <Clock className="w-8 h-8 animate-pulse" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-200 text-amber-900 border border-amber-300">
+                          {t('অ্যাকাউন্ট ভেরিফিকেশন পেন্ডিং', 'ACCOUNT VERIFICATION PENDING')}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                          {t('সেবাসমূহ স্থগিত', 'Services Locked')}
+                        </span>
+                      </div>
+                      <h1 className="text-2xl sm:text-3xl font-black text-amber-950 tracking-tight">
+                        {t('আপনার নাগরিক অ্যাকাউন্টটি সুপার অ্যাডমিনের অনুমোদনের অপেক্ষায় রয়েছে', 'Your Citizen Account is Pending Super Admin Approval')}
+                      </h1>
+                      <p className="text-xs sm:text-sm text-amber-900 leading-relaxed max-w-3xl font-medium">
+                        {t(
+                          'জাতীয় ভূমি সেবা ও ডিজিটাল ল্যান্ড ভল্টের সর্বোচ্চ নিরাপত্তা বিধানে নতুন নাগরিক অ্যাকাউন্টসমূহ কেন্দ্রীয় সুপার অ্যাডমিন কর্তৃক ম্যানুয়ালি যাচাই ও অনুমোদন করা হয়। অ্যাডমিন অনুমোদন সম্পন্ন করলে আপনার ড্যাশবোর্ড সেবাগুলো আনলক হবে।',
+                          'To safeguard national land records, all self-registered citizen accounts are audited and verified by the Super Admin before property vault services are unlocked.'
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0">
+                    <button
+                      onClick={handleRefreshApprovalStatus}
+                      disabled={refreshingApprovalStatus}
+                      className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${refreshingApprovalStatus ? 'animate-spin' : ''}`} />
+                      <span>{refreshingApprovalStatus ? t('যাচাই করা হচ্ছে...', 'Checking Status...') : t('স্ট্যাটাস রিফ্রেশ করুন', 'Refresh Approval Status')}</span>
+                    </button>
+                    <button
+                      onClick={logout}
+                      className="w-full sm:w-auto px-4 py-3 rounded-xl bg-white border border-amber-300 text-amber-900 hover:bg-amber-100 font-bold text-xs transition cursor-pointer"
+                    >
+                      {t('লগআউট করুন', 'Sign Out')}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Citizen Registration Summary Dossier */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="p-4 rounded-2xl bg-white border border-amber-200 shadow-xs">
+                    <span className="text-[11px] font-bold text-slate-400 block">{t('নাগরিকের নাম', 'Citizen Name')}</span>
+                    <span className="text-sm font-extrabold text-slate-900 mt-0.5 block">{user?.full_name_bn || 'নাগরিক'}</span>
+                    <span className="text-[11px] text-slate-500 font-mono">{user?.full_name_en}</span>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-white border border-amber-200 shadow-xs">
+                    <span className="text-[11px] font-bold text-slate-400 block">{t('ইউজারনেম', 'Username')}</span>
+                    <span className="text-sm font-extrabold text-[#006A4E] font-mono mt-0.5 block">@{user?.username}</span>
+                    <span className="text-[11px] text-slate-500">{t('নাগরিক আইডি', 'Citizen ID')}</span>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-white border border-amber-200 shadow-xs">
+                    <span className="text-[11px] font-bold text-slate-400 block">{t('নিবন্ধিত মাধ্যম', 'Registration Channel')}</span>
+                    <span className="text-sm font-extrabold text-slate-900 capitalize mt-0.5 flex items-center gap-1.5">
+                      {user?.registration_channel === 'email' ? <Mail className="w-4 h-4 text-blue-600" /> : <Phone className="w-4 h-4 text-emerald-600" />}
+                      {user?.registration_channel === 'email' ? t('ইমেইল (Email)', 'Email') : t('মোবাইল নম্বর (Phone)', 'Mobile')}
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-mono truncate block">
+                      {user?.registration_channel === 'email' ? user?.email : user?.phone_dummy}
+                    </span>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-white border border-amber-200 shadow-xs">
+                    <span className="text-[11px] font-bold text-slate-400 block">{t('অনুমোদন স্থিতি', 'Approval State')}</span>
+                    <span className="text-sm font-extrabold text-amber-700 mt-0.5 block">
+                      {t('অপেক্ষমাণ (PENDING)', 'Pending Official Review')}
+                    </span>
+                    <span className="text-[11px] text-slate-500">{t('সুপার অ্যাডমিন পর্যালোচনায়', 'Under Super Admin Audit')}</span>
+                  </div>
+                </div>
+
+                {/* Step-by-Step Guidance */}
+                <div className="p-5 rounded-2xl bg-white/90 border border-amber-200 space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-bold text-amber-950">
+                    <ShieldCheck className="w-5 h-5 text-[#006A4E]" />
+                    <span>{t('অনুমোদনের পর পরবর্তী ধাপ কী?', 'What happens after Super Admin Approval?')}</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-slate-700">
+                    <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200">
+                      <span className="font-bold text-amber-900 block mb-1">১. অ্যাডমিন ভেরিফিকেশন</span>
+                      <p>সুপার অ্যাডমিন তাঁর অ্যাডমিন প্যানেল থেকে আপনার তথ্য যাচাই করে "অনুমোদন ও যাচাই" সম্পন্ন করবেন।</p>
+                    </div>
+                    <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200">
+                      <span className="font-bold text-amber-900 block mb-1">২. প্রোফাইল সম্পন্নকরণ পপ-আপ</span>
+                      <p>অনুমোদনের পর আপনার স্ক্রিনে একটি ফর্ম আসবে যেখানে ছবি, অভিভাবকের নাম ও ঠিকানা প্রদান করতে হবে।</p>
+                    </div>
+                    <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-200">
+                      <span className="font-bold text-emerald-900 block mb-1">৩. পূর্ণ সেবা আনলক</span>
+                      <p>প্রোফাইল সংরক্ষণের সাথে সাথেই আপনার ল্যান্ড ভল্ট, দাগ, খতিয়ান, নামজারি ও সকল সেবা চালু হবে।</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
           {/* VIEW 1: 📊 সারসংক্ষেপ ও পরিসংখ্যান (OVERVIEW) */}
           {activeSection === 'overview' && (
             <div className="space-y-6 animate-fadeIn">
@@ -1724,6 +1845,8 @@ export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
               </div>
             </div>
           )}
+            </>
+          )}
         </div>
       </main>
 
@@ -1937,6 +2060,23 @@ export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Mandatory Post-Approval Citizen Profile Completion Modal */}
+      {user?.role === 'citizen' && Number(user?.is_identity_verified) === 1 && Number(user?.is_profile_complete) === 0 && (
+        <ProfileCompletionModal
+          isOpen={true}
+          user={user}
+          onComplete={(updatedUser) => {
+            setUser(updatedUser);
+            loadCitizenData();
+            setActionMsg(
+              lang === 'bn'
+                ? 'আপনার প্রোফাইল সফলভাবে সম্পূর্ণ হয়েছে! সকল সেবা এখন সক্রিয়।'
+                : 'Profile completed successfully! All services are now fully active.'
+            );
+          }}
+        />
       )}
     </div>
   );

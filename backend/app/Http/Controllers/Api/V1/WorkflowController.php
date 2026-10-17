@@ -108,18 +108,22 @@ final class WorkflowController
 
     public static function login(array $body): array
     {
-        $ident = strtolower(trim((string) ($body['username'] ?? '')));
+        $ident = strtolower(trim((string) ($body['username'] ?? ($body['identifier'] ?? ''))));
         if ($ident === '' || !isset($body['password']) || trim((string) $body['password']) === '') {
             throw new \RuntimeException(json_encode([
                 'status' => 401,
                 'code' => 'INVALID_CREDENTIALS',
-                'message_bn' => 'ইউজারনেম এবং পাসওয়ার্ড উভয়ই আবশ্যক।',
-                'message_en' => 'Both username and password are required.',
+                'message_bn' => 'ইউজারনেম/ইমেইল/মোবাইল এবং পাসওয়ার্ড উভয়ই আবশ্যক।',
+                'message_en' => 'Both identifier (username/email/phone) and password are required.',
             ], JSON_UNESCAPED_UNICODE));
         }
 
         $password = (string) $body['password'];
-        $user = DB::selectOne('SELECT * FROM users WHERE LOWER(username) = ? OR LOWER(email) = ?', [$ident, $ident]);
+        $cleanPhone = preg_replace('/[^\d]/', '', $ident);
+        $user = DB::selectOne(
+            'SELECT * FROM users WHERE LOWER(username) = ? OR LOWER(email) = ? OR phone_dummy = ? OR replace(phone_dummy, \'-\', \'\') = ?',
+            [$ident, $ident, $ident, $cleanPhone]
+        );
 
         if (!$user || !JwtAuthService::verifyPassword($password, (string) $user['password_hash'])) {
             throw new \RuntimeException(json_encode([
@@ -164,6 +168,15 @@ final class WorkflowController
                 'phone_dummy' => $user['phone_dummy'] ?? '01700-001001',
                 'nid' => $user['nid'] ?? '9900001001',
                 'is_active' => (int) ($user['is_active'] ?? 1),
+                'is_identity_verified' => (int) ($user['is_identity_verified'] ?? 0),
+                'is_profile_complete' => (int) ($user['is_profile_complete'] ?? 0),
+                'avatar_url' => $user['avatar_url'] ?? null,
+                'registration_channel' => $user['registration_channel'] ?? 'phone',
+                'father_name_bn' => $user['father_name_bn'] ?? null,
+                'mother_name_bn' => $user['mother_name_bn'] ?? null,
+                'present_address_bn' => $user['present_address_bn'] ?? null,
+                'date_of_birth' => $user['date_of_birth'] ?? null,
+                'gender' => $user['gender'] ?? null,
                 'last_login_at' => $nowIso,
             ],
         ];

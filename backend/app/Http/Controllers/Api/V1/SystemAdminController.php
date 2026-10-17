@@ -28,7 +28,15 @@ final class SystemAdminController
             'phone_dummy' => $u['phone_dummy'] ?? '01700-001001',
             'nid' => $u['nid'] ?? '9900001001',
             'is_active' => (int) ($u['is_active'] ?? 1),
-            'is_identity_verified' => (int) ($u['is_identity_verified'] ?? 1),
+            'is_identity_verified' => (int) ($u['is_identity_verified'] ?? 0),
+            'is_profile_complete' => (int) ($u['is_profile_complete'] ?? 0),
+            'avatar_url' => $u['avatar_url'] ?? null,
+            'registration_channel' => $u['registration_channel'] ?? 'phone',
+            'father_name_bn' => $u['father_name_bn'] ?? null,
+            'mother_name_bn' => $u['mother_name_bn'] ?? null,
+            'present_address_bn' => $u['present_address_bn'] ?? null,
+            'date_of_birth' => $u['date_of_birth'] ?? null,
+            'gender' => $u['gender'] ?? null,
             'token_version' => (int) ($u['token_version'] ?? 1),
             'last_login_at' => $u['last_login_at'] ?? null,
             'created_at' => $u['created_at'] ?? null,
@@ -37,7 +45,52 @@ final class SystemAdminController
 
     public static function registerUser(array $req, ?array $actor = null): array
     {
+        // I02: Security check: Only an active, authenticated Admin can provision officer or admin accounts.
+        // If an unauthenticated caller or suspended admin attempts to register non-citizen role, fail closed with 403.
+        $currentUser = $actor ?? JwtAuthService::getAuthenticatedUser();
+        $isAdmin = $currentUser && ($currentUser['role'] ?? '') === 'admin' && ((int) ($currentUser['is_active'] ?? 0)) === 1;
+        $requestedRole = (string) ($req['role'] ?? 'citizen');
+
+        if ($requestedRole !== 'citizen') {
+            if (!$isAdmin) {
+                $code = ($currentUser && ($currentUser['role'] ?? '') === 'admin' && ((int) ($currentUser['is_active'] ?? 0)) === 0)
+                    ? 'INACTIVE_ADMIN_CANNOT_PROVISION_ROLES'
+                    : 'UNAUTHORIZED_ROLE_PROVISIONING';
+                throw new \RuntimeException(json_encode([
+                    'status' => 403,
+                    'code' => $code,
+                    'message_bn' => 'কর্মকর্তা বা অ্যাডমিন অ্যাকাউন্ট তৈরি করতে সক্রিয় অ্যাডমিন হিসেবে লগইন থাকা আবশ্যক।',
+                    'message_en' => 'Only active administrators can provision officer or administrator accounts.',
+                ], JSON_UNESCAPED_UNICODE));
+            }
+            $allowedRoles = ['citizen', 'sub_registrar', 'ac_land', 'bank_officer', 'field_verification_officer', 'support_agent', 'admin'];
+            $role = in_array($requestedRole, $allowedRoles, true) ? $requestedRole : 'citizen';
+        } else {
+            $role = 'citizen';
+        }
+
+        $nowIso = gmdate('c');
+        $regChannel = (string) ($req['registration_channel'] ?? '');
+        $rawEmail = trim((string) ($req['email'] ?? ''));
+        $rawPhone = trim((string) ($req['phone_dummy'] ?? ($req['phone_mock'] ?? ($req['phone'] ?? ''))));
+
+        if ($regChannel === '') {
+            $regChannel = (!empty($rawEmail) && empty($rawPhone)) ? 'email' : 'phone';
+        }
+
         $uname = strtolower(trim((string) ($req['username'] ?? '')));
+        if ($uname === '') {
+            if (!empty($rawEmail)) {
+                $parts = explode('@', strtolower($rawEmail));
+                $uname = preg_replace('/[^a-z0-9_]/', '', $parts[0]);
+            } elseif (!empty($rawPhone)) {
+                $uname = 'cit_' . substr(preg_replace('/\D/', '', $rawPhone), -6);
+            }
+            if (strlen($uname) < 3) {
+                $uname = 'user_' . substr(uniqid(), -6);
+            }
+        }
+
         if (strlen($uname) < 3) {
             throw new \RuntimeException(json_encode([
                 'status' => 422,
@@ -57,38 +110,18 @@ final class SystemAdminController
             ], JSON_UNESCAPED_UNICODE));
         }
 
-        // I02: Security check: Only an active, authenticated Admin can provision officer or admin accounts.
-        // If an unauthenticated caller or suspended admin attempts to register non-citizen role, fail closed with 403.
-        $currentUser = $actor ?? JwtAuthService::getAuthenticatedUser();
-        $isAdmin = $currentUser && ($currentUser['role'] ?? '') === 'admin' && ((int) ($currentUser['is_active'] ?? 0)) === 1;
-        $requestedRole = (string) ($req['role'] ?? 'citizen');
+        $email = $rawEmail !== '' ? strtolower($rawEmail) : "{$uname}@citizen.bhumishield.gov.bd";
+        $phone = $rawPhone !== '' ? $rawPhone : '01700-009999';
 
-        if ($requestedRole !== 'citizen') {
-            if (!$isAdmin) {
-                $code = ($currentUser && ($currentUser['role'] ?? '') === 'admin' && ((int) ($currentUser['is_active'] ?? 0)) === 0)
-                    ? 'INACTIVE_ADMIN_CANNOT_PROVISION_ROLES'
-                    : 'UNAUTHORIZED_ROLE_PROVISIONING';
-                throw new \RuntimeException(json_encode([
-                    'status' => 403,
-                    'code' => $code,
-                    'message_bn' => 'কর্মকর্তা বা অ্যাডমিন অ্যাকাউন্ট তৈরি করতে সক্রিয় অ্যাডমিন হিসেবে লগইন থাকা আবশ্যক।',
-                    'message_en' => 'Only active administrators can provision officer or administrator accounts.',
-                ], JSON_UNESCAPED_UNICODE));
-            }
-            $allowedRoles = ['citizen', 'sub_registrar', 'ac_land', 'bank_officer', 'admin'];
-            $role = in_array($requestedRole, $allowedRoles, true) ? $requestedRole : 'citizen';
-        } else {
-            $role = 'citizen';
-        }
-
-        $nowIso = gmdate('c');
-        $email = strtolower(trim((string) ($req['email'] ?? "{$uname}@demo.bhumishield.gov.bd")));
         $nameBn = trim((string) ($req['full_name_bn'] ?? $uname));
         $nameEn = trim((string) ($req['full_name_en'] ?? $nameBn));
         $officeBn = trim((string) ($req['office_bn'] ?? ($req['office_name'] ?? 'নাগরিক পোর্টাল — ঢাকা')));
         $officeEn = trim((string) ($req['office_en'] ?? ($req['office_name'] ?? 'Citizen Portal — Dhaka')));
-        $phone = trim((string) ($req['phone_dummy'] ?? ($req['phone_mock'] ?? '01700-009999')));
-        $nid = trim((string) ($req['nid'] ?? ($req['nid_mock'] ?? '9900009999')));
+        $nid = trim((string) ($req['nid'] ?? ($req['nid_mock'] ?? '')));
+        if ($nid === '') {
+            // Generate valid synthetic NID starting with 99
+            $nid = '99' . str_pad((string) abs(crc32($uname . $nowIso)), 8, '0', STR_PAD_LEFT);
+        }
         $password = (string) ($req['password'] ?? 'demo123');
 
         // F13: NID uniqueness safeguard across user accounts
@@ -105,10 +138,12 @@ final class SystemAdminController
         // I01: Identity verification. Self-registered public citizens start unverified (0)
         // to prevent unauthorized portfolio takeover. Admin-provisioned accounts start verified (1).
         $isIdentityVerified = $isAdmin ? 1 : 0;
+        $isProfileComplete = $isAdmin ? 1 : 0;
+        $avatarUrl = trim((string) ($req['avatar_url'] ?? ''));
 
         $userId = DB::insert(
-            'INSERT INTO users (username, email, full_name_bn, full_name_en, role, office_bn, office_en, phone_dummy, nid, is_active, is_identity_verified, token_version, password_hash, last_login_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 1, ?, ?, ?)',
-            [$uname, $email, $nameBn, $nameEn, $role, $officeBn, $officeEn, $phone, $nid, $isIdentityVerified, JwtAuthService::hashPassword($password), $nowIso, $nowIso]
+            'INSERT INTO users (username, email, full_name_bn, full_name_en, role, office_bn, office_en, phone_dummy, nid, is_active, is_identity_verified, is_profile_complete, avatar_url, registration_channel, token_version, password_hash, last_login_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, 1, ?, ?, ?)',
+            [$uname, $email, $nameBn, $nameEn, $role, $officeBn, $officeEn, $phone, $nid, $isIdentityVerified, $isProfileComplete, $avatarUrl, $regChannel, JwtAuthService::hashPassword($password), $nowIso, $nowIso]
         );
 
         $existingPerson = DB::selectOne('SELECT id FROM persons WHERE nid = ?', [$nid]);
@@ -129,8 +164,9 @@ final class SystemAdminController
                 'username' => $uname,
                 'role' => $role,
                 'nid' => $nid,
+                'channel' => $regChannel,
                 'is_identity_verified' => $isIdentityVerified,
-                'note_bn' => "নতুন ব্যবহারকারী নিবন্ধন: {$nameBn} ({$role}) [ভেরিফাইড: {$isIdentityVerified}]",
+                'note_bn' => "নতুন ব্যবহারকারী নিবন্ধন: {$nameBn} ({$role}) [ভেরিফাইড: {$isIdentityVerified}] [চ্যানেল: {$regChannel}]",
             ],
             $nowIso
         );
@@ -138,12 +174,152 @@ final class SystemAdminController
         $userRow = DB::selectOne('SELECT * FROM users WHERE id = ?', [$userId]);
         $token = JwtAuthService::createToken(['sub' => $uname, 'role' => $role]);
 
+        $msgBn = $isAdmin
+            ? 'নতুন ব্যবহারকারী অ্যাকাউন্ট সফলভাবে তৈরি ও সক্রিয় করা হয়েছে।'
+            : 'আপনার নাগরিক অ্যাকাউন্ট তৈরি সম্পন্ন হয়েছে। প্ল্যাটফর্মের সুরক্ষার স্বার্থে সুপার অ্যাডমিনের অনুমোদনের পর আপনি আপনার ড্যাশবোর্ড ও সেবাসমূহ অ্যাক্সেস করতে পারবেন।';
+        $msgEn = $isAdmin
+            ? 'User account created and activated successfully.'
+            : 'Your citizen account has been created. It is pending Super Admin verification before full access is unlocked.';
+
         return [
             'access_token' => $token,
             'token_type' => 'bearer',
             'user' => self::serializeUser($userRow),
-            'message_bn' => 'আপনার অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে এবং লগইন সম্পন্ন হয়েছে।',
-            'message_en' => 'Your account has been created and signed in.',
+            'message_bn' => $msgBn,
+            'message_en' => $msgEn,
+        ];
+    }
+
+    public static function completeProfile(array $req, ?array $user = null): array
+    {
+        $u = $user ?? JwtAuthService::getAuthenticatedUser();
+        if (!$u) {
+            throw new \RuntimeException(json_encode([
+                'status' => 401,
+                'code' => 'AUTH_REQUIRED',
+                'message_bn' => 'প্রোফাইল সম্পূর্ণ করতে অনুগ্রহ করে প্রথমে লগইন করুন।',
+                'message_en' => 'Sign in to complete profile.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $freshUser = DB::selectOne('SELECT * FROM users WHERE id = ?', [$u['id']]);
+        if (!$freshUser) {
+            throw new \RuntimeException(json_encode([
+                'status' => 404,
+                'code' => 'USER_NOT_FOUND',
+                'message_bn' => 'ব্যবহারকারী পাওয়া যায়নি।',
+                'message_en' => 'User not found.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        // Must be identity verified by admin first
+        if (((int) ($freshUser['is_identity_verified'] ?? 0)) !== 1) {
+            throw new \RuntimeException(json_encode([
+                'status' => 403,
+                'code' => 'PENDING_ADMIN_VERIFICATION',
+                'message_bn' => 'আপনার অ্যাকাউন্টটি এখনও সুপার অ্যাডমিন কর্তৃক অনুমোদিত হয়নি। অ্যাডমিন কর্তৃক অ্যাকাউন্ট যাচাই ও অনুমোদনের পর প্রোফাইল সম্পন্ন করা যাবে।',
+                'message_en' => 'Your account is pending Super Admin verification. You can complete your profile once approved.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $fullNameBn = trim((string) ($req['full_name_bn'] ?? $freshUser['full_name_bn']));
+        $fullNameEn = trim((string) ($req['full_name_en'] ?? ($freshUser['full_name_en'] ?: $fullNameBn)));
+        $phone = trim((string) ($req['phone_dummy'] ?? ($req['phone'] ?? $freshUser['phone_dummy'])));
+        $email = strtolower(trim((string) ($req['email'] ?? $freshUser['email'])));
+        $nid = trim((string) ($req['nid'] ?? $freshUser['nid']));
+        $fatherNameBn = trim((string) ($req['father_name_bn'] ?? ($freshUser['father_name_bn'] ?? 'মো. আবদুল করিম')));
+        $fatherNameEn = trim((string) ($req['father_name_en'] ?? 'Md. Abdul Karim'));
+        $motherNameBn = trim((string) ($req['mother_name_bn'] ?? ($freshUser['mother_name_bn'] ?? 'রোকেয়া বেগম')));
+        $addressBn = trim((string) ($req['present_address_bn'] ?? ($req['address_bn'] ?? ($freshUser['present_address_bn'] ?? 'ঢাকা, বাংলাদেশ'))));
+        $dob = trim((string) ($req['date_of_birth'] ?? ($freshUser['date_of_birth'] ?? '1988-03-26')));
+        $gender = trim((string) ($req['gender'] ?? ($freshUser['gender'] ?? 'male')));
+        $avatarUrl = trim((string) ($req['avatar_url'] ?? ($freshUser['avatar_url'] ?? '')));
+
+        if ($fullNameBn === '') {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'NAME_REQUIRED',
+                'message_bn' => 'পূর্ণ নাম (বাংলায়) প্রদান করা আবশ্যক।',
+                'message_en' => 'Full name in Bangla is required.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+        if ($phone === '' || $phone === '01700-000000') {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'PHONE_REQUIRED',
+                'message_bn' => 'সঠিক মোবাইল নম্বর প্রদান করা আবশ্যক।',
+                'message_en' => 'Valid mobile phone number is required.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'EMAIL_REQUIRED',
+                'message_bn' => 'সঠিক ইমেইল ঠিকানা প্রদান করা আবশ্যক।',
+                'message_en' => 'Valid email address is required.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+        if ($nid === '') {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'NID_REQUIRED',
+                'message_bn' => 'জাতীয় পরিচয়পত্র (NID) নম্বর প্রদান করা আবশ্যক।',
+                'message_en' => 'National ID number is required.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        // Check NID conflict with other users
+        $conflict = DB::selectOne('SELECT id, username FROM users WHERE nid = ? AND id != ?', [$nid, $u['id']]);
+        if ($conflict) {
+            throw new \RuntimeException(json_encode([
+                'status' => 409,
+                'code' => 'NID_ALREADY_REGISTERED',
+                'message_bn' => "এই জাতীয় পরিচয়পত্র (NID: {$nid}) ইতিমধ্যে অন্য ব্যবহারকারী ({$conflict['username']})-এর অ্যাকাউন্টে সংযুক্ত।",
+                'message_en' => "NID {$nid} is already linked to another account ({$conflict['username']}).",
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        DB::statement(
+            'UPDATE users SET full_name_bn = ?, full_name_en = ?, phone_dummy = ?, email = ?, nid = ?, father_name_bn = ?, mother_name_bn = ?, present_address_bn = ?, date_of_birth = ?, gender = ?, avatar_url = ?, is_profile_complete = 1 WHERE id = ?',
+            [$fullNameBn, $fullNameEn, $phone, $email, $nid, $fatherNameBn, $motherNameBn, $addressBn, $dob, $gender, $avatarUrl, $u['id']]
+        );
+
+        // Ensure persons table row exists and is updated
+        $person = DB::selectOne('SELECT id FROM persons WHERE nid = ?', [$nid]);
+        if ($person) {
+            DB::statement(
+                'UPDATE persons SET name_bn = ?, name_en = ?, father_name_bn = ?, father_name_en = ?, mother_name_bn = ?, phone_dummy = ?, address_bn = ? WHERE id = ?',
+                [$fullNameBn, $fullNameEn, $fatherNameBn, $fatherNameEn, $motherNameBn, $phone, $addressBn, $person['id']]
+            );
+        } else {
+            DB::insert(
+                'INSERT INTO persons (name_bn, name_en, father_name_bn, father_name_en, mother_name_bn, nid, phone_dummy, is_deceased, heirs_recorded, address_bn, address_en) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?)',
+                [$fullNameBn, $fullNameEn, $fatherNameBn, $fatherNameEn, $motherNameBn, $nid, $phone, $addressBn, $addressBn]
+            );
+        }
+
+        DatabaseSeeder::appendAuditEntry(
+            (string) ($freshUser['username'] ?? 'citizen'),
+            (string) ($freshUser['role'] ?? 'citizen'),
+            'CITIZEN_PROFILE_COMPLETED',
+            'user',
+            (string) $u['id'],
+            [
+                'username' => $freshUser['username'],
+                'nid' => $nid,
+                'phone' => $phone,
+                'email' => $email,
+                'note_bn' => "নাগরিকের বিস্তারিত প্রোফাইল সম্পন্নকরণ ও অ্যাকাউন্ট পূর্ণ সক্রিয়করণ সম্পন্ন: {$freshUser['username']}",
+            ],
+            gmdate('c')
+        );
+
+        $updated = DB::selectOne('SELECT * FROM users WHERE id = ?', [$u['id']]);
+
+        return [
+            'user' => self::serializeUser($updated),
+            'message_bn' => 'আপনার প্রোফাইল সফলভাবে সম্পূর্ণ হয়েছে! অ্যাকাউন্ট এখন পূর্ণ সক্রিয় এবং সকল সেবা উন্মুক্ত।',
+            'message_en' => 'Profile completed successfully! Your account is now fully active with all services unlocked.',
         ];
     }
 

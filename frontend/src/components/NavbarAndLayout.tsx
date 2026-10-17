@@ -38,7 +38,10 @@ import {
   CheckCircle2,
   Settings,
   AlertOctagon,
-  Sparkles
+  Sparkles,
+  Compass,
+  Smartphone,
+  Users
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -685,16 +688,25 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
     setToken,
     activeSubTab,
     setActiveSubTab,
+    adminUserRoleFilter,
+    setAdminUserRoleFilter,
     logout,
     t,
   } = useAppUI();
 
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [usersMenuExpanded, setUsersMenuExpanded] = useState(true);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
   const drawerCloseBtnRef = React.useRef<HTMLButtonElement>(null);
   const previousFocusedElementRef = React.useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (activeSubTab === 'users') {
+      setUsersMenuExpanded(true);
+    }
+  }, [activeSubTab]);
 
   useEffect(() => {
     if (mobileDrawerOpen) {
@@ -1010,74 +1022,20 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
     }
     // 19. System Admin / Admin
     return [
+      { id: 'overview', label: t('সারসংক্ষেপ ও ড্যাশবোর্ড', 'Overview & Dashboard'), icon: <LayoutDashboard className="w-4 h-4" /> },
+      { id: 'users', label: t('ইউজার ও কর্মকর্তা ব্যবস্থাপনা', 'User & Officer Management'), icon: <Users className="w-4 h-4" /> },
       { id: 'ledger', label: t('ক্রিপ্টোগ্রাফিক লেজার ও অখণ্ডতা', 'Cryptographic Ledger'), icon: <ShieldCheck className="w-4 h-4" /> },
-      { id: 'users', label: t('ইউজার ও রোল ব্যবস্থাপনা', 'Users & Access Control'), icon: <UserCheck className="w-4 h-4" /> },
+      { id: 'plots_control', label: t('ভূমি ও দাগ নিয়ন্ত্রণ', 'Plots & Land Control'), icon: <Compass className="w-4 h-4" /> },
       { id: 'audit', label: t('সিকিউরিটি অডিট ট্রেইল', 'Security Audit Trail'), icon: <FileSpreadsheet className="w-4 h-4" /> },
       { id: 'settings', label: t('জালিয়াতি প্রতিরোধ সেটিংস', 'Fraud Engine Policy'), icon: <Settings className="w-4 h-4" /> },
       { id: 'rbac', label: t('রোল পারমিশন ম্যাট্রিক্স', 'RBAC Matrix'), icon: <KeyRound className="w-4 h-4" /> },
       { id: 'onboarding_appeals', label: t('অনবোর্ডিং ও আপিল ওভারসাইট', 'Onboarding & Appeals'), icon: <Scale className="w-4 h-4" /> },
       { id: 'catalogue', label: t('সার্ভিস ও ফি ডিরেক্টরি', 'Service & Fees'), icon: <Layers className="w-4 h-4" /> },
-      { id: 'direct_access', label: t('সুপার অ্যাডমিন তত্ত্বাবধান', 'Direct Role Oversight'), icon: <ShieldAlert className="w-4 h-4" /> },
+      { id: 'dev_outbox', label: t('এসএমএস ও ওটিপি আউটবক্স', 'SMS & OTP Outbox'), icon: <Smartphone className="w-4 h-4" /> },
     ];
   };
 
   const sidebarItems = getRoleSidebarItems();
-
-  const superAdminOversightBanner = isSuperAdminMode ? (
-    <div className="sticky top-0 z-50 bg-amber-400 text-slate-950 px-4 py-2 shadow-md flex flex-wrap items-center justify-between gap-2 border-b-2 border-amber-600">
-      <div className="flex items-center gap-2 text-xs font-black">
-        <span className="flex h-2.5 w-2.5 rounded-full bg-red-600 animate-ping" />
-        <ShieldAlert className="w-4 h-4 text-slate-950 shrink-0" />
-        <span>
-          {t(
-            `সুপার অ্যাডমিন নিরীক্ষা মোড: আপনি পাসওয়ার্ড ছাড়াই সরাসরি '${currentRoleMeta.titleBn}' ড্যাশবোর্ড পর্যবেক্ষণে রয়েছেন।`,
-            `Super Admin Oversight Mode: Directly inspecting '${currentRoleMeta.titleEn}' without password.`
-          )}
-        </span>
-      </div>
-      <button
-        onClick={handleReturnToSuperAdmin}
-        className="px-3 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 text-amber-300 text-xs font-black flex items-center gap-1.5 transition cursor-pointer shadow-xs border border-amber-400/40"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" />
-        <span>{t('সুপার অ্যাডমিনে ফিরুন ↩', 'Return to Super Admin ↩')}</span>
-      </button>
-    </div>
-  ) : null;
-
-  const roleSwitcher = (
-    <div className="space-y-1">
-      {(
-        [
-          { r: 'citizen' as UserRole, tab: 'home', label: t('নাগরিক ভল্ট (Citizen)', 'Citizen Vault') },
-          { r: 'sub_registrar' as UserRole, tab: 'registrar', label: t('সাব-রেজিস্ট্রার (Law)', 'Sub-Registrar') },
-          { r: 'ac_land' as UserRole, tab: 'acland', label: t('এসি ল্যান্ড (Land)', 'AC Land') },
-          { r: 'bank_officer' as UserRole, tab: 'bank', label: t('ব্যাংক অফিসার (Bank)', 'Bank Officer') },
-          { r: 'admin' as UserRole, tab: 'admin', label: t('সুপার অ্যাডমিন (Admin)', 'Super Admin') },
-        ] as const
-      ).map((rp) => {
-        const active = role === rp.r && activeTab === rp.tab;
-        return (
-          <button
-            key={rp.r}
-            onClick={() => {
-              setMobileDrawerOpen(false);
-              handleSuperAdminDirectLogin(rp.r);
-            }}
-            className={`w-full px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between cursor-pointer min-h-[38px] transition-colors ${
-              active
-                ? 'bg-amber-500/20 text-amber-300 border-l-2 border-amber-400 font-bold'
-                : 'text-white/70 hover:bg-white/10 hover:text-white'
-            }`}
-            title={t('পাসওয়ার্ড ছাড়া সরাসরি লগইন করুন', 'Direct Login Without Password')}
-          >
-            <span className="truncate">{rp.label}</span>
-            <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-          </button>
-        );
-      })}
-    </div>
-  );
 
   // Clean Public Header & Layout (Modeled after bcc.zohirrayhan.com)
   if (isPublicPage) {
@@ -1193,8 +1151,6 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
       <div className="min-h-screen flex flex-col bg-white text-slate-800 pb-28 lg:pb-0">
         {/* Top Accent Gradient Bar — Exactly like bcc.zohirrayhan.com */}
         <div className="h-1 bg-gradient-to-r from-emerald-700 via-emerald-600 to-amber-500" />
-
-        {superAdminOversightBanner}
 
         {/* Clean Header Bar */}
         <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur">
@@ -1347,8 +1303,8 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         {/* Main Content */}
         <main className={`flex-1 w-full ${activeTab === 'landing' || activeTab === 'map' || activeTab === 'home' ? '' : 'py-8 px-4 max-w-7xl mx-auto'}`}>{children}</main>
 
-        {/* Clean Footer (bcc.zohirrayhan.com style, suppressed on map page which has its own map.land.gov.bd institutional footer) */}
-        {activeTab !== 'map' && <InstitutionalFooter t={t} onNavigate={setActiveTab} />}
+        {/* Clean Footer (suppressed on map and admin control panel) */}
+        {activeTab !== 'map' && activeTab !== 'admin' && <InstitutionalFooter t={t} onNavigate={setActiveTab} />}
 
         {/* Mobile Slide-Over Drawer */}
         {mobileDrawerOpen && (
@@ -1578,16 +1534,6 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                     </button>
                   </div>
                 </div>
-
-                {import.meta.env.DEV && (user?.role === 'admin' || isSuperAdminMode) && (
-                  <div className="border-t border-white/10 pt-3">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-amber-400 px-3 mb-2 flex items-center gap-1.5">
-                      <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-                      {t('সুপার অ্যাডমিন ডাইরেক্ট এক্সেস', 'Super Admin Direct Access')}
-                    </div>
-                    {roleSwitcher}
-                  </div>
-                )}
               </div>
             </aside>
           </div>
@@ -1611,9 +1557,94 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         <div className="space-y-1">
           {sidebarItems.map((item, idx) => {
             const isOfficerRole = role !== 'citizen';
+            const isUsersItem = item.id === 'users' && (role === 'admin' || role === 'system_admin');
             const isActive = isOfficerRole
               ? (activeSubTab ? activeSubTab === item.id : idx === 0)
               : activeTab === item.id;
+
+            if (isUsersItem) {
+              const isUsersActive = activeSubTab === 'users';
+              return (
+                <div key={item.id} className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onNavigate?.();
+                      setActiveSubTab('users');
+                      if (activeTab !== 'admin') setActiveTab('admin');
+                      setUsersMenuExpanded((prev) => (isUsersActive ? !prev : true));
+                    }}
+                    className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer min-h-[40px] ${
+                      isUsersActive
+                        ? 'bg-[#006A4E] text-white shadow-xs'
+                        : 'text-white/70 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2.5 min-w-0">
+                      {item.icon}
+                      {sidebarOpen && <span className="truncate">{item.label}</span>}
+                    </span>
+                    {sidebarOpen && (
+                      <ChevronDown
+                        className={`w-3.5 h-3.5 transition-transform duration-200 shrink-0 ${
+                          usersMenuExpanded ? 'rotate-180' : ''
+                        }`}
+                      />
+                    )}
+                  </button>
+
+                  {/* Expandable Role Submenu under Users Menu */}
+                  {sidebarOpen && usersMenuExpanded && (
+                    <div className="pl-3 pr-1 py-1 space-y-0.5 border-l-2 border-emerald-500/30 ml-4 animate-fadeIn">
+                      {[
+                        { id: 'all', labelBn: 'সকল ইউজার ও কর্মকর্তা', labelEn: 'All Users & Officers' },
+                        { id: 'citizen', labelBn: 'সাধারণ নাগরিকবৃন্দ', labelEn: 'Citizens' },
+                        { id: 'sub_registrar', labelBn: 'সাব-রেজিস্ট্রারগণ', labelEn: 'Sub-Registrars' },
+                        { id: 'ac_land', labelBn: 'সহকারী কমিশনার (ভূমি)', labelEn: 'AC Land Officers' },
+                        { id: 'bank_officer', labelBn: 'ব্যাংক কর্মকর্তাবৃন্দ', labelEn: 'Bank Officers' },
+                        { id: 'field_verification_officer', labelBn: 'ফিল্ড অফিসার (সার্ভেয়ার)', labelEn: 'Field Officers' },
+                        { id: 'registry_data_officer', labelBn: 'রেজিস্ট্রি ডাটা মেকার', labelEn: 'Registry Data Officers' },
+                        { id: 'settlement_records_officer', labelBn: 'সেটেলমেন্ট রেকর্ডস অফিসার', labelEn: 'Settlement Records' },
+                        { id: 'uno_supervisor', labelBn: 'ইউএনও তদারককারী', labelEn: 'UNO Supervisors' },
+                        { id: 'service_point_operator', labelBn: 'সার্ভিস পয়েন্ট অপারেটর (UDC)', labelEn: 'UDC Operators' },
+                        { id: 'admin', labelBn: 'সিস্টেম অ্যাডমিনিস্ট্রেটর', labelEn: 'System Admins' },
+                      ].map((subItem) => {
+                        const isSubActive = isUsersActive && (adminUserRoleFilter === subItem.id || (!adminUserRoleFilter && subItem.id === 'all'));
+                        return (
+                          <button
+                            key={subItem.id}
+                            type="button"
+                            onClick={() => {
+                              onNavigate?.();
+                              setAdminUserRoleFilter(subItem.id);
+                              setActiveSubTab('users');
+                              if (activeTab !== 'admin') setActiveTab('admin');
+                            }}
+                            className={`w-full px-2.5 py-1.5 rounded-md text-[11px] font-medium flex items-center justify-between text-left transition cursor-pointer ${
+                              isSubActive
+                                ? 'bg-emerald-600 text-white font-bold shadow-2xs'
+                                : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
+                            }`}
+                          >
+                            <span className="flex items-center gap-1.5 truncate">
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                                  isSubActive ? 'bg-white' : 'bg-slate-500'
+                                }`}
+                              />
+                              <span className="truncate">
+                                {lang === 'bn' ? subItem.labelBn : subItem.labelEn}
+                              </span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <button
                 key={item.id}
@@ -1651,17 +1682,6 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
           })}
         </div>
       </div>
-      {import.meta.env.DEV && (user?.role === 'admin' || isSuperAdminMode) && (
-        <div className="pt-2 border-t border-slate-800">
-          {sidebarOpen && (
-            <div className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-              <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-              {t('সুপার অ্যাডমিন ডাইরেক্ট এক্সেস', 'Super Admin Direct Access')}
-            </div>
-          )}
-          {sidebarOpen && roleSwitcher}
-        </div>
-      )}
     </>
   );
 
@@ -1673,27 +1693,27 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
       {/* Desktop Sidebar */}
       <aside
         className={`${
-          sidebarOpen ? 'w-64' : 'w-[4.5rem]'
-        } hidden md:flex flex-col bg-slate-900 text-white transition-all duration-200 shrink-0 z-30 border-r border-slate-800 pt-1`}
+          sidebarOpen ? 'w-64 xl:w-72' : 'w-20'
+        } hidden md:flex flex-col bg-slate-900 text-white transition-all duration-200 shrink-0 z-30 border-r border-slate-800 sticky top-0 h-screen max-h-screen`}
       >
-        <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800">
+        <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800 shrink-0">
           <button
             onClick={() => setActiveTab('landing')}
             className="flex items-center gap-2.5 min-w-0 text-left cursor-pointer min-h-0 bg-transparent border-0 p-0"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#006A4E] text-xs font-bold text-white ring-2 ring-emerald-500/30">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[#006A4E] to-emerald-600 text-xs font-black text-white shadow-md ring-2 ring-emerald-500/30">
               ভূ
             </span>
             {sidebarOpen && (
               <div className="min-w-0">
-                <div className="font-bold text-sm text-white truncate">ভূমি সুরক্ষা</div>
-                <div className="text-[10px] text-slate-400 font-mono">BCC LandTech</div>
+                <div className="font-extrabold text-sm text-white truncate tracking-tight">ভূমি সুরক্ষা</div>
+                <div className="text-[10px] text-emerald-400 font-mono font-semibold">Central Admin OS</div>
               </div>
             )}
           </button>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1 rounded text-slate-400 hover:text-white cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer transition"
             title="Toggle Sidebar"
           >
             <Menu className="w-4 h-4" />
@@ -1701,7 +1721,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         </div>
 
         {sidebarOpen && (
-          <div className="px-4 py-2.5 bg-slate-800/60 border-b border-slate-800 text-[11px]">
+          <div className="px-4 py-2.5 bg-slate-800/60 border-b border-slate-800 text-[11px] shrink-0">
             <div className="font-bold text-emerald-400 truncate">
               {lang === 'bn' ? currentRoleMeta.titleBn : currentRoleMeta.titleEn}
             </div>
@@ -1711,12 +1731,12 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
           </div>
         )}
 
-        <nav aria-label="Sidebar Navigation" className="flex-1 py-4 px-3 space-y-6 overflow-y-auto">
+        <nav aria-label="Sidebar Navigation" className="flex-1 py-3 px-3 space-y-1 overflow-y-auto custom-scrollbar select-none">
           {renderSidebarNav()}
         </nav>
 
         {/* Footer in sidebar */}
-        <div className="p-3 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
+        <div className="p-3 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between shrink-0 bg-slate-900">
           {sidebarOpen ? (
             <>
               <button
@@ -1761,8 +1781,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
       </aside>
 
       {/* Main Area */}
-      <div className="flex-1 flex flex-col min-w-0 pt-1">
-        {superAdminOversightBanner}
+      <div className="flex-1 flex flex-col min-w-0 pt-0">
         {/* Top Navbar */}
         <header className="sticky top-1 z-20 h-16 bg-white/95 backdrop-blur border-b border-slate-200 px-4 lg:px-6 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -1836,12 +1855,12 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         </header>
 
         {/* Content Body */}
-        <main className="flex-1 p-4 lg:p-6 max-w-7xl w-full mx-auto space-y-6">
+        <main className={`flex-1 w-full mx-auto space-y-6 ${activeTab === 'admin' ? 'p-4 lg:p-6 max-w-[1600px]' : 'p-4 lg:p-6 max-w-7xl'}`}>
           {children}
         </main>
 
-        {/* Clean Footer */}
-        <InstitutionalFooter t={t} onNavigate={setActiveTab} />
+        {/* Clean Footer (suppressed for admin control panel) */}
+        {activeTab !== 'admin' && <InstitutionalFooter t={t} onNavigate={setActiveTab} />}
       </div>
 
       {/* Mobile Slide-Over Drawer for Authenticated View */}

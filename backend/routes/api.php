@@ -124,6 +124,10 @@ return static function (string $method, string $uri, array $query, array $body):
     if ($method === 'POST' && $sub === '/auth/change-password') {
         return SystemAdminController::changePassword($body);
     }
+    if ($method === 'POST' && ($sub === '/auth/complete-profile' || $sub === '/citizen/complete-profile')) {
+        RoleMiddleware::authorize(['citizen', 'admin']);
+        return SystemAdminController::completeProfile($body);
+    }
 
     // 3. Citizen Portfolio, Sale Lock & Dispute Control Routes
     if ($method === 'GET' && $sub === '/locations') {
@@ -507,7 +511,7 @@ return static function (string $method, string $uri, array $query, array $body):
         $actor = RoleMiddleware::authorize(['admin']);
         return ServiceCatalogueController::updateFee((int) $m[1], $body, $actor);
     }
-    if ($method === 'POST' && preg_match('#^/admin/users/(\d+)/verify-identity$#', $sub, $m)) {
+    if ($method === 'POST' && (preg_match('#^/admin/users/(\d+)/verify-identity$#', $sub, $m) || preg_match('#^/admin/users/(\d+)/verify$#', $sub, $m))) {
         $actor = RoleMiddleware::authorize(['admin']);
         return SystemAdminController::verifyCitizenIdentity((int) $m[1], $actor);
     }

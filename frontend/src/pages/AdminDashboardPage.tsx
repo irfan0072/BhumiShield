@@ -48,7 +48,10 @@ import {
   X,
   Smartphone,
   Copy,
-  Send
+  Send,
+  Phone,
+  Mail,
+  LayoutDashboard,
 } from 'lucide-react';
 
 const ROLE_DASHBOARD_MAP: Record<string, string> = {
@@ -60,41 +63,41 @@ const ROLE_DASHBOARD_MAP: Record<string, string> = {
 };
 
 export type AdminTab =
+  | 'overview'
+  | 'users'
   | 'ledger'
   | 'plots_control'
-  | 'users'
   | 'audit'
   | 'settings'
   | 'rbac'
   | 'catalogue'
   | 'risk_protocols'
-  | 'direct_access'
   | 'onboarding_appeals'
   | 'dev_outbox';
 
 export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNavigate }) => {
-  const { lang, role, setRole, user, setUser, token, setToken, activeSubTab, setActiveSubTab, t } = useAppUI();
+  const { lang, role, setRole, user, setUser, token, setToken, activeSubTab, setActiveSubTab, adminUserRoleFilter, setAdminUserRoleFilter, t } = useAppUI();
 
   const roleAllowedTabs: Record<string, AdminTab[]> = {
-    auditor: ['ledger', 'plots_control', 'audit', 'rbac', 'dev_outbox'],
-    support_agent: ['plots_control', 'users', 'audit', 'dev_outbox'],
-    platform_moderator: ['onboarding_appeals', 'catalogue', 'audit'],
-    content_editor: ['catalogue', 'settings', 'audit'],
-    content_approver: ['settings', 'catalogue', 'audit'],
-    system_admin: ['ledger', 'plots_control', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'onboarding_appeals', 'risk_protocols', 'direct_access', 'dev_outbox'],
-    admin: ['ledger', 'plots_control', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'onboarding_appeals', 'risk_protocols', 'direct_access', 'dev_outbox'],
+    auditor: ['overview', 'ledger', 'plots_control', 'audit', 'rbac', 'dev_outbox'],
+    support_agent: ['overview', 'users', 'plots_control', 'audit', 'dev_outbox'],
+    platform_moderator: ['overview', 'onboarding_appeals', 'catalogue', 'audit'],
+    content_editor: ['overview', 'catalogue', 'settings', 'audit'],
+    content_approver: ['overview', 'settings', 'catalogue', 'audit'],
+    system_admin: ['overview', 'users', 'ledger', 'plots_control', 'audit', 'settings', 'rbac', 'catalogue', 'onboarding_appeals', 'risk_protocols', 'dev_outbox'],
+    admin: ['overview', 'users', 'ledger', 'plots_control', 'audit', 'settings', 'rbac', 'catalogue', 'onboarding_appeals', 'risk_protocols', 'dev_outbox'],
   };
   const allowedTabs: AdminTab[] = roleAllowedTabs[role] || [
+    'overview',
+    'users',
     'ledger',
     'plots_control',
-    'users',
     'audit',
     'settings',
     'rbac',
     'catalogue',
     'onboarding_appeals',
     'risk_protocols',
-    'direct_access',
     'dev_outbox',
   ];
 
@@ -102,7 +105,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     if (requested && allowedTabs.includes(requested as AdminTab)) {
       return requested as AdminTab;
     }
-    return allowedTabs[0] || 'ledger';
+    return allowedTabs[0] || 'overview';
   };
 
   const [subTab, setSubTab] = useState<AdminTab>(() => getValidTab(activeSubTab));
@@ -152,12 +155,23 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
 
   // Users Management state
   const [usersList, setUsersList] = useState<any[]>([]);
+  const [userRoleFilter, setUserRoleFilter] = useState<string>('all');
+  const [userStatusFilter, setUserStatusFilter] = useState<'all' | 'pending' | 'verified' | 'disabled'>('all');
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [userJoinDateFilter, setUserJoinDateFilter] = useState<'all' | 'today' | '7days' | '30days' | 'custom'>('all');
+  const [userDateFrom, setUserDateFrom] = useState('');
+  const [userDateTo, setUserDateTo] = useState('');
+  const [selectedUserDetail, setSelectedUserDetail] = useState<any | null>(null);
+  const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [newNameBn, setNewNameBn] = useState('');
   const [newNameEn, setNewNameEn] = useState('');
   const [newRole, setNewRole] = useState<UserRole>('sub_registrar');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPhone, setNewPhone] = useState('01711-000111');
   const [newNid, setNewNid] = useState('9900008888');
   const [newOffice, setNewOffice] = useState('সাভার সাব-রেজিস্ট্রি অফিস');
+  const [userActionNotice, setUserActionNotice] = useState<{ msg: string; err?: boolean } | null>(null);
 
   // Service Catalogue & Fees State (Phase 2)
   const [adminServices, setAdminServices] = useState<ServiceCatalogueItem[]>([]);
@@ -280,47 +294,74 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     setSubTab(getValidTab(activeSubTab));
   }, [activeSubTab, role]);
 
+  useEffect(() => {
+    if (adminUserRoleFilter && adminUserRoleFilter !== userRoleFilter) {
+      setUserRoleFilter(adminUserRoleFilter);
+    }
+  }, [adminUserRoleFilter]);
+
+  const handleRoleSelectChange = (newRoleVal: string) => {
+    setUserRoleFilter(newRoleVal);
+    if (setAdminUserRoleFilter) {
+      setAdminUserRoleFilter(newRoleVal);
+    }
+  };
+
+  const formatUserDate = (dateStr?: string) => {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const formatted = `${day}/${month}/${year}`;
+      return lang === 'bn' ? toBanglaDigits(formatted, 'bn') : formatted;
+    } catch {
+      return dateStr;
+    }
+  };
+
   const handleTabChange = (target: AdminTab) => {
     setSubTab(target);
     setActiveSubTab(target);
   };
 
-  const switchToAdminRole = async (targetRole: UserRole = 'admin') => {
-    if (!localStorage.getItem('bs_superadmin_mode') && token) {
-      localStorage.setItem('bs_admin_original_token', token);
-    }
-    const res = await BhumiApi.switchDemoRole(targetRole);
-    if (res?.access_token && res?.user) {
-      localStorage.setItem('bs_superadmin_mode', '1');
-      setToken(res.access_token);
-      setUser(res.user);
-      setRole(targetRole);
-      onNavigate?.(ROLE_DASHBOARD_MAP[targetRole] || 'home');
-    } else {
-      setRole(targetRole);
-      onNavigate?.(ROLE_DASHBOARD_MAP[targetRole] || 'home');
-    }
-    refreshAll();
-  };
-
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    await BhumiApi.createUser({
-      username: newUsername,
-      password: 'demo123',
-      full_name_bn: newNameBn,
-      full_name_en: newNameEn || newNameBn,
-      role: newRole,
-      nid: newNid,
-      phone_dummy: '01711-000111',
-      office_bn: newOffice,
-      office_en: newOffice,
-    });
-    setNewUsername('');
-    setNewNameBn('');
-    setNewNameEn('');
-    refreshAll();
+    try {
+      await BhumiApi.createUser({
+        username: newUsername.trim(),
+        password: 'demo123',
+        full_name_bn: newNameBn.trim(),
+        full_name_en: newNameEn.trim() || newNameBn.trim(),
+        role: newRole,
+        nid: newNid.trim(),
+        phone_dummy: newPhone.trim(),
+        email: newEmail.trim() || `${newUsername.trim()}@bhumishield.gov.bd`,
+        office_bn: newOffice.trim(),
+        office_en: newOffice.trim(),
+      });
+      setUserActionNotice({
+        msg: lang === 'bn'
+          ? `নতুন ব্যবহারকারী @${newUsername} (${newRole}) সফলভাবে তৈরি ও সক্রিয় করা হয়েছে।`
+          : `User @${newUsername} (${newRole}) created and activated successfully.`,
+      });
+      setNewUsername('');
+      setNewNameBn('');
+      setNewNameEn('');
+      setNewEmail('');
+      setIsCreateUserOpen(false);
+      refreshAll();
+      setTimeout(() => setUserActionNotice(null), 5000);
+    } catch (err: any) {
+      setUserActionNotice({
+        msg: err?.response?.data?.detail?.message_bn || err?.response?.data?.message_bn || 'ব্যবহারকারী তৈরি করতে ত্রুটি হয়েছে।',
+        err: true,
+      });
+      setTimeout(() => setUserActionNotice(null), 5000);
+    }
   };
 
   const handleToggleUserStatus = async (u: any) => {
@@ -344,19 +385,34 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   const handleDeleteUser = async (id: number) => {
     try {
       await BhumiApi.deleteUser(id);
+      setUserActionNotice({
+        msg: lang === 'bn' ? 'ব্যবহারকারী সফলভাবে অপসারণ করা হয়েছে।' : 'User removed successfully.',
+      });
       refreshAll();
-    } catch {}
+      setTimeout(() => setUserActionNotice(null), 4000);
+    } catch {
+      setUserActionNotice({
+        msg: lang === 'bn' ? 'ব্যবহারকারী অপসারণ করা সম্ভব হয়নি।' : 'Failed to remove user.',
+        err: true,
+      });
+      setTimeout(() => setUserActionNotice(null), 4000);
+    }
   };
 
   const handleVerifyCitizen = async (userId: number) => {
     try {
       const res = await BhumiApi.verifyCitizenIdentity(userId);
-      setCatalogueNotice({ msg: res.message_bn || 'নাগরিক আইডি সফলভাবে যাচাইকৃত হয়েছে।' });
+      setUserActionNotice({
+        msg: res.message_bn || 'নাগরিকের জাতীয় পরিচয়পত্র ও প্রোফাইল সফলভাবে যাচাই ও অনুমোদন করা হয়েছে।',
+      });
       refreshAll();
-      setTimeout(() => setCatalogueNotice(null), 4000);
+      setTimeout(() => setUserActionNotice(null), 4000);
     } catch (err: any) {
-      setCatalogueNotice({ msg: err?.response?.data?.message_bn || 'আইডি যাচাইকরণে ব্যর্থ হয়েছে।', err: true });
-      setTimeout(() => setCatalogueNotice(null), 4000);
+      setUserActionNotice({
+        msg: err?.response?.data?.message_bn || 'আইডি যাচাইকরণে ত্রুটি হয়েছে।',
+        err: true,
+      });
+      setTimeout(() => setUserActionNotice(null), 4000);
     }
   };
 
@@ -504,298 +560,421 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
 
   return (
     <div className="space-y-6">
-      <header className="page-intro animate-rise">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1>
-              {role === 'support_agent'
-                ? t('নাগরিক সহায়তা ও হেল্পলাইন ডেস্ক (১৬১২২)', 'Citizen Support & Helpline Desk (16122)')
-                : role === 'platform_moderator'
-                ? t('প্ল্যাটফর্ম মডারেশন ও সার্ভিস ওভারসাইট', 'Platform Moderation & Oversight')
-                : role === 'content_editor'
-                ? t('কন্টেন্ট এডিটর ও সেবা নির্দেশিকা কনসোল', 'Content Editor & Service Guidelines Console')
-                : role === 'content_approver'
-                ? t('কন্টেন্ট অ্যাপ্রুভার ও প্রকাশনা কর্তৃপক্ষ', 'Content Approver & Publishing Authority')
-                : role === 'auditor'
-                ? t('স্বাধীন নিরাপত্তা ও সম্মতি নিরীক্ষক কনসোল', 'Independent Security & Compliance Auditor')
-                : t('কেন্দ্রীয় গভর্ন্যান্স ও অ্যাডমিন কনসোল', 'Central Governance & Admin Console')}
-            </h1>
-            <p>
-              {role === 'support_agent'
-                ? t('নাগরিক একাউন্ট অনুসন্ধান, অভিযোগ ট্রায়াজ এবং সাধারণ সহায়তা অডিট।', 'Citizen account search, ticket triage, and support audit logs.')
-                : role === 'platform_moderator'
-                ? t('অনবোর্ডিং ব্যাচ পর্যবেক্ষণ, আপিল নিরীক্ষা এবং সার্ভিস ক্যাটালগ পর্যালোচনা।', 'Onboarding batch monitoring, appeals review, and service directory oversight.')
-                : role === 'content_editor'
-                ? t('নাগরিক সেবা ক্যাটালগ ও ফি চার্ট খসড়া প্রণয়ন ও আপডেট।', 'Draft and edit service directory, guidelines, and fee schedules.')
-                : role === 'content_approver'
-                ? t('খসড়া সেবা ও ফি নির্দেশিকা চূড়ান্ত অনুমোদন এবং আইনি বিজ্ঞপ্তি প্রকাশনা।', 'Approve and publish draft service catalogues, fees, and policy notices.')
-                : role === 'auditor'
-                ? t('ক্রিপ্টোগ্রাফিক লেজার অখণ্ডতা, ব্রেক-গ্লাস অডিট ট্রেইল এবং রোল এক্সেস সম্মতি যাচাই।', 'Cryptographic hash ledger integrity, break-glass security logs, and RBAC compliance.')
-                : t('RBAC, হ্যাশ লেজার ল্যাব, ইউজার ডিরেক্টরি ও অপরিবর্তনীয় অডিট ট্রেইল।', 'RBAC, hash ledger lab, officers directory, and append-only audit trail.')}
-            </p>
-          </div>
-          <span className="px-3 py-1.5 rounded-full text-xs font-bold border border-emerald-300 bg-emerald-50 text-emerald-900">
-            {role === 'support_agent'
-              ? t('সাপোর্ট এজেন্ট (১৬১২২)', 'Support Agent (16122)')
-              : role === 'platform_moderator'
-              ? t('প্ল্যাটফর্ম মডারেটর', 'Platform Moderator')
-              : role === 'content_editor'
-              ? t('কন্টেন্ট এডিটর (মেকার)', 'Content Editor (Maker)')
-              : role === 'content_approver'
-              ? t('কন্টেন্ট অ্যাপ্রুভার (চেকার)', 'Content Approver (Checker)')
-              : role === 'auditor'
-              ? t('স্বাধীন নিরীক্ষক', 'Independent Auditor')
-              : t('সিস্টেম অ্যাডমিনিস্ট্রেটর', 'System Administrator')}
-          </span>
+      {loadError && (
+        <div role="alert" className="panel p-4 text-red-700 flex items-center justify-between">
+          <span>{loadError}</span>
+          <button onClick={refreshAll} className="ml-3 underline font-bold cursor-pointer">
+            {t('আবার চেষ্টা', 'Retry')}
+          </button>
         </div>
-      </header>
-      {loadError && <div role="alert" className="panel p-4 text-red-700">{loadError}<button onClick={refreshAll} className="ml-3 underline">{t('আবার চেষ্টা', 'Retry')}</button></div>}
-      {/* Admin Operational KPI Strip (Role-Specific) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-rise">
-        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
-              {t('ব্লকচেইন লেজার অখণ্ডতা', 'Ledger Hash Integrity')}
-            </div>
-            <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
-              {toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}%
-            </div>
-            <button
-              onClick={() => handleTabChange('ledger')}
-              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
-            >
-              {t('হ্যাশ লেজার ল্যাব দেখুন →', 'Inspect Hash Lab →')}
-            </button>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
-            <Lock className="w-6 h-6" />
-          </div>
-        </div>
+      )}
 
-        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
-              {t('কর্মকর্তা ও ইউজার সংখ্যা', 'Registered Officers')}
+      {/* SUBTAB: OVERVIEW (গভর্ন্যান্স সারসংক্ষেপ ও ড্যাশবোর্ড) */}
+      {subTab === 'overview' && (
+        <div className="space-y-6 animate-rise">
+          <header className="page-intro">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <LayoutDashboard className="w-6 h-6 text-[#006A4E]" />
+                  <span>
+                    {role === 'support_agent'
+                      ? t('নাগরিক সহায়তা ও হেল্পলাইন ডেস্ক (১৬১২২)', 'Citizen Support & Helpline Desk (16122)')
+                      : role === 'platform_moderator'
+                      ? t('প্ল্যাটফর্ম মডারেশন ও সার্ভিস ওভারসাইট', 'Platform Moderation & Oversight')
+                      : role === 'content_editor'
+                      ? t('কন্টেন্ট এডিটর ও সেবা নির্দেশিকা কনসোল', 'Content Editor & Service Guidelines Console')
+                      : role === 'content_approver'
+                      ? t('কন্টেন্ট অ্যাপ্রুভার ও প্রকাশনা কর্তৃপক্ষ', 'Content Approver & Publishing Authority')
+                      : role === 'auditor'
+                      ? t('স্বাধীন নিরাপত্তা ও সম্মতি নিরীক্ষক কনসোল', 'Independent Security & Compliance Auditor')
+                      : t('কেন্দ্রীয় গভর্ন্যান্স ও অ্যাডমিন কনসোল', 'Central Governance & Admin Console')}
+                  </span>
+                </h1>
+                <p className="text-xs text-slate-600 mt-1">
+                  {role === 'support_agent'
+                    ? t('নাগরিক একাউন্ট অনুসন্ধান, অভিযোগ ট্রায়াজ এবং সাধারণ সহায়তা অডিট।', 'Citizen account search, ticket triage, and support audit logs.')
+                    : role === 'platform_moderator'
+                    ? t('অনবোর্ডিং ব্যাচ পর্যবেক্ষণ, আপিল নিরীক্ষা এবং সার্ভিস ক্যাটালগ পর্যালোচনা।', 'Onboarding batch monitoring, appeals review, and service directory oversight.')
+                    : role === 'content_editor'
+                    ? t('নাগরিক সেবা ক্যাটালগ ও ফি চার্ট খসড়া প্রণয়ন ও আপডেট।', 'Draft and edit service directory, guidelines, and fee schedules.')
+                    : role === 'content_approver'
+                    ? t('খসড়া সেবা ও ফি নির্দেশিকা চূড়ান্ত অনুমোদন এবং আইনি বিজ্ঞপ্তি প্রকাশনা।', 'Approve and publish draft service catalogues, fees, and policy notices.')
+                    : role === 'auditor'
+                    ? t('ক্রিপ্টোগ্রাফিক লেজার অখণ্ডতা, ব্রেক-গ্লাস অডিট ট্রেইল এবং রোল এক্সেস সম্মতি যাচাই।', 'Cryptographic hash ledger integrity, break-glass security logs, and RBAC compliance.')
+                    : t('RBAC, হ্যাশ লেজার ল্যাব, ইউজার ডিরেক্টরি ও অপরিবর্তনীয় অডিট ট্রেইল।', 'RBAC, hash ledger lab, officers directory, and append-only audit trail.')}
+                </p>
+              </div>
+              <span className="px-3 py-1.5 rounded-full text-xs font-bold border border-emerald-300 bg-emerald-50 text-emerald-900">
+                {role === 'support_agent'
+                  ? t('সাপোর্ট এজেন্ট (১৬১২২)', 'Support Agent (16122)')
+                  : role === 'platform_moderator'
+                  ? t('প্ল্যাটফর্ম মডারেটর', 'Platform Moderator')
+                  : role === 'content_editor'
+                  ? t('কন্টেন্ট এডিটর (মেকার)', 'Content Editor (Maker)')
+                  : role === 'content_approver'
+                  ? t('কন্টেন্ট অ্যাপ্রুভার (চেকার)', 'Content Approver (Checker)')
+                  : role === 'auditor'
+                  ? t('স্বাধীন নিরীক্ষক', 'Independent Auditor')
+                  : t('সিস্টেম অ্যাডমিনিস্ট্রেটর', 'System Administrator')}
+              </span>
             </div>
-            <div className="text-2xl font-extrabold text-[#0A1F1C] mt-1">
-              {toBanglaDigits(usersList.length || stats?.kpis?.total_users || 0, lang)}
-            </div>
-            <button
-              onClick={() => handleTabChange('users')}
-              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
-            >
-              {t('ইউজার ডিরেক্টরি দেখুন →', 'View User Directory →')}
-            </button>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
-            <Users className="w-6 h-6" />
-          </div>
-        </div>
+          </header>
 
-        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
-              {t('সিকিউরিটি অডিট ট্রেইল', 'Security Audit Events')}
+          {/* Admin Operational KPI Strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+                  {t('ব্লকচেইন লেজার অখণ্ডতা', 'Ledger Hash Integrity')}
+                </div>
+                <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
+                  {toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}%
+                </div>
+                <button
+                  onClick={() => handleTabChange('ledger')}
+                  className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+                >
+                  {t('হ্যাশ লেজার ল্যাব দেখুন →', 'Inspect Hash Lab →')}
+                </button>
+              </div>
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+                <Lock className="w-6 h-6" />
+              </div>
             </div>
-            <div className="text-2xl font-extrabold text-[#0A1F1C] mt-1">
-              {toBanglaDigits(auditLogs.length, lang)}
-            </div>
-            <button
-              onClick={() => handleTabChange('audit')}
-              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
-            >
-              {t('অডিট লগ পর্যালোচনা →', 'Review Audit Logs →')}
-            </button>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
-            <History className="w-6 h-6" />
-          </div>
-        </div>
 
-        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
-              {t('সুপার অ্যাডমিন নজরদারি', 'Role Oversight')}
+            <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+                  {t('কর্মকর্তা ও ইউজার সংখ্যা', 'Registered Officers & Users')}
+                </div>
+                <div className="text-2xl font-extrabold text-[#0A1F1C] mt-1">
+                  {toBanglaDigits(usersList.length || stats?.kpis?.total_users || 0, lang)}
+                </div>
+                <button
+                  onClick={() => handleTabChange('users')}
+                  className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+                >
+                  {t('ইউজার ডিরেক্টরি দেখুন →', 'View User Directory →')}
+                </button>
+              </div>
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+                <Users className="w-6 h-6" />
+              </div>
             </div>
-            <div className="text-2xl font-extrabold text-amber-600 mt-1">
-              ৫টি {t('রোল উন্মুক্ত', 'Roles')}
+
+            <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+                  {t('সিকিউরিটি অডিট ট্রেইল', 'Security Audit Events')}
+                </div>
+                <div className="text-2xl font-extrabold text-[#0A1F1C] mt-1">
+                  {toBanglaDigits(auditLogs.length, lang)}
+                </div>
+                <button
+                  onClick={() => handleTabChange('audit')}
+                  className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+                >
+                  {t('অডিট লগ পর্যালোচনা →', 'Review Audit Logs →')}
+                </button>
+              </div>
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+                <History className="w-6 h-6" />
+              </div>
             </div>
-            <button
-              onClick={() => handleTabChange('direct_access')}
-              className="text-xs text-amber-700 font-semibold hover:underline mt-1 block cursor-pointer"
-            >
-              {t('সরাসরি রোল অ্যাক্সেস →', 'Direct Role Access →')}
-            </button>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-            <ShieldAlert className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
 
-      {/* Governance Sub-navigation Tabs */}
-      <div className="panel p-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="font-bold text-base md:text-lg text-[#074f38]">
-            {t(
-              'কেন্দ্রীয় গভর্ন্যান্স, RBAC ম্যাট্রিক্স, ইউজার ডিরেক্টরি ও ক্রিপ্টোগ্রাফিক অডিট',
-              'Central Governance, RBAC Matrix, Officers Directory & Cryptographic Audit'
-            )}
-          </h2>
-        </div>
+            <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+              <div>
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+                  {t('স্বয়ংক্রিয় ঝুঁকি ইঞ্জিন', 'Fraud Verification Engines')}
+                </div>
+                <div className="text-2xl font-extrabold text-emerald-700 mt-1">
+                  {t('৯টি ইঞ্জিন সক্রিয়', '9 Engines Active')}
+                </div>
+                <button
+                  onClick={() => handleTabChange('risk_protocols')}
+                  className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+                >
+                  {t('যাচাই প্রটোকল দেখুন →', 'Inspect Protocols →')}
+                </button>
+              </div>
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+            </div>
+          </div>
 
-        <div className="flex flex-wrap gap-1.5">
-          {allowedTabs.includes('ledger') && (
-            <button
-              onClick={() => handleTabChange('ledger')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-                subTab === 'ledger'
-                  ? 'bg-[#006A4E] text-white'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-              }`}
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>{t('হ্যাশ লেজার ল্যাব', 'Hash Ledger Lab')}</span>
-            </button>
-          )}
-          {allowedTabs.includes('plots_control') && (
-            <button
-              onClick={() => handleTabChange('plots_control')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-                subTab === 'plots_control'
-                  ? 'bg-[#006A4E] text-white shadow-xs'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-              }`}
-            >
-              <Compass className="w-3.5 h-3.5" />
-              <span>{t('ভূমি ও দাগ নিয়ন্ত্রণ', 'Plots & Land Control')}</span>
-            </button>
-          )}
-          {allowedTabs.includes('users') && (
-            <button
-              onClick={() => handleTabChange('users')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-                subTab === 'users'
-                  ? 'bg-[#006A4E] text-white'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-              }`}
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>{role === 'support_agent' ? t('নাগরিক ও অফিসার ডিরেক্টরি', 'Citizen & Officer Lookup') : t('ইউজার ডিরেক্টরি', 'Officers CRUD')}</span>
-            </button>
-          )}
-          {allowedTabs.includes('audit') && (
-            <button
-              onClick={() => handleTabChange('audit')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-                subTab === 'audit'
-                  ? 'bg-[#006A4E] text-white'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-              }`}
-            >
-              <History className="w-3.5 h-3.5" />
-              <span>{t('অডিট লগ', 'Audit Trail')}</span>
-            </button>
-          )}
-          {allowedTabs.includes('settings') && (
-            <button
-              onClick={() => handleTabChange('settings')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-                subTab === 'settings'
-                  ? 'bg-[#006A4E] text-white'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-              }`}
-            >
-              <Settings className="w-3.5 h-3.5" />
-              <span>{t('সিস্টেম পলিসি ও নোটিশ', 'Policy Settings')}</span>
-            </button>
-          )}
-          {allowedTabs.includes('rbac') && (
-            <button
-              onClick={() => handleTabChange('rbac')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-                subTab === 'rbac'
-                  ? 'bg-[#006A4E] text-white'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-              }`}
-            >
-              <KeyRound className="w-3.5 h-3.5" />
-              <span>{t('RBAC ম্যাট্রিক্স', 'RBAC Matrix')}</span>
-            </button>
-          )}
-          {allowedTabs.includes('catalogue') && (
-            <button
-              onClick={() => handleTabChange('catalogue')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-                subTab === 'catalogue'
-                  ? 'bg-[#006A4E] text-white'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-              }`}
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>{t('সার্ভিস ও ফি ডিরেক্টরি', 'Service & Fees')}</span>
-            </button>
-          )}
-          {allowedTabs.includes('onboarding_appeals') && (
-            <button
-              onClick={() => handleTabChange('onboarding_appeals')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-                subTab === 'onboarding_appeals'
-                  ? 'bg-[#006A4E] text-white shadow-xs'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>{t('অনবোর্ডিং ও আপিল', 'Onboarding & Appeals')}</span>
-            </button>
-          )}
-          {allowedTabs.includes('risk_protocols') && (
-            <button
-              onClick={() => handleTabChange('risk_protocols')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-                subTab === 'risk_protocols'
-                  ? 'bg-[#006A4E] text-white'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-              }`}
-            >
-              <FileSearch className="w-3.5 h-3.5" />
-              <span>{t('ঝুঁকি প্রটোকল ও OCR', 'Risk Protocols & OCR')}</span>
-            </button>
-          )}
-          {allowedTabs.includes('direct_access') && (
-            <button
-              onClick={() => handleTabChange('direct_access')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-                subTab === 'direct_access'
-                  ? 'bg-[#C4891A] text-white shadow-xs'
-                  : 'bg-[#FBF3E0] text-[#7A540E] hover:bg-[#F5E6BE]'
-              }`}
-            >
-              <ShieldAlert className="w-3.5 h-3.5" />
-              <span>{t('রোল তত্ত্বাবধান', 'Direct Role Access')}</span>
-            </button>
-          )}
-          {allowedTabs.includes('dev_outbox') && (
-            <button
-              onClick={() => handleTabChange('dev_outbox')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-                subTab === 'dev_outbox'
-                  ? 'bg-[#006A4E] text-white shadow-xs'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-              }`}
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>{t('এসএমএস ওটিপি আউটবক্স', 'SMS Outbox & OTPs')}</span>
-            </button>
-          )}
+          {/* Subsystems & Controlling Modules Grid */}
+          <div className="space-y-3">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500">
+              {t('কন্ট্রোল প্যানেল মডিউল ও অ্যাক্সেস কেন্দ্র', 'Control Panel Modules & Subsystems')}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Module: User Management */}
+              <div
+                onClick={() => handleTabChange('users')}
+                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
+                    {t('ইউজার ও কর্মকর্তা ব্যবস্থাপনা', 'User & Officer Directory')}
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                    {t('নাগরিক একাউন্ট অনুমোদন, কর্মকর্তা পদায়ন, রোল ফিল্টারিং ও স্ট্যাটাস নিয়ন্ত্রণ।', 'Citizen approvals, officer onboarding, role filters, and status toggles.')}
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
+                  <span>{toBanglaDigits(usersList.length, lang)} {t('জন ব্যবহারকারী', 'Users')}</span>
+                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
+                    {t('প্রবেশ করুন', 'Manage')} →
+                  </span>
+                </div>
+              </div>
+
+              {/* Module: Cryptographic Ledger */}
+              <div
+                onClick={() => handleTabChange('ledger')}
+                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                    <Lock className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
+                    {t('ক্রিপ্টোগ্রাফিক লেজার ও অখণ্ডতা', 'Cryptographic Ledger Lab')}
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                    {t('SHA-256 হ্যাশ-চেইন স্টেট, জেনেসিস ব্লক ভেরিফিকেশন ও রিয়েল-টাইম টেম্পার ডিটেকশন।', 'SHA-256 hash-chain states, genesis block validation, and real-time tamper auditing.')}
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
+                  <span>{toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}% {t('অখণ্ডতা', 'Integrity')}</span>
+                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
+                    {t('ল্যাব খুলুন', 'Inspect')} →
+                  </span>
+                </div>
+              </div>
+
+              {/* Module: Plots & Land Control */}
+              <div
+                onClick={() => handleTabChange('plots_control')}
+                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                    <Compass className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
+                    {t('ভূমি ও দাগ নিয়ন্ত্রণ কেন্দ্র', 'Land Records & Plots Control')}
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                    {t('সকল মৌজার দাগের বিক্রয় সুরক্ষা লক, ব্যাংক মর্টগেজ এবং খতিয়ান চেইনের ওভারসাইট।', 'Plot sale locks, mortgage encumbrance inspection, and full khatian lineages.')}
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
+                  <span>{toBanglaDigits(plotsList.length, lang)} {t('টি দাগ', 'Plots')}</span>
+                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
+                    {t('নিয়ন্ত্রণ করুন', 'Control')} →
+                  </span>
+                </div>
+              </div>
+
+              {/* Module: Security Audit */}
+              <div
+                onClick={() => handleTabChange('audit')}
+                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                    <History className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
+                    {t('সিকিউরিটি অডিট ট্রেইল', 'Security Audit Trail')}
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                    {t('সিস্টেমের প্রতিটি লগইন, পরিবর্তন ও ব্রেক-গ্লাস এক্সেসের অপরিবর্তনীয় অডিট লগ।', 'Immutable logs of all administrative actions, logins, and break-glass events.')}
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
+                  <span>{toBanglaDigits(auditLogs.length, lang)} {t('টি ইভেন্ট', 'Events')}</span>
+                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
+                    {t('পর্যালোচনা', 'Review')} →
+                  </span>
+                </div>
+              </div>
+
+              {/* Module: Policy Settings */}
+              <div
+                onClick={() => handleTabChange('settings')}
+                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                    <Settings className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
+                    {t('সিস্টেম পলিসি ও নোটিশ', 'Policy & System Settings')}
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                    {t('স্বয়ংক্রিয় ঝুঁকি ইঞ্জিন প্যারামিটার, সরকারি ফি রুল ও প্ল্যাটফর্ম পলিসি ব্যবস্থাপনা।', 'Risk engine thresholds, tax policies, and global system configuration.')}
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
+                  <span>{t('সক্রিয় সেটিংস', 'Active Configuration')}</span>
+                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
+                    {t('কনফিগার করুন', 'Configure')} →
+                  </span>
+                </div>
+              </div>
+
+              {/* Module: RBAC Matrix */}
+              <div
+                onClick={() => handleTabChange('rbac')}
+                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                    <KeyRound className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
+                    {t('ভূমিকাভিত্তিক প্রবেশাধিকার (RBAC)', 'RBAC Permission Matrix')}
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                    {t('সিস্টেমের ২১টি ব্যবহারকারী রোলের সুনির্দিষ্ট পারমিশন ও এক্সেস নিয়ন্ত্রণ ম্যাট্রিক্স।', 'Strict role-permission mapping and capability matrix across all 21 roles.')}
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
+                  <span>২১টি {t('রোল ম্যাট্রিক্স', 'Roles')}</span>
+                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
+                    {t('ম্যাট্রিক্স দেখুন', 'View Matrix')} →
+                  </span>
+                </div>
+              </div>
+
+              {/* Module: Onboarding & Appeals */}
+              <div
+                onClick={() => handleTabChange('onboarding_appeals')}
+                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                    <Layers className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
+                    {t('অনবোর্ডিং ও আপিল ওভারসাইট', 'Onboarding & Appeals')}
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                    {t('মেকার-চেকার ব্যাচ অনবোর্ডিং প্রক্রিয়া ও অতিরিক্ত জেলা প্রশাসক (রাজস্ব) আপিল ট্রায়াল।', 'Maker-checker staging batches and appellate tribunal hearings.')}
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
+                  <span>{toBanglaDigits(appealsList.length, lang)} {t('টি আপিল', 'Appeals')}</span>
+                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
+                    {t('ওভারসাইট', 'Oversight')} →
+                  </span>
+                </div>
+              </div>
+
+              {/* Module: Service Catalogue & Fees */}
+              <div
+                onClick={() => handleTabChange('catalogue')}
+                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
+                    {t('সার্ভিস ক্যাটালগ ও ফি ডিরেক্টরি', 'Service Directory & Fees')}
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                    {t('সরকারি নাগরিক সেবাসমূহ, আবেদন নির্দেশিকা ও হালনাগাদ সরকারি ফি তালিকা।', 'Official citizen services catalog, fee schedules, and legal guidance.')}
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
+                  <span>{toBanglaDigits(adminServices.length, lang)} {t('টি সেবা', 'Services')}</span>
+                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
+                    {t('ক্যাটালগ পরিচালনা', 'Directory')} →
+                  </span>
+                </div>
+              </div>
+
+              {/* Module: SMS & OTP Outbox */}
+              <div
+                onClick={() => handleTabChange('dev_outbox')}
+                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                    <Smartphone className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
+                    {t('এসএমএস ও ওটিপি আউটবক্স', 'SMS & OTP Outbox')}
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
+                    {t('সিস্টেম কর্তৃক প্রেরিত সকল ওটিপি কোড ও নিরাপত্তা বার্তার রিয়েল-টাইম আউটবক্স।', 'Real-time inspection of dispatch queue, OTPs, and verification messages.')}
+                  </p>
+                </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
+                  <span>{t('লাইভ আউটবক্স', 'Live Outbox')}</span>
+                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
+                    {t('আউটবক্স দেখুন', 'View Outbox')} →
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Security Audit preview */}
+          <div className="panel p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                <History className="w-4 h-4 text-[#006A4E]" />
+                <span>{t('সাম্প্রতিক সিকিউরিটি অডিট ইভেন্ট', 'Recent Security Audit Events')}</span>
+              </h3>
+              <button
+                onClick={() => handleTabChange('audit')}
+                className="text-xs font-bold text-[#006A4E] hover:underline cursor-pointer"
+              >
+                {t('সকল অডিট লগ দেখুন →', 'View All Logs →')}
+              </button>
+            </div>
+            <div className="divide-y divide-slate-100 text-xs">
+              {auditLogs.slice(0, 5).map((log: any, idx: number) => (
+                <div key={log.id || idx} className="py-2.5 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="font-mono font-bold text-slate-800 shrink-0">{log.action || log.event}</span>
+                    <span className="text-slate-500 truncate">{log.details || log.description || log.entity_type}</span>
+                  </div>
+                  <div className="text-slate-400 font-mono text-[11px] shrink-0">
+                    {log.created_at ? new Date(log.created_at).toLocaleTimeString() : '—'}
+                  </div>
+                </div>
+              ))}
+              {auditLogs.length === 0 && (
+                <div className="py-4 text-center text-slate-400">{t('কোনো সাম্প্রতিক অডিট ইভেন্ট নেই।', 'No audit events found.')}</div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* TAB 1: RBAC Middleware Permission Matrix */}
       {subTab === 'rbac' && permissionsData && (
         <div className="panel p-6 space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
             <div>
+              <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
+                <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+                  {t('কন্ট্রোল প্যানেল', 'Control Panel')}
+                </button>
+                <span>/</span>
+                <span className="text-[#006A4E] font-extrabold">{t('ভূমিকাভিত্তিক প্রবেশাধিকার (RBAC)', 'RBAC Permission Matrix')}</span>
+              </div>
               <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
                 <KeyRound className="w-5 h-5 text-[#006A4E]" />
                 <span>
@@ -867,14 +1046,9 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                     <span className="text-[11px] font-mono text-[#5F7A74]">
                       Panel: {rData.dashboard_tab || rData.dashboard_route || rKey}
                     </span>
-                    {import.meta.env.DEV && (<button
-                      onClick={() => switchToAdminRole(rKey as UserRole)}
-                      className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black flex items-center gap-1.5 cursor-pointer min-h-[32px] shadow-xs"
-                      title={t('পাসওয়ার্ড ছাড়া সরাসরি লগইন করুন', 'Direct Login Without Password')}
-                    >
-                      <KeyRound className="w-3.5 h-3.5 text-slate-950" />
-                      <span>{t('পাসওয়ার্ডহীন সরাসরি এক্সেস', 'Direct Login (No Password)')}</span>
-                    </button>)}
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-[#006A4E] border border-emerald-200">
+                      RBAC PROTECTED
+                    </span>
                   </div>
                 </div>
               );
@@ -888,6 +1062,13 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
         <div className="panel p-6 space-y-5">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
+              <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
+                <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+                  {t('কন্ট্রোল প্যানেল', 'Control Panel')}
+                </button>
+                <span>/</span>
+                <span className="text-[#006A4E] font-extrabold">{t('ক্রিপ্টোগ্রাফিক লেজার ও অখণ্ডতা', 'Ledger Integrity Lab')}</span>
+              </div>
               <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
                 <Lock className="w-5 h-5 text-[#006A4E]" />
                 <span>
@@ -969,6 +1150,13 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
           <div className="panel p-6 space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
               <div>
+                <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
+                  <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+                    {t('কন্ট্রোল প্যানেল', 'Control Panel')}
+                  </button>
+                  <span>/</span>
+                  <span className="text-[#006A4E] font-extrabold">{t('ভূমি ও দাগ নিয়ন্ত্রণ কেন্দ্র', 'Plots & Land Control')}</span>
+                </div>
                 <div className="flex items-center gap-2">
                   <Compass className="w-5 h-5 text-[#006A4E]" />
                   <h2 className="font-bold text-lg text-[#074f38]">
@@ -1374,6 +1562,13 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
           <div className="panel p-6 space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
+                <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
+                  <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+                    {t('কন্ট্রোল প্যানেল', 'Control Panel')}
+                  </button>
+                  <span>/</span>
+                  <span className="text-[#006A4E] font-extrabold">{t('ঝুঁকি প্রটোকল ও OCR', 'Risk Protocols & OCR')}</span>
+                </div>
                 <h2 className="text-lg font-extrabold text-[#0A1F1C]">
                   {t(
                     'ভূমি ঝুঁকি ও অখণ্ডতা যাচাই প্রটোকল (৯টি স্বয়ংক্রিয় ভেরিফিকেশন ইঞ্জিন)',
@@ -1572,156 +1767,880 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
         </div>
       )}
 
-      {/* TAB 4: Users CRUD Management */}
+      {/* TAB 4: Users CRUD Management & Role Filter Control System */}
       {subTab === 'users' && (
-        <div className="space-y-6">
-          <div className="panel p-6 space-y-4">
-            <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-[#006A4E]" />
-              <span>
-                {t('নতুন কর্মকর্তা / ব্যবহারকারী যুক্ত করুন', 'Add New Officer / System Account')}
-              </span>
-            </h2>
-            <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <input
-                type="text"
-                placeholder={t('ইউজারনেম (যেমন: registrar_dhamrai)', 'Username')}
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
-                className="field text-xs"
-                required
-              />
-              <input
-                type="text"
-                placeholder={t('পূর্ণ নাম (বাংলা)', 'Full Name (Bangla)')}
-                value={newNameBn}
-                onChange={(e) => setNewNameBn(e.target.value)}
-                className="field text-xs"
-                required
-              />
-              <select
-                value={newRole}
-                onChange={(e) => setNewRole(e.target.value as UserRole)}
-                className="field text-xs font-bold"
-              >
-                <option value="citizen">Citizen (নাগরিক)</option>
-                <option value="sub_registrar">Sub-Registrar (সাব-রেজিস্ট্রার)</option>
-                <option value="ac_land">AC Land (এসি ল্যান্ড)</option>
-                <option value="bank_officer">Bank Officer (ব্যাংক কর্মকর্তা)</option>
-                <option value="admin">Admin (অ্যাডমিন)</option>
-              </select>
-              <input
-                type="text"
-                placeholder={t('এনআইডি নম্বর', 'NID Number')}
-                value={newNid}
-                onChange={(e) => setNewNid(e.target.value)}
-                className="field font-mono text-xs"
-                required
-              />
-              <input
-                type="text"
-                placeholder={t('অফিসের নাম', 'Office Name')}
-                value={newOffice}
-                onChange={(e) => setNewOffice(e.target.value)}
-                className="field text-xs"
-              />
+        <div className="space-y-6 animate-fadeIn">
+          {/* Notification Banner */}
+          {userActionNotice && (
+            <div
+              className={`p-4 rounded-xl border flex items-center justify-between text-xs font-bold animate-fadeIn ${
+                userActionNotice.err
+                  ? 'bg-rose-50 border-rose-300 text-rose-800'
+                  : 'bg-emerald-50 border-emerald-300 text-emerald-800'
+              }`}
+            >
+              <span>{userActionNotice.msg}</span>
               <button
-                type="submit"
-                className="btn-primary text-xs cursor-pointer min-h-[40px]"
+                onClick={() => setUserActionNotice(null)}
+                className="text-slate-500 hover:text-slate-800 cursor-pointer"
               >
-                + {t('ব্যবহারকারী তৈরি করুন', 'Create Officer Account')}
+                ✕
               </button>
-            </form>
-          </div>
+            </div>
+          )}
 
-          <div className="panel p-6 space-y-4">
-            <h2 className="font-bold text-base text-[#074f38]">
-              {t('সকল নিবন্ধিত কর্মকর্তা ও রোল নিয়ন্ত্রণ ডিরেক্টরি', 'Registered Officers & Role Assignment Directory')}{' '}
-              ({toBanglaDigits(usersList.length, lang)})
-            </h2>
-            <div className="space-y-2.5">
-              {usersList.map((u) => (
+          {/* Top KPI Metrics Overview */}
+          {(() => {
+            const totalUsers = usersList.length;
+            const citizenUsers = usersList.filter((u) => u.role === 'citizen');
+            const pendingCitizens = citizenUsers.filter((u) => Number(u.is_identity_verified) !== 1);
+            const officerUsers = usersList.filter((u) =>
+              ['sub_registrar', 'ac_land', 'bank_officer', 'field_verification_officer'].includes(u.role)
+            );
+            const adminUsers = usersList.filter((u) => u.role === 'admin' || u.role === 'system_admin');
+
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 <div
-                  key={u.id}
-                  className="p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                  onClick={() => {
+                    handleRoleSelectChange('all');
+                    setUserStatusFilter('all');
+                  }}
+                  className="panel p-4 bg-white border border-slate-200 shadow-2xs cursor-pointer hover:border-[#006A4E] transition"
                 >
-                  <div>
-                    <div className="font-bold text-sm text-[#0A1F1C] flex items-center gap-2">
-                      <span>{lang === 'bn' ? u.full_name_bn : u.full_name_en}</span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#074f38] text-white font-bold">
-                        {u.role}
-                      </span>
-                      <span
-                        className={`text-[10px] px-2 py-0.5 rounded-lg font-bold ${
-                          u.is_active
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-rose-100 text-rose-800'
-                        }`}
-                      >
-                        {u.is_active ? 'ACTIVE' : 'DISABLED'}
-                      </span>
-                      {u.role === 'citizen' && (
-                        <span
-                          className={`text-[10px] px-2 py-0.5 rounded-lg font-bold ${
-                            Number(u.is_identity_verified) === 1
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-amber-100 text-amber-800'
-                          }`}
-                        >
-                          {Number(u.is_identity_verified) === 1
-                            ? t('আইডি যাচাইকৃত', 'ID Verified')
-                            : t('আইডি যাচাই পেন্ডিং', 'ID Pending')}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-[#5F7A74] font-mono mt-1">
-                      @{u.username} • NID: {u.nid_mock} • Office: {u.office_name}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    {u.role === 'citizen' && Number(u.is_identity_verified) !== 1 && (
-                      <button
-                        onClick={() => handleVerifyCitizen(u.id)}
-                        className="px-2.5 py-1 rounded bg-[#006A4E] text-white text-xs font-bold hover:bg-[#00553e] cursor-pointer min-h-[34px] flex items-center gap-1 shadow-2xs"
-                        title={t('নাগরিকের জাতীয় পরিচয়পত্র যাচাই ও স্বত্ব সক্রিয়করণ', 'Verify Citizen NID and activate vault')}
-                      >
-                        <UserCheck className="w-3.5 h-3.5" />
-                        <span>{t('আইডি যাচাই করুন', 'Verify Citizen')}</span>
-                      </button>
-                    )}
-                    <select
-                      value={u.role}
-                      onChange={(e) => handleChangeUserRole(u, e.target.value)}
-                      className="px-2.5 py-1 rounded border border-[#006A4E]/20 bg-white text-xs font-bold min-h-[34px]"
-                    >
-                      <option value="citizen">citizen</option>
-                      <option value="sub_registrar">sub_registrar</option>
-                      <option value="ac_land">ac_land</option>
-                      <option value="bank_officer">bank_officer</option>
-                      <option value="admin">admin</option>
-                    </select>
-                    <button
-                      onClick={() => handleToggleUserStatus(u)}
-                      className="px-3 py-1 rounded border border-[#006A4E]/20 text-xs font-bold hover:bg-[#E2EFE9] cursor-pointer min-h-[34px]"
-                    >
-                      {u.is_active
-                        ? t('নিষ্ক্রিয় করুন', 'Disable')
-                        : t('সক্রিয় করুন', 'Enable')}
-                    </button>
-                    {u.id > 5 && (
-                      <button
-                        onClick={() => handleDeleteUser(u.id)}
-                        className="p-1.5 rounded text-[#FF3B4A] hover:bg-rose-50 cursor-pointer min-h-[34px]"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
+                  <span className="text-[11px] font-bold text-slate-500 uppercase block">{t('মোট অ্যাকাউন্ট', 'Total Accounts')}</span>
+                  <div className="text-2xl font-black text-slate-900 mt-1">{toBanglaDigits(totalUsers, lang)}</div>
+                  <span className="text-[10px] text-slate-400">{t('প্ল্যাটফর্মে নিবন্ধিত', 'Registered in system')}</span>
                 </div>
-              ))}
+
+                <div
+                  onClick={() => {
+                    handleRoleSelectChange('citizen');
+                    setUserStatusFilter('all');
+                  }}
+                  className="panel p-4 bg-white border border-slate-200 shadow-2xs cursor-pointer hover:border-blue-500 transition"
+                >
+                  <span className="text-[11px] font-bold text-blue-600 uppercase block">{t('সাধারণ নাগরিক', 'Citizens')}</span>
+                  <div className="text-2xl font-black text-blue-900 mt-1">{toBanglaDigits(citizenUsers.length, lang)}</div>
+                  <span className="text-[10px] text-slate-400">{t('ভূমি মালিক ও আবেদনকারী', 'Landholders & Public')}</span>
+                </div>
+
+                <div
+                  onClick={() => {
+                    handleRoleSelectChange('citizen');
+                    setUserStatusFilter('pending');
+                  }}
+                  className={`panel p-4 cursor-pointer transition border shadow-2xs ${
+                    pendingCitizens.length > 0
+                      ? 'bg-amber-50/90 border-amber-300 ring-2 ring-amber-400/30'
+                      : 'bg-white border-slate-200 hover:border-amber-400'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-amber-800 uppercase">{t('অপেক্ষমাণ অনুমোদন', 'Pending Approval')}</span>
+                    {pendingCitizens.length > 0 && (
+                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                    )}
+                  </div>
+                  <div className="text-2xl font-black text-amber-900 mt-1">{toBanglaDigits(pendingCitizens.length, lang)}</div>
+                  <span className="text-[10px] text-amber-700 font-semibold">{t('যাচাই ও অনুমোদন প্রয়োজন', 'Awaiting Verification')}</span>
+                </div>
+
+                <div
+                  onClick={() => {
+                    handleRoleSelectChange('sub_registrar');
+                    setUserStatusFilter('all');
+                  }}
+                  className="panel p-4 bg-white border border-slate-200 shadow-2xs cursor-pointer hover:border-emerald-500 transition"
+                >
+                  <span className="text-[11px] font-bold text-[#006A4E] uppercase block">{t('কর্মকর্তাবৃন্দ', 'Officers')}</span>
+                  <div className="text-2xl font-black text-[#074f38] mt-1">{toBanglaDigits(officerUsers.length, lang)}</div>
+                  <span className="text-[10px] text-slate-400">{t('সাব-রেজিস্ট্রার, এসি ল্যান্ড ও ব্যাংক', 'Registry, Land & Bank')}</span>
+                </div>
+
+                <div
+                  onClick={() => {
+                    handleRoleSelectChange('admin');
+                    setUserStatusFilter('all');
+                  }}
+                  className="panel p-4 bg-white border border-slate-200 shadow-2xs cursor-pointer hover:border-purple-500 transition"
+                >
+                  <span className="text-[11px] font-bold text-purple-600 uppercase block">{t('অ্যাডমিনিস্ট্রেটর', 'Administrators')}</span>
+                  <div className="text-2xl font-black text-purple-900 mt-1">{toBanglaDigits(adminUsers.length, lang)}</div>
+                  <span className="text-[10px] text-slate-400">{t('সুপার অ্যাডমিন ও অডিটর', 'Security & Governance')}</span>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Filter & Action Toolbar */}
+          <div className="panel p-4 bg-white border border-slate-200 space-y-3">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+              {/* Search input */}
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={userSearchQuery}
+                  onChange={(e) => setUserSearchQuery(e.target.value)}
+                  placeholder={t(
+                    'ইউজারনেম, নাম, এনআইডি, মোবাইল, ইমেইল বা অফিস দিয়ে খুঁজুন...',
+                    'Search by username, name, NID, phone, email, or office...'
+                  )}
+                  className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-slate-300 text-xs focus:border-[#006A4E] focus:ring-1 focus:ring-[#006A4E] bg-white"
+                />
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                {userSearchQuery && (
+                  <button
+                    onClick={() => setUserSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Add New User Button (Opens Center Popup Modal) */}
+              <button
+                onClick={() => setIsCreateUserOpen(true)}
+                className="px-4 py-2.5 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs cursor-pointer shadow-xs transition flex items-center justify-center gap-2 shrink-0 min-h-[40px]"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>{t('+ নতুন ব্যবহারকারী / কর্মকর্তা যুক্ত করুন', '+ Add New Officer / User')}</span>
+              </button>
+            </div>
+
+            {/* Dropdown Filters Row */}
+            <div className="flex flex-wrap items-center gap-2.5 pt-2 border-t border-slate-100 text-xs">
+              <div className="flex items-center gap-1.5 text-slate-500 font-bold shrink-0">
+                <Filter className="w-3.5 h-3.5 text-[#006A4E]" />
+                <span>{t('ফিল্টারিং:', 'Filter:')}</span>
+              </div>
+
+              {/* Role Dropdown */}
+              <select
+                value={userRoleFilter}
+                onChange={(e) => handleRoleSelectChange(e.target.value)}
+                className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-semibold text-xs text-slate-700 focus:border-[#006A4E] focus:ring-1 focus:ring-[#006A4E]"
+              >
+                <option value="all">{t('সকল ভূমিকা (All Roles)', 'All Roles')}</option>
+                <option value="citizen">{t('নাগরিক (Citizen)', 'Citizen')}</option>
+                <option value="sub_registrar">{t('সাব-রেজিস্ট্রার (Sub-Registrar)', 'Sub-Registrar')}</option>
+                <option value="ac_land">{t('এসি ল্যান্ড (AC Land)', 'AC Land')}</option>
+                <option value="bank_officer">{t('ব্যাংক কর্মকর্তা (Bank Officer)', 'Bank Officer')}</option>
+                <option value="field_verification_officer">{t('ফিল্ড অফিসার (Field Officer)', 'Field Officer')}</option>
+                <option value="registry_data_officer">{t('রেজিস্ট্রি ডেটা অফিসার (Registry Data)', 'Registry Data Officer')}</option>
+                <option value="settlement_officer">{t('সার্ভেয়ার / সেটেলমেন্ট অফিসার (Settlement)', 'Settlement Officer')}</option>
+                <option value="uno_supervisor">{t('ইউএনও / এডিসি সুপারভাইজার (UNO/ADC)', 'UNO Supervisor')}</option>
+                <option value="udc_operator">{t('ইউডিসি উদ্যোক্তা (UDC)', 'UDC Operator')}</option>
+                <option value="support_agent">{t('সাপোর্ট এজেন্ট (Support)', 'Support Agent')}</option>
+                <option value="admin">{t('সিস্টেম অ্যাডমিন (Admin)', 'System Admin')}</option>
+              </select>
+
+              {/* Status Dropdown */}
+              <select
+                value={userStatusFilter}
+                onChange={(e) => setUserStatusFilter(e.target.value as any)}
+                className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-semibold text-xs text-slate-700 focus:border-[#006A4E] focus:ring-1 focus:ring-[#006A4E]"
+              >
+                <option value="all">{t('সকল স্ট্যাটাস (All Status)', 'All Status')}</option>
+                <option value="pending">{t('⚠️ অপেক্ষমাণ অনুমোদন (Pending Approval)', '⚠️ Pending Approval')}</option>
+                <option value="verified">{t('✓ সক্রিয় ও যাচাইকৃত (Active & Verified)', '✓ Active & Verified')}</option>
+                <option value="disabled">{t('⛔ নিষ্ক্রিয় / স্থগিত (Suspended)', '⛔ Suspended')}</option>
+              </select>
+
+              {/* Join Date Filter Dropdown */}
+              <select
+                value={userJoinDateFilter}
+                onChange={(e) => setUserJoinDateFilter(e.target.value as any)}
+                className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-semibold text-xs text-slate-700 focus:border-[#006A4E] focus:ring-1 focus:ring-[#006A4E]"
+              >
+                <option value="all">{t('যোগদানের তারিখ: সকল সময়', 'Join Date: All Time')}</option>
+                <option value="today">{t('আজকে নিবন্ধিত (Registered Today)', 'Registered Today')}</option>
+                <option value="7days">{t('গত ৭ দিন (Last 7 Days)', 'Last 7 Days')}</option>
+                <option value="30days">{t('গত ৩০ দিন (Last 30 Days)', 'Last 30 Days')}</option>
+                <option value="custom">{t('কাস্টম তারিখ পরিসীমা (Custom Range)', 'Custom Date Range')}</option>
+              </select>
+
+              {/* Custom Date Range Inputs */}
+              {userJoinDateFilter === 'custom' && (
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="date"
+                    value={userDateFrom}
+                    onChange={(e) => setUserDateFrom(e.target.value)}
+                    className="px-2 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-mono"
+                    title={t('শুরুর তারিখ', 'Start Date')}
+                  />
+                  <span className="text-slate-400 text-xs">-</span>
+                  <input
+                    type="date"
+                    value={userDateTo}
+                    onChange={(e) => setUserDateTo(e.target.value)}
+                    className="px-2 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-mono"
+                    title={t('শেষের তারিখ', 'End Date')}
+                  />
+                </div>
+              )}
+
+              {/* Reset Filters button if any filter applied */}
+              {(userRoleFilter !== 'all' || userStatusFilter !== 'all' || userJoinDateFilter !== 'all' || userSearchQuery || userDateFrom || userDateTo) && (
+                <button
+                  onClick={() => {
+                    handleRoleSelectChange('all');
+                    setUserStatusFilter('all');
+                    setUserJoinDateFilter('all');
+                    setUserSearchQuery('');
+                    setUserDateFrom('');
+                    setUserDateTo('');
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 font-bold text-xs cursor-pointer transition flex items-center gap-1"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>{t('রিসেট', 'Reset')}</span>
+                </button>
+              )}
             </div>
           </div>
+
+          {/* User Directory Table with Horizontal Scroll */}
+          {(() => {
+            const matchDate = (createdAtStr?: string) => {
+              if (userJoinDateFilter === 'all') return true;
+              if (!createdAtStr) return false;
+              const createdDate = new Date(createdAtStr);
+              if (isNaN(createdDate.getTime())) return true;
+
+              const now = new Date();
+              if (userJoinDateFilter === 'today') {
+                return createdDate.toDateString() === now.toDateString();
+              }
+              if (userJoinDateFilter === '7days') {
+                const diffDays = (now.getTime() - createdDate.getTime()) / (1000 * 3600 * 24);
+                return diffDays >= 0 && diffDays <= 7;
+              }
+              if (userJoinDateFilter === '30days') {
+                const diffDays = (now.getTime() - createdDate.getTime()) / (1000 * 3600 * 24);
+                return diffDays >= 0 && diffDays <= 30;
+              }
+              if (userJoinDateFilter === 'custom') {
+                if (userDateFrom) {
+                  const from = new Date(userDateFrom);
+                  from.setHours(0, 0, 0, 0);
+                  if (createdDate < from) return false;
+                }
+                if (userDateTo) {
+                  const to = new Date(userDateTo);
+                  to.setHours(23, 59, 59, 999);
+                  if (createdDate > to) return false;
+                }
+                return true;
+              }
+              return true;
+            };
+
+            const filteredUsers = usersList.filter((u: any) => {
+              if (userRoleFilter !== 'all') {
+                if (userRoleFilter === 'admin') {
+                  if (u.role !== 'admin' && u.role !== 'system_admin') return false;
+                } else if (userRoleFilter === 'service_point_operator' || userRoleFilter === 'udc_operator') {
+                  if (u.role !== 'service_point_operator' && u.role !== 'udc_operator') return false;
+                } else if (userRoleFilter === 'settlement_records_officer' || userRoleFilter === 'settlement_officer') {
+                  if (u.role !== 'settlement_records_officer' && u.role !== 'settlement_officer') return false;
+                } else if (u.role !== userRoleFilter) {
+                  return false;
+                }
+              }
+              if (userStatusFilter === 'pending') {
+                if (u.role !== 'citizen' || Number(u.is_identity_verified) === 1) return false;
+              } else if (userStatusFilter === 'verified') {
+                if (Number(u.is_active) !== 1) return false;
+                if (u.role === 'citizen' && Number(u.is_identity_verified) !== 1) return false;
+              } else if (userStatusFilter === 'disabled') {
+                if (Number(u.is_active) !== 0) return false;
+              }
+              if (!matchDate(u.created_at)) return false;
+              if (userSearchQuery.trim()) {
+                const q = userSearchQuery.toLowerCase();
+                const match =
+                  (u.username || '').toLowerCase().includes(q) ||
+                  (u.full_name_bn || '').toLowerCase().includes(q) ||
+                  (u.full_name_en || '').toLowerCase().includes(q) ||
+                  (u.email || '').toLowerCase().includes(q) ||
+                  (u.phone_mock || u.phone_dummy || '').includes(q) ||
+                  (u.nid_mock || u.nid || '').includes(q) ||
+                  (u.office_name || u.office_bn || '').toLowerCase().includes(q);
+                if (!match) return false;
+              }
+              return true;
+            });
+
+            return (
+              <div className="panel p-5 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-[#006A4E]" />
+                    <h2 className="font-bold text-base text-slate-900">
+                      {t('ব্যবহারকারী ও কর্মকর্তা তালিকা', 'Users & Officers List')}
+                    </h2>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#EDF7F4] text-[#006A4E] font-bold">
+                      {toBanglaDigits(filteredUsers.length, lang)} {t('জন প্রদর্শিত', 'shown')}
+                    </span>
+                  </div>
+
+                  <div className="text-xs text-slate-500 font-medium">
+                    {t('মোট নিবন্ধিত: ', 'Total Registered: ')} {toBanglaDigits(usersList.length, lang)} {t('জন', 'users')}
+                  </div>
+                </div>
+
+                {filteredUsers.length === 0 ? (
+                  <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-2">
+                    <Users className="w-8 h-8 text-slate-300 mx-auto" />
+                    <p className="text-xs text-slate-500 font-bold">
+                      {t('কোনো ব্যবহারকারী খুঁজে পাওয়া যায়নি।', 'No users matched the selected filters.')}
+                    </p>
+                    <button
+                      onClick={() => {
+                        handleRoleSelectChange('all');
+                        setUserStatusFilter('all');
+                        setUserJoinDateFilter('all');
+                        setUserSearchQuery('');
+                        setUserDateFrom('');
+                        setUserDateTo('');
+                      }}
+                      className="text-xs text-[#006A4E] font-bold hover:underline cursor-pointer"
+                    >
+                      {t('সকল ফিল্টার রিসেট করুন', 'Reset all filters')}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto w-full rounded-xl border border-slate-200">
+                    <table className="w-full text-left text-xs whitespace-nowrap min-w-[950px]">
+                      <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                        <tr>
+                          <th className="py-3 px-3 w-12 text-center">#</th>
+                          <th className="py-3 px-4">{t('নাম ও ইউজারনেম', 'Name & Username')}</th>
+                          <th className="py-3 px-3">{t('ভূমিকা', 'Role')}</th>
+                          <th className="py-3 px-3">{t('যোগাযোগ', 'Contact')}</th>
+                          <th className="py-3 px-3">{t('অফিস / এলাকা', 'Office / Area')}</th>
+                          <th className="py-3 px-3">{t('যোগদানের তারিখ', 'Join Date')}</th>
+                          <th className="py-3 px-3">{t('স্ট্যাটাস', 'Status')}</th>
+                          <th className="py-3 px-3 text-right">{t('অ্যাকশন', 'Actions')}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 bg-white">
+                        {filteredUsers.map((u: any, idx: number) => {
+                          const isPendingCitizen = u.role === 'citizen' && Number(u.is_identity_verified) !== 1;
+                          const isVerifiedCitizen = u.role === 'citizen' && Number(u.is_identity_verified) === 1;
+
+                          return (
+                            <tr
+                              key={u.id}
+                              className={`hover:bg-slate-50/80 transition ${
+                                isPendingCitizen ? 'bg-amber-50/50' : ''
+                              }`}
+                            >
+                              <td className="py-3 px-3 text-center font-mono text-slate-400">
+                                {toBanglaDigits(idx + 1, lang)}
+                              </td>
+
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-xs text-slate-700 shrink-0 overflow-hidden">
+                                    {u.avatar_url ? (
+                                      <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
+                                    ) : (
+                                      <span>{(u.full_name_bn || u.username || 'ব')[0]}</span>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <div className="font-bold text-slate-900">
+                                      {lang === 'bn' ? u.full_name_bn : (u.full_name_en || u.full_name_bn)}
+                                    </div>
+                                    <div className="text-[11px] font-mono text-[#006A4E]">
+                                      @{u.username}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className="py-3 px-3">
+                                <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold ${
+                                  u.role === 'citizen'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : ['sub_registrar', 'ac_land', 'field_verification_officer'].includes(u.role)
+                                    ? 'bg-emerald-100 text-[#006A4E]'
+                                    : u.role === 'bank_officer'
+                                    ? 'bg-amber-100 text-amber-800'
+                                    : ['admin', 'system_admin'].includes(u.role)
+                                    ? 'bg-purple-100 text-purple-800'
+                                    : 'bg-slate-100 text-slate-800'
+                                }`}>
+                                  {u.role}
+                                </span>
+                              </td>
+
+                              <td className="py-3 px-3 text-slate-600 font-mono">
+                                <div className="flex items-center gap-1 text-[11px]">
+                                  <Phone className="w-3 h-3 text-slate-400" />
+                                  <span>{u.phone_mock || u.phone_dummy || '—'}</span>
+                                </div>
+                                {u.email && (
+                                  <div className="flex items-center gap-1 text-[11px] text-slate-400 truncate max-w-[140px]">
+                                    <Mail className="w-3 h-3 text-slate-400" />
+                                    <span>{u.email}</span>
+                                  </div>
+                                )}
+                              </td>
+
+                              <td className="py-3 px-3 text-slate-700 max-w-[160px] truncate" title={u.office_name || u.office_bn}>
+                                {u.office_name || u.office_bn || '—'}
+                              </td>
+
+                              <td className="py-3 px-3 font-mono text-slate-600 text-[11px]">
+                                {formatUserDate(u.created_at)}
+                              </td>
+
+                              <td className="py-3 px-3">
+                                <div className="flex flex-col gap-1 items-start">
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                                    u.is_active ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'
+                                  }`}>
+                                    {u.is_active ? 'ACTIVE' : 'DISABLED'}
+                                  </span>
+                                  {u.role === 'citizen' && (
+                                    <span className={`text-[10px] px-1.5 py-0.2 rounded font-semibold ${
+                                      isVerifiedCitizen
+                                        ? 'text-blue-700 bg-blue-50'
+                                        : 'text-amber-700 bg-amber-100 animate-pulse font-bold'
+                                    }`}>
+                                      {isVerifiedCitizen ? t('আইডি যাচাইকৃত', 'Verified') : t('⚠️ পেন্ডিং', 'Pending')}
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+
+                              <td className="py-3 px-3 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  {/* Eye Button for Full Details Modal */}
+                                  <button
+                                    onClick={() => setSelectedUserDetail(u)}
+                                    className="p-1.5 rounded-lg bg-[#EDF7F4] hover:bg-[#006A4E] text-[#006A4E] hover:text-white transition cursor-pointer"
+                                    title={t('ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন', 'View Full Details & Controls')}
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </button>
+
+                                  {/* Quick Approve Button if Citizen Pending */}
+                                  {isPendingCitizen && (
+                                    <button
+                                      onClick={() => handleVerifyCitizen(u.id)}
+                                      className="p-1.5 rounded-lg bg-amber-100 hover:bg-emerald-600 text-amber-800 hover:text-white transition cursor-pointer"
+                                      title={t('আইডি ও প্রোফাইল অনুমোদন করুন', 'Approve Citizen')}
+                                    >
+                                      <CheckCircle2 className="w-4 h-4" />
+                                    </button>
+                                  )}
+
+                                  {/* Quick Toggle Active / Disabled */}
+                                  <button
+                                    onClick={() => handleToggleUserStatus(u)}
+                                    className={`px-2 py-1 rounded text-[11px] font-bold border cursor-pointer transition ${
+                                      u.is_active
+                                        ? 'border-slate-200 text-slate-600 hover:bg-slate-100'
+                                        : 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                                    }`}
+                                    title={u.is_active ? t('নিষ্ক্রিয় করুন', 'Disable') : t('সক্রিয় করুন', 'Enable')}
+                                  >
+                                    {u.is_active ? t('স্থগিত', 'Disable') : t('সক্রিয়', 'Enable')}
+                                  </button>
+
+                                  {/* Quick Delete if Non-Root User */}
+                                  {u.id > 5 && u.username !== 'admin' && (
+                                    <button
+                                      onClick={() => {
+                                        if (window.confirm(lang === 'bn' ? 'ব্যবহারকারী অপসারণ করতে চান?' : 'Delete user?')) {
+                                          handleDeleteUser(u.id);
+                                        }
+                                      }}
+                                      className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition cursor-pointer"
+                                      title={t('অপসারণ', 'Delete')}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* CENTER POPUP MODAL: Create New User / Officer */}
+          {isCreateUserOpen && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
+              <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 my-8">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+                      <UserPlus className="w-4 h-4" />
+                    </div>
+                    <span>{t('নতুন কর্মকর্তা বা ব্যবহারকারী অ্যাকাউন্ট তৈরি করুন', 'Create New Officer or User Account')}</span>
+                  </h3>
+                  <button
+                    onClick={() => setIsCreateUserOpen(false)}
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center cursor-pointer transition text-sm"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handleCreateUser} className="space-y-4 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('ভূমিকা (Role):', 'Role:')} *</label>
+                      <select
+                        value={newRole}
+                        onChange={(e) => setNewRole(e.target.value as UserRole)}
+                        className="w-full p-2.5 rounded-lg border border-slate-300 font-bold bg-white text-xs"
+                      >
+                        <option value="citizen">Citizen (সাধারণ নাগরিক)</option>
+                        <option value="sub_registrar">Sub-Registrar (সাব-রেজিস্ট্রার)</option>
+                        <option value="ac_land">AC Land (সহকারী কমিশনার ভূমি)</option>
+                        <option value="bank_officer">Bank Officer (ব্যাংক কর্মকর্তা)</option>
+                        <option value="field_verification_officer">Field Officer (ফিল্ড অফিসার)</option>
+                        <option value="registry_data_officer">Registry Data Officer (রেজিস্ট্রি ডেটা)</option>
+                        <option value="settlement_officer">Settlement Officer (সার্ভেয়ার / সেটেলমেন্ট)</option>
+                        <option value="uno_supervisor">UNO / ADC Supervisor (তত্ত্বাবধায়ক)</option>
+                        <option value="udc_operator">UDC Operator (ইউনিয়ন ডিজিটাল সেন্টার)</option>
+                        <option value="support_agent">Support Agent (সাপোর্ট ডেস্ক)</option>
+                        <option value="admin">Admin (সিস্টেম অ্যাডমিন)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('ইউজারনেম (Username):', 'Username:')} *</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono">@</span>
+                        <input
+                          type="text"
+                          placeholder="registrar_dhamrai"
+                          value={newUsername}
+                          onChange={(e) => setNewUsername(e.target.value)}
+                          className="w-full pl-7 pr-3 py-2 rounded-lg border border-slate-300 font-mono bg-white text-xs"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('পূর্ণ নাম (বাংলায়):', 'Full Name (Bangla):')} *</label>
+                      <input
+                        type="text"
+                        placeholder="মোঃ আবদুর রহমান"
+                        value={newNameBn}
+                        onChange={(e) => setNewNameBn(e.target.value)}
+                        className="w-full p-2 rounded-lg border border-slate-300 bg-white text-xs"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('পূর্ণ নাম (ইংরেজিতে):', 'Full Name (English):')}</label>
+                      <input
+                        type="text"
+                        placeholder="Md. Abdur Rahman"
+                        value={newNameEn}
+                        onChange={(e) => setNewNameEn(e.target.value)}
+                        className="w-full p-2 rounded-lg border border-slate-300 bg-white text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('মোবাইল নম্বর:', 'Phone:')} *</label>
+                      <input
+                        type="text"
+                        placeholder="01711-000111"
+                        value={newPhone}
+                        onChange={(e) => setNewPhone(e.target.value)}
+                        className="w-full p-2 rounded-lg border border-slate-300 font-mono bg-white text-xs"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('ইমেইল ঠিকানা:', 'Email:')}</label>
+                      <input
+                        type="email"
+                        placeholder="officer@bhumishield.gov.bd"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        className="w-full p-2 rounded-lg border border-slate-300 font-mono bg-white text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('জাতীয় পরিচয়পত্র (NID):', 'NID:')} *</label>
+                      <input
+                        type="text"
+                        placeholder="9900008888"
+                        value={newNid}
+                        onChange={(e) => setNewNid(e.target.value)}
+                        className="w-full p-2 rounded-lg border border-slate-300 font-mono bg-white text-xs"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('অফিস / অধিক্ষেত্র:', 'Office / Location:')}</label>
+                      <input
+                        type="text"
+                        placeholder="সাভার উপজেলা ভূমি অফিস"
+                        value={newOffice}
+                        onChange={(e) => setNewOffice(e.target.value)}
+                        className="w-full p-2 rounded-lg border border-slate-300 bg-white text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 flex items-center gap-2">
+                    <KeyRound className="w-4 h-4 text-slate-400 shrink-0" />
+                    <span>
+                      {t(
+                        'অ্যাকাউন্টের ডিফল্ট পাসওয়ার্ড হবে "demo123"। ব্যবহারকারী যেকোনো সময় নিজের পাসওয়ার্ড পরিবর্তন করতে পারবেন।',
+                        'Default account password will be "demo123". The user can change password after logging in.'
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setIsCreateUserOpen(false)}
+                      className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer transition text-xs"
+                    >
+                      {t('বাতিল', 'Cancel')}
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold cursor-pointer shadow-xs transition text-xs flex items-center gap-2"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      <span>{t('অ্যাকাউন্ট তৈরি ও সক্রিয় করুন', 'Create & Activate Account')}</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* CENTER POPUP MODAL: View User Details & Permissions */}
+          {selectedUserDetail && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
+              <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-5 my-8">
+                {/* Header */}
+                <div className="flex items-start justify-between pb-4 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#006A4E] to-[#074f38] text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                      {selectedUserDetail.avatar_url ? (
+                        <img src={selectedUserDetail.avatar_url} alt="" className="w-full h-full object-cover rounded-2xl" />
+                      ) : (
+                        <span>{(selectedUserDetail.full_name_bn || selectedUserDetail.username || 'ব')[0]}</span>
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-extrabold text-base text-slate-900">
+                          {lang === 'bn' ? selectedUserDetail.full_name_bn : (selectedUserDetail.full_name_en || selectedUserDetail.full_name_bn)}
+                        </h3>
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-[#074f38] text-white">
+                          {selectedUserDetail.role}
+                        </span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
+                          selectedUserDetail.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                        }`}>
+                          {selectedUserDetail.is_active ? 'ACTIVE' : 'DISABLED'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 font-mono mt-0.5">
+                        @{selectedUserDetail.username} • ID #{selectedUserDetail.id}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedUserDetail(null)}
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center cursor-pointer transition"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Pending Citizen Verification Alert */}
+                {selectedUserDetail.role === 'citizen' && Number(selectedUserDetail.is_identity_verified) !== 1 && (
+                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-2.5">
+                      <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="text-xs">
+                        <div className="font-bold text-amber-900">{t('নাগরিকের অ্যাকাউন্ট অনুমোদন অপেক্ষমাণ', 'Citizen Account Approval Pending')}</div>
+                        <div className="text-amber-700 text-[11px] mt-0.5">
+                          {t('এনআইডি ও পরিচয়পত্রের সত্যতা যাচাই করে সিস্টেমে প্রবেশাধিকার প্রদান করুন।', 'Verify NID and enable system access for this citizen.')}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        await handleVerifyCitizen(selectedUserDetail.id);
+                        setSelectedUserDetail({ ...selectedUserDetail, is_identity_verified: 1 });
+                      }}
+                      className="px-3.5 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold cursor-pointer shadow-sm transition flex items-center gap-1.5 shrink-0"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                      <span>{t('অনুমোদন ও যাচাই সম্পন্ন করুন', 'Approve & Verify')}</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Detail Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                    <h4 className="font-bold text-slate-700 uppercase text-[11px] tracking-wide border-b border-slate-200 pb-1.5 flex items-center gap-1.5">
+                      <UserCheck className="w-3.5 h-3.5 text-[#006A4E]" />
+                      <span>{t('ব্যক্তিগত বিবরণ', 'Personal Information')}</span>
+                    </h4>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">{t('পূর্ণ নাম (বাংলা):', 'Full Name (BN):')}</span>
+                        <span className="font-bold text-slate-800">{selectedUserDetail.full_name_bn || '—'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">{t('পূর্ণ নাম (ইংরেজি):', 'Full Name (EN):')}</span>
+                        <span className="font-semibold text-slate-800">{selectedUserDetail.full_name_en || '—'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">{t('জাতীয় পরিচয়পত্র (NID):', 'NID Number:')}</span>
+                        <span className="font-mono font-bold text-slate-800">{selectedUserDetail.nid_mock || selectedUserDetail.nid || '—'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">{t('জন্ম তারিখ:', 'Date of Birth:')}</span>
+                        <span className="font-mono text-slate-800">{selectedUserDetail.date_of_birth || '—'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">{t('লিঙ্গ:', 'Gender:')}</span>
+                        <span className="text-slate-800">{selectedUserDetail.gender || '—'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                    <h4 className="font-bold text-slate-700 uppercase text-[11px] tracking-wide border-b border-slate-200 pb-1.5 flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-[#006A4E]" />
+                      <span>{t('যোগাযোগ ও অধিক্ষেত্র', 'Contact & Office')}</span>
+                    </h4>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">{t('মোবাইল নম্বর:', 'Phone:')}</span>
+                        <span className="font-mono font-bold text-slate-800">{selectedUserDetail.phone_mock || selectedUserDetail.phone_dummy || '—'}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500">{t('ইমেইল:', 'Email:')}</span>
+                        <span className="font-mono text-slate-800 truncate max-w-[170px]">{selectedUserDetail.email || '—'}</span>
+                      </div>
+                      <div className="flex justify-between items-start">
+                        <span className="text-slate-500">{t('অফিস / অধিক্ষেত্র:', 'Office / Location:')}</span>
+                        <span className="font-semibold text-slate-800 text-right max-w-[170px]">{selectedUserDetail.office_name || selectedUserDetail.office_bn || '—'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">{t('যোগদানের তারিখ:', 'Join Date:')}</span>
+                        <span className="font-mono text-slate-800">{formatUserDate(selectedUserDetail.created_at)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Access & Role Controls */}
+                <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200 space-y-3 text-xs">
+                  <h4 className="font-bold text-[#074f38] uppercase text-[11px] tracking-wide border-b border-emerald-200/60 pb-1.5 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#006A4E]" />
+                    <span>{t('অ্যাক্সেস ও ভূমিকা নিয়ন্ত্রণ (Role & Access Control)', 'Role & Access Control')}</span>
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('ভূমিকা পরিবর্তন করুন:', 'Change Role:')}</label>
+                      <select
+                        value={selectedUserDetail.role}
+                        onChange={async (e) => {
+                          const updatedRole = e.target.value;
+                          await handleChangeUserRole(selectedUserDetail, updatedRole);
+                          setSelectedUserDetail({ ...selectedUserDetail, role: updatedRole });
+                        }}
+                        className="w-full p-2 rounded-lg border border-slate-300 font-bold bg-white text-xs"
+                      >
+                        <option value="citizen">citizen (সাধারণ নাগরিক)</option>
+                        <option value="sub_registrar">sub_registrar (সাব-রেজিস্ট্রার)</option>
+                        <option value="ac_land">ac_land (সহকারী কমিশনার ভূমি)</option>
+                        <option value="bank_officer">bank_officer (ব্যাংক কর্মকর্তা)</option>
+                        <option value="field_verification_officer">field_verification_officer (ফিল্ড অফিসার)</option>
+                        <option value="registry_data_officer">registry_data_officer (রেজিস্ট্রি ডেটা অফিসার)</option>
+                        <option value="settlement_officer">settlement_officer (সার্ভেয়ার / সেটেলমেন্ট অফিসার)</option>
+                        <option value="uno_supervisor">uno_supervisor (ইউএনও / এডিসি)</option>
+                        <option value="udc_operator">udc_operator (ইউডিসি উদ্যোক্তা)</option>
+                        <option value="support_agent">support_agent (সাপোর্ট ডেস্ক)</option>
+                        <option value="admin">admin (সিস্টেম অ্যাডমিন)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('অ্যাকাউন্ট স্থিতি (Status):', 'Account Status:')}</label>
+                      <button
+                        onClick={async () => {
+                          await handleToggleUserStatus(selectedUserDetail);
+                          setSelectedUserDetail({ ...selectedUserDetail, is_active: selectedUserDetail.is_active ? 0 : 1 });
+                        }}
+                        className={`w-full py-2 px-3 rounded-lg font-bold text-xs cursor-pointer border transition flex items-center justify-center gap-2 ${
+                          selectedUserDetail.is_active
+                            ? 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100'
+                            : 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100'
+                        }`}
+                      >
+                        {selectedUserDetail.is_active ? t('⛔ অ্যাকাউন্ট নিষ্ক্রিয় / স্থগিত করুন', '⛔ Suspend Account') : t('✓ অ্যাকাউন্ট পুনরায় সক্রিয় করুন', '✓ Activate Account')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  {selectedUserDetail.id > 5 && selectedUserDetail.username !== 'admin' ? (
+                    <button
+                      onClick={async () => {
+                        if (window.confirm(lang === 'bn' ? 'আপনি কি নিশ্চিত যে এই ব্যবহারকারী অপসারণ করতে চান?' : 'Are you sure you want to delete this user?')) {
+                          await handleDeleteUser(selectedUserDetail.id);
+                          setSelectedUserDetail(null);
+                        }
+                      }}
+                      className="px-3.5 py-2 rounded-lg text-rose-600 hover:bg-rose-50 text-xs font-bold cursor-pointer transition flex items-center gap-1.5"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>{t('ব্যবহারকারী অপসারণ করুন', 'Delete User')}</span>
+                    </button>
+                  ) : <div />}
+
+                  <button
+                    onClick={() => setSelectedUserDetail(null)}
+                    className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer transition"
+                  >
+                    {t('বন্ধ করুন', 'Close')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1751,6 +2670,13 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
           <div className="panel p-6 space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
               <div>
+                <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
+                  <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+                    {t('কন্ট্রোল প্যানেল', 'Control Panel')}
+                  </button>
+                  <span>/</span>
+                  <span className="text-[#006A4E] font-extrabold">{t('সার্ভিস ও ফি ডিরেক্টরি', 'Service & Fee Directory')}</span>
+                </div>
                 <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-[#006A4E]" />
                   <span>
@@ -2606,6 +3532,13 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       {subTab === 'settings' && (
         <div className="panel p-6 space-y-5">
           <div>
+            <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
+              <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+                {t('কন্ট্রোল প্যানেল', 'Control Panel')}
+              </button>
+              <span>/</span>
+              <span className="text-[#006A4E] font-extrabold">{t('সিস্টেম পলিসি ও নোটিশ', 'System Policy Settings')}</span>
+            </div>
             <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
               <Settings className="w-5 h-5 text-[#006A4E]" />
               <span>
@@ -2667,14 +3600,23 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       {/* TAB 6: Append-Only Hash-Chained Audit Log */}
       {subTab === 'audit' && (
         <div className="panel p-6 space-y-4">
-          <div className="flex items-center gap-2">
-            <History className="w-5 h-5 text-[#006A4E]" />
-            <h2 className="text-lg font-extrabold text-[#0A1F1C]">
-              {t(
-                'অপরিবর্তনীয় হ্যাশ-চেইন অডিট লগ (Append-Only Cryptographic Audit Trail)',
-                'Append-Only Hash-Chained Audit Trail'
-              )}
-            </h2>
+          <div>
+            <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
+              <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+                {t('কন্ট্রোল প্যানেল', 'Control Panel')}
+              </button>
+              <span>/</span>
+              <span className="text-[#006A4E] font-extrabold">{t('সিকিউরিটি অডিট ট্রেইল', 'Security Audit Trail')}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <History className="w-5 h-5 text-[#006A4E]" />
+              <h2 className="text-lg font-extrabold text-[#0A1F1C]">
+                {t(
+                  'অপরিবর্তনীয় হ্যাশ-চেইন অডিট লগ (Append-Only Cryptographic Audit Trail)',
+                  'Append-Only Hash-Chained Audit Trail'
+                )}
+              </h2>
+            </div>
           </div>
 
           <div className="space-y-2 max-h-96 overflow-y-auto font-mono text-xs">
@@ -2695,86 +3637,6 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
         </div>
       )}
 
-      {/* TAB 8: Super Admin Direct Role Access & Oversight */}
-      {subTab === 'direct_access' && (
-        <div className="panel p-6 space-y-6">
-          <div className="border-b border-[#006A4E]/10 pb-4">
-            <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5 text-amber-500" />
-              <span>
-                {t(
-                  'সুপার অ্যাডমিন সরাসরি রোল নজরদারি ও পাসওয়ার্ডহীন প্রবেশাধিকার',
-                  'Super Admin Direct Role Inspection & Passwordless Access'
-                )}
-              </span>
-            </h2>
-            <p className="text-xs text-[#5F7A74] mt-0.5">
-              {t(
-                'সুপার অ্যাডমিন হিসেবে আপনি যেকোনো দাপ্তরিক বা নাগরিক ড্যাশবোর্ডে পাসওয়ার্ড ছাড়াই সরাসরি প্রবেশ করে নিরীক্ষা সম্পন্ন করতে পারবেন:',
-                'As Super Admin, directly inspect any government agency or citizen portal dashboard without passwords:'
-              )}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              {
-                r: 'sub_registrar' as UserRole,
-                title: t('সাব-রেজিস্ট্রার কনসোল', 'Sub-Registrar Console'),
-                dept: t('নিবন্ধন অধিদপ্তর • আইন মন্ত্রণালয়', 'Directorate of Registration • Law Ministry'),
-                icon: <FileSpreadsheet className="w-6 h-6 text-[#006A4E]" />,
-                iconBg: 'bg-emerald-50',
-                desc: t('দলিল প্রাক-যাচাই, ১১টি জালিয়াতি রুলস গেটকিপার, HELD কিউ ও রেজিস্ট্রি অডিট।', 'Pre-reg gatekeeper, 11 fraud rules, held queue & registry audit.'),
-              },
-              {
-                r: 'ac_land' as UserRole,
-                title: t('এসি ল্যান্ড কনসোল', 'AC Land Console'),
-                dept: t('উপজেলা ভূমি অফিস • ভূমি মন্ত্রণালয়', 'Upazila Land Office • Ministry of Land'),
-                icon: <Landmark className="w-6 h-6 text-[#006A4E]" />,
-                iconBg: 'bg-emerald-50',
-                desc: t('ই-মিউটেশন অনুমোদন, খতিয়ান চেইন সমন্বয়, ওয়ারিশ হিস্যা ও বিরোধ ট্রাইব্যুনাল।', 'e-Mutation approval, khatian reconciliation & dispute tribunal.'),
-              },
-              {
-                r: 'bank_officer' as UserRole,
-                title: t('ব্যাংক মর্টগেজ কনসোল', 'Bank Mortgage Console'),
-                dept: t('তফসিলি ব্যাংক জামানত ও লিয়েন বিভাগ', 'Scheduled Commercial Bank Collateral'),
-                icon: <Building2 className="w-6 h-6 text-[#006A4E]" />,
-                iconBg: 'bg-emerald-50',
-                desc: t('জামানত যাচাই, দ্বৈত বন্ধক প্রতিরোধে প্লট লক এবং ডিজিটাল NOC সনদ ইস্যু।', 'Collateral check, double-mortgage plot lock & digital NOC release.'),
-              },
-              {
-                r: 'citizen' as UserRole,
-                title: t('নাগরিক ভূমি পোর্টাল', 'Citizen Land Portal'),
-                dept: t('নাগরিক সেবা ও ভূমি সুরক্ষা ভল্ট', 'Public Consumer Property Vault'),
-                icon: <ShieldCheck className="w-6 h-6 text-[#006A4E]" />,
-                iconBg: 'bg-emerald-50',
-                desc: t('মালিকানা যাচাই, বায়োমেট্রিক বিক্রয় লক ও নাগরিক আপত্তি দাখিল।', 'Property vault, biometric sale locks & objection filings.'),
-              },
-            ].map((card) => (
-              <div key={card.r} className="p-5 rounded-xl border border-[#006A4E]/15 bg-white flex flex-col justify-between shadow-xs hover:shadow-md transition">
-                <div>
-                  <div className={`w-12 h-12 rounded-xl ${card.iconBg} flex items-center justify-center mb-3`}>
-                    {card.icon}
-                  </div>
-                  <h3 className="font-bold text-sm text-slate-900">{card.title}</h3>
-                  <div className="text-[11px] font-medium text-emerald-800 mt-0.5">{card.dept}</div>
-                  <p className="text-xs text-slate-600 mt-2 leading-relaxed">{card.desc}</p>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-100">
-                  <button
-                    onClick={() => switchToAdminRole(card.r)}
-                    className="w-full py-2 px-3 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs"
-                  >
-                    <span>{t('সরাসরি লগইন করুন →', 'Direct Login →')}</span>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* TAB 9: Maker-Checker Staging Onboarding & Appellate Review Mirror (Tier C Sections 8.7 & 8.8) */}
       {subTab === 'onboarding_appeals' && (
         <div className="panel p-6 space-y-6">
@@ -2789,6 +3651,13 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
 
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
             <div>
+              <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
+                <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+                  {t('কন্ট্রোল প্যানেল', 'Control Panel')}
+                </button>
+                <span>/</span>
+                <span className="text-[#006A4E] font-extrabold">{t('অনবোর্ডিং ও আপিল ওভারসাইট', 'Onboarding & Appeals Oversight')}</span>
+              </div>
               <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
                 <Layers className="w-5 h-5 text-[#006A4E]" />
                 <span>{t('মেকার-চেকার অনবোর্ডিং ও আপিল রিভিউ ট্রাইব্যুনাল', 'Maker-Checker Onboarding & Appellate Review Tribunal')}</span>
@@ -3331,6 +4200,13 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
         <div className="panel p-6 space-y-5 animate-rise">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
             <div>
+              <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
+                <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+                  {t('কন্ট্রোল প্যানেল', 'Control Panel')}
+                </button>
+                <span>/</span>
+                <span className="text-[#006A4E] font-extrabold">{t('এসএমএস ও ওটিপি আউটবক্স', 'SMS & OTP Outbox')}</span>
+              </div>
               <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
                 <Smartphone className="w-5 h-5 text-[#006A4E]" />
                 <span>

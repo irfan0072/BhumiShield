@@ -28,6 +28,7 @@ export type UserRole =
 export interface AuthUser {
   id: number;
   username: string;
+  email?: string;
   full_name_bn: string;
   full_name_en: string;
   role: UserRole;
@@ -39,6 +40,15 @@ export interface AuthUser {
   office_bn?: string;
   office_en?: string;
   is_active: number;
+  is_identity_verified?: number;
+  is_profile_complete?: number;
+  avatar_url?: string;
+  registration_channel?: string;
+  father_name_bn?: string;
+  mother_name_bn?: string;
+  present_address_bn?: string;
+  date_of_birth?: string;
+  gender?: string;
 }
 
 interface AppUIContextType {
@@ -57,6 +67,8 @@ interface AppUIContextType {
   setToken: (t: string | null) => void;
   activeSubTab: string;
   setActiveSubTab: (sub: string) => void;
+  adminUserRoleFilter: string;
+  setAdminUserRoleFilter: (filter: string) => void;
   logout: () => void;
   t: (bn: string, en: string) => string;
   formatNumber: (val: number | string) => string;
@@ -95,6 +107,7 @@ export const AppUIProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return (localStorage.getItem('bs_role') as UserRole) || 'citizen';
   });
   const [activeSubTab, setActiveSubTab] = useState<string>('');
+  const [adminUserRoleFilter, setAdminUserRoleFilter] = useState<string>('all');
 
   useEffect(() => {
     localStorage.setItem('bs_lang', lang);
@@ -211,6 +224,8 @@ export const AppUIProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setToken,
         activeSubTab,
         setActiveSubTab,
+        adminUserRoleFilter,
+        setAdminUserRoleFilter,
         logout,
         t,
         formatNumber,

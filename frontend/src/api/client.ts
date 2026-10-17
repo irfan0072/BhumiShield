@@ -453,6 +453,16 @@ export const BhumiApi = {
     }),
   getMe: () => api.get('/auth/me').then((r) => r.data),
   updateProfile: (payload: any) => api.put('/auth/profile', payload).then((r) => r.data),
+  completeProfile: (payload: any) =>
+    api.post('/auth/complete-profile', payload).then((r) => {
+      const u = r.data.user;
+      if (u) {
+        u.nid_mock = u.nid || u.nid_mock || '';
+        u.phone_mock = u.phone_dummy || u.phone_mock || '';
+        u.office_name = u.office_bn || u.office_name || '';
+      }
+      return r.data;
+    }),
   switchDemoRole: (role: string) =>
     api.post('/auth/switch-demo-role', { role }).then((r) => {
       const u = r.data.user;

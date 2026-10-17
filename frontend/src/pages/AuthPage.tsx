@@ -16,6 +16,11 @@ import {
   FileText,
   AlertCircle,
   HelpCircle,
+  Mail,
+  Phone,
+  Clock,
+  ArrowRight,
+  Sparkles,
 } from 'lucide-react';
 
 const ROLE_ROUTE: Record<string, string> = {
@@ -55,14 +60,17 @@ export const AuthPage: React.FC<{
   const [password, setPassword] = useState(isDemoMode ? 'demo123' : '');
   const [showPassword, setShowPassword] = useState(false);
 
-  // Registration state - strictly locked to citizen
+  // Registration state - supports both Phone and Email
+  const [regMethod, setRegMethod] = useState<'phone' | 'email'>('phone');
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState(isDemoMode ? 'demo123' : '');
   const [regNameBn, setRegNameBn] = useState('');
   const [regNameEn, setRegNameEn] = useState('');
   const [regNid, setRegNid] = useState(isDemoMode ? '9900001099' : '');
   const [regPhone, setRegPhone] = useState(isDemoMode ? '01700-000999' : '');
+  const [regEmail, setRegEmail] = useState('');
   const [regOffice, setRegOffice] = useState('ঢাকা, বাংলাদেশ');
+  const [regPendingNotice, setRegPendingNotice] = useState<any | null>(null);
 
   // Profile update state
   const [profNameBn, setProfNameBn] = useState(user?.full_name_bn || '');
@@ -122,20 +130,38 @@ export const AuthPage: React.FC<{
     setLoading(true);
     setErrorMsg('');
     try {
-      // Public registration is strictly restricted to citizen role
-      const res = await BhumiApi.register({
+      const payload: any = {
         username: regUsername.trim(),
         password: regPassword,
         full_name_bn: regNameBn.trim(),
         full_name_en: regNameEn.trim() || regNameBn.trim(),
         role: 'citizen',
+        registration_channel: regMethod,
         nid: regNid.trim(),
-        phone_dummy: regPhone.trim(),
         office_bn: regOffice.trim(),
-      });
-      setToken(res.access_token);
-      setUser(res.user);
-      onSuccessNavigate('home');
+      };
+      if (regMethod === 'phone') {
+        payload.phone_dummy = regPhone.trim();
+        if (regEmail.trim()) payload.email = regEmail.trim();
+      } else {
+        payload.email = regEmail.trim();
+        if (regPhone.trim()) payload.phone_dummy = regPhone.trim();
+      }
+
+      const res = await BhumiApi.register(payload);
+      if (res.user && Number(res.user.is_identity_verified) === 0) {
+        setRegPendingNotice(res.user);
+        setUsername(res.user.username);
+        setSuccessMsg(
+          lang === 'bn'
+            ? 'নাগরিক নিবন্ধন সফল হয়েছে! আপনার অ্যাকাউন্টটি বর্তমানে সুপার অ্যাডমিন অনুমোদনের অপেক্ষায় রয়েছে।'
+            : 'Registration submitted! Your citizen account is pending Super Admin approval.'
+        );
+      } else {
+        setToken(res.access_token);
+        setUser(res.user);
+        onSuccessNavigate('home');
+      }
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       setErrorMsg(
@@ -261,14 +287,14 @@ export const AuthPage: React.FC<{
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  {t('ইউজারনেম বা এনআইডি (Username or NID):', 'Username or NID:')}
+                  {t('ইউজারনেম / ইমেইল / মোবাইল নম্বর (Username / Email / Mobile):', 'Username / Email / Mobile Phone:')}
                 </label>
                 <div className="relative">
                   <input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="e.g. citizen or registrar"
+                    placeholder={t('ইউজারনেম, ইমেইল অথবা মোবাইল নম্বর দিন (যেমন: citizen)', 'Username, email or mobile (e.g. citizen)')}
                     className="w-full pl-10 pr-3.5 py-2.5 rounded-lg border border-slate-300 font-mono text-sm focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20 focus:outline-none"
                     required
                   />
@@ -414,142 +440,312 @@ export const AuthPage: React.FC<{
           </details>
         )}
 
-        {/* 2. Citizen Registration Tab (Strictly Locked to Citizen Role) */}
+        {/* 2. Citizen Registration Tab (Supports Phone and Email Registration) */}
         {tab === 'register' && (
-          <form onSubmit={handleRegister} className="space-y-5">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">
-                {t('নাগরিক অ্যাকাউন্ট নিবন্ধন (এনআইডি যাচাই সহ)', 'Citizen Account Registration (with NID Verification)')}
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {t('জাতীয় পরিচয়পত্র ও মোবাইল নম্বর দিয়ে নাগরিক সেবা ভল্টে যুক্ত হন', 'Register your citizen profile to protect your land holdings with digital sale locks')}
-              </p>
-            </div>
+          <div>
+            {regPendingNotice ? (
+              <div className="space-y-6 animate-fadeIn">
+                <div className="p-6 rounded-2xl bg-amber-50/80 border-2 border-amber-300 text-amber-950 space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="h-12 w-12 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
+                      <Clock className="w-6 h-6 animate-pulse" />
+                    </div>
+                    <div className="space-y-1 flex-1">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h2 className="text-xl font-extrabold text-amber-900">
+                          {t('নাগরিক নিবন্ধন সফল — সুপার অ্যাডমিন অনুমোদনের অপেক্ষায়', 'Registration Submitted — Pending Super Admin Approval')}
+                        </h2>
+                        <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-200 text-amber-900 border border-amber-300">
+                          PENDING_ADMIN_VERIFICATION
+                        </span>
+                      </div>
+                      <p className="text-xs text-amber-800 leading-relaxed font-medium">
+                        {t(
+                          'আপনার নাগরিক অ্যাকাউন্ট নিবন্ধন তথ্য সিস্টেমে সফলভাবে সংরক্ষিত হয়েছে। ভূমি রেকর্ডের সংবেদনশীলতা ও জাতীয় নিরাপত্তার স্বার্থে সুপার অ্যাডমিন কর্তৃক প্রোফাইল যাচাইকরণের পর অ্যাকাউন্টটি অনুমোদিত হবে।',
+                          'Your registration details have been submitted. Under BhumiShield security policies, citizen profiles require Super Admin verification before full workspace access is unlocked.'
+                        )}
+                      </p>
+                    </div>
+                  </div>
 
-            {/* Account Type Badge */}
-            <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs font-semibold flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                <span>{t('অ্যাকাউন্টের ধরন: সাধারণ নাগরিক (Citizen Account)', 'Account Type: Verified Citizen Account')}</span>
+                  {/* Citizen Registration Summary Card */}
+                  <div className="p-4 rounded-xl bg-white border border-amber-200 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    <div>
+                      <span className="text-slate-400 block text-[11px] font-bold">{t('পূর্ণ নাম', 'Full Name')}</span>
+                      <span className="font-bold text-slate-800 text-sm">{regPendingNotice.full_name_bn}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[11px] font-bold">{t('ইউজারনেম', 'Username')}</span>
+                      <span className="font-mono font-bold text-emerald-800 text-sm">@{regPendingNotice.username}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[11px] font-bold">{t('নিবন্ধন মাধ্যম', 'Channel')}</span>
+                      <span className="font-bold text-slate-700 capitalize flex items-center gap-1.5 mt-0.5">
+                        {regPendingNotice.registration_channel === 'email' ? <Mail className="w-3.5 h-3.5 text-blue-600" /> : <Phone className="w-3.5 h-3.5 text-emerald-600" />}
+                        {regPendingNotice.registration_channel === 'email' ? t('ইমেইল', 'Email') : t('মোবাইল নম্বর', 'Phone')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block text-[11px] font-bold">{t('যোগাযোগের তথ্য', 'Contact')}</span>
+                      <span className="font-mono text-slate-700">
+                        {regPendingNotice.registration_channel === 'email' ? regPendingNotice.email : regPendingNotice.phone_dummy}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Flow guidance note */}
+                  <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs flex items-center gap-2.5">
+                    <ShieldCheck className="w-5 h-5 text-emerald-700 shrink-0" />
+                    <span>
+                      {t(
+                        'পরবর্তী ধাপ: সুপার অ্যাডমিন অনুমোদনের পর আপনি লগইন করলে একটি সংক্ষিপ্ত পপ-আপ ফর্মে ছবি, অভিভাবকের নাম ও পূর্ণ ঠিকানা দিয়ে প্রোফাইল সম্পূর্ণ করতে পারবেন এবং তাৎক্ষণিকভাবে সকল নাগরিক সেবা ব্যবহার করতে পারবেন।',
+                        'Next Step: Once the Super Admin verifies your account, log in to complete your profile via a quick modal to unlock all services.'
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRegPendingNotice(null);
+                        setTab('login');
+                      }}
+                      className="px-6 py-2.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs cursor-pointer shadow-sm transition flex items-center gap-2"
+                    >
+                      <LogIn className="w-4 h-4" />
+                      <span>{t('লগইন স্ক্রিনে যান (Proceed to Sign In)', 'Go to Sign In')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRegPendingNotice(null)}
+                      className="px-4 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50 cursor-pointer"
+                    >
+                      {t('অন্য একটি অ্যাকাউন্ট নিবন্ধন করুন', 'Register Another Account')}
+                    </button>
+                  </div>
+                </div>
               </div>
-              <span className="text-[11px] font-mono text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-                Role: citizen
-              </span>
-            </div>
+            ) : (
+              <form onSubmit={handleRegister} className="space-y-5">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">
+                    {t('নাগরিক অ্যাকাউন্ট নিবন্ধন (মোবাইল বা ইমেইল)', 'Citizen Account Registration (Phone or Email)')}
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {t('মোবাইল নম্বর অথবা ইমেইল ঠিকানা দিয়ে নতুন নাগরিক অ্যাকাউন্ট তৈরি করুন', 'Create a new citizen account using either mobile phone number or email address')}
+                  </p>
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t('ইউজারনেম (Username):', 'Username:')}
-                </label>
-                <input
-                  type="text"
-                  value={regUsername}
-                  onChange={(e) => setRegUsername(e.target.value)}
-                  placeholder="e.g. saiful_islam"
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono"
-                  required
-                />
-              </div>
+                {/* Registration Method Switcher */}
+                <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100 rounded-xl border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => setRegMethod('phone')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition ${
+                      regMethod === 'phone'
+                        ? 'bg-[#006A4E] text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                    }`}
+                  >
+                    <Phone className="w-4 h-4" />
+                    <span>{t('মোবাইল নম্বর দিয়ে নিবন্ধন (Register with Phone)', 'Register with Phone')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRegMethod('email')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition ${
+                      regMethod === 'email'
+                        ? 'bg-[#006A4E] text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                    }`}
+                  >
+                    <Mail className="w-4 h-4" />
+                    <span>{t('ইমেইল ঠিকানা দিয়ে নিবন্ধন (Register with Email)', 'Register with Email')}</span>
+                  </button>
+                </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t('পাসওয়ার্ড (Password):', 'Password:')}
-                </label>
-                <input
-                  type="password"
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono"
-                  required
-                />
-              </div>
+                {/* Account Type Badge */}
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs font-semibold flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                    <span>{t('অ্যাকাউন্টের ধরন: সাধারণ নাগরিক (Citizen Account)', 'Account Type: Verified Citizen Account')}</span>
+                  </div>
+                  <span className="text-[11px] font-mono text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+                    Role: citizen
+                  </span>
+                </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t('পূর্ণ নাম (বাংলায়):', 'Full Name (Bangla):')}
-                </label>
-                <input
-                  type="text"
-                  value={regNameBn}
-                  onChange={(e) => setRegNameBn(e.target.value)}
-                  placeholder="মোঃ সাইফুল ইসলাম"
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
-                  required
-                />
-              </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Primary identifier based on method */}
+                  {regMethod === 'phone' ? (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        {t('মোবাইল নম্বর (বাধ্যতামূলক):', 'Mobile Phone Number (Required):')} <span className="text-red-600">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        value={regPhone}
+                        onChange={(e) => setRegPhone(e.target.value)}
+                        placeholder="01700-000999"
+                        className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs focus:border-[#006A4E] focus:ring-1 focus:ring-[#006A4E]"
+                        required
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        {t('ইমেইল ঠিকানা (বাধ্যতামূলক):', 'Email Address (Required):')} <span className="text-red-600">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        value={regEmail}
+                        onChange={(e) => setRegEmail(e.target.value)}
+                        placeholder="citizen@domain.com"
+                        className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs focus:border-[#006A4E] focus:ring-1 focus:ring-[#006A4E]"
+                        required
+                      />
+                    </div>
+                  )}
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t('পূর্ণ নাম (ইংরেজিতে):', 'Full Name (English):')}
-                </label>
-                <input
-                  type="text"
-                  value={regNameEn}
-                  onChange={(e) => setRegNameEn(e.target.value)}
-                  placeholder="Md. Saiful Islam"
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
-                />
-              </div>
+                  {/* Secondary optional identifier */}
+                  {regMethod === 'phone' ? (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        {t('ইমেইল ঠিকানা (ঐচ্ছিক):', 'Email Address (Optional):')}
+                      </label>
+                      <input
+                        type="email"
+                        value={regEmail}
+                        onChange={(e) => setRegEmail(e.target.value)}
+                        placeholder="name@domain.com"
+                        className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs"
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        {t('মোবাইল নম্বর (ঐচ্ছিক):', 'Phone Number (Optional):')}
+                      </label>
+                      <input
+                        type="tel"
+                        value={regPhone}
+                        onChange={(e) => setRegPhone(e.target.value)}
+                        placeholder="01700-000999"
+                        className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs"
+                      />
+                    </div>
+                  )}
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t('এনআইডি নম্বর (১০ বা ১৭ ডিজিট):', 'NID Number (10 or 17 digits):')}
-                </label>
-                <input
-                  type="text"
-                  value={regNid}
-                  onChange={(e) => setRegNid(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs"
-                  required
-                />
-              </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {t('ইউজারনেম (Username):', 'Username:')}
+                    </label>
+                    <input
+                      type="text"
+                      value={regUsername}
+                      onChange={(e) => setRegUsername(e.target.value)}
+                      placeholder={regMethod === 'email' ? 'e.g. saiful_islam (ঐচ্ছিক)' : 'e.g. saiful_islam'}
+                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono"
+                    />
+                    <span className="text-[10px] text-slate-400">
+                      {t('খালি রাখলে স্বয়ংক্রিয়ভাবে তৈরি হবে', 'Auto-generated if left empty')}
+                    </span>
+                  </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t('মোবাইল নম্বর:', 'Phone Number:')}
-                </label>
-                <input
-                  type="text"
-                  value={regPhone}
-                  onChange={(e) => setRegPhone(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs"
-                />
-              </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {t('গোপনীয় পাসওয়ার্ড (Password):', 'Password:')} <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="password"
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono"
+                      required
+                    />
+                  </div>
 
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t('ঠিকানা / অবস্থান:', 'Address / Location:')}
-                </label>
-                <input
-                  type="text"
-                  value={regOffice}
-                  onChange={(e) => setRegOffice(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
-                />
-              </div>
-            </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {t('পূর্ণ নাম (বাংলায়):', 'Full Name (Bangla):')} <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={regNameBn}
+                      onChange={(e) => setRegNameBn(e.target.value)}
+                      placeholder="মোঃ সাইফুল ইসলাম"
+                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
+                      required
+                    />
+                  </div>
 
-            <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-[11px] text-slate-500 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-slate-400 shrink-0" />
-              <span>
-                {t(
-                  'বিজ্ঞপ্তি: সরকারি কর্মকর্তা ও ব্যাংক প্যানেলের আইডি প্রশাসনিকভাবে অনুমোদনপ্রাপ্ত দপ্তর কর্তৃক সংরক্ষিত ও ইস্যু করা হয়।',
-                  'Notice: Government officer and bank institutional IDs are provisioned exclusively by administrative departments.'
-                )}
-              </span>
-            </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {t('পূর্ণ নাম (ইংরেজিতে):', 'Full Name (English):')}
+                    </label>
+                    <input
+                      type="text"
+                      value={regNameEn}
+                      onChange={(e) => setRegNameEn(e.target.value)}
+                      placeholder="Md. Saiful Islam"
+                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
+                    />
+                  </div>
 
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="py-3 px-6 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs cursor-pointer shadow-sm transition"
-              >
-                {t('নাগরিক অ্যাকাউন্ট নিবন্ধন করুন', 'Complete Citizen Registration')}
-              </button>
-            </div>
-          </form>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {t('জাতীয় পরিচয়পত্র / এনআইডি নম্বর:', 'NID Number:')}
+                    </label>
+                    <input
+                      type="text"
+                      value={regNid}
+                      onChange={(e) => setRegNid(e.target.value)}
+                      placeholder="9900001099"
+                      className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs"
+                    />
+                    <span className="text-[10px] text-slate-400">
+                      {t('১০ বা ১৭ ডিজিট (প্রোফাইল সম্পন্নকালেও দেওয়া যাবে)', 'Can also be updated during profile completion')}
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      {t('ঠিকানা / অবস্থান:', 'Address / Location:')}
+                    </label>
+                    <input
+                      type="text"
+                      value={regOffice}
+                      onChange={(e) => setRegOffice(e.target.value)}
+                      placeholder="ঢাকা, বাংলাদেশ"
+                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-[11px] text-slate-500 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span>
+                    {t(
+                      'নিরাপত্তা নির্দেশিকা: সাধারণ নাগরিক নিবন্ধন ব্যতীত অন্যান্য কর্মকর্তা ও ব্যাংক প্যানেলের আইডি প্রশাসনিকভাবে সুপার অ্যাডমিন কর্তৃক নিয়ন্ত্রিত ও অনুমোদিত হয়।',
+                      'Security Notice: Official and bank panel institutional IDs are provisioned exclusively under Super Admin governance.'
+                    )}
+                  </span>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="py-3 px-6 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs cursor-pointer shadow-sm transition flex items-center gap-2"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span>{loading ? t('নিবন্ধন প্রক্রিয়াধীন...', 'Registering...') : t('নাগরিক অ্যাকাউন্ট নিবন্ধন করুন', 'Complete Citizen Registration')}</span>
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         )}
 
         {/* 3. Profile Tab */}
