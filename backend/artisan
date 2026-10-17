@@ -10,6 +10,7 @@ use Database\Seeders\DatabaseSeeder;
 use Tests\Feature\AppointmentBookingTest;
 use Tests\Feature\CheckBeforeBuyRouteTest;
 use Tests\Feature\FieldOperationsAndSlaTest;
+use Tests\Feature\ListingBadgeDerivationTest;
 use Tests\Feature\RoleAuditRegressionTest;
 use Tests\Feature\RoleRoutingAndSubtabTest;
 use Tests\Feature\RulesAndLedgerTest;
@@ -136,7 +137,84 @@ switch ($command) {
         $c9 = FieldOperationsAndSlaTest::runAll();
         $c10 = RoleRoutingAndSubtabTest::runAll();
         $c11 = SignedNoticePdfTest::runAll();
-        exit(($c1 === 0 && $c2 === 0 && $c3 === 0 && $c4 === 0 && $c5 === 0 && $c6 === 0 && $c7 === 0 && $c8 === 0 && $c9 === 0 && $c10 === 0 && $c11 === 0) ? 0 : 1);
+        $c12 = ListingBadgeDerivationTest::runAll();
+        exit(($c1 === 0 && $c2 === 0 && $c3 === 0 && $c4 === 0 && $c5 === 0 && $c6 === 0 && $c7 === 0 && $c8 === 0 && $c9 === 0 && $c10 === 0 && $c11 === 0 && $c12 === 0) ? 0 : 1);
+
+    case 'bhumi:drill:tamper':
+        $env = strtolower((string) env('APP_ENV', 'development'));
+        if ($env === 'production') {
+            fwrite(STDERR, "ERROR: Storage integrity drill is strictly prohibited in production environment (APP_ENV=production).\n");
+            exit(1);
+        }
+        $deedCode = null;
+        foreach (array_slice($args, 1) as $a) {
+            if (!str_starts_with($a, '--')) {
+                $deedCode = $a;
+                break;
+            }
+        }
+        $confirm = in_array('--confirm', $args, true);
+        if (!$confirm) {
+            fwrite(STDERR, "ERROR: Safety flag --confirm is required to execute storage integrity drill.\nUsage: php artisan bhumi:drill:tamper {deed_code} --confirm\n");
+            exit(1);
+        }
+        if (!$deedCode) {
+            fwrite(STDERR, "ERROR: Target deed code is required.\nUsage: php artisan bhumi:drill:tamper {deed_code} --confirm\n");
+            exit(1);
+        }
+        try {
+            $res = \App\Http\Controllers\Api\V1\LedgerVerificationController::simulateTampering(
+                $deedCode,
+                [],
+                ['username' => 'operator_cli', 'role' => 'operator']
+            );
+            echo "SUCCESS: Storage byte modified for deed {$deedCode}.\n";
+            echo "         Tamper verification result:\n";
+            echo "         - Valid: " . (!empty($res['verified']) ? 'true' : 'false') . "\n";
+            echo "         - Message: " . ($res['message_en'] ?? '') . "\n";
+            echo "         - Tampered Fields: " . json_encode($res['tampered_fields'] ?? []) . "\n";
+            echo "To revert to authentic signed state:\n";
+            echo "  php artisan bhumi:drill:restore {$deedCode} --confirm\n";
+            exit(0);
+        } catch (\Throwable $e) {
+            fwrite(STDERR, "ERROR: Drill failed: " . $e->getMessage() . "\n");
+            exit(1);
+        }
+
+    case 'bhumi:drill:restore':
+        $env = strtolower((string) env('APP_ENV', 'development'));
+        if ($env === 'production') {
+            fwrite(STDERR, "ERROR: Storage integrity drill is strictly prohibited in production environment (APP_ENV=production).\n");
+            exit(1);
+        }
+        $deedCode = null;
+        foreach (array_slice($args, 1) as $a) {
+            if (!str_starts_with($a, '--')) {
+                $deedCode = $a;
+                break;
+            }
+        }
+        $confirm = in_array('--confirm', $args, true);
+        if (!$confirm) {
+            fwrite(STDERR, "ERROR: Safety flag --confirm is required to execute restore drill.\nUsage: php artisan bhumi:drill:restore {deed_code} --confirm\n");
+            exit(1);
+        }
+        if (!$deedCode) {
+            fwrite(STDERR, "ERROR: Target deed code is required.\nUsage: php artisan bhumi:drill:restore {deed_code} --confirm\n");
+            exit(1);
+        }
+        try {
+            $res = \App\Http\Controllers\Api\V1\LedgerVerificationController::restoreTamperedDeed(
+                $deedCode,
+                ['username' => 'operator_cli', 'role' => 'operator']
+            );
+            echo "SUCCESS: Authentic signed record restored for deed {$deedCode}.\n";
+            echo "         Hash-chain and signature verified.\n";
+            exit(0);
+        } catch (\Throwable $e) {
+            fwrite(STDERR, "ERROR: Restore failed: " . $e->getMessage() . "\n");
+            exit(1);
+        }
 
     default:
         echo "BhumiShield Custom Artisan Console (PHP " . PHP_VERSION . ")\n";
@@ -145,6 +223,8 @@ switch ($command) {
         echo "  php artisan migrate                Run additive migrations safely without dropping data\n";
         echo "  php artisan migrate:fresh --seed   Drop tables, run migrations, and seed demo database (requires --force in production)\n";
         echo "  php artisan db:seed                Seed the BhumiShield demo database\n";
+        echo "  php artisan bhumi:drill:tamper     Storage integrity drill: flip byte to prove tamper detection (non-prod only)\n";
+        echo "  php artisan bhumi:drill:restore    Restore deed to authentic signed state after drill\n";
         echo "  php artisan serve --port=8000      Start the API server on port 8000\n";
         echo "  php artisan test                   Run the full automated test suite\n";
         exit(0);

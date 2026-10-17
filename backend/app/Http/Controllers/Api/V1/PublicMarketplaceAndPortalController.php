@@ -159,7 +159,7 @@ final class PublicMarketplaceAndPortalController
         }
 
         // Check active liens
-        $activeLien = DB::selectOne("SELECT * FROM liens WHERE plot_id = ? AND status = 'ACTIVE'", [(int) $plot['id']]);
+        $activeLien = DB::selectOne("SELECT * FROM mortgages_liens WHERE plot_id = ? AND status = 'ACTIVE'", [(int) $plot['id']]);
         if ($activeLien) {
             throw new \RuntimeException(json_encode([
                 'status' => 422,
@@ -179,6 +179,31 @@ final class PublicMarketplaceAndPortalController
         $descBn = trim((string) ($payload['description_bn'] ?? 'সাভার বিরুলিয়ায় আবাসিক বাড়ি/শিল্প কারখানা নির্মাণের উপযোগী নিষ্কণ্টক জমি।'));
         $descEn = trim((string) ($payload['description_en'] ?? 'Verified residential land in Birulia, Savar suitable for development.'));
 
+        // F16: derive the verification badge from real signals rather than
+        // always writing VERIFIED_CLEAR. A plot is FLAGGED if any field
+        // report for it carries a risk flag, VERIFIED_CLEAR if it has at
+        // least one field report with no flag, and NEEDS_REVIEW if no field
+        // report exists yet.
+        $flagRow = DB::selectOne(
+            "SELECT COUNT(*) AS c FROM field_reports
+             WHERE plot_id = ? AND boundary_status = 'DISPUTED'
+                OR possession_status = 'ENCROACHED'",
+            [(int) $plot['id']]
+        );
+        $flaggedCount = (int) ($flagRow['c'] ?? 0);
+        $verifiedRow = DB::selectOne(
+            "SELECT COUNT(*) AS c FROM field_reports WHERE plot_id = ?",
+            [(int) $plot['id']]
+        );
+        $verifiedCount = (int) ($verifiedRow['c'] ?? 0);
+        if ($flaggedCount > 0) {
+            $badge = 'FLAGGED';
+        } elseif ($verifiedCount > 0) {
+            $badge = 'VERIFIED_CLEAR';
+        } else {
+            $badge = 'NEEDS_REVIEW';
+        }
+
         $listingId = DB::insert(
             'INSERT INTO listings (listing_code, plot_id, seller_nid, asking_price_bdt, area_decimal, description_bn, description_en, status, verification_badge, co_owner_consent_confirmed, expires_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
@@ -190,7 +215,7 @@ final class PublicMarketplaceAndPortalController
                 $descBn,
                 $descEn,
                 'ACTIVE',
-                'VERIFIED_CLEAR',
+                $badge,
                 1,
                 $expiresAt,
                 $now,

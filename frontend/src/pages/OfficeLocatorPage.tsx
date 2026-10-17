@@ -56,6 +56,7 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState('');
   const [bookingResult, setBookingResult] = useState<any | null>(null);
+  const [mapNotice, setMapNotice] = useState<string | null>(null);
 
   const fetchOffices = () => {
     setLoading(true);
@@ -150,7 +151,15 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
     if (off.latitude && off.longitude) {
       onNavigate?.(`map?lat=${off.latitude}&lng=${off.longitude}&office_id=${off.id}`);
     } else {
-      alert(t('এই দপ্তরের জিপিএস মানচিত্র স্থানাঙ্ক বর্তমানে হালনাগাদ করা হচ্ছে।', 'GPS coordinates for this office are currently being surveyed.'));
+      // F18: inline notice instead of an alert(). The banner auto-dismisses
+      // after 6s; users can also close it manually.
+      setMapNotice(
+        t(
+          'মানচিত্রে দেখানো যাচ্ছে না — এই দপ্তরের GPS স্থানাঙ্ক জরিপ চলমান।',
+          'Map unavailable — GPS coordinates for this office are currently being surveyed.'
+        )
+      );
+      setTimeout(() => setMapNotice(null), 6000);
     }
   };
 
@@ -173,6 +182,24 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
             )}
           </p>
         </div>
+
+        {/* F18: Inline map-unavailable notice (replaces alert()). */}
+        {mapNotice && (
+          <div className="bg-amber-50 border border-amber-300 text-amber-900 rounded-xl px-4 py-3 flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2">
+              <MapPin className="w-4 h-4 mt-0.5 text-amber-700 shrink-0" />
+              <p className="text-sm font-semibold">{mapNotice}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMapNotice(null)}
+              className="text-amber-700 hover:text-amber-900 text-sm font-bold px-2"
+              aria-label="Dismiss notice"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {/* Filters and Search */}
         <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-3">

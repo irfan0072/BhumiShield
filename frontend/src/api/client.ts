@@ -826,31 +826,7 @@ export const BhumiApi = {
       .then((r) => r.data),
   releaseMortgage: (lienId: number) =>
     api.post(`/mortgages/${lienId}/release`).then((r) => r.data),
-  getDemoScenarios: () =>
-    api.get('/scenarios').then((r) => {
-      const items = r.data.items || r.data || [];
-      return items.map((sc: any) => ({
-        ...sc,
-        code: String(sc.scenario_no ?? sc.code ?? sc.id),
-        badge_type:
-          sc.expected_verdict === 'SAFE'
-            ? 'SAFE'
-            : sc.expected_verdict === 'REVIEW'
-            ? 'WARNING'
-            : 'HIGH_RISK',
-      }));
-    }),
-  runDemoScenario: async (code: string) => {
-    const scenarios = await BhumiApi.getDemoScenarios();
-    const match =
-      scenarios.find((s: any) => String(s.code) === String(code)) || scenarios[0];
-    const report = await BhumiApi.checkBeforeBuy({
-      plot_id: Number(match.plot_id),
-      seller_id: Number(match.seller_id),
-      proposed_area_decimal: Number(match.requested_area_decimal),
-    });
-    return { scenario: match, report };
-  },
+
   getAuditLogs: () =>
     api.get('/audit-log').then((r) => {
       const items = r.data.items || r.data || [];

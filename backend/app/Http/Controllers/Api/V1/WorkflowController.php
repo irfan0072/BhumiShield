@@ -13,7 +13,7 @@ use Database\Seeders\DatabaseSeeder;
 
 /**
  * Laravel Controller for Role Workflows: Locations, Plots, Citizen Check-Before-You-Buy,
- * Sub-Registrar, AC Land Mutations, Bank Mortgages, Scenarios, and Bangla Khatian OCR.
+ * Sub-Registrar, AC Land Mutations, Bank Mortgages, Risk Rules, and Bangla Khatian OCR.
  */
 final class WorkflowController
 {
@@ -319,42 +319,7 @@ final class WorkflowController
         ]);
     }
 
-    public static function listDemoScenarios(): array
-    {
-        $rows = DB::select('SELECT * FROM demo_scenarios ORDER BY scenario_no ASC');
-        $enriched = [];
-        foreach ($rows as $sc) {
-            $bundle = self::loadPlotBundle((int) $sc['plot_id']);
-            $seller = DB::selectOne('SELECT * FROM persons WHERE id = ?', [$sc['seller_id']]);
-            $buyer = DB::selectOne('SELECT * FROM persons WHERE id = ?', [$sc['buyer_id']]);
-            $risk = FraudRulesEngine::evaluatePlotAndTransaction(
-                $bundle['plot'],
-                $bundle['khatians'],
-                $bundle['latest_ownerships'],
-                $bundle['latest_owner_persons'],
-                $bundle['deeds'],
-                $bundle['mortgages'],
-                $seller,
-                (float) $sc['requested_area_decimal'],
-                $sc['seller_nid_override'] ?? null,
-                null,
-                false,
-                $bundle['disputes']
-            );
-            $enriched[] = array_merge($sc, [
-                'plot' => $bundle['plot'],
-                'location' => $bundle['location'],
-                'seller' => $seller,
-                'buyer' => $buyer,
-                'live_verdict' => $risk['verdict'],
-                'live_risk_score' => $risk['risk_score'],
-                'live_flags' => $risk['flags'],
-                'live_summary_bn' => $risk['summary_bn'],
-                'live_summary_en' => $risk['summary_en'],
-            ]);
-        }
-        return ['items' => $enriched, 'total' => count($enriched)];
-    }
+
 
     public static function subRegistrarPreCheck(array $req): array
     {

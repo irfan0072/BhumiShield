@@ -1,194 +1,75 @@
-# BhumiShield (ভূমি সুরক্ষা) — Gap Report (v1 → v2 Upgrade)
+# BhumiShield (ভূমি সুরক্ষা) — Gap Report (v3 Production Conversion)
 
-**Date:** 2026-10-17  
-**Context:** LandTech Innovation Hackathon 2026 (Daffodil International University)  
-**Track:** Digital Land Records, Verification & Digitization  
-**Specification:** UPGRADE PROMPT v2 (Antigravity)
+**Audit Date:** 2026-10-17  
+**Project:** BhumiShield (ভূমি সুরক্ষা) — National Land Records Trust Layer & Fraud Prevention Engine  
+**Event:** LandTech Innovation Hackathon 2026 (Daffodil International University)  
+**Specification:** PRODUCTION CONVERSION PROMPT v3 (for Antigravity)
 
 ---
 
 ## 1. Executive Summary
 
-This report establishes the baseline comparison between the current production-ready BhumiShield codebase and the Hackathon v2 Specification.
-
-- **Backend Status:** Already running on Laravel 11.0 (PHP 8.4) with custom PDO SQLite/PostgreSQL layer, ext-sodium Ed25519 signatures, SHA-256 hash chaining, and 47 green tests. No language port is needed (M1 is fulfilled).
-- **Core Principles Maintained:** All 8 hackathon demo scenarios, 9 fraud detection rules, Bangladesh flag visual branding (`#006A4E`, `#F42A41`, `#C4891A`), and Hind Siliguri Bangla typography will remain intact.
-- **Primary Upgrades Required:**
-  1. Transition from 5 simple roles to an 18-role RBAC architecture with jurisdiction scoping.
-  2. Implement an inviolable DB-level guard ensuring **only `ApproveMutation` (role `ac_land`)** can mutate `ownerships`.
-  3. Expand the deed registration and mutation flow into the **13-step transfer state machine** with mock biometric counter verification.
-  4. Migrate to friendly bilingual `/bn` and `/en` slug/code-based routing.
-  5. Build the Citizen Documents Vault with trust levels (L0–L3) and 2-tap pre-filled ticket submission.
-  6. Add new schema tables for offices, appointments, transfers, documents, tickets, listings, notices, and blog.
+This Gap Report defines the strict transition from the hackathon demonstration baseline to a **complete, production-grade land records trust system**. In this architecture, every verdict, risk flag, status, and document is computed at request time from database state by generic domain services. The only fake element in the entire system is the synthetic input data and simulated external interfaces.
 
 ---
 
-## 2. KEEP (Already Correct — Do Not Rewrite)
+## 2. KEEP (Proven Production Foundations)
 
-The following components are robust, tested, and meet or exceed the v2 specification requirements:
+The following core components meet or exceed production-level requirements and will be strictly preserved:
 
-1. **The 8 Seeded Demo Scenarios:**
-   - Scenario 1 (`CLEAN_SALE`): Dag 101, Deed DL-2026-1001 → Verdict `SAFE`
-   - Scenario 2 (`DOUBLE_SALE`): Dag 102, Deed DL-2026-1002 → Verdict `HIGH_RISK`
-   - Scenario 3 (`AREA_EXCEEDS_OWNED`): Dag 103, 18 dec vs 12 dec → Verdict `HIGH_RISK`
-   - Scenario 4 (`SELLER_NOT_OWNER`): Dag 104, non-owner seller → Verdict `HIGH_RISK`
-   - Scenario 5 (`DEED_TAMPERED`): Dag 105, Deed DL-2026-1005 → Verdict `HIGH_RISK`
-   - Scenario 6 (`PLOT_MORTGAGED`): Dag 106, active Sonali Bank lien → Verdict `HIGH_RISK`
-   - Scenario 7 (`KHATIAN_CHAIN_BREAK`): Dag 107, RS 18 dec to BS 26 dec → Verdict `REVIEW`
-   - Scenario 8 (`INHERITANCE_UNRESOLVED`): Dag 108, deceased owner → Verdict `REVIEW`
-
-2. **The 9 Fraud & Discrepancy Detection Rules (`FraudRulesEngine.php`):**
-   - Pure, deterministic calculation of `SELLER_NOT_OWNER`, `AREA_EXCEEDS_OWNED`, `DOUBLE_SALE`, `KHATIAN_CHAIN_BREAK`, `DEED_TAMPERED`, `PLOT_MORTGAGED`, `RAPID_RESALE`, `INHERITANCE_UNRESOLVED`, and `NID_MISMATCH`.
-   - Produces structured bilingual findings with severity, score deltas, and actionable guidance.
-
-3. **Cryptographic Deed Ledger & Audit Log (`LedgerService.php`):**
+1. **Deterministic Fraud Rules Engine (`FraudRulesEngine.php`):**
+   - 9 mathematical, deterministic rules (`SELLER_NOT_OWNER`, `AREA_EXCEEDS_OWNED`, `DOUBLE_SALE`, `KHATIAN_CHAIN_BREAK`, `DEED_TAMPERED`, `PLOT_MORTGAGED`, `RAPID_RESALE`, `INHERITANCE_UNRESOLVED`, `NID_MISMATCH`).
+   - Dynamic computation from real database rows without hard-coded IDs or scenario tags.
+2. **Inviolable Ownership Guard (`OwnershipGuard.php`):**
+   - Strictly enforces that **only AC Land mutation approval (`ac_land`)** can modify `ownerships`.
+   - Guaranteed by automated regression tests proving all other roles, controllers, and direct queries fail closed.
+3. **Cryptographic Deed Ledger & Audit Engine (`LedgerService.php`):**
    - Canonical JSON serialization with recursive key sorting.
    - SHA-256 hash chaining of deed envelopes and audit entries.
    - Ed25519 digital signatures using native PHP `libsodium` (`sodium_crypto_sign_detached`).
-   - Tamper simulation and automatic tamper detection.
-
-4. **Existing 47 Automated Tests:**
-   - 18 tests in `RulesAndLedgerTest` (rules, scenarios, ledger tampering, role workflows).
-   - 29 regression tests in `RoleAuditRegressionTest` (findings F01–F22, I01–I08).
-
-5. **In-Panel Officer Utilities:**
-   - `OfficerKhatianExplorer.tsx`: Historical CS → SA → RS → BS lineage explorer with joint holding breakdown and dispute/lock indicators.
-   - `OfficerDeedVerifier.tsx`: Digital signature and block hash validator with interactive tamper testing.
-
-6. **Branding, Theme, and Accessibility Tokens:**
-   - Bangladesh flag colors: Bottle Green (`#006A4E`), National Red (`#F42A41`), Amber (`#C4891A`).
-   - `Hind Siliguri` primary Bengali typography with 18px base text size and 48px touch targets.
-   - High-contrast toggle, text size zoom, and WCAG AA compliance.
-
-7. **Service Catalogue & Statutory Fee Registry (`ServiceCatalogueController.php`):**
-   - 6 official Bangladesh land services linked to `mutation.land.gov.bd`, `lsg-portal.land.gov.bd`, `ldtax.gov.bd`, and `settlement.gov.bd`.
-   - Statutory fee schedules reflecting Ministry Circular dated 17 February 2026.
+4. **13-Step Transfer State Machine (`TransferStateMachine.php`):**
+   - Fully modeled transfer lifecycle with immutable event auditing, multi-party consent, and strict role transition gates.
+5. **National Flag Design System & Bangla Accessibility:**
+   - Bottle Green (`#006A4E`), National Red (`#F42A41`), Amber (`#C4891A`).
+   - `Hind Siliguri` typography, 18px base text size, 48px touch targets, WCAG 2.1 AA compliance, high contrast toggle.
+6. **Existing Automated Test Suite:**
+   - 119 passing tests covering RBAC authorization, tamper detection, security workflows, and data integrity.
 
 ---
 
-## 3. MODIFY (Must Change — Explicit Modifications M1–M12)
+## 3. MODIFY (Required Refactorings & Generalizations)
 
-| # | Item | Current Implementation | Target Specification (v2) | Rationale |
-|---|---|---|---|---|
-| **M1** | Backend Framework | Laravel 11.0 on PHP 8.4 is already in place. | Preserve Laravel JSON API, Eloquent models, and artisan commands. | Team requirement already met; no port needed. |
-| **M2** | Role Storage & RBAC | Single string column `role` in `users` with 5 roles (`citizen`, `sub_registrar`, `ac_land`, `bank_officer`, `admin`). | Granular RBAC supporting all 18 roles specified in Section 4.2 with permission matrices (Section 4.4) and jurisdiction scoping (`office_id`, division, district, upazila, mouza set). Seed 1 demo user per role. | Multi-tier administrative governance and least privilege. |
-| **M3** | Ownership Guard | Ownership updates happen in `WorkflowController::decideMutationCase` AND `RoleControlController::reconcileKhatianPlot`. | **Remove every code path that writes to `ownerships` except `ApproveMutation` (role `ac_land`).** Implement an inviolable DB-level guard (trigger or strict application writer check) and add automated tests proving all other roles/methods fail closed. | Constitutional authority rule: only AC Land can change ownership. |
-| **M4** | Transfer State Machine | Ad-hoc register deed endpoint → pending mutation queue. | **13-step transfer state machine** (`transfer_requests`, `transfer_events`, `transfer_parties`, `transfer_consents`). 5 friendly citizen stages (Start, Verify, Register, Review, Done). Link existing deeds/mutations to initial transfer requests. | Complete end-to-end land transaction lifecycle. |
-| **M5** | Privacy Masking | Partial masking on persons list and public deed verifier. | Rigorous enforcement across all endpoints: NID last 4 only to the owner; phone numbers never exposed to third parties; non-party names masked (First name + `***`); prices visible only to transaction parties, Sub-Registrar, and AC Land; banks see collateral value only. | Data privacy and citizen security. |
-| **M6** | Friendly URLs & Slugs | Tab/query parameter navigation (`/?tab=check&plot_id=101`). | **Prefix all routes with `/bn` or `/en`** with public alphanumeric codes and slugs (e.g. `/bn/check/...`, `/bn/verify/D-8F3K2Q`, `/bn/plots/PLT-DHK-ASH-101`, `/bn/my/land/...`). Add 301 redirects for backwards compatibility. Never expose raw integer IDs. | User experience and speakable reference codes. |
-| **M7** | Navigation Structure | Top navbar with simple tab links. | Public Navigation: Map, Sale, Notices, Blog, Offices, Help. Citizen Navigation: My Land, My Transfers, My Tickets, Alerts. Scoped Officer Navigation per role. | Clean citizen-first and officer-specific workflows. |
-| **M8** | Database Schema Extension | 14 core tables. | Add 16+ new tables from Section 7 without dropping existing ones (`offices`, `appointments`, `case_access_grants`, `transfer_requests`, `biometric_verifications`, `plot_documents`, `document_templates`, `tickets`, `sla_policies`, `listings`, `notices`, `blog_posts`, etc.). | Support v2 modular features. |
-| **M9** | Full Bilingual Strings | UI is mostly bilingual; some newer backend messages and seed descriptions are single-language. | Complete Bengali and English strings for all new screens and error messages. Zero hardcoded single-language text. | Bangla-first requirement. |
-| **M10** | Seed Data Expansion | 7 demo accounts, 60 plots, 80 deeds, 8 scenarios. | Extend seeder with offices, service points, demo users for all 18 roles, document templates with all statuses (L0–L3), sample tickets, listings, notices with attachments, and blog posts. | Comprehensive hackathon demonstration readiness. |
-| **M11** | Documentation Update | Docs reflect earlier interim audits. | Update `README.md`, `docs/ARCHITECTURE.md` (Mermaid), `docs/INTEGRATION.md` (EC NID, Land Service Gateway, Biometric Provider), `docs/RULES.md`, and write `docs/DEMO_SCRIPT.md` (v2 3-minute timed script). | Evaluation criteria. |
-| **M12** | Automated Test Suite | 47 existing feature/regression tests. | Add tests for: ownership guard enforcement, 13-step state machine transitions, 18-role permission matrix, privacy masking verification, ticket SLA tracking, and biometric result handling. | Safety and reliability. |
+| Area | Current State | Target State (v3) | Rationale |
+|---|---|---|---|
+| **Scenario Artifacts** | `demo_scenarios` table, routes (`/scenarios`), and UI references in check, landing, and admin pages. | **Complete scenario purge:** Drop `demo_scenarios` table, remove all routes, and eliminate all `scenario` wording across `app/`, `database/`, `routes/`, and `frontend/src/`. | v3 Requirement: No outcome is pre-decided; eliminate all canned demo helpers. |
+| **Tamper Simulation** | UI button on deed verifier pages directly modifies the database. | **Console-only tamper drill:** Remove UI buttons; add `php artisan bhumi:drill:tamper {deed_code} --confirm` (runs only in local/demo environment). | Production systems never expose tamper buttons in user interfaces. |
+| **Provider Boundaries** | `MockNidService` and `MockBiometricProvider` live inside application services. | **Architectural abstraction:** Define clean interfaces in `app/Contracts/*` (`NidVerificationProvider`, `BiometricProvider`, `SmsProvider`, `PaymentProvider`, `LandServiceGatewayAdapter`) with simulator drivers in `app/Simulators/*`. Core app does not know simulators exist. | Real production boundaries with pluggable drivers. |
+| **Data Generation** | Manual static seeder in `DatabaseSeeder.php`. | **Synthetic Data Factory:** `php artisan bhumi:seed-world --profile=pilot --seed=2026 [--fresh]` advancing time over 12 months, executing real domain services as proper role users. | Synthetic data enters the way real data enters: through maker-checker and officer actions. |
+| **Biometric Verification** | Basic boolean match helper. | **Production Biometric Session:** Registered terminals, 2-minute challenge nonce, client-side liveness detection (frames never leave browser), presentation token, supervisor override, and audited result persistence. | Realistic, privacy-preserving biometric counter workflow. |
+| **Role Dashboards** | Roles have accessible tabs but some rely on static layouts. | **Complete Daily Workflows (J0–J11):** Every role has a complete, working daily workflow with validation, notifications, error handling in Bangla, and automated browser tests. | A role is not done until its journey passes an automated test. |
 
 ---
 
-## 4. ADD (New Capabilities & Modules)
+## 4. ADD (New Production Modules & Gates)
 
-### 4.1 Schema Tables (Section 7)
-- `offices`: Registry offices, AC Land offices, Union Land offices, Settlement offices, and Service Points with coordinates and jurisdictions.
-- `office_user`: Assignment of officers to offices and jurisdictions.
-- `appointments`: Booking slots at registry offices or service points.
-- `case_access_grants`: Time-limited (default 7 days) case-scoped access for Service Points.
-- `transfer_requests`: The core 13-step transfer state entity (`TR-2026-XXXXXX`).
-- `transfer_parties`: Sellers, buyers, and heirs associated with a transfer.
-- `transfer_consents`: Co-owner OTP consents with timestamps and status.
-- `transfer_events`: Immutable state transition audit trail (who, when, from, to, reason).
-- `biometric_verifications`: Counter biometric audit record (transaction ID, party, match yes/no, score, terminal ID, officer ID).
-- `plot_documents`: Citizen and official documents per plot with trust levels (`L3` Official, `L2` Verified copy, `L1` Citizen-uploaded, `L0` Missing), file paths, SHA-256 hashes, and verification metadata.
-- `document_templates`: Expected documents checklist based on acquisition type (sale, inheritance, gift, original survey).
-- `tickets`: Citizen and officer support ticket management (`TKT-2026-XXXXXX`).
-- `ticket_messages`: Public replies and internal officer notes.
-- `ticket_events`: Ticket assignment, SLA tracking, and status changes.
-- `sla_policies`: Service Level Agreement targets (first reply 1–3 days, resolution 2–30 days).
-- `listings`: Citizen land sale marketplace listings (only verified owners, unanimous co-owner consent, unencumbered).
-- `listing_enquiries`: Secure in-app buyer inquiries (no phone exposure).
-- `plot_geometries`: Synthetic PostGIS polygon coordinates for cadastral map representation.
-- `notices`: Official public notices with categories and jurisdictions.
-- `notice_attachments`: Notice files with SHA-256 hash and QR verification seal.
-- `blog_posts` & `blog_categories`: Public land literacy guides and awareness articles.
-- `onboarding_batches` & `onboarding_items`: Staging area for maker–checker production data entry.
-- `appeals`: Mirror records for appellate reviews and court orders.
-
-### 4.2 Interfaces & Services
-- **`BiometricProvider` Interface:**
-  - `MockProvider`: Simulates counter biometric terminal with browser camera liveness demonstration and fingerprint sensor button. Storing **only** result records; no biometric templates or face images are ever stored.
-  - `EcNidProvider`: Documented architecture stub for production integration with Bangladesh Election Commission NID wing.
-- **`TransferStateMachine` Service:**
-  - Handles all 13 transitions, enforces pre-requisites (OTP, biometrics, deed registration, AC Land sign-off), and disallows illegal skips.
-- **`DocumentVaultService`:**
-  - Evaluates expected vs present documents per plot and computes trust levels (`L0` to `L3`).
-  - Powers the 2-tap missing-document ticket trigger.
-- **`TicketManagementService`:**
-  - Auto-routing based on issue category, SLA clock calculation, and 4-tier escalation ladder.
-
-### 4.3 Frontend Pages & Modules
-- `/bn/my/land/{plot_code}/documents`: Citizen Documents Vault with trust level badges and pre-filled missing-document ticket trigger.
-- `/bn/my/transfers`: Citizen transfer wizard and tracking (5 friendly stages).
-- `/bn/my/tickets`: Ticket submission, live tracking, and conversation thread.
-- `/bn/sale`: Public land sale browse page with filters, risk verdict chips, and in-app inquiry modal.
-- `/bn/notices`: Public noticeboard with downloadable QR-sealed attachments.
-- `/bn/blog`: Public educational blog.
-- `/bn/map`: Interactive plot and mouza map with zoom-aware sale tags.
-
----
-
-## 5. Implementation Roadmap (Tiered Strategy)
-
-```mermaid
-flowchart TD
-    subgraph Tier A [Tier A — Submission Ready by 18 October 2026]
-        P1[Phase 1: Baseline Audit & Gap Report] --> P2[Phase 2: RBAC 18 Roles & Inviolable Ownership Guard]
-        P2 --> P3[Phase 3: Friendly Bilingual URLs & Privacy Masking]
-        P3 --> P4[Phase 4: 13-Step Transfer State Machine & Biometric Mock]
-        P4 --> P5[Phase 5: Citizen Documents Vault & Missing-Doc Ticket]
-        P5 --> P6[Phase 6: Responsive Pass, Tests & 3-Min Demo Script]
-    end
-
-    subgraph Tier B [Tier B — Final Preparation]
-        P6 --> TB1[Interactive PostGIS Map & Zoom Tags]
-        TB1 --> TB2[Land Sale Listings & Marketplace]
-        TB2 --> TB3[Full Ticket SLA & Escalation Ladder]
-        TB3 --> TB4[Public Noticeboard & QR Attachments]
-        TB4 --> TB5[Public Educational Blog & Service Points]
-    end
-
-    subgraph Tier C [Tier C — Architecture Roadmap]
-        TB5 --> TC1[Maker-Checker Staging Data Onboarding]
-        TC1 --> TC2[Appellate Review Mirror & Legal Roles]
-        TC2 --> TC3[Production EC NID Adapter Specification]
-    end
-```
-
----
-
-## 6. Definition of Done Checklist
-
-### Tier A (Round 1 Submission Complete)
-- [x] **Step 0 Complete:** `docs/CURRENT_STATE.md` and `docs/GAP_REPORT.md` created.
-- [x] **Phase 2 Complete:** All 18 Spatie RBAC roles seeded with jurisdiction scoping; SQLite triggers (`trg_guard_ownership_insert`, `trg_guard_ownership_update`, `trg_guard_ownership_delete`) strictly restrict `ownerships` mutations to `ac_land` (`ApproveMutation`).
-- [x] **Phase 3 Complete:** Friendly bilingual `/bn` and `/en` routing active; privacy masking verified on all public and citizen endpoints (NID masked, phone hidden).
-- [x] **Phase 4 Complete:** Transfer state machine operational with all 13 steps mapped to 5 citizen stages (`START`, `VERIFY`, `REGISTER`, `REVIEW`, `DONE`); mock counter biometric check logged before deed registration; AC Land sole mutation approver.
-- [x] **Phase 5 Complete:** Plot documents vault displays L0–L3 trust levels; missing document button creates pre-filled SLA support ticket in 2 taps (`TKT-2026-XXXXXX`).
-- [x] **Phase 6 Complete:** Layout verified at 360px, 768px, and 1280px with AA contrast; all 8 original demo scenarios pass; `docs/DEMO_SCRIPT.md` delivered.
-
-### Tier B (Final Preparation Complete)
-- [x] **Land Sale Marketplace (`/bn/sale` & `/en/sale`):** Verified unencumbered land listings, filtered by district/upazila/mouza/price, in-app enquiry without phone disclosure, and instant fraud check jump.
-- [x] **Official Noticeboard (`/bn/notices` & `/en/notices`):** 5 official gazettes/circulars with categories, pinned/urgent alerts, SHA-256 seal, and QR verification stamp preview.
-- [x] **Educational Blog (`/bn/blog` & `/en/blog`):** 5 land literacy & fraud prevention guides, category filtering, reading time, and interactive helpful feedback counter.
-- [x] **Office & Service Point Locator (`/bn/offices` & `/en/offices`):** Registry, AC Land, UDC Service Points, and Bank Branches with addresses, contacts, operating hours, and in-person appointment booking.
-- [x] **Cadastral Mouza Map (`/bn/map` & `/en/map`):** Zoom-aware visualizer (Upazila clusters <= 9, Mouza clusters 10–13, Plot boundaries >= 14) with interactive sidebar inspector.
-- [x] **Automated Test Suite:** 55 tests passing (20 Rules & Ledger tests, 29 Audit Regression tests, 6 Tier B Marketplace/Portal tests).
-
-### Tier C (Architecture & Extended Modules Complete)
-- [x] **Maker-Checker Staging Data Onboarding (Section 8.7):** Four-eyes principle strictly enforced (`SEPARATION_OF_DUTIES_VIOLATION` if maker approves own batch); SHA-256 batch proof packages; valid item payloads with NID and area checks; Sub-Registrar / AC Land / Checker decision workflows.
-- [x] **Appellate Review Mirror & Legal Roles (Section 8.8):** Citizen appeal petition filing (`APL-2026-XXXX`); ADC Revenue and UNO tribunal hearing scheduling; `STAY_ORDER_GRANTED` decision automatically locks the plot against any sale or mutation (`owner_sale_locked = 1`).
-- [x] **Unified Governance UI:** Admin Dashboard Tab 9 "অনবোর্ডিং ও আপিল (Onboarding & Appeals)" provides comprehensive oversight, item inspection, batch decision controls, and tribunal order execution.
-- [x] **Complete Automated Test Suite:** 61 tests passing across all 4 suites:
-  - `RulesAndLedgerTest`: 20 passed
-  - `RoleAuditRegressionTest`: 29 passed
-  - `TierBPortalAndMarketplaceTest`: 6 passed
-  - `TierCOnboardingAndAppealsTest`: 6 passed
-- [x] **System Architecture & Integration Specifications:** `docs/ARCHITECTURE.md` and `docs/INTEGRATION.md` updated with technical integration adapters for EC NID Porichoy, Land Service Gateway (LSG), and Biometric Counter Verifier.
+1. **CI Scenario Gate (`scripts/ci-gate-no-scenarios.sh`):**
+   - Automated build script that scans `backend/app/`, `backend/database/`, `backend/routes/`, and `frontend/src/` for case-insensitive `scenario`. Fails build if any match is found.
+2. **Console Drill Command (`php artisan bhumi:drill:tamper`):**
+   - CLI-only integrity drill tool for evaluators and security drills that mutates a deed record directly in the DB to test SHA-256 / Ed25519 tamper detection organically.
+3. **Provider Contracts & Simulators (`app/Contracts/*` & `app/Simulators/*`):**
+   - `NidVerificationProvider` (synthetic registry lookup, realistic latency, timeouts)
+   - `BiometricProvider` (presentation token verification against synthetic enrolment)
+   - `SmsProvider` (outbox viewer for OTPs at `/admin/dev/outbox`)
+   - `PaymentProvider` (simulated MFS payment with receipt and fee ledger callback)
+   - `LandServiceGatewayAdapter` (e-porcha and LD tax synthetic gateway)
+4. **Biometric Terminal Session Manager:**
+   - Terminal registration table, challenge nonce generator, presentation token verifier, supervisor dual-key override.
+5. **Synthetic World Seeder (`php artisan bhumi:seed-world`):**
+   - Pilot profile generating 2 districts, 5 upazilas, 30 mouzas, 4,000 plots, 6,000 persons, 5,000 deeds, 800 mutations, 200 liens, 120 tickets.
+6. **Playwright E2E Test Suite for Journeys J0–J11:**
+   - Dedicated browser tests covering complete daily workflows for all user personas.
+7. **Production Documentation Suite:**
+   - `docs/ARCHITECTURE.md` (Mermaid diagrams)
+   - `docs/INTEGRATION.md` (replacing simulators with real production APIs)
+   - `docs/SECURITY.md` & `docs/RULES.md`
+   - `docs/DEMO_RUNBOOK.md` (timed 3-minute evaluator script without UI helpers)

@@ -38,7 +38,6 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
   const [stats, setStats] = useState<any>(null);
   const [locations, setLocations] = useState<any[]>([]);
   const [plots, setPlots] = useState<any[]>([]);
-  const [scenarios, setScenarios] = useState<any[]>([]);
   const [catalogueServices, setCatalogueServices] = useState<ServiceCatalogueItem[]>([]);
   const [catalogueState, setCatalogueState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [selectedServiceCat, setSelectedServiceCat] = useState<string>('ALL');
@@ -54,14 +53,12 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
       BhumiApi.getStatsSummary(),
       BhumiApi.getLocations(),
       BhumiApi.getPlots(),
-      import.meta.env.DEV ? BhumiApi.getDemoScenarios() : Promise.resolve([]),
       BhumiApi.listPublicServices(),
     ])
-      .then(([st, locs, plts, scns, svcs]) => {
+      .then(([st, locs, plts, svcs]) => {
         if (st.status === 'fulfilled') setStats(st.value);
         if (locs.status === 'fulfilled') setLocations(locs.value);
         if (plts.status === 'fulfilled') setPlots(plts.value);
-        if (scns.status === 'fulfilled') setScenarios(scns.value);
         if (svcs.status === 'fulfilled') {
           setCatalogueServices(svcs.value?.items || []);
           setCatalogueState('ready');
@@ -606,71 +603,6 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
         </div>
       </section>
 
-      {/* Live Demo Scenarios for Evaluators */}
-      {scenarios.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4">
-          <div className="mb-6 border-b border-slate-200 pb-3 flex items-end justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900">
-                {t('ভূমি ঝুঁকি ও জালিয়াতি সনাক্তকরণ প্রটোকল', 'Land Risk & Fraud Detection Protocols')}
-              </h2>
-              <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
-                {t(
-                  'ভূমি হস্তান্তর ও নিবন্ধনের ক্ষেত্রে ৮টি স্বয়ংক্রিয় ঝুঁকি ও জালিয়াতি সনাক্তকরণ প্রটোকল:',
-                  '8 Standard automated verification and fraud detection rules for land registration:'
-                )}
-              </p>
-            </div>
-            <span className="text-xs font-bold px-2.5 py-1 rounded bg-[#E6F2EE] text-[#006A4E] hidden sm:inline-block">
-              8 Standard Protocols
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-            {scenarios.map((sc) => {
-              const isSafe = sc.badge_type === 'SAFE';
-              const isWarn = sc.badge_type === 'WARNING';
-              return (
-                <div
-                  key={sc.code}
-                  onClick={() => onNavigate('check')}
-                  className={`rounded-xl border bg-white p-4 shadow-2xs hover:shadow-md transition-all cursor-pointer border-l-4 flex flex-col justify-between ${
-                    isSafe
-                      ? 'border-l-[#006A4E] border-slate-200'
-                      : isWarn
-                      ? 'border-l-amber-500 border-slate-200'
-                      : 'border-l-rose-500 border-slate-200'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-mono font-bold text-slate-400">#{sc.code}</span>
-                      <span
-                        className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
-                          isSafe
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : isWarn
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-rose-100 text-rose-800'
-                        }`}
-                      >
-                        {sc.badge_type}
-                      </span>
-                    </div>
-                    <div className="text-xs sm:text-sm font-bold text-slate-900 mt-2 line-clamp-2">
-                      {lang === 'bn' ? sc.title_bn : sc.title_en}
-                    </div>
-                  </div>
-                  <div className="mt-3 pt-2 border-t border-slate-100 text-[11px] font-bold text-emerald-800 flex items-center justify-between">
-                    <span>{t('কেস পরীক্ষা করুন', 'Run Test')}</span>
-                    <span>→</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
 
       {/* Trust Pipeline — 3 Simple Steps */}
       <section className="bg-slate-50 border-y border-slate-200 py-14">

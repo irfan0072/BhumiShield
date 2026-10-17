@@ -15,7 +15,7 @@ use Database\Migrations\CreateBhumishieldTables;
 /**
  * Seeds the BhumiShield Laravel database with 100% synthetic Bangladeshi land records,
  * all 18 RBAC demo user roles, offices, document vault templates, SLA policies,
- * transfer state machines, and the 8 deliberate hackathon demo scenarios.
+ * transfer state machines, and real land record workflows.
  */
 final class DatabaseSeeder
 {
@@ -824,24 +824,6 @@ final class DatabaseSeeder
             [$deed1Id, $plotIds[0], $personIds[16], $personIds[0]]
         );
 
-        // 8. Seed 8 Deliberate Demo Scenarios
-        $scenarios = [
-            [1, 'CLEAN_SALE', '১. বৈধ ও নিরাপদ জমি বিক্রয় (সকল যাচাই সফল)', '1. Clean Legitimate Sale (All Checks Pass)', 'SAFE', '✔ নিরাপদ', '✔ Safe', 'বিরুলিয়া মৌজার দাগ নং ১০১-এর প্রকৃত মালিক মো. রফিকুল ইসলাম তাঁর ২০ শতাংশ নিষ্কণ্টক জমি হতে ১০ শতাংশ (১/২ অংশ) মোসা. রাবেয়া খাতুনের নিকট বিক্রয় করছেন। সিএস-এসএ-আরএস-বিএস খতিয়ান ও এনআইডি সম্পূর্ণ সঠিক।', 'Legitimate owner Md. Rafiqul Islam sells 10 decimals (out of 20 decimals owned on BS Khatian 4101, Dag 101, Birulia) to Mst. Rabeya Khatun. Full CS-SA-RS-BS chain intact and no liens.', $plotIds[0], $deed1Id, $personIds[0], $personIds[1], 10.0, null, 'sub_registrar'],
-            [2, 'DOUBLE_SALE', '২. একই জমি দুইবার বিক্রয়ের চেষ্টা (ডাবল সেল জালিয়াতি)', '2. Double Sale of the Same Plot to Two Buyers', 'HIGH_RISK', '✖ ঝুঁকিপূর্ণ (আটকানো)', '✖ High Risk (Blocked)', 'দাগ নং ১০২-এর মালিক আবদুল করিম ইতিমধ্যে দলিল নং DL-2026-1002 মূলে সম্পূর্ণ ১৫ শতাংশ জমি মো. জাহাঙ্গীর আলমের নিকট বিক্রি করেছেন (নামজারি প্রক্রিয়াধীন)। এখন তিনি আবার একই জমি মো. কামরুল হাসানের কাছে বিক্রির চেষ্টা করছেন।', 'Owner Abdul Karim already sold all 15 decimals of Dag 102 to Md. Jahangir Alam via Deed DL-2026-1002 (mutation pending) and now attempts to sell 10 decimals of the same plot to a second buyer.', $plotIds[1], $deed2Id, $personIds[2], $personIds[4], 10.0, null, 'sub_registrar'],
-            [3, 'AREA_EXCEEDS_OWNED', '৩. নিজের অংশের চেয়ে বেশি জমি বিক্রয়ের চেষ্টা', '3. Seller Selling More Area Than Owned Share', 'HIGH_RISK', '✖ ঝুঁকিপূর্ণ (আটকানো)', '✖ High Risk (Blocked)', 'দাগ নং ১০৩-এ মোট জমি ২৪ শতাংশ। বিক্রেতা মো. আনোয়ার হোসেন বিএস খতিয়ান ৪১০৩ অনুযায়ী ১/২ অংশের (১২ শতাংশ) মালিক, কিন্তু তিনি ১৮ শতাংশ জমি বিক্রির দলিল নিবন্ধনের চেষ্টা করছেন।', 'Dag 103 has 24 decimals total. Seller Md. Anwar Hossain owns a 1/2 share (12 decimals) on BS Khatian 4103, but attempts to sell 18 decimals.', $plotIds[2], null, $personIds[5], $personIds[4], 18.0, null, 'sub_registrar'],
-            [4, 'SELLER_NOT_OWNER', '৪. ভুয়া মালিক কর্তৃক জমি বিক্রয়ের চেষ্টা (সর্বশেষ খতিয়ানে নাম নেই)', '4. Seller Is Not the Current Owner on Latest Khatian', 'HIGH_RISK', '✖ ঝুঁকিপূর্ণ (আটকানো)', '✖ High Risk (Blocked)', 'দাগ নং ১০৪-এর বর্তমান বিএস খতিয়ান ৪১০৪-এর একমাত্র মালিক ফাতেমা বেগম। কিন্তু পূর্ববর্তী বিক্রেতা মো. সাইফুল ইসলাম নিজেকে মালিক দাবি করে ৮ শতাংশ জমি বিক্রির চেষ্টা করছেন।', 'Fatema Begum is the sole recorded owner on latest BS Khatian 4104 for Dag 104, but non-owner Md. Saiful Islam attempts to sell 8 decimals.', $plotIds[3], null, $personIds[8], $personIds[9], 8.0, null, 'sub_registrar'],
-            [5, 'DEED_TAMPERED', '৫. নিবন্ধনের পরে দলিলের তথ্য গোপনে পরিবর্তন (হ্যাশ ও স্বাক্ষর অমিল)', '5. Stored Deed Tampered After Registration (Hash & Signature Mismatch)', 'HIGH_RISK', '✖ ঝুঁকিপূর্ণ (টেম্পারিং সনাক্ত)', '✖ High Risk (Tampered)', 'দলিল নং DL-2026-1005 (দাগ নং ১০৫) মূলত ১০ শতাংশ জমির জন্য নিবন্ধিত ও ডিজিটাল স্বাক্ষরিত হয়েছিল। পরবর্তীতে ডাটাবেজে জমির পরিমাণ পরিবর্তন করে ২৫ শতাংশ করা হয়েছে—যা SHA-256 হ্যাশ চেইনে তাৎক্ষণিক ধরা পড়ে।', 'Deed DL-2026-1005 (Dag 105) was originally signed for 10 decimals, then altered in storage to 25 decimals. Hash chain recomputation catches the tampering immediately.', $plotIds[4], $deed5Id, $personIds[9], $personIds[11], 25.0, null, 'verify'],
-            [6, 'PLOT_MORTGAGED', '৬. ব্যাংকে বন্ধক থাকা জমি পুনরায় বন্ধক বা বিক্রির চেষ্টা (ডাবল মর্টগেজ)', '6. Plot Already Mortgaged Offered as Collateral Again', 'HIGH_RISK', '✖ ঝুঁকিপূর্ণ (বন্ধককৃত)', '✖ High Risk (Mortgaged)', 'দাগ নং ১০৬-এর ৩০ শতাংশ জমি সোনালী ব্যাংক পিএলসি (সাভার শাখা)-তে ২৫,০০,০০০ টাকার ঋণের বিপরীতে সক্রিয়ভাবে বন্ধক রয়েছে। ঋণ পরিশোধ ও ছাড়পত্র ছাড়া নতুন বন্ধক বা বিক্রয় ব্লক করা হয়েছে।', 'Dag 106 (30 decimals) has an active BDT 2,500,000 mortgage lien with Sonali Bank PLC, Savar Branch. Second mortgage or unencumbered transfer is blocked.', $plotIds[5], $deed6Id, $personIds[10], $personIds[11], 15.0, null, 'bank'],
-            [7, 'KHATIAN_CHAIN_BREAK', '৭. খতিয়ান চেইনে অসামঞ্জস্যতা (আরএস → বিএস জমির পরিমাণ অমিল)', '7. Khatian Survey Chain Break (RS -> BS Area Discrepancy)', 'REVIEW', '⚠ সতর্কতা (যাচাই প্রয়োজন)', '⚠ Warning (Needs Review)', 'দাগ নং ১০৭-এ সিএস, এসএ এবং আরএস খতিয়ানে জমির পরিমাণ ১৮ শতাংশ থাকলেও সর্বশেষ বিএস খতিয়ানে কোনো দলিল ছাড়াই ২৬ শতাংশ লিপিবদ্ধ হয়েছে। মানব কর্মকর্তার ম্যানুয়াল যাচাইয়ের জন্য ফ্ল্যাগ করা হয়েছে।', 'Dag 107 records 18 decimals across CS, SA, and RS surveys, but jumps to 26 decimals in BS Khatian 4107 without a supporting deed. Flagged for officer review.', $plotIds[6], null, $personIds[12], $personIds[1], 10.0, null, 'citizen'],
-            [8, 'INHERITANCE_UNRESOLVED', '৮. মৃত মালিকের ওয়ারিশ সনদ ও নামজারি অমীমাংসিত (ম্যানুয়াল রিভিউ)', '8. Inheritance Case with Unresolved Heirs (Manual Review)', 'REVIEW', '⚠ সতর্কতা (ওয়ারিশ যাচাই)', '⚠ Warning (Heirs Unresolved)', 'দাগ নং ১০৮-এর রেকর্ডীয় মালিক আলহাজ্ব নূরুল হক মৃত্যুবরণ করেছেন, কিন্তু এখনো সকল ওয়ারিশের নামজারি ও বণ্টননামা সম্পন্ন হয়নি। এসি ল্যান্ড ও সাব-রেজিস্ট্রারের যৌথ যাচাইয়ের জন্য সতর্কতা প্রদান।', 'Recorded BS owner Alhaj Nurul Haque (Dag 108) is marked deceased in the registry without completed succession mutation for all legal heirs.', $plotIds[7], null, $personIds[13], $personIds[14], 11.0, null, 'citizen'],
-        ];
-
-        foreach ($scenarios as $sc) {
-            DB::insert(
-                'INSERT INTO demo_scenarios (scenario_no, code, title_bn, title_en, expected_verdict, badge_bn, badge_en, description_bn, description_en, plot_id, deed_id, seller_id, buyer_id, requested_area_decimal, seller_nid_override, recommended_view) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                $sc
-            );
-        }
 
         // 9. Initial Audit Log Chain
         self::appendAuditEntry('admin', 'admin', 'LEDGER_GENESIS_SEED', 'ledger', 'GENESIS', [
@@ -895,7 +877,6 @@ final class DatabaseSeeder
             'plots' => count($plotIds),
             'khatian_records' => count($plotIds) * 4,
             'deeds' => $chainState['next_deed_index'] - 1,
-            'scenarios' => count($scenarios),
         ];
     }
 
@@ -1083,15 +1064,15 @@ final class DatabaseSeeder
         DB::insert("INSERT INTO blog_categories (slug, name_bn, name_en) VALUES ('fraud-alerts', 'প্রতারণা সতর্কতা ও আইনি সুরক্ষা', 'Fraud Alerts & Protection')");
         DB::insert("INSERT INTO blog_categories (slug, name_bn, name_en) VALUES ('statutory-rules', 'আইন, বিধি ও পরিপত্র', 'Statutory Rules & Circulars')");
 
-        // Seed 5 Blog Posts
+        // Seed 5 Blog Posts (F23: each body is now ≥2 paragraphs)
         $posts = [
             [
                 'how-to-verify-land-before-buying',
                 'land-literacy',
                 'জমি ক্রয়ের পূর্বে ৪টি মৌলিক বিষয় যেভাবে যাচাই করবেন',
                 '4 Crucial Land Checks Every Buyer Must Perform in Bangladesh',
-                'জমি ক্রয়ের ক্ষেত্রে সিএস, এসএ, আরএস এবং বিএস খতিয়ানের ধারাবাহিক চেইন মেলানো অত্যন্ত জরুরি। বিএস খতিয়ানে বিক্রেতার নাম ও অংশের পরিমাণ সঠিক আছে কি না তা ভূমি মন্ত্রণালয়ের ই-পর্চা পোর্টালে যাচাই করতে হবে। এছাড়া কোনো তফসিলি ব্যাংকে জমিটি বন্ধক আছে কি না তা ডিজিটাল এনওসি ব্যবস্থার মাধ্যমে নিশ্চিত হোন। ভূয়া ওয়ারিশ সনদ কিংবা বিক্রিয় লকের অস্তিত্ব ভূমি সুরক্ষা পোর্টালে এক ক্লিকেই যাচাই করা যায়।',
-                'Checking the historical khatian chain from CS to BS survey is the primary defence against property fraud. Always verify the recorded owner shares on the latest BS khatian and check for active bank mortgages.',
+                'জমি ক্রয়ের ক্ষেত্রে সিএস, এসএ, আরএস এবং বিএস খতিয়ানের ধারাবাহিক চেইন মেলানো অত্যন্ত জরুরি। বিএস খতিয়ানে বিক্রেতার নাম ও অংশের পরিমাণ সঠিক আছে কি না তা ভূমি মন্ত্রণালয়ের ই-পর্চা পোর্টালে যাচাই করতে হবে। এছাড়া কোনো তফসিলি ব্যাংকে জমিটি বন্ধক আছে কি না তা ডিজিটাল এনওসি ব্যবস্থার মাধ্যমে নিশ্চিত হোন। ভূয়া ওয়ারিশ সনদ কিংবা বিক্রিয় লকের অস্তিত্ব ভূমি সুরক্ষা পোর্টালে এক ক্লিকেই যাচাই করা যায়।' . "\n\n" . 'চূড়ান্তভাবে দলিল নিবন্ধনের পূর্বে অফিসে বসে ক্রেতা ও বিক্রেতা উভয়ের জাতীয় পরিচয়পত্রের ফিঙ্গারপ্রিন্ট ও জীবন-সাক্ষীর উপস্থিতি বাধ্যতামূলক। রেজিস্ট্রার অফিসের সহকারী কমিশনার (ল্যান্ড) কর্তৃক পরিদর্শন প্রতিবেদন এবং ভূমি উন্নয়ন কর পরিশোধের সর্বশেষ রসিদ ক্রেতাকে দেখে নেওয়া উচিত। এই চারটি স্তরের যেকোনো একটিতে গরমিল পাওয়া গেলে ক্রয় প্রক্রিয়া স্থগিত রাখুন এবং সংশ্লিষ্ট ইউনিয়ন ভূমি সহকারী কর্মকর্তার সাথে পরামর্শ করুন।',
+                'Checking the historical khatian chain from CS to BS survey is the primary defence against property fraud. Always verify the recorded owner shares on the latest BS khatian and check for active bank mortgages through the digital NOC endpoint.' . "\n\n" . 'Before finalising the deed registration, both buyer and seller must appear in person with valid National ID cards and two witnesses. The Assistant Commissioner (Land) inspection report and the most recent land development tax receipt are equally essential — request both and cross-check the seller\'s declared share against the official record. If any of these layers reveal a discrepancy, halt the transaction and consult the local Union Land Assistant Officer before proceeding.',
                 'মো. তানভীর আহমেদ (এসি ল্যান্ড)',
                 'Md. Tanvir Ahmed (AC Land)',
                 6,
@@ -1101,8 +1082,8 @@ final class DatabaseSeeder
                 'fraud-alerts',
                 'দলিল নিবন্ধনের পর তথ্য গোপনে পরিবর্তন রোধে ক্রিপ্টোগ্রাফিক সুরক্ষা',
                 'Preventing Post-Registration Deed Tampering with Ed25519 Signatures',
-                'ভূমি সুরক্ষায় প্রতিটি নিবন্ধিত দলিলের সম্পূর্ণ তথ্যের ডিজিটাল ফিঙ্গারপ্রিন্ট (SHA-256) এবং নিবন্ধন অধিদপ্তরের অনুমোদিত অফিসারের Ed25519 ডিজিটাল স্বাক্ষর যুক্ত করা হয়। ডাটাবেজে জমির পরিমাণ বা ব্যক্তির নাম পরিবর্তন করার চেষ্টা করলে সাথে সাথে লেজার হ্যাশ চেইনে লাল সতর্কবার্তা প্রদর্শিত হয়।',
-                'BhumiShield secures deed records using deterministic SHA-256 hash chaining and Ed25519 digital signatures. Any subsequent alteration in storage immediately breaks cryptographic verification.',
+                'ভূমি সুরক্ষায় প্রতিটি নিবন্ধিত দলিলের সম্পূর্ণ তথ্যের ডিজিটাল ফিঙ্গারপ্রিন্ট (SHA-256) এবং নিবন্ধন অধিদপ্তরের অনুমোদিত অফিসারের Ed25519 ডিজিটাল স্বাক্ষর যুক্ত করা হয়। ডাটাবেজে জমির পরিমাণ বা ব্যক্তির নাম পরিবর্তন করার চেষ্টা করলে সাথে সাথে লেজার হ্যাশ চেইনে লাল সতর্কবার্তা প্রদর্শিত হয়।' . "\n\n" . 'ক্রেতা মোবাইল অ্যাপে QR কোড স্ক্যান করে দলিলের বিশুদ্ধতা যাচাই করতে পারেন; SHA-256 হ্যাশ ভিন্ন হলে "ঝুঁকিপূর্ণ — তথ্য পরিবর্তিত" ব্যাজ প্রদর্শিত হয় এবং আইনি পুনর্মূল্যায়ন শুরু হয়। এই কৌশলটি ডিজিটাল দলিল জালিয়াতি ও কাগজপত্র-ভিত্তিক পুরাতন কেলেঙ্কারি দুটোকেই প্রতিহত করে।',
+                'BhumiShield secures deed records using deterministic SHA-256 hash chaining and Ed25519 digital signatures. Any subsequent alteration in storage immediately breaks cryptographic verification, raising a red flag in the public verifier.' . "\n\n" . 'Buyers can scan a QR code on the printed deed to confirm purity against the published hash; a mismatch triggers a "High Risk — Content Tampered" badge and an automatic legal re-review. This single mechanism defeats both digital record tampering and the older paper-based frauds that have plagued Bangladeshi land markets for decades.',
                 'ফারহানা ইয়াসমিন (সাব-রেজিস্ট্রার)',
                 'Farhana Yasmin (Sub-Registrar)',
                 5,
@@ -1112,8 +1093,8 @@ final class DatabaseSeeder
                 'land-literacy',
                 'ওয়ারিশি জমির সুষম ফারায়েজ ও নামজারি সম্পন্ন করার নিয়মাবলী',
                 'Step-by-Step Guide to Muslim Inheritance and Heir Mutation in Bangladesh',
-                'মূল মালিকের মৃত্যুর পর সকল জীবিত ওয়ারিশের জাতীয় পরিচয়পত্র ও সিটি কর্পোরেশন/ইউনিয়ন পরিষদের ওয়ারিশি সনদ সংগ্রহ করতে হবে। মুসলিম ফারায়েজ আইন অনুযায়ী সহ-শরিকদের হিস্যা নির্ধারণ ব্যতিরেকে এককভাবে কোনো ওয়ারিশ জমি হস্তান্তর করতে পারেন না। ভূমি সুরক্ষায় সহ-শরিকদের ডিজিটাল সম্মতি ছাড়া নামজারি আবেদন প্রক্রিয়াকরণ নিষিদ্ধ।',
-                'A comprehensive legal guide on obtaining heir certificates, calculating Muslim Faraiz shares, and registering inheritance mutations with unanimous co-owner digital consent.',
+                'মূল মালিকের মৃত্যুর পর সকল জীবিত ওয়ারিশের জাতীয় পরিচয়পত্র ও সিটি কর্পোরেশন/ইউনিয়ন পরিষদের ওয়ারিশি সনদ সংগ্রহ করতে হবে। মুসলিম ফারায়েজ আইন অনুযায়ী সহ-শরিকদের হিস্যা নির্ধারণ ব্যতিরেকে এককভাবে কোনো ওয়ারিশ জমি হস্তান্তর করতে পারেন না। ভূমি সুরক্ষায় সহ-শরিকদের ডিজিটাল সম্মতি ছাড়া নামজারি আবেদন প্রক্রিয়াকরণ নিষিদ্ধ।' . "\n\n" . 'নামজারি আবেদনপত্রের সাথে মৃত ব্যক্তির মৃত্যু সনদ, ব্যাংক পাসবুক/সঞ্চয়পত্র, এবং পূর্ববর্তী দলিলের সত্যায়িত কপি দাখিল করতে হয়। ইউনিয়ন ভূমি সহকারী কর্মকর্তা মাঠ পরিদর্শন শেষে এসি ল্যান্ডের কাছে প্রেরণ করেন; এসি ল্যান্ড ২৮ কর্মদিবসের মধ্যে চূড়ান্ত আদেশ জারি করবেন। কোনো সহ-শরিক আপত্তি করলে শুনানীর পর সিদ্ধান্ত গৃহীত হয়।',
+                'A comprehensive legal guide on obtaining heir certificates, calculating Muslim Faraiz shares, and registering inheritance mutations with unanimous co-owner digital consent.' . "\n\n" . 'Submit the deceased\'s death certificate, bank passbook / savings certificate, and a certified copy of the prior deed alongside the mutation application. The Union Land Assistant Officer conducts a field inspection before forwarding the file to the AC Land, who must issue a final order within 28 working days. Any co-heir objection triggers a formal hearing before the mutation is recorded.',
                 'মোসা. রাবেয়া খাতুন (আইনি পরামর্শক)',
                 'Mst. Rabeya Khatun (Legal Advisor)',
                 7,
@@ -1123,8 +1104,8 @@ final class DatabaseSeeder
                 'statutory-rules',
                 'ব্যাংক ঋণ পরিশোধের পর ডিজিটাল অনাপত্তিপত্র (NOC) প্রাপ্তির সহজ ধাপ',
                 'Securing Bank Lien Releases and Digital NOCs for Mortgaged Land',
-                'জমির ওপর ব্যাংক বা আর্থিক প্রতিষ্ঠানের সক্রিয় বন্ধকী লিয়েন থাকলে তা সাব-রেজিস্ট্রি অফিসে দলিল নিবন্ধনে স্বয়ংক্রিয়ভাবে ব্লক হয়। ঋণ পরিশোধ সম্পন্ন হলে সংশ্লিষ্ট ব্যাংকের ঋণ কর্মকর্তা ডিজিটাল প্ল্যাটফর্মে লিয়েন অবমুক্ত করেন এবং ক্রিপ্টোগ্রাফিক কিউআর সম্বলিত অনাপত্তিপত্র জারি করেন।',
-                'How commercial banks create, verify, and release land mortgage liens digitally, eliminating physical NOC forgery.',
+                'জমির ওপর ব্যাংক বা আর্থিক প্রতিষ্ঠানের সক্রিয় বন্ধকী লিয়েন থাকলে তা সাব-রেজিস্ট্রি অফিসে দলিল নিবন্ধনে স্বয়ংক্রিয়ভাবে ব্লক হয়। ঋণ পরিশোধ সম্পন্ন হলে সংশ্লিষ্ট ব্যাংকের ঋণ কর্মকর্তা ডিজিটাল প্ল্যাটফর্মে লিয়েন অবমুক্ত করেন এবং ক্রিপ্টোগ্রাফিক কিউআর সম্বলিত অনাপত্তিপত্র জারি করেন।' . "\n\n" . 'গ্রাহক ডিজিটাল NOC হারানো গেলে ভূমি সুরক্ষা অ্যাপ থেকে এক ক্লিকে পুনঃমুদ্রণ করতে পারেন। লিয়েন মুক্তির ৭২ ঘণ্টার মধ্যে ব্যাংকের কেন্দ্রীয় সার্ভার থেকে স্বয়ংক্রিয় ভেরিফিকেশন কোড সাব-রেজিস্ট্রিকে পাঠানো হয়, যা ভূয়া NOC তৈরির সম্ভাবনা সম্পূর্ণরূপে বন্ধ করে দিয়েছে।',
+                'How commercial banks create, verify, and release land mortgage liens digitally, eliminating physical NOC forgery.' . "\n\n" . 'If a customer loses the digital NOC, the BhumiShield app can re-print it with a single click. Within 72 hours of lien release, the bank\'s central server pushes an automatic verification code to the sub-registry, fully closing the loophole that allowed counterfeit NOC papers to circulate in physical markets.',
                 'সাদিয়া চৌধুরী (সিনিয়র প্রিন্সিপাল অফিসার, সোনালী ব্যাংক)',
                 'Sadia Chowdhury (Senior Principal Officer, Sonali Bank)',
                 5,
@@ -1134,8 +1115,8 @@ final class DatabaseSeeder
                 'land-literacy',
                 'সিএস থেকে বিএস খতিয়ানের ধারাবাহিক চেইন ও খতিয়ান পরিচিতি',
                 'Understanding the Survey Lineage: CS, SA, RS, and BS Khatians Explained',
-                '১৮৮৮ সালের ক্যাডাস্ট্রাল সার্ভে (CS), ১৯৫০ সালের স্টেট অ্যাকুইজিশন সার্ভে (SA), ১৯৬২ সালের রিভিশনাল সার্ভে (RS) এবং চলমান বাংলাদেশ সার্ভে (BS)। প্রতিটি জরিপের খতিয়ানে জমির দাগ নম্বর ও শ্রেণী পরিবর্তনের ইতিহাস সংরক্ষিত থাকে। কোনো স্তরে জমির পরিমাণ বৃদ্ধি অস্বাভাবিক হলে তা ভূমি দখল বা ভুল রেকর্ডের নির্দেশক।',
-                'A detailed walkthrough of historical land surveys in Bengal from 1888 to modern city surveys, and how to spot chain breaks.',
+                '১৮৮৮ সালের ক্যাডাস্ট্রাল সার্ভে (CS), ১৯৫০ সালের স্টেট অ্যাকুইজিশন সার্ভে (SA), ১৯৬২ সালের রিভিশনাল সার্ভে (RS) এবং চলমান বাংলাদেশ সার্ভে (BS)। প্রতিটি জরিপের খতিয়ানে জমির দাগ নম্বর ও শ্রেণী পরিবর্তনের ইতিহাস সংরক্ষিত থাকে। কোনো স্তরে জমির পরিমাণ বৃদ্ধি অস্বাভাবিক হলে তা ভূমি দখল বা ভুল রেকর্ডের নির্দেশক।' . "\n\n" . 'বাংলাদেশ সার্ভে (BS) এর সর্বশেষ আপডেট মূলত নগর ও পৌর এলাকায় সম্পন্ন হয়েছে; গ্রামীণ এলাকায় বেশিরভাগ জমি এখনও RS খতিয়ানের ওপর নির্ভরশীল। যেকোনো ক্রেতাকে কমপক্ষে ৩০ বছরের পিছনের খতিয়ান ইতিহাস যাচাই করার পরামর্শ দেওয়া হয়।',
+                'A detailed walkthrough of historical land surveys in Bengal from 1888 to modern city surveys, and how to spot chain breaks.' . "\n\n" . 'The latest BS survey has been completed primarily in urban and municipal areas; rural parcels still rely on the older RS khatian as their authoritative record. We strongly recommend that any buyer review at least 30 years of historical khatian lineage before completing a purchase — chain breaks in this window are the most common source of post-purchase disputes.',
                 'মো. দেলোয়ার হোসেন (সেটেলমেন্ট রেকর্ডস অফিসার)',
                 'Md. Delwar Hossain (Settlement Records Officer)',
                 8,

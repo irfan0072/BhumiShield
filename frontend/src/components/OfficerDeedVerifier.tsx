@@ -33,8 +33,6 @@ export const OfficerDeedVerifier: React.FC<OfficerDeedVerifierProps> = ({
   const [result, setResult] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [tamperLoading, setTamperLoading] = useState(false);
-  const [tamperSuccessMsg, setTamperSuccessMsg] = useState<string | null>(null);
   const [showCertModal, setShowCertModal] = useState(false);
 
   useEffect(() => {
@@ -56,7 +54,6 @@ export const OfficerDeedVerifier: React.FC<OfficerDeedVerifierProps> = ({
     if (!cleanCode) return;
     setLoading(true);
     setErrorMsg(null);
-    setTamperSuccessMsg(null);
 
     try {
       if (cleanCode.toUpperCase().startsWith('NOC-')) {
@@ -110,34 +107,6 @@ export const OfficerDeedVerifier: React.FC<OfficerDeedVerifierProps> = ({
   useEffect(() => {
     handleVerify(deedCode);
   }, []);
-
-  const handleSimulateTamper = async () => {
-    if (!result?.deed?.id && !result?.deed?.deed_no) return;
-    setTamperLoading(true);
-    setTamperSuccessMsg(null);
-    try {
-      const res = await BhumiApi.tamperDeedRecord(result.deed.deed_no || deedCode);
-      setTamperSuccessMsg(lang === 'bn' ? res.message_bn : res.message_en);
-      await handleVerify(deedCode);
-    } catch {
-      setErrorMsg(t('অখণ্ডতা অডিট টেস্ট ব্যর্থ হয়েছে।', 'Ledger integrity test failed.'));
-    } finally {
-      setTamperLoading(false);
-    }
-  };
-
-  const handleRestoreTamper = async () => {
-    setTamperLoading(true);
-    try {
-      await BhumiApi.resetLedger();
-      setTamperSuccessMsg(t('রেকর্ড পূর্বাবস্থায় ফিরিয়ে আনা হয়েছে।', 'Record restored to authentic state.'));
-      await handleVerify(deedCode);
-    } catch {
-      setErrorMsg(t('রিস্টোর ব্যর্থ হয়েছে।', 'Restore failed.'));
-    } finally {
-      setTamperLoading(false);
-    }
-  };
 
   const isVerified = Boolean(result?.verified && result?.signature?.verified);
 
@@ -221,12 +190,6 @@ export const OfficerDeedVerifier: React.FC<OfficerDeedVerifierProps> = ({
         </div>
       )}
 
-      {tamperSuccessMsg && (
-        <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-bold flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 shrink-0" />
-          <span>{tamperSuccessMsg}</span>
-        </div>
-      )}
 
       {/* Result Panel */}
       {result && result.deed && (
@@ -275,26 +238,6 @@ export const OfficerDeedVerifier: React.FC<OfficerDeedVerifierProps> = ({
                   <Printer className="w-3.5 h-3.5" />
                   <span>{t('অফিসিয়াল সনদপত্র দেখুন', 'View Certificate')}</span>
                 </button>
-
-                {isVerified ? (
-                  <button
-                    onClick={handleSimulateTamper}
-                    disabled={tamperLoading}
-                    className="px-3 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold border border-rose-200 flex items-center gap-1.5 transition cursor-pointer"
-                  >
-                    <Zap className="w-3.5 h-3.5 text-rose-600" />
-                    <span>{tamperLoading ? t('পরীক্ষা চলছে...', 'Testing...') : t('অডিট টেস্ট (Tamper Check)', 'Test Tamper Detection')}</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleRestoreTamper}
-                    disabled={tamperLoading}
-                    className="px-3 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200 flex items-center gap-1.5 transition cursor-pointer"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5 text-emerald-700" />
-                    <span>{t('আসল রেকর্ডে রিস্টোর', 'Restore Authentic')}</span>
-                  </button>
-                )}
               </div>
             </div>
           </div>

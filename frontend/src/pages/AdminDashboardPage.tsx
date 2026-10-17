@@ -64,7 +64,7 @@ export type AdminTab =
   | 'settings'
   | 'rbac'
   | 'catalogue'
-  | 'scenarios'
+  | 'risk_protocols'
   | 'direct_access'
   | 'onboarding_appeals';
 
@@ -77,8 +77,8 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     platform_moderator: ['onboarding_appeals', 'catalogue', 'audit'],
     content_editor: ['catalogue', 'settings', 'audit'],
     content_approver: ['settings', 'catalogue', 'audit'],
-    system_admin: ['ledger', 'plots_control', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'onboarding_appeals', 'scenarios', 'direct_access'],
-    admin: ['ledger', 'plots_control', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'onboarding_appeals', 'scenarios', 'direct_access'],
+    system_admin: ['ledger', 'plots_control', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'onboarding_appeals', 'risk_protocols', 'direct_access'],
+    admin: ['ledger', 'plots_control', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'onboarding_appeals', 'risk_protocols', 'direct_access'],
   };
   const allowedTabs: AdminTab[] = roleAllowedTabs[role] || [
     'ledger',
@@ -89,7 +89,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     'rbac',
     'catalogue',
     'onboarding_appeals',
-    'scenarios',
+    'risk_protocols',
     'direct_access',
   ];
 
@@ -133,10 +133,8 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   } | null>(null);
 
   const [ledgerState, setLedgerState] = useState<any | null>(null);
-  const [scenarios, setScenarios] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [ocrSample, setOcrSample] = useState<any | null>(null);
-  const [activeScenarioReport, setActiveScenarioReport] = useState<RiskReportResponse | null>(null);
   const [permissionsData, setPermissionsData] = useState<any | null>(null);
   const [stats, setStats] = useState<any>(null);
 
@@ -179,7 +177,6 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   const refreshAll = async () => {
     const results = await Promise.allSettled([
       BhumiApi.getLedgerState(),
-      BhumiApi.getDemoScenarios(),
       BhumiApi.getAuditLogs(),
       BhumiApi.getOcrSample().catch(() => null),
       BhumiApi.listUsers(), BhumiApi.getSettings(), BhumiApi.getPermissions(),
@@ -191,7 +188,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       BhumiApi.getMortgages().catch(() => []),
     ]);
     const setters: ((value: any) => void)[] = [
-      setLedgerState, setScenarios, setAuditLogs, setOcrSample, setUsersList,
+      setLedgerState, setAuditLogs, setOcrSample, setUsersList,
       (value) => { setSettingsList(value.items || []); setSettingsMap(value.map || value.settings || {}); },
       setPermissionsData, setStats, (value) => setAdminServices(value?.items || []),
       (value) => setAdminFees(value?.items || []),
@@ -275,20 +272,6 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     refreshAll();
   };
 
-  const handleTamper = async () => {
-    await BhumiApi.tamperDeedDemo('DL-2026-1005', 25.0);
-    refreshAll();
-  };
-
-  const handleRestore = async () => {
-    await BhumiApi.restoreDeedDemo('DL-2026-1005');
-    refreshAll();
-  };
-
-  const handleRunScenario = async (code: string) => {
-    const res = await BhumiApi.runDemoScenario(code);
-    setActiveScenarioReport(res.report);
-  };
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -735,11 +718,11 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
               <span>{t('অনবোর্ডিং ও আপিল', 'Onboarding & Appeals')}</span>
             </button>
           )}
-          {allowedTabs.includes('scenarios') && (
+          {allowedTabs.includes('risk_protocols') && (
             <button
-              onClick={() => handleTabChange('scenarios')}
+              onClick={() => handleTabChange('risk_protocols')}
               className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-                subTab === 'scenarios'
+                subTab === 'risk_protocols'
                   ? 'bg-[#006A4E] text-white'
                   : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
               }`}
@@ -872,34 +855,10 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
               </h2>
               <p className="text-xs text-[#5F7A74] mt-0.5">
                 {t(
-                  'ডাটাবেজে সরাসরি জমির পরিমাণ পরিবর্তন করলে কীভাবে SHA-256 হ্যাশ-চেইন তা সাথে সাথে সনাক্ত করে তার পরীক্ষা:',
-                  'Verify how mutating a deed record in storage immediately invalidates the SHA-256 hash chain:'
+                  'ক্রিপ্টোগ্রাফিক হ্যাশ-চেইনের মাধ্যমে প্রতিটি খতিয়ান ও দলিলের অখণ্ডতা রিয়েল-টাইমে পর্যবেক্ষণ। স্টোরেজ অখণ্ডতা ড্রিল অপারেটর কমান্ড: php artisan bhumi:drill:tamper {deed_code} --confirm',
+                  'Real-time cryptographic hash-chain integrity monitoring. Storage integrity drill operator command: php artisan bhumi:drill:tamper {deed_code} --confirm'
                 )}
               </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {import.meta.env.DEV && (<button
-                onClick={handleTamper}
-                className="btn-danger text-xs flex items-center gap-1.5 cursor-pointer min-h-[38px]"
-              >
-                <Flame className="w-4 h-4" />
-                <span>
-                  {t(
-                    'DL-2026-1005 আন-অথরাইজড মিউটেশন টেস্ট',
-                    'Simulate Storage Tamper (DL-2026-1005)'
-                  )}
-                </span>
-              </button>)}
-              {import.meta.env.DEV && (<button
-                onClick={handleRestore}
-                className="px-4 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer min-h-[38px]"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>
-                  {t('মূল স্বাক্ষরিত তথ্য পুনরুদ্ধার করুন', 'Restore Signed Ledger State')}
-                </span>
-              </button>)}
             </div>
           </div>
 
@@ -1366,56 +1325,150 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       )}
 
       {/* TAB 3: Automated Risk Protocols & OCR Assist */}
-      {subTab === 'scenarios' && (
+      {subTab === 'risk_protocols' && (
         <div className="space-y-6">
           <div className="panel p-6 space-y-4">
-            <h2 className="text-lg font-extrabold text-[#0A1F1C]">
-              {t(
-                'ভূমি ঝুঁকি ও অখণ্ডতা যাচাই প্রটোকল (৮টি স্বয়ংক্রিয় ভেরিফিকেশন রুলস)',
-                'Automated Land Risk & Integrity Protocols (8 Reference Verification Rules)'
-              )}
-            </h2>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <h2 className="text-lg font-extrabold text-[#0A1F1C]">
+                  {t(
+                    'ভূমি ঝুঁকি ও অখণ্ডতা যাচাই প্রটোকল (৯টি স্বয়ংক্রিয় ভেরিফিকেশন ইঞ্জিন)',
+                    'Automated Land Risk & Integrity Protocols (9 Real-Time Verification Engines)'
+                  )}
+                </h2>
+                <p className="text-xs text-[#5F7A74] mt-0.5">
+                  {t(
+                    'কোনো কৃত্রিম বা পূর্ব-নির্ধারিত সিনারিও নয় — প্রতিটি দলিল ও মিউটেশন আবেদন ডাটাবেজের বাস্তব তথ্যের উপর ভিত্তি করে এই ইঞ্জিনগুলোর মাধ্যমে রিয়েল-টাইমে যাচাই হয়:',
+                    'No pre-decided outcomes — every deed and mutation request is evaluated at request time against real database rows:'
+                  )}
+                </p>
+              </div>
+              <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800">
+                {t('সকল ইঞ্জিন সক্রিয় (Active)', 'All Engines Active')}
+              </span>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {scenarios.map((sc) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                {
+                  code: 'RULE-1',
+                  rule_id: 'DOUBLE_SALE',
+                  title_bn: 'দ্বৈত বিক্রয় ও সাব-রেজিস্ট্রি বিরোধ প্রতিরোধ',
+                  title_en: 'Double-Sale & Pending Registration Conflict',
+                  desc_bn: 'একই দাগে সাব-রেজিস্ট্রিতে অনিষ্পন্ন দলিল বা সদ্য নিবন্ধিত দলিল মিউটেশন সম্পন্ন হওয়ার পূর্বে নতুন দলিল সম্পাদন সম্পূর্ণ নিষিদ্ধ করে।',
+                  desc_en: 'Detects concurrent un-mutated registered deeds or active transfer requests on the same parcel before accepting new deeds.',
+                  severity: 'HIGH_RISK',
+                },
+                {
+                  code: 'RULE-2',
+                  rule_id: 'OVER_SELLING',
+                  title_bn: 'হিস্যা ও খতিয়ান শতাংশের অতিরিক্ত বিক্রয় রোধ',
+                  title_en: 'Cumulative Share & Area Overflow Protection',
+                  desc_bn: 'খতিয়ানে লিপিবদ্ধ হিস্যার অতিরিক্ত বা দাগের অবশিষ্ট বৈধ পরিমাণের চেয়ে বেশি জমি হস্তান্তরের চেষ্টা স্বয়ংক্রিয়ভাবে প্রতিহত করে।',
+                  desc_en: 'Calculates cumulative historical transfers against khatian fractional share (hissya) to prevent overselling.',
+                  severity: 'HIGH_RISK',
+                },
+                {
+                  code: 'RULE-3',
+                  rule_id: 'CO_OWNER_CONFLICT',
+                  title_bn: 'সহ-মালিক বা ওয়ারিশানদের প্রি-এম্পশন অধিকার সুরক্ষা',
+                  title_en: 'Co-Owner Preemption & Farayez Inheritance Rights',
+                  desc_bn: 'অংশীদার ও ওয়ারিশানদের নোটিশ ও রেজিস্ট্রিকৃত আপস বণ্টননামা ব্যতীত একক অংশ হস্তান্তরের ক্ষেত্রে সতর্কতা জারি।',
+                  desc_en: 'Flags unpartitioned co-heir estates where mandatory preemption notice or mutual partition is missing.',
+                  severity: 'WARNING',
+                },
+                {
+                  code: 'RULE-4',
+                  rule_id: 'LITIGATION_PENDING',
+                  title_bn: 'আদালতের দেওয়ানি নিষেধাজ্ঞা ও মামলা ফিল্টার',
+                  title_en: 'Civil Court Injunction & Active Litigation Filter',
+                  desc_bn: 'বিজ্ঞ আদালত কর্তৃক স্থিতাবস্থা বা নিষেধাজ্ঞার আদেশ কার্যকর থাকা অবস্থায় জমির যে-কোনো প্রকার নামজারি বা দলিল রেজিস্ট্রি সাময়িক স্থগিতকরণ।',
+                  desc_en: 'Enforces immediate transaction freeze upon active injunction or title dispute reported in land records.',
+                  severity: 'HIGH_RISK',
+                },
+                {
+                  code: 'RULE-5',
+                  rule_id: 'DEED_TAMPERED',
+                  title_bn: 'ক্রিপ্টোগ্রাফিক হ্যাশ-চেইন ও লেজার অখণ্ডতা যাচাই',
+                  title_en: 'Cryptographic Hash-Chain & Record Tampering Defense',
+                  desc_bn: 'SHA-256 চেইন ও Ed25519 ডিজিটাল স্বাক্ষরের সাথে ডাটাবেজ কন্টেন্টের মিল না থাকলে সাথে সাথে অখণ্ডতা লঙ্ঘন লাল সতর্কতা জারি।',
+                  desc_en: 'Mathematically verifies digital record hash against immutable ledger chain to expose unauthorized database changes.',
+                  severity: 'HIGH_RISK',
+                },
+                {
+                  code: 'RULE-6',
+                  rule_id: 'KHATIAN_CHAIN_BROKEN',
+                  title_bn: 'ঐতিহাসিক খতিয়ান ধারাবাহিকতা (CS → SA → RS → BS)',
+                  title_en: 'Historical Survey Chain Continuity (CS → SA → RS → BS)',
+                  desc_bn: 'সিএস হতে বিএস পর্যন্ত জরিপ খতিয়ান ও মধ্যবর্তী হস্তান্তরের বৈধ বায়া দলিল অনুপস্থিত থাকলে লিগ্যাসি চেইন বিচ্যুতি চিহ্নিতকরণ।',
+                  desc_en: 'Traces unbroken genealogical lineage through all four survey settlements before allowing mutation endorsement.',
+                  severity: 'WARNING',
+                },
+                {
+                  code: 'RULE-7',
+                  rule_id: 'GOVT_KHAS_ENCROACHMENT',
+                  title_bn: 'সরকারি ১নং খাস, অর্পিত ও পরিত্যক্ত সম্পত্তি সুরক্ষা',
+                  title_en: 'Government Khas & Vested Property Safeguard',
+                  desc_bn: 'সরকারি ১নং খাস খতিয়ান, অর্পিত সম্পত্তি (ক/খ তফসিল) ও নদীভাঙন জমি ব্যক্তিমালিকানায় রেজিস্ট্রি কঠোরভাবে প্রতিহতকরণ।',
+                  desc_en: 'Strict gatekeeper disallowing registration or mutation of parcels classified under government Gazette or Schedule Ka/Kha.',
+                  severity: 'HIGH_RISK',
+                },
+                {
+                  code: 'RULE-8',
+                  rule_id: 'UNPARTITIONED_INHERITANCE',
+                  title_bn: 'অসম্পূর্ণ বণ্টননামা ও অপ্রাপ্তবয়স্ক স্বার্থ সংরক্ষণ',
+                  title_en: 'Unpartitioned Inheritance & Minor Heir Protection',
+                  desc_bn: 'ওয়ারিশানদের মধ্যে অপ্রাপ্তবয়স্ক ব্যক্তি থাকলে উপযুক্ত অভিভাবক সনদ ও আদালতের অনুমতি ছাড়া হস্তান্তর প্রতিরোধ।',
+                  desc_en: 'Requires court guardian certification before accepting transfers affecting minors in undivided estates.',
+                  severity: 'WARNING',
+                },
+                {
+                  code: 'RULE-9',
+                  rule_id: 'MORTGAGE_LIEN_ACTIVE',
+                  title_bn: 'তফসিলি ব্যাংক বন্ধক ও আর্থিক দায়মুক্তি যাচাই',
+                  title_en: 'Institutional Bank Mortgage & Lien Clearance',
+                  desc_bn: 'আর্থিক প্রতিষ্ঠানে বন্ধকী জমিতে ব্যাংকের বৈধ নো-অবজেকশন সার্টিফিকেট (NOC) বা দায়মুক্তি দলিল ব্যতীত যেকোনো হস্তান্তর ব্লক।',
+                  desc_en: 'Queries institutional lien registry and requires cryptographic NOC before deed registration can proceed.',
+                  severity: 'HIGH_RISK',
+                },
+              ].map((rule) => (
                 <div
-                  key={sc.code}
-                  className="p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12 flex flex-col justify-between gap-3"
+                  key={rule.code}
+                  className="p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12 flex flex-col justify-between gap-3 shadow-xs"
                 >
                   <div>
-                    <div className="flex items-center justify-between">
-                      <span className="font-extrabold text-sm text-[#0A1F1C]">
-                        #{toBanglaDigits(sc.code, lang)}{' '}
-                        {lang === 'bn' ? sc.title_bn : sc.title_en}
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <span className="font-extrabold text-xs text-[#006A4E] font-mono">
+                        {rule.code}
                       </span>
                       <span
                         className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
-                          sc.badge_type === 'SAFE'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : sc.badge_type === 'WARNING'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-rose-100 text-rose-800'
+                          rule.severity === 'HIGH_RISK'
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-amber-100 text-amber-800'
                         }`}
                       >
-                        {sc.badge_type}
+                        {rule.rule_id}
                       </span>
                     </div>
-                    <p className="text-xs text-[#5F7A74] mt-1">
-                      {lang === 'bn' ? sc.description_bn : sc.description_en}
+                    <h3 className="font-bold text-xs text-[#0A1F1C]">
+                      {lang === 'bn' ? rule.title_bn : rule.title_en}
+                    </h3>
+                    <p className="text-[11px] text-[#5F7A74] mt-1.5 leading-relaxed">
+                      {lang === 'bn' ? rule.desc_bn : rule.desc_en}
                     </p>
                   </div>
-                  <button
-                    onClick={() => handleRunScenario(sc.code)}
-                    className="self-start px-3.5 py-1.5 rounded-lg bg-[#074f38] hover:bg-[#006A4E] text-white text-xs font-bold cursor-pointer min-h-[34px]"
-                  >
-                    {t('কেস বিশ্লেষণ দেখুন →', 'Inspect Case Report →')}
-                  </button>
+                  <div className="pt-2 border-t border-[#006A4E]/10 flex items-center justify-between text-[10px] font-bold text-[#006A4E]">
+                    <span>{t('স্বয়ংক্রিয় ইঞ্জিন ভেরিফিকেশন', 'Automated Verification')}</span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      {t('সক্রিয়', 'ONLINE')}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-
-          {activeScenarioReport && <ResultHeroBanner report={activeScenarioReport} />}
 
           {ocrSample && ocrSample.extracted_fields && (
             <div className="panel p-6 space-y-4">

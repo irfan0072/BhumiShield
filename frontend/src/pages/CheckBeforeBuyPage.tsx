@@ -43,7 +43,6 @@ export const CheckBeforeBuyPage: React.FC = () => {
   const [locations, setLocations] = useState<any[]>([]);
   const [plots, setPlots] = useState<any[]>([]);
   const [persons, setPersons] = useState<any[]>([]);
-  const [scenarios, setScenarios] = useState<any[]>([]);
 
   const [selectedMouzaId, setSelectedMouzaId] = useState<number>(1);
   const [selectedPlotId, setSelectedPlotId] = useState<number>(1);
@@ -59,20 +58,17 @@ export const CheckBeforeBuyPage: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [report, setReport] = useState<RiskReportResponse | null>(null);
   const [showCertModal, setShowCertModal] = useState(false);
-  const [scenariosOpen, setScenariosOpen] = useState(false);
 
   useEffect(() => {
     Promise.all([
       BhumiApi.getLocations(),
       BhumiApi.getPlots(),
       BhumiApi.getPersons(),
-      BhumiApi.getDemoScenarios(),
     ])
-      .then(([locs, plts, pers, scns]) => {
+      .then(([locs, plts, pers]) => {
         setLocations(locs);
         setPlots(plts);
         setPersons(pers);
-        setScenarios(scns);
 
         const urlParams = new URLSearchParams(window.location.search);
         const dagParam = urlParams.get('dag');
@@ -249,27 +245,6 @@ export const CheckBeforeBuyPage: React.FC = () => {
     }
   };
 
-  const triggerScenario = async (sc: any) => {
-    setLoading(true);
-    setErrorMsg(null);
-    try {
-      const res = await BhumiApi.runDemoScenario(sc.code);
-      setSelectedPlotId(sc.plot_id);
-      const targetPlot = plots.find((p) => Number(p.id) === Number(sc.plot_id));
-      if (targetPlot) {
-        setSelectedMouzaId(Number(targetPlot.mouza_id));
-      }
-      if (sc.seller_id) {
-        setSellerId(sc.seller_id);
-      }
-      setReport(res.report);
-      setStep(3);
-    } catch {
-      setErrorMsg(t('কেস রেকর্ড লোড করতে সমস্যা হয়েছে।', 'Failed to load verification case.'));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const totalPlotArea = Number(currentSelectedPlot?.total_area_decimal || 0);
   const parsedProposedArea = Number(proposedArea) || 0;
@@ -299,80 +274,6 @@ export const CheckBeforeBuyPage: React.FC = () => {
         </div>
       </header>
 
-      {/* Evaluator & Test Scenarios Collapsible Accordion */}
-      <div className="panel overflow-hidden border border-[#006A4E]/15 bg-white shadow-2xs">
-        <button
-          type="button"
-          onClick={() => setScenariosOpen(!scenariosOpen)}
-          className="w-full p-3.5 sm:p-4 flex items-center justify-between text-left hover:bg-slate-50 transition-colors cursor-pointer"
-          aria-expanded={scenariosOpen}
-        >
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#006A4E] flex items-center justify-center shrink-0">
-              <Layers className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm font-bold text-[#074f38]">
-                  {t(
-                    'স্বয়ংক্রিয় ঝুঁকি সনাক্তকরণ রেফারেন্স প্রটোকল (৮টি কেস)',
-                    'Automated Risk Detection Reference Protocols (8 Standard Cases)'
-                  )}
-                </span>
-                <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                  {t('স্বয়ংক্রিয় ঝুঁকি বিশ্লেষণ', 'Automated Risk Rules')}
-                </span>
-              </div>
-              <div className="text-[11px] text-slate-500 hidden sm:block">
-                {t('ডাবল সেল, জাল দলিল, ব্যাংক বন্ধক ও অমীমাংসিত ওয়ারিশ ঝুঁকি সনাক্তকরণ', 'Automated detection of double sale, forged deeds, mortgages, and inheritance disputes')}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-            <span>{scenariosOpen ? t('সংকুচিত করুন', 'Collapse') : t('প্রদর্শন করুন', 'Expand')}</span>
-            <ChevronDown
-              className={`w-4 h-4 text-[#006A4E] transition-transform duration-200 ${
-                scenariosOpen ? 'rotate-180' : ''
-              }`}
-            />
-          </div>
-        </button>
-
-        {scenariosOpen && (
-          <div className="p-4 pt-1 border-t border-slate-100 bg-slate-50/60">
-            <p className="text-xs text-slate-600 mb-3 leading-relaxed">
-              {t(
-                'যেকোনো রেফারেন্স কেসে ক্লিক করলে স্বয়ংক্রিয়ভাবে সংশ্লিষ্ট দাগ, বিক্রেতা ও ক্রিপ্টোগ্রাফিক রেকর্ড লোড হয়ে ফলাফল প্রদর্শিত হবে:',
-                'Click any benchmark case to automatically populate the exact plot, seller, and cryptographic lineage:'
-              )}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {scenarios.map((sc) => {
-                const btnColor =
-                  sc.badge_type === 'SAFE'
-                    ? 'bg-emerald-50 text-[#006A4E] border-emerald-300 hover:bg-[#006A4E] hover:text-white'
-                    : sc.badge_type === 'WARNING'
-                    ? 'bg-amber-50 text-[#C4891A] border-amber-300 hover:bg-[#C4891A] hover:text-white'
-                    : 'bg-rose-50 text-[#FF3B4A] border-rose-300 hover:bg-[#FF3B4A] hover:text-white';
-
-                const rawTitle = lang === 'bn' ? sc.title_bn : sc.title_en;
-                const cleanTitle = rawTitle.replace(/^[\d১-৯]+\.\s*/, '');
-
-                return (
-                  <button
-                    key={sc.code}
-                    onClick={() => triggerScenario(sc)}
-                    className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all cursor-pointer min-h-[34px] flex items-center gap-1.5 shadow-2xs ${btnColor}`}
-                  >
-                    <span className="font-mono opacity-80">#{toBanglaDigits(sc.code, lang)}</span>
-                    <span>{cleanTitle}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Interactive Visual Stepper Wizard */}
       <div className="panel p-3.5 sm:p-5 border border-slate-200/80 shadow-xs bg-white rounded-2xl">

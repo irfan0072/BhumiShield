@@ -29,7 +29,7 @@ return static function (string $method, string $uri, array $query, array $body):
 
     if (strtolower((string) env('APP_ENV', 'development')) === 'production') {
         $demoOnly = preg_match('#^/ledger/(tamper|restore)/#', $sub)
-            || in_array($sub, ['/auth/switch-demo-role', '/auth/demo-users', '/scenarios', '/demo-scenarios', '/ocr/khatian-demo', '/ocr-assist/sample'], true);
+            || in_array($sub, ['/auth/switch-demo-role', '/auth/demo-users', '/ocr/khatian-demo', '/ocr-assist/sample'], true);
         if ($demoOnly) {
             throw new \RuntimeException(json_encode([
                 'status' => 404, 'code' => 'DEMO_FEATURE_DISABLED',
@@ -231,7 +231,8 @@ return static function (string $method, string $uri, array $query, array $body):
         return PublicMarketplaceAndPortalController::listListings($query);
     }
     if ($method === 'POST' && $sub === '/listings') {
-        return PublicMarketplaceAndPortalController::createListing($body);
+        $actor = RoleMiddleware::authorize(['citizen', 'admin']);
+        return PublicMarketplaceAndPortalController::createListing($body, $actor);
     }
     if ($method === 'GET' && preg_match('#^/listings/([^/]+)$#', $sub, $m)) {
         return PublicMarketplaceAndPortalController::getListing(urldecode($m[1]));
@@ -296,9 +297,6 @@ return static function (string $method, string $uri, array $query, array $body):
     }
 
     // 4. Sub-Registrar Controlling Routes (Protected by RoleMiddleware)
-    if ($method === 'GET' && ($sub === '/scenarios' || $sub === '/demo-scenarios')) {
-        return WorkflowController::listDemoScenarios();
-    }
     if ($method === 'POST' && $sub === '/registrar/pre-check') {
         RoleMiddleware::authorize(['sub_registrar', 'admin']);
         return WorkflowController::subRegistrarPreCheck($body);

@@ -1198,7 +1198,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
 
         {/* Clean Header Bar */}
         <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur">
-          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:gap-4">
+          <div className="mx-auto flex h-16 max-w-7xl xl:max-w-[1400px] items-center justify-between gap-2 px-4 sm:gap-4">
             {/* Logo and Brand Title (bcc.zohirrayhan.com style) */}
             <button
               onClick={() => setActiveTab('landing')}
@@ -1221,7 +1221,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
             </button>
 
             {/* Desktop Navigation Links with Dropdown Menus */}
-            <nav className="hidden items-center justify-center gap-1 xl:gap-1.5 lg:flex flex-nowrap" aria-label="প্রধান মেনু">
+            <nav className="hidden items-center justify-center gap-1 xl:gap-1.5 lg:flex flex-nowrap whitespace-nowrap" aria-label="প্রধান মেনু">
               {/* 1. All Services (Home) */}
               <button
                 type="button"

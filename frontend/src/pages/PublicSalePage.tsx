@@ -12,6 +12,7 @@ import {
   MapPin,
   X,
   AlertTriangle,
+  Clock,
   FileCheck,
   Tag,
   Lock,
@@ -315,10 +316,34 @@ export const PublicSalePage: React.FC<PublicSalePageProps> = ({ onNavigate }) =>
                   {/* Card Header & Badge */}
                   <div className="p-5 pb-3 border-b border-slate-100 flex items-start justify-between gap-3 bg-slate-50/50">
                     <div>
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 border border-emerald-200 text-[#006A4E] mb-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>{t('নিষ্কণ্টক মালিকানা', 'Verified Clear')}</span>
-                      </div>
+                      {(() => {
+                        // F17: render the actual verification_badge returned by
+                        // the backend (VERIFIED_CLEAR / NEEDS_REVIEW / FLAGGED)
+                        // instead of a hardcoded "Verified Clear" pill.
+                        const badge = String(item.verification_badge || 'NEEDS_REVIEW');
+                        if (badge === 'FLAGGED') {
+                          return (
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 border border-rose-200 text-[#F42A41] mb-1.5">
+                              <AlertTriangle className="w-3.5 h-3.5" />
+                              <span>{t('পতাকাঙ্কিত (ঝুঁকিপূর্ণ)', 'Flagged (Risk)')}</span>
+                            </div>
+                          );
+                        }
+                        if (badge === 'NEEDS_REVIEW') {
+                          return (
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 border border-amber-200 text-amber-800 mb-1.5">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>{t('যাচাই-অপেক্ষমাণ', 'Pending Review')}</span>
+                            </div>
+                          );
+                        }
+                        return (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 border border-emerald-200 text-[#006A4E] mb-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>{t('নিষ্কণ্টক মালিকানা', 'Verified Clear')}</span>
+                          </div>
+                        );
+                      })()}
                       <h3 className="text-lg font-extrabold text-slate-900 leading-snug">
                         {t('দাগ নং:', 'Plot Dag:')} {lang === 'bn' ? item.dag_no_bn : item.dag_no}
                       </h3>

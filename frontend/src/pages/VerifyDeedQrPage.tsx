@@ -24,8 +24,6 @@ export const VerifyDeedQrPage: React.FC = () => {
   const [result, setResult] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [tamperLoading, setTamperLoading] = useState(false);
-  const [tamperSuccessMsg, setTamperSuccessMsg] = useState<string | null>(null);
   const [showCertModal, setShowCertModal] = useState(false);
 
   useEffect(() => {
@@ -47,7 +45,6 @@ export const VerifyDeedQrPage: React.FC = () => {
     if (!cleanCode) return;
     setLoading(true);
     setErrorMsg(null);
-    setTamperSuccessMsg(null);
     try {
       if (forceNoc || cleanCode.toUpperCase().startsWith('NOC-')) {
         const res = await BhumiApi.verifyNocByCode(cleanCode, hashPrefix);
@@ -111,42 +108,6 @@ export const VerifyDeedQrPage: React.FC = () => {
     }
   };
 
-  const handleTamperSimulation = async () => {
-    setTamperLoading(true);
-    try {
-      await BhumiApi.tamperDeedDemo(deedCode, 25.0);
-      setTamperSuccessMsg(
-        t(
-          'সতর্কতা: ডাটাবেজে জমির পরিমাণ জোরপূর্বক ২৫ শতাংশ করা হয়েছে! এখন পুনরায় হ্যাশ যাচাই করুন।',
-          'Simulated: Deed area modified to 25.0 Decimal in database. Verifying hash now...'
-        )
-      );
-      await handleVerify(deedCode);
-    } catch {
-      setErrorMsg(t('নিরাপত্তা অডিট টেস্ট ব্যর্থ হয়েছে।', 'Security audit test failed.'));
-    } finally {
-      setTamperLoading(false);
-    }
-  };
-
-  const handleRestoreLedger = async () => {
-    setTamperLoading(true);
-    try {
-      const restored = await BhumiApi.restoreDeedDemo(deedCode);
-      const restoredArea = restored?.deed?.original_area_decimal ?? (deedCode === 'DL-2026-1005' ? 10.0 : 20.0);
-      setTamperSuccessMsg(
-        t(
-          `সফল: লেজার মূল সত্য অবস্থায় পুনরুদ্ধার করা হয়েছে (${toBanglaDigits(restoredArea, 'bn')} শতাংশ)। হ্যাশ চেইন আবার বৈধ।`,
-          `Restored: Ledger restored to authentic truth (${restoredArea} Decimal). Hash chain valid again.`
-        )
-      );
-      await handleVerify(deedCode);
-    } catch {
-      setErrorMsg(t('লেজার পুনরুদ্ধার ব্যর্থ হয়েছে।', 'Failed to restore ledger.'));
-    } finally {
-      setTamperLoading(false);
-    }
-  };
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -332,53 +293,26 @@ export const VerifyDeedQrPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Cryptographic Ledger Integrity & Security Audit Control */}
-        <div className="mt-4 p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12 space-y-3">
+        {/* Cryptographic Ledger Integrity & Architecture Panel */}
+        <div className="mt-4 p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12 space-y-2">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-xs font-bold text-[#0A1F1C]/90">
               <Shield className="w-4 h-4 text-[#006A4E]" />
-              <span>{t('লেজার অখণ্ডতা ও নিরাপত্তা অডিট কন্ট্রোল:', 'Ledger Integrity & Cryptographic Security Audit Control:')}</span>
+              <span>{t('লেজার অখণ্ডতা ও ক্রিপ্টোগ্রাফিক নিরাপত্তা:', 'Ledger Integrity & Cryptographic Security Architecture:')}</span>
             </div>
             <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
               {t('ক্রিপ্টোগ্রাফিক সুরক্ষা ও ডিফেন্স ইঞ্জিন', 'Cryptographic Security & Defense Engine')}
             </span>
           </div>
 
-          <p className="text-xs text-[#5F7A74]">
+          <p className="text-xs text-[#5F7A74] leading-relaxed">
             {t(
-              'যদি কোনো অনুমোদনহীনভাবে ডাটাবেজে দলিলের জমির পরিমাণ বা কোনো তথ্য পরিবর্তন করা হয়, SHA-256 হ্যাশ চেইন তাৎক্ষণিকভাবে অখণ্ডতা লঙ্ঘন সনাক্ত করে লাল সতর্কবার্তায় রূপান্তর করে। নিচের কন্ট্রোল ব্যবহার করে নিরাপত্তা অডিট কার্যকারিতা পরীক্ষা ও লেজার পুনরুদ্ধার করা যায়।',
-              'If any unauthorized DB modification occurs, the cryptographic SHA-256 hash chain instantly flags integrity violation and revokes validity. Use these audit controls to test tamper detection and restore the authentic ledger state.'
+              'যদি কোনো অনুমোদনহীনভাবে ডাটাবেজে দলিলের জমির পরিমাণ বা কোনো তথ্য পরিবর্তন করা হয়, SHA-256 হ্যাশ চেইন তাৎক্ষণিকভাবে অখণ্ডতা লঙ্ঘন সনাক্ত করে লাল সতর্কবার্তায় রূপান্তর করে। অপারেটর ইন্টিগ্রিটি ড্রিল কমান্ড: php artisan bhumi:drill:tamper {deed_code} --confirm',
+              'If any unauthorized DB modification occurs, the cryptographic SHA-256 hash chain instantly flags integrity violation and revokes validity. Operator storage integrity drill: php artisan bhumi:drill:tamper {deed_code} --confirm'
             )}
           </p>
-
-          <div className="flex flex-wrap gap-2.5">
-            <button
-              onClick={handleTamperSimulation}
-              disabled={tamperLoading}
-              className="px-3.5 py-2 rounded-lg bg-[#FFF0F1] text-[#FF3B4A] hover:bg-[#FF3B4A] hover:text-white text-xs font-bold border border-[#FF3B4A]/30 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 min-h-[36px]"
-            >
-              <Zap className="w-3.5 h-3.5" />
-              <span>{t('নিরাপত্তা নিরীক্ষা: টেম্পারিং প্রতিরোধ টেস্ট চালান', 'Security Audit: Test Tamper Detection')}</span>
-            </button>
-
-            <button
-              onClick={handleRestoreLedger}
-              disabled={tamperLoading}
-              className="px-3.5 py-2 rounded-lg bg-[#EDF7F4] text-[#006A4E] hover:bg-[#006A4E] hover:text-white text-xs font-bold border border-[#006A4E]/30 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 min-h-[36px]"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>{t('লেজার অখণ্ডতা পুনরুদ্ধার করুন (Restore Ledger)', 'Restore Ledger Integrity')}</span>
-            </button>
-          </div>
         </div>
       </div>
-
-      {tamperSuccessMsg && (
-        <div className="p-4 rounded-xl bg-amber-50 border-l-4 border-amber-500 text-amber-900 font-bold text-xs flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-          <span>{tamperSuccessMsg}</span>
-        </div>
-      )}
 
       {errorMsg && (
         <div className="p-4 rounded-xl bg-[#FFF0F1] border-l-4 border-[#FF3B4A] font-bold text-xs text-[#0A1F1C] flex items-center gap-2">

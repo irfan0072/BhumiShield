@@ -226,25 +226,6 @@ CREATE TABLE IF NOT EXISTS risk_reports (
     created_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS demo_scenarios (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    scenario_no INTEGER UNIQUE NOT NULL,
-    code TEXT UNIQUE NOT NULL,
-    title_bn TEXT NOT NULL,
-    title_en TEXT NOT NULL,
-    expected_verdict TEXT NOT NULL,
-    badge_bn TEXT NOT NULL,
-    badge_en TEXT NOT NULL,
-    description_bn TEXT NOT NULL,
-    description_en TEXT NOT NULL,
-    plot_id INTEGER NOT NULL,
-    deed_id INTEGER,
-    seller_id INTEGER NOT NULL,
-    buyer_id INTEGER NOT NULL,
-    requested_area_decimal REAL NOT NULL,
-    seller_nid_override TEXT,
-    recommended_view TEXT NOT NULL
-);
 
 CREATE TABLE IF NOT EXISTS noc_certificates (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -888,7 +869,6 @@ SQL,
             'service_fees_registry',
             'service_catalogue',
             'noc_certificates',
-            'demo_scenarios',
             'risk_reports',
             'audit_log',
             'disputes',

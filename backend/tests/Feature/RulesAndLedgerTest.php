@@ -70,7 +70,6 @@ final class RulesAndLedgerTest
         self::assertTrue(self::$seedSummary['plots'] === 60, 'Expected 60 plots');
         self::assertTrue(self::$seedSummary['khatian_records'] === 240, 'Expected 240 khatians');
         self::assertTrue(self::$seedSummary['deeds'] === 80, 'Expected 80 deeds');
-        self::assertTrue(self::$seedSummary['scenarios'] === 8, 'Expected 8 demo scenarios');
     }
 
     public static function test_02_rule_seller_not_owner(): void
@@ -208,16 +207,79 @@ final class RulesAndLedgerTest
         self::assertTrue(FraudRulesEngine::checkNidMismatch($person, '9900001001') === null);
     }
 
-    public static function test_11_all_8_seeded_demo_scenarios_produce_expected_verdicts(): void
+    public static function test_11_all_core_fraud_rules_produce_expected_verdicts_from_real_database_rows(): void
     {
-        $res = WorkflowController::listDemoScenarios();
-        self::assertTrue(count($res['items']) === 8, 'Expected 8 scenarios');
-        foreach ($res['items'] as $sc) {
-            self::assertTrue(
-                $sc['live_verdict'] === $sc['expected_verdict'],
-                "Scenario {$sc['scenario_no']} ({$sc['code']}) expected {$sc['expected_verdict']} got {$sc['live_verdict']}"
-            );
-        }
+        // 1. Plot 101: Clean sale -> SAFE
+        $b1 = WorkflowController::loadPlotBundle(1);
+        $seller1 = DB::selectOne('SELECT * FROM persons WHERE id = 1');
+        $r1 = FraudRulesEngine::evaluatePlotAndTransaction(
+            $b1['plot'], $b1['khatians'], $b1['latest_ownerships'], $b1['latest_owner_persons'],
+            $b1['deeds'], $b1['mortgages'], $seller1, 10.0, null, null, false, $b1['disputes']
+        );
+        self::assertTrue($r1['verdict'] === 'SAFE');
+
+        // 2. Plot 102: Double sale -> HIGH_RISK
+        $b2 = WorkflowController::loadPlotBundle(2);
+        $seller2 = DB::selectOne('SELECT * FROM persons WHERE id = 3');
+        $r2 = FraudRulesEngine::evaluatePlotAndTransaction(
+            $b2['plot'], $b2['khatians'], $b2['latest_ownerships'], $b2['latest_owner_persons'],
+            $b2['deeds'], $b2['mortgages'], $seller2, 10.0, null, null, false, $b2['disputes']
+        );
+        self::assertTrue($r2['verdict'] === 'HIGH_RISK');
+
+        // 3. Plot 103: Area exceeds owned -> HIGH_RISK
+        $b3 = WorkflowController::loadPlotBundle(3);
+        $seller3 = DB::selectOne('SELECT * FROM persons WHERE id = 6');
+        $r3 = FraudRulesEngine::evaluatePlotAndTransaction(
+            $b3['plot'], $b3['khatians'], $b3['latest_ownerships'], $b3['latest_owner_persons'],
+            $b3['deeds'], $b3['mortgages'], $seller3, 18.0, null, null, false, $b3['disputes']
+        );
+        self::assertTrue($r3['verdict'] === 'HIGH_RISK');
+
+        // 4. Plot 104: Seller not owner -> HIGH_RISK
+        $b4 = WorkflowController::loadPlotBundle(4);
+        $nonOwner = DB::selectOne('SELECT * FROM persons WHERE id = 9');
+        $r4 = FraudRulesEngine::evaluatePlotAndTransaction(
+            $b4['plot'], $b4['khatians'], $b4['latest_ownerships'], $b4['latest_owner_persons'],
+            $b4['deeds'], $b4['mortgages'], $nonOwner, 8.0, null, null, false, $b4['disputes']
+        );
+        self::assertTrue($r4['verdict'] === 'HIGH_RISK');
+
+        // 5. Plot 105: Deed tampered -> HIGH_RISK
+        $b5 = WorkflowController::loadPlotBundle(5);
+        $seller5 = DB::selectOne('SELECT * FROM persons WHERE id = 10');
+        $r5 = FraudRulesEngine::evaluatePlotAndTransaction(
+            $b5['plot'], $b5['khatians'], $b5['latest_ownerships'], $b5['latest_owner_persons'],
+            $b5['deeds'], $b5['mortgages'], $seller5, 25.0, null, null, false, $b5['disputes']
+        );
+        self::assertTrue($r5['verdict'] === 'HIGH_RISK');
+
+        // 6. Plot 106: Plot mortgaged -> HIGH_RISK
+        $b6 = WorkflowController::loadPlotBundle(6);
+        $seller6 = DB::selectOne('SELECT * FROM persons WHERE id = 11');
+        $r6 = FraudRulesEngine::evaluatePlotAndTransaction(
+            $b6['plot'], $b6['khatians'], $b6['latest_ownerships'], $b6['latest_owner_persons'],
+            $b6['deeds'], $b6['mortgages'], $seller6, 15.0, null, null, false, $b6['disputes']
+        );
+        self::assertTrue($r6['verdict'] === 'HIGH_RISK');
+
+        // 7. Plot 107: Khatian chain break -> REVIEW
+        $b7 = WorkflowController::loadPlotBundle(7);
+        $seller7 = DB::selectOne('SELECT * FROM persons WHERE id = 13');
+        $r7 = FraudRulesEngine::evaluatePlotAndTransaction(
+            $b7['plot'], $b7['khatians'], $b7['latest_ownerships'], $b7['latest_owner_persons'],
+            $b7['deeds'], $b7['mortgages'], $seller7, 10.0, null, null, false, $b7['disputes']
+        );
+        self::assertTrue($r7['verdict'] === 'REVIEW');
+
+        // 8. Plot 108: Inheritance unresolved -> REVIEW
+        $b8 = WorkflowController::loadPlotBundle(8);
+        $seller8 = DB::selectOne('SELECT * FROM persons WHERE id = 14');
+        $r8 = FraudRulesEngine::evaluatePlotAndTransaction(
+            $b8['plot'], $b8['khatians'], $b8['latest_ownerships'], $b8['latest_owner_persons'],
+            $b8['deeds'], $b8['mortgages'], $seller8, 11.0, null, null, false, $b8['disputes']
+        );
+        self::assertTrue($r8['verdict'] === 'REVIEW');
     }
 
     public static function test_12_live_tamper_and_restore_workflow(): void

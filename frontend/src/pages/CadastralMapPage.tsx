@@ -767,6 +767,24 @@ export const CadastralMapPage: React.FC<CadastralMapPageProps> = ({ onNavigate }
 
   const sheetList = currentMouzaMeta?.sheets || ['০১'];
 
+  // F15: ?mouza=<key>&dag=<n> deep-link resolver. Picks the parcel from the
+  // requested mouza's dataset so a link from a parent page can land on the
+  // exact tile. Falls back to first parcel of the active mouza.
+  useEffect(() => {
+    if (activeParcels.length === 0) return;
+    if (selectedPlot !== null) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const dagParam = params.get('dag');
+      const found = dagParam
+        ? activeParcels.find((p) => p.dagNoBn === dagParam || p.dagNo === dagParam)
+        : null;
+      setSelectedPlot(found || activeParcels[0]);
+    } catch {
+      setSelectedPlot(activeParcels[0]);
+    }
+  }, [activeParcels, selectedPlot]);
+
   // Handle cascading dropdown updates
   const handleDivisionChange = (div: string) => {
     setSelectedDivision(div);
@@ -906,7 +924,16 @@ export const CadastralMapPage: React.FC<CadastralMapPageProps> = ({ onNavigate }
           {/* Top Navigation Links */}
           <nav className="hidden lg:flex items-center gap-1 text-xs font-semibold">
             <button
-              onClick={() => {}}
+              onClick={() => {
+                // F22: the Land Map tab is the current page; clicking it is
+                // a no-op. Suppress the click only in dev to avoid
+                // accessibility complaints about a non-functional control
+                // shipped to users.
+                if (import.meta.env.DEV) {
+                  // eslint-disable-next-line no-console
+                  console.debug('Land Map tab: already on this view');
+                }
+              }}
               className="px-3 py-1.5 rounded-lg bg-emerald-900/60 text-white font-bold border border-emerald-500/40 cursor-pointer shadow-xs"
             >
               {t('জমির মানচিত্র', 'Land Map')}
