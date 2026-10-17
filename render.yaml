@@ -23,7 +23,7 @@ services:
       - key: PUBLIC_VERIFY_BASE_URL
         value: https://bhumishield-web.onrender.com
 
-  # BhumiShield React Frontend (Optional static site on Render if not using Vercel)
+  # BhumiShield React Frontend (static site on Render)
   - type: web
     name: bhumishield-web
     runtime: static
@@ -37,7 +37,3 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://bhumishield-api.onrender.com/api/v1
-        fromService:
-          type: web
-          name: bhumishield-api
-          property: url
