@@ -16,7 +16,9 @@ final class PublicRecordService
             if (in_array($key, ['content_json','original_content_json','canonical_payload','canonical_json'], true)) { unset($data[$key]); continue; }
             if (is_string($key) && preg_match('/^(?:[a-z_]+_)?nid(?:_mock)?$/i', $key)) {
                 $raw = (string) $value;
-                $value = strpos($raw, '*') !== false ? $raw : (strlen($raw) >= 6 ? substr($raw,0,4).'****'.substr($raw,-2) : '****');
+                $masked = strpos($raw, '*') !== false ? $raw : (strlen($raw) >= 6 ? substr($raw,0,4).'****'.substr($raw,-2) : '****');
+                $value = $masked;
+                $data[$key . '_masked'] = $masked;
             } elseif (is_array($value)) $value = self::minimize($value);
         }
         unset($value);

@@ -934,5 +934,25 @@ export const BhumiApi = {
     api.post(`/listings/${codeOrId}/enquire`, data).then((r) => r.data),
   getMapFeatures: (zoom?: number): Promise<any> =>
     api.get('/public/map/features', { params: { zoom } }).then((r) => r.data),
+
+  // Maker-Checker Staging Data Onboarding (Tier C Section 8.7)
+  listOnboardingBatches: (params?: { status?: string }): Promise<any> =>
+    api.get('/onboarding/batches', { params }).then((r) => r.data),
+  getOnboardingBatch: (idOrBatchNo: string | number): Promise<any> =>
+    api.get(`/onboarding/batches/${idOrBatchNo}`).then((r) => r.data),
+  createOnboardingBatch: (data: { record_type: string; items: any[] }): Promise<any> =>
+    api.post('/onboarding/batches', data).then((r) => r.data),
+  decideOnboardingBatch: (idOrBatchNo: string | number, decision: 'APPROVED' | 'REJECTED'): Promise<any> =>
+    api.post(`/onboarding/batches/${idOrBatchNo}/decide`, { decision }).then((r) => r.data),
+
+  // Appellate Review Mirror & Legal Roles (Tier C Section 8.8)
+  listAppeals: (params?: { status?: string }): Promise<any> =>
+    api.get('/appeals', { params }).then((r) => r.data),
+  getAppeal: (idOrCode: string | number): Promise<any> =>
+    api.get(`/appeals/${idOrCode}`).then((r) => r.data),
+  createAppeal: (data: { mutation_id?: number; plot_id?: number; appellant_name_bn?: string; appellant_nid?: string; reason_bn: string }): Promise<any> =>
+    api.post('/appeals', data).then((r) => r.data),
+  decideAppeal: (idOrCode: string | number, data: { status: string; decision_note_bn: string }): Promise<any> =>
+    api.post(`/appeals/${idOrCode}/decide`, data).then((r) => r.data),
 };
 

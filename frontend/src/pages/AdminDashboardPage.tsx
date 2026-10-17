@@ -32,7 +32,12 @@ import {
   Building2,
   Landmark,
   FileSpreadsheet,
-  Layers
+  Layers,
+  Scale,
+  Gavel,
+  FileText,
+  AlertCircle,
+  Clock
 } from 'lucide-react';
 
 const ROLE_DASHBOARD_MAP: Record<UserRole, string> = {
@@ -51,14 +56,15 @@ export type AdminTab =
   | 'rbac'
   | 'catalogue'
   | 'scenarios'
-  | 'direct_access';
+  | 'direct_access'
+  | 'onboarding_appeals';
 
 export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNavigate }) => {
   const { lang, role, setRole, user, setUser, token, setToken, activeSubTab, setActiveSubTab, t } = useAppUI();
   const [subTab, setSubTab] = useState<AdminTab>(() => {
     if (
       activeSubTab &&
-      ['ledger', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'scenarios', 'direct_access'].includes(
+      ['ledger', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'scenarios', 'direct_access', 'onboarding_appeals'].includes(
         activeSubTab
       )
     ) {
@@ -66,6 +72,36 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     }
     return 'ledger';
   });
+
+  // Maker-Checker & Appeals state (Tier C Sections 8.7 & 8.8)
+  const [onboardingBatches, setOnboardingBatches] = useState<any[]>([]);
+  const [selectedBatch, setSelectedBatch] = useState<any | null>(null);
+  const [appealsList, setAppealsList] = useState<any[]>([]);
+  const [onbAppealsSubTab, setOnbAppealsSubTab] = useState<'batches' | 'appeals'>('batches');
+  const [onbNotice, setOnbNotice] = useState<{ msg: string; err?: boolean } | null>(null);
+  const [isCreatingBatch, setIsCreatingBatch] = useState(false);
+  const [isCreatingAppeal, setIsCreatingAppeal] = useState(false);
+  const [batchForm, setBatchForm] = useState({
+    record_type: 'DEED_DRAFT',
+    dag_no: '125',
+    mouza: 'Birulia',
+    seller_name: 'আব্দুল কাদের',
+    buyer_name: 'মো. রফিকুল ইসলাম',
+    area_decimal: '8.5',
+    declared_value_bdt: '1850000',
+  });
+  const [appealForm, setAppealForm] = useState({
+    plot_id: 8,
+    mutation_id: 1,
+    appellant_name_bn: 'মোসা. রাবেয়া খাতুন',
+    appellant_nid: '9900001002',
+    reason_bn: 'সহকারী কমিশনার (ভূমি) কর্তৃক নামজারি স্থগিতাদেশের বিরুদ্ধে অতিরিক্ত জেলা প্রশাসক (রাজস্ব) মহোদয় সমীপে আপিল।',
+  });
+  const [appealDecisionModal, setAppealDecisionModal] = useState<{
+    appeal: any;
+    status: string;
+    note: string;
+  } | null>(null);
 
   const [ledgerState, setLedgerState] = useState<any | null>(null);
   const [scenarios, setScenarios] = useState<any[]>([]);
@@ -108,12 +144,16 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       import.meta.env.DEV ? BhumiApi.getOcrSample() : Promise.resolve(null),
       BhumiApi.listUsers(), BhumiApi.getSettings(), BhumiApi.getPermissions(),
       BhumiApi.getStatsSummary(), BhumiApi.listAdminServices(), BhumiApi.listAdminFees(),
+      BhumiApi.listOnboardingBatches().catch(() => ({ items: [] })),
+      BhumiApi.listAppeals().catch(() => ({ items: [] })),
     ]);
     const setters: ((value: any) => void)[] = [
       setLedgerState, setScenarios, setAuditLogs, setOcrSample, setUsersList,
       (value) => { setSettingsList(value.items || []); setSettingsMap(value.map || value.settings || {}); },
       setPermissionsData, setStats, (value) => setAdminServices(value?.items || []),
       (value) => setAdminFees(value?.items || []),
+      (value) => setOnboardingBatches(value?.items || []),
+      (value) => setAppealsList(value?.items || []),
     ];
     results.forEach((result, i) => { if (result.status === 'fulfilled') setters[i](result.value); });
     setLoadError(results.some((result) => result.status === 'rejected')
@@ -127,7 +167,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   useEffect(() => {
     if (
       activeSubTab &&
-      ['ledger', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'scenarios', 'direct_access'].includes(
+      ['ledger', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'scenarios', 'direct_access', 'onboarding_appeals'].includes(
         activeSubTab
       )
     ) {
@@ -226,6 +266,79 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     } catch (err: any) {
       setCatalogueNotice({ msg: err?.response?.data?.message_bn || 'আইডি যাচাইকরণে ব্যর্থ হয়েছে।', err: true });
       setTimeout(() => setCatalogueNotice(null), 4000);
+    }
+  };
+
+  const handleCreateBatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        record_type: batchForm.record_type,
+        items: [
+          {
+            deed_type: 'SALE',
+            dag_no: batchForm.dag_no,
+            mouza: batchForm.mouza,
+            seller_name: batchForm.seller_name,
+            buyer_name: batchForm.buyer_name,
+            area_decimal: parseFloat(batchForm.area_decimal) || 1.0,
+            declared_value_bdt: parseInt(batchForm.declared_value_bdt, 10) || 500000,
+          },
+        ],
+      };
+      const res = await BhumiApi.createOnboardingBatch(payload);
+      setOnbNotice({ msg: t(`নতুন ব্যাচ ${res.batch.batch_no} সফলভাবে সাবমিট হয়েছে।`, `Batch ${res.batch.batch_no} submitted successfully.`) });
+      setIsCreatingBatch(false);
+      refreshAll();
+      setTimeout(() => setOnbNotice(null), 4000);
+    } catch (err: any) {
+      setOnbNotice({ msg: err?.response?.data?.message_bn || err?.message || 'ব্যাচ সাবমিট ব্যর্থ হয়েছে', err: true });
+      setTimeout(() => setOnbNotice(null), 4000);
+    }
+  };
+
+  const handleDecideBatch = async (batchId: number, decision: 'APPROVED' | 'REJECTED') => {
+    try {
+      const res = await BhumiApi.decideOnboardingBatch(batchId, decision);
+      setOnbNotice({ msg: res.message_bn || (decision === 'APPROVED' ? 'ব্যাচ অনুমোদিত হয়েছে।' : 'ব্যাচ প্রত্যাখ্যাত হয়েছে।') });
+      setSelectedBatch(null);
+      refreshAll();
+      setTimeout(() => setOnbNotice(null), 4000);
+    } catch (err: any) {
+      const errMsg = err?.response?.data?.message_bn || err?.message || 'অনুমোদন কার্যক্রমে ত্রুটি হয়েছে।';
+      setOnbNotice({ msg: errMsg, err: true });
+      setTimeout(() => setOnbNotice(null), 5000);
+    }
+  };
+
+  const handleCreateAppeal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await BhumiApi.createAppeal(appealForm);
+      setOnbNotice({ msg: t(`আপিল ${res.appeal.appeal_code} সফলভাবে দাখিল করা হয়েছে।`, `Appeal ${res.appeal.appeal_code} filed successfully.`) });
+      setIsCreatingAppeal(false);
+      refreshAll();
+      setTimeout(() => setOnbNotice(null), 4000);
+    } catch (err: any) {
+      setOnbNotice({ msg: err?.response?.data?.message_bn || err?.message || 'আপিল দাখিলে ত্রুটি হয়েছে।', err: true });
+      setTimeout(() => setOnbNotice(null), 4000);
+    }
+  };
+
+  const handleDecideAppeal = async () => {
+    if (!appealDecisionModal) return;
+    try {
+      const res = await BhumiApi.decideAppeal(appealDecisionModal.appeal.id, {
+        status: appealDecisionModal.status,
+        decision_note_bn: appealDecisionModal.note,
+      });
+      setOnbNotice({ msg: res.message_bn || 'আপিল সিদ্ধান্ত সফলভাবে রেকর্ড করা হয়েছে।' });
+      setAppealDecisionModal(null);
+      refreshAll();
+      setTimeout(() => setOnbNotice(null), 4000);
+    } catch (err: any) {
+      setOnbNotice({ msg: err?.response?.data?.message_bn || err?.message || 'আপিল সিদ্ধান্তে ত্রুটি হয়েছে।', err: true });
+      setTimeout(() => setOnbNotice(null), 4000);
     }
   };
 
@@ -465,6 +578,17 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
           >
             <BookOpen className="w-3.5 h-3.5" />
             <span>{t('সার্ভিস ও ফি ডিরেক্টরি', 'Service & Fees')}</span>
+          </button>
+          <button
+            onClick={() => handleTabChange('onboarding_appeals')}
+            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+              subTab === 'onboarding_appeals'
+                ? 'bg-[#006A4E] text-white shadow-xs'
+                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+            }`}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>{t('অনবোর্ডিং ও আপিল', 'Onboarding & Appeals')}</span>
           </button>
           {import.meta.env.DEV && (
             <button
@@ -1995,6 +2119,557 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* TAB 9: Maker-Checker Staging Onboarding & Appellate Review Mirror (Tier C Sections 8.7 & 8.8) */}
+      {subTab === 'onboarding_appeals' && (
+        <div className="panel p-6 space-y-6">
+          {onbNotice && (
+            <div className={`p-4 rounded-xl border flex items-center gap-3 text-sm font-semibold animate-rise ${
+              onbNotice.err ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-[#006A4E]'
+            }`}>
+              {onbNotice.err ? <AlertCircle className="w-5 h-5 flex-shrink-0" /> : <CheckCircle2 className="w-5 h-5 flex-shrink-0" />}
+              <span>{onbNotice.msg}</span>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
+            <div>
+              <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
+                <Layers className="w-5 h-5 text-[#006A4E]" />
+                <span>{t('মেকার-চেকার অনবোর্ডিং ও আপিল রিভিউ ট্রাইব্যুনাল', 'Maker-Checker Onboarding & Appellate Review Tribunal')}</span>
+              </h2>
+              <p className="text-xs text-[#5F7A74] mt-0.5">
+                {t(
+                  'ডিজিটালাইজেশন ড্রাফট যাচাইয়ে মেকার-চেকার চার-চোখের নীতি (Four-Eyes Principle) এবং আপিল আদালতের স্থগিতাদেশ ট্রাইব্যুনাল।',
+                  'Maker-Checker staging data verification with cryptographic proof packages and legal appellate stay orders.'
+                )}
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setOnbAppealsSubTab('batches')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition ${
+                  onbAppealsSubTab === 'batches'
+                    ? 'bg-[#006A4E] text-white shadow-xs'
+                    : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>{t('মেকার-চেকার ব্যাচ', 'Staging Batches')} ({toBanglaDigits(onboardingBatches.length, lang)})</span>
+              </button>
+              <button
+                onClick={() => setOnbAppealsSubTab('appeals')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition ${
+                  onbAppealsSubTab === 'appeals'
+                    ? 'bg-[#006A4E] text-white shadow-xs'
+                    : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+                }`}
+              >
+                <Scale className="w-3.5 h-3.5" />
+                <span>{t('আপিল ট্রাইব্যুনাল', 'Appeals Mirror')} ({toBanglaDigits(appealsList.length, lang)})</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Sub-tab 1: Maker-Checker Staging Batches */}
+          {onbAppealsSubTab === 'batches' && (
+            <div className="space-y-6">
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-[#F4F9F6] p-4 rounded-xl border border-[#006A4E]/10">
+                <div className="text-xs text-[#33554B] leading-relaxed max-w-2xl">
+                  <strong>{t('চার-চোখের নীতি (Four-Eyes Principle):', 'Four-Eyes Principle:')}</strong>{' '}
+                  {t(
+                    'রেজিস্ট্রি ডাটা অফিসার বা সহকারী কর্মকর্তা ড্রাফট প্রস্তুত করেন (Maker)। সাব-রেজিস্ট্রার বা এসি ল্যান্ড তা যাচাই ও হ্যাশ অখণ্ডতা মিলিয়ে অনুমোদন করেন (Checker)। প্রস্তুতকারী কর্মকর্তা নিজ ব্যাচ অনুমোদন করতে পারেন না।',
+                    'Makers stage draft entries. Checkers verify payloads and cryptographic hash chains before granting approval. Makers cannot check their own batches.'
+                  )}
+                </div>
+                <button
+                  onClick={() => setIsCreatingBatch(!isCreatingBatch)}
+                  className="px-4 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{isCreatingBatch ? t('ফর্ম বন্ধ করুন', 'Close Form') : t('নতুন স্ট্যাজিং ব্যাচ তৈরি', 'New Staging Batch')}</span>
+                </button>
+              </div>
+
+              {isCreatingBatch && (
+                <form onSubmit={handleCreateBatch} className="p-5 rounded-xl border border-[#006A4E]/20 bg-white shadow-xs space-y-4 animate-rise">
+                  <h3 className="font-bold text-sm text-[#074f38] flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-[#006A4E]" />
+                    <span>{t('নতুন অনবোর্ডিং ড্রাফট ব্যাচ দাখিল', 'Submit New Staging Onboarding Batch')}</span>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">{t('রেকর্ড ধরন', 'Record Type')}</label>
+                      <select
+                        value={batchForm.record_type}
+                        onChange={(e) => setBatchForm({ ...batchForm, record_type: e.target.value })}
+                        className="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white"
+                      >
+                        <option value="DEED_DRAFT">{t('সাফ-কবলা দলিল ড্রাফট (DEED_DRAFT)', 'Sale Deed Draft')}</option>
+                        <option value="KHATIAN_RECONCILIATION">{t('খতিয়ান সমন্বয় ড্রাফট (KHATIAN_RECONCILIATION)', 'Khatian Reconciliation Draft')}</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">{t('দাগ নং', 'Dag No')}</label>
+                      <input
+                        type="text"
+                        value={batchForm.dag_no}
+                        onChange={(e) => setBatchForm({ ...batchForm, dag_no: e.target.value })}
+                        required
+                        className="w-full text-xs p-2.5 rounded-lg border border-slate-300"
+                        placeholder="১২২"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">{t('মৌজা', 'Mouza')}</label>
+                      <input
+                        type="text"
+                        value={batchForm.mouza}
+                        onChange={(e) => setBatchForm({ ...batchForm, mouza: e.target.value })}
+                        required
+                        className="w-full text-xs p-2.5 rounded-lg border border-slate-300"
+                        placeholder="বিরুলিয়া"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">{t('দাতা / বর্তমান মালিকের নাম', 'Seller / Current Owner')}</label>
+                      <input
+                        type="text"
+                        value={batchForm.seller_name}
+                        onChange={(e) => setBatchForm({ ...batchForm, seller_name: e.target.value })}
+                        required
+                        className="w-full text-xs p-2.5 rounded-lg border border-slate-300"
+                        placeholder="মো. আব্দুল কাদের"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">{t('গ্রহীতা / ক্রেতার নাম', 'Buyer / Beneficiary')}</label>
+                      <input
+                        type="text"
+                        value={batchForm.buyer_name}
+                        onChange={(e) => setBatchForm({ ...batchForm, buyer_name: e.target.value })}
+                        required
+                        className="w-full text-xs p-2.5 rounded-lg border border-slate-300"
+                        placeholder="মো. রফিকুল ইসলাম"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">{t('জমির পরিমাণ (শতাংশ)', 'Area (Decimal)')}</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={batchForm.area_decimal}
+                        onChange={(e) => setBatchForm({ ...batchForm, area_decimal: e.target.value })}
+                        required
+                        className="w-full text-xs p-2.5 rounded-lg border border-slate-300"
+                        placeholder="৮.৫০"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsCreatingBatch(false)}
+                      className="px-3 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100"
+                    >
+                      {t('বাতিল', 'Cancel')}
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 rounded-lg bg-[#006A4E] text-white text-xs font-bold hover:bg-[#00553e] shadow-xs"
+                    >
+                      {t('ব্যাচ তৈরি ও হ্যাশ সিল সহ দাখিল', 'Submit Batch with SHA-256 Proof')}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Batches Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {onboardingBatches.map((batch) => {
+                  const isSubmitted = batch.status === 'SUBMITTED';
+                  const isApproved = batch.status === 'APPROVED';
+                  const isMaker = user && Number(user.id) === Number(batch.maker_user_id);
+
+                  return (
+                    <div
+                      key={batch.id}
+                      className="p-5 rounded-xl border border-[#006A4E]/15 bg-white shadow-xs flex flex-col justify-between hover:border-[#006A4E]/30 transition"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-mono text-xs font-extrabold text-[#006A4E] bg-emerald-50 px-2.5 py-1 rounded-md">
+                            {batch.batch_no}
+                          </span>
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 ${
+                              isApproved
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : isSubmitted
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {isApproved ? <CheckCircle2 className="w-3.5 h-3.5" /> : isSubmitted ? <Clock className="w-3.5 h-3.5" /> : <XOctagon className="w-3.5 h-3.5" />}
+                            <span>{batch.status}</span>
+                          </span>
+                        </div>
+
+                        <h3 className="font-bold text-sm text-slate-900 mb-1">
+                          {batch.record_type === 'DEED_DRAFT' ? t('দলিল প্রাক-যাচাই ড্রাফট ব্যাচ', 'Sale Deed Draft Batch') : t('খতিয়ান সমন্বয় ড্রাফট ব্যাচ', 'Khatian Reconciliation Batch')}
+                        </h3>
+
+                        <div className="space-y-1.5 text-xs text-slate-600 mt-3 pt-3 border-t border-slate-100">
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">{t('প্রস্তুতকারী (Maker):', 'Maker:')}</span>
+                            <span className="font-medium text-slate-800">{batch.maker_name_bn || 'মেকার অফিসার'} ({batch.maker_role})</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">{t('অনুমোদনকারী (Checker):', 'Checker:')}</span>
+                            <span className="font-medium text-slate-800">{batch.checker_name_bn || (isSubmitted ? t('অপেক্ষমান...', 'Pending Review...') : '—')}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">{t('আইটেম সংখ্যা:', 'Items Count:')}</span>
+                            <span className="font-bold text-[#006A4E]">{toBanglaDigits(batch.item_count || 1, lang)} টি</span>
+                          </div>
+                          <div className="pt-1">
+                            <span className="text-[11px] text-slate-400 block">{t('SHA-256 প্রুফ হ্যাশ:', 'Proof Hash:')}</span>
+                            <span className="font-mono text-[10px] text-slate-600 truncate block bg-slate-50 p-1 rounded">
+                              {batch.batch_hash}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                        <button
+                          onClick={async () => {
+                            const res = await BhumiApi.getOnboardingBatch(batch.id);
+                            setSelectedBatch(res);
+                          }}
+                          className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer"
+                        >
+                          {t('আইটেম বিস্তারিত দেখুন →', 'Inspect Payload →')}
+                        </button>
+
+                        {isSubmitted && (
+                          <div className="flex gap-1.5 items-center">
+                            {isMaker ? (
+                              <span className="text-[11px] text-amber-700 bg-amber-50 px-2.5 py-1 rounded font-medium">
+                                {t('🔒 প্রস্তুতকারী (মেকার লক)', '🔒 Maker Locked')}
+                              </span>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => handleDecideBatch(batch.id, 'APPROVED')}
+                                  className="px-3 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold cursor-pointer transition shadow-xs"
+                                >
+                                  {t('✔ অনুমোদন', '✔ Approve')}
+                                </button>
+                                <button
+                                  onClick={() => handleDecideBatch(batch.id, 'REJECTED')}
+                                  className="px-2.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold cursor-pointer transition shadow-xs"
+                                >
+                                  {t('✕ বাতিল', '✕ Reject')}
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Batch Inspector Modal */}
+              {selectedBatch && (
+                <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+                  <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 space-y-4 shadow-xl animate-rise">
+                    <div className="flex items-center justify-between border-b pb-3">
+                      <div>
+                        <h3 className="font-bold text-base text-[#074f38]">
+                          {t('ব্যাচ বিস্তারিত ও আইটেম পেলোড:', 'Batch Details & Canonical Items:')} {selectedBatch.batch.batch_no}
+                        </h3>
+                        <p className="text-xs text-slate-500 font-mono mt-0.5">
+                          Hash: {selectedBatch.batch.batch_hash}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setSelectedBatch(null)}
+                        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {selectedBatch.items.map((item: any, idx: number) => (
+                        <div key={item.id || idx} className="p-4 rounded-xl border border-slate-200 bg-slate-50 text-xs space-y-2">
+                          <div className="flex items-center justify-between font-bold text-slate-800">
+                            <span>#{toBanglaDigits(idx + 1, lang)} | দাগ নং: {toBanglaDigits(item.payload.dag_no || item.payload.dag_no_bn || '১২২', lang)}</span>
+                            <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                              {item.validation_status}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-slate-600">
+                            <div><strong>{t('মৌজা:', 'Mouza:')}</strong> {item.payload.mouza || 'বিরুলিয়া'}</div>
+                            <div><strong>{t('জমির পরিমাণ:', 'Area:')}</strong> {toBanglaDigits(item.payload.area_decimal || '০.০০', lang)} শতক</div>
+                            <div><strong>{t('হস্তান্তরকারী / দাতা:', 'Transferor:')}</strong> {item.payload.seller_name || item.payload.donor_name || 'আবুল কাশেম'}</div>
+                            <div><strong>{t('গ্রহীতা / ক্রেতা:', 'Transferee:')}</strong> {item.payload.buyer_name || item.payload.donee_name || 'মো. ফখরুল ইসলাম'}</div>
+                          </div>
+                          {item.payload.declared_value_bdt && (
+                            <div className="text-slate-600 pt-1 border-t border-slate-200">
+                              <strong>{t('ঘোষিত মূল্য:', 'Declared Value:')}</strong> ৳{toBanglaDigits(Number(item.payload.declared_value_bdt).toLocaleString(), lang)}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                      <button
+                        onClick={() => setSelectedBatch(null)}
+                        className="px-4 py-2 rounded-lg bg-[#006A4E] text-white text-xs font-bold hover:bg-[#00553e]"
+                      >
+                        {t('বন্ধ করুন', 'Close')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sub-tab 2: Appeals Mirror & Legal Review Tribunal */}
+          {onbAppealsSubTab === 'appeals' && (
+            <div className="space-y-6">
+              <div className="flex flex-wrap items-center justify-between gap-3 bg-[#F4F9F6] p-4 rounded-xl border border-[#006A4E]/10">
+                <div className="text-xs text-[#33554B] leading-relaxed max-w-2xl">
+                  <strong>{t('আপিল আদালতের এখতিয়ার (Section 8.8):', 'Appellate Tribunal Jurisdiction:')}</strong>{' '}
+                  {t(
+                    'সহকারী কমিশনার (ভূমি) কর্তৃক নামজারি আদেশ বা খারিজের বিরুদ্ধে অতিরিক্ত জেলা প্রশাসক (রাজস্ব) বা ইউএনও রিভিউ ট্রাইব্যুনালে শুনানি অনুষ্ঠিত হয়। স্থগিতাদেশ (Stay Order) জারির সাথে সাথে সংশ্লিষ্ট দাগে যেকোনো বিক্রয় বা নামজারি স্বয়ংক্রিয়ভাবে ব্লক হয়।',
+                    'Appeals against mutation decisions before ADC (Revenue) or UNO. Granting a stay order automatically locks the plot against any deed registrations or mutation transfers.'
+                  )}
+                </div>
+                <button
+                  onClick={() => setIsCreatingAppeal(!isCreatingAppeal)}
+                  className="px-4 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{isCreatingAppeal ? t('ফর্ম বন্ধ করুন', 'Close Form') : t('নতুন আপিল দায়ের', 'File New Appeal')}</span>
+                </button>
+              </div>
+
+              {isCreatingAppeal && (
+                <form onSubmit={handleCreateAppeal} className="p-5 rounded-xl border border-[#006A4E]/20 bg-white shadow-xs space-y-4 animate-rise">
+                  <h3 className="font-bold text-sm text-[#074f38] flex items-center gap-2">
+                    <Scale className="w-4 h-4 text-[#006A4E]" />
+                    <span>{t('নতুন ভূমি আপিল আবেদন দাখিল', 'File New Land Mutation Appeal')}</span>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">{t('আপিলকারীর নাম', 'Appellant Name')}</label>
+                      <input
+                        type="text"
+                        value={appealForm.appellant_name_bn}
+                        onChange={(e) => setAppealForm({ ...appealForm, appellant_name_bn: e.target.value })}
+                        required
+                        className="w-full text-xs p-2.5 rounded-lg border border-slate-300"
+                        placeholder="মোসা. রাবেয়া খাতুন"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">{t('আপিলকারীর জাতীয় পরিচয়পত্র (NID)', 'Appellant NID')}</label>
+                      <input
+                        type="text"
+                        value={appealForm.appellant_nid}
+                        onChange={(e) => setAppealForm({ ...appealForm, appellant_nid: e.target.value })}
+                        required
+                        className="w-full text-xs p-2.5 rounded-lg border border-slate-300"
+                        placeholder="9900001002"
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">{t('আপিলের কারণ ও প্রার্থিত প্রতিকার', 'Grounds for Appeal & Remedy Sought')}</label>
+                      <textarea
+                        rows={3}
+                        value={appealForm.reason_bn}
+                        onChange={(e) => setAppealForm({ ...appealForm, reason_bn: e.target.value })}
+                        required
+                        className="w-full text-xs p-2.5 rounded-lg border border-slate-300"
+                        placeholder="সহকারী কমিশনার (ভূমি) কর্তৃক নামজারি স্থগিতাদেশের বিরুদ্ধে অতিরিক্ত জেলা প্রশাসক (রাজস্ব) মহোদয় সমীপে আপিল..."
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsCreatingAppeal(false)}
+                      className="px-3 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100"
+                    >
+                      {t('বাতিল', 'Cancel')}
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 rounded-lg bg-[#006A4E] text-white text-xs font-bold hover:bg-[#00553e] shadow-xs"
+                    >
+                      {t('আপিল পিটিশন দাখিল করুন', 'Submit Appeal Petition')}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Appeals List */}
+              <div className="space-y-4">
+                {appealsList.map((appeal) => {
+                  const isStay = appeal.status === 'STAY_ORDER_GRANTED';
+                  const isHearing = appeal.status === 'HEARING_SCHEDULED';
+                  const isUpheld = appeal.status === 'UPHELD';
+
+                  return (
+                    <div
+                      key={appeal.id}
+                      className="p-5 rounded-xl border border-[#006A4E]/15 bg-white shadow-xs space-y-3 hover:border-[#006A4E]/30 transition"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-extrabold text-[#006A4E] bg-emerald-50 px-2.5 py-1 rounded-md">
+                            {appeal.appeal_code}
+                          </span>
+                          <span className="font-semibold text-xs text-slate-700">
+                            দাগ নং: {toBanglaDigits(appeal.dag_no || appeal.dag_no_bn || '১০৮', lang)}
+                          </span>
+                        </div>
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 ${
+                            isStay
+                              ? 'bg-red-100 text-red-800 border border-red-200'
+                              : isHearing
+                              ? 'bg-amber-100 text-amber-800'
+                              : isUpheld
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}
+                        >
+                          {isStay ? <Lock className="w-3.5 h-3.5" /> : <Gavel className="w-3.5 h-3.5" />}
+                          <span>
+                            {isStay
+                              ? t('হস্তান্তর স্থগিতাদেশ কার্যকর (বিক্রয় লক)', 'Stay Order Active (Sale Locked)')
+                              : isHearing
+                              ? t('শুনানি নির্ধারিত', 'Hearing Scheduled')
+                              : appeal.status}
+                          </span>
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        <div>
+                          <span className="text-slate-500 block mb-0.5">{t('আপিলকারী:', 'Appellant:')}</span>
+                          <span className="font-bold text-slate-800">{appeal.appellant_name_bn}</span>{' '}
+                          <span className="text-slate-500 font-mono">
+                            (NID: {appeal.appellant_nid_masked || appeal.appellant_nid})
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500 block mb-0.5">{t('পর্যালোচনাকারী কর্মকর্তা:', 'Appellate Reviewer:')}</span>
+                          <span className="font-medium text-slate-800">{appeal.reviewer_username || t('শুনানি কর্মকর্তা নির্ধারিত হননি', 'Unassigned')}</span>
+                        </div>
+                      </div>
+
+                      <div className="p-3 bg-slate-50 rounded-lg text-xs text-slate-700 leading-relaxed border border-slate-100">
+                        <strong className="text-slate-900 block mb-1">{t('আপিলের কারণ:', 'Appeal Grounds:')}</strong>
+                        {appeal.reason_bn}
+                      </div>
+
+                      {appeal.decision_note_bn && (
+                        <div className="p-3 bg-emerald-50/60 rounded-lg text-xs text-[#006A4E] leading-relaxed border border-emerald-100">
+                          <strong className="block mb-0.5 font-bold">{t('ট্রাইব্যুনালের আদেশ / শুনানির সিদ্ধান্ত:', 'Tribunal Order:')}</strong>
+                          {appeal.decision_note_bn}
+                        </div>
+                      )}
+
+                      <div className="pt-2 flex justify-end">
+                        <button
+                          onClick={() => setAppealDecisionModal({ appeal, status: appeal.status, note: appeal.decision_note_bn || '' })}
+                          className="px-4 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                        >
+                          <Gavel className="w-3.5 h-3.5" />
+                          <span>{t('আদালতের আদেশ / শুনানি নির্ধারণ করুন', 'Render Order / Schedule Hearing')}</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Appeal Decision Modal */}
+              {appealDecisionModal && (
+                <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+                  <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl animate-rise">
+                    <div className="flex items-center justify-between border-b pb-3">
+                      <h3 className="font-bold text-base text-[#074f38] flex items-center gap-2">
+                        <Gavel className="w-5 h-5 text-[#006A4E]" />
+                        <span>{t('আপিল আদালতের সিদ্ধান্ত প্রদান:', 'Appellate Tribunal Decision:')} {appealDecisionModal.appeal.appeal_code}</span>
+                      </h3>
+                      <button
+                        onClick={() => setAppealDecisionModal(null)}
+                        className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 font-bold"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">{t('আদালতের আদেশ স্ট্যাটাস', 'Decision Status')}</label>
+                        <select
+                          value={appealDecisionModal.status}
+                          onChange={(e) => setAppealDecisionModal({ ...appealDecisionModal, status: e.target.value })}
+                          className="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white"
+                        >
+                          <option value="HEARING_SCHEDULED">{t('শুনানির দিন ধার্য (HEARING_SCHEDULED)', 'Schedule Hearing')}</option>
+                          <option value="STAY_ORDER_GRANTED">{t('হস্তান্তর স্থগিতাদেশ জারি - প্লট বিক্রয় লক (STAY_ORDER_GRANTED)', 'Grant Stay Order (Lock Plot)')}</option>
+                          <option value="UPHELD">{t('পূর্বের সহকারী কমিশনারের আদেশ বহাল (UPHELD)', 'Upheld Order')}</option>
+                          <option value="OVERTURNED">{t('আদেশ বাতিল ও নতুন নামজারি নির্দেশ (OVERTURNED)', 'Overturn Decision')}</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">{t('আদেশের বিবরণ ও নোটিশ', 'Order Decision Notes')}</label>
+                        <textarea
+                          rows={3}
+                          value={appealDecisionModal.note}
+                          onChange={(e) => setAppealDecisionModal({ ...appealDecisionModal, note: e.target.value })}
+                          required
+                          className="w-full text-xs p-2.5 rounded-lg border border-slate-300"
+                          placeholder="আগামী ২৫ অক্টোবর সকাল ১১টায় শুনানীর দিন ধার্য করা হলো..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2 border-t">
+                      <button
+                        onClick={() => setAppealDecisionModal(null)}
+                        className="px-3 py-2 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100"
+                      >
+                        {t('বাতিল', 'Cancel')}
+                      </button>
+                      <button
+                        onClick={handleDecideAppeal}
+                        className="px-4 py-2 rounded-lg bg-[#006A4E] text-white text-xs font-bold hover:bg-[#00553e] shadow-xs"
+                      >
+                        {t('আদেশ কার্যকর করুন', 'Execute Order')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

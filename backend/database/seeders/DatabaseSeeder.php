@@ -882,6 +882,9 @@ final class DatabaseSeeder
         // 16. Seed Land Sale Marketplace Listings & Geometries (Sections 8.3 & 8.4)
         self::seedListingsAndGeometries($plotIds);
 
+        // 17. Seed Maker-Checker Onboarding Batches & Appeals (Tier C Sections 8.7 & 8.8)
+        self::seedOnboardingAndAppeals($plotIds, $mut1Id);
+
         return [
             'users' => count(self::DEMO_USERS),
             'mouzas' => count($locationIds),
@@ -1320,6 +1323,100 @@ final class DatabaseSeeder
                 ]
             );
         }
+    }
+
+    public static function seedOnboardingAndAppeals(array $plotIds, int $sampleMutationId): void
+    {
+        $now = gmdate('c');
+
+        // 1. Seed Onboarding Batches
+        $maker = DB::selectOne("SELECT id, username FROM users WHERE username = 'rdo_savar'");
+        $checker = DB::selectOne("SELECT id, username FROM users WHERE username = 'registrar'");
+
+        $makerId = (int) ($maker['id'] ?? 6);
+        $checkerId = (int) ($checker['id'] ?? 4);
+
+        // Batch 1: SUBMITTED (2 draft deeds pending Sub-Registrar review)
+        $batch1Hash = hash('sha256', 'ONB-2026-0001|DEED_DRAFT|SUBMITTED');
+        $b1Id = DB::insert(
+            'INSERT INTO onboarding_batches (batch_no, record_type, maker_user_id, status, proof_package_json, batch_hash, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [
+                'ONB-2026-0001',
+                'DEED_DRAFT',
+                $makerId,
+                'SUBMITTED',
+                json_encode(['batch_title_bn' => 'সাভার সাব-রেজিস্ট্রি নতুন সাফ-কবলা দলিল ড্রাফট ব্যাচ #১']),
+                $batch1Hash,
+                $now,
+            ]
+        );
+
+        $item1Payload = [
+            'deed_type' => 'SALE',
+            'dag_no' => '115',
+            'mouza' => 'Birulia',
+            'seller_name' => 'আবুল কাশেম',
+            'buyer_name' => 'মো. ফখরুল ইসলাম',
+            'area_decimal' => 10.5,
+            'declared_value_bdt' => 2100000,
+        ];
+        $item2Payload = [
+            'deed_type' => 'HEBA',
+            'dag_no' => '116',
+            'mouza' => 'Birulia',
+            'donor_name' => 'মোসা. হালিমা বেগম',
+            'donee_name' => 'মো. তারেক রহমান',
+            'area_decimal' => 8.0,
+            'declared_value_bdt' => 1600000,
+        ];
+
+        DB::insert(
+            'INSERT INTO onboarding_items (batch_id, item_payload_json, validation_status, created_at) VALUES (?, ?, ?, ?)',
+            [$b1Id, json_encode($item1Payload, JSON_UNESCAPED_UNICODE), 'VALID', $now]
+        );
+        DB::insert(
+            'INSERT INTO onboarding_items (batch_id, item_payload_json, validation_status, created_at) VALUES (?, ?, ?, ?)',
+            [$b1Id, json_encode($item2Payload, JSON_UNESCAPED_UNICODE), 'VALID', $now]
+        );
+
+        // Batch 2: APPROVED (Earlier reconciled batch)
+        $batch2Hash = hash('sha256', 'ONB-2026-0002|KHATIAN_RECONCILIATION|APPROVED');
+        $b2Id = DB::insert(
+            'INSERT INTO onboarding_batches (batch_no, record_type, maker_user_id, checker_user_id, status, proof_package_json, batch_hash, created_at, decided_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                'ONB-2026-0002',
+                'KHATIAN_RECONCILIATION',
+                $makerId,
+                $checkerId,
+                'APPROVED',
+                json_encode(['batch_title_bn' => 'বিরুলিয়া মৌজা খতিয়ান সমন্বয় ব্যাচ #২']),
+                $batch2Hash,
+                $now,
+                $now,
+            ]
+        );
+
+        DB::insert(
+            'INSERT INTO onboarding_items (batch_id, item_payload_json, validation_status, created_at) VALUES (?, ?, ?, ?)',
+            [$b2Id, json_encode(['khatian_no' => 'BS-5021', 'dag_no' => '112', 'status' => 'RECONCILED'], JSON_UNESCAPED_UNICODE), 'VALID', $now]
+        );
+
+        // 2. Seed Appeals
+        DB::insert(
+            'INSERT INTO appeals (appeal_code, mutation_id, plot_id, appellant_nid, appellant_name_bn, reason_bn, status, reviewer_username, decision_note_bn, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                'APL-2026-0001',
+                $sampleMutationId,
+                $plotIds[7] ?? 8, // Dag 108 (Inheritance Unresolved plot)
+                '9900001002',
+                'মোসা. রাবেয়া খাতুন',
+                'সহকারী কমিশনার (ভূমি) কর্তৃক নামজারি স্থগিতাদেশের বিরুদ্ধে অতিরিক্ত জেলা প্রশাসক (রাজস্ব) বরাবর রিভিউ আপিল। ওয়ারিশি ফারায়েজ সনদ সংযুক্ত।',
+                'HEARING_SCHEDULED',
+                'uno_supervisor',
+                'আগামী ২৫ অক্টোবর সকাল ১১টায় শুনানীর দিন ধার্য করা হলো।',
+                $now,
+            ]
+        );
     }
 
     public static function seedServiceCatalogue(): void

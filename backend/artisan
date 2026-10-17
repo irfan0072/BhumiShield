@@ -9,6 +9,8 @@ use Database\Migrations\CreateBhumishieldTables;
 use Database\Seeders\DatabaseSeeder;
 use Tests\Feature\RoleAuditRegressionTest;
 use Tests\Feature\RulesAndLedgerTest;
+use Tests\Feature\TierBPortalAndMarketplaceTest;
+use Tests\Feature\TierCOnboardingAndAppealsTest;
 
 $args = array_slice($argv, 1);
 $command = $args[0] ?? 'list';
@@ -118,7 +120,9 @@ switch ($command) {
     case 'test':
         $c1 = RulesAndLedgerTest::runAll();
         $c2 = RoleAuditRegressionTest::runAll();
-        exit(($c1 === 0 && $c2 === 0) ? 0 : 1);
+        $c3 = TierBPortalAndMarketplaceTest::runAll();
+        $c4 = TierCOnboardingAndAppealsTest::runAll();
+        exit(($c1 === 0 && $c2 === 0 && $c3 === 0 && $c4 === 0) ? 0 : 1);
 
     default:
         echo "BhumiShield Custom Artisan Console (PHP " . PHP_VERSION . ")\n";

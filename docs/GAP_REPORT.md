@@ -181,3 +181,14 @@ flowchart TD
 - [x] **Office & Service Point Locator (`/bn/offices` & `/en/offices`):** Registry, AC Land, UDC Service Points, and Bank Branches with addresses, contacts, operating hours, and in-person appointment booking.
 - [x] **Cadastral Mouza Map (`/bn/map` & `/en/map`):** Zoom-aware visualizer (Upazila clusters <= 9, Mouza clusters 10–13, Plot boundaries >= 14) with interactive sidebar inspector.
 - [x] **Automated Test Suite:** 55 tests passing (20 Rules & Ledger tests, 29 Audit Regression tests, 6 Tier B Marketplace/Portal tests).
+
+### Tier C (Architecture & Extended Modules Complete)
+- [x] **Maker-Checker Staging Data Onboarding (Section 8.7):** Four-eyes principle strictly enforced (`SEPARATION_OF_DUTIES_VIOLATION` if maker approves own batch); SHA-256 batch proof packages; valid item payloads with NID and area checks; Sub-Registrar / AC Land / Checker decision workflows.
+- [x] **Appellate Review Mirror & Legal Roles (Section 8.8):** Citizen appeal petition filing (`APL-2026-XXXX`); ADC Revenue and UNO tribunal hearing scheduling; `STAY_ORDER_GRANTED` decision automatically locks the plot against any sale or mutation (`owner_sale_locked = 1`).
+- [x] **Unified Governance UI:** Admin Dashboard Tab 9 "অনবোর্ডিং ও আপিল (Onboarding & Appeals)" provides comprehensive oversight, item inspection, batch decision controls, and tribunal order execution.
+- [x] **Complete Automated Test Suite:** 61 tests passing across all 4 suites:
+  - `RulesAndLedgerTest`: 20 passed
+  - `RoleAuditRegressionTest`: 29 passed
+  - `TierBPortalAndMarketplaceTest`: 6 passed
+  - `TierCOnboardingAndAppealsTest`: 6 passed
+- [x] **System Architecture & Integration Specifications:** `docs/ARCHITECTURE.md` and `docs/INTEGRATION.md` updated with technical integration adapters for EC NID Porichoy, Land Service Gateway (LSG), and Biometric Counter Verifier.

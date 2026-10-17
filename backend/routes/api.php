@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\LedgerVerificationController;
+use App\Http\Controllers\Api\V1\OnboardingAndAppealsController;
 use App\Http\Controllers\Api\V1\PublicMarketplaceAndPortalController;
 use App\Http\Controllers\Api\V1\RoleControlController;
 use App\Http\Controllers\Api\V1\ServiceCatalogueController;
@@ -230,6 +231,32 @@ return static function (string $method, string $uri, array $query, array $body):
     }
     if ($method === 'GET' && ($sub === '/public/map/features' || $sub === '/map/features')) {
         return PublicMarketplaceAndPortalController::getMapFeatures($query);
+    }
+
+    // 3f. Maker-Checker Staging Onboarding & Appellate Reviews (Tier C Sections 8.7, 8.8)
+    if ($method === 'GET' && $sub === '/onboarding/batches') {
+        return OnboardingAndAppealsController::listBatches($query);
+    }
+    if ($method === 'POST' && $sub === '/onboarding/batches') {
+        return OnboardingAndAppealsController::createBatch($body);
+    }
+    if ($method === 'GET' && preg_match('#^/onboarding/batches/([^/]+)$#', $sub, $m)) {
+        return OnboardingAndAppealsController::getBatch(urldecode($m[1]));
+    }
+    if ($method === 'POST' && preg_match('#^/onboarding/batches/([^/]+)/decide$#', $sub, $m)) {
+        return OnboardingAndAppealsController::decideBatch(urldecode($m[1]), $body);
+    }
+    if ($method === 'GET' && $sub === '/appeals') {
+        return OnboardingAndAppealsController::listAppeals($query);
+    }
+    if ($method === 'POST' && $sub === '/appeals') {
+        return OnboardingAndAppealsController::createAppeal($body);
+    }
+    if ($method === 'GET' && preg_match('#^/appeals/([^/]+)$#', $sub, $m)) {
+        return OnboardingAndAppealsController::getAppeal(urldecode($m[1]));
+    }
+    if ($method === 'POST' && preg_match('#^/appeals/([^/]+)/decide$#', $sub, $m)) {
+        return OnboardingAndAppealsController::decideAppeal(urldecode($m[1]), $body);
     }
 
     // 4. Sub-Registrar Controlling Routes (Protected by RoleMiddleware)
