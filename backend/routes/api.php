@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\LedgerVerificationController;
+use App\Http\Controllers\Api\V1\PublicMarketplaceAndPortalController;
 use App\Http\Controllers\Api\V1\RoleControlController;
 use App\Http\Controllers\Api\V1\ServiceCatalogueController;
 use App\Http\Controllers\Api\V1\SystemAdminController;
@@ -196,23 +197,39 @@ return static function (string $method, string $uri, array $query, array $body):
 
     // 3d. Offices, Public Notices and Educational Blog (Sections 6, 8.5, 8.6)
     if ($method === 'GET' && $sub === '/offices') {
-        $rows = DB::select('SELECT * FROM offices ORDER BY id ASC');
-        return ['items' => $rows, 'total' => count($rows)];
+        return PublicMarketplaceAndPortalController::listOffices($query);
     }
     if ($method === 'GET' && $sub === '/notices') {
-        $rows = DB::select('SELECT * FROM notices WHERE is_active = 1 ORDER BY is_pinned DESC, published_at DESC');
-        return ['items' => $rows, 'total' => count($rows)];
+        return PublicMarketplaceAndPortalController::listNotices($query);
+    }
+    if ($method === 'GET' && preg_match('#^/notices/([^/]+)$#', $sub, $m)) {
+        return PublicMarketplaceAndPortalController::getNotice(urldecode($m[1]));
     }
     if ($method === 'GET' && $sub === '/blog') {
-        $sql = 'SELECT p.*, c.name_bn AS category_name_bn, c.name_en AS category_name_en FROM blog_posts p JOIN blog_categories c ON c.slug = p.category_slug WHERE p.is_published = 1';
-        $params = [];
-        if (!empty($query['category'])) {
-            $sql .= ' AND p.category_slug = ?';
-            $params[] = $query['category'];
-        }
-        $sql .= ' ORDER BY p.id DESC';
-        $rows = DB::select($sql, $params);
-        return ['items' => $rows, 'total' => count($rows)];
+        return PublicMarketplaceAndPortalController::listBlogPosts($query);
+    }
+    if ($method === 'GET' && preg_match('#^/blog/([^/]+)$#', $sub, $m)) {
+        return PublicMarketplaceAndPortalController::getBlogPost(urldecode($m[1]));
+    }
+    if ($method === 'POST' && preg_match('#^/blog/([^/]+)/helpful$#', $sub, $m)) {
+        return PublicMarketplaceAndPortalController::markBlogPostHelpful(urldecode($m[1]));
+    }
+
+    // 3e. Land Sale Marketplace & Map Features (Sections 8.3, 8.4)
+    if ($method === 'GET' && $sub === '/listings') {
+        return PublicMarketplaceAndPortalController::listListings($query);
+    }
+    if ($method === 'POST' && $sub === '/listings') {
+        return PublicMarketplaceAndPortalController::createListing($body);
+    }
+    if ($method === 'GET' && preg_match('#^/listings/([^/]+)$#', $sub, $m)) {
+        return PublicMarketplaceAndPortalController::getListing(urldecode($m[1]));
+    }
+    if ($method === 'POST' && preg_match('#^/listings/([^/]+)/enquire$#', $sub, $m)) {
+        return PublicMarketplaceAndPortalController::createListingEnquiry(urldecode($m[1]), $body);
+    }
+    if ($method === 'GET' && ($sub === '/public/map/features' || $sub === '/map/features')) {
+        return PublicMarketplaceAndPortalController::getMapFeatures($query);
     }
 
     // 4. Sub-Registrar Controlling Routes (Protected by RoleMiddleware)

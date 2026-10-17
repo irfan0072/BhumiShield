@@ -12,6 +12,11 @@ import { BankOfficerPage } from './pages/BankOfficerPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { HelpPage } from './pages/HelpPage';
 import { AuthPage } from './pages/AuthPage';
+import { PublicSalePage } from './pages/PublicSalePage';
+import { NoticeboardPage } from './pages/NoticeboardPage';
+import { EducationalBlogPage } from './pages/EducationalBlogPage';
+import { OfficeLocatorPage } from './pages/OfficeLocatorPage';
+import { CadastralMapPage } from './pages/CadastralMapPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 const getInitialTab = (): string => {
@@ -38,6 +43,11 @@ const getInitialTab = (): string => {
   if (cleanPath.startsWith('/check') || search.has('plot_id')) {
     return 'check';
   }
+  if (cleanPath.startsWith('/sale') || cleanPath.startsWith('/marketplace')) return 'sale';
+  if (cleanPath.startsWith('/notices') || cleanPath.startsWith('/circulars')) return 'notices';
+  if (cleanPath.startsWith('/blog')) return 'blog';
+  if (cleanPath.startsWith('/map')) return 'map';
+  if (cleanPath.startsWith('/offices')) return 'offices';
   if (cleanPath.startsWith('/help')) return 'help';
   if (cleanPath.startsWith('/home') || cleanPath.startsWith('/portal') || cleanPath.startsWith('/my/land')) return 'home';
   if (cleanPath.startsWith('/registrar')) return 'registrar';
@@ -48,7 +58,7 @@ const getInitialTab = (): string => {
   if (cleanPath.startsWith('/profile')) return 'profile';
 
   const tabParam = search.get('tab');
-  if (tabParam && ['landing', 'home', 'check', 'qr', 'help', 'auth', 'registrar', 'acland', 'bank', 'admin', 'profile'].includes(tabParam)) return tabParam;
+  if (tabParam && ['landing', 'home', 'check', 'qr', 'help', 'auth', 'registrar', 'acland', 'bank', 'admin', 'profile', 'sale', 'notices', 'blog', 'map', 'offices'].includes(tabParam)) return tabParam;
   return 'landing';
 };
 
@@ -97,6 +107,11 @@ export const AppContent: React.FC = () => {
       {activeTab === 'landing' && <LandingPage onNavigate={setActiveTab} />}
       {activeTab === 'check' && <CheckBeforeBuyPage />}
       {activeTab === 'qr' && <VerifyDeedQrPage />}
+      {activeTab === 'sale' && <PublicSalePage onNavigate={setActiveTab} />}
+      {activeTab === 'notices' && <NoticeboardPage />}
+      {activeTab === 'blog' && <EducationalBlogPage />}
+      {activeTab === 'map' && <CadastralMapPage onNavigate={setActiveTab} />}
+      {activeTab === 'offices' && <OfficeLocatorPage onNavigate={setActiveTab} />}
       {activeTab === 'help' && <HelpPage onNavigate={setActiveTab} />}
       {activeTab === 'auth' && <AuthPage mode="login" onSuccessNavigate={setActiveTab} />}
 

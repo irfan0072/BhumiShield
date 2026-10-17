@@ -59,7 +59,9 @@ CREATE TABLE IF NOT EXISTS locations (
     upazila_en TEXT NOT NULL,
     mouza_bn TEXT NOT NULL,
     mouza_en TEXT NOT NULL,
-    jl_no TEXT NOT NULL
+    jl_no TEXT NOT NULL,
+    latitude REAL DEFAULT 23.8580,
+    longitude REAL DEFAULT 90.3180
 );
 
 CREATE TABLE IF NOT EXISTS persons (

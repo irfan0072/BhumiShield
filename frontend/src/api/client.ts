@@ -907,12 +907,32 @@ export const BhumiApi = {
   getTicket: (codeOrId: string | number): Promise<any> =>
     api.get(`/tickets/${codeOrId}`).then((r) => r.data),
 
-  // Institutional Public Registers & Blog (Phase 3)
-  listOffices: (): Promise<any> =>
-    api.get('/offices').then((r) => r.data),
-  listNotices: (): Promise<any> =>
-    api.get('/notices').then((r) => r.data),
-  listBlogPosts: (category?: string): Promise<any> =>
-    api.get('/blog', { params: { category } }).then((r) => r.data),
+  // Institutional Public Registers & Blog (Phase 3 & Tier B)
+  listOffices: (query?: any): Promise<any> =>
+    api.get('/offices', { params: query }).then((r) => r.data),
+  listNotices: (query?: any): Promise<any> =>
+    api.get('/notices', { params: query }).then((r) => r.data),
+  getNotice: (slugOrId: string | number): Promise<any> =>
+    api.get(`/notices/${slugOrId}`).then((r) => r.data),
+  listBlogPosts: (categoryOrQuery?: any): Promise<any> => {
+    const params = typeof categoryOrQuery === 'string' ? { category: categoryOrQuery } : categoryOrQuery;
+    return api.get('/blog', { params }).then((r) => r.data);
+  },
+  getBlogPost: (slugOrId: string | number): Promise<any> =>
+    api.get(`/blog/${slugOrId}`).then((r) => r.data),
+  markBlogPostHelpful: (slugOrId: string | number): Promise<any> =>
+    api.post(`/blog/${slugOrId}/helpful`).then((r) => r.data),
+
+  // Public Land Sale Marketplace & Map Features (Tier B)
+  listListings: (filters?: any): Promise<any> =>
+    api.get('/listings', { params: filters }).then((r) => r.data),
+  getListing: (codeOrId: string | number): Promise<any> =>
+    api.get(`/listings/${codeOrId}`).then((r) => r.data),
+  createListing: (data: any): Promise<any> =>
+    api.post('/listings', data).then((r) => r.data),
+  createListingEnquiry: (codeOrId: string | number, data: any): Promise<any> =>
+    api.post(`/listings/${codeOrId}/enquire`, data).then((r) => r.data),
+  getMapFeatures: (zoom?: number): Promise<any> =>
+    api.get('/public/map/features', { params: { zoom } }).then((r) => r.data),
 };
 

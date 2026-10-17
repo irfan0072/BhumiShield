@@ -549,15 +549,15 @@ final class DatabaseSeeder
 
         // 2. Seed Locations (3 Mouzas)
         $mouzas = [
-            ['division_bn' => 'ঢাকা', 'division_en' => 'Dhaka', 'district_bn' => 'ঢাকা', 'district_en' => 'Dhaka', 'upazila_bn' => 'সাভার', 'upazila_en' => 'Savar', 'mouza_bn' => 'বিরুলিয়া', 'mouza_en' => 'Birulia', 'jl_no' => '12'],
-            ['division_bn' => 'ঢাকা', 'division_en' => 'Dhaka', 'district_bn' => 'গাজীপুর', 'district_en' => 'Gazipur', 'upazila_bn' => 'গাজীপুর সদর', 'upazila_en' => 'Gazipur Sadar', 'mouza_bn' => 'বাসন', 'mouza_en' => 'Bason', 'jl_no' => '08'],
-            ['division_bn' => 'ঢাকা', 'division_en' => 'Dhaka', 'district_bn' => 'নারায়ণগঞ্জ', 'district_en' => 'Narayanganj', 'upazila_bn' => 'সোনারগাঁও', 'upazila_en' => 'Sonargaon', 'mouza_bn' => 'পানাম', 'mouza_en' => 'Panam', 'jl_no' => '15'],
+            ['division_bn' => 'ঢাকা', 'division_en' => 'Dhaka', 'district_bn' => 'ঢাকা', 'district_en' => 'Dhaka', 'upazila_bn' => 'সাভার', 'upazila_en' => 'Savar', 'mouza_bn' => 'বিরুলিয়া', 'mouza_en' => 'Birulia', 'jl_no' => '12', 'lat' => 23.8580, 'lng' => 90.3180],
+            ['division_bn' => 'ঢাকা', 'division_en' => 'Dhaka', 'district_bn' => 'গাজীপুর', 'district_en' => 'Gazipur', 'upazila_bn' => 'গাজীপুর সদর', 'upazila_en' => 'Gazipur Sadar', 'mouza_bn' => 'বাসন', 'mouza_en' => 'Bason', 'jl_no' => '08', 'lat' => 23.9980, 'lng' => 90.4200],
+            ['division_bn' => 'ঢাকা', 'division_en' => 'Dhaka', 'district_bn' => 'নারায়ণগঞ্জ', 'district_en' => 'Narayanganj', 'upazila_bn' => 'সোনারগাঁও', 'upazila_en' => 'Sonargaon', 'mouza_bn' => 'পানাম', 'mouza_en' => 'Panam', 'jl_no' => '15', 'lat' => 23.6450, 'lng' => 90.6010],
         ];
         $locationIds = [];
         foreach ($mouzas as $m) {
             $locationIds[] = DB::insert(
-                'INSERT INTO locations (division_bn, division_en, district_bn, district_en, upazila_bn, upazila_en, mouza_bn, mouza_en, jl_no) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [$m['division_bn'], $m['division_en'], $m['district_bn'], $m['district_en'], $m['upazila_bn'], $m['upazila_en'], $m['mouza_bn'], $m['mouza_en'], $m['jl_no']]
+                'INSERT INTO locations (division_bn, division_en, district_bn, district_en, upazila_bn, upazila_en, mouza_bn, mouza_en, jl_no, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [$m['division_bn'], $m['division_en'], $m['district_bn'], $m['district_en'], $m['upazila_bn'], $m['upazila_en'], $m['mouza_bn'], $m['mouza_en'], $m['jl_no'], $m['lat'], $m['lng']]
             );
         }
 
@@ -879,6 +879,9 @@ final class DatabaseSeeder
         // 15. Seed Notices and Blog Articles (Section 8.5 & 8.6)
         self::seedNoticesAndBlog();
 
+        // 16. Seed Land Sale Marketplace Listings & Geometries (Sections 8.3 & 8.4)
+        self::seedListingsAndGeometries($plotIds);
+
         return [
             'users' => count(self::DEMO_USERS),
             'mouzas' => count($locationIds),
@@ -1069,18 +1072,19 @@ final class DatabaseSeeder
     {
         $now = gmdate('c');
 
-        // Seed 2 Blog Categories
+        // Seed 3 Blog Categories
         DB::insert("INSERT INTO blog_categories (slug, name_bn, name_en) VALUES ('land-literacy', 'ভূমি সাক্ষরতা ও অধিকার', 'Land Literacy & Rights')");
         DB::insert("INSERT INTO blog_categories (slug, name_bn, name_en) VALUES ('fraud-alerts', 'প্রতারণা সতর্কতা ও আইনি সুরক্ষা', 'Fraud Alerts & Protection')");
+        DB::insert("INSERT INTO blog_categories (slug, name_bn, name_en) VALUES ('statutory-rules', 'আইন, বিধি ও পরিপত্র', 'Statutory Rules & Circulars')");
 
-        // Seed 3 Blog Posts
+        // Seed 5 Blog Posts
         $posts = [
             [
                 'how-to-verify-land-before-buying',
                 'land-literacy',
                 'জমি ক্রয়ের পূর্বে ৪টি মৌলিক বিষয় যেভাবে যাচাই করবেন',
                 '4 Crucial Land Checks Every Buyer Must Perform in Bangladesh',
-                'জমি ক্রয়ের ক্ষেত্রে সিএস, এসএ, আরএস এবং বিএস খতিয়ানের ধারাবাহিক চেইন মেলানো অত্যন্ত জরুরি। বিএস খতিয়ানে বিক্রেতার নাম ও অংশের পরিমাণ সঠিক আছে কি না তা ভূমি মন্ত্রণালয়ের ই-পর্চা পোর্টালে যাচাই করতে হবে। এছাড়া কোনো তফসিলি ব্যাংকে জমিটি বন্ধক আছে কি না তা ডিজিটাল এনওসি ব্যবস্থার মাধ্যমে নিশ্চিত হোন।',
+                'জমি ক্রয়ের ক্ষেত্রে সিএস, এসএ, আরএস এবং বিএস খতিয়ানের ধারাবাহিক চেইন মেলানো অত্যন্ত জরুরি। বিএস খতিয়ানে বিক্রেতার নাম ও অংশের পরিমাণ সঠিক আছে কি না তা ভূমি মন্ত্রণালয়ের ই-পর্চা পোর্টালে যাচাই করতে হবে। এছাড়া কোনো তফসিলি ব্যাংকে জমিটি বন্ধক আছে কি না তা ডিজিটাল এনওসি ব্যবস্থার মাধ্যমে নিশ্চিত হোন। ভূয়া ওয়ারিশ সনদ কিংবা বিক্রিয় লকের অস্তিত্ব ভূমি সুরক্ষা পোর্টালে এক ক্লিকেই যাচাই করা যায়।',
                 'Checking the historical khatian chain from CS to BS survey is the primary defence against property fraud. Always verify the recorded owner shares on the latest BS khatian and check for active bank mortgages.',
                 'মো. তানভীর আহমেদ (এসি ল্যান্ড)',
                 'Md. Tanvir Ahmed (AC Land)',
@@ -1097,6 +1101,39 @@ final class DatabaseSeeder
                 'Farhana Yasmin (Sub-Registrar)',
                 5,
             ],
+            [
+                'inheritance-faraiz-and-heir-mutation-guide',
+                'land-literacy',
+                'ওয়ারিশি জমির সুষম ফারায়েজ ও নামজারি সম্পন্ন করার নিয়মাবলী',
+                'Step-by-Step Guide to Muslim Inheritance and Heir Mutation in Bangladesh',
+                'মূল মালিকের মৃত্যুর পর সকল জীবিত ওয়ারিশের জাতীয় পরিচয়পত্র ও সিটি কর্পোরেশন/ইউনিয়ন পরিষদের ওয়ারিশি সনদ সংগ্রহ করতে হবে। মুসলিম ফারায়েজ আইন অনুযায়ী সহ-শরিকদের হিস্যা নির্ধারণ ব্যতিরেকে এককভাবে কোনো ওয়ারিশ জমি হস্তান্তর করতে পারেন না। ভূমি সুরক্ষায় সহ-শরিকদের ডিজিটাল সম্মতি ছাড়া নামজারি আবেদন প্রক্রিয়াকরণ নিষিদ্ধ।',
+                'A comprehensive legal guide on obtaining heir certificates, calculating Muslim Faraiz shares, and registering inheritance mutations with unanimous co-owner digital consent.',
+                'মোসা. রাবেয়া খাতুন (আইনি পরামর্শক)',
+                'Mst. Rabeya Khatun (Legal Advisor)',
+                7,
+            ],
+            [
+                'bank-mortgage-lien-and-digital-noc',
+                'statutory-rules',
+                'ব্যাংক ঋণ পরিশোধের পর ডিজিটাল অনাপত্তিপত্র (NOC) প্রাপ্তির সহজ ধাপ',
+                'Securing Bank Lien Releases and Digital NOCs for Mortgaged Land',
+                'জমির ওপর ব্যাংক বা আর্থিক প্রতিষ্ঠানের সক্রিয় বন্ধকী লিয়েন থাকলে তা সাব-রেজিস্ট্রি অফিসে দলিল নিবন্ধনে স্বয়ংক্রিয়ভাবে ব্লক হয়। ঋণ পরিশোধ সম্পন্ন হলে সংশ্লিষ্ট ব্যাংকের ঋণ কর্মকর্তা ডিজিটাল প্ল্যাটফর্মে লিয়েন অবমুক্ত করেন এবং ক্রিপ্টোগ্রাফিক কিউআর সম্বলিত অনাপত্তিপত্র জারি করেন।',
+                'How commercial banks create, verify, and release land mortgage liens digitally, eliminating physical NOC forgery.',
+                'সাদিয়া চৌধুরী (সিনিয়র প্রিন্সিপাল অফিসার, সোনালী ব্যাংক)',
+                'Sadia Chowdhury (Senior Principal Officer, Sonali Bank)',
+                5,
+            ],
+            [
+                'understanding-cs-sa-rs-bs-khatian-chain',
+                'land-literacy',
+                'সিএস থেকে বিএস খতিয়ানের ধারাবাহিক চেইন ও খতিয়ান পরিচিতি',
+                'Understanding the Survey Lineage: CS, SA, RS, and BS Khatians Explained',
+                '১৮৮৮ সালের ক্যাডাস্ট্রাল সার্ভে (CS), ১৯৫০ সালের স্টেট অ্যাকুইজিশন সার্ভে (SA), ১৯৬২ সালের রিভিশনাল সার্ভে (RS) এবং চলমান বাংলাদেশ সার্ভে (BS)। প্রতিটি জরিপের খতিয়ানে জমির দাগ নম্বর ও শ্রেণী পরিবর্তনের ইতিহাস সংরক্ষিত থাকে। কোনো স্তরে জমির পরিমাণ বৃদ্ধি অস্বাভাবিক হলে তা ভূমি দখল বা ভুল রেকর্ডের নির্দেশক।',
+                'A detailed walkthrough of historical land surveys in Bengal from 1888 to modern city surveys, and how to spot chain breaks.',
+                'মো. দেলোয়ার হোসেন (সেটেলমেন্ট রেকর্ডস অফিসার)',
+                'Md. Delwar Hossain (Settlement Records Officer)',
+                8,
+            ],
         ];
 
         foreach ($posts as $p) {
@@ -1106,7 +1143,7 @@ final class DatabaseSeeder
             );
         }
 
-        // Seed 2 Notices with QR attachments
+        // Seed 5 Official Notices with QR attachments
         $notices = [
             [
                 'notice-mutation-timeline-circular-2026',
@@ -1130,6 +1167,39 @@ final class DatabaseSeeder
                 1,
                 0,
             ],
+            [
+                'notice-inheritance-mutation-hearing-schedule',
+                'PUBLIC_HEARING',
+                'UPAZILA',
+                'বিরুলিয়া মৌজার ওয়ারিশি নামজারি বিশেষ শুনানী ও মাঠ যাচাই ক্যাম্প',
+                'Special Field Hearing & Heir Mutation Verification Camp in Birulia Mouza',
+                'বিরুলিয়া মৌজার আওতাধীন সকল ওয়ারিশি জমির নামজারি নিষ্পত্তির জন্য আগামী ২০ অক্টোবর সকাল ১০টায় ইউনিয়ন ভূমি অফিসে সহকারী কমিশনার (ভূমি) এর উপস্থিতিতে গণশুনানী অনুষ্ঠিত হবে।',
+                'Public notice on upcoming field hearing and mutation camp in Birulia Union Land Office.',
+                0,
+                0,
+            ],
+            [
+                'notice-bank-noc-mandatory-clearance-gazette',
+                'GAZETTE',
+                'NATIONAL',
+                'বন্ধকী জমির হস্তান্তরে তফসিলি ব্যাংকের ডিজিটাল এনওসি বাধ্যতামূলক সংক্রান্ত গেজেট',
+                'Official Gazette on Mandatory Digital NOC for Mortgaged Property Transactions',
+                'বাংলাদেশ ব্যাংক ও ভূমি মন্ত্রণালয়ের যৌথ নির্দেশনামতে কোনো তফসিলি ব্যাংকের লিয়েন বিদ্যমান থাকলে ব্যাংক কর্মকর্তা কর্তৃক সিস্টেম-অনুমোদিত কিউআর কোডযুক্ত এনওসি ব্যতীত সাব-রেজিস্ট্রার কর্তৃক দলিল রেজিস্ট্রি নিষিদ্ধ ঘোষণা করা হলো।',
+                'Official gazette notification prohibiting property registration without system-verified bank digital NOC.',
+                0,
+                0,
+            ],
+            [
+                'notice-fake-power-of-attorney-warning',
+                'FRAUD_WARNING',
+                'NATIONAL',
+                'ভুয়া আমমোক্তারনামা (পাওয়ার অব অ্যাটর্নি) প্রস্তুতকারী চক্রের বিরুদ্ধে জনসচেতনতা',
+                'Public Warning Against Forged Power of Attorney Syndicates',
+                'বিদেশে অবস্থানরত প্রবাসীদের জমি জাল আমমোক্তারনামা দিয়ে বিক্রয়ের অপচেষ্টা প্রতিহত করতে দূতাবাস ও সাব-রেজিস্ট্রি অফিসের অনলাইন ক্রস-ভেরিফিকেশন সক্রিয় করা হয়েছে। কোনো অস্বচ্ছ আমমোক্তারনামা দৃষ্টিগোচর হলে অবিলম্বে অভিযোগ দাখিল করুন।',
+                'Alert for citizens and expatriates regarding verification safeguards against unauthorized power of attorney documents.',
+                0,
+                1,
+            ],
         ];
 
         foreach ($notices as $n) {
@@ -1142,7 +1212,112 @@ final class DatabaseSeeder
             $qrPayload = "https://bhumishield.gov.bd/bn/notices/{$n[0]}";
             DB::insert(
                 'INSERT INTO notice_attachments (notice_id, file_name, file_path, file_type, file_size_bytes, content_hash, qr_payload, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [$nId, 'circular_notice_2026.pdf', "/notices/{$n[0]}.pdf", 'application/pdf', 450000, hash('sha256', $n[0]), $qrPayload, $now]
+                [$nId, "official_gazette_{$n[0]}.pdf", "/notices/{$n[0]}.pdf", 'application/pdf', 524000, hash('sha256', $n[0]), $qrPayload, $now]
+            );
+        }
+    }
+
+    public static function seedListingsAndGeometries(array $plotIds): void
+    {
+        $now = gmdate('c');
+        $expiresAt = gmdate('c', time() + (90 * 86400));
+
+        // Seed 4 verified active listings:
+        $listings = [
+            [
+                'listing_code' => 'LST-2026-000101',
+                'plot_id' => $plotIds[0], // Dag 101
+                'seller_nid' => '9900001001',
+                'asking_price_bdt' => 2400000,
+                'area_decimal' => 10.0,
+                'description_bn' => 'সাভারের বিরুলিয়া মৌজায় প্রধান সড়ক সংলগ্ন নিষ্কণ্টক ভিটা জমি। সম্পূর্ণ কাগজ ও বিএস নামজারি হালনাগাদ। বসতবাড়ি নির্মাণের উপযোগী।',
+                'description_en' => 'Prime residential high-land in Birulia mouza, Savar. Clear title chain, up-to-date BS mutation, suitable for residential building.',
+                'verification_badge' => 'VERIFIED_CLEAR',
+            ],
+            [
+                'listing_code' => 'LST-2026-000102',
+                'plot_id' => $plotIds[8] ?? 9, // Dag 109
+                'seller_nid' => '9900001009',
+                'asking_price_bdt' => 3200000,
+                'area_decimal' => 12.0,
+                'description_bn' => 'বিরুলিয়ায় শান্ত প্রাকৃতিক পরিবেশে নিষ্কণ্টক আবাসিক প্লট। গ্যাস ও বিদ্যুৎ সংযোগের সুব্যবস্থা বিদ্যমান। ওয়ারিশ ও বন্ধকমুক্ত।',
+                'description_en' => 'Scenic residential plot in Birulia with utility access. Fully clear of mortgage liens or inheritance disputes.',
+                'verification_badge' => 'VERIFIED_CLEAR',
+            ],
+            [
+                'listing_code' => 'LST-2026-000103',
+                'plot_id' => $plotIds[9] ?? 10, // Dag 110
+                'seller_nid' => '9900001010',
+                'asking_price_bdt' => 1850000,
+                'area_decimal' => 8.5,
+                'description_bn' => 'বিরুলিয়া মৌজার বাগান/ভিটা জমি। সীমানা চিহ্নিত ও সুরক্ষিত। নির্ভরযোগ্য বিনিয়োগের জন্য আদর্শ।',
+                'description_en' => 'Demarcated garden and high-land in Birulia mouza. Ideal for long-term secure investment.',
+                'verification_badge' => 'VERIFIED_CLEAR',
+            ],
+            [
+                'listing_code' => 'LST-2026-000104',
+                'plot_id' => $plotIds[20] ?? 21, // Gazipur Plot
+                'seller_nid' => '9900001021',
+                'asking_price_bdt' => 4500000,
+                'area_decimal' => 15.0,
+                'description_bn' => 'গাজীপুর সদর বাসন মৌজায় পাকা রাস্তার পাশে বাণিজ্যিক ও শিল্প উপযোগী উন্নত জমি। মালিকানা সম্পূর্ণ যাচাইকৃত।',
+                'description_en' => 'Commercial frontage land near Gazipur Sadar (Bason mouza). Verified single ownership, ready for immediate transfer.',
+                'verification_badge' => 'VERIFIED_CLEAR',
+            ],
+        ];
+
+        foreach ($listings as $l) {
+            DB::insert(
+                'INSERT INTO listings (listing_code, plot_id, seller_nid, asking_price_bdt, area_decimal, description_bn, description_en, status, verification_badge, co_owner_consent_confirmed, expires_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [
+                    $l['listing_code'],
+                    $l['plot_id'],
+                    $l['seller_nid'],
+                    $l['asking_price_bdt'],
+                    $l['area_decimal'],
+                    $l['description_bn'],
+                    $l['description_en'],
+                    'ACTIVE',
+                    $l['verification_badge'],
+                    1,
+                    $expiresAt,
+                    $now,
+                    $now,
+                ]
+            );
+        }
+
+        // Seed sample plot geometries for the first 20 plots (Savar Birulia cluster around lat 23.858, lng 90.318)
+        $baseLat = 23.8580;
+        $baseLng = 90.3180;
+        for ($i = 0; $i < min(20, count($plotIds)); $i++) {
+            $pId = $plotIds[$i];
+            $row = (int) ($i / 4);
+            $col = $i % 4;
+            $cLat = $baseLat + ($row * 0.0012) - 0.0024;
+            $cLng = $baseLng + ($col * 0.0014) - 0.0028;
+            $dLat = 0.0005;
+            $dLng = 0.0006;
+
+            $polygon = [
+                [round($cLng - $dLng, 6), round($cLat - $dLat, 6)],
+                [round($cLng + $dLng, 6), round($cLat - $dLat, 6)],
+                [round($cLng + $dLng, 6), round($cLat + $dLat, 6)],
+                [round($cLng - $dLng, 6), round($cLat + $dLat, 6)],
+                [round($cLng - $dLng, 6), round($cLat - $dLat, 6)],
+            ];
+
+            DB::insert(
+                'INSERT INTO plot_geometries (plot_id, mouza_jl, dag_no, geojson_polygon, center_lat, center_lng, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [
+                    $pId,
+                    '12',
+                    (string) (101 + $i),
+                    json_encode($polygon),
+                    round($cLat, 6),
+                    round($cLng, 6),
+                    $now,
+                ]
             );
         }
     }

@@ -19,6 +19,14 @@ final class PublicRecordService
                 $value = strpos($raw, '*') !== false ? $raw : (strlen($raw) >= 6 ? substr($raw,0,4).'****'.substr($raw,-2) : '****');
             } elseif (is_array($value)) $value = self::minimize($value);
         }
-        unset($value); return $data;
+        unset($value);
+        return $data;
+    }
+
+    public static function maskNid(string $raw): string
+    {
+        $raw = trim($raw);
+        if (strpos($raw, '*') !== false) return $raw;
+        return strlen($raw) >= 6 ? substr($raw, 0, 4) . '****' . substr($raw, -2) : '****';
     }
 }

@@ -786,31 +786,75 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
               </span>
             </button>
 
-            {/* Desktop Navigation Links (bcc.zohirrayhan.com style) */}
-            <nav className="hidden items-center justify-center gap-1 lg:flex" aria-label="প্রধান মেনু">
+            {/* Desktop Navigation Links */}
+            <nav className="hidden items-center justify-center gap-0.5 xl:gap-1 lg:flex flex-wrap" aria-label="প্রধান মেনু">
               <button
                 onClick={() => setActiveTab('landing')}
-                className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors cursor-pointer min-h-[38px] ${
-                  activeTab === 'landing' ? 'text-[#006A4E] bg-emerald-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer min-h-[38px] ${
+                  activeTab === 'landing' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
                 {t('সকল সেবা', 'All Services')}
               </button>
               <button
+                onClick={() => setActiveTab('sale')}
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer min-h-[38px] ${
+                  activeTab === 'sale' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                {t('জমির হাট', 'Land Sale')}
+              </button>
+              <button
+                onClick={() => setActiveTab('map')}
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer min-h-[38px] ${
+                  activeTab === 'map' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                {t('মৌজা ম্যাপ', 'Cadastral Map')}
+              </button>
+              <button
                 onClick={() => setActiveTab('check')}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer min-h-[38px]"
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer min-h-[38px] ${
+                  activeTab === 'check' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
               >
                 {t('জমি যাচাই', 'Check Land')}
               </button>
               <button
                 onClick={() => setActiveTab('qr')}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer min-h-[38px]"
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer min-h-[38px] ${
+                  activeTab === 'qr' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
               >
                 {t('দলিল QR', 'Verify Deed')}
               </button>
               <button
+                onClick={() => setActiveTab('notices')}
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer min-h-[38px] ${
+                  activeTab === 'notices' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                {t('নোটিশ', 'Notices')}
+              </button>
+              <button
+                onClick={() => setActiveTab('blog')}
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer min-h-[38px] ${
+                  activeTab === 'blog' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                {t('ভূমি ব্লগ', 'Blog')}
+              </button>
+              <button
+                onClick={() => setActiveTab('offices')}
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer min-h-[38px] ${
+                  activeTab === 'offices' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                {t('দপ্তরসমূহ', 'Offices')}
+              </button>
+              <button
                 onClick={() => setActiveTab('home')}
-                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors cursor-pointer min-h-[38px] ${
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer min-h-[38px] ${
                   activeTab === 'home'
                     ? 'text-[#006A4E] bg-emerald-50 font-bold'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -820,9 +864,11 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
               </button>
               <button
                 onClick={() => setActiveTab('help')}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer min-h-[38px]"
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer min-h-[38px] ${
+                  activeTab === 'help' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
               >
-                {t('সহায়িকা ও FAQ', 'Help & FAQ')}
+                {t('সহায়িকা', 'Help')}
               </button>
             </nav>
 
@@ -923,6 +969,26 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                   <button
                     onClick={() => {
                       setMobileDrawerOpen(false);
+                      setActiveTab('sale');
+                    }}
+                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2 text-white/80 hover:bg-white/5"
+                  >
+                    <Building2 className="w-4 h-4 text-emerald-400" />
+                    <span>{t('জমির হাট (বিক্রয়)', 'Land Sale')}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMobileDrawerOpen(false);
+                      setActiveTab('map');
+                    }}
+                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2 text-white/80 hover:bg-white/5"
+                  >
+                    <Layers className="w-4 h-4 text-emerald-400" />
+                    <span>{t('মৌজা ম্যাপ', 'Cadastral Map')}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMobileDrawerOpen(false);
                       setActiveTab('check');
                     }}
                     className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2 text-white/80 hover:bg-white/5"
@@ -939,6 +1005,46 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                   >
                     <QrCode className="w-4 h-4 text-emerald-400" />
                     <span>{t('দলিল QR কোড যাচাই', 'Verify Deed QR')}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMobileDrawerOpen(false);
+                      setActiveTab('notices');
+                    }}
+                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2 text-white/80 hover:bg-white/5"
+                  >
+                    <Bell className="w-4 h-4 text-emerald-400" />
+                    <span>{t('নোটিশবোর্ড', 'Notices')}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMobileDrawerOpen(false);
+                      setActiveTab('blog');
+                    }}
+                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2 text-white/80 hover:bg-white/5"
+                  >
+                    <FileText className="w-4 h-4 text-emerald-400" />
+                    <span>{t('ভূমি ব্লগ ও আইন', 'Blog & Legal Guide')}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMobileDrawerOpen(false);
+                      setActiveTab('offices');
+                    }}
+                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2 text-white/80 hover:bg-white/5"
+                  >
+                    <Landmark className="w-4 h-4 text-emerald-400" />
+                    <span>{t('দপ্তরসমূহ ও সেবা কেন্দ্র', 'Offices & Service Points')}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMobileDrawerOpen(false);
+                      setActiveTab('home');
+                    }}
+                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2 text-white/80 hover:bg-white/5"
+                  >
+                    <Lock className="w-4 h-4 text-emerald-400" />
+                    <span>{t('নাগরিক ভল্ট ও আবেদন', 'Citizen Vault & Transfers')}</span>
                   </button>
                   <button
                     onClick={() => {
@@ -1302,6 +1408,22 @@ const InstitutionalFooter: React.FC<{
           </li>
           <li>
             <button
+              onClick={() => onNavigate('sale')}
+              className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
+            >
+              {t('জমির হাট (নিরাপদ বিক্রয়)', 'Land Sale Marketplace')}
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => onNavigate('map')}
+              className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
+            >
+              {t('ক্যাডাস্ট্রাল মৌজা ম্যাপ', 'Cadastral Mouza Map')}
+            </button>
+          </li>
+          <li>
+            <button
               onClick={() => onNavigate('qr')}
               className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
             >
@@ -1310,26 +1432,34 @@ const InstitutionalFooter: React.FC<{
           </li>
           <li>
             <button
+              onClick={() => onNavigate('notices')}
+              className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
+            >
+              {t('অফিসিয়াল নোটিশবোর্ড', 'Official Noticeboard')}
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => onNavigate('blog')}
+              className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
+            >
+              {t('ভূমি সাক্ষরতা ও আইন ব্লগ', 'Land Literacy Blog')}
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => onNavigate('offices')}
+              className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
+            >
+              {t('দপ্তর ও সেবা কেন্দ্রসমূহ', 'Offices & Service Points')}
+            </button>
+          </li>
+          <li>
+            <button
               onClick={() => onNavigate('home')}
               className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
             >
               {t('নাগরিক ভল্ট ও বিক্রয় লক', 'Citizen Sale Lock Vault')}
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => onNavigate('help')}
-              className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
-            >
-              {t('১১-রুল গেটকিপার ও শুল্ক হিসাব', '11-Rule Gatekeeper')}
-            </button>
-          </li>
-          <li>
-            <button
-              onClick={() => onNavigate('help')}
-              className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
-            >
-              {t('স্বয়ংক্রিয় ই-মিউটেশন কিউ', 'e-Mutation Queue')}
             </button>
           </li>
         </ul>
