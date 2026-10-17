@@ -191,7 +191,7 @@ return static function (string $method, string $uri, array $query, array $body):
         return WorkflowController::listMutations($query['status'] ?? null);
     }
     if ($method === 'POST' && (preg_match('#^/mutations/(\d+)/decide$#', $sub, $m) || preg_match('#^/mutations/(\d+)/decision$#', $sub, $m))) {
-        $actor = RoleMiddleware::authorize(['ac_land', 'admin']);
+        $actor = RoleMiddleware::authorize(['ac_land']);
         if (isset($body['status']) && !isset($body['decision'])) {
             $body['decision'] = $body['status'];
         }

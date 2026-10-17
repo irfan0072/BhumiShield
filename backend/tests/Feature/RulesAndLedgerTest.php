@@ -366,4 +366,59 @@ final class RulesAndLedgerTest
         $flagged = RoleControlController::listFlaggedKhatians();
         self::assertTrue($flagged['total'] >= 2);
     }
+
+    public static function test_19_inviolable_ownership_guard_strictly_enforces_ac_land_mutation_only(): void
+    {
+        // 1. Direct write to ownerships table outside ApproveMutation context must be aborted by database trigger
+        $triggerAborted = false;
+        try {
+            DB::statement("UPDATE ownerships SET area_decimal = 999.0 WHERE id = 1");
+        } catch (\Throwable $e) {
+            $triggerAborted = str_contains($e->getMessage(), 'VIOLATION_M3_OWNERSHIP_GUARD');
+        }
+        self::assertTrue($triggerAborted, 'Direct SQL UPDATE to ownerships must be aborted by M3 ownership guard trigger');
+
+        $insertAborted = false;
+        try {
+            DB::statement("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (1, 1, 1, '1/1', 1.0, 10.0, 1)");
+        } catch (\Throwable $e) {
+            $insertAborted = str_contains($e->getMessage(), 'VIOLATION_M3_OWNERSHIP_GUARD');
+        }
+        self::assertTrue($insertAborted, 'Direct SQL INSERT to ownerships must be aborted by M3 ownership guard trigger');
+
+        // 2. Citizen cannot approve mutation (must throw FORBIDDEN_ROLE)
+        $citizenBlocked = false;
+        try {
+            WorkflowController::decideMutationCase(1, ['decision' => 'APPROVED'], ['username' => 'citizen', 'role' => 'citizen']);
+        } catch (\Throwable $e) {
+            $citizenBlocked = str_contains($e->getMessage(), 'FORBIDDEN_ROLE');
+        }
+        self::assertTrue($citizenBlocked, 'Citizen cannot decide mutation cases');
+
+        // 3. Sub-Registrar cannot approve mutation (must throw FORBIDDEN_ROLE)
+        $registrarBlocked = false;
+        try {
+            WorkflowController::decideMutationCase(1, ['decision' => 'APPROVED'], ['username' => 'registrar', 'role' => 'sub_registrar']);
+        } catch (\Throwable $e) {
+            $registrarBlocked = str_contains($e->getMessage(), 'FORBIDDEN_ROLE');
+        }
+        self::assertTrue($registrarBlocked, 'Sub-Registrar cannot decide mutation cases');
+
+        // 4. Admin cannot approve mutation (Admin & auditor CANNOT edit land data - Spec 4.4 & Rule M3)
+        $adminBlocked = false;
+        try {
+            WorkflowController::decideMutationCase(1, ['decision' => 'APPROVED'], ['username' => 'admin', 'role' => 'admin']);
+        } catch (\Throwable $e) {
+            $adminBlocked = str_contains($e->getMessage(), 'ADMIN_CANNOT_EDIT_LAND_DATA') || str_contains($e->getMessage(), 'FORBIDDEN_ROLE');
+        }
+        self::assertTrue($adminBlocked, 'System Admin cannot decide mutation cases or mutate land ownership');
+
+        // 5. AC Land can execute within ApproveMutation context cleanly
+        $mutPending = DB::selectOne("SELECT id FROM mutations WHERE status = 'PENDING' LIMIT 1");
+        if ($mutPending) {
+            $res = WorkflowController::decideMutationCase((int) $mutPending['id'], ['decision' => 'APPROVED'], ['username' => 'acland', 'role' => 'ac_land']);
+            self::assertTrue($res['status'] === 'APPROVED', 'AC Land must successfully approve mutation and update ownership');
+        }
+    }
 }
+

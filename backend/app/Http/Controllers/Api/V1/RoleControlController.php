@@ -479,7 +479,7 @@ final class RoleControlController
 
     public static function reconcileKhatianPlot(int $plotId, array $req, ?array $user = null): array
     {
-        $actor = RoleMiddleware::authorize(['ac_land', 'admin'], $user);
+        $actor = RoleMiddleware::authorize(['ac_land'], $user);
         $plot = DB::selectOne('SELECT * FROM plots WHERE id = ?', [$plotId]);
         if (!$plot) {
             throw new \RuntimeException(json_encode([
@@ -515,34 +515,42 @@ final class RoleControlController
             $owners = DB::select('SELECT id, person_id, area_decimal, share_float FROM ownerships WHERE plot_id = ? AND is_latest = 1 ORDER BY id ASC', [$plotId]);
             $ownerCount = count($owners);
 
-            if ($ownerCount === 1) {
-                DB::statement(
-                    "UPDATE ownerships SET area_decimal = ?, share_float = 1.0, share_fraction = '1/1' WHERE id = ?",
-                    [$reconciledArea, $owners[0]['id']]
-                );
-            } elseif ($ownerCount > 1) {
-                // Total area conservation across joint owners:
-                // Scale existing shares proportionally so the sum strictly equals $reconciledArea
-                $totalPrev = array_sum(array_column($owners, 'area_decimal'));
-                $allocated = 0.0;
+            // M3: Ownership records mutated strictly under AC Land ApproveMutation context
+            \App\Services\OwnershipGuard::executeInMutationContext(
+                "RECONCILE-PLOT-{$plotId}",
+                (string) ($actor['username'] ?? 'acland'),
+                (string) ($actor['role'] ?? 'ac_land'),
+                static function () use ($ownerCount, $reconciledArea, $owners): void {
+                    if ($ownerCount === 1) {
+                        DB::statement(
+                            "UPDATE ownerships SET area_decimal = ?, share_float = 1.0, share_fraction = '1/1' WHERE id = ?",
+                            [$reconciledArea, $owners[0]['id']]
+                        );
+                    } elseif ($ownerCount > 1) {
+                        // Total area conservation across joint owners:
+                        // Scale existing shares proportionally so the sum strictly equals $reconciledArea
+                        $totalPrev = array_sum(array_column($owners, 'area_decimal'));
+                        $allocated = 0.0;
 
-                for ($i = 0; $i < $ownerCount; $i++) {
-                    $o = $owners[$i];
-                    if ($i === $ownerCount - 1) {
-                        // Last owner absorbs any rounding variance to ensure exact conservation
-                        $shareArea = max(0.01, round($reconciledArea - $allocated, 2));
-                    } else {
-                        $ratio = $totalPrev > 0 ? ((float) $o['area_decimal'] / $totalPrev) : (1.0 / $ownerCount);
-                        $shareArea = round($reconciledArea * $ratio, 2);
-                        $allocated += $shareArea;
+                        for ($i = 0; $i < $ownerCount; $i++) {
+                            $o = $owners[$i];
+                            if ($i === $ownerCount - 1) {
+                                // Last owner absorbs any rounding variance to ensure exact conservation
+                                $shareArea = max(0.01, round($reconciledArea - $allocated, 2));
+                            } else {
+                                $ratio = $totalPrev > 0 ? ((float) $o['area_decimal'] / $totalPrev) : (1.0 / $ownerCount);
+                                $shareArea = round($reconciledArea * $ratio, 2);
+                                $allocated += $shareArea;
+                            }
+                            $shareFloat = round($shareArea / $reconciledArea, 4);
+                            DB::statement(
+                                'UPDATE ownerships SET area_decimal = ?, share_float = ? WHERE id = ?',
+                                [$shareArea, $shareFloat, $o['id']]
+                            );
+                        }
                     }
-                    $shareFloat = round($shareArea / $reconciledArea, 4);
-                    DB::statement(
-                        'UPDATE ownerships SET area_decimal = ?, share_float = ? WHERE id = ?',
-                        [$shareArea, $shareFloat, $o['id']]
-                    );
                 }
-            }
+            );
 
             // Only mark succession if explicit succession distribution is supplied or requested
             if (!empty($req['record_succession_for_deceased_person_id'])) {

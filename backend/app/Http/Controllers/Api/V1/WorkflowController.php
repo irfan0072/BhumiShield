@@ -616,6 +616,8 @@ final class WorkflowController
 
     public static function decideMutationCase(int $mutationId, array $req, ?array $user = null): array
     {
+        $actor = RoleMiddleware::authorize(['ac_land'], $user);
+
         $decision = strtoupper(trim((string) ($req['decision'] ?? 'APPROVED')));
         if (!in_array($decision, ['APPROVED', 'REJECTED'], true)) {
             throw new \RuntimeException(json_encode([
@@ -629,7 +631,6 @@ final class WorkflowController
         $reasonBn = (string) ($req['reason_bn'] ?? '');
         $reasonEn = (string) ($req['reason_en'] ?? $reasonBn);
         $nowIso = gmdate('c');
-        $actor = $user ?? JwtAuthService::getAuthenticatedUser() ?? ['username' => 'acland', 'role' => 'ac_land'];
         $officer = (string) ($actor['username'] ?? 'acland');
 
         return DB::transaction(function () use ($mutationId, $decision, $reasonBn, $reasonEn, $officer, $nowIso, $actor) {
@@ -724,49 +725,56 @@ final class WorkflowController
 
                 $totalArea = max(0.01, (float) $plot['total_area_decimal']);
                 $newSellerArea = max(0.0, round((float) $sellerOwn['area_decimal'] - $transferArea, 2));
+                $sellerFraction = self::formatConservedFraction($newSellerArea, $totalArea);
 
                 // Update deed status to MUTATED
                 DB::statement("UPDATE deeds SET status = 'MUTATED' WHERE id = ?", [$mut['deed_id']]);
 
-                // I07: Update seller ownership with exact conserved fraction (e.g. 19/23)
-                if ($newSellerArea <= 0.01) {
-                    DB::statement("UPDATE ownerships SET is_latest = 0, area_decimal = 0, share_float = 0, share_fraction = '0/1' WHERE id = ?", [$sellerOwn['id']]);
-                } else {
-                    $sellerFraction = self::formatConservedFraction($newSellerArea, $totalArea);
+                // M3: Ownership records mutated strictly under AC Land ApproveMutation context
+                \App\Services\OwnershipGuard::executeInMutationContext(
+                    (string) $mut['case_no'],
+                    $officer,
+                    (string) ($actor['role'] ?? 'ac_land'),
+                    static function () use ($newSellerArea, $sellerFraction, $totalArea, $sellerOwn, $mut, $transferArea, $bsKhatian): void {
+                        // I07: Update seller ownership with exact conserved fraction (e.g. 19/23)
+                        if ($newSellerArea <= 0.01) {
+                            DB::statement("UPDATE ownerships SET is_latest = 0, area_decimal = 0, share_float = 0, share_fraction = '0/1' WHERE id = ?", [$sellerOwn['id']]);
+                        } else {
+                            DB::statement(
+                                'UPDATE ownerships SET area_decimal = ?, share_float = ?, share_fraction = ? WHERE id = ?',
+                                [$newSellerArea, round($newSellerArea / $totalArea, 4), $sellerFraction, $sellerOwn['id']]
+                            );
+                        }
 
-                    DB::statement(
-                        'UPDATE ownerships SET area_decimal = ?, share_float = ?, share_fraction = ? WHERE id = ?',
-                        [$newSellerArea, round($newSellerArea / $totalArea, 4), $sellerFraction, $sellerOwn['id']]
-                    );
-                }
+                        // I07: Buyer ownership consolidation: if buyer already has an active latest holding on this plot, consolidate it
+                        $existingBuyerOwn = DB::selectOne(
+                            'SELECT * FROM ownerships WHERE plot_id = ? AND person_id = ? AND is_latest = 1',
+                            [$mut['plot_id'], $mut['buyer_id']]
+                        );
 
-                // I07: Buyer ownership consolidation: if buyer already has an active latest holding on this plot, consolidate it
-                $existingBuyerOwn = DB::selectOne(
-                    'SELECT * FROM ownerships WHERE plot_id = ? AND person_id = ? AND is_latest = 1',
-                    [$mut['plot_id'], $mut['buyer_id']]
+                        if ($existingBuyerOwn) {
+                            $aggArea = round((float) $existingBuyerOwn['area_decimal'] + $transferArea, 2);
+                            $aggFloat = round($aggArea / $totalArea, 4);
+                            $buyerFraction = WorkflowController::formatConservedFraction($aggArea, $totalArea);
+
+                            // Retire previous buyer row
+                            DB::statement('UPDATE ownerships SET is_latest = 0 WHERE id = ?', [$existingBuyerOwn['id']]);
+
+                            // Insert consolidated latest row
+                            DB::insert(
+                                'INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, ?, ?, ?, 1)',
+                                [$bsKhatian['id'], $mut['plot_id'], $mut['buyer_id'], $buyerFraction, $aggFloat, $aggArea]
+                            );
+                        } else {
+                            $buyerFraction = WorkflowController::formatConservedFraction($transferArea, $totalArea);
+
+                            DB::insert(
+                                'INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, ?, ?, ?, 1)',
+                                [$bsKhatian['id'], $mut['plot_id'], $mut['buyer_id'], $buyerFraction, round($transferArea / $totalArea, 4), round($transferArea, 2)]
+                            );
+                        }
+                    }
                 );
-
-                if ($existingBuyerOwn) {
-                    $aggArea = round((float) $existingBuyerOwn['area_decimal'] + $transferArea, 2);
-                    $aggFloat = round($aggArea / $totalArea, 4);
-                    $buyerFraction = self::formatConservedFraction($aggArea, $totalArea);
-
-                    // Retire previous buyer row
-                    DB::statement('UPDATE ownerships SET is_latest = 0 WHERE id = ?', [$existingBuyerOwn['id']]);
-
-                    // Insert consolidated latest row
-                    DB::insert(
-                        'INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, ?, ?, ?, 1)',
-                        [$bsKhatian['id'], $mut['plot_id'], $mut['buyer_id'], $buyerFraction, $aggFloat, $aggArea]
-                    );
-                } else {
-                    $buyerFraction = self::formatConservedFraction($transferArea, $totalArea);
-
-                    DB::insert(
-                        'INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, ?, ?, ?, 1)',
-                        [$bsKhatian['id'], $mut['plot_id'], $mut['buyer_id'], $buyerFraction, round($transferArea / $totalArea, 4), round($transferArea, 2)]
-                    );
-                }
 
                 // Append audit entry
                 DatabaseSeeder::appendAuditEntry(

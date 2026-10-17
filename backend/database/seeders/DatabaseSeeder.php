@@ -7,12 +7,15 @@ namespace Database\Seeders;
 use App\Services\FraudRulesEngine;
 use App\Services\JwtAuthService;
 use App\Services\LedgerService;
+use App\Services\OwnershipGuard;
+use App\Services\RbacService;
 use App\Support\DB;
 use Database\Migrations\CreateBhumishieldTables;
 
 /**
- * Seeds the BhumiShield Laravel database with 100% synthetic Bangladeshi land records
- * and the 8 deliberate hackathon demo scenarios.
+ * Seeds the BhumiShield Laravel database with 100% synthetic Bangladeshi land records,
+ * all 18 RBAC demo user roles, offices, document vault templates, SLA policies,
+ * transfer state machines, and the 8 deliberate hackathon demo scenarios.
  */
 final class DatabaseSeeder
 {
@@ -31,6 +34,32 @@ final class DatabaseSeeder
             'is_active' => 1,
         ],
         [
+            'username' => 'rabeya',
+            'email' => 'rabeya.citizen@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'মোসা. রাবেয়া খাতুন (নাগরিক - ওয়ারিশ)',
+            'full_name_en' => 'Mst. Rabeya Khatun (Citizen - Heir)',
+            'role' => 'citizen',
+            'office_bn' => 'নাগরিক পোর্টাল — বিরুলিয়া, সাভার',
+            'office_en' => 'Citizen Portal — Birulia, Savar',
+            'phone_dummy' => '01700-001002',
+            'nid' => '9900001002',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'spo_birulia',
+            'email' => 'spo.birulia@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'মো. শাহীনুর রহমান (সার্ভিস পয়েন্ট অপারেটর)',
+            'full_name_en' => 'Md. Shahinur Rahman (Service Point Operator)',
+            'role' => 'service_point_operator',
+            'office_bn' => 'বিরুলিয়া ইউনিয়ন ডিজিটাল সেন্টার (ইউডিসি)',
+            'office_en' => 'Birulia Union Digital Center (UDC)',
+            'phone_dummy' => '01700-001003',
+            'nid' => '9900001999',
+            'is_active' => 1,
+        ],
+        [
             'username' => 'registrar',
             'email' => 'sr.savar@demo.bhumishield.gov.bd',
             'password' => 'demo123',
@@ -41,6 +70,32 @@ final class DatabaseSeeder
             'office_en' => 'Sub-Registry Office, Savar, Dhaka',
             'phone_dummy' => '01700-002001',
             'nid' => '9900002001',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'registrar_gazipur',
+            'email' => 'sr.gazipur@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'মো. শফিকুল আলম (সাব-রেজিস্ট্রার)',
+            'full_name_en' => 'Md. Shafiqul Alam (Sub-Registrar)',
+            'role' => 'sub_registrar',
+            'office_bn' => 'সাব-রেজিস্ট্রি অফিস, গাজীপুর সদর',
+            'office_en' => 'Sub-Registry Office, Gazipur Sadar',
+            'phone_dummy' => '01700-002002',
+            'nid' => '9900002002',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'rdo_savar',
+            'email' => 'rdo.savar@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'মো. কামরুল হাসান (রেজিস্ট্রি ডাটা অফিসার - মেকার)',
+            'full_name_en' => 'Md. Kamrul Hasan (Registry Data Officer - Maker)',
+            'role' => 'registry_data_officer',
+            'office_bn' => 'সাব-রেজিস্ট্রি অফিস, সাভার, ঢাকা',
+            'office_en' => 'Sub-Registry Office, Savar, Dhaka',
+            'phone_dummy' => '01700-002003',
+            'nid' => '9900002003',
             'is_active' => 1,
         ],
         [
@@ -57,11 +112,89 @@ final class DatabaseSeeder
             'is_active' => 1,
         ],
         [
+            'username' => 'loa_savar',
+            'email' => 'loa.savar@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'সালমা আক্তার (ভূমি অফিস সহকারী - মেকার)',
+            'full_name_en' => 'Salma Akter (Land Office Assistant - Maker)',
+            'role' => 'land_office_assistant',
+            'office_bn' => 'উপজেলা ভূমি অফিস, সাভার, ঢাকা',
+            'office_en' => 'Upazila Land Office, Savar, Dhaka',
+            'phone_dummy' => '01700-003002',
+            'nid' => '9900003002',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'fvo_savar',
+            'email' => 'fvo.savar@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'মো. জাহাঙ্গীর আলম (ফিল্ড ভেরিফিকেশন অফিসার)',
+            'full_name_en' => 'Md. Jahangir Alam (Field Verification Officer)',
+            'role' => 'field_verification_officer',
+            'office_bn' => 'ইউনিয়ন ভূমি অফিস, বিরুলিয়া, সাভার',
+            'office_en' => 'Union Land Office, Birulia, Savar',
+            'phone_dummy' => '01700-003003',
+            'nid' => '9900003003',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'sro_dhaka',
+            'email' => 'sro.dhaka@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'মো. দেলোয়ার হোসেন (সেটেলমেন্ট রেকর্ডস অফিসার - মেকার)',
+            'full_name_en' => 'Md. Delwar Hossain (Settlement Records Officer - Maker)',
+            'role' => 'settlement_records_officer',
+            'office_bn' => 'জোনাল সেটেলমেন্ট অফিস, ঢাকা',
+            'office_en' => 'Zonal Settlement Office, Dhaka',
+            'phone_dummy' => '01700-003004',
+            'nid' => '9900003004',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'aso_dhaka',
+            'email' => 'aso.dhaka@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'নাজনীন সুলতানা (সহকারী সেটেলমেন্ট অফিসার - চেকার)',
+            'full_name_en' => 'Nazneen Sultana (Assistant Settlement Officer - Checker)',
+            'role' => 'settlement_checker',
+            'office_bn' => 'জোনাল সেটেলমেন্ট অফিস, ঢাকা',
+            'office_en' => 'Zonal Settlement Office, Dhaka',
+            'phone_dummy' => '01700-003005',
+            'nid' => '9900003005',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'uno_savar',
+            'email' => 'uno.savar@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'মো. মশিউর রহমান (উপজেলা নির্বাহী কর্মকর্তা - তদারককারী)',
+            'full_name_en' => 'Md. Mashiur Rahman (UNO Supervisor)',
+            'role' => 'uno_supervisor',
+            'office_bn' => 'উপজেলা নির্বাহী অফিসারের কার্যালয়, সাভার',
+            'office_en' => 'Upazila Nirbahi Office, Savar',
+            'phone_dummy' => '01700-003006',
+            'nid' => '9900003006',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'appellate_reviewer',
+            'email' => 'adc.dhaka@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'মো. সাইদুর রহমান (অতিরিক্ত জেলা প্রশাসক - রাজস্ব)',
+            'full_name_en' => 'Md. Saidur Rahman (ADC Revenue - Appellate Reviewer)',
+            'role' => 'appellate_reviewer',
+            'office_bn' => 'জেলা প্রশাসকের কার্যালয় (রাজস্ব শাখা), ঢাকা',
+            'office_en' => 'Office of Deputy Commissioner (Revenue), Dhaka',
+            'phone_dummy' => '01700-003007',
+            'nid' => '9900003007',
+            'is_active' => 1,
+        ],
+        [
             'username' => 'bank',
             'email' => 'credit.sonalibank@demo.bhumishield.gov.bd',
             'password' => 'demo123',
-            'full_name_bn' => 'নাজমুল হাসান (ব্যাংক কর্মকর্তা)',
-            'full_name_en' => 'Nazmul Hasan (Bank Officer)',
+            'full_name_bn' => 'নাজমুল হাসান (ব্যাংক কর্মকর্তা - ঋণ শাখা)',
+            'full_name_en' => 'Nazmul Hasan (Bank Officer - Credit)',
             'role' => 'bank_officer',
             'office_bn' => 'সোনালী ব্যাংক পিএলসি, সাভার শাখা (ডেমো)',
             'office_en' => 'Sonali Bank PLC, Savar Branch (Demo)',
@@ -70,42 +203,120 @@ final class DatabaseSeeder
             'is_active' => 1,
         ],
         [
+            'username' => 'bank_manager',
+            'email' => 'manager.sonalibank@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'সৈয়দা খালেদা পারভীন (শাখা ব্যবস্থাপক - ব্যাংক)',
+            'full_name_en' => 'Syeda Khaleda Parveen (Bank Branch Manager)',
+            'role' => 'bank_manager',
+            'office_bn' => 'সোনালী ব্যাংক পিএলসি, সাভার শাখা (ডেমো)',
+            'office_en' => 'Sonali Bank PLC, Savar Branch (Demo)',
+            'phone_dummy' => '01700-004002',
+            'nid' => '9900004002',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'support_agent',
+            'email' => 'support.agent@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'মোসা. ফারহানা আফরোজ (সাপোর্ট এজেন্ট - ১৬১২২)',
+            'full_name_en' => 'Mst. Farhana Afroz (Support Agent - 16122)',
+            'role' => 'support_agent',
+            'office_bn' => 'ভূমি সেবা হেল্পলাইন কলসেন্টার ১৬১২২',
+            'office_en' => 'Land Service Helpline Call Center 16122',
+            'phone_dummy' => '01700-004003',
+            'nid' => '9900004003',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'platform_moderator',
+            'email' => 'mod.bhumishield@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'মো. ফাহিম চৌধুরী (প্ল্যাটফর্ম মডারেটর)',
+            'full_name_en' => 'Md. Fahim Chowdhury (Platform Moderator)',
+            'role' => 'platform_moderator',
+            'office_bn' => 'ভূমি সুরক্ষা মার্কেটপ্লেস ও লিস্টিং সেল',
+            'office_en' => 'BhumiShield Marketplace Moderation Cell',
+            'phone_dummy' => '01700-004004',
+            'nid' => '9900004004',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'content_editor',
+            'email' => 'editor.land@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'তানজিলা হক (কনটেন্ট এডিটর)',
+            'full_name_en' => 'Tanjila Haque (Content Editor)',
+            'role' => 'content_editor',
+            'office_bn' => 'ভূমি প্রকাশনা ও জনসচেতনতা শাখা',
+            'office_en' => 'Land Publication & Public Awareness Wing',
+            'phone_dummy' => '01700-004005',
+            'nid' => '9900004005',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'content_approver',
+            'email' => 'approver.land@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'মো. আতিকুল ইসলাম (কনটেন্ট অ্যাপ্রুভার)',
+            'full_name_en' => 'Md. Atiqul Islam (Content Approver)',
+            'role' => 'content_approver',
+            'office_bn' => 'ভূমি মন্ত্রণালয় জনসংযোগ উইং',
+            'office_en' => 'Ministry of Land Public Relations Wing',
+            'phone_dummy' => '01700-004006',
+            'nid' => '9900004006',
+            'is_active' => 1,
+        ],
+        [
             'username' => 'admin',
             'email' => 'auditor.admin@demo.bhumishield.gov.bd',
             'password' => 'demo123',
-            'full_name_bn' => 'সিস্টেম অডিটর (ভূমি সুরক্ষা অ্যাডমিন)',
-            'full_name_en' => 'System Auditor (BhumiShield Admin)',
+            'full_name_bn' => 'সিস্টেম অ্যাডমিন (ভূমি সুরক্ষা অ্যাডমিন)',
+            'full_name_en' => 'System Admin (BhumiShield Admin)',
             'role' => 'admin',
-            'office_bn' => 'কেন্দ্রীয় লেজার মনিটরিং সেল (ডেমো)',
-            'office_en' => 'Central Ledger Monitoring Cell (Demo)',
+            'office_bn' => 'কেন্দ্রীয় সিস্টেম গভর্ন্যান্স ও কনফিগারেশন সেল',
+            'office_en' => 'Central System Governance & Configuration Cell',
             'phone_dummy' => '01700-005001',
             'nid' => '9900005001',
             'is_active' => 1,
         ],
         [
-            'username' => 'rabeya',
-            'email' => 'rabeya.citizen@demo.bhumishield.gov.bd',
+            'username' => 'lead_auditor',
+            'email' => 'lead.auditor@demo.bhumishield.gov.bd',
             'password' => 'demo123',
-            'full_name_bn' => 'মোসা. রাবেয়া খাতুন (নাগরিক)',
-            'full_name_en' => 'Mst. Rabeya Khatun (Citizen)',
-            'role' => 'citizen',
-            'office_bn' => 'নাগরিক পোর্টাল — বিরুলিয়া, সাভার',
-            'office_en' => 'Citizen Portal — Birulia, Savar',
-            'phone_dummy' => '01700-001002',
-            'nid' => '9900001002',
+            'full_name_bn' => 'মো. শামসুল হক (জাতীয় ক্রিপ্টোগ্রাফিক অডিটর)',
+            'full_name_en' => 'Md. Shamsul Haque (National Cryptographic Auditor)',
+            'role' => 'auditor',
+            'office_bn' => 'জাতীয় ভূমি লেজার অডিট অধিদপ্তর',
+            'office_en' => 'National Land Ledger Audit Directorate',
+            'phone_dummy' => '01700-005002',
+            'nid' => '9900005002',
             'is_active' => 1,
         ],
         [
-            'username' => 'registrar_gazipur',
-            'email' => 'sr.gazipur@demo.bhumishield.gov.bd',
+            'username' => 'dc_la',
+            'email' => 'dc.acquisition@demo.bhumishield.gov.bd',
             'password' => 'demo123',
-            'full_name_bn' => 'মো. শফিকুল আলম (সাব-রেজিস্ট্রার)',
-            'full_name_en' => 'Md. Shafiqul Alam (Sub-Registrar)',
-            'role' => 'sub_registrar',
-            'office_bn' => 'সাব-রেজিস্ট্রি অফিস, গাজীপুর সদর',
-            'office_en' => 'Sub-Registry Office, Gazipur Sadar',
-            'phone_dummy' => '01700-002002',
-            'nid' => '9900002002',
+            'full_name_bn' => 'মো. তারেক হাসান (এলএ কর্মকর্তা - অধিগ্রহণ)',
+            'full_name_en' => 'Md. Tariq Hasan (DC Land Acquisition Officer)',
+            'role' => 'dc_acquisition_officer',
+            'office_bn' => 'জেলা প্রশাসকের কার্যালয় (ভূমি অধিগ্রহণ শাখা)',
+            'office_en' => 'Office of Deputy Commissioner (LA Branch)',
+            'phone_dummy' => '01700-005003',
+            'nid' => '9900005003',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'lawyer',
+            'email' => 'advocate.karim@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'এডভোকেট সিরাজুল করিম (দেওয়ানি আদালত প্রতিনিধি)',
+            'full_name_en' => 'Advocate Sirajul Karim (Civil Court User)',
+            'role' => 'lawyer_court_user',
+            'office_bn' => 'ঢাকা জেলা ও দায়রা জজ আদালত বার',
+            'office_en' => 'Dhaka District & Sessions Judge Court Bar',
+            'phone_dummy' => '01700-005004',
+            'nid' => '9900005004',
             'is_active' => 1,
         ],
     ];
@@ -248,9 +459,12 @@ final class DatabaseSeeder
             $storedJson = LedgerService::canonicalJson($tamperedObj);
         }
 
+        $deedCode = sprintf('D-%s', strtoupper(substr(hash('sha256', $deedNo), 0, 6)));
+
         $deedId = DB::insert(
-            'INSERT INTO deeds (deed_no, deed_type, seller_id, buyer_id, plot_id, share_fraction, area_decimal, price_bdt, status, content_json, original_content_json, content_hash, prev_hash, signature, chain_index, registered_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO deeds (deed_code, deed_no, deed_type, seller_id, buyer_id, plot_id, share_fraction, area_decimal, price_bdt, status, content_json, original_content_json, content_hash, prev_hash, signature, chain_index, registered_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
+                $deedCode,
                 $deedNo,
                 $deedType,
                 $sellerId,
@@ -291,9 +505,12 @@ final class DatabaseSeeder
             }
         }
 
-        // 1. Seed Users (Explicitly verified synthetic demo accounts)
+        // 1. Seed Spatie-Compatible RBAC Schema & Permissions
+        RbacService::seedRbacTables();
+
+        // 1b. Seed Users (All 18 roles + stubs with explicit role assignments)
         foreach (self::DEMO_USERS as $u) {
-            DB::insert(
+            $uId = DB::insert(
                 'INSERT INTO users (username, email, full_name_bn, full_name_en, role, office_bn, office_en, phone_dummy, nid, is_active, is_identity_verified, token_version, password_hash, last_login_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, ?, ?, ?)',
                 [
                     $u['username'],
@@ -311,9 +528,18 @@ final class DatabaseSeeder
                     '2026-01-01T09:00:00+06:00',
                 ]
             );
+
+            // Assign role in model_has_roles
+            $roleRow = DB::selectOne('SELECT id FROM roles WHERE name = ?', [$u['role']]);
+            if ($roleRow) {
+                DB::insert(
+                    'INSERT OR IGNORE INTO model_has_roles (role_id, model_type, model_id) VALUES (?, ?, ?)',
+                    [$roleRow['id'], 'App\\Models\\User', $uId]
+                );
+            }
         }
 
-        // 1b. Seed Site Settings
+        // 1c. Seed Site Settings
         foreach (self::DEFAULT_SETTINGS as $st) {
             DB::insert(
                 "INSERT INTO site_settings (setting_key, setting_value_json, description_bn, description_en, updated_by, updated_at) VALUES (?, ?, ?, ?, 'admin', '2026-10-16T09:00:00+06:00')",
@@ -427,6 +653,7 @@ final class DatabaseSeeder
             $dagBn = FraudRulesEngine::toBnNum($dagStr);
             [$ltBn, $ltEn] = $landTypes[($pIdx - 1) % count($landTypes)];
             $area = $specialAreas[$pIdx] ?? (float) (12 + (($pIdx * 3) % 28));
+            $plotCode = sprintf('PLT-DHK-SAV-%04d', $pIdx);
 
             $notesBn = 'ডেমো রেকর্ড — সিএস, এসএ, আরএস ও বিএস খতিয়ান যাচাইকৃত।';
             $notesEn = 'Demo record — CS, SA, RS & BS khatian chain recorded.';
@@ -439,8 +666,8 @@ final class DatabaseSeeder
             }
 
             $plotId = DB::insert(
-                'INSERT INTO plots (location_id, dag_no, dag_no_bn, land_type_bn, land_type_en, total_area_decimal, notes_bn, notes_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                [$locId, $dagStr, $dagBn, $ltBn, $ltEn, $area, $notesBn, $notesEn]
+                'INSERT INTO plots (plot_code, location_id, dag_no, dag_no_bn, land_type_bn, land_type_en, total_area_decimal, notes_bn, notes_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [$plotCode, $locId, $dagStr, $dagBn, $ltBn, $ltEn, $area, $notesBn, $notesEn]
             );
             $plotIds[] = $plotId;
 
@@ -476,42 +703,45 @@ final class DatabaseSeeder
                 );
             }
 
-            $hist1 = $personIds[($pIdx + 15) % count($personIds)];
-            $hist2 = $personIds[($pIdx + 20) % count($personIds)];
-            foreach ([['CS', $hist1], ['SA', $hist1], ['RS', $hist2]] as [$st, $oId]) {
-                DB::insert(
-                    "INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, ?, 0)",
-                    [$khatianIds[$st], $plotId, $oId, $area]
-                );
-            }
+            // M3 Guard: Initial ownership seed executed with seeder authorization
+            OwnershipGuard::withSeederAuthorization(function () use ($khatianIds, $plotId, $personIds, $pIdx, $area) {
+                $hist1 = $personIds[($pIdx + 15) % count($personIds)];
+                $hist2 = $personIds[($pIdx + 20) % count($personIds)];
+                foreach ([['CS', $hist1], ['SA', $hist1], ['RS', $hist2]] as [$st, $oId]) {
+                    DB::insert(
+                        "INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, ?, 0)",
+                        [$khatianIds[$st], $plotId, $oId, $area]
+                    );
+                }
 
-            $bsKid = $khatianIds['BS'];
-            if ($pIdx === 1) {
-                DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, 20.0, 1)", [$bsKid, $plotId, $personIds[0]]);
-            } elseif ($pIdx === 2) {
-                DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, 15.0, 1)", [$bsKid, $plotId, $personIds[2]]);
-            } elseif ($pIdx === 3) {
-                DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/2', 0.5, 12.0, 1)", [$bsKid, $plotId, $personIds[5]]);
-                DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/2', 0.5, 12.0, 1)", [$bsKid, $plotId, $personIds[6]]);
-            } elseif ($pIdx === 4) {
-                DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, 16.0, 1)", [$bsKid, $plotId, $personIds[7]]);
-            } elseif ($pIdx === 5) {
-                DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, 20.0, 1)", [$bsKid, $plotId, $personIds[9]]);
-            } elseif ($pIdx === 6) {
-                DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, 30.0, 1)", [$bsKid, $plotId, $personIds[10]]);
-            } elseif ($pIdx === 7) {
-                DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, 26.0, 1)", [$bsKid, $plotId, $personIds[12]]);
-            } elseif ($pIdx === 8) {
-                DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, 22.0, 1)", [$bsKid, $plotId, $personIds[13]]);
-            } elseif ($pIdx === 9) {
-                DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, 16.0, 1)", [$bsKid, $plotId, $personIds[15]]);
-            } else {
-                $ownerId = ($pIdx === 13) ? $personIds[0] : $personIds[($pIdx + 3) % count($personIds)];
-                DB::insert(
-                    "INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, ?, 1)",
-                    [$bsKid, $plotId, $ownerId, $area]
-                );
-            }
+                $bsKid = $khatianIds['BS'];
+                if ($pIdx === 1) {
+                    DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, 20.0, 1)", [$bsKid, $plotId, $personIds[0]]);
+                } elseif ($pIdx === 2) {
+                    DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, 15.0, 1)", [$bsKid, $plotId, $personIds[2]]);
+                } elseif ($pIdx === 3) {
+                    DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/2', 0.5, 12.0, 1)", [$bsKid, $plotId, $personIds[5]]);
+                    DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/2', 0.5, 12.0, 1)", [$bsKid, $plotId, $personIds[6]]);
+                } elseif ($pIdx === 4) {
+                    DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, 16.0, 1)", [$bsKid, $plotId, $personIds[7]]);
+                } elseif ($pIdx === 5) {
+                    DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, 20.0, 1)", [$bsKid, $plotId, $personIds[9]]);
+                } elseif ($pIdx === 6) {
+                    DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, 30.0, 1)", [$bsKid, $plotId, $personIds[10]]);
+                } elseif ($pIdx === 7) {
+                    DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, 26.0, 1)", [$bsKid, $plotId, $personIds[12]]);
+                } elseif ($pIdx === 8) {
+                    DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, 22.0, 1)", [$bsKid, $plotId, $personIds[13]]);
+                } elseif ($pIdx === 9) {
+                    DB::insert("INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, 16.0, 1)", [$bsKid, $plotId, $personIds[15]]);
+                } else {
+                    $ownerId = ($pIdx === 13) ? $personIds[0] : $personIds[($pIdx + 3) % count($personIds)];
+                    DB::insert(
+                        "INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, '1/1', 1.0, ?, 1)",
+                        [$bsKid, $plotId, $ownerId, $area]
+                    );
+                }
+            });
         }
 
         // 5. Seed 80 Deeds in a Cryptographic Hash Chain
@@ -558,22 +788,39 @@ final class DatabaseSeeder
             "INSERT INTO mortgages_liens (plot_id, borrower_id, bank_name_bn, bank_name_en, branch_bn, amount_bdt, area_mortgaged_decimal, status, created_at) VALUES (?, ?, 'বাংলাদেশ কৃষি ব্যাংক', 'Bangladesh Krishi Bank', 'গাজীপুর সদর শাখা', 1500000, 16.0, 'ACTIVE', '2026-07-05T10:15:00+06:00')",
             [$plotIds[14], $personIds[18]]
         );
-        DB::insert(
+        $lien3Id = DB::insert(
             "INSERT INTO mortgages_liens (plot_id, borrower_id, bank_name_bn, bank_name_en, branch_bn, amount_bdt, area_mortgaged_decimal, status, created_at, released_at) VALUES (?, ?, 'অগ্রণী ব্যাংক পিএলসি', 'Agrani Bank PLC', 'সাভার শাখা', 800000, 20.0, 'RELEASED', '2024-05-10T10:00:00+06:00', '2025-11-20T15:00:00+06:00')",
             [$plotIds[0], $personIds[0]]
         );
 
-        // 7. Seed Mutations
+        // Seed 1 NOC Certificate for released lien
+        $nocPayload = [
+            'noc_no' => 'NOC-2026-8801',
+            'bank' => 'Agrani Bank PLC',
+            'branch' => 'Savar Branch',
+            'borrower_nid' => '9900001001',
+            'dag_no' => '101',
+            'amount_bdt' => 800000,
+            'released_at' => '2025-11-20T15:00:00+06:00',
+        ];
+        $nocHash = hash('sha256', LedgerService::canonicalJson($nocPayload));
+        $nocSig = LedgerService::signHash($nocHash);
         DB::insert(
-            "INSERT INTO mutations (case_no, deed_id, plot_id, seller_id, buyer_id, area_decimal, status, decision_reason_bn, decision_reason_en, created_at) VALUES ('MUT-2026-501', ?, ?, ?, ?, 15.0, 'PENDING', 'সাব-রেজিস্ট্রি অফিস হতে প্রাপ্ত দলিল নং DL-2026-1002 নামজারির অপেক্ষায়।', 'Awaiting AC Land mutation decision for registered deed DL-2026-1002.', '2026-10-03T09:30:00+06:00')",
+            'INSERT INTO noc_certificates (lien_id, noc_no, bank_name_bn, bank_name_en, branch_bn, borrower_name_bn, borrower_name_en, borrower_nid, mouza_bn, mouza_en, dag_no, dag_no_bn, amount_bdt, status, released_at, noc_hash, ed25519_signature, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [$lien3Id, 'NOC-2026-8801', 'অগ্রণী ব্যাংক পিএলসি', 'Agrani Bank PLC', 'সাভার শাখা', 'মো. রফিকুল ইসলাম', 'Md. Rafiqul Islam', '9900001001', 'বিরুলিয়া', 'Birulia', '101', '১০১', 800000, 'RELEASED', '2025-11-20T15:00:00+06:00', $nocHash, $nocSig, '2025-11-20T15:05:00+06:00']
+        );
+
+        // 7. Seed Mutations
+        $mut1Id = DB::insert(
+            "INSERT INTO mutations (mutation_code, case_no, deed_id, plot_id, seller_id, buyer_id, area_decimal, status, decision_reason_bn, decision_reason_en, created_at) VALUES ('MUT-2026-000501', 'MUT-2026-501', ?, ?, ?, ?, 15.0, 'PENDING', 'সাব-রেজিস্ট্রি অফিস হতে প্রাপ্ত দলিল নং DL-2026-1002 নামজারির অপেক্ষায়।', 'Awaiting AC Land mutation decision for registered deed DL-2026-1002.', '2026-10-03T09:30:00+06:00')",
             [$deed2Id, $plotIds[1], $personIds[2], $personIds[3]]
         );
-        DB::insert(
-            "INSERT INTO mutations (case_no, deed_id, plot_id, seller_id, buyer_id, area_decimal, status, decision_reason_bn, decision_reason_en, created_at) VALUES ('MUT-2026-502', ?, ?, ?, ?, 25.0, 'PENDING', 'সতর্কতা: দলিল নং DL-2026-1005-এ হ্যাশ অমিল (তথ্য পরিবর্তনের ঝুঁকি) সনাক্ত হয়েছে।', 'ALERT: Hash mismatch detected on Deed DL-2026-1005.', '2026-09-29T10:15:00+06:00')",
+        $mut2Id = DB::insert(
+            "INSERT INTO mutations (mutation_code, case_no, deed_id, plot_id, seller_id, buyer_id, area_decimal, status, decision_reason_bn, decision_reason_en, created_at) VALUES ('MUT-2026-000502', 'MUT-2026-502', ?, ?, ?, ?, 25.0, 'PENDING', 'সতর্কতা: দলিল নং DL-2026-1005-এ হ্যাশ অমিল (তথ্য পরিবর্তনের ঝুঁকি) সনাক্ত হয়েছে।', 'ALERT: Hash mismatch detected on Deed DL-2026-1005.', '2026-09-29T10:15:00+06:00')",
             [$deed5Id, $plotIds[4], $personIds[9], $personIds[11]]
         );
-        DB::insert(
-            "INSERT INTO mutations (case_no, deed_id, plot_id, seller_id, buyer_id, area_decimal, status, decision_reason_bn, decision_reason_en, decided_by, decided_at, created_at) VALUES ('MUT-2024-101', ?, ?, ?, ?, 20.0, 'APPROVED', 'মালিকানা চেইন ও দলিলের ডিজিটাল স্বাক্ষর সঠিক থাকায় নামজারি অনুমোদিত।', 'Ownership chain and digital signature verified; mutation approved.', 'acland', '2024-04-02T14:00:00+06:00', '2024-03-16T10:00:00+06:00')",
+        $mut3Id = DB::insert(
+            "INSERT INTO mutations (mutation_code, case_no, deed_id, plot_id, seller_id, buyer_id, area_decimal, status, decision_reason_bn, decision_reason_en, decided_by, decided_at, created_at) VALUES ('MUT-2024-000101', 'MUT-2024-101', ?, ?, ?, ?, 20.0, 'APPROVED', 'মালিকানা চেইন ও দলিলের ডিজিটাল স্বাক্ষর সঠিক থাকায় নামজারি অনুমোদিত।', 'Ownership chain and digital signature verified; mutation approved.', 'acland', '2024-04-02T14:00:00+06:00', '2024-03-16T10:00:00+06:00')",
             [$deed1Id, $plotIds[0], $personIds[16], $personIds[0]]
         );
 
@@ -613,9 +860,24 @@ final class DatabaseSeeder
             'note_bn' => 'দাগ নং ১০৬-এ সোনালী ব্যাংকের ২৫ লক্ষ টাকার বন্ধক এন্ট্রি',
         ], '2026-08-12T11:32:00+06:00');
 
-        // 10. Seed Canonical Service Catalogue & Fee Registry (Phase 2)
+        // 10. Seed Offices & Jurisdictions (Section 6)
+        self::seedOfficesAndJurisdictions();
+
+        // 11. Seed Document Templates & Plot Documents (Section 8.1)
+        self::seedDocumentTemplatesAndVault($plotIds);
+
+        // 12. Seed SLA Policies & Sample Tickets (Section 8.2)
+        self::seedSlaPoliciesAndTickets($plotIds);
+
+        // 13. Seed 13-Step Transfer State Machines (Section 5)
+        self::seedTransferWorkflows($plotIds, $personIds, $deed1Id, $deed2Id, $deed5Id, $mut1Id, $mut2Id, $mut3Id);
+
+        // 14. Seed Canonical Service Catalogue & Fee Registry
         self::seedServiceCatalogue();
         self::seedServiceFeesRegistry();
+
+        // 15. Seed Notices and Blog Articles (Section 8.5 & 8.6)
+        self::seedNoticesAndBlog();
 
         return [
             'users' => count(self::DEMO_USERS),
@@ -626,6 +888,263 @@ final class DatabaseSeeder
             'deeds' => $chainState['next_deed_index'] - 1,
             'scenarios' => count($scenarios),
         ];
+    }
+
+    public static function seedOfficesAndJurisdictions(): void
+    {
+        $now = gmdate('c');
+        $offices = [
+            ['OFF-REG-SAVAR', 'সাব-রেজিস্ট্রি অফিস, সাভার', 'Sub-Registry Office, Savar', 'registry', 'ঢাকা', 'Dhaka', 'ঢাকা', 'Dhaka', 'সাভার', 'Savar', '["12"]', 23.8583, 90.2667, 'সাভার বাজার রোড, সাভার, ঢাকা', 'Savar Bazar Road, Savar, Dhaka', '০২-৭৭৯০২২১'],
+            ['OFF-REG-GAZIPUR', 'সাব-রেজিস্ট্রি অফিস, গাজীপুর সদর', 'Sub-Registry Office, Gazipur Sadar', 'registry', 'ঢাকা', 'Dhaka', 'গাজীপুর', 'Gazipur', 'গাজীপুর সদর', 'Gazipur Sadar', '["08"]', 23.9999, 90.4203, 'রাজবাড়ি রোড, গাজীপুর', 'Rajbari Road, Gazipur', '০২-৯২৬১২২২'],
+            ['OFF-ACL-SAVAR', 'উপজেলা ভূমি অফিস, সাভার', 'Upazila Land Office, Savar', 'ac_land', 'ঢাকা', 'Dhaka', 'ঢাকা', 'Dhaka', 'সাভার', 'Savar', '["12"]', 23.8560, 90.2610, 'উপজেলা পরিষদ চত্বর, সাভার', 'Upazila Parishad Complex, Savar', '০২-৭৭৯০২৩৪'],
+            ['OFF-SPO-BIRULIA', 'বিরুলিয়া ইউনিয়ন ডিজিটাল সেন্টার (ইউডিসি)', 'Birulia Union Digital Center (UDC)', 'service_point', 'ঢাকা', 'Dhaka', 'ঢাকা', 'Dhaka', 'সাভার', 'Savar', '["12"]', 23.8750, 90.3120, 'ইউনিয়ন পরিষদ ভবন, বিরুলিয়া', 'Union Parishad Bhaban, Birulia', '০১৭০০-০০১০৩৩'],
+            ['OFF-BNK-SONALI', 'সোনালী ব্যাংক পিএলসি, সাভার শাখা', 'Sonali Bank PLC, Savar Branch', 'bank_branch', 'ঢাকা', 'Dhaka', 'ঢাকা', 'Dhaka', 'সাভার', 'Savar', '["12"]', 23.8590, 90.2640, 'বাসস্ট্যান্ড, সাভার', 'Bus Stand, Savar', '০২-৭৭৯০১১২'],
+            ['OFF-SET-DHAKA', 'জোনাল সেটেলমেন্ট অফিস, ঢাকা', 'Zonal Settlement Office, Dhaka', 'settlement', 'ঢাকা', 'Dhaka', 'ঢাকা', 'Dhaka', 'তেজগাঁও', 'Tejgaon', '["12", "08", "15"]', 23.7580, 90.3910, 'ভূমি রেকর্ড ভবন, তেজগাঁও, ঢাকা', 'Bhumi Record Bhaban, Tejgaon, Dhaka', '০২-৮১৭০১৯২'],
+            ['OFF-ADM-CENTRAL', 'কেন্দ্রীয় ভূমি সুরক্ষা গভর্ন্যান্স সেল', 'Central BhumiShield Governance Cell', 'admin_cell', 'ঢাকা', 'Dhaka', 'ঢাকা', 'Dhaka', 'শাহবাগ', 'Shahbag', '["all"]', 23.7380, 90.3960, 'ভূমি ভবন, ৭ম তলা, ঢাকা', 'Bhumi Bhaban, 7th Floor, Dhaka', '১৬১২২'],
+        ];
+
+        foreach ($offices as $o) {
+            DB::insert(
+                'INSERT INTO offices (office_code, name_bn, name_en, office_type, division_bn, division_en, district_bn, district_en, upazila_bn, upazila_en, mouzas_served_json, latitude, longitude, address_bn, address_en, contact_phone, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)',
+                [...$o, $now, $now]
+            );
+        }
+
+        // Map primary demo officers to offices
+        $officerMappings = [
+            ['registrar', 'OFF-REG-SAVAR', 'sub_registrar'],
+            ['registrar_gazipur', 'OFF-REG-GAZIPUR', 'sub_registrar'],
+            ['rdo_savar', 'OFF-REG-SAVAR', 'registry_data_officer'],
+            ['acland', 'OFF-ACL-SAVAR', 'ac_land'],
+            ['loa_savar', 'OFF-ACL-SAVAR', 'land_office_assistant'],
+            ['fvo_savar', 'OFF-ACL-SAVAR', 'field_verification_officer'],
+            ['spo_birulia', 'OFF-SPO-BIRULIA', 'service_point_operator'],
+            ['bank', 'OFF-BNK-SONALI', 'bank_officer'],
+            ['bank_manager', 'OFF-BNK-SONALI', 'bank_manager'],
+            ['sro_dhaka', 'OFF-SET-DHAKA', 'settlement_records_officer'],
+            ['aso_dhaka', 'OFF-SET-DHAKA', 'settlement_checker'],
+        ];
+
+        foreach ($officerMappings as [$uName, $offCode, $rName]) {
+            $u = DB::selectOne('SELECT id FROM users WHERE username = ?', [$uName]);
+            $off = DB::selectOne('SELECT id FROM offices WHERE office_code = ?', [$offCode]);
+            if ($u && $off) {
+                DB::insert(
+                    'INSERT INTO office_user (office_id, user_id, role_name, jurisdiction_scope_json, is_primary, assigned_at) VALUES (?, ?, ?, ?, 1, ?)',
+                    [$off['id'], $u['id'], $rName, '{"upazila": "সাভার"}', $now]
+                );
+            }
+        }
+    }
+
+    public static function seedDocumentTemplatesAndVault(array $plotIds): void
+    {
+        $templates = [
+            ['SALE', 'BS_KHATIAN', 'সর্বশেষ বিএস খতিয়ান (পর্চা)', 'Latest BS Khatian (Porcha)', 1, 'ac_land', 1],
+            ['SALE', 'REGISTERED_DEED', 'মূল নিবন্ধিত বিক্রয় দলিল', 'Original Registered Sale Deed', 1, 'sub_registrar', 2],
+            ['SALE', 'BAYA_DEED', 'বায়া দলিল ধারাবাহিক চেইন', 'Baya Deed Chain', 1, 'sub_registrar', 3],
+            ['SALE', 'LD_TAX_RECEIPT', 'হালনাগাদ ভূমি উন্নয়ন কর (দাখিলা)', 'Current Land Development Tax Receipt', 1, 'union_land', 4],
+            ['SALE', 'MOUZA_MAP', 'মৌজা নকশা (ম্যাপ শিট)', 'Mouza Map Sheet', 1, 'settlement', 5],
+            ['SALE', 'LIEN_NOC', 'ব্যাংক ঋণ বা বন্ধক অবমুক্তি সনদ (এনওসি)', 'Bank Mortgage Clearance Certificate (NOC)', 0, 'bank', 6],
+            ['INHERITANCE', 'BS_KHATIAN', 'সর্বশেষ বিএস খতিয়ান', 'Latest BS Khatian', 1, 'ac_land', 1],
+            ['INHERITANCE', 'HEIR_CERTIFICATE', 'স্থানীয় সরকার ওয়ারিশান সনদপত্র', 'Local Govt Succession / Heir Certificate', 1, 'union_land', 2],
+            ['INHERITANCE', 'CHAIN_KHATIAN', 'সিএস/এসএ/আরএস পূর্ববর্তী জরিপ খতিয়ান', 'CS/SA/RS Chain Khatians', 1, 'settlement', 3],
+            ['INHERITANCE', 'LD_TAX_RECEIPT', 'হালনাগাদ দাখিলা', 'Current Tax Receipt', 1, 'union_land', 4],
+        ];
+
+        foreach ($templates as $t) {
+            DB::insert(
+                'INSERT INTO document_templates (acquisition_type, document_type, title_bn, title_en, is_mandatory, responsible_office_type, display_order) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                $t
+            );
+        }
+
+        // Seed Documents for Dag 101 (Clean Sale: all L3 Official present)
+        $now = gmdate('c');
+        $docsPlot1 = [
+            ['BS_KHATIAN', 'সর্বশেষ বিএস খতিয়ান (পর্চা নং ৪১০১)', 'BS Khatian #4101', 'L3', 'OFFICIAL', '/documents/khatian_4101.pdf', 'khatian_4101.pdf', 345000, hash('sha256', 'khatian_4101'), '9900001001', 'acland', $now],
+            ['REGISTERED_DEED', 'মূল নিবন্ধিত বিক্রয় দলিল (দলিল নং DL-2026-1001)', 'Registered Deed DL-2026-1001', 'L3', 'OFFICIAL', '/documents/deed_1001.pdf', 'deed_1001.pdf', 812000, hash('sha256', 'deed_1001'), '9900001001', 'registrar', $now],
+            ['LD_TAX_RECEIPT', 'ভূমি উন্নয়ন কর দাখিলা (১৪৩১ বঙ্গাব্দ)', 'LD Tax Receipt (1431 BS)', 'L3', 'OFFICIAL', '/documents/tax_receipt_1431.pdf', 'tax_receipt_1431.pdf', 128000, hash('sha256', 'tax_receipt_1431'), '9900001001', 'fvo_savar', $now],
+            ['MOUZA_MAP', 'বিরুলিয়া মৌজা নকশা শিট নং ১২', 'Birulia Mouza Map Sheet #12', 'L2', 'VERIFIED', '/documents/mouza_sheet_12.pdf', 'mouza_sheet_12.pdf', 1450000, hash('sha256', 'mouza_sheet_12'), '9900001001', 'aso_dhaka', $now],
+            ['LIEN_NOC', 'অগ্রণী ব্যাংক ঋণ অবমুক্তি সনদ (NOC-2026-8801)', 'Agrani Bank Lien NOC-2026-8801', 'L3', 'OFFICIAL', '/documents/noc_8801.pdf', 'noc_8801.pdf', 256000, hash('sha256', 'noc_8801'), '9900001001', 'bank_manager', $now],
+        ];
+
+        foreach ($docsPlot1 as $doc) {
+            DB::insert(
+                'INSERT INTO plot_documents (plot_id, document_type, title_bn, title_en, trust_level, status, file_path, file_name, file_size_bytes, file_hash, uploaded_by_nid, verified_by, verified_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [$plotIds[0], ...$doc, $now, $now]
+            );
+        }
+
+        // Seed Documents for Dag 108 (Inheritance case: Missing Heir Certificate L0)
+        $docsPlot8 = [
+            ['BS_KHATIAN', 'সর্বশেষ বিএস খতিয়ান (পর্চা নং ৪১০৮)', 'BS Khatian #4108', 'L3', 'OFFICIAL', '/documents/khatian_4108.pdf', 'khatian_4108.pdf', 312000, hash('sha256', 'khatian_4108'), '9900001014', 'acland', $now],
+            ['HEIR_CERTIFICATE', 'স্থানীয় সরকার ওয়ারিশান সনদপত্র', 'Local Govt Succession / Heir Certificate', 'L0', 'MISSING', null, null, null, null, '9900001014', null, null],
+            ['LD_TAX_RECEIPT', 'ভূমি উন্নয়ন কর দাখিলা (বকেয়া সতর্কবার্তা)', 'LD Tax Receipt (Overdue)', 'L1', 'PENDING_VERIFICATION', '/documents/tax_receipt_draft.pdf', 'tax_receipt_draft.pdf', 115000, hash('sha256', 'tax_draft'), '9900001014', null, null],
+        ];
+
+        foreach ($docsPlot8 as $doc) {
+            DB::insert(
+                'INSERT INTO plot_documents (plot_id, document_type, title_bn, title_en, trust_level, status, file_path, file_name, file_size_bytes, file_hash, uploaded_by_nid, verified_by, verified_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [$plotIds[7], ...$doc, $now, $now]
+            );
+        }
+    }
+
+    public static function seedSlaPoliciesAndTickets(array $plotIds): void
+    {
+        $policies = [
+            ['MISSING_DOCUMENT', 'অনুপস্থিত কাগজপত্রের সহায়তা', 'Missing Document Assistance', 2, 15, 5, 10, 15],
+            ['RECORD_MISMATCH', 'খতিয়ান বা রেকর্ডের অমিল সংশোধন', 'Record Mismatch / Correction', 2, 20, 5, 12, 20],
+            ['MUTATION_DELAY', 'নামজারি শুনানির বিলম্ব', 'Mutation Delay Redress', 1, 10, 3, 7, 10],
+            ['BIOMETRIC_FAILURE', 'কাউন্টার বায়োমেট্রিক সমস্যা', 'Biometric Verification Failure', 1, 3, 1, 2, 3],
+            ['FRAUD_REPORT', 'বেনামি বা ভুয়া জমি বিক্রয় অভিযোগ', 'Suspected Land Fraud Report', 1, 7, 2, 5, 7],
+            ['NID_ISSUE', 'এনআইডি ও নামজারি প্রোফাইল মিল', 'NID Verification Assistance', 1, 5, 2, 4, 5],
+            ['LISTING_COMPLAINT', 'বিক্রয় বিজ্ঞাপনের অসঙ্গতি', 'Sale Listing Complaint', 1, 7, 2, 5, 7],
+            ['GENERAL', 'সাধারণ নাগরিক তথ্য ও হেল্পলাইন', 'General Citizen Inquiry', 2, 15, 5, 10, 15],
+        ];
+
+        foreach ($policies as $pol) {
+            DB::insert(
+                'INSERT INTO sla_policies (category, title_bn, title_en, first_reply_target_days, resolution_target_days, escalation_level_1_days, escalation_level_2_days, escalation_level_3_days) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                $pol
+            );
+        }
+
+        // Seed 2 initial tickets
+        $now = gmdate('c');
+        $t1Id = DB::insert(
+            "INSERT INTO tickets (ticket_code, category, plot_id, document_type, title_bn, title_en, description_bn, complainant_nid, complainant_name_bn, complainant_phone, is_anonymous, priority, status, assigned_office_id, current_escalation_level, created_at, updated_at) VALUES ('TKT-2026-000045', 'MISSING_DOCUMENT', ?, 'HEIR_CERTIFICATE', 'দাগ নং ১০৮-এর জন্য প্রয়োজনীয় ওয়ারিশান সনদ অনুপস্থিত', 'Missing Heir Certificate for Plot #108', 'রেকর্ডীয় মালিক আলহাজ্ব নূরুল হক মৃত হওয়ায় বণ্টননামা ও ওয়ারিশ সনদ দাখিলের নির্দেশিকা প্রয়োজন।', '9900001014', 'মো. তারেক আজিজ', '01700-001014', 0, 'HIGH', 'IN_PROGRESS', 3, 1, ?, ?)",
+            [$plotIds[7], $now, $now]
+        );
+
+        DB::insert(
+            "INSERT INTO ticket_messages (ticket_id, sender_username, sender_role, is_internal_note, message_bn, message_en, created_at) VALUES (?, 'acland', 'ac_land', 0, 'আপনার আবেদনটি এসি ল্যান্ড সাভার ডেস্কে প্রক্রিয়াধীন। ইউপি চেয়ারম্যান কর্তৃক স্বাক্ষরিত মূল ওয়ারিশ সনদ আপলোড করুন।', 'Application under review at Savar AC Land desk. Please upload succession certificate.', ?)",
+            [$t1Id, $now]
+        );
+    }
+
+    public static function seedTransferWorkflows(
+        array $plotIds,
+        array $personIds,
+        int $deed1Id,
+        int $deed2Id,
+        int $deed5Id,
+        int $mut1Id,
+        int $mut2Id,
+        int $mut3Id
+    ): void {
+        $now = gmdate('c');
+
+        // Transfer 1: Completed Clean Sale (Dag 101, Step 12 -> 13)
+        $t1Id = DB::insert(
+            "INSERT INTO transfer_requests (transfer_code, plot_id, current_step, public_stage, transfer_area_decimal, proposed_price_bdt, deed_type, service_point_id, home_office_id, status, deed_id, mutation_id, created_by_nid, created_at, updated_at) VALUES ('TR-2026-000101', ?, 12, 'DONE', 20.0, 3000000, 'SALE', 4, 3, 'APPROVED', ?, ?, '9900001017', '2024-03-01T10:00:00+06:00', ?)",
+            [$plotIds[0], $deed1Id, $mut3Id, $now]
+        );
+
+        // Transfer 2: Registered Deed pending AC Land mutation decision (Dag 102, Step 8)
+        $t2Id = DB::insert(
+            "INSERT INTO transfer_requests (transfer_code, plot_id, current_step, public_stage, transfer_area_decimal, proposed_price_bdt, deed_type, service_point_id, home_office_id, status, deed_id, mutation_id, created_by_nid, created_at, updated_at) VALUES ('TR-2026-000102', ?, 8, 'REVIEW', 15.0, 2400000, 'SALE', 4, 3, 'REGISTERED', ?, ?, '9900001003', '2026-10-01T11:00:00+06:00', ?)",
+            [$plotIds[1], $deed2Id, $mut1Id, $now]
+        );
+
+        // Transfer 3: Active draft transfer (Dag 101, Step 1 Intent)
+        $t3Id = DB::insert(
+            "INSERT INTO transfer_requests (transfer_code, plot_id, current_step, public_stage, transfer_area_decimal, proposed_price_bdt, deed_type, service_point_id, home_office_id, status, created_by_nid, created_at, updated_at) VALUES ('TR-2026-000103', ?, 1, 'START', 10.0, 1500000, 'SALE', 4, 3, 'DRAFT', '9900001001', ?, ?)",
+            [$plotIds[0], $now, $now]
+        );
+
+        // Seed Biometric verification records (Result only, no template stored!)
+        DB::insert(
+            "INSERT INTO biometric_verifications (transaction_id, transfer_id, party_nid, party_role, modality, match_status, match_score, terminal_id, officer_id, liveness_nonce, verified_at, notes_bn) VALUES ('BIO-TR101-SEL', ?, '9900001017', 'SELLER', 'DUAL', 'MATCH', 0.98, 'TERM-SR-SAVAR-01', 'registrar', 'NONCE-88F92A', '2024-03-15T11:10:00+06:00', 'কাউন্টার ক্যামেরা ও ফিঙ্গারপ্রিন্ট সফলভাবে মিলেছে।')",
+            [$t1Id]
+        );
+        DB::insert(
+            "INSERT INTO biometric_verifications (transaction_id, transfer_id, party_nid, party_role, modality, match_status, match_score, terminal_id, officer_id, liveness_nonce, verified_at, notes_bn) VALUES ('BIO-TR101-BUY', ?, '9900001001', 'BUYER', 'DUAL', 'MATCH', 0.99, 'TERM-SR-SAVAR-01', 'registrar', 'NONCE-88F92B', '2024-03-15T11:15:00+06:00', 'ক্রেতার বায়োমেট্রিক সম্মতি সম্পন্ন।')",
+            [$t1Id]
+        );
+    }
+
+    public static function seedNoticesAndBlog(): void
+    {
+        $now = gmdate('c');
+
+        // Seed 2 Blog Categories
+        DB::insert("INSERT INTO blog_categories (slug, name_bn, name_en) VALUES ('land-literacy', 'ভূমি সাক্ষরতা ও অধিকার', 'Land Literacy & Rights')");
+        DB::insert("INSERT INTO blog_categories (slug, name_bn, name_en) VALUES ('fraud-alerts', 'প্রতারণা সতর্কতা ও আইনি সুরক্ষা', 'Fraud Alerts & Protection')");
+
+        // Seed 3 Blog Posts
+        $posts = [
+            [
+                'how-to-verify-land-before-buying',
+                'land-literacy',
+                'জমি ক্রয়ের পূর্বে ৪টি মৌলিক বিষয় যেভাবে যাচাই করবেন',
+                '4 Crucial Land Checks Every Buyer Must Perform in Bangladesh',
+                'জমি ক্রয়ের ক্ষেত্রে সিএস, এসএ, আরএস এবং বিএস খতিয়ানের ধারাবাহিক চেইন মেলানো অত্যন্ত জরুরি। বিএস খতিয়ানে বিক্রেতার নাম ও অংশের পরিমাণ সঠিক আছে কি না তা ভূমি মন্ত্রণালয়ের ই-পর্চা পোর্টালে যাচাই করতে হবে। এছাড়া কোনো তফসিলি ব্যাংকে জমিটি বন্ধক আছে কি না তা ডিজিটাল এনওসি ব্যবস্থার মাধ্যমে নিশ্চিত হোন।',
+                'Checking the historical khatian chain from CS to BS survey is the primary defence against property fraud. Always verify the recorded owner shares on the latest BS khatian and check for active bank mortgages.',
+                'মো. তানভীর আহমেদ (এসি ল্যান্ড)',
+                'Md. Tanvir Ahmed (AC Land)',
+                6,
+            ],
+            [
+                'double-sale-prevention-with-ed25519',
+                'fraud-alerts',
+                'দলিল নিবন্ধনের পর তথ্য গোপনে পরিবর্তন রোধে ক্রিপ্টোগ্রাফিক সুরক্ষা',
+                'Preventing Post-Registration Deed Tampering with Ed25519 Signatures',
+                'ভূমি সুরক্ষায় প্রতিটি নিবন্ধিত দলিলের সম্পূর্ণ তথ্যের ডিজিটাল ফিঙ্গারপ্রিন্ট (SHA-256) এবং নিবন্ধন অধিদপ্তরের অনুমোদিত অফিসারের Ed25519 ডিজিটাল স্বাক্ষর যুক্ত করা হয়। ডাটাবেজে জমির পরিমাণ বা ব্যক্তির নাম পরিবর্তন করার চেষ্টা করলে সাথে সাথে লেজার হ্যাশ চেইনে লাল সতর্কবার্তা প্রদর্শিত হয়।',
+                'BhumiShield secures deed records using deterministic SHA-256 hash chaining and Ed25519 digital signatures. Any subsequent alteration in storage immediately breaks cryptographic verification.',
+                'ফারহানা ইয়াসমিন (সাব-রেজিস্ট্রার)',
+                'Farhana Yasmin (Sub-Registrar)',
+                5,
+            ],
+        ];
+
+        foreach ($posts as $p) {
+            DB::insert(
+                'INSERT INTO blog_posts (post_slug, category_slug, title_bn, title_en, body_bn, body_en, author_name_bn, author_name_en, reading_time_minutes, status, published_at, helpful_count, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?)',
+                [...$p, 'PUBLISHED', $now, $now]
+            );
+        }
+
+        // Seed 2 Notices with QR attachments
+        $notices = [
+            [
+                'notice-mutation-timeline-circular-2026',
+                'CIRCULAR_POLICY',
+                'NATIONAL',
+                'অনলাইন ই-নামজারি নিষ্পত্তির সর্বোচ্চ সময়সীমা ২৮ কর্মদিবস নির্ধারণ প্রসঙ্গে',
+                'Circular on 28-Day Maximum Timeline for Online e-Mutation Processing',
+                'ভূমি মন্ত্রণালয়ের সর্বশেষ পরিপত্র অনুযায়ী নাগরিক হয়রানি রোধে নামজারি আবেদনের শুনানী ও অনুমোদন ২৮ কর্মদিবসের মধ্যে সম্পন্ন করা বাধ্যতামূলক। ব্যত্যয় ঘটলে সিস্টেম স্বয়ংক্রিয়ভাবে ইউএনও ও এডিসি (রাজস্ব) ড্যাশবোর্ডে এসকেলেশন প্রেরণ করবে।',
+                'Ministry circular establishing a strict 28-working-day target for e-mutation case resolution.',
+                1,
+                1,
+            ],
+            [
+                'notice-savar-registry-counter-biometric',
+                'OFFICE_NOTICE',
+                'UPAZILA',
+                'সাভার সাব-রেজিস্ট্রি অফিসে কাউন্টার বায়োমেট্রিক উপস্থিতি বাধ্যতামূলক',
+                'Mandatory Counter Biometric Presence at Savar Sub-Registry Office',
+                'জাল দাতা ও ভুয়া জাতীয় পরিচয়পত্র শনাক্তকরণে সাভার সাব-রেজিস্ট্রি অফিসে দলিল নিবন্ধনের সময় উভয় পক্ষের বায়োমেট্রিক ফিঙ্গারপ্রিন্ট ও লাইভনেস উপস্থিতি নিশ্চিত করার নির্দেশ দেওয়া যাচ্ছে।',
+                'Mandatory in-person counter biometric verification for deed registration parties at Savar Sub-Registry.',
+                1,
+                0,
+            ],
+        ];
+
+        foreach ($notices as $n) {
+            $nId = DB::insert(
+                'INSERT INTO notices (notice_slug, category, scope, title_bn, title_en, body_bn, body_en, is_pinned, is_urgent, status, published_by, published_at, view_count, download_count, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?)',
+                [...$n, 'PUBLISHED', 'admin', $now, $now, $now]
+            );
+
+            // Add verified attachment
+            $qrPayload = "https://bhumishield.gov.bd/bn/notices/{$n[0]}";
+            DB::insert(
+                'INSERT INTO notice_attachments (notice_id, file_name, file_path, file_type, file_size_bytes, content_hash, qr_payload, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                [$nId, 'circular_notice_2026.pdf', "/notices/{$n[0]}.pdf", 'application/pdf', 450000, hash('sha256', $n[0]), $qrPayload, $now]
+            );
+        }
     }
 
     public static function seedServiceCatalogue(): void
@@ -791,11 +1310,11 @@ final class DatabaseSeeder
             ],
         ];
 
-        foreach ($services as $svc) {
+        foreach ($services as $srv) {
             DB::insert(
                 'INSERT INTO service_catalogue (category, service_code, title_bn, title_en, description_bn, description_en, service_type, internal_route, external_url, source_url, authority_name_bn, authority_name_en, badge_bn, badge_en, is_published, display_order, last_reviewed_date, created_at, updated_at)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [...$svc, $nowIso, $nowIso]
+                [...$srv, $nowIso, $nowIso]
             );
         }
     }
@@ -810,20 +1329,20 @@ final class DatabaseSeeder
         $nowIso = gmdate('c');
         $fees = [
             [
-                'FEE_KHATIAN_COPY',
-                'অনলাইন খতিয়ান / সার্টিফাইড কপি ফি',
-                'Online Khatian / Certified Copy Fee',
+                'FEE_KHATIAN_CERTIFIED_CIRCULAR_2026',
+                'খতিয়ান সার্টিফাইড ও অনলাইন কপি ফি (সার্কুলার ১৭ ফেব্রু ২০২৬)',
+                'Khatian Certified & Online Copy Fee (17 Feb 2026 Circular)',
                 json_encode([
-                    ['name_bn' => 'সরকারি ফি', 'name_en' => 'Government Fee', 'amount_bdt' => 100],
-                    ['name_bn' => 'সার্ভিস চার্জ', 'name_en' => 'Service Charge', 'amount_bdt' => 20],
+                    ['name_bn' => 'সরকারি ফি (প্রতি খতিয়ান কপি)', 'name_en' => 'Government Fee (per copy)', 'amount_bdt' => 100],
+                    ['name_bn' => 'অনলাইন সার্ভিস চার্জ', 'name_en' => 'Online Platform Service Charge', 'amount_bdt' => 20],
                 ], JSON_UNESCAPED_UNICODE),
                 120.0,
                 'BDT',
                 'ভূমি রেকর্ড ও জরিপ অধিদপ্তর',
                 'Directorate of Land Records and Surveys (DLRS)',
-                'ভূমি মন্ত্রণালয়ের ১৭ ফেব্রুয়ারি ২০২৬ তারিখের স্মারক সার্কুলার',
-                'Ministry of Land signed circular dated 17 February 2026',
-                '474d0828-7c66-4f0d-98c3-78105e0009d9',
+                'ভূমি মন্ত্রণালয়ের স্মারক নং ৩১.০০.০০০০.০৪২.৬৮.০১৮.২৩-৭২ (১৭ ফেব্রুয়ারি ২০২৬)',
+                'Ministry of Land Memo No. 31.00.0000.042.68.018.23-72 (17 Feb 2026)',
+                'CIRCULAR-2026-02-17-72',
                 '2026-02-17',
                 'https://minland.gov.bd/pages/static-pages/694032df35ce18e1c0563b8d',
                 0,
@@ -832,20 +1351,20 @@ final class DatabaseSeeder
                 '[]',
             ],
             [
-                'FEE_MOUZA_MAP',
-                'মৌজা নকশা (ম্যাপ শিট) ফি',
-                'Mouza Map Sheet Fee',
+                'FEE_MOUZA_MAP_CIRCULAR_2026',
+                'মৌজা নকশা (ম্যাপ শিট) আবেদন ফি (সার্কুলার ১৭ ফেব্রু ২০২৬)',
+                'Mouza Map Sheet Order Fee (17 Feb 2026 Circular)',
                 json_encode([
-                    ['name_bn' => 'সরকারি ফি', 'name_en' => 'Government Fee', 'amount_bdt' => 520],
-                    ['name_bn' => 'সার্ভিস চার্জ', 'name_en' => 'Service Charge', 'amount_bdt' => 25],
+                    ['name_bn' => 'মৌজা নকশা সরকারি ফি (প্রতি শিট)', 'name_en' => 'Government Fee (per sheet)', 'amount_bdt' => 520],
+                    ['name_bn' => 'অনলাইন প্রসেসিং সার্ভিস চার্জ', 'name_en' => 'Online Processing Service Charge', 'amount_bdt' => 25],
                 ], JSON_UNESCAPED_UNICODE),
                 545.0,
                 'BDT',
                 'ভূমি রেকর্ড ও জরিপ অধিদপ্তর',
                 'Directorate of Land Records and Surveys (DLRS)',
-                'ভূমি মন্ত্রণালয়ের ১৭ ফেব্রুয়ারি ২০২৬ তারিখের স্মারক সার্কুলার',
-                'Ministry of Land signed circular dated 17 February 2026',
-                '474d0828-7c66-4f0d-98c3-78105e0009d9',
+                'ভূমি মন্ত্রণালয়ের স্মারক নং ৩১.০০.০০০০.০৪২.৬৮.০১৮.২৩-৭২ (১৭ ফেব্রুয়ারি ২০২৬)',
+                'Ministry of Land Memo No. 31.00.0000.042.68.018.23-72 (17 Feb 2026)',
+                'CIRCULAR-2026-02-17-72',
                 '2026-02-17',
                 'https://minland.gov.bd/pages/static-pages/694032df35ce18e1c0563b8d',
                 0,

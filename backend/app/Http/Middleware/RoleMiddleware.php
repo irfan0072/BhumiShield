@@ -5,86 +5,19 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Services\JwtAuthService;
+use App\Services\RbacService;
 use App\Support\DB;
 
 /**
  * Laravel Role-Based Access Control (RBAC) Middleware.
- *
- * Validates Bearer JWT tokens, checks account active status (`is_active === 1`),
- * and enforces strict role-based access control across all protected endpoints.
+ * Validates Bearer JWT tokens, active status, and enforces Spatie-compatible RBAC
+ * and Section 4.4 Permission Matrix.
  */
 final class RoleMiddleware
 {
-    public const ROLE_PERMISSIONS = [
-        'citizen' => [
-            'label_bn' => 'নাগরিক (Citizen)',
-            'label_en' => 'Citizen',
-            'dashboard_route' => '/dashboard/citizen',
-            'permissions' => [
-                'verify:deed_qr',
-                'plots:check_before_you_buy',
-                'citizen:view_own_portfolio',
-                'citizen:toggle_plot_sale_lock',
-                'citizen:file_dispute',
-            ],
-        ],
-        'sub_registrar' => [
-            'label_bn' => 'সাব-রেজিস্ট্রার (Sub-Registrar)',
-            'label_en' => 'Sub-Registrar (Ministry of Law)',
-            'dashboard_route' => '/dashboard/sub-registrar',
-            'permissions' => [
-                'verify:deed_qr',
-                'plots:check_before_you_buy',
-                'registrar:pre_registration_check',
-                'registrar:register_signed_deed',
-                'registrar:manage_held_deeds',
-                'registrar:calculate_stamp_duty',
-            ],
-        ],
-        'ac_land' => [
-            'label_bn' => 'সহকারী কমিশনার - ভূমি (AC Land)',
-            'label_en' => 'AC Land Officer (Ministry of Land)',
-            'dashboard_route' => '/dashboard/ac-land',
-            'permissions' => [
-                'verify:deed_qr',
-                'plots:check_before_you_buy',
-                'acland:view_mutation_queue',
-                'acland:decide_mutation',
-                'acland:reconcile_khatian_chain',
-                'acland:resolve_citizen_disputes',
-            ],
-        ],
-        'bank_officer' => [
-            'label_bn' => 'ব্যাংক কর্মকর্তা (Bank Officer)',
-            'label_en' => 'Bank Officer (Financial Institution)',
-            'dashboard_route' => '/dashboard/bank',
-            'permissions' => [
-                'verify:deed_qr',
-                'plots:check_before_you_buy',
-                'bank:collateral_check',
-                'bank:create_mortgage_lien',
-                'bank:release_mortgage_lien',
-                'bank:generate_noc_certificate',
-            ],
-        ],
-        'admin' => [
-            'label_bn' => 'সিস্টেম অ্যাডমিন ও অডিটর (Admin)',
-            'label_en' => 'System Admin & Ledger Auditor',
-            'dashboard_route' => '/dashboard/admin',
-            'permissions' => [
-                '*',
-                'admin:verify_full_ledger',
-                'admin:simulate_tamper_demo',
-                'admin:manage_users_rbac',
-                'admin:manage_site_settings',
-                'admin:view_audit_log',
-            ],
-        ],
-    ];
-
     /**
-     * Checks if strict RBAC enforcement is enabled in site_settings (`enforce_strict_rbac`),
-     * or when an Authorization Bearer header is provided.
+     * Authorizes the request against a set of allowed roles.
+     * Enforces M3 & T3: Admins cannot mutate land data or approve mutations!
      */
     public static function authorize(array $allowedRoles, ?array $overrideUser = null): array
     {
@@ -109,7 +42,32 @@ final class RoleMiddleware
         }
 
         $userRole = (string) ($user['role'] ?? 'citizen');
-        if ($userRole !== 'admin' && !empty($allowedRoles) && !in_array($userRole, $allowedRoles, true)) {
+        $isAdminRole = ($userRole === 'admin' || $userRole === 'system_admin');
+
+        // M3 & T3 Rule: Admin CANNOT edit land data or approve mutations!
+        // If allowedRoles strictly targets 'ac_land' and does not explicitly include 'admin', admin is rejected!
+        $isLandDataWrite = in_array('ac_land', $allowedRoles, true) && !in_array('admin', $allowedRoles, true) && !in_array('system_admin', $allowedRoles, true);
+
+        if ($isAdminRole && $isLandDataWrite) {
+            throw new \RuntimeException(json_encode([
+                'status' => 403,
+                'code' => 'ADMIN_CANNOT_EDIT_LAND_DATA',
+                'required_roles' => $allowedRoles,
+                'current_role' => $userRole,
+                'message_bn' => 'প্রশাসক বা অডিটর কর্তৃক ভূমির মালিকানা বা রেকর্ড পরিবর্তন আইনত নিষিদ্ধ (Rule M3)। শুধুমাত্র সহকারী কমিশনার (ভূমি) এর অনুমোদন ক্ষমতা রয়েছে।',
+                'message_en' => 'System administrators and auditors are strictly prohibited from mutating land data or approving ownership transfers (Rule M3).',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $effectiveAllowed = $allowedRoles;
+        if (in_array('admin', $allowedRoles, true)) {
+            $effectiveAllowed[] = 'system_admin';
+        }
+        if (in_array('system_admin', $allowedRoles, true)) {
+            $effectiveAllowed[] = 'admin';
+        }
+
+        if (!$isAdminRole && !empty($allowedRoles) && !in_array($userRole, $effectiveAllowed, true)) {
             $reqRolesStr = implode(', ', $allowedRoles);
             throw new \RuntimeException(json_encode([
                 'status' => 403,
@@ -124,8 +82,30 @@ final class RoleMiddleware
         return $user;
     }
 
+    /**
+     * Checks if user has a specific permission by name.
+     */
+    public static function checkPermission(string $permission, ?array $overrideUser = null): array
+    {
+        $user = self::authorize([], $overrideUser);
+        $role = (string) ($user['role'] ?? '');
+
+        if (!RbacService::hasPermission($role, $permission)) {
+            throw new \RuntimeException(json_encode([
+                'status' => 403,
+                'code' => 'PERMISSION_DENIED',
+                'permission' => $permission,
+                'current_role' => $role,
+                'message_bn' => "আপনার ভূমিকা '{$role}'-এর জন্য '{$permission}' অনুমতিটি বরাদ্দ নেই।",
+                'message_en' => "Permission '{$permission}' is denied for role '{$role}'.",
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        return $user;
+    }
+
     public static function getPermissionMatrix(): array
     {
-        return self::ROLE_PERMISSIONS;
+        return RbacService::PERMISSION_MATRIX;
     }
 }
