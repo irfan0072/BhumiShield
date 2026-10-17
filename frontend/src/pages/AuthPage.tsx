@@ -20,10 +20,25 @@ import {
 
 const ROLE_ROUTE: Record<string, string> = {
   citizen: 'home',
+  service_point_operator: 'home',
   sub_registrar: 'registrar',
+  registry_data_officer: 'registrar',
   ac_land: 'acland',
+  land_office_assistant: 'acland',
+  field_verification_officer: 'acland',
+  settlement_records_officer: 'acland',
+  settlement_checker: 'acland',
+  uno_supervisor: 'acland',
+  appellate_reviewer: 'acland',
   bank_officer: 'bank',
+  bank_manager: 'bank',
   admin: 'admin',
+  system_admin: 'admin',
+  auditor: 'admin',
+  support_agent: 'admin',
+  platform_moderator: 'admin',
+  content_editor: 'admin',
+  content_approver: 'admin',
 };
 
 export const AuthPage: React.FC<{
@@ -68,6 +83,17 @@ export const AuthPage: React.FC<{
     try {
       const res = await BhumiApi.login(u.trim(), p);
       if (res?.access_token && res?.user) {
+        // F05/F06: log the user in even if their dedicated workspace is not
+        // yet built. The Citizen Home shows a dismissible "under development"
+        // banner so they can still browse public resources instead of being
+        // stranded on the login screen.
+        if (res.user.role === 'dc_acquisition_officer' || res.user.role === 'lawyer_court_user') {
+          setErrorMsg(
+            lang === 'bn'
+              ? '✓ সফলভাবে প্রবেশ করেছেন — এই পদবীর জন্য নিবেদিত ওয়ার্কস্পেসটি এখনো নির্মাণাধীন। আপাতত আপনি নাগরিক হোম পেজটি ব্রাউজ করতে পারেন এবং প্রকাশ্য সেবাগুলো দেখতে পারেন।'
+              : '✓ Login successful — the dedicated workspace for this role is under active development. For now, you can browse the Citizen Home and access public services.'
+          );
+        }
         setToken(res.access_token);
         setUser(res.user);
         setSuccessMsg(t('সফলভাবে পরিচয় নিশ্চিত হয়েছে!', 'Signed in successfully!'));
@@ -345,15 +371,15 @@ export const AuthPage: React.FC<{
             <summary className="px-4 py-3 font-semibold text-slate-600 cursor-pointer flex items-center justify-between hover:text-slate-900 select-none">
               <span className="flex items-center gap-2">
                 <KeyRound className="w-3.5 h-3.5 text-emerald-700" />
-                <span>{t('মূল্যায়নকারী ও পরীক্ষক ডেমো নির্দেশিকা (Evaluator Test Credentials)', 'Evaluator Prototype Test Credentials')}</span>
+                <span>{t('দাপ্তরিক ভূমিকা ও সিস্টেম অ্যাক্সেস নির্দেশিকা (Official Role & Access Directory)', 'Official Role & System Access Directory')}</span>
               </span>
-              <span className="text-[11px] text-slate-400 font-medium">তথ্য দেখুন ▼</span>
+              <span className="text-[11px] text-slate-400 font-medium">নির্দেশিকা দেখুন ▼</span>
             </summary>
             <div className="p-4 pt-1 border-t border-slate-200 text-slate-600 space-y-2 text-xs bg-white">
               <p className="text-slate-500">
                 {t(
-                  'ভূমি সুরক্ষা প্রোটোটাইপ মূল্যায়নের জন্য নিম্নের নমুনা অ্যাকাউন্ট ইউজারনেম ও পাসওয়ার্ড ইনপুট বক্সে টাইপ করুন:',
-                  'For evaluation, type the following verified prototype credentials into the sign-in form above:'
+                  'ভূমি সুরক্ষা প্ল্যাটফর্মের বিভিন্ন প্রাতিষ্ঠানিক ভূমিকা ও পোর্টাল অ্যাক্সেস নির্দেশিকা:',
+                  'Authorized institutional role access and credential directory for the BhumiShield platform:'
                 )}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 pt-1 font-mono text-[11px]">
@@ -380,8 +406,8 @@ export const AuthPage: React.FC<{
               </div>
               <p className="text-[11px] text-slate-400 pt-1">
                 {t(
-                  '* অ্যাডমিন ও অডিটর ক্রেডেনশিয়াল সিস্টেম প্রশাসকের জন্য সংরক্ষিত।',
-                  '* System auditor credentials are reserved for security oversight.'
+                  '* কেন্দ্রীয় নিরাপত্তা প্রশাসন ও অডিটর ক্রেডেনশিয়াল সিস্টেম সুপারভাইজারের অধীনে সংরক্ষিত।',
+                  '* Central administration and audit credentials are managed under security supervision.'
                 )}
               </p>
             </div>

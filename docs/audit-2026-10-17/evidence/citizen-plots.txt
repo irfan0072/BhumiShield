@@ -1,0 +1,188 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/home".
+0 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/home
+	1 container root
+		2 container
+			3 button ভূ BhumiShield National Land & Deed Trust Platform
+				4 text ভূ
+				5 text BhumiShield
+				6 text National Land & Deed Trust Platform
+			7 container প্রধান মেনু
+				8 button All Services
+				9 button Land Sale
+				10 button Cadastral Map
+				11 button Check Land
+				12 button Verify Deed
+				13 button Notices
+				14 button Blog
+				15 button Offices
+				16 button Citizen Vault
+				17 button Help
+			18 button Switch Language
+			19 button High Contrast
+				20 image
+			101 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				102 text ম
+				103 text মো. রফিকুল ইসলাম (নাগরিক)
+				104 text Citizen Land Portal
+				105 image
+		24 container
+			106 text ম
+			107 heading Md. Rafiqul Islam, Value: 3
+				108 text Md. Rafiqul Islam
+			109 text NID:  ****1001
+			110 button Collapse Menu
+				111 image
+			112 container
+				113 text CITIZEN SERVICES
+				114 button Overview & KPIs
+					115 image
+					116 text Overview & KPIs
+				117 button My Land & Plots 3, Help: My Land & Plots
+					118 image
+					119 text My Land & Plots
+					120 text 3
+				121 button Document Vault (L0-L3) ✔ 5, Help: Document Vault (L0-L3)
+					122 image
+					123 text Document Vault (L0-L3)
+					124 text ✔ 5
+				125 button My Registered Deeds 6, Help: My Registered Deeds
+					126 image
+					127 text My Registered Deeds
+					128 text 6
+				129 button 13-Step Transfer Pipeline 3, Help: 13-Step Transfer Pipeline
+					130 image
+					131 text 13-Step Transfer Pipeline
+					132 text 3
+				133 button Disputes & Objections
+					134 image
+					135 text Disputes & Objections
+				136 button Support Tickets & Helpdesk 1, Help: Support Tickets & Helpdesk
+					137 image
+					138 text Support Tickets & Helpdesk
+					139 text 1
+				140 button Profile & Demo Switcher
+					141 image
+					142 text Profile & Demo Switcher
+			143 image
+			144 text Land Hotline: 16122
+			145 text Call toll-free for land and khatian inquiries.
+			146 button Check Plot
+			147 button QR Deed
+			148 container
+				149 text Citizen Portal / আমার জমি ও খতিয়ান ভল্ট
+				150 heading My Land & Plots, Value: 2
+					151 text My Land & Plots
+				152 text Demo Profile:
+				153 button মোঃ রফিকুল ইসলাম
+				154 button রাবেয়া খাতুন (লক)
+				155 button আব্দুল করিম (বন্ধক)
+				156 button Refresh Data
+					157 image
+				158 button Check Before Buying
+					159 image
+					160 text Check Before Buying
+			219 image
+			220 text 🔓 Owner Sale Lock disabled on Dag 101. Legitimate transfers are now permitted.
+			221 button
+				222 image
+			223 image
+			224 text field (settable)
+			225 button All
+			226 button Sale Locked
+			227 button Unlocked
+			228 text PLT-DHK-SAV-001
+			229 heading দাগ 101 — বিরুলিয়া মৌজা, Value: 3
+				230 text দাগ  101  —  বিরুলিয়া  মৌজা
+			231 text Upazila:  সাভার •  District:  ঢাকা
+			232 container
+				233 image
+				234 text Unlocked
+			235 text BS Khatian:
+			236 text 4101
+			237 text Share:
+			238 text 1/1
+			239 text Area:
+			240 container
+				241 text 20  শতক
+			242 button Lock Plot
+				243 image
+				244 text Lock Plot
+			245 button Docs Vault
+				246 image
+				247 text Docs Vault
+			248 button Transfer
+				249 image
+				250 text Transfer
+			251 text PLT-DHK-SAV-0013
+			252 heading দাগ 113 — বিরুলিয়া মৌজা, Value: 3
+				253 text দাগ  113  —  বিরুলিয়া  মৌজা
+			254 text Upazila:  সাভার •  District:  ঢাকা
+			255 container
+				256 image
+				257 text Unlocked
+			258 text BS Khatian:
+			259 text 4113
+			260 text Share:
+			261 text 1/1
+			262 text Area:
+			263 container
+				264 text 23  শতক
+			265 button Lock Plot
+				266 image
+				267 text Lock Plot
+			268 button Docs Vault
+				269 image
+				270 text Docs Vault
+			271 button Transfer
+				272 image
+				273 text Transfer
+			274 text PLT-DHK-SAV-0039
+			275 heading দাগ 219 — বাসন মৌজা, Value: 3
+				276 text দাগ  219  —  বাসন  মৌজা
+			277 text Upazila:  সাভার •  District:  ঢাকা
+			278 container
+				279 image
+				280 text Unlocked
+			281 text BS Khatian:
+			282 text 4139
+			283 text Share:
+			284 text 1/1
+			285 text Area:
+			286 container
+				287 text 17  শতক
+			288 button Lock Plot
+				289 image
+				290 text Lock Plot
+			291 button Docs Vault
+				292 image
+				293 text Docs Vault
+			294 button Transfer
+				295 image
+				296 text Transfer
+		76 container
+			77 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			78 content list
+				79 button Check Before Buy
+				80 button Land Sale Marketplace
+				81 button Cadastral Mouza Map
+				82 button Verify Deed QR Code
+				83 button Official Noticeboard
+				84 button Land Literacy Blog
+				85 button Offices & Service Points
+				86 button Citizen Sale Lock Vault
+			87 text Workspaces
+			88 content list
+				89 button Sub-Registrar Panel
+				90 button AC Land Tribunal
+				91 button Bank Lien & NOC
+				92 button National Ledger & Audit
+			93 text Support & Helpline
+			94 content list
+				95 text Land Service Call Center: 16122
+				96 text Ministry of Land (Official service hours)
+				97 text Check official service hours
+				98 button Frequently Asked Questions
+				99 button Bangladeshi Land Glossary
+			100 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 117 button My Land & Plots 3, Help: My Land & Plots

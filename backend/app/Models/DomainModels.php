@@ -42,3 +42,5 @@ final class MortgageLien extends BaseModel { protected static string $table = 'm
 final class AuditLog extends BaseModel { protected static string $table = 'audit_log'; }
 final class RiskReport extends BaseModel { protected static string $table = 'risk_reports'; }
 final class DemoScenario extends BaseModel { protected static string $table = 'demo_scenarios'; }
+final class FieldReport extends BaseModel { protected static string $table = 'field_reports'; }
+final class SlaDispatch extends BaseModel { protected static string $table = 'sla_dispatches'; }

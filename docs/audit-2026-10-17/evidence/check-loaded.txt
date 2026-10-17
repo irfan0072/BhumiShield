@@ -1,0 +1,321 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/check?dag=101".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/check?dag=101
+	2 container root
+		3 container
+			4 button ভূ BhumiShield National Land & Deed Trust Platform
+				5 text ভূ
+				6 text BhumiShield
+				7 text National Land & Deed Trust Platform
+			8 container প্রধান মেনু
+				9 button All Services
+				10 button Land Sale
+				11 button Cadastral Map
+				12 button Check Land
+				13 button Verify Deed
+				14 button Notices
+				15 button Blog
+				16 button Offices
+				17 button Citizen Vault
+				18 button Help
+			19 button Switch Language
+			20 button High Contrast
+				21 image
+			22 button Sign In
+				23 image
+				24 text Sign In
+		25 container
+			26 heading Check Before Buy, Value: 1
+				27 text Check Before Buy
+			28 text Select mouza, plot and seller to run cryptographic pre-purchase risk and khatian lineage checks.
+			29 image
+			30 text Live Ledger Verification
+			31 button (collapsed) Secondary Actions: Expand, Evaluator & Demo Scenarios (8 Reference Cases) 1-Click Auto Test Simulate double sale, tampered deed, mortgages, and lineage conflicts Expand
+				32 image
+				33 text Evaluator & Demo Scenarios (8 Reference Cases)
+				34 text 1-Click Auto Test
+				35 text Simulate double sale, tampered deed, mortgages, and lineage conflicts
+				36 text Expand
+				37 image
+			38 button 1 STEP 1 Mouza & Plot
+				39 text 1
+				40 text STEP 1
+				41 text Mouza & Plot
+			42 button 2 STEP 2 Seller & Area
+				43 text 2
+				44 text STEP 2
+				45 text Seller & Area
+			46 button (disabled) 3 STEP 3 Lineage & Risk
+				47 text 3
+				48 text STEP 3
+				49 text Lineage & Risk
+			50 text ১.১
+			51 heading Select Administrative Area & Mouza, Value: 3
+				52 text Select Administrative Area & Mouza
+			53 text Choose the jurisdiction or mouza where the land is situated:
+			102 button Birulia JL 12 Savar, Dhaka
+				103 image
+				104 text Birulia
+				105 text JL 
+				106 text 12
+				107 text Savar, Dhaka
+			108 button Bason JL 08 Gazipur Sadar, Gazipur
+				109 image
+				110 text Bason
+				111 text JL 
+				112 text 08
+				113 text Gazipur Sadar, Gazipur
+			114 button Panam JL 15 Sonargaon, Narayanganj
+				115 image
+				116 text Panam
+				117 text JL 
+				118 text 15
+				119 text Sonargaon, Narayanganj
+			120 text Or pick from full jurisdiction dropdown:
+			54 pop up button (collapsed, settable) Value: Dhaka → Dhaka → Savar → Mouza: Birulia (JL 12), Secondary Actions: Expand
+				121 menu
+					122 (selected) Dhaka → Dhaka → Savar → Mouza: Birulia (JL 12)
+					123 Dhaka → Gazipur → Gazipur Sadar → Mouza: Bason (JL 08)
+					124 Dhaka → Narayanganj → Sonargaon → Mouza: Panam (JL 15)
+			55 text ১.২
+			56 heading Select or Search Plot / Dag Number, Value: 3
+				57 text Select or Search Plot / Dag Number
+			58 text Total 20 plots recorded in selected mouza:
+			59 button All (20)
+				60 text All
+				61 text  (
+				62 text 20
+				63 text )
+			64 button Unlocked (20)
+				65 text Unlocked
+				66 text  (
+				67 text 20
+				68 text )
+			69 button Locked (0)
+				70 text Locked
+				71 text  (
+				72 text 0
+				73 text )
+			74 text field (settable)
+			75 image
+			125 button Plot #101 ভিটা (আবাসিক) 20 Dec Unlocked
+				126 text Plot
+				127 text  #
+				128 text 101
+				129 text ভিটা (আবাসিক)
+				130 container
+					131 text 20 Dec
+				132 image
+				133 text Unlocked
+				134 image
+			135 button Plot #102 নাল (কৃষি) 15 Dec Unlocked
+				136 text Plot
+				137 text  #
+				138 text 102
+				139 text নাল (কৃষি)
+				140 container
+					141 text 15 Dec
+				142 image
+				143 text Unlocked
+			144 button Plot #103 চালা (উঁচু জমি) 24 Dec Unlocked
+				145 text Plot
+				146 text  #
+				147 text 103
+				148 text চালা (উঁচু জমি)
+				149 container
+					150 text 24 Dec
+				151 image
+				152 text Unlocked
+			153 button Plot #104 বাগান 16 Dec Unlocked
+				154 text Plot
+				155 text  #
+				156 text 104
+				157 text বাগান
+				158 container
+					159 text 16 Dec
+				160 image
+				161 text Unlocked
+			162 button Plot #105 ভিটা (আবাসিক) 20 Dec Unlocked
+				163 text Plot
+				164 text  #
+				165 text 105
+				166 text ভিটা (আবাসিক)
+				167 container
+					168 text 20 Dec
+				169 image
+				170 text Unlocked
+			171 button Plot #106 নাল (কৃষি) 30 Dec Unlocked
+				172 text Plot
+				173 text  #
+				174 text 106
+				175 text নাল (কৃষি)
+				176 container
+					177 text 30 Dec
+				178 image
+				179 text Unlocked
+			180 button Plot #107 চালা (উঁচু জমি) 18 Dec Unlocked
+				181 text Plot
+				182 text  #
+				183 text 107
+				184 text চালা (উঁচু জমি)
+				185 container
+					186 text 18 Dec
+				187 image
+				188 text Unlocked
+			189 button Plot #108 বাগান 22 Dec Unlocked
+				190 text Plot
+				191 text  #
+				192 text 108
+				193 text বাগান
+				194 container
+					195 text 22 Dec
+				196 image
+				197 text Unlocked
+			198 button Plot #109 ভিটা (আবাসিক) 16 Dec Unlocked
+				199 text Plot
+				200 text  #
+				201 text 109
+				202 text ভিটা (আবাসিক)
+				203 container
+					204 text 16 Dec
+				205 image
+				206 text Unlocked
+			207 button Plot #110 নাল (কৃষি) 25 Dec Unlocked
+				208 text Plot
+				209 text  #
+				210 text 110
+				211 text নাল (কৃষি)
+				212 container
+					213 text 25 Dec
+				214 image
+				215 text Unlocked
+			216 button Plot #111 চালা (উঁচু জমি) 17 Dec Unlocked
+				217 text Plot
+				218 text  #
+				219 text 111
+				220 text চালা (উঁচু জমি)
+				221 container
+					222 text 17 Dec
+				223 image
+				224 text Unlocked
+			225 button Plot #112 বাগান 20 Dec Unlocked
+				226 text Plot
+				227 text  #
+				228 text 112
+				229 text বাগান
+				230 container
+					231 text 20 Dec
+				232 image
+				233 text Unlocked
+			234 button Plot #113 ভিটা (আবাসিক) 23 Dec Unlocked
+				235 text Plot
+				236 text  #
+				237 text 113
+				238 text ভিটা (আবাসিক)
+				239 container
+					240 text 23 Dec
+				241 image
+				242 text Unlocked
+			243 button Plot #114 নাল (কৃষি) 26 Dec Unlocked
+				244 text Plot
+				245 text  #
+				246 text 114
+				247 text নাল (কৃষি)
+				248 container
+					249 text 26 Dec
+				250 image
+				251 text Unlocked
+			252 button Plot #115 চালা (উঁচু জমি) 29 Dec Unlocked
+				253 text Plot
+				254 text  #
+				255 text 115
+				256 text চালা (উঁচু জমি)
+				257 container
+					258 text 29 Dec
+				259 image
+				260 text Unlocked
+			261 button Plot #116 বাগান 32 Dec Unlocked
+				262 text Plot
+				263 text  #
+				264 text 116
+				265 text বাগান
+				266 container
+					267 text 32 Dec
+				268 image
+				269 text Unlocked
+			270 button Plot #117 ভিটা (আবাসিক) 35 Dec Unlocked
+				271 text Plot
+				272 text  #
+				273 text 117
+				274 text ভিটা (আবাসিক)
+				275 container
+					276 text 35 Dec
+				277 image
+				278 text Unlocked
+			279 button Plot #118 নাল (কৃষি) 38 Dec Unlocked
+				280 text Plot
+				281 text  #
+				282 text 118
+				283 text নাল (কৃষি)
+				284 container
+					285 text 38 Dec
+				286 image
+				287 text Unlocked
+			288 button Plot #119 চালা (উঁচু জমি) 13 Dec Unlocked
+				289 text Plot
+				290 text  #
+				291 text 119
+				292 text চালা (উঁচু জমি)
+				293 container
+					294 text 13 Dec
+				295 image
+				296 text Unlocked
+			297 button Plot #120 বাগান 16 Dec Unlocked
+				298 text Plot
+				299 text  #
+				300 text 120
+				301 text বাগান
+				302 container
+					303 text 16 Dec
+				304 image
+				305 text Unlocked
+			306 text ১.৩
+			307 heading Selected Plot Profile & Digital Status, Value: 4
+				308 text Selected Plot Profile & Digital Status
+			309 text Birulia  মৌজা • দাগ নং  101
+			310 image
+			311 text Plot Selected Jurisdiction: Birulia  (JL  12 ) Savar, Dhaka Land Class: ভিটা (আবাসিক) Recorded in Khatian Total Area: 20 Decimal ~ 12.1 Katha Sale Lock Status:
+			312 image
+			313 text UNLOCKED Available to verify
+			314 image
+			315 text Guidance:
+			316 text Plot is open for transfer. Proceed to Step 2 to enter seller identity and proposed purchase amount.
+			317 button Next Step (Seller & Area) ➔
+				318 text Next Step (Seller & Area) ➔
+				319 image
+		77 container
+			78 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			79 content list
+				80 button Check Before Buy
+				81 button Land Sale Marketplace
+				82 button Cadastral Mouza Map
+				83 button Verify Deed QR Code
+				84 button Official Noticeboard
+				85 button Land Literacy Blog
+				86 button Offices & Service Points
+				87 button Citizen Sale Lock Vault
+			88 text Workspaces
+			89 content list
+				90 button Sub-Registrar Panel
+				91 button AC Land Tribunal
+				92 button Bank Lien & NOC
+				93 button National Ledger & Audit
+			94 text Support & Helpline
+			95 content list
+				96 text Land Service Call Center: 16122
+				97 text Ministry of Land (Official service hours)
+				98 text Check official service hours
+				99 button Frequently Asked Questions
+				100 button Bangladeshi Land Glossary
+			101 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/check?dag=101

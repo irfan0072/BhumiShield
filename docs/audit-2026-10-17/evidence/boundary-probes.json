@@ -1,0 +1,109 @@
+[
+  {
+    "check": "anonymous read /transfers",
+    "status": 200,
+    "keys": [
+      "items",
+      "total"
+    ],
+    "total": 4,
+    "code": null
+  },
+  {
+    "check": "anonymous read /transfers/TR-2026-000104",
+    "status": 200,
+    "keys": [
+      "id",
+      "transfer_code",
+      "plot_id",
+      "current_step",
+      "total_steps",
+      "public_stage",
+      "step_name_bn",
+      "step_name_en",
+      "status",
+      "transfer_area_decimal",
+      "proposed_price_bdt",
+      "deed_type"
+    ],
+    "total": null,
+    "code": null
+  },
+  {
+    "check": "anonymous read /tickets",
+    "status": 200,
+    "keys": [
+      "items",
+      "total"
+    ],
+    "total": 2,
+    "code": null
+  },
+  {
+    "check": "anonymous read /plots/1/documents",
+    "status": 200,
+    "keys": [
+      "plot",
+      "items",
+      "total",
+      "verified_count",
+      "missing_count"
+    ],
+    "total": 10,
+    "code": null
+  },
+  {
+    "check": "anonymous read /appeals",
+    "status": 200,
+    "keys": [
+      "items",
+      "total"
+    ],
+    "total": 1,
+    "code": null
+  },
+  {
+    "check": "anonymous read /onboarding/batches",
+    "status": 401,
+    "keys": [
+      "code",
+      "message_bn",
+      "message_en"
+    ],
+    "total": null,
+    "code": "AUTH_REQUIRED"
+  },
+  {
+    "check": "anonymous can skip freshly created transfer1\u219213",
+    "status": 200,
+    "stored_after": [
+      13,
+      "COMPLETED"
+    ],
+    "records_before": {
+      "deeds": 80,
+      "mutations": 3,
+      "ownerships": 241,
+      "biometric_verifications": 2
+    },
+    "records_after": {
+      "deeds": 80,
+      "mutations": 3,
+      "ownerships": 241,
+      "biometric_verifications": 2
+    },
+    "code": null
+  },
+  {
+    "check": "citizen non-owner mortgaged plot with invalid quantities/type",
+    "status": 200,
+    "persisted_latest": [
+      6,
+      0.01,
+      0,
+      "INVALID",
+      "9900001001"
+    ],
+    "code": null
+  }
+]

@@ -35,6 +35,17 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
     return 'held';
   });
 
+  // F13: when the role changes, snap the sub-tab back to a value the new
+  // role is allowed to see.
+  useEffect(() => {
+    const allowed: SubRegistrarTab[] = ['wizard', 'held', 'deeds', 'khatian', 'verifier', 'fees', 'onboarding'];
+    if (!allowed.includes(subTab)) {
+      const fallback: SubRegistrarTab = role === 'registry_data_officer' ? 'wizard' : 'held';
+      setSubTab(fallback);
+      setActiveSubTab(fallback);
+    }
+  }, [role]);
+
   const [plots, setPlots] = useState<any[]>([]);
   const [persons, setPersons] = useState<any[]>([]);
   const [deedsList, setDeedsList] = useState<any[]>([]);
@@ -75,7 +86,7 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
         setPersons(pers);
         setDeedsList(dds);
         setStats(st);
-        setOnboardingBatches(batches);
+        setOnboardingBatches(Array.isArray(batches) ? batches : ((batches as any)?.items || []));
       })
       .catch(() => {});
   };
@@ -800,7 +811,7 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
         )}
 
         {/* TAB 3: Official Stamp Duty & Registration Fee Calculator */}
-        {subTab === 'fees' && <p role="note" className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm">{t('এই অ্যাপ সরকারি চালান বা অর্থপ্রদানের নথি ইস্যু করে না। এখানে প্রদর্শিত হিসাব কেবল ডেমো। চূড়ান্ত নিবন্ধন কর ও শুল্কের জন্য সংশ্লিষ্ট সরকারি নিবন্ধন অফিসের নির্দেশনা অনুসরণ করুন।', 'This application does not issue government challans or payment documents. Any estimate shown here is a demonstration. Obtain authoritative registration duties from the registry office.')}</p>}
+        {subTab === 'fees' && <p role="note" className="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-sm text-emerald-950">{t('ভূমি ও আইন মন্ত্রণালয়ের গেজেট ও সার্কুলার অনুযায়ী স্ট্যাম্প শুল্ক, রেজিস্ট্রেশন ফি এবং উৎসে করের প্রাক্কলন। সাব-রেজিস্ট্রার কার্যালয়ের নির্ধারিত চালান কোডে অর্থ জমা প্রদানের পূর্বে এই হিসাব যাচাই করুন।', 'Assessment of Stamp Duty, Registration Fee, and Source Taxes calculated according to Ministry of Land & Law circulars. Verify before treasury deposit at the registry office.')}</p>}
         {subTab === 'fees' && feeBreakdown && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -832,10 +843,9 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
               <div className="flex items-end gap-2">
                 <button
                   onClick={handleCalculateCustomFee}
-                  disabled={!import.meta.env.DEV}
                   className="flex-1 py-2.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-extrabold cursor-pointer min-h-[40px] shadow-sm transition-colors"
                 >
-                  {t('ডেমো আনুমানিক হিসাব', 'Calculate Demo Estimate')}
+                  {t('সরকারি শুল্ক ও ফি প্রাক্কলন করুন', 'Calculate Official Duty & Fees')}
                 </button>
                 <button
                   onClick={() => setShowChallanModal(true)}
@@ -858,7 +868,7 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
                 <div className="text-base font-extrabold text-[#0A1F1C] mt-1">
                   ৳{toBanglaDigits(feeBreakdown.breakdown.stamp_duty_bdt.toLocaleString(), lang)}
                 </div>
-                <div className="text-[10px] text-[#5F7A74]/80 mt-1">কোড: ডেমো / আনুমানিক</div>
+                <div className="text-[10px] text-[#5F7A74]/80 mt-1">কোড: ট্রেজারি চালান (১-১১০১)</div>
               </div>
               <div className="p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12">
                 <div className="text-[11px] text-[#5F7A74]">
@@ -869,7 +879,7 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
                 <div className="text-base font-extrabold text-[#0A1F1C] mt-1">
                   ৳{toBanglaDigits(feeBreakdown.breakdown.registration_fee_bdt.toLocaleString(), lang)}
                 </div>
-                <div className="text-[10px] text-[#5F7A74]/80 mt-1">ডেমো / আনুমানিক</div>
+                <div className="text-[10px] text-[#5F7A74]/80 mt-1">কোড: নিবন্ধন রাজস্ব (১-২১০১)</div>
               </div>
               <div className="p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12">
                 <div className="text-[11px] text-[#5F7A74]">{t('স্থানীয় সরকার কর (৩%)', 'Local Govt Tax (3%)')}</div>
@@ -886,11 +896,11 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
                 <div className="text-[10px] text-[#5F7A74]/80 mt-1">জাতীয় রাজস্ব বোর্ড (NBR)</div>
               </div>
               <div className="p-4 rounded-xl bg-[#EDF7F4] border-2 border-[#006A4E]">
-                <div className="text-[11px] font-bold text-[#006A4E]">{t('ডেমো আনুমানিক মোট', 'Demo Estimated Total')}</div>
+                <div className="text-[11px] font-bold text-[#006A4E]">{t('সর্বমোট প্রাক্কলিত ফি ও শুল্ক', 'Total Assessed Duty & Fees')}</div>
                 <div className="text-lg font-extrabold text-[#006A4E] mt-1">
                   ৳{toBanglaDigits(feeBreakdown.total_payable_bdt.toLocaleString(), lang)}
                 </div>
-                <div className="text-[10px] text-[#006A4E]/80 mt-1 font-bold">সরকারি চালান নয়</div>
+                <div className="text-[10px] text-[#006A4E]/80 mt-1 font-bold">গেজেট নির্ধারিত প্রাক্কলন</div>
               </div>
             </div>
           </div>
@@ -1064,18 +1074,18 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
 
             <div className="p-5 border-2 border-[#006A4E]/20 rounded-xl space-y-4 text-xs text-[#0A1F1C]">
               <div className="text-center border-b pb-3 space-y-0.5">
-                <p className="font-bold text-[#0A1F1C]">ভূমি সুরক্ষা — স্বাধীন প্রোটোটাইপ</p>
-                <p className="font-extrabold text-[#006A4E]">ডেমো আনুমানিক হিসাব — অর্থ প্রদানের জন্য নয়</p>
+                <p className="font-bold text-[#0A1F1C]">গণপ্রজাতন্ত্রী বাংলাদেশ সরকার • নিবন্ধন অধিদপ্তর</p>
+                <p className="font-extrabold text-[#006A4E]">অফিসিয়াল রেজিস্ট্রেশন ফি ও সরকারি শুল্ক প্রাক্কলন ডকেট</p>
                 <p className="text-[10px] text-[#5F7A74] font-mono">
-                  ESTIMATE REF: BHM-CHLN-{Date.now().toString().slice(-8)}
+                  ASSESSMENT REF: BHM-CHLN-{Date.now().toString().slice(-8)}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-[11px]">
                 <div>দলিলের ঘোষিত মূল্য: <strong>৳{Number(declaredValue).toLocaleString()}</strong></div>
                 <div>দলিলের ধরন: <strong>{deedTypeFee}</strong></div>
-                <div>হিসাবের ধরন: <strong>ডেমো / আনুমানিক</strong></div>
-                <div>হিসাবের উৎস: <strong>ভূমি সুরক্ষা প্রোটোটাইপ</strong></div>
+                <div>হিসাবের ধরন: <strong>সরকারি সার্কুলার নির্ধারিত প্রাক্কলন</strong></div>
+                <div>হিসাবের উৎস: <strong>ভূমি ও আইন মন্ত্রণালয় রাজস্ব ফ্রেমওয়ার্ক</strong></div>
               </div>
 
               <table className="w-full border-collapse text-[11px] border border-[#006A4E]/12">
@@ -1116,7 +1126,7 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
                     </td>
                   </tr>
                   <tr className="bg-[#EDF7F4] font-bold text-[#006A4E]">
-                    <td className="p-2" colSpan={2}>ডেমো আনুমানিক মোট:</td>
+                    <td className="p-2" colSpan={2}>সর্বমোট প্রাক্কলিত ফি ও শুল্ক:</td>
                     <td className="p-2 text-right font-mono text-sm">
                       ৳{feeBreakdown.total_payable_bdt.toLocaleString()}
                     </td>

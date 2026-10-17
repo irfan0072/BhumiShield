@@ -37,7 +37,15 @@ import {
   Gavel,
   FileText,
   AlertCircle,
-  Clock
+  Clock,
+  Compass,
+  MapPin,
+  Search,
+  Filter,
+  AlertTriangle,
+  Shield,
+  Check,
+  X
 } from 'lucide-react';
 
 const ROLE_DASHBOARD_MAP: Record<string, string> = {
@@ -50,6 +58,7 @@ const ROLE_DASHBOARD_MAP: Record<string, string> = {
 
 export type AdminTab =
   | 'ledger'
+  | 'plots_control'
   | 'users'
   | 'audit'
   | 'settings'
@@ -63,16 +72,17 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   const { lang, role, setRole, user, setUser, token, setToken, activeSubTab, setActiveSubTab, t } = useAppUI();
 
   const roleAllowedTabs: Record<string, AdminTab[]> = {
-    auditor: ['ledger', 'audit', 'rbac'],
-    support_agent: ['users', 'audit'],
+    auditor: ['ledger', 'plots_control', 'audit', 'rbac'],
+    support_agent: ['plots_control', 'users', 'audit'],
     platform_moderator: ['onboarding_appeals', 'catalogue', 'audit'],
     content_editor: ['catalogue', 'settings', 'audit'],
     content_approver: ['settings', 'catalogue', 'audit'],
-    system_admin: ['ledger', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'onboarding_appeals', 'scenarios', 'direct_access'],
-    admin: ['ledger', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'onboarding_appeals', 'scenarios', 'direct_access'],
+    system_admin: ['ledger', 'plots_control', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'onboarding_appeals', 'scenarios', 'direct_access'],
+    admin: ['ledger', 'plots_control', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'onboarding_appeals', 'scenarios', 'direct_access'],
   };
   const allowedTabs: AdminTab[] = roleAllowedTabs[role] || [
     'ledger',
+    'plots_control',
     'users',
     'audit',
     'settings',
@@ -83,22 +93,14 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     'direct_access',
   ];
 
-  const [subTab, setSubTab] = useState<AdminTab>(() => {
-    if (
-      activeSubTab &&
-      ['ledger', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'scenarios', 'direct_access', 'onboarding_appeals'].includes(
-        activeSubTab
-      )
-    ) {
-      return activeSubTab as AdminTab;
+  const getValidTab = (requested?: string | null): AdminTab => {
+    if (requested && allowedTabs.includes(requested as AdminTab)) {
+      return requested as AdminTab;
     }
-    if (role === 'support_agent') return 'users';
-    if (role === 'platform_moderator') return 'onboarding_appeals';
-    if (role === 'content_editor') return 'catalogue';
-    if (role === 'content_approver') return 'settings';
-    if (role === 'auditor') return 'ledger';
-    return 'ledger';
-  });
+    return allowedTabs[0] || 'ledger';
+  };
+
+  const [subTab, setSubTab] = useState<AdminTab>(() => getValidTab(activeSubTab));
 
   // Maker-Checker & Appeals state (Tier C Sections 8.7 & 8.8)
   const [onboardingBatches, setOnboardingBatches] = useState<any[]>([]);
@@ -157,6 +159,17 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   const [catalogueNotice, setCatalogueNotice] = useState<{ msg: string; err?: boolean } | null>(null);
   const [adminServiceCatFilter, setAdminServiceCatFilter] = useState<string>('ALL');
 
+  // Plots & Land Control Management State
+  const [plotsList, setPlotsList] = useState<any[]>([]);
+  const [plotsLoading, setPlotsLoading] = useState(false);
+  const [plotFilter, setPlotFilter] = useState<'ALL' | 'LOCKED' | 'UNLOCKED' | 'MORTGAGED' | 'DISPUTED'>('ALL');
+  const [plotSearchQuery, setPlotSearchQuery] = useState('');
+  const [selectedPlotDetail, setSelectedPlotDetail] = useState<any | null>(null);
+  const [plotDetailLoading, setPlotDetailLoading] = useState(false);
+  const [allDisputes, setAllDisputes] = useState<any[]>([]);
+  const [allMortgages, setAllMortgages] = useState<any[]>([]);
+  const [plotActionNotice, setPlotActionNotice] = useState<{ msg: string; err?: boolean } | null>(null);
+
   // Site Settings state
   const [settingsList, setSettingsList] = useState<any[]>([]);
   const [settingsMap, setSettingsMap] = useState<Record<string, string>>({});
@@ -166,13 +179,16 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   const refreshAll = async () => {
     const results = await Promise.allSettled([
       BhumiApi.getLedgerState(),
-      import.meta.env.DEV ? BhumiApi.getDemoScenarios() : Promise.resolve([]),
+      BhumiApi.getDemoScenarios(),
       BhumiApi.getAuditLogs(),
-      import.meta.env.DEV ? BhumiApi.getOcrSample() : Promise.resolve(null),
+      BhumiApi.getOcrSample().catch(() => null),
       BhumiApi.listUsers(), BhumiApi.getSettings(), BhumiApi.getPermissions(),
       BhumiApi.getStatsSummary(), BhumiApi.listAdminServices(), BhumiApi.listAdminFees(),
       BhumiApi.listOnboardingBatches().catch(() => ({ items: [] })),
       BhumiApi.listAppeals().catch(() => ({ items: [] })),
+      BhumiApi.getPlots().catch(() => []),
+      BhumiApi.listDisputes().catch(() => []),
+      BhumiApi.getMortgages().catch(() => []),
     ]);
     const setters: ((value: any) => void)[] = [
       setLedgerState, setScenarios, setAuditLogs, setOcrSample, setUsersList,
@@ -181,10 +197,51 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       (value) => setAdminFees(value?.items || []),
       (value) => setOnboardingBatches(value?.items || []),
       (value) => setAppealsList(value?.items || []),
+      (value) => setPlotsList(Array.isArray(value) ? value : (value?.items || [])),
+      (value) => setAllDisputes(Array.isArray(value) ? value : (value?.items || [])),
+      (value) => setAllMortgages(Array.isArray(value) ? value : (value?.mortgages || value?.items || [])),
     ];
     results.forEach((result, i) => { if (result.status === 'fulfilled') setters[i](result.value); });
     setLoadError(results.some((result) => result.status === 'rejected')
       ? t('কিছু তথ্য লোড হয়নি। আবার চেষ্টা করুন।', 'Some records could not be loaded. Please retry.') : '');
+  };
+
+  const handleAdminToggleSaleLock = async (plot: any) => {
+    try {
+      setPlotsLoading(true);
+      const isLocked = Number(plot.owner_sale_locked) === 1;
+      const targetState = !isLocked;
+      const reason = targetState
+        ? (lang === 'bn' ? 'ভূমি ব্যবস্থাপনা কর্তৃপক্ষ কর্তৃক বিক্রয় সুরক্ষা লক সক্রিয়' : 'Sale protection lock activated by system administrator')
+        : (lang === 'bn' ? 'ভূমি ব্যবস্থাপনা কর্তৃপক্ষ কর্তৃক বিক্রয় সুরক্ষা লক উন্মুক্তকরণ' : 'Sale protection lock released by system administrator');
+      await BhumiApi.togglePlotSaleLock(plot.id, reason);
+      setPlotActionNotice({
+        msg: lang === 'bn'
+          ? `দাগ নং ${plot.dag_no_bn || plot.dag_no}-এর বিক্রয় সুরক্ষা ${targetState ? 'সফলভাবে সক্রিয়' : 'নিষ্ক্রিয়'} করা হয়েছে।`
+          : `Sale protection for Plot ${plot.dag_no} was successfully ${targetState ? 'locked' : 'unlocked'}.`,
+        err: false,
+      });
+      refreshAll();
+    } catch {
+      setPlotActionNotice({
+        msg: lang === 'bn' ? 'বিক্রয় লক পরিবর্তনে ত্রুটি হয়েছে।' : 'Failed to toggle sale lock.',
+        err: true,
+      });
+    } finally {
+      setPlotsLoading(false);
+    }
+  };
+
+  const handleInspectPlot = async (plotId: number) => {
+    try {
+      setPlotDetailLoading(true);
+      const detail = await BhumiApi.getPlotDetail(plotId);
+      setSelectedPlotDetail(detail);
+    } catch (e) {
+      console.error('Failed to load plot detail', e);
+    } finally {
+      setPlotDetailLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -192,15 +249,8 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   }, []);
 
   useEffect(() => {
-    if (
-      activeSubTab &&
-      ['ledger', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'scenarios', 'direct_access', 'onboarding_appeals'].includes(
-        activeSubTab
-      )
-    ) {
-      setSubTab(activeSubTab as AdminTab);
-    }
-  }, [activeSubTab]);
+    setSubTab(getValidTab(activeSubTab));
+  }, [activeSubTab, role]);
 
   const handleTabChange = (target: AdminTab) => {
     setSubTab(target);
@@ -594,6 +644,19 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
               <span>{t('হ্যাশ লেজার ল্যাব', 'Hash Ledger Lab')}</span>
             </button>
           )}
+          {allowedTabs.includes('plots_control') && (
+            <button
+              onClick={() => handleTabChange('plots_control')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+                subTab === 'plots_control'
+                  ? 'bg-[#006A4E] text-white shadow-xs'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+              }`}
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span>{t('ভূমি ও দাগ নিয়ন্ত্রণ', 'Plots & Land Control')}</span>
+            </button>
+          )}
           {allowedTabs.includes('users') && (
             <button
               onClick={() => handleTabChange('users')}
@@ -672,7 +735,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
               <span>{t('অনবোর্ডিং ও আপিল', 'Onboarding & Appeals')}</span>
             </button>
           )}
-          {import.meta.env.DEV && allowedTabs.includes('scenarios') && (
+          {allowedTabs.includes('scenarios') && (
             <button
               onClick={() => handleTabChange('scenarios')}
               className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
@@ -682,7 +745,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
               }`}
             >
               <FileSearch className="w-3.5 h-3.5" />
-              <span>{t('যাচাই কেস ও OCR', 'Case Library & OCR')}</span>
+              <span>{t('ঝুঁকি প্রটোকল ও OCR', 'Risk Protocols & OCR')}</span>
             </button>
           )}
           {allowedTabs.includes('direct_access') && (
@@ -896,14 +959,420 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
         </div>
       )}
 
-      {/* TAB 3: Verification Case Library & OCR Assist */}
-      {import.meta.env.DEV && subTab === 'scenarios' && (
+      {/* TAB: Full Land Records & Plots Control Management System */}
+      {subTab === 'plots_control' && (
+        <div className="space-y-6">
+          {/* Header Card */}
+          <div className="panel p-6 space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Compass className="w-5 h-5 text-[#006A4E]" />
+                  <h2 className="font-bold text-lg text-[#074f38]">
+                    {t(
+                      'ভূমি ও দাগ নিয়ন্ত্রণ কেন্দ্র (Land Records & Plots Control Management)',
+                      'Land Records & Plots Control Management System'
+                    )}
+                  </h2>
+                </div>
+                <p className="text-xs text-[#5F7A74] mt-1">
+                  {t(
+                    'সকল নিবন্ধিত দাগের লাইভ স্থিতি, বিক্রয় সুরক্ষা লক ব্যবস্থাপনা, ব্যাংক মর্টগেজ স্থিতি ও খতিয়ান নিরীক্ষা',
+                    'Direct administrative oversight of all registered plots, sale-lock states, bank mortgages, and khatian lineages'
+                  )}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 self-start md:self-auto">
+                <button
+                  onClick={() => refreshAll()}
+                  disabled={plotsLoading}
+                  className="px-3.5 py-2 rounded-lg bg-[#EDF7F4] hover:bg-[#E2EFE9] text-[#006A4E] text-xs font-bold border border-[#006A4E]/20 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${plotsLoading ? 'animate-spin' : ''}`} />
+                  <span>{t('রিফ্রেশ', 'Refresh Records')}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Metrics */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                <div className="text-[11px] font-semibold text-slate-500">
+                  {t('মোট নিবন্ধিত দাগ', 'Total Registered Plots')}
+                </div>
+                <div className="text-xl font-extrabold text-slate-900 mt-1">
+                  {toBanglaDigits(plotsList.length, lang)} {t('টি', '')}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200">
+                <div className="text-[11px] font-semibold text-rose-700 flex items-center gap-1">
+                  <Lock className="w-3 h-3" />
+                  <span>{t('বিক্রয় সুরক্ষিত (লক সক্রিয়)', 'Sale Protection Locked')}</span>
+                </div>
+                <div className="text-xl font-extrabold text-rose-900 mt-1">
+                  {toBanglaDigits(plotsList.filter((p) => Number(p.owner_sale_locked) === 1).length, lang)} {t('টি', '')}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                <div className="text-[11px] font-semibold text-emerald-700">
+                  {t('উন্মুক্ত / হস্তান্তরযোগ্য', 'Unlocked / Available')}
+                </div>
+                <div className="text-xl font-extrabold text-emerald-900 mt-1">
+                  {toBanglaDigits(plotsList.filter((p) => Number(p.owner_sale_locked) === 0).length, lang)} {t('টি', '')}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200">
+                <div className="text-[11px] font-semibold text-blue-700 flex items-center gap-1">
+                  <Landmark className="w-3 h-3" />
+                  <span>{t('ব্যাংক বন্ধক ও লিয়েন', 'Bank Liens & Mortgages')}</span>
+                </div>
+                <div className="text-xl font-extrabold text-blue-900 mt-1">
+                  {toBanglaDigits(allMortgages.length, lang)} {t('টি', '')}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Notice */}
+            {plotActionNotice && (
+              <div
+                className={`p-3 rounded-xl border text-xs flex items-center justify-between gap-2 ${
+                  plotActionNotice.err
+                    ? 'bg-rose-50 border-rose-200 text-rose-800'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>{plotActionNotice.msg}</span>
+                </div>
+                <button
+                  onClick={() => setPlotActionNotice(null)}
+                  className="font-bold text-xs hover:underline cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {/* Filter & Search Bar */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2">
+              <div className="relative flex-1 max-w-md">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={plotSearchQuery}
+                  onChange={(e) => setPlotSearchQuery(e.target.value)}
+                  placeholder={t('দাগ নং, মৌজা, উপজেলা বা প্লট কোড দিয়ে খুঁজুন...', 'Search by Dag No, Mouza, Upazila or Plot Code...')}
+                  className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-1.5">
+                {(
+                  [
+                    { key: 'ALL', labelBn: 'সকল দাগ', labelEn: 'All Plots' },
+                    { key: 'LOCKED', labelBn: 'সুরক্ষিত লক', labelEn: 'Locked' },
+                    { key: 'UNLOCKED', labelBn: 'উন্মুক্ত', labelEn: 'Unlocked' },
+                    { key: 'MORTGAGED', labelBn: 'ব্যাংক বন্ধক', labelEn: 'Mortgaged' },
+                    { key: 'DISPUTED', labelBn: 'বিরোধযুক্ত', labelEn: 'Disputed' },
+                  ] as const
+                ).map((f) => (
+                  <button
+                    key={f.key}
+                    onClick={() => setPlotFilter(f.key)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      plotFilter === f.key
+                        ? 'bg-[#006A4E] text-white shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                    }`}
+                  >
+                    {lang === 'bn' ? f.labelBn : f.labelEn}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Plots Table */}
+            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                  <tr>
+                    <th className="py-2.5 px-3 font-bold">{t('দাগ নং ও কোড', 'Dag No & Code')}</th>
+                    <th className="py-2.5 px-3 font-bold">{t('মৌজা ও এলাকা', 'Mouza & Location')}</th>
+                    <th className="py-2.5 px-3 font-bold">{t('শ্রেণি ও পরিমাণ', 'Type & Area')}</th>
+                    <th className="py-2.5 px-3 font-bold">{t('বিক্রয় সুরক্ষা লক', 'Sale Lock Status')}</th>
+                    <th className="py-2.5 px-3 font-bold">{t('আইনি অবস্থা / বন্ধক', 'Legal / Encumbrance')}</th>
+                    <th className="py-2.5 px-3 font-bold text-right">{t('অ্যাডমিন অ্যাকশন', 'Admin Controls')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {plotsList
+                    .filter((p) => {
+                      const q = plotSearchQuery.toLowerCase().trim();
+                      if (q) {
+                        const matchDag = String(p.dag_no || '').includes(q) || String(p.dag_no_bn || '').includes(q);
+                        const matchCode = String(p.plot_code || '').toLowerCase().includes(q);
+                        const matchMouza = String(p.mouza_bn || '').toLowerCase().includes(q) || String(p.mouza_en || '').toLowerCase().includes(q);
+                        const matchUpazila = String(p.upazila_bn || '').toLowerCase().includes(q) || String(p.upazila_en || '').toLowerCase().includes(q);
+                        if (!matchDag && !matchCode && !matchMouza && !matchUpazila) return false;
+                      }
+
+                      const isLocked = Number(p.owner_sale_locked) === 1;
+                      const hasMortgage = allMortgages.some((m: any) => m.plot_id === p.id && Number(m.is_active) === 1);
+                      const hasDispute = allDisputes.some((d: any) => d.plot_id === p.id && d.status !== 'RESOLVED');
+
+                      if (plotFilter === 'LOCKED') return isLocked;
+                      if (plotFilter === 'UNLOCKED') return !isLocked;
+                      if (plotFilter === 'MORTGAGED') return hasMortgage;
+                      if (plotFilter === 'DISPUTED') return hasDispute;
+                      return true;
+                    })
+                    .map((plot) => {
+                      const isLocked = Number(plot.owner_sale_locked) === 1;
+                      const hasMortgage = allMortgages.some((m: any) => m.plot_id === plot.id && Number(m.is_active) === 1);
+                      const hasDispute = allDisputes.some((d: any) => d.plot_id === plot.id && d.status !== 'RESOLVED');
+
+                      return (
+                        <tr key={plot.id} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="py-2.5 px-3">
+                            <span className="font-extrabold text-sm text-[#006A4E] block">
+                              দাগ #{lang === 'bn' ? plot.dag_no_bn || plot.dag_no : plot.dag_no}
+                            </span>
+                            <span className="font-mono text-[10px] text-slate-400 block">
+                              {plot.plot_code}
+                            </span>
+                          </td>
+
+                          <td className="py-2.5 px-3">
+                            <span className="font-semibold text-slate-900 block">
+                              {lang === 'bn' ? plot.mouza_bn : plot.mouza_en}
+                            </span>
+                            <span className="text-[10px] text-slate-500 block">
+                              {lang === 'bn' ? `${plot.upazila_bn}, ${plot.district_bn}` : `${plot.upazila_en}, ${plot.district_en}`}
+                            </span>
+                          </td>
+
+                          <td className="py-2.5 px-3">
+                            <span className="font-medium text-slate-700 block">
+                              {lang === 'bn' ? plot.land_type_bn : plot.land_type_en}
+                            </span>
+                            <span className="font-bold text-[#0A1F1C] text-[11px] block">
+                              {toBanglaDigits(plot.total_area_decimal, lang)} {t('শতাংশ', 'decimals')}
+                            </span>
+                          </td>
+
+                          <td className="py-2.5 px-3">
+                            {isLocked ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 border border-rose-200">
+                                <Lock className="w-3 h-3" />
+                                <span>{t('বিক্রয় লক সক্রিয়', 'Sale Locked')}</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                <Check className="w-3 h-3" />
+                                <span>{t('উন্মুক্ত / সক্রিয়', 'Unlocked')}</span>
+                              </span>
+                            )}
+                            {plot.locked_by_nid && (
+                              <span className="text-[9px] font-mono text-slate-400 block mt-0.5">
+                                by NID: {plot.locked_by_nid}
+                              </span>
+                            )}
+                          </td>
+
+                          <td className="py-2.5 px-3">
+                            <div className="flex flex-col gap-1">
+                              {hasMortgage && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                  <Landmark className="w-2.5 h-2.5" />
+                                  <span>{t('ব্যাংক বন্ধকযুক্ত', 'Bank Lien')}</span>
+                                </span>
+                              )}
+                              {hasDispute && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                  <AlertTriangle className="w-2.5 h-2.5" />
+                                  <span>{t('সক্রিয় বিবাদ', 'Disputed')}</span>
+                                </span>
+                              )}
+                              {!hasMortgage && !hasDispute && (
+                                <span className="text-[11px] font-semibold text-emerald-700">
+                                  {t('নিষ্কণ্টক রেকর্ড', 'Clean Title')}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+
+                          <td className="py-2.5 px-3 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => handleAdminToggleSaleLock(plot)}
+                                disabled={plotsLoading}
+                                className={`px-2.5 py-1 rounded text-[11px] font-bold border transition cursor-pointer min-h-[30px] flex items-center gap-1 ${
+                                  isLocked
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                                    : 'bg-rose-50 text-rose-800 border-rose-300 hover:bg-rose-100'
+                                }`}
+                              >
+                                <Lock className="w-3 h-3" />
+                                <span>
+                                  {isLocked
+                                    ? t('আনলক করুন', 'Unlock')
+                                    : t('লক করুন', 'Lock Sale')}
+                                </span>
+                              </button>
+
+                              <button
+                                onClick={() => handleInspectPlot(plot.id)}
+                                disabled={plotDetailLoading}
+                                className="px-2.5 py-1 rounded bg-[#EDF7F4] hover:bg-[#E2EFE9] text-[#006A4E] border border-[#006A4E]/20 text-[11px] font-bold transition cursor-pointer min-h-[30px] flex items-center gap-1"
+                              >
+                                <Eye className="w-3 h-3" />
+                                <span>{t('তদন্ত ও বিবরণ', 'Inspect')}</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Plot Details Modal */}
+          {selectedPlotDetail && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 p-6 space-y-5 animate-in fade-in duration-150">
+                <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono">
+                      {selectedPlotDetail.plot_code || 'PLOT-RECORD'}
+                    </span>
+                    <h3 className="text-lg font-bold text-slate-900 mt-1">
+                      {t('দাগ নং', 'Plot Dag No')}: {selectedPlotDetail.dag_no_bn || selectedPlotDetail.dag_no} • {selectedPlotDetail.mouza_bn || selectedPlotDetail.mouza}
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      {t('জমির শ্রেণি:', 'Land Type:')} {selectedPlotDetail.land_type_bn || selectedPlotDetail.land_type} • {t('মোট আয়তন:', 'Total Area:')} {selectedPlotDetail.total_area_decimal} {t('শতাংশ', 'decimals')}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedPlotDetail(null)}
+                    className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Owners Section */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-[#006A4E]" />
+                    <span>{t('রেকর্ডকৃত বর্তমান মালিকগণ (Recorded Owners)', 'Recorded Legal Owners')}</span>
+                  </h4>
+                  <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50/50">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-100 text-slate-600 font-bold">
+                        <tr>
+                          <th className="p-2.5">মালিকের নাম</th>
+                          <th className="p-2.5">পিতা/স্বামীর নাম</th>
+                          <th className="p-2.5">জাতীয় পরিচয়পত্র (NID)</th>
+                          <th className="p-2.5 text-right">মালিকানার অংশ</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        {(selectedPlotDetail.owners || []).map((o: any, idx: number) => (
+                          <tr key={idx} className="bg-white">
+                            <td className="p-2.5 font-bold text-slate-900">{o.name_bn || o.name_en}</td>
+                            <td className="p-2.5 text-slate-600">{o.father_name_bn || o.father_name || '—'}</td>
+                            <td className="p-2.5 font-mono text-slate-700">{o.nid || o.nid_mock}</td>
+                            <td className="p-2.5 text-right font-bold text-[#006A4E]">
+                              {toBanglaDigits(o.area_decimal, lang)} শতাংশ
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Khatian Chain Lineage */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-[#006A4E]" />
+                    <span>{t('ঐতিহাসিক খতিয়ান ধারাবাহিকতা (CS → SA → RS → BS)', 'Historical Khatian Chain')}</span>
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {['CS', 'SA', 'RS', 'BS'].map((type) => {
+                      const rec = (selectedPlotDetail.khatian_chain || []).find((k: any) => k.type === type || k.survey_type === type);
+                      return (
+                        <div key={type} className="p-3 rounded-xl border border-slate-200 bg-white">
+                          <div className="flex items-center justify-between">
+                            <span className="font-extrabold text-xs text-[#006A4E]">{type} খতিয়ান</span>
+                            <span className="text-[10px] font-mono text-slate-400">#{rec?.khatian_no || '—'}</span>
+                          </div>
+                          <div className="text-[11px] text-slate-700 font-bold mt-1">
+                            {rec?.owner_name_bn || rec?.owner_name || 'রেকর্ডপ্রাপ্ত'}
+                          </div>
+                          <div className="text-[10px] text-slate-500 mt-0.5">
+                            আয়তন: {rec?.area_decimal ?? selectedPlotDetail.total_area_decimal} শতাংশ
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Protection Lock Status & Direct Action */}
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="font-bold text-xs text-slate-900">
+                      {t('বর্তমান বিক্রয় সুরক্ষা স্থিতি:', 'Current Sale Protection Status:')}{' '}
+                      <span className={Number(selectedPlotDetail.owner_sale_locked) === 1 ? 'text-rose-700 font-extrabold' : 'text-emerald-700 font-extrabold'}>
+                        {Number(selectedPlotDetail.owner_sale_locked) === 1 ? t('সুরক্ষিত (লক সক্রিয়)', 'Locked') : t('উন্মুক্ত', 'Unlocked')}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      {t('সরাসরি অ্যাডমিন কন্ট্রোল থেকে দাগের বিক্রয় অনুমতি পরিচালনা করুন।', 'Manage sale permission directly from administrative control.')}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      handleAdminToggleSaleLock(selectedPlotDetail);
+                      setSelectedPlotDetail(null);
+                    }}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer min-h-[36px] flex items-center gap-1.5 self-start sm:self-auto ${
+                      Number(selectedPlotDetail.owner_sale_locked) === 1
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                        : 'bg-rose-600 hover:bg-rose-700 text-white'
+                    }`}
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>
+                      {Number(selectedPlotDetail.owner_sale_locked) === 1
+                        ? t('বিক্রয় লক নিষ্ক্রিয় করুন', 'Unlock Plot')
+                        : t('বিক্রয় লক সক্রিয় করুন', 'Lock Plot for Sale Protection')}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 3: Automated Risk Protocols & OCR Assist */}
+      {subTab === 'scenarios' && (
         <div className="space-y-6">
           <div className="panel p-6 space-y-4">
             <h2 className="text-lg font-extrabold text-[#0A1F1C]">
               {t(
-                'প্রাক-নিবন্ধন যাচাই কেস লাইব্রেরি (৮টি স্ট্যান্ডার্ড ভেরিফিকেশন কেস)',
-                'Pre-Registration Verification Case Library (8 Reference Scenarios)'
+                'ভূমি ঝুঁকি ও অখণ্ডতা যাচাই প্রটোকল (৮টি স্বয়ংক্রিয় ভেরিফিকেশন রুলস)',
+                'Automated Land Risk & Integrity Protocols (8 Reference Verification Rules)'
               )}
             </h2>
 
@@ -960,13 +1429,16 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                 </h2>
               </div>
 
-              {/* Demo Prototype Disclaimer Banner (F20) */}
-              <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-900 font-medium">
-                <strong>{t('নমুনা OCR ড্রাফট সহায়ক:', 'DEMO OCR ASSIST COPY:')}</strong>{' '}
-                {t(
-                  'এটি ঐতিহাসিক হস্তলিখিত খতিয়ানের নমুনা ডিজিটাল ড্রাফট। সকল ফিল্ড ভূমি কর্মকর্তা দ্বারা ম্যানুয়াল নিরীক্ষা সাপেক্ষ।',
-                  'This is a demo digital draft from simulated historical khatian scans. All fields require human officer verification before legal acceptance.'
-                )}
+              {/* Official OCR Digitization Assist Notice */}
+              <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-xs text-emerald-950 font-medium flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#006A4E] shrink-0" />
+                <span>
+                  <strong>{t('ঐতিহাসিক খতিয়ান ডিজিটাইজেশন ড্রাফট:', 'HISTORICAL KHATIAN OCR DRAFT:')}</strong>{' '}
+                  {t(
+                    'ঐতিহাসিক হস্তলিখিত খতিয়ানের ডিজিটাল ড্রাফট ও মেশিন কনফিডেন্স স্কোর। আইনি স্বীকৃতির পূর্বে সংশ্লিষ্ট সহকারী কমিশনার (ভূমি) বা কানুনগো দ্বারা যাচাই সাপেক্ষ।',
+                    'Digital draft and machine confidence scores for historical handwritten khatians. Requires human officer review before final legal acceptance.'
+                  )}
+                </span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1437,7 +1909,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                             </span>
                             {isEst && (
                               <span className="text-xs text-slate-500">
-                                {t('(আনুমানিক প্রাক্কলন)', '(demo estimate)')}
+                                {t('(প্রাক্কলিত হার)', '(circular estimated rate)')}
                               </span>
                             )}
                           </div>

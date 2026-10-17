@@ -67,21 +67,33 @@ export const AppContent: React.FC = () => {
   const [activeTab, setActiveTabState] = useState<string>(getInitialTab);
 
   // Synchronize URL on tab change or mount
-  const syncUrl = (tab: string, replace = false) => {
+  const syncUrl = (target: string, replace = false) => {
+    let tab = target;
+    let query = '';
+    if (target.includes('?')) {
+      const parts = target.split('?');
+      tab = parts[0];
+      query = '?' + parts[1];
+    }
     const currentUrl = new URL(window.location.href);
     const targetPath = tab === 'landing' ? `/${lang}` : `/${lang}/${tab}`;
-    if (currentUrl.pathname !== targetPath) {
+    const fullPath = query ? `${targetPath}${query}` : targetPath;
+    if (currentUrl.pathname + currentUrl.search !== fullPath) {
       if (replace) {
-        window.history.replaceState({ tab }, '', targetPath);
+        window.history.replaceState({ tab }, '', fullPath);
       } else {
-        window.history.pushState({ tab }, '', targetPath);
+        window.history.pushState({ tab }, '', fullPath);
       }
     }
   };
 
-  const setActiveTab = (tab: string) => {
+  const setActiveTab = (target: string) => {
+    let tab = target;
+    if (target.includes('?')) {
+      tab = target.split('?')[0];
+    }
     setActiveTabState(tab);
-    syncUrl(tab, false);
+    syncUrl(target, false);
   };
 
   // On mount and popstate, keep tab in sync with browser URL

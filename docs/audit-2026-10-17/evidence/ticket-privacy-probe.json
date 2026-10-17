@@ -1,0 +1,12 @@
+{
+  "anonymous_ticket_detail_status": 200,
+  "top_level_keys": [
+    "ticket",
+    "plot",
+    "messages",
+    "events"
+  ],
+  "messages_returned": 1,
+  "internal_note_rows_in_fixture": 0,
+  "internal_notes_returned": 0
+}

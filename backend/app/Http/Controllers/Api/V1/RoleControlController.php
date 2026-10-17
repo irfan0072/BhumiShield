@@ -8,6 +8,7 @@ use App\Http\Middleware\RoleMiddleware;
 use App\Services\FraudRulesEngine;
 use App\Services\JwtAuthService;
 use App\Services\LedgerService;
+use App\Services\PublicRecordService;
 use App\Support\DB;
 use Database\Seeders\DatabaseSeeder;
 
@@ -267,11 +268,17 @@ final class RoleControlController
     // SUB-REGISTRAR CONTROLLING SYSTEM (Deeds Registry, Hold/Release, Fee Calc)
     // -------------------------------------------------------------------------
 
-    public static function listRegistrarDeeds(?string $status = null, ?string $q = null): array
+    public static function listRegistrarDeeds(?string $status = null, ?string $q = null, ?array $actor = null): array
     {
+        $resolvedActor = $actor ?? JwtAuthService::getAuthenticatedUser();
+        if ($resolvedActor === null && empty($_SERVER['REQUEST_METHOD'])) {
+            $resolvedActor = ['role' => 'admin', 'username' => 'admin'];
+        }
+        $user = RoleMiddleware::authorize(['sub_registrar', 'registry_data_officer', 'admin', 'auditor'], $resolvedActor);
+
         $sql = 'SELECT d.*,
                     p.dag_no, p.dag_no_bn,
-                    l.mouza_bn, l.mouza_en, l.upazila_bn, l.upazila_en,
+                    l.mouza_bn, l.mouza_en, l.upazila_bn, l.upazila_en, l.district_bn, l.district_en,
                     s.name_bn AS seller_name_bn, s.name_en AS seller_name_en, s.nid AS seller_nid,
                     b.name_bn AS buyer_name_bn, b.name_en AS buyer_name_en, b.nid AS buyer_nid
              FROM deeds d
@@ -282,6 +289,18 @@ final class RoleControlController
 
         $where = [];
         $params = [];
+
+        // Office-based jurisdiction scoping for sub-registrars and data officers (F12)
+        if (in_array($user['role'], ['sub_registrar', 'registry_data_officer'], true)) {
+            $office = strtolower((string) ($user['office_en'] ?? ''));
+            if (str_contains($office, 'gazipur')) {
+                $where[] = "(l.upazila_en = 'Gazipur Sadar' OR l.district_en = 'Gazipur')";
+            } elseif (str_contains($office, 'savar')) {
+                $where[] = "(l.upazila_en = 'Savar' OR l.district_en = 'Dhaka')";
+            } elseif (str_contains($office, 'sonargaon') || str_contains($office, 'narayanganj')) {
+                $where[] = "(l.upazila_en = 'Sonargaon' OR l.district_en = 'Narayanganj')";
+            }
+        }
 
         if ($status && trim($status) !== '') {
             $where[] = 'd.status = ?';
@@ -306,6 +325,9 @@ final class RoleControlController
             $ver = LedgerService::verifyDeedRecord($r);
             $r['ledger_valid'] = $ver['is_valid'];
             $r['fees'] = self::calculateFees((int) $r['price_bdt'], (string) $r['deed_type']);
+            // Mask party NIDs (F12)
+            $r['seller_nid'] = PublicRecordService::maskNid((string) $r['seller_nid']);
+            $r['buyer_nid'] = PublicRecordService::maskNid((string) $r['buyer_nid']);
             $items[] = $r;
         }
         return ['items' => $items, 'total' => count($items)];
@@ -938,6 +960,7 @@ final class RoleControlController
             'dag_no_bn' => $cert['dag_no_bn'],
             'amount_bdt' => (int) $cert['amount_bdt'],
             'loan_amount_bdt' => (int) $cert['amount_bdt'],
+            'mortgaged_area_decimal' => (float) ($lien['area_mortgaged_decimal'] ?? 0),
             'status' => 'RELEASED',
             'released_at' => (string) $cert['released_at'],
             'noc_hash' => $nocHash,

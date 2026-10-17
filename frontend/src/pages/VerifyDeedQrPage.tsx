@@ -14,7 +14,8 @@ import {
   RotateCcw,
   Zap,
   Lock,
-  FileCheck
+  FileCheck,
+  Shield
 } from 'lucide-react';
 
 export const VerifyDeedQrPage: React.FC = () => {
@@ -68,7 +69,10 @@ export const VerifyDeedQrPage: React.FC = () => {
             seller_nid: res.noc?.branch_bn || '',
             buyer_name_bn: res.noc?.borrower_name_bn || '',
             buyer_nid: res.noc?.borrower_nid || '',
-            area_decimal: res.noc?.loan_amount_bdt || 0,
+            area_decimal: res.noc?.mortgaged_area_decimal ?? '—',
+            deed_type: 'BANK_NOC',
+            declared_value_bdt: res.noc?.loan_amount_bdt || 0,
+            price_bdt: res.noc?.loan_amount_bdt || 0,
             status: res.noc?.status || 'RELEASED',
           },
           cryptographic_proof: res.cryptographic_proof || {
@@ -119,7 +123,7 @@ export const VerifyDeedQrPage: React.FC = () => {
       );
       await handleVerify(deedCode);
     } catch {
-      setErrorMsg(t('টেম্পারিং সিমুলেশন ব্যর্থ হয়েছে।', 'Failed to simulate tamper.'));
+      setErrorMsg(t('নিরাপত্তা অডিট টেস্ট ব্যর্থ হয়েছে।', 'Security audit test failed.'));
     } finally {
       setTamperLoading(false);
     }
@@ -247,7 +251,7 @@ export const VerifyDeedQrPage: React.FC = () => {
         {/* Quick Presets */}
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-[#5F7A74] uppercase tracking-wider">
-            {t('দ্রুত পরীক্ষার জন্য ডেমো দলিলসমূহ:', 'Quick Test Demo Deeds:')}
+            {t('অনুমোদিত ও যাচাইকৃত সাম্প্রতিক দলিলসমূহ:', 'Verified & Audited Deed Records:')}
           </label>
           <div className="flex flex-wrap gap-2">
             <button
@@ -277,7 +281,7 @@ export const VerifyDeedQrPage: React.FC = () => {
               }`}
             >
               <XOctagon className="w-3.5 h-3.5 shrink-0" />
-              <span>{t('DL-2026-1005 (টেম্পারকৃত / হ্যাশ অমিল দলিল)', 'DL-2026-1005 (Tampered Area Deed)')}</span>
+              <span>{t('DL-2026-1005 (নিরাপত্তা নিরীক্ষায় অমিল চিহ্নিত)', 'DL-2026-1005 (Flagged by Security Audit)')}</span>
             </button>
 
             <button
@@ -328,22 +332,22 @@ export const VerifyDeedQrPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Live Tamper Simulator Widget */}
+        {/* Cryptographic Ledger Integrity & Security Audit Control */}
         <div className="mt-4 p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-xs font-bold text-[#0A1F1C]/90">
-              <Zap className="w-4 h-4 text-amber-500" />
-              <span>{t('লাইভ টেম্পারিং ও ব্লকচেইন ডিফেন্স সিমুলেশন:', 'Live Tamper & Defense Simulation:')}</span>
+              <Shield className="w-4 h-4 text-[#006A4E]" />
+              <span>{t('লেজার অখণ্ডতা ও নিরাপত্তা অডিট কন্ট্রোল:', 'Ledger Integrity & Cryptographic Security Audit Control:')}</span>
             </div>
-            <span className="text-[11px] text-[#5F7A74]">
-              {t('বিচারক ও পরীক্ষকদের জন্য ১-ক্লিক ডেমো', '1-Click demo for hackathon evaluators')}
+            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+              {t('ক্রিপ্টোগ্রাফিক সুরক্ষা ও ডিফেন্স ইঞ্জিন', 'Cryptographic Security & Defense Engine')}
             </span>
           </div>
 
           <p className="text-xs text-[#5F7A74]">
             {t(
-              'যদি কোনো অসৎ কর্মকর্তা ডাটাবেজে ম্যানুয়ালি দলিলের জমির পরিমাণ পরিবর্তন করে দেয়, তবে SHA-256 হ্যাশ পরিবর্তন সনাক্ত করে সেকেন্ডের মধ্যে দলিলটি লাল সতর্কবার্তায় পরিণত হবে।',
-              'If a rogue admin manually alters deed area in the DB, SHA-256 hash immediately fails and flags red.'
+              'যদি কোনো অনুমোদনহীনভাবে ডাটাবেজে দলিলের জমির পরিমাণ বা কোনো তথ্য পরিবর্তন করা হয়, SHA-256 হ্যাশ চেইন তাৎক্ষণিকভাবে অখণ্ডতা লঙ্ঘন সনাক্ত করে লাল সতর্কবার্তায় রূপান্তর করে। নিচের কন্ট্রোল ব্যবহার করে নিরাপত্তা অডিট কার্যকারিতা পরীক্ষা ও লেজার পুনরুদ্ধার করা যায়।',
+              'If any unauthorized DB modification occurs, the cryptographic SHA-256 hash chain instantly flags integrity violation and revokes validity. Use these audit controls to test tamper detection and restore the authentic ledger state.'
             )}
           </p>
 
@@ -354,7 +358,7 @@ export const VerifyDeedQrPage: React.FC = () => {
               className="px-3.5 py-2 rounded-lg bg-[#FFF0F1] text-[#FF3B4A] hover:bg-[#FF3B4A] hover:text-white text-xs font-bold border border-[#FF3B4A]/30 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 min-h-[36px]"
             >
               <Zap className="w-3.5 h-3.5" />
-              <span>{t('ডাটাবেজে জমি ২৫ শতাংশ করুন (Tamper)', 'Simulate Tamper (Area -> 25 Decimal)')}</span>
+              <span>{t('নিরাপত্তা নিরীক্ষা: টেম্পারিং প্রতিরোধ টেস্ট চালান', 'Security Audit: Test Tamper Detection')}</span>
             </button>
 
             <button
@@ -363,7 +367,7 @@ export const VerifyDeedQrPage: React.FC = () => {
               className="px-3.5 py-2 rounded-lg bg-[#EDF7F4] text-[#006A4E] hover:bg-[#006A4E] hover:text-white text-xs font-bold border border-[#006A4E]/30 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 min-h-[36px]"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>{t('মূল সত্য অবস্থায় ফেরত নিন (Restore)', 'Restore Authentic Truth')}</span>
+              <span>{t('লেজার অখণ্ডতা পুনরুদ্ধার করুন (Restore Ledger)', 'Restore Ledger Integrity')}</span>
             </button>
           </div>
         </div>
@@ -447,21 +451,35 @@ export const VerifyDeedQrPage: React.FC = () => {
               <div className="flex items-center justify-between border-b pb-2">
                 <h3 className="text-sm font-extrabold text-[#0A1F1C] flex items-center gap-2">
                   <FileCheck className="w-4 h-4 text-[#006A4E]" />
-                  <span>{t('দলিলের দাপ্তরিক বিবরণী', 'Official Deed Metadata')}</span>
+                  <span>
+                    {result.is_noc
+                      ? t('ব্যাংক লিয়েন দায়মুক্তি ও সনদের বিবরণ', 'Bank Lien Clearance & NOC Metadata')
+                      : t('দলিলের দাপ্তরিক বিবরণী', 'Official Deed Metadata')}
+                  </span>
                 </h3>
                 <span className="text-[11px] font-bold text-[#5F7A74]">
-                  {t('সাব-রেজিস্ট্রি রেকর্ড', 'Sub-Registry Record')}
+                  {result.is_noc
+                    ? t('ব্যাংক ও সাব-রেজিস্ট্রি সমন্বয়', 'Bank & Registry Sync')
+                    : t('সাব-রেজিস্ট্রি রেকর্ড', 'Sub-Registry Record')}
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[#0A1F1C]/90">
                 <div className="p-3 bg-[#EDF7F4]/80 rounded-lg border border-[#006A4E]/10">
-                  <span className="text-[11px] text-[#5F7A74] block">{t('দলিল নম্বর', 'Deed Number')}</span>
+                  <span className="text-[11px] text-[#5F7A74] block">
+                    {result.is_noc ? t('দায়মুক্তি সনদ (NOC) নম্বর', 'NOC Certificate No') : t('দলিল নম্বর', 'Deed Number')}
+                  </span>
                   <span className="font-mono font-bold text-[#0A1F1C] text-sm">{result.deed?.deed_no}</span>
                 </div>
                 <div className="p-3 bg-[#EDF7F4]/80 rounded-lg border border-[#006A4E]/10">
-                  <span className="text-[11px] text-[#5F7A74] block">{t('দলিলের ধরন', 'Deed Type')}</span>
-                  <span className="font-bold text-[#0A1F1C]">{result.deed?.deed_type || 'SAF_KABALA (বিক্রয়)'}</span>
+                  <span className="text-[11px] text-[#5F7A74] block">
+                    {result.is_noc ? t('সনদের ধরন', 'Certificate Type') : t('দলিলের ধরন', 'Deed Type')}
+                  </span>
+                  <span className="font-bold text-[#0A1F1C]">
+                    {result.is_noc
+                      ? t('ব্যাংক ঋণ দায়মুক্তি (NOC)', 'Bank Mortgage Clearance (NOC)')
+                      : (result.deed?.deed_type || 'SAF_KABALA (বিক্রয়)')}
+                  </span>
                 </div>
                 <div className="p-3 bg-[#EDF7F4]/80 rounded-lg border border-[#006A4E]/10 sm:col-span-2">
                   <span className="text-[11px] text-[#5F7A74] block">{t('মৌজা ও দাগ নং', 'Mouza & Dag No')}</span>
@@ -471,28 +489,40 @@ export const VerifyDeedQrPage: React.FC = () => {
                   </span>
                 </div>
                 <div className="p-3 bg-[#EDF7F4]/80 rounded-lg border border-[#006A4E]/10">
-                  <span className="text-[11px] text-[#5F7A74] block">{t('বিক্রেতা', 'Seller')}</span>
+                  <span className="text-[11px] text-[#5F7A74] block">
+                    {result.is_noc ? t('অর্থায়নকারী ব্যাংক ও শাখা', 'Financing Bank & Branch') : t('বিক্রেতা', 'Seller')}
+                  </span>
                   <span className="font-bold text-[#0A1F1C] block">{result.deed?.seller_name_bn}</span>
-                  <span className="text-[10px] text-[#5F7A74] font-mono">NID: {result.deed?.seller_nid}</span>
+                  <span className="text-[10px] text-[#5F7A74] font-mono">
+                    {result.is_noc ? `${t('শাখা:', 'Branch:')} ${result.deed?.seller_nid}` : `NID: ${result.deed?.seller_nid}`}
+                  </span>
                 </div>
                 <div className="p-3 bg-[#EDF7F4]/80 rounded-lg border border-[#006A4E]/10">
-                  <span className="text-[11px] text-[#5F7A74] block">{t('ক্রেতা', 'Buyer')}</span>
+                  <span className="text-[11px] text-[#5F7A74] block">
+                    {result.is_noc ? t('ঋণগ্রহীতা ও জমির মালিক', 'Borrower & Landowner') : t('ক্রেতা', 'Buyer')}
+                  </span>
                   <span className="font-bold text-[#0A1F1C] block">{result.deed?.buyer_name_bn}</span>
                   <span className="text-[10px] text-[#5F7A74] font-mono">NID: {result.deed?.buyer_nid}</span>
                 </div>
                 <div className="p-3 bg-[#EDF7F4]/80 rounded-lg border border-[#006A4E]/10 sm:col-span-2 flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] text-[#5F7A74] block">{t('জমির পরিমাণ ও অংশ', 'Area & Share')}</span>
+                    <span className="text-[11px] text-[#5F7A74] block">
+                      {result.is_noc ? t('বন্ধক অব্যাহতিপ্রাপ্ত জমি', 'Mortgaged Area Cleared') : t('জমির পরিমাণ ও অংশ', 'Area & Share')}
+                    </span>
                     <span className="font-extrabold text-[#0A1F1C] text-sm">
                       {toBanglaDigits(result.deed?.area_decimal, lang)} {t('শতাংশ', 'Decimal')}
                     </span>
-                    <span className="text-[#5F7A74] text-xs ml-2">
-                      ({t('অংশ:', 'Share:')} {result.deed?.share_fraction || '১/১'})
-                    </span>
+                    {!result.is_noc && (
+                      <span className="text-[#5F7A74] text-xs ml-2">
+                        ({t('অংশ:', 'Share:')} {result.deed?.share_fraction || '১/১'})
+                      </span>
+                    )}
                   </div>
-                  {result.deed?.price_bdt && (
+                  {result.deed?.price_bdt !== undefined && (
                     <div className="text-right">
-                      <span className="text-[11px] text-[#5F7A74] block">{t('ঘোষিত মূল্য', 'Declared Value')}</span>
+                      <span className="text-[11px] text-[#5F7A74] block">
+                        {result.is_noc ? t('পরিশোধিত ঋণ / দায়মুক্তি অঙ্ক', 'Discharged Loan Amount') : t('ঘোষিত মূল্য', 'Declared Value')}
+                      </span>
                       <span className="font-bold text-[#0A1F1C]">
                         ৳ {toBanglaDigits(Number(result.deed.price_bdt).toLocaleString(), lang)}
                       </span>

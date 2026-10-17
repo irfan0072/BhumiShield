@@ -1,0 +1,202 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/check?dag=101".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/check?dag=101
+	2 container root
+		3 container
+			4 button ভূ BhumiShield National Land & Deed Trust Platform
+				5 text ভূ
+				6 text BhumiShield
+				7 text National Land & Deed Trust Platform
+			8 container প্রধান মেনু
+				9 button All Services
+				10 button Land Sale
+				11 button Cadastral Map
+				12 button Check Land
+				13 button Verify Deed
+				14 button Notices
+				15 button Blog
+				16 button Offices
+				17 button Citizen Vault
+				18 button Help
+			19 button Switch Language
+			20 button High Contrast
+				21 image
+			22 button Sign In
+				23 image
+				24 text Sign In
+		25 container
+			26 heading Check Before Buy, Value: 1
+				27 text Check Before Buy
+			28 text Select mouza, plot and seller to run cryptographic pre-purchase risk and khatian lineage checks.
+			29 image
+			30 text Live Ledger Verification
+			31 button (expanded) Secondary Actions: Collapse, Evaluator & Demo Scenarios (8 Reference Cases) 1-Click Auto Test Simulate double sale, tampered deed, mortgages, and lineage conflicts Collapse
+				32 image
+				33 text Evaluator & Demo Scenarios (8 Reference Cases)
+				34 text 1-Click Auto Test
+				35 text Simulate double sale, tampered deed, mortgages, and lineage conflicts
+				36 text Collapse
+				37 image
+			319 text Click any benchmark case to automatically populate the exact plot, seller, and cryptographic lineage:
+			320 button #1 Clean Legitimate Sale (All Checks Pass)
+				321 text #
+				322 text 1
+				323 text Clean Legitimate Sale (All Checks Pass)
+			324 button #2 Double Sale of the Same Plot to Two Buyers
+				325 text #
+				326 text 2
+				327 text Double Sale of the Same Plot to Two Buyers
+			328 button #3 Seller Selling More Area Than Owned Share
+				329 text #
+				330 text 3
+				331 text Seller Selling More Area Than Owned Share
+			332 button #4 Seller Is Not the Current Owner on Latest Khatian
+				333 text #
+				334 text 4
+				335 text Seller Is Not the Current Owner on Latest Khatian
+			336 button #5 Stored Deed Tampered After Registration (Hash & Signature Mismatch)
+				337 text #
+				338 text 5
+				339 text Stored Deed Tampered After Registration (Hash & Signature Mismatch)
+			340 button #6 Plot Already Mortgaged Offered as Collateral Again
+				341 text #
+				342 text 6
+				343 text Plot Already Mortgaged Offered as Collateral Again
+			344 button #7 Khatian Survey Chain Break (RS -> BS Area Discrepancy)
+				345 text #
+				346 text 7
+				347 text Khatian Survey Chain Break (RS -> BS Area Discrepancy)
+			348 button #8 Inheritance Case with Unresolved Heirs (Manual Review)
+				349 text #
+				350 text 8
+				351 text Inheritance Case with Unresolved Heirs (Manual Review)
+			38 button STEP 1 Mouza & Plot
+				352 image
+				40 text STEP 1
+				41 text Mouza & Plot
+			42 button STEP 2 Seller & Area
+				353 image
+				44 text STEP 2
+				45 text Seller & Area
+			46 button 3 STEP 3 Lineage & Risk
+				47 text 3
+				48 text STEP 3
+				49 text Lineage & Risk
+			354 button Check Another Plot
+				355 image
+				356 text Check Another Plot
+			357 button Edit Seller or Area
+				358 image
+				359 text Edit Seller or Area
+			360 button Print Risk Assessment
+				361 image
+				362 text Print Risk Assessment
+			441 image
+			364 text ✖ High Risk (Hold / Block)
+			365 text Critical fraud or encumbrance risk detected on this plot/transaction. Do not proceed with registration or payment.
+			366 button Listen
+				367 image
+				368 text Listen
+			369 button Print / PDF
+				370 image
+				371 text Print / PDF
+			372 heading Key Observations (Plain Language):, Value: 3
+				373 text Key Observations (Plain Language):
+			374 text Requested Area Exceeds Seller's Owned / Available Share High Risk
+			375 text Seller owns share 1/2 (12.00 decimals total; 12.00 decimals available after pending deeds), but attempted to transfer 18.00 decimals.
+			376 container
+				377 text Action: Hold this transaction and inspect physical registry volumes.
+			378 text Next Step (What to do next):
+			379 text Do not pay any advance or earnest money at this stage. • Verify original khatian and register volume at the AC Land and Sub-Registry offices. • If mortgaged, require an official Bank Lien Release Certificate before proceeding.
+			380 button See Technical Details (Rule Codes & Ledger Hashes for Officers)
+				381 image
+				382 text See Technical Details (Rule Codes & Ledger Hashes for Officers)
+			383 heading Khatian Lineage Chain (CS → SA → RS → BS Reconciliation), Value: 3
+				384 text Khatian Lineage Chain (CS → SA → RS → BS Reconciliation)
+			385 text Continuity of land area and ownership shares from 1940 CS survey to latest BS survey: CS  ( 1915 )
+			442 image
+			443 text Matched
+			444 container
+				445 text Khatian No: 1003
+			446 container
+				447 text Recorded Area: 24 Decimal
+			448 text Owners & Fractional Share:
+			449 text Shirin Akter
+			450 text Share:
+			451 text 1/1
+			452 text 24 dec
+			453 text SA  ( 1960 )
+			454 image
+			455 text Matched
+			456 container
+				457 text Khatian No: 2003
+			458 container
+				459 text Recorded Area: 24 Decimal
+			460 text Owners & Fractional Share:
+			461 text Shirin Akter
+			462 text Share:
+			463 text 1/1
+			464 text 24 dec
+			465 text RS  ( 1982 )
+			466 image
+			467 text Matched
+			468 container
+				469 text Khatian No: 3003
+			470 container
+				471 text Recorded Area: 24 Decimal
+			472 text Owners & Fractional Share:
+			473 text Md. Khorshed Alam
+			474 text Share:
+			475 text 1/1
+			476 text 24 dec
+			477 text BS  ( 2016 )
+			478 image
+			479 text Matched
+			480 container
+				481 text Khatian No: 4103
+			482 container
+				483 text Recorded Area: 24 Decimal
+			484 text Owners & Fractional Share:
+			485 text Md. Anwar Hossain
+			486 text Share:
+			487 text 1/2
+			488 text 12 dec
+			489 text Md. Delwar Hossain
+			490 text Share:
+			491 text 1/2
+			492 text 12 dec
+			433 heading Bank Mortgage & Lien Status, Value: 3
+				434 image
+				435 text Bank Mortgage & Lien Status
+			436 image
+			437 text No active bank mortgage found on this plot.
+			438 heading Registered Deed History (Hash Ledger), Value: 3
+				439 image
+				440 text Registered Deed History (Hash Ledger)
+			493 text DL-2022-1060 MUTATED মো. শহিদুল ইসলাম  →  মো. হুমায়ুন কবির  ( 8 dec ) SHA256:  03b3b9b82502df06b5d39b8cd1f797da515215439d43e469d4505a06e61ab509 DL-2023-1003 MUTATED মো. হুমায়ুন কবির  →  মো. আনোয়ার হোসেন  ( 12 dec ) SHA256:  546b279bc327d628a829b2f7c2091174eecac0b9349c1506ab279f769336b306
+		294 container
+			295 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			296 content list
+				297 button Check Before Buy
+				298 button Land Sale Marketplace
+				299 button Cadastral Mouza Map
+				300 button Verify Deed QR Code
+				301 button Official Noticeboard
+				302 button Land Literacy Blog
+				303 button Offices & Service Points
+				304 button Citizen Sale Lock Vault
+			305 text Workspaces
+			306 content list
+				307 button Sub-Registrar Panel
+				308 button AC Land Tribunal
+				309 button Bank Lien & NOC
+				310 button National Ledger & Audit
+			311 text Support & Helpline
+			312 content list
+				313 text Land Service Call Center: 16122
+				314 text Ministry of Land (Official service hours)
+				315 text Check official service hours
+				316 button Frequently Asked Questions
+				317 button Bangladeshi Land Glossary
+			318 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 328 button #3 Seller Selling More Area Than Owned Share

@@ -724,6 +724,47 @@ CREATE TABLE IF NOT EXISTS appeals (
     created_at TEXT NOT NULL
 );
 
+-- F08: Field inspection reports and SLA dispatches (Section 4.5 Field Verification Officer)
+CREATE TABLE IF NOT EXISTS field_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_code TEXT UNIQUE NOT NULL,
+    plot_id INTEGER NOT NULL REFERENCES plots(id),
+    dag_no TEXT NOT NULL,
+    possession_status TEXT NOT NULL,
+    boundary_status TEXT NOT NULL,
+    tax_status TEXT NOT NULL,
+    latitude REAL,
+    longitude REAL,
+    remarks_bn TEXT NOT NULL,
+    signed_by_user_id INTEGER NOT NULL REFERENCES users(id),
+    signed_by_username TEXT NOT NULL,
+    signed_at TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'SUBMITTED',
+    created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_field_reports_plot ON field_reports (plot_id);
+CREATE INDEX IF NOT EXISTS idx_field_reports_signed_by ON field_reports (signed_by_user_id);
+
+CREATE TABLE IF NOT EXISTS sla_dispatches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    dispatch_code TEXT UNIQUE NOT NULL,
+    case_reference TEXT,
+    target_role TEXT NOT NULL,
+    target_user_id INTEGER REFERENCES users(id),
+    target_username TEXT,
+    priority TEXT NOT NULL DEFAULT 'NORMAL',
+    due_at TEXT,
+    notes_bn TEXT NOT NULL,
+    issued_by_user_id INTEGER NOT NULL REFERENCES users(id),
+    issued_by_username TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'SENT',
+    created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sla_dispatches_target ON sla_dispatches (target_role, status);
+CREATE INDEX IF NOT EXISTS idx_sla_dispatches_issuer ON sla_dispatches (issued_by_user_id);
+
 CREATE UNIQUE INDEX IF NOT EXISTS idx_active_mortgage_per_plot ON mortgages_liens (plot_id) WHERE status = 'ACTIVE';
 SQL;
 
@@ -812,6 +853,8 @@ SQL,
     public function down(): void
     {
         $tables = [
+            'sla_dispatches',
+            'field_reports',
             'appeals',
             'onboarding_items',
             'onboarding_batches',

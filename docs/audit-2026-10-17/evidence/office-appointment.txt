@@ -1,0 +1,204 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/offices".
+0 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/offices
+	1 container root
+		2 container
+			3 button ভূ BhumiShield National Land & Deed Trust Platform
+				4 text ভূ
+				5 text BhumiShield
+				6 text National Land & Deed Trust Platform
+			7 container প্রধান মেনু
+				8 button All Services
+				9 button Land Sale
+				10 button Cadastral Map
+				11 button Check Land
+				12 button Verify Deed
+				13 button Notices
+				14 button Blog
+				15 button Offices
+				16 button Citizen Vault
+				17 button Help
+			18 button Switch Language
+			19 button High Contrast
+				20 image
+			21 button Sign In
+				22 image
+				23 text Sign In
+		24 container
+			153 image
+			154 text Office Directory & Service Points
+			155 heading Nearby Land, Sub-Registry & Union Service Points, Value: 1
+				156 text Nearby Land, Sub-Registry & Union Service Points
+			157 text Official directory of sub-registry offices, upazila land offices, union digital service points, and authorized bank branches with contact details and jurisdictional mouzas.
+			158 image
+			159 text field (settable)
+			160 pop up button (collapsed, settable) Value: All Office Types, Secondary Actions: Expand
+				161 menu
+					162 (selected) All Office Types
+					163 Sub-Registry
+					164 Upazila Land Office
+					165 UDC Service Point
+					166 Bank Branch
+			167 pop up button (collapsed, settable) Value: All Upazilas, Secondary Actions: Expand
+				168 menu
+					169 (selected) All Upazilas
+					170 Savar
+					171 Gazipur Sadar
+			172 text Sub-Registry Office
+			173 heading Sub-Registry Office, Savar, Value: 3
+				174 text Sub-Registry Office, Savar
+			175 text OFF-REG-SAVAR
+			176 image
+			177 text Savar Bazar Road, Savar, Dhaka
+			178 image
+			179 text Contact: ০২-৭৭৯০২২১
+			180 image
+			181 text Sun - Thu, 9:00 AM - 4:00 PM Jurisdiction Mouzas: 12
+			182 button View on Map
+				183 image
+				184 text View on Map
+			185 button Book Appointment
+				186 image
+				187 text Book Appointment
+			188 text Sub-Registry Office
+			189 heading Sub-Registry Office, Gazipur Sadar, Value: 3
+				190 text Sub-Registry Office, Gazipur Sadar
+			191 text OFF-REG-GAZIPUR
+			192 image
+			193 text Rajbari Road, Gazipur
+			194 image
+			195 text Contact: ০২-৯২৬১২২২
+			196 image
+			197 text Sun - Thu, 9:00 AM - 4:00 PM Jurisdiction Mouzas: 08
+			198 button View on Map
+				199 image
+				200 text View on Map
+			201 button Book Appointment
+				202 image
+				203 text Book Appointment
+			204 text Upazila Land Office
+			205 heading Upazila Land Office, Savar, Value: 3
+				206 text Upazila Land Office, Savar
+			207 text OFF-ACL-SAVAR
+			208 image
+			209 text Upazila Parishad Complex, Savar
+			210 image
+			211 text Contact: ০২-৭৭৯০২৩৪
+			212 image
+			213 text Sun - Thu, 9:00 AM - 4:00 PM Jurisdiction Mouzas: 12
+			214 button View on Map
+				215 image
+				216 text View on Map
+			217 button Book Appointment
+				218 image
+				219 text Book Appointment
+			220 text UDC Service Point
+			221 heading Birulia Union Digital Center (UDC), Value: 3
+				222 text Birulia Union Digital Center (UDC)
+			223 text OFF-SPO-BIRULIA
+			224 image
+			225 text Union Parishad Bhaban, Birulia
+			226 image
+			227 text Contact: ০১৭০০-০০১০৩৩
+			228 image
+			229 text Sun - Thu, 9:00 AM - 4:00 PM Jurisdiction Mouzas: 12
+			230 button View on Map
+				231 image
+				232 text View on Map
+			233 button Book Appointment
+				234 image
+				235 text Book Appointment
+			236 text Bank Branch
+			237 heading Sonali Bank PLC, Savar Branch, Value: 3
+				238 text Sonali Bank PLC, Savar Branch
+			239 text OFF-BNK-SONALI
+			240 image
+			241 text Bus Stand, Savar
+			242 image
+			243 text Contact: ০২-৭৭৯০১১২
+			244 image
+			245 text Sun - Thu, 9:00 AM - 4:00 PM Jurisdiction Mouzas: 12
+			246 button View on Map
+				247 image
+				248 text View on Map
+			249 button Book Appointment
+				250 image
+				251 text Book Appointment
+			252 text Government Office
+			253 heading Zonal Settlement Office, Dhaka, Value: 3
+				254 text Zonal Settlement Office, Dhaka
+			255 text OFF-SET-DHAKA
+			256 image
+			257 text Bhumi Record Bhaban, Tejgaon, Dhaka
+			258 image
+			259 text Contact: ০২-৮১৭০১৯২
+			260 image
+			261 text Sun - Thu, 9:00 AM - 4:00 PM Jurisdiction Mouzas: 12 08 15
+			262 button View on Map
+				263 image
+				264 text View on Map
+			265 button Book Appointment
+				266 image
+				267 text Book Appointment
+			268 text Government Office
+			269 heading Central BhumiShield Governance Cell, Value: 3
+				270 text Central BhumiShield Governance Cell
+			271 text OFF-ADM-CENTRAL
+			272 image
+			273 text Bhumi Bhaban, 7th Floor, Dhaka
+			274 image
+			275 text Contact: ১৬১২২
+			276 image
+			277 text Sun - Thu, 9:00 AM - 4:00 PM Jurisdiction Mouzas: all
+			278 button View on Map
+				279 image
+				280 text View on Map
+			281 button Book Appointment
+				282 image
+				283 text Book Appointment
+			284 image
+			285 heading Schedule In-Person Appointment, Value: 3
+				286 text Schedule In-Person Appointment
+			287 button
+				288 image
+			289 container
+				290 text Office:
+				291 text Sub-Registry Office, Savar Savar Bazar Road, Savar, Dhaka Your Full Name  *
+				292 text field (settable)
+				293 text Mobile Number  *
+				294 text field (settable)
+				295 text Select Preferred Date  *
+				296 date field (settable)
+					297 container
+						298 stepper
+						299 stepper
+						300 stepper
+					301 pop up button Show date picker
+				302 button Cancel
+				303 button Confirm Booking
+		128 container
+			129 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			130 content list
+				131 button Check Before Buy
+				132 button Land Sale Marketplace
+				133 button Cadastral Mouza Map
+				134 button Verify Deed QR Code
+				135 button Official Noticeboard
+				136 button Land Literacy Blog
+				137 button Offices & Service Points
+				138 button Citizen Sale Lock Vault
+			139 text Workspaces
+			140 content list
+				141 button Sub-Registrar Panel
+				142 button AC Land Tribunal
+				143 button Bank Lien & NOC
+				144 button National Ledger & Audit
+			145 text Support & Helpline
+			146 content list
+				147 text Land Service Call Center: 16122
+				148 text Ministry of Land (Official service hours)
+				149 text Check official service hours
+				150 button Frequently Asked Questions
+				151 button Bangladeshi Land Glossary
+			152 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 185 button Book Appointment

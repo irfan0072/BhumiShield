@@ -1,0 +1,218 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/home".
+0 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/home
+	1 container root
+		2 container
+			3 button ভূ BhumiShield National Land & Deed Trust Platform
+				4 text ভূ
+				5 text BhumiShield
+				6 text National Land & Deed Trust Platform
+			7 container প্রধান মেনু
+				8 button All Services
+				9 button Land Sale
+				10 button Cadastral Map
+				11 button Check Land
+				12 button Verify Deed
+				13 button Notices
+				14 button Blog
+				15 button Offices
+				16 button Citizen Vault
+				17 button Help
+			18 button Switch Language
+			19 button High Contrast
+				20 image
+			101 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				102 text ম
+				103 text মো. রফিকুল ইসলাম (নাগরিক)
+				104 text Citizen Land Portal
+				105 image
+		24 container
+			106 text ম
+			107 heading Md. Rafiqul Islam, Value: 3
+				108 text Md. Rafiqul Islam
+			109 text NID:  ****1001
+			110 button Collapse Menu
+				111 image
+			112 container
+				113 text CITIZEN SERVICES
+				114 button Overview & KPIs
+					115 image
+					116 text Overview & KPIs
+				117 button My Land & Plots 3, Help: My Land & Plots
+					118 image
+					119 text My Land & Plots
+					120 text 3
+				121 button Document Vault (L0-L3) ✔ 6, Help: Document Vault (L0-L3)
+					122 image
+					123 text Document Vault (L0-L3)
+					124 text ✔ 6
+				125 button My Registered Deeds 6, Help: My Registered Deeds
+					126 image
+					127 text My Registered Deeds
+					128 text 6
+				129 button 13-Step Transfer Pipeline 4, Help: 13-Step Transfer Pipeline
+					130 image
+					131 text 13-Step Transfer Pipeline
+					132 text 4
+				133 button Disputes & Objections
+					134 image
+					135 text Disputes & Objections
+				136 button Support Tickets & Helpdesk 2, Help: Support Tickets & Helpdesk
+					137 image
+					138 text Support Tickets & Helpdesk
+					139 text 2
+				140 button Profile & Demo Switcher
+					141 image
+					142 text Profile & Demo Switcher
+			143 image
+			144 text Land Hotline: 16122
+			145 text Call toll-free for land and khatian inquiries.
+			146 button Check Plot
+			147 button QR Deed
+			148 container
+				149 text Citizen Portal / ১৩-ধাপের হস্তান্তর ট্র্যাকার
+				150 heading 13-Step Transfer Pipeline, Value: 2
+					151 text 13-Step Transfer Pipeline
+				152 text Demo Profile:
+				153 button মোঃ রফিকুল ইসলাম
+				154 button রাবেয়া খাতুন (লক)
+				155 button আব্দুল করিম (বন্ধক)
+				156 button Refresh Data
+					157 image
+				158 button Check Before Buying
+					159 image
+					160 text Check Before Buying
+			219 image
+			220 text New transfer case initialized at Step 1!
+			221 button
+				222 image
+			223 heading Land Transfer & Ownership Mutation Tracker, Value: 3
+				224 text Land Transfer & Ownership Mutation Tracker
+			225 text 5 Citizen Stages & 13 State Machine Security Steps
+			226 button + New Transfer Intent
+				227 image
+				228 text + New Transfer Intent
+			304 text TR-2026-000104
+			305 text DRAFT SALE
+			306 container
+				307 text বিরুলিয়া  মৌজা  • দাগ নং:  101  •  5  শতক • ৳  850000
+			308 button Advance to Step 2
+				309 text Advance to Step 2
+				310 image
+			311 text STAGE  1
+			312 text 1. Start & Draft
+			313 text STAGE  2
+			314 text 2. Verify & Fees
+			315 text STAGE  3
+			316 text 3. Registry & Biometrics
+			317 text STAGE  4
+			318 text 4. Mutation Review
+			319 text STAGE  5
+			320 text 5. Done & Sealed
+			321 text Current Step:
+			322 container
+				323 text Step 1 of 13: Intent & Land Selection
+			324 container
+				325 image
+				326 text Biometrics: Scheduled Step 8
+			229 text TR-2026-000103
+			230 text DRAFT SALE
+			231 container
+				232 text বিরুলিয়া  মৌজা  • দাগ নং:  101  •  10  শতক • ৳  1500000
+			233 button Advance to Step 2
+				234 text Advance to Step 2
+				235 image
+			236 text STAGE  1
+			237 text 1. Start & Draft
+			238 text STAGE  2
+			239 text 2. Verify & Fees
+			240 text STAGE  3
+			241 text 3. Registry & Biometrics
+			242 text STAGE  4
+			243 text 4. Mutation Review
+			244 text STAGE  5
+			245 text 5. Done & Sealed
+			246 text Current Step:
+			247 container
+				248 text Step 1 of 13: Intent & Land Selection
+			249 container
+				250 image
+				251 text Biometrics: Scheduled Step 8
+			252 text TR-2026-000102
+			253 text REGISTERED SALE
+			254 container
+				255 text বিরুলিয়া  মৌজা  • দাগ নং:  102  •  15  শতক • ৳  2400000
+			256 button Advance to Step 9
+				257 text Advance to Step 9
+				258 image
+			259 image
+			260 text STAGE  1
+			261 text 1. Start & Draft
+			262 image
+			263 text STAGE  2
+			264 text 2. Verify & Fees
+			265 text STAGE  3
+			266 text 3. Registry & Biometrics
+			267 text STAGE  4
+			268 text 4. Mutation Review
+			269 text STAGE  5
+			270 text 5. Done & Sealed
+			271 text Current Step:
+			272 container
+				273 text Step 8 of 13: Counter Biometric & Liveness
+			274 container
+				275 image
+				276 text Biometrics: Verified
+			277 text TR-2026-000101
+			278 text APPROVED SALE
+			279 container
+				280 text বিরুলিয়া  মৌজা  • দাগ নং:  101  •  20  শতক • ৳  3000000
+			281 button Advance to Step 13
+				282 text Advance to Step 13
+				283 image
+			284 image
+			285 text STAGE  1
+			286 text 1. Start & Draft
+			287 image
+			288 text STAGE  2
+			289 text 2. Verify & Fees
+			290 image
+			291 text STAGE  3
+			292 text 3. Registry & Biometrics
+			293 image
+			294 text STAGE  4
+			295 text 4. Mutation Review
+			296 text STAGE  5
+			297 text 5. Done & Sealed
+			298 text Current Step:
+			299 container
+				300 text Step 12 of 13: AC Land Mutation Approval
+			301 container
+				302 image
+				303 text Biometrics: Verified
+		76 container
+			77 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			78 content list
+				79 button Check Before Buy
+				80 button Land Sale Marketplace
+				81 button Cadastral Mouza Map
+				82 button Verify Deed QR Code
+				83 button Official Noticeboard
+				84 button Land Literacy Blog
+				85 button Offices & Service Points
+				86 button Citizen Sale Lock Vault
+			87 text Workspaces
+			88 content list
+				89 button Sub-Registrar Panel
+				90 button AC Land Tribunal
+				91 button Bank Lien & NOC
+				92 button National Ledger & Audit
+			93 text Support & Helpline
+			94 content list
+				95 text Land Service Call Center: 16122
+				96 text Ministry of Land (Official service hours)
+				97 text Check official service hours
+				98 button Frequently Asked Questions
+				99 button Bangladeshi Land Glossary
+			100 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 0 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/home

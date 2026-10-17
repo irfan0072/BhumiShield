@@ -1,0 +1,104 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/help".
+0 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/help
+	1 container root
+		2 container
+			3 button ভূ BhumiShield National Land & Deed Trust Platform
+				4 text ভূ
+				5 text BhumiShield
+				6 text National Land & Deed Trust Platform
+			7 container প্রধান মেনু
+				8 button All Services
+				9 button Land Sale
+				10 button Cadastral Map
+				11 button Check Land
+				12 button Verify Deed
+				13 button Notices
+				14 button Blog
+				15 button Offices
+				16 button Citizen Vault
+				17 button Help
+			18 button Switch Language
+			19 button High Contrast
+				20 image
+			21 button Sign In
+				22 image
+				23 text Sign In
+		24 container
+			25 heading Help Center, FAQs & Bangladeshi Land Registry Glossary, Value: 1
+				26 image
+				27 text Help Center, FAQs & Bangladeshi Land Registry Glossary
+			28 text LandTech Guide v2.0 “Registration and mutation don’t talk to each other. We built the layer that checks every deed before it is registered, and proves afterwards that it was never tampered with.”
+			29 image
+			30 text ✔ Safe & Verified (Green) Seller is on the latest BS khatian, plot is unlocked, area is within share, and no active mortgage or dispute exists.
+			31 image
+			32 text ⚠ Needs Review (Amber) RS-to-BS khatian chain discrepancy, unresolved inheritance shares, or open citizen dispute under hearing.
+			33 image
+			34 text ✖ High Risk / Blocked (Red) Owner sale lock active, seller is not the owner, plot already sold/mortgaged, or cryptographic hash mismatch.
+			35 image
+			36 heading Official Land Service Fees & Ministry Circulars, Value: 2
+				37 text Official Land Service Fees & Ministry Circulars
+			38 text Official fees pursuant to Ministry of Land Circular dated 17 February 2026 (Memo: 31.00.0000.042.68.012.22.52) & statutory rules. Circular: 17 Feb 2026 Loading official fees registry...
+			39 image
+			40 text Important Notice on Land Fees: BhumiShield never collects official fees or government payments. All application fees, court fees, and DCR charges must be paid directly on official government portals (e.g. eporcha.gov.bd, mutation.land.gov.bd). Deed registration duties are assessed authoritatively by the Sub-Registry Office.
+			41 image
+			42 heading Frequently Asked Questions & Answers, Value: 2
+				43 text Frequently Asked Questions & Answers
+			44 button 1. How does BhumiShield prevent land registry fraud in Bangladesh?
+				45 text 1. How does BhumiShield prevent land registry fraud in Bangladesh?
+				46 image
+			47 text Historically, the Sub-Registry (Law Ministry) and AC Land (Land Ministry) operate in separate silos. Fraudsters exploit this gap to double-sell land or forge deeds. BhumiShield bridges them with an automated 11-rule gatekeeper and Ed25519 cryptographic hash ledger before registration, recording tamper-evident audit proofs.
+			48 button 2. What is the "Check Before You Buy" feature?
+				49 text 2. What is the "Check Before You Buy" feature?
+				50 image
+			51 button 3. What is the Citizen Sale Lock and how does it work?
+				52 text 3. What is the Citizen Sale Lock and how does it work?
+				53 image
+			54 button 4. How does the CS, SA, RS, and BS Khatian lineage chain work across regions?
+				55 text 4. How does the CS, SA, RS, and BS Khatian lineage chain work across regions?
+				56 image
+			57 button 5. How does e-Mutation happen automatically after deed registration?
+				58 text 5. How does e-Mutation happen automatically after deed registration?
+				59 image
+			60 button 6. How do banks and financial institutions prevent double mortgaging?
+				61 text 6. How do banks and financial institutions prevent double mortgaging?
+				62 image
+			63 image
+			64 heading Bangladeshi Land & Deed Registry Glossary, Value: 2
+				65 text Bangladeshi Land & Deed Registry Glossary
+			66 text সিএস জরিপ (CS Survey) Cadastral Survey (1888–1940) First scientific survey and mapping under British India; primary historical baseline for land title. এসএ খতিয়ান (SA Survey) State Acquisition (1956–1963) Record-of-rights created following abolition of the Zamindari system under the 1950 Tenancy Act. আরএস জরিপ (RS Survey) Revisional Survey (1965–1990s) District-wise revisional survey correcting past anomalies; remains the latest final record in multiple regions. বিএস / সিটি / বিডিএস জরিপ (BS & BDS) Bangladesh Survey / BDS Modern Bangladesh Survey (BS), Dhaka City Survey, and ongoing Bangladesh Digital Survey (BDS). Once finalized, it governs. সাফ কবলা দলিল (Saf Kabala) Absolute Sale Deed Deed effecting outright and irrevocable transfer of absolute land title for consideration. হেবা দলিল (Hiba) Gift / Transfer for Affection Unconditional gift transfer of land between close blood relatives under Islamic jurisprudence. নামজারি ও জমাভাগ (e-Mutation) e-Mutation & Revenue Splitting Post-registration process to create a new mutated khatian in the buyer’s name and assess rent. ডিজিটাল লিয়েন (Mortgage Lien) Bank Collateral Lien Collateral lien registered on a plot to secure commercial bank mortgage financing.
+			67 image
+			68 text Government Land Call Center & Grievance Cell For any land services or grievances, call Ministry of Land Call Center 16122 during official service hours (standard telecom charges apply). LAND HELPLINE ১৬১২২
+			69 button Go to Check-Before-You-Buy Wizard
+				70 image
+				71 text Go to Check-Before-You-Buy Wizard
+			72 button Verify Deed QR & Hash Chain
+				73 image
+				74 text Verify Deed QR & Hash Chain
+			75 button Open RBAC Matrix & 8 Demo Scenarios
+		76 container
+			77 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			78 content list
+				79 button Check Before Buy
+				80 button Land Sale Marketplace
+				81 button Cadastral Mouza Map
+				82 button Verify Deed QR Code
+				83 button Official Noticeboard
+				84 button Land Literacy Blog
+				85 button Offices & Service Points
+				86 button Citizen Sale Lock Vault
+			87 text Workspaces
+			88 content list
+				89 button Sub-Registrar Panel
+				90 button AC Land Tribunal
+				91 button Bank Lien & NOC
+				92 button National Ledger & Audit
+			93 text Support & Helpline
+			94 content list
+				95 text Land Service Call Center: 16122
+				96 text Ministry of Land (Official service hours)
+				97 text Check official service hours
+				98 button Frequently Asked Questions
+				99 button Bangladeshi Land Glossary
+			100 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 17 button Help

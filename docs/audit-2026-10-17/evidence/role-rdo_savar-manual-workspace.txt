@@ -1,0 +1,145 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/registrar".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/registrar
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা BCC LandTech
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text BCC LandTech
+			8 button Toggle Sidebar
+				9 image
+			10 text Registry Data Entry Officer Sub-Registry Record Staging Cell
+			11 container Sidebar Navigation
+				12 text MENU
+				13 button Draft Deed Entry (Maker)
+					14 image
+					15 text Draft Deed Entry (Maker)
+				16 button Stamp Duty & Fees
+					17 image
+					18 text Stamp Duty & Fees
+				19 button Khatian & Dag Lookup
+					20 image
+					21 text Khatian & Dag Lookup
+				22 button Submitted Drafts Queue
+					23 image
+					24 text Submitted Drafts Queue
+				25 button Deed Ledger Verifier
+					26 image
+					27 text Deed Ledger Verifier
+			28 button Public Portal
+				29 image
+				30 text Public Portal
+			31 button Sign Out
+				32 image
+				33 text Sign Out
+		34 container
+			35 button Home
+				36 image
+				37 text Home
+			38 text / Registry Data Entry Officer
+			39 text field (settable)
+			40 image
+			41 button বাং
+			42 button Contrast
+				43 image
+			44 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				45 text ম
+				46 text মো. কামরুল হাসান (রেজিস্ট্রি ডাটা অফিসার - মেকার)
+				47 text Registry Data Entry Officer
+				48 image
+		49 container
+			50 heading Registry Data Entry Cell (Maker Console), Value: 1
+				51 text Registry Data Entry Cell (Maker Console)
+			52 text Draft deed data entry, party NID validation, and treasury stamp duty calculation.
+			53 text TOTAL REGISTERED DEEDS 0
+			54 button View Deed Registry →
+			55 image
+			56 text HELD DEEDS QUEUE 0
+			57 button Review Held Hearings →
+			58 image
+			59 text REVENUE & STAMP DUTY ৳ 12.0  Lac
+			60 button Fee Calculator →
+			61 image
+			62 text CRYPTOGRAPHIC LEDGER 100 %
+			63 button Verify Ledger →
+			64 image
+			65 heading Pre-Registration Gatekeeper, Deed Control & Verification, Value: 2
+				66 image
+				67 text Pre-Registration Gatekeeper, Deed Control & Verification
+			68 text Run pre-registration fraud checks, manage held hearings, inspect khatian lineage and ledger proofs:
+			69 button Pre-Reg Gatekeeper
+				70 image
+				71 text Pre-Reg Gatekeeper
+			72 button Held Queue (0)
+				73 image
+				74 text Held Queue
+				75 text  (
+				76 text 0
+				77 text )
+			78 button Deed Registry (0)
+				79 image
+				80 text Deed Registry
+				81 text  (
+				82 text 0
+				83 text )
+			84 button Khatian Lineage
+				85 image
+				86 text Khatian Lineage
+			87 button Deed Verifier
+				88 image
+				89 text Deed Verifier
+			90 button Stamp & Challan
+				91 image
+				92 text Stamp & Challan
+			93 text Plot / Dag No:
+			94 pop up button (collapsed, settable) Secondary Actions: Expand
+			95 text Seller (with NID):
+			96 pop up button (collapsed, settable) Secondary Actions: Expand
+			97 text Buyer (with NID):
+			98 pop up button (collapsed, settable) Secondary Actions: Expand
+			99 text Transfer Area (Decimal):
+			100 stepper (settable, integer) 10
+			101 text Share Fraction:
+			102 text field (settable) 1/2
+			103 text Declared Value (BDT):
+			104 stepper (settable, integer) 1500000
+			105 text Selected Plot: ধানমন্ডি  •  Dag 101 Seller: বিক্রেতা
+			106 image
+			107 text Buyer: ক্রেতা
+			108 heading AUTOMATED 11-RULE GATEKEEPER ENGINE:, Value: 4
+				109 image
+				110 text AUTOMATED 11-RULE GATEKEEPER ENGINE:
+			111 text 1 Seller NID & Heir Identity Check 2 CS -> SA -> RS -> BS Lineage 3 Seller Share Balance Calculation 4 Mortgage Lien & Clearance Check 5 Civil Court Injunction Check 6 Citizen Biometric Sale Lock Status 7 Vested / Khas Property Filter 8 Survey Field Area Discrepancy Check 9 Duplicate Same-Day Filing Prevention 10 Ed25519 Sub-Registrar Signing Prep 11 Treasury Challan & Tax Compliance
+			112 button 1. Run Pre-Registration Risk & Fee Check
+				113 image
+				114 text 1. Run Pre-Registration Risk & Fee Check
+			115 button 2. Register Deed in Hash Ledger & Sign
+				116 image
+				117 text 2. Register Deed in Hash Ledger & Sign
+		118 container
+			119 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			120 content list
+				121 button Check Before Buy
+				122 button Land Sale Marketplace
+				123 button Cadastral Mouza Map
+				124 button Verify Deed QR Code
+				125 button Official Noticeboard
+				126 button Land Literacy Blog
+				127 button Offices & Service Points
+				128 button Citizen Sale Lock Vault
+			129 text Workspaces
+			130 content list
+				131 button Sub-Registrar Panel
+				132 button AC Land Tribunal
+				133 button Bank Lien & NOC
+				134 button National Ledger & Audit
+			135 text Support & Helpline
+			136 content list
+				137 text Land Service Call Center: 16122
+				138 text Ministry of Land (Official service hours)
+				139 text Check official service hours
+				140 button Frequently Asked Questions
+				141 button Bangladeshi Land Glossary
+			142 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/registrar

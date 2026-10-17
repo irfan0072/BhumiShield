@@ -1,0 +1,202 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/admin".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/admin
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা BCC LandTech
+				101 text ভূ
+				102 text ভূমি সুরক্ষা
+				103 text BCC LandTech
+			5 button Toggle Sidebar
+				6 image
+			104 text National Admin & Governance Panel Central Cryptographic Ledger Governance & Security
+			105 container Sidebar Navigation
+				106 text MENU
+				107 button Cryptographic Ledger
+					108 image
+					109 text Cryptographic Ledger
+				110 button Users & Access Control
+					111 image
+					112 text Users & Access Control
+				113 button Security Audit Trail
+					114 image
+					115 text Security Audit Trail
+				116 button Fraud Engine Policy
+					117 image
+					118 text Fraud Engine Policy
+				119 button RBAC Matrix
+					120 image
+					121 text RBAC Matrix
+				122 button Onboarding & Appeals
+					123 image
+					124 text Onboarding & Appeals
+				125 button Service & Fees
+					126 image
+					127 text Service & Fees
+				128 button Direct Role Oversight
+					129 image
+					130 text Direct Role Oversight
+				131 image
+				132 text SUPER ADMIN DIRECT ACCESS
+				133 button Citizen Vault, Help: Direct Login Without Password
+					134 text Citizen Vault
+					135 image
+				136 button Sub-Registrar, Help: Direct Login Without Password
+					137 text Sub-Registrar
+					138 image
+				139 button AC Land, Help: Direct Login Without Password
+					140 text AC Land
+					141 image
+				142 button Bank Officer, Help: Direct Login Without Password
+					143 text Bank Officer
+					144 image
+				145 button Super Admin, Help: Direct Login Without Password
+					146 text Super Admin
+					147 image
+			34 button Public Portal
+				35 image
+				148 text Public Portal
+			36 button Sign Out
+				37 image
+				149 text Sign Out
+		38 container
+			39 button Home
+				40 image
+				150 text Home
+			151 text / National Admin & Governance Panel
+			41 text field (settable)
+			42 image
+			43 button বাং
+			44 button Contrast
+				45 image
+			46 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				152 text স
+				153 text সিস্টেম অ্যাডমিন (ভূমি সুরক্ষা অ্যাডমিন)
+				154 text National Admin & Governance Panel
+				47 image
+		48 container
+			49 heading Central Governance & Admin Console, Value: 1
+				155 text Central Governance & Admin Console
+			156 text RBAC, hash ledger lab, officers directory, and append-only audit trail.
+			157 text System Administrator LEDGER HASH INTEGRITY 97.5 %
+			50 button Inspect Hash Lab →
+			51 image
+			158 text REGISTERED OFFICERS 23
+			52 button View User Directory →
+			53 image
+			159 text SECURITY AUDIT EVENTS 5
+			54 button Review Audit Logs →
+			55 image
+			160 text ROLE OVERSIGHT ৫টি  Roles
+			56 button Direct Role Access →
+			57 image
+			58 heading Central Governance, RBAC Matrix, Officers Directory & Cryptographic Audit, Value: 2
+				161 text Central Governance, RBAC Matrix, Officers Directory & Cryptographic Audit
+			59 button Hash Ledger Lab
+				60 image
+				162 text Hash Ledger Lab
+			61 button Officers CRUD
+				62 image
+				163 text Officers CRUD
+			63 button Audit Trail
+				64 image
+				164 text Audit Trail
+			65 button Policy Settings
+				66 image
+				165 text Policy Settings
+			67 button RBAC Matrix
+				68 image
+				166 text RBAC Matrix
+			69 button Service & Fees
+				70 image
+				167 text Service & Fees
+			71 button Onboarding & Appeals
+				72 image
+				168 text Onboarding & Appeals
+			73 button Case Library & OCR
+				74 image
+				169 text Case Library & OCR
+			75 button Direct Role Access
+				76 image
+				170 text Direct Role Access
+			184 heading Pre-Registration Verification Case Library (8 Reference Scenarios), Value: 2
+				185 text Pre-Registration Verification Case Library (8 Reference Scenarios)
+			186 text # 1 1. Clean Legitimate Sale (All Checks Pass) SAFE Legitimate owner Md. Rafiqul Islam sells 10 decimals (out of 20 decimals owned on BS Khatian 4101, Dag 101, Birulia) to Mst. Rabeya Khatun. Full CS-SA-RS-BS chain intact and no liens.
+			187 button Inspect Case Report →
+			188 text # 2 2. Double Sale of the Same Plot to Two Buyers HIGH_RISK Owner Abdul Karim already sold all 15 decimals of Dag 102 to Md. Jahangir Alam via Deed DL-2026-1002 (mutation pending) and now attempts to sell 10 decimals of the same plot to a second buyer.
+			189 button Inspect Case Report →
+			190 text # 3 3. Seller Selling More Area Than Owned Share HIGH_RISK Dag 103 has 24 decimals total. Seller Md. Anwar Hossain owns a 1/2 share (12 decimals) on BS Khatian 4103, but attempts to sell 18 decimals.
+			191 button Inspect Case Report →
+			192 text # 4 4. Seller Is Not the Current Owner on Latest Khatian HIGH_RISK Fatema Begum is the sole recorded owner on latest BS Khatian 4104 for Dag 104, but non-owner Md. Saiful Islam attempts to sell 8 decimals.
+			193 button Inspect Case Report →
+			194 text # 5 5. Stored Deed Tampered After Registration (Hash & Signature Mismatch) HIGH_RISK Deed DL-2026-1005 (Dag 105) was originally signed for 10 decimals, then altered in storage to 25 decimals. Hash chain recomputation catches the tampering immediately.
+			195 button Inspect Case Report →
+			196 text # 6 6. Plot Already Mortgaged Offered as Collateral Again HIGH_RISK Dag 106 (30 decimals) has an active BDT 2,500,000 mortgage lien with Sonali Bank PLC, Savar Branch. Second mortgage or unencumbered transfer is blocked.
+			197 button Inspect Case Report →
+			198 text # 7 7. Khatian Survey Chain Break (RS -> BS Area Discrepancy) WARNING Dag 107 records 18 decimals across CS, SA, and RS surveys, but jumps to 26 decimals in BS Khatian 4107 without a supporting deed. Flagged for officer review.
+			199 button Inspect Case Report →
+			200 text # 8 8. Inheritance Case with Unresolved Heirs (Manual Review) WARNING Recorded BS owner Alhaj Nurul Haque (Dag 108) is marked deceased in the registry without completed succession mutation for all legal heirs.
+			201 button Inspect Case Report →
+			202 image
+			203 heading Legacy Khatian Digitization Assist (Bangla OCR + Officer Review), Value: 2
+				204 text Legacy Khatian Digitization Assist (Bangla OCR + Officer Review)
+			205 text DEMO OCR ASSIST COPY:
+			206 text This is a demo digital draft from simulated historical khatian scans. All fields require human officer verification before legal acceptance. DAG_NO
+			207 text field (settable) 101
+			208 text Confidence:  99 % DAG_NO_BN
+			209 text field (settable) ১০১
+			210 text Confidence:  99 % SURVEY_TYPE
+			211 text field (settable) BS
+			212 text Confidence:  98 % KHATIAN_NO
+			213 text field (settable) 4101
+			214 text Confidence:  97 % KHATIAN_NO_BN
+			215 text field (settable) ৪১০১
+			216 text Confidence:  97 % MOUZA_BN
+			217 text field (settable) বিরুলিয়া
+			218 text Confidence:  96 % MOUZA_EN
+			219 text field (settable) Birulia
+			220 text Confidence:  95 % JL_NO
+			221 text field (settable) 12
+			222 text Confidence:  95 % UPAZILA_BN
+			223 text field (settable) সাভার
+			224 text Confidence:  97 % DISTRICT_BN
+			225 text field (settable) ঢাকা
+			226 text Confidence:  98 % OWNER_NAME_BN
+			227 text field (settable) মো. রফিকুল ইসলাম
+			228 text Confidence:  94 % FATHER_NAME_BN
+			229 text field (settable) মৃত হাজী আবদুল জব্বার
+			230 text Confidence:  92 % SHARE_FRACTION
+			231 text field (settable) 1/1
+			232 text Confidence:  95 % LAND_TYPE_BN
+			233 text field (settable) ভিটা (আবাসিক)
+			234 text Confidence:  93 % AREA_DECIMAL
+			235 text field (settable) 20.00
+			236 text Confidence:  96 % MATCHED_PLOT_ID
+			237 text field (settable) 1
+			238 text Confidence:  99 %
+		83 container
+			177 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			84 content list
+				85 button Check Before Buy
+				86 button Land Sale Marketplace
+				87 button Cadastral Mouza Map
+				88 button Verify Deed QR Code
+				89 button Official Noticeboard
+				90 button Land Literacy Blog
+				91 button Offices & Service Points
+				92 button Citizen Sale Lock Vault
+			178 text Workspaces
+			93 content list
+				94 button Sub-Registrar Panel
+				95 button AC Land Tribunal
+				96 button Bank Lien & NOC
+				97 button National Ledger & Audit
+			179 text Support & Helpline
+			98 content list
+				180 text Land Service Call Center: 16122
+				181 text Ministry of Land (Official service hours)
+				182 text Check official service hours
+				99 button Frequently Asked Questions
+				100 button Bangladeshi Land Glossary
+			183 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 73 button Case Library & OCR

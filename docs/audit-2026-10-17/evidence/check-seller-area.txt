@@ -1,0 +1,267 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/check?dag=101".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/check?dag=101
+	2 container root
+		3 container
+			4 button ভূ BhumiShield National Land & Deed Trust Platform
+				5 text ভূ
+				6 text BhumiShield
+				7 text National Land & Deed Trust Platform
+			8 container প্রধান মেনু
+				9 button All Services
+				10 button Land Sale
+				11 button Cadastral Map
+				12 button Check Land
+				13 button Verify Deed
+				14 button Notices
+				15 button Blog
+				16 button Offices
+				17 button Citizen Vault
+				18 button Help
+			19 button Switch Language
+			20 button High Contrast
+				21 image
+			22 button Sign In
+				23 image
+				24 text Sign In
+		25 container
+			26 heading Check Before Buy, Value: 1
+				27 text Check Before Buy
+			28 text Select mouza, plot and seller to run cryptographic pre-purchase risk and khatian lineage checks.
+			29 image
+			30 text Live Ledger Verification
+			31 button (collapsed) Secondary Actions: Expand, Evaluator & Demo Scenarios (8 Reference Cases) 1-Click Auto Test Simulate double sale, tampered deed, mortgages, and lineage conflicts Expand
+				32 image
+				33 text Evaluator & Demo Scenarios (8 Reference Cases)
+				34 text 1-Click Auto Test
+				35 text Simulate double sale, tampered deed, mortgages, and lineage conflicts
+				36 text Expand
+				37 image
+			38 button STEP 1 Mouza & Plot
+				102 image
+				40 text STEP 1
+				41 text Mouza & Plot
+			42 button 2 STEP 2 Seller & Area
+				43 text 2
+				44 text STEP 2
+				45 text Seller & Area
+			46 button (disabled) 3 STEP 3 Lineage & Risk
+				47 text 3
+				48 text STEP 3
+				49 text Lineage & Risk
+			103 image
+			104 text Selected Land: Birulia  মৌজা, দাগ নং  101  •  20 Decimal  ( ভিটা (আবাসিক) )
+			105 button Change Plot
+			106 text ২.১
+			107 heading Select Seller (with Verified NID), Value: 3
+				108 text Select Seller (with Verified NID)
+			109 text Select the person proposing to sell the land to verify their ownership records:
+			110 text field (settable)
+			111 image
+			112 button ম Md. Rafiqul Islam Owner NID: 9900****01
+				113 text ম
+				114 text Md. Rafiqul Islam
+				115 text Owner
+				116 container
+					117 text NID:  9900****01
+				118 image
+			119 button ম Mst. Rabeya Khatun NID: 9900****02
+				120 text ম
+				121 text Mst. Rabeya Khatun
+				122 container
+					123 text NID:  9900****02
+			124 button আ Abdul Karim NID: 9900****03
+				125 text আ
+				126 text Abdul Karim
+				127 container
+					128 text NID:  9900****03
+			129 button ম Md. Jahangir Alam NID: 9900****04
+				130 text ম
+				131 text Md. Jahangir Alam
+				132 container
+					133 text NID:  9900****04
+			134 button ম Md. Kamrul Hasan NID: 9900****05
+				135 text ম
+				136 text Md. Kamrul Hasan
+				137 container
+					138 text NID:  9900****05
+			139 button ম Md. Anwar Hossain NID: 9900****06
+				140 text ম
+				141 text Md. Anwar Hossain
+				142 container
+					143 text NID:  9900****06
+			144 button ম Md. Delwar Hossain NID: 9900****07
+				145 text ম
+				146 text Md. Delwar Hossain
+				147 container
+					148 text NID:  9900****07
+			149 button ফ Fatema Begum NID: 9900****08
+				150 text ফ
+				151 text Fatema Begum
+				152 container
+					153 text NID:  9900****08
+			154 button ম Md. Saiful Islam NID: 9900****09
+				155 text ম
+				156 text Md. Saiful Islam
+				157 container
+					158 text NID:  9900****09
+			159 button ম Md. Moniruzzaman NID: 9900****10
+				160 text ম
+				161 text Md. Moniruzzaman
+				162 container
+					163 text NID:  9900****10
+			164 button ম Md. Mahbubur Rahman NID: 9900****11
+				165 text ম
+				166 text Md. Mahbubur Rahman
+				167 container
+					168 text NID:  9900****11
+			169 button স Salma Akter NID: 9900****12
+				170 text স
+				171 text Salma Akter
+				172 container
+					173 text NID:  9900****12
+			174 button ম Md. Shahidul Islam NID: 9900****13
+				175 text ম
+				176 text Md. Shahidul Islam
+				177 container
+					178 text NID:  9900****13
+			179 button আ Alhaj Nurul Haque NID: 9900****14
+				180 text আ
+				181 text Alhaj Nurul Haque
+				182 container
+					183 text NID:  9900****14
+			184 button ম Md. Tariq Aziz NID: 9900****15
+				185 text ম
+				186 text Md. Tariq Aziz
+				187 container
+					188 text NID:  9900****15
+			189 button ন Nasrin Sultana NID: 9900****16
+				190 text ন
+				191 text Nasrin Sultana
+				192 container
+					193 text NID:  9900****16
+			194 button ম Md. Mizanur Rahman NID: 9900****17
+				195 text ম
+				196 text Md. Mizanur Rahman
+				197 container
+					198 text NID:  9900****17
+			199 button ম Md. Humayun Kabir NID: 9900****18
+				200 text ম
+				201 text Md. Humayun Kabir
+				202 container
+					203 text NID:  9900****18
+			204 button শ Shirin Akter NID: 9900****19
+				205 text শ
+				206 text Shirin Akter
+				207 container
+					208 text NID:  9900****19
+			209 button ম Md. Zakir Hossain NID: 9900****20
+				210 text ম
+				211 text Md. Zakir Hossain
+				212 container
+					213 text NID:  9900****20
+			214 button ম Md. Golam Rabbani NID: 9900****21
+				215 text ম
+				216 text Md. Golam Rabbani
+				217 container
+					218 text NID:  9900****21
+			219 button ম Mst. Rehana Parvin NID: 9900****22
+				220 text ম
+				221 text Mst. Rehana Parvin
+				222 container
+					223 text NID:  9900****22
+			224 button ম Md. Shafiqul Alam NID: 9900****23
+				225 text ম
+				226 text Md. Shafiqul Alam
+				227 container
+					228 text NID:  9900****23
+			229 button ম Md. Khorshed Alam NID: 9900****24
+				230 text ম
+				231 text Md. Khorshed Alam
+				232 container
+					233 text NID:  9900****24
+			234 text Or select from full person list:
+			235 pop up button (collapsed, settable) Value: Md. Rafiqul Islam — NID: 9900****01, Secondary Actions: Expand
+				236 menu
+					237 (selected) Md. Rafiqul Islam — NID: 9900****01
+					238 Mst. Rabeya Khatun — NID: 9900****02
+					239 Abdul Karim — NID: 9900****03
+					240 Md. Jahangir Alam — NID: 9900****04
+					241 Md. Kamrul Hasan — NID: 9900****05
+					242 Md. Anwar Hossain — NID: 9900****06
+					243 Md. Delwar Hossain — NID: 9900****07
+					244 Fatema Begum — NID: 9900****08
+					245 Md. Saiful Islam — NID: 9900****09
+					246 Md. Moniruzzaman — NID: 9900****10
+					247 Md. Mahbubur Rahman — NID: 9900****11
+					248 Salma Akter — NID: 9900****12
+					249 Md. Shahidul Islam — NID: 9900****13
+					250 Alhaj Nurul Haque — NID: 9900****14
+					251 Md. Tariq Aziz — NID: 9900****15
+					252 Nasrin Sultana — NID: 9900****16
+					253 Md. Mizanur Rahman — NID: 9900****17
+					254 Md. Humayun Kabir — NID: 9900****18
+					255 Shirin Akter — NID: 9900****19
+					256 Md. Zakir Hossain — NID: 9900****20
+					257 Md. Golam Rabbani — NID: 9900****21
+					258 Mst. Rehana Parvin — NID: 9900****22
+					259 Md. Shafiqul Alam — NID: 9900****23
+					260 Md. Khorshed Alam — NID: 9900****24
+					261 Md. Ashraful Islam — NID: 9900****25
+			262 text ২.২
+			263 heading Proposed Purchase Area (in Decimal), Value: 3
+				264 text Proposed Purchase Area (in Decimal)
+			265 text Specify how many decimals of land you intend to purchase: Purchase Area (Decimal):
+			266 stepper (settable, integer) 10
+			267 text Decimal Quick Presets:
+			268 button 5 Dec
+				269 text 5
+				270 text Dec
+			271 button 10 Dec
+				272 text 10
+				273 text Dec
+			274 button 15 Dec
+				275 text 15
+				276 text Dec
+			277 button All (20 Dec)
+				278 text All
+				279 text  (
+				280 text 20
+				281 text Dec
+				282 text )
+			283 text Total Plot Area: 20 Dec Requested: 10 Dec  ( 50 %) Remaining in Plot: 10.00 Decimal ~ 6.0 Katha ২.৩
+			284 heading Pre-Verification Summary, Value: 4
+				285 text Pre-Verification Summary
+			286 text Confirm parameters to run automated blockchain ledger audit: Selected Plot: Birulia  • দাগ # 101 20 Dec  ( ভিটা (আবাসিক) ) Proposed Seller: Md. Rafiqul Islam NID:  9900****01 Proposed Area: 10 Decimal ~ 6.0 Katha
+			287 button Back (Change Plot)
+				288 image
+				289 text Back (Change Plot)
+			290 button Run Pre-Purchase Verification ➔
+				291 image
+				292 text Run Pre-Purchase Verification ➔
+		77 container
+			78 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			79 content list
+				80 button Check Before Buy
+				81 button Land Sale Marketplace
+				82 button Cadastral Mouza Map
+				83 button Verify Deed QR Code
+				84 button Official Noticeboard
+				85 button Land Literacy Blog
+				86 button Offices & Service Points
+				87 button Citizen Sale Lock Vault
+			88 text Workspaces
+			89 content list
+				90 button Sub-Registrar Panel
+				91 button AC Land Tribunal
+				92 button Bank Lien & NOC
+				93 button National Ledger & Audit
+			94 text Support & Helpline
+			95 content list
+				96 text Land Service Call Center: 16122
+				97 text Ministry of Land (Official service hours)
+				98 text Check official service hours
+				99 button Frequently Asked Questions
+				100 button Bangladeshi Land Glossary
+			101 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/check?dag=101

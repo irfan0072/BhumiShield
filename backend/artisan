@@ -7,10 +7,17 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use Database\Migrations\CreateBhumishieldTables;
 use Database\Seeders\DatabaseSeeder;
+use Tests\Feature\AppointmentBookingTest;
+use Tests\Feature\CheckBeforeBuyRouteTest;
+use Tests\Feature\FieldOperationsAndSlaTest;
 use Tests\Feature\RoleAuditRegressionTest;
+use Tests\Feature\RoleRoutingAndSubtabTest;
 use Tests\Feature\RulesAndLedgerTest;
+use Tests\Feature\SecurityWorkflowRegressionTest;
+use Tests\Feature\SignedNoticePdfTest;
 use Tests\Feature\TierBPortalAndMarketplaceTest;
 use Tests\Feature\TierCOnboardingAndAppealsTest;
+use Tests\Feature\UiEnvelopeAdapterTest;
 
 $args = array_slice($argv, 1);
 $command = $args[0] ?? 'list';
@@ -122,7 +129,14 @@ switch ($command) {
         $c2 = RoleAuditRegressionTest::runAll();
         $c3 = TierBPortalAndMarketplaceTest::runAll();
         $c4 = TierCOnboardingAndAppealsTest::runAll();
-        exit(($c1 === 0 && $c2 === 0 && $c3 === 0 && $c4 === 0) ? 0 : 1);
+        $c5 = SecurityWorkflowRegressionTest::runAll();
+        $c6 = UiEnvelopeAdapterTest::runAll();
+        $c7 = CheckBeforeBuyRouteTest::runAll();
+        $c8 = AppointmentBookingTest::runAll();
+        $c9 = FieldOperationsAndSlaTest::runAll();
+        $c10 = RoleRoutingAndSubtabTest::runAll();
+        $c11 = SignedNoticePdfTest::runAll();
+        exit(($c1 === 0 && $c2 === 0 && $c3 === 0 && $c4 === 0 && $c5 === 0 && $c6 === 0 && $c7 === 0 && $c8 === 0 && $c9 === 0 && $c10 === 0 && $c11 === 0) ? 0 : 1);
 
     default:
         echo "BhumiShield Custom Artisan Console (PHP " . PHP_VERSION . ")\n";

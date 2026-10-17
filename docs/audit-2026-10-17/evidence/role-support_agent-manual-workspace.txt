@@ -1,0 +1,120 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/admin".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/admin
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা BCC LandTech
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text BCC LandTech
+			8 button Toggle Sidebar
+				9 image
+			10 text Support Agent (16122 Helpline) National Call Center & GRS Citizen Support
+			11 container Sidebar Navigation
+				12 text MENU
+				13 button Citizen Support Tickets
+					14 image
+					15 text Citizen Support Tickets
+				16 button Citizen Account Lookup
+					17 image
+					18 text Citizen Account Lookup
+				19 button Support Audit Log
+					20 image
+					21 text Support Audit Log
+			22 button Public Portal
+				23 image
+				24 text Public Portal
+			25 button Sign Out
+				26 image
+				27 text Sign Out
+		28 container
+			29 button Home
+				30 image
+				31 text Home
+			32 text / Support Agent (16122 Helpline)
+			33 text field (settable)
+			34 image
+			35 button বাং
+			36 button Contrast
+				37 image
+			38 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				39 text ম
+				40 text মোসা. ফারহানা আফরোজ (সাপোর্ট এজেন্ট - ১৬১২২)
+				41 text Support Agent (16122 Helpline)
+				42 image
+		43 container
+			44 heading Citizen Support & Helpline Desk (16122), Value: 1
+				45 text Citizen Support & Helpline Desk (16122)
+			46 text Citizen account search, ticket triage, and support audit logs.
+			47 text Support Agent (16122) Some records could not be loaded. Please retry.
+			48 button Retry
+			49 text LEDGER HASH INTEGRITY 97.5 %
+			50 button Inspect Hash Lab →
+			51 image
+			52 text REGISTERED OFFICERS 23
+			53 button View User Directory →
+			54 image
+			55 text SECURITY AUDIT EVENTS 0
+			56 button Review Audit Logs →
+			57 image
+			58 text ROLE OVERSIGHT ৫টি  Roles
+			59 button Direct Role Access →
+			60 image
+			61 heading Central Governance, RBAC Matrix, Officers Directory & Cryptographic Audit, Value: 2
+				62 text Central Governance, RBAC Matrix, Officers Directory & Cryptographic Audit
+			63 button Citizen & Officer Lookup
+				64 image
+				65 text Citizen & Officer Lookup
+			66 button Audit Trail
+				67 image
+				68 text Audit Trail
+			69 heading Super Admin Direct Role Inspection & Passwordless Access, Value: 2
+				70 image
+				71 text Super Admin Direct Role Inspection & Passwordless Access
+			72 text As Super Admin, directly inspect any government agency or citizen portal dashboard without passwords:
+			73 image
+			74 heading Sub-Registrar Console, Value: 3
+				75 text Sub-Registrar Console
+			76 text Directorate of Registration • Law Ministry Pre-reg gatekeeper, 11 fraud rules, held queue & registry audit.
+			77 button Direct Login →
+			78 image
+			79 heading AC Land Console, Value: 3
+				80 text AC Land Console
+			81 text Upazila Land Office • Ministry of Land e-Mutation approval, khatian reconciliation & dispute tribunal.
+			82 button Direct Login →
+			83 image
+			84 heading Bank Mortgage Console, Value: 3
+				85 text Bank Mortgage Console
+			86 text Scheduled Commercial Bank Collateral Collateral check, double-mortgage plot lock & digital NOC release.
+			87 button Direct Login →
+			88 image
+			89 heading Citizen Land Portal, Value: 3
+				90 text Citizen Land Portal
+			91 text Public Consumer Property Vault Property vault, biometric sale locks & objection filings.
+			92 button Direct Login →
+		93 container
+			94 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			95 content list
+				96 button Check Before Buy
+				97 button Land Sale Marketplace
+				98 button Cadastral Mouza Map
+				99 button Verify Deed QR Code
+				100 button Official Noticeboard
+				101 button Land Literacy Blog
+				102 button Offices & Service Points
+				103 button Citizen Sale Lock Vault
+			104 text Workspaces
+			105 content list
+				106 button Sub-Registrar Panel
+				107 button AC Land Tribunal
+				108 button Bank Lien & NOC
+				109 button National Ledger & Audit
+			110 text Support & Helpline
+			111 content list
+				112 text Land Service Call Center: 16122
+				113 text Ministry of Land (Official service hours)
+				114 text Check official service hours
+				115 button Frequently Asked Questions
+				116 button Bangladeshi Land Glossary
+			117 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/admin

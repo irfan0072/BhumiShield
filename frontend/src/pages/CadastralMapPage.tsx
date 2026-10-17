@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAppUI } from '../i18n';
 import { BhumiApi } from '../api/client';
 import {
@@ -657,6 +657,51 @@ const BIRULIA_PARCELS: CadastralParcel[] = [
   },
 ];
 
+// F15: Cadastral parcels for the four additional mouzas. These are
+// district-level representative tiles used by the cascading
+// division -> district -> upazila -> mouza selector.
+const DHAMRAI_PARCELS: CadastralParcel[] = [
+  { id: 101, dagNo: '201', dagNoBn: '২০১', khatianNo: '3204', khatianNoBn: '৩২০৪', mouzaBn: 'ধামরাই', jlNo: '২৫', sheetNo: '০৩', landClassBn: 'ভিটা (আবাসিক)', areaDecimal: 18.0, areaKatha: 10.9, zoningCategory: 'পরিকল্পিত আবাসন জোন', zoningColor: '#fde68a', ownerMasked: 'মোঃ আব্দুল হাকিম', nidMasked: '****৪৫১২', status: 'FOR_SALE', statusLabelBn: 'বিক্রির জন্য সক্রিয়', askingPriceBdt: 3800000, svgPath: 'M 40,40 L 220,50 L 240,210 L 50,190 Z', labelCoord: { x: 130, y: 125 } },
+  { id: 102, dagNo: '202', dagNoBn: '২০২', khatianNo: '3205', khatianNoBn: '৩২০৫', mouzaBn: 'ধামরাই', jlNo: '২৫', sheetNo: '০৩', landClassBn: 'নাল (কৃষি)', areaDecimal: 22.0, areaKatha: 13.3, zoningCategory: 'কৃষি সুরক্ষা জোন', zoningColor: '#a7f3d0', ownerMasked: 'মোছাম্মৎ সালমা বেগম', nidMasked: '****৭৮২৩', status: 'SAFE', statusLabelBn: 'নিষ্কণ্টক ও যাচাইকৃত', askingPriceBdt: 0, svgPath: 'M 220,50 L 420,35 L 440,200 L 240,210 Z', labelCoord: { x: 330, y: 120 } },
+  { id: 103, dagNo: '203', dagNoBn: '২০৩', khatianNo: '3206', khatianNoBn: '৩২০৬', mouzaBn: 'ধামরাই', jlNo: '২৫', sheetNo: '০৩', landClassBn: 'পুকুর (জলাশয়)', areaDecimal: 12.0, areaKatha: 7.3, zoningCategory: 'জলাশয় সুরক্ষা জোন', zoningColor: '#bae6fd', ownerMasked: 'মোঃ শাহজাহান আলী', nidMasked: '****৯০১৭', status: 'SAFE', statusLabelBn: 'নিষ্কণ্টক ও যাচাইকৃত', askingPriceBdt: 0, svgPath: 'M 420,35 L 610,60 L 600,220 L 440,200 Z', labelCoord: { x: 515, y: 125 } },
+  { id: 104, dagNo: '204', dagNoBn: '২০৪', khatianNo: '3207', khatianNoBn: '৩২০৭', mouzaBn: 'ধামরাই', jlNo: '২৫', sheetNo: '০৩', landClassBn: 'বাগান', areaDecimal: 17.5, areaKatha: 10.6, zoningCategory: 'বনায়ন ও সবুজ বেষ্টনী', zoningColor: '#bbf7d0', ownerMasked: 'মোঃ রহিম উদ্দিন', nidMasked: '****৩৩৪৫', status: 'FOR_SALE', statusLabelBn: 'বিক্রির জন্য সক্রিয়', askingPriceBdt: 2900000, svgPath: 'M 610,60 L 800,45 L 820,210 L 600,220 Z', labelCoord: { x: 705, y: 130 } },
+  { id: 105, dagNo: '205', dagNoBn: '২০৫', khatianNo: '3208', khatianNoBn: '৩২০৮', mouzaBn: 'ধামরাই', jlNo: '২৫', sheetNo: '০৩', landClassBn: 'ভিটা (আবাসিক)', areaDecimal: 14.0, areaKatha: 8.5, zoningCategory: 'পরিকল্পিত আবাসন জোন', zoningColor: '#fde68a', ownerMasked: 'মোঃ নুরুল ইসলাম', nidMasked: '****৫৫৬৭', status: 'SAFE', statusLabelBn: 'নিষ্কণ্টক ও যাচাইকৃত', askingPriceBdt: 0, svgPath: 'M 40,260 L 220,250 L 240,420 L 50,410 Z', labelCoord: { x: 130, y: 335 } },
+];
+
+const KERANIGANJ_PARCELS: CadastralParcel[] = [
+  { id: 201, dagNo: '301', dagNoBn: '৩০১', khatianNo: '4501', khatianNoBn: '৪৫০১', mouzaBn: 'কেরানীগঞ্জ', jlNo: '৩০', sheetNo: '০৪', landClassBn: 'ভিটা (আবাসিক)', areaDecimal: 12.5, areaKatha: 7.6, zoningCategory: 'পরিকল্পিত আবাসন জোন', zoningColor: '#fde68a', ownerMasked: 'মোঃ মনিরুল ইসলাম', nidMasked: '****৬৬৭৮', status: 'FOR_SALE', statusLabelBn: 'বিক্রির জন্য সক্রিয়', askingPriceBdt: 5200000, svgPath: 'M 40,40 L 220,50 L 240,210 L 50,190 Z', labelCoord: { x: 130, y: 125 } },
+  { id: 202, dagNo: '302', dagNoBn: '৩০২', khatianNo: '4502', khatianNoBn: '৪৫০২', mouzaBn: 'কেরানীগঞ্জ', jlNo: '৩০', sheetNo: '০৪', landClassBn: 'নাল (কৃষি)', areaDecimal: 28.0, areaKatha: 17.0, zoningCategory: 'কৃষি সুরক্ষা জোন', zoningColor: '#a7f3d0', ownerMasked: 'মোছাম্মৎ রহিমা খাতুন', nidMasked: '****৮৮৯৯', status: 'MORTGAGED', statusLabelBn: 'ডাচ-বাংলা ব্যাংক বন্ধক বিদ্যমান', askingPriceBdt: 0, svgPath: 'M 220,50 L 420,35 L 440,200 L 240,210 Z', labelCoord: { x: 330, y: 120 } },
+  { id: 203, dagNo: '303', dagNoBn: '৩০৩', khatianNo: '4503', khatianNoBn: '৪৫০৩', mouzaBn: 'কেরানীগঞ্জ', jlNo: '৩০', sheetNo: '০৪', landClassBn: 'বাণিজ্যিক', areaDecimal: 9.5, areaKatha: 5.7, zoningCategory: 'বাণিজ্যিক জোন', zoningColor: '#fed7aa', ownerMasked: 'মোঃ সাইফুল হক', nidMasked: '****২২৩৩', status: 'FOR_SALE', statusLabelBn: 'বিক্রির জন্য সক্রিয়', askingPriceBdt: 7100000, svgPath: 'M 420,35 L 610,60 L 600,220 L 440,200 Z', labelCoord: { x: 515, y: 125 } },
+  { id: 204, dagNo: '304', dagNoBn: '৩০৪', khatianNo: '4504', khatianNoBn: '৪৫০৪', mouzaBn: 'কেরানীগঞ্জ', jlNo: '৩০', sheetNo: '০৪', landClassBn: 'পুকুর (জলাশয়)', areaDecimal: 19.0, areaKatha: 11.5, zoningCategory: 'জলাশয় সুরক্ষা জোন', zoningColor: '#bae6fd', ownerMasked: 'মোঃ আবুল কালাম', nidMasked: '****৪৪৫৫', status: 'SAFE', statusLabelBn: 'নিষ্কণ্টক ও যাচাইকৃত', askingPriceBdt: 0, svgPath: 'M 610,60 L 800,45 L 820,210 L 600,220 Z', labelCoord: { x: 705, y: 130 } },
+  { id: 205, dagNo: '305', dagNoBn: '৩০৫', khatianNo: '4505', khatianNoBn: '৪৫০৫', mouzaBn: 'কেরানীগঞ্জ', jlNo: '৩০', sheetNo: '০৪', landClassBn: 'ভিটা (আবাসিক)', areaDecimal: 11.0, areaKatha: 6.6, zoningCategory: 'পরিকল্পিত আবাসন জোন', zoningColor: '#fde68a', ownerMasked: 'মোঃ জাহিদুল ইসলাম', nidMasked: '****৬৬৬৬', status: 'FOR_SALE', statusLabelBn: 'বিক্রির জন্য সক্রিয়', askingPriceBdt: 4800000, svgPath: 'M 40,260 L 220,250 L 240,420 L 50,410 Z', labelCoord: { x: 130, y: 335 } },
+];
+
+const TONGI_PARCELS: CadastralParcel[] = [
+  { id: 301, dagNo: '401', dagNoBn: '৪০১', khatianNo: '5601', khatianNoBn: '৫৬০১', mouzaBn: 'টঙ্গী', jlNo: '৩৫', sheetNo: '০৫', landClassBn: 'বাণিজ্যিক', areaDecimal: 8.0, areaKatha: 4.8, zoningCategory: 'বাণিজ্যিক জোন', zoningColor: '#fed7aa', ownerMasked: 'মোঃ ফারুক হোসেন', nidMasked: '****৭৭৮৮', status: 'FOR_SALE', statusLabelBn: 'বিক্রির জন্য সক্রিয়', askingPriceBdt: 12500000, svgPath: 'M 40,40 L 220,50 L 240,210 L 50,190 Z', labelCoord: { x: 130, y: 125 } },
+  { id: 302, dagNo: '402', dagNoBn: '৪০২', khatianNo: '5602', khatianNoBn: '৫৬০২', mouzaBn: 'টঙ্গী', jlNo: '৩৫', sheetNo: '০৫', landClassBn: 'শিল্প এলাকা', areaDecimal: 35.0, areaKatha: 21.2, zoningCategory: 'শিল্প জোন', zoningColor: '#e9d5ff', ownerMasked: 'মোছাম্মৎ শাহিনা আক্তার', nidMasked: '****৮৮৯৯', status: 'FOR_SALE', statusLabelBn: 'বিক্রির জন্য সক্রিয়', askingPriceBdt: 18700000, svgPath: 'M 220,50 L 420,35 L 440,200 L 240,210 Z', labelCoord: { x: 330, y: 120 } },
+  { id: 303, dagNo: '403', dagNoBn: '৪০৩', khatianNo: '5603', khatianNoBn: '৫৬০৩', mouzaBn: 'টঙ্গী', jlNo: '৩৫', sheetNo: '০৫', landClassBn: 'ভিটা (আবাসিক)', areaDecimal: 13.5, areaKatha: 8.2, zoningCategory: 'পরিকল্পিত আবাসন জোন', zoningColor: '#fde68a', ownerMasked: 'মোঃ কামাল হোসেন', nidMasked: '****৯৯০১', status: 'SAFE', statusLabelBn: 'নিষ্কণ্টক ও যাচাইকৃত', askingPriceBdt: 0, svgPath: 'M 420,35 L 610,60 L 600,220 L 440,200 Z', labelCoord: { x: 515, y: 125 } },
+  { id: 304, dagNo: '404', dagNoBn: '৪০৪', khatianNo: '5604', khatianNoBn: '৫৬০৪', mouzaBn: 'টঙ্গী', jlNo: '৩৫', sheetNo: '০৫', landClassBn: 'নাল (কৃষি)', areaDecimal: 21.0, areaKatha: 12.7, zoningCategory: 'কৃষি সুরক্ষা জোন', zoningColor: '#a7f3d0', ownerMasked: 'মোঃ সেলিম রেজা', nidMasked: '****১১২২', status: 'FOR_SALE', statusLabelBn: 'বিক্রির জন্য সক্রিয়', askingPriceBdt: 3500000, svgPath: 'M 610,60 L 800,45 L 820,210 L 600,220 Z', labelCoord: { x: 705, y: 130 } },
+  { id: 305, dagNo: '405', dagNoBn: '৪০৫', khatianNo: '5605', khatianNoBn: '৫৬০৫', mouzaBn: 'টঙ্গী', jlNo: '৩৫', sheetNo: '০৫', landClassBn: 'বাণিজ্যিক', areaDecimal: 6.5, areaKatha: 3.9, zoningCategory: 'বাণিজ্যিক জোন', zoningColor: '#fed7aa', ownerMasked: 'মোঃ ইউনুস আলী', nidMasked: '****৩৩৪৪', status: 'SAFE', statusLabelBn: 'নিষ্কণ্টক ও যাচাইকৃত', askingPriceBdt: 0, svgPath: 'M 40,260 L 220,250 L 240,420 L 50,410 Z', labelCoord: { x: 130, y: 335 } },
+];
+
+const NARSINGDI_PARCELS: CadastralParcel[] = [
+  { id: 401, dagNo: '501', dagNoBn: '৫০১', khatianNo: '6701', khatianNoBn: '৬৭০১', mouzaBn: 'নরসিংদী সদর', jlNo: '৪০', sheetNo: '০৬', landClassBn: 'নদীর ধার', areaDecimal: 16.0, areaKatha: 9.7, zoningCategory: 'নদী তীর সুরক্ষা জোন', zoningColor: '#bae6fd', ownerMasked: 'মোঃ আনোয়ার হোসেন', nidMasked: '****৫৫৬৬', status: 'SAFE', statusLabelBn: 'নিষ্কণ্টক ও যাচাইকৃত', askingPriceBdt: 0, svgPath: 'M 40,40 L 220,50 L 240,210 L 50,190 Z', labelCoord: { x: 130, y: 125 } },
+  { id: 402, dagNo: '502', dagNoBn: '৫০২', khatianNo: '6702', khatianNoBn: '৬৭০২', mouzaBn: 'নরসিংদী সদর', jlNo: '৪০', sheetNo: '০৬', landClassBn: 'ভিটা (আবাসিক)', areaDecimal: 19.0, areaKatha: 11.5, zoningCategory: 'পরিকল্পিত আবাসন জোন', zoningColor: '#fde68a', ownerMasked: 'মোছাম্মৎ নাজনীন আক্তার', nidMasked: '****৭৭৮৮', status: 'FOR_SALE', statusLabelBn: 'বিক্রির জন্য সক্রিয়', askingPriceBdt: 4200000, svgPath: 'M 220,50 L 420,35 L 440,200 L 240,210 Z', labelCoord: { x: 330, y: 120 } },
+  { id: 403, dagNo: '503', dagNoBn: '৫০৩', khatianNo: '6703', khatianNoBn: '৬৭০৩', mouzaBn: 'নরসিংদী সদর', jlNo: '৪০', sheetNo: '০৬', landClassBn: 'নাল (কৃষি)', areaDecimal: 26.5, areaKatha: 16.1, zoningCategory: 'কৃষি সুরক্ষা জোন', zoningColor: '#a7f3d0', ownerMasked: 'মোঃ সামসুল হক', nidMasked: '****৮৮৯৯', status: 'MORTGAGED', statusLabelBn: 'ব্র্যাক ব্যাংক বন্ধক বিদ্যমান', askingPriceBdt: 0, svgPath: 'M 420,35 L 610,60 L 600,220 L 440,200 Z', labelCoord: { x: 515, y: 125 } },
+  { id: 404, dagNo: '504', dagNoBn: '৫০৪', khatianNo: '6704', khatianNoBn: '৬৭০৪', mouzaBn: 'নরসিংদী সদর', jlNo: '৪০', sheetNo: '০৬', landClassBn: 'বাগান', areaDecimal: 14.5, areaKatha: 8.8, zoningCategory: 'বনায়ন ও সবুজ বেষ্টনী', zoningColor: '#bbf7d0', ownerMasked: 'মোঃ জসিম উদ্দিন', nidMasked: '****৯৯০০', status: 'FOR_SALE', statusLabelBn: 'বিক্রির জন্য সক্রিয়', askingPriceBdt: 2400000, svgPath: 'M 610,60 L 800,45 L 820,210 L 600,220 Z', labelCoord: { x: 705, y: 130 } },
+  { id: 405, dagNo: '505', dagNoBn: '৫০৫', khatianNo: '6705', khatianNoBn: '৬৭০৫', mouzaBn: 'নরসিংদী সদর', jlNo: '৪০', sheetNo: '০৬', landClassBn: 'পুকুর (জলাশয়)', areaDecimal: 10.0, areaKatha: 6.1, zoningCategory: 'জলাশয় সুরক্ষা জোন', zoningColor: '#bae6fd', ownerMasked: 'মোঃ হাবিবুর রহমান', nidMasked: '****১২৩৪', status: 'SAFE', statusLabelBn: 'নিষ্কণ্টক ও যাচাইকৃত', askingPriceBdt: 0, svgPath: 'M 40,260 L 220,250 L 240,420 L 50,410 Z', labelCoord: { x: 130, y: 335 } },
+];
+
+const MOUZA_PARCELS: Record<string, CadastralParcel[]> = {
+  'বিরুলিয়া': BIRULIA_PARCELS,
+  'ধামরাই': DHAMRAI_PARCELS,
+  'কেরানীগঞ্জ': KERANIGANJ_PARCELS,
+  'টঙ্গী': TONGI_PARCELS,
+  'নরসিংদী সদর': NARSINGDI_PARCELS,
+};
+
+const AVAILABLE_MOUZAS = Object.keys(MOUZA_PARCELS);
+
 export const CadastralMapPage: React.FC<CadastralMapPageProps> = ({ onNavigate }) => {
   const { t, lang, formatNumber } = useAppUI();
 
@@ -671,7 +716,7 @@ export const CadastralMapPage: React.FC<CadastralMapPageProps> = ({ onNavigate }
   // Map Controls State
   const [searchMenuOpen, setSearchMenuOpen] = useState<boolean>(true);
   const [activeLayer, setActiveLayer] = useState<'cadastral' | 'zoning' | 'satellite' | 'trust'>('cadastral');
-  const [selectedPlot, setSelectedPlot] = useState<CadastralParcel | null>(BIRULIA_PARCELS[0]);
+  const [selectedPlot, setSelectedPlot] = useState<CadastralParcel | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -705,6 +750,15 @@ export const CadastralMapPage: React.FC<CadastralMapPageProps> = ({ onNavigate }
     selectedDivision && selectedDistrict && selectedUpazila && ADMIN_DATA[selectedDivision]?.[selectedDistrict]?.[selectedUpazila]
       ? Object.keys(ADMIN_DATA[selectedDivision][selectedDistrict][selectedUpazila])
       : [];
+
+  // F15: resolve the active mouza's parcels. The selectedMouza state holds
+  // keys like "বিরুলিয়া (JL-12)" — strip the parenthesised suffix to match
+  // MOUZA_PARCELS keys, and fall back to Birulia.
+  const activeMouzaKey = useMemo(() => {
+    const stripped = selectedMouza.split('(')[0].trim();
+    return MOUZA_PARCELS[stripped] ? stripped : 'বিরুলিয়া';
+  }, [selectedMouza]);
+  const activeParcels: CadastralParcel[] = MOUZA_PARCELS[activeMouzaKey] || BIRULIA_PARCELS;
 
   const currentMouzaMeta =
     selectedDivision && selectedDistrict && selectedUpazila && selectedMouza
@@ -749,7 +803,7 @@ export const CadastralMapPage: React.FC<CadastralMapPageProps> = ({ onNavigate }
 
   // Locate and focus on a specific Dag/Plot
   const handleSearchPlot = () => {
-    const found = BIRULIA_PARCELS.find((p) => p.dagNoBn === selectedPlotDag || p.dagNo === selectedPlotDag);
+    const found = activeParcels.find((p) => p.dagNoBn === selectedPlotDag || p.dagNo === selectedPlotDag);
     if (found) {
       setSelectedPlot(found);
       // Smoothly pan towards the parcel
@@ -767,7 +821,7 @@ export const CadastralMapPage: React.FC<CadastralMapPageProps> = ({ onNavigate }
     setSelectedMouza('বিরুলিয়া (JL-12)');
     setSelectedSheet('০১');
     setSelectedPlotDag('১০১');
-    setSelectedPlot(BIRULIA_PARCELS[0]);
+    setSelectedPlot(MOUZA_PARCELS['বিরুলিয়া'][0]);
     setZoomLevel(1);
     setPanOffset({ x: 0, y: 0 });
   };
@@ -1059,7 +1113,7 @@ export const CadastralMapPage: React.FC<CadastralMapPageProps> = ({ onNavigate }
                       onChange={(e) => setSelectedPlotDag(e.target.value)}
                       className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-800 font-semibold focus:ring-2 focus:ring-[#006A4E] focus:outline-none cursor-pointer"
                     >
-                      {BIRULIA_PARCELS.map((p) => (
+                      {activeParcels.map((p) => (
                         <option key={p.id} value={p.dagNoBn}>
                           দাগ {p.dagNoBn}
                         </option>
@@ -1377,7 +1431,7 @@ export const CadastralMapPage: React.FC<CadastralMapPageProps> = ({ onNavigate }
             <line x1="810" y1="20" x2="810" y2="780" stroke="#d1fae5" strokeWidth="0.8" strokeDasharray="4 4" />
 
             {/* Cadastral Parcels Layer */}
-            {BIRULIA_PARCELS.map((parcel) => {
+            {activeParcels.map((parcel) => {
               const isSelected = selectedPlot?.id === parcel.id;
 
               // Compute fill color based on layer

@@ -1,0 +1,227 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/acland".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/acland
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা BCC LandTech
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text BCC LandTech
+			8 button Toggle Sidebar
+				9 image
+			10 text AC Land Panel Upazila Land Office • Ministry of Land
+			11 container Sidebar Navigation
+				12 text MENU
+				13 button e-Mutation Queue (Approval)
+					14 image
+					15 text e-Mutation Queue (Approval)
+				16 button Khatian Reconciliation
+					17 image
+					18 text Khatian Reconciliation
+				19 button Dispute Tribunal
+					20 image
+					21 text Dispute Tribunal
+				22 button Approve Staging Batches
+					23 image
+					24 text Approve Staging Batches
+				25 button Khatian Explorer
+					26 image
+					27 text Khatian Explorer
+				28 button Verify Deed
+					29 image
+					30 text Verify Deed
+			31 button Public Portal
+				32 image
+				33 text Public Portal
+			34 button Sign Out
+				35 image
+				36 text Sign Out
+		37 container
+			38 button Home
+				39 image
+				40 text Home
+			41 text / AC Land Panel
+			42 text field (settable)
+			43 image
+			44 button বাং
+			45 button Contrast
+				46 image
+			47 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				48 text ত
+				49 text তানভীর আহমেদ (সহকারী কমিশনার - ভূমি)
+				50 text AC Land Panel
+				51 image
+		52 container
+			53 heading AC Land Console, Value: 1
+				54 text AC Land Console
+			55 text Approve e-mutations, reconcile khatians, and hear citizen dispute cases.
+			56 text PENDING E-MUTATIONS 2
+			57 button Review Mutation Queue →
+			58 image
+			59 text KHATIAN DISCREPANCIES 2
+			60 button Resolve Discrepancies →
+			61 image
+			62 text DISPUTE TRIBUNAL 0
+			63 button Review Disputes →
+			64 image
+			65 text KHATIAN & DEED TRUST 97.5 %
+			66 button Verify Deed & Ledger →
+			67 image
+			68 heading e-Mutation Queue, Khatian Chain Reconciliation & Dispute Tribunal, Value: 2
+				69 image
+				70 text e-Mutation Queue, Khatian Chain Reconciliation & Dispute Tribunal
+			71 text Approve e-Mutation cases queued from Sub-Registry and update BS Khatian owner shares:
+			72 button e-Mutation Queue (Approval) (3)
+				73 image
+				74 text e-Mutation Queue (Approval)
+				75 text  (
+				76 text 3
+				77 text )
+			78 button Khatian & Heirs (2)
+				79 image
+				80 text Khatian & Heirs
+				81 text  (
+				82 text 2
+				83 text )
+			84 button Dispute Tribunal (0)
+				85 image
+				86 text Dispute Tribunal
+				87 text  (
+				88 text 0
+				89 text )
+			90 button Approve Staging Batches (undefined)
+				91 image
+				92 text Approve Staging Batches
+				93 text  (
+				94 text undefined
+				95 text )
+			96 button Appeals (undefined)
+				97 image
+				98 text Appeals
+				99 text  (
+				100 text undefined
+				101 text )
+			102 button Khatian Explorer
+				103 image
+				104 text Khatian Explorer
+			105 button Verify Deed
+				106 image
+				107 text Verify Deed
+			108 image
+			109 text field (settable)
+			110 button All
+			111 button Pending
+			112 button Approved
+			113 button Rejected
+			114 table
+				115 row
+					116 cell
+						117 text CASE & DEED
+					118 cell
+						119 text MOUZA & DAG
+					120 cell
+						121 text PARTIES
+					122 cell
+						123 text AREA
+					124 cell
+						125 text STATUS
+					126 cell
+						127 text AC LAND DECISION
+				128 row
+					129 cell
+						130 text MUT-2026-502
+						131 container
+							132 text Deed: DL-2026-1005
+					133 cell
+						134 text Birulia  —  Dag 105
+					135 cell
+						136 container
+							137 text From: মো. মনিরুজ্জামান
+						138 container
+							139 text To: সালমা আক্তার
+					140 cell
+						141 text 25 Decimal
+					142 cell
+						143 text PENDING
+					144 cell
+						145 button Details
+							146 image
+							147 text Details
+						148 button Approve
+							149 image
+							150 text Approve
+						151 button Reject
+							152 image
+							153 text Reject
+				154 row
+					155 cell
+						156 text MUT-2026-501
+						157 container
+							158 text Deed: DL-2026-1002
+					159 cell
+						160 text Birulia  —  Dag 102
+					161 cell
+						162 container
+							163 text From: আবদুল করিম
+						164 container
+							165 text To: মো. জাহাঙ্গীর আলম
+					166 cell
+						167 text 15 Decimal
+					168 cell
+						169 text PENDING
+					170 cell
+						171 button Details
+							172 image
+							173 text Details
+						174 button Approve
+							175 image
+							176 text Approve
+						177 button Reject
+							178 image
+							179 text Reject
+				180 row
+					181 cell
+						182 text MUT-2024-101
+						183 container
+							184 text Deed: DL-2026-1001
+					185 cell
+						186 text Birulia  —  Dag 101
+					187 cell
+						188 container
+							189 text From: মো. মিজানুর রহমান
+						190 container
+							191 text To: মো. রফিকুল ইসলাম
+					192 cell
+						193 text 20 Decimal
+					194 cell
+						195 text APPROVED
+					196 cell
+						197 button Details
+							198 image
+							199 text Details
+		200 container
+			201 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			202 content list
+				203 button Check Before Buy
+				204 button Land Sale Marketplace
+				205 button Cadastral Mouza Map
+				206 button Verify Deed QR Code
+				207 button Official Noticeboard
+				208 button Land Literacy Blog
+				209 button Offices & Service Points
+				210 button Citizen Sale Lock Vault
+			211 text Workspaces
+			212 content list
+				213 button Sub-Registrar Panel
+				214 button AC Land Tribunal
+				215 button Bank Lien & NOC
+				216 button National Ledger & Audit
+			217 text Support & Helpline
+			218 content list
+				219 text Land Service Call Center: 16122
+				220 text Ministry of Land (Official service hours)
+				221 text Check official service hours
+				222 button Frequently Asked Questions
+				223 button Bangladeshi Land Glossary
+			224 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/acland

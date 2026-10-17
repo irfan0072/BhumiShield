@@ -256,7 +256,7 @@ export const HelpPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNa
                         }`}
                       >
                         {isEstimate
-                          ? t('ডেমো প্রাক্কলন', 'Demo Estimate')
+                          ? t('প্রাক্কলিত হার', 'Estimated Rate')
                           : t('সরকারি নির্ধারিত ফি', 'Gazetted Fee')}
                       </span>
                     </div>
@@ -454,7 +454,7 @@ export const HelpPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNa
           onClick={() => onNavigate('admin')}
           className="px-5 py-3 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-extrabold text-xs flex items-center gap-2 cursor-pointer transition-colors min-h-[40px]"
         >
-          <span>{t('RBAC ম্যাট্রিক্স ও ৮টি ডেমো সিনারিও দেখুন', 'Open RBAC Matrix & 8 Demo Scenarios')}</span>
+          <span>{t('RBAC রোল ও নিরাপত্তা নিয়ন্ত্রণ ম্যাট্রিক্স দেখুন', 'Open RBAC Matrix & Security Controls')}</span>
         </button>
       </div>
     </div>

@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Middleware\RoleMiddleware;
 use App\Services\JwtAuthService;
 use App\Services\LookupService;
+use App\Services\PdfSealService;
 use App\Services\PublicRecordService;
 use App\Support\DB;
 
@@ -102,9 +103,22 @@ final class PublicMarketplaceAndPortalController
             [(int) $listing['plot_id']]
         );
 
-        // Document availability count (counts only, without exposing private files)
+        if ($plot) {
+            $listing['dag_no'] = $plot['dag_no'];
+            $listing['dag_no_bn'] = $plot['dag_no_bn'];
+            $listing['mouza_bn'] = $plot['mouza_bn'];
+            $listing['mouza_en'] = $plot['mouza_en'];
+            $listing['upazila_bn'] = $plot['upazila_bn'];
+            $listing['upazila_en'] = $plot['upazila_en'];
+            $listing['district_bn'] = $plot['district_bn'];
+            $listing['district_en'] = $plot['district_en'];
+            $listing['land_type_bn'] = $plot['land_type_bn'] ?? 'নাল / ধানী';
+            $listing['land_type_en'] = $plot['land_type_en'] ?? 'Agricultural';
+        }
+
+        // Document availability count: real derived counts from verified status and L2/L3 trust levels (F17)
         $docCount = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM plot_documents WHERE plot_id = ?', [(int) $listing['plot_id']])['c'] ?? 0);
-        $verifiedDocCount = (int) (DB::selectOne("SELECT COUNT(*) AS c FROM plot_documents WHERE plot_id = ? AND trust_level IN ('L3', 'L2')", [(int) $listing['plot_id']])['c'] ?? 0);
+        $verifiedDocCount = (int) (DB::selectOne("SELECT COUNT(*) AS c FROM plot_documents WHERE plot_id = ? AND (trust_level IN ('L3', 'L2') OR status = 'VERIFIED')", [(int) $listing['plot_id']])['c'] ?? 0);
 
         $listing['seller_nid_masked'] = PublicRecordService::maskNid((string) $listing['seller_nid']);
         unset($listing['seller_nid']);
@@ -289,6 +303,96 @@ final class PublicMarketplaceAndPortalController
         return [
             'notice' => $notice,
             'attachments' => $attachments,
+        ];
+    }
+
+    /**
+     * F09: Download a notice attachment as a government-signed PDF.
+     *
+     * The original attached file may be a plain Word/Excel document. For
+     * trust purposes we render a one-page PDF that contains the notice
+     * metadata + the SHA-256 + Ed25519 signature of the canonical envelope.
+     *
+     * Returns a binary-dispatch envelope (see public/index.php) so the
+     * router streams raw PDF bytes instead of JSON.
+     *
+     * Public endpoint — no JWT required. Only PUBLISHED notices are
+     * downloadable; draft/expired notices return 403.
+     */
+    public static function downloadNoticeAttachment(string $slug, int $attachmentId, array $query = []): array
+    {
+        $notice = DB::selectOne('SELECT * FROM notices WHERE notice_slug = ?', [$slug]);
+        if (!$notice) {
+            $notice = DB::selectOne('SELECT * FROM notices WHERE id = ?', [(int) $slug]);
+        }
+        if (!$notice) {
+            throw new \RuntimeException(json_encode([
+                'status' => 404,
+                'code' => 'NOTICE_NOT_FOUND',
+                'message_bn' => 'নোটিশ পাওয়া যায়নি।',
+                'message_en' => 'Notice not found.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+        if (($notice['status'] ?? '') !== 'PUBLISHED') {
+            throw new \RuntimeException(json_encode([
+                'status' => 403,
+                'code' => 'NOTICE_NOT_PUBLISHED',
+                'message_bn' => 'শুধুমাত্র প্রকাশিত নোটিশের সংযুক্তি ডাউনলোড করা যায়।',
+                'message_en' => 'Only published notice attachments can be downloaded.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $attachment = DB::selectOne(
+            'SELECT * FROM notice_attachments WHERE id = ? AND notice_id = ?',
+            [$attachmentId, (int) $notice['id']]
+        );
+        if (!$attachment) {
+            throw new \RuntimeException(json_encode([
+                'status' => 404,
+                'code' => 'ATTACHMENT_NOT_FOUND',
+                'message_bn' => 'এই নোটিশে এই সংযুক্তিটি পাওয়া যায়নি।',
+                'message_en' => 'Attachment not found for this notice.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $verifyFlag = (string) ($query['verify'] ?? '') === '1';
+
+        if ($verifyFlag) {
+            // Verify-only path: return JSON envelope (no PDF bytes).
+            $seal = PdfSealService::sealNoticeAttachment($attachment, $notice);
+            return [
+                'attachment_id' => (int) $attachment['id'],
+                'notice_slug' => (string) $notice['notice_slug'],
+                'envelope' => $seal['envelope'],
+                'content_hash' => $seal['content_hash'],
+                'signature_hex' => $seal['signature_hex'],
+                'public_key_hex' => $seal['public_key_hex'],
+                'verified' => PdfSealService::verifySeal($seal),
+            ];
+        }
+
+        // Increment download counter (best-effort, ignore failure).
+        try {
+            DB::statement(
+                'UPDATE notices SET download_count = download_count + 1 WHERE id = ?',
+                [(int) $notice['id']]
+            );
+        } catch (\Throwable) {
+            // Non-fatal: download must still succeed.
+        }
+
+        $pdfBytes = PdfSealService::renderPdf($attachment, $notice);
+
+        $safeName = preg_replace('/[^A-Za-z0-9._-]/', '_', (string) $attachment['file_name']);
+        $disposition = "inline; filename=\"bhumi_notice_{$notice['notice_slug']}_{$attachment['id']}.pdf\"; "
+                     . "filename*=UTF-8''" . rawurlencode($safeName . '.sealed.pdf');
+
+        return [
+            '_binary' => true,
+            'status' => 200,
+            'content_type' => 'application/pdf',
+            'content_disposition' => $disposition,
+            'body' => $pdfBytes,
         ];
     }
 
@@ -508,6 +612,233 @@ final class PublicMarketplaceAndPortalController
             'type' => 'FeatureCollection',
             'zoom' => $zoom,
             'features' => $features,
+        ];
+    }
+
+    // -------------------------------------------------------------------------
+    // 4. LISTING ENQUIRIES WORKFLOW (Finding F16)
+    // -------------------------------------------------------------------------
+
+    public static function listListingEnquiries(string|int $codeOrId, ?array $actor = null): array
+    {
+        $user = RoleMiddleware::authorize(['citizen', 'platform_moderator', 'admin'], $actor);
+        $listing = LookupService::resolveListing($codeOrId);
+        if (!$listing) {
+            throw new \RuntimeException(json_encode([
+                'status' => 404,
+                'code' => 'LISTING_NOT_FOUND',
+                'message_bn' => 'বিজ্ঞাপনটি পাওয়া যায়নি।',
+                'message_en' => 'Listing not found.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        if ($user['role'] === 'citizen' && ($user['nid'] ?? '') !== ($listing['seller_nid'] ?? '')) {
+            throw new \RuntimeException(json_encode([
+                'status' => 403,
+                'code' => 'FORBIDDEN',
+                'message_bn' => 'শুধুমাত্র এই বিজ্ঞাপনের বিক্রেতা বা অনুমোদিত মডারেটর ক্রেতাদের আগ্রহ ও প্রস্তাব দেখতে পারেন।',
+                'message_en' => 'Only the listing seller or authorized moderators can view buyer enquiries.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $enquiries = DB::select(
+            'SELECT * FROM listing_enquiries WHERE listing_id = ? ORDER BY id DESC',
+            [(int) $listing['id']]
+        );
+
+        return [
+            'items' => array_map(static function(array $e): array {
+                $e['buyer_nid_masked'] = PublicRecordService::maskNid((string) $e['buyer_nid']);
+                return PublicRecordService::forViewer($e);
+            }, $enquiries),
+            'total' => count($enquiries),
+        ];
+    }
+
+    public static function updateListingEnquiry(string|int $codeOrId, int $enquiryId, array $payload, ?array $actor = null): array
+    {
+        $user = RoleMiddleware::authorize(['citizen', 'platform_moderator', 'admin'], $actor);
+        $listing = LookupService::resolveListing($codeOrId);
+        if (!$listing) {
+            throw new \RuntimeException(json_encode([
+                'status' => 404,
+                'code' => 'LISTING_NOT_FOUND',
+                'message_bn' => 'বিজ্ঞাপনটি পাওয়া যায়নি।',
+                'message_en' => 'Listing not found.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        if ($user['role'] === 'citizen' && ($user['nid'] ?? '') !== ($listing['seller_nid'] ?? '')) {
+            throw new \RuntimeException(json_encode([
+                'status' => 403,
+                'code' => 'FORBIDDEN',
+                'message_bn' => 'শুধুমাত্র এই বিজ্ঞাপনের বিক্রেতা অনুসন্ধান স্ট্যাটাস হালনাগাদ করতে পারেন।',
+                'message_en' => 'Only the listing owner can update enquiries.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $newStatus = strtoupper(trim((string) ($payload['status'] ?? 'ACCEPTED')));
+        $validStatuses = ['SENT', 'ACCEPTED', 'DECLINED', 'COMPLETED'];
+        if (!in_array($newStatus, $validStatuses, true)) {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'INVALID_STATUS',
+                'message_bn' => 'অবৈধ অনুসন্ধান স্ট্যাটাস।',
+                'message_en' => 'Invalid enquiry status.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        DB::statement('UPDATE listing_enquiries SET status = ? WHERE id = ? AND listing_id = ?', [$newStatus, $enquiryId, (int) $listing['id']]);
+
+        return [
+            'status' => $newStatus,
+            'message_bn' => 'অনুসন্ধানের স্ট্যাটাস সফলভাবে হালনাগাদ করা হয়েছে।',
+            'message_en' => 'Enquiry status updated successfully.',
+        ];
+    }
+
+    // -------------------------------------------------------------------------
+    // 5. APPOINTMENT BOOKING WORKFLOW (Finding F10)
+    // -------------------------------------------------------------------------
+
+    public static function createAppointment(array $payload, ?array $actor = null): array
+    {
+        $officeId = (int) ($payload['office_id'] ?? 0);
+        $office = DB::selectOne('SELECT * FROM offices WHERE id = ? AND is_active = 1', [$officeId]);
+        if (!$office) {
+            throw new \RuntimeException(json_encode([
+                'status' => 404,
+                'code' => 'OFFICE_NOT_FOUND',
+                'message_bn' => 'অনুরোধকৃত ভূমি বা সাব-রেজিস্ট্রি অফিসটি পাওয়া যায়নি।',
+                'message_en' => 'Requested office was not found or is currently inactive.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $citizenName = trim((string) ($payload['citizen_name_bn'] ?? ($payload['citizen_name'] ?? '')));
+        if ($citizenName === '') {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'NAME_REQUIRED',
+                'message_bn' => 'আবেদনকারীর নাম আবশ্যক।',
+                'message_en' => 'Citizen name is required.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $citizenPhone = trim((string) ($payload['citizen_phone'] ?? ''));
+        if ($citizenPhone === '') {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'PHONE_REQUIRED',
+                'message_bn' => 'যোগাযোগের মোবাইল নম্বর প্রদান করুন।',
+                'message_en' => 'Contact phone number is required.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $slotDate = trim((string) ($payload['slot_date'] ?? ''));
+        if ($slotDate === '') {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'DATE_REQUIRED',
+                'message_bn' => 'সাক্ষাতের তারিখ নির্বাচন করুন।',
+                'message_en' => 'Appointment date is required.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $slotTime = trim((string) ($payload['slot_time'] ?? '10:30 AM'));
+        $serviceType = trim((string) ($payload['service_type'] ?? 'GENERAL_INQUIRY'));
+        $citizenNid = trim((string) ($payload['citizen_nid'] ?? ($actor['nid'] ?? '9900001001')));
+        $caseRef = trim((string) ($payload['case_reference'] ?? ''));
+        $notes = trim((string) ($payload['notes_bn'] ?? 'ভূমি সংক্রান্ত সেবা গ্রহণের জন্য অ্যাপয়েন্টমেন্ট।'));
+
+        // F10 double-booking guard: same office + same citizen + same date = conflict
+        $conflict = DB::selectOne(
+            'SELECT appointment_code, slot_time FROM appointments
+             WHERE office_id = ? AND citizen_nid = ? AND slot_date = ? AND status = "BOOKED" LIMIT 1',
+            [$officeId, $citizenNid, $slotDate]
+        );
+        if ($conflict !== null) {
+            throw new \RuntimeException(json_encode([
+                'status' => 409,
+                'code' => 'APPOINTMENT_CONFLICT',
+                'message_bn' => "একই তারিখে এই দপ্তরে আপনার ইতোমধ্যে একটি অ্যাপয়েন্টমেন্ট আছে ({$conflict['appointment_code']} — {$conflict['slot_time']})।",
+                'message_en' => "You already have a booked appointment at this office on the same date ({$conflict['appointment_code']} — {$conflict['slot_time']}).",
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $cnt = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM appointments')['c'] ?? 0);
+        $aptCode = sprintf('APT-2026-%04d', $cnt + 101);
+        $now = gmdate('c');
+
+        $aptId = DB::insert(
+            'INSERT INTO appointments (appointment_code, office_id, citizen_nid, citizen_name_bn, citizen_phone, service_type, case_reference, slot_date, slot_time, status, notes_bn, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, "BOOKED", ?, ?)',
+            [
+                $aptCode,
+                $officeId,
+                $citizenNid,
+                $citizenName,
+                $citizenPhone,
+                $serviceType,
+                $caseRef,
+                $slotDate,
+                $slotTime,
+                $notes,
+                $now,
+            ]
+        );
+
+        return [
+            'status' => 200,
+            'appointment' => [
+                'id' => $aptId,
+                'appointment_code' => $aptCode,
+                'office_name_bn' => $office['name_bn'],
+                'office_name_en' => $office['name_en'],
+                'office_address_bn' => $office['address_bn'],
+                'slot_date' => $slotDate,
+                'slot_time' => $slotTime,
+                'citizen_name_bn' => $citizenName,
+                'status' => 'BOOKED',
+                'created_at' => $now,
+            ],
+            'message_bn' => "আপনার সাক্ষাতের বুকিং সফল হয়েছে! রেফারেন্স নং: {$aptCode}। নির্ধারিত সময়ে অফিসে উপস্থিত হতে অনুরোধ করা হচ্ছে।",
+            'message_en' => "Appointment booked successfully! Reference: {$aptCode}.",
+        ];
+    }
+
+    public static function listAppointments(array $query = [], ?array $actor = null): array
+    {
+        $user = RoleMiddleware::authorize(['citizen', 'sub_registrar', 'registry_data_officer', 'ac_land', 'land_office_assistant', 'admin'], $actor);
+        $sql = 'SELECT a.*, o.name_bn AS office_name_bn, o.name_en AS office_name_en, o.office_code, o.address_bn AS office_address_bn
+                FROM appointments a
+                JOIN offices o ON o.id = a.office_id
+                WHERE 1=1';
+        $params = [];
+
+        if ($user['role'] === 'citizen') {
+            $sql .= ' AND a.citizen_nid = ?';
+            $params[] = (string) ($user['nid'] ?? '');
+        }
+
+        if (!empty($query['office_id'])) {
+            $sql .= ' AND a.office_id = ?';
+            $params[] = (int) $query['office_id'];
+        }
+
+        if (!empty($query['status'])) {
+            $sql .= ' AND a.status = ?';
+            $params[] = $query['status'];
+        }
+
+        $sql .= ' ORDER BY a.id DESC';
+        $rows = DB::select($sql, $params);
+
+        return [
+            'items' => array_map(static function(array $r): array {
+                $r['citizen_nid_masked'] = PublicRecordService::maskNid((string) $r['citizen_nid']);
+                return PublicRecordService::forViewer($r);
+            }, $rows),
+            'total' => count($rows),
         ];
     }
 }

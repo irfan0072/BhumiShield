@@ -88,6 +88,65 @@ export const AcLandPage: React.FC = () => {
 
   // UNO SLA Escalation Notice
   const [slaNoticeSent, setSlaNoticeSent] = useState(false);
+  const [decisionLoading, setDecisionLoading] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
+
+  // Field reports persistent list
+  const defaultFieldReports = [
+    {
+      id: 1,
+      dag_no: '101',
+      mouza_bn: 'বিরুলিয়া',
+      possession: 'VERIFIED',
+      boundary: 'MATCHED',
+      tax_status: 'PAID',
+      remarks: 'মাঠ সীমানা ও দখল আবেদনকারীর অনুকূলে পাওয়া গেছে। কোনো আপত্তি নেই।',
+      officer: 'মো. নুরুল ইসলাম (সার্ভেয়ার)',
+      date: '2026-10-15',
+    },
+    {
+      id: 2,
+      dag_no: '107',
+      mouza_bn: 'বিরুলিয়া',
+      possession: 'CONTESTED',
+      boundary: 'DISPUTED',
+      tax_status: 'DUE',
+      remarks: 'আরএস খতিয়ানে ১৮ শতক থাকলেও বিএস জরিপে ২৬ শতক দেখানো হয়েছে। অতিরিক্ত ৮ শতকের সীমানা বিরোধ বিদ্যমান।',
+      officer: 'এস এম জাকারিয়া (কানুনগো)',
+      date: '2026-10-14',
+    },
+  ];
+
+  const [fieldReportsList, setFieldReportsList] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('bs_field_reports');
+      return saved ? JSON.parse(saved) : defaultFieldReports;
+    } catch {
+      return defaultFieldReports;
+    }
+  });
+
+  const [slaEscalationsList, setSlaEscalationsList] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('bs_sla_escalations');
+      return saved
+        ? JSON.parse(saved)
+        : [
+            {
+              id: 'SLA-ESC-001',
+              case_no: 'MUT-2026-0008',
+              dag_no: '108',
+              mouza_bn: 'বিরুলিয়া',
+              days_elapsed: 22,
+              reason: 'ওয়ারিশদের উপস্থিতি না হওয়ায় ২২ দিন ধরে অপেক্ষমাণ।',
+              status: 'DIRECTIVE_ISSUED',
+              issued_at: '2026-10-16 11:30:00',
+            },
+          ];
+    } catch {
+      return [];
+    }
+  });
 
   // Filtering states
   const [mutationSearch, setMutationSearch] = useState('');
@@ -105,14 +164,19 @@ export const AcLandPage: React.FC = () => {
       BhumiApi.getStatsSummary(),
       BhumiApi.listOnboardingBatches().catch(() => []),
       BhumiApi.listAppeals().catch(() => []),
+      BhumiApi.listFieldReports().catch(() => []),
+      BhumiApi.listSlaDispatches().catch(() => []),
     ])
-      .then(([muts, khats, dsps, st, batches, appeals]) => {
+      .then(([muts, khats, dsps, st, batches, appeals, fr, sla]) => {
         setMutations(muts);
         setFlaggedKhatians(khats);
         setDisputes(dsps);
         setStats(st);
-        setOnboardingBatches(batches);
-        setAppealsList(appeals);
+        setOnboardingBatches(Array.isArray(batches) ? batches : ((batches as any)?.items || []));
+        setAppealsList(Array.isArray(appeals) ? appeals : ((appeals as any)?.items || []));
+        // F08: server-side state replaces the previous localStorage-driven mocks.
+        setFieldReportsList(Array.isArray(fr) ? fr : []);
+        setSlaEscalationsList(Array.isArray(sla) ? sla : []);
       })
       .finally(() => setLoading(false));
   };
@@ -126,6 +190,26 @@ export const AcLandPage: React.FC = () => {
       setSubTab(activeSubTab as AcLandTab);
     }
   }, [activeSubTab]);
+
+  // F13: when the role changes, snap the sub-tab back to a value the new
+  // role is actually allowed to see. Without this, a citizen who becomes an
+  // FVO via switchDemoRole would still see the previous role's tab.
+  useEffect(() => {
+    const allowed: AcLandTab[] = ['mutations', 'khatians', 'disputes', 'field_reports', 'survey_batches', 'sla_overview', 'appeals', 'onboarding', 'explorer', 'verifier'];
+    if (!allowed.includes(subTab)) {
+      const roleDefault: Record<string, AcLandTab> = {
+        field_verification_officer: 'field_reports',
+        settlement_records_officer: 'survey_batches',
+        settlement_checker: 'onboarding',
+        uno_supervisor: 'sla_overview',
+        appellate_reviewer: 'appeals',
+        ac_land: 'mutations',
+      };
+      const fallback = roleDefault[role] || 'mutations';
+      setSubTab(fallback);
+      setActiveSubTab(fallback);
+    }
+  }, [role]);
 
   const handleTabChange = (target: AcLandTab) => {
     setSubTab(target);
@@ -162,14 +246,39 @@ export const AcLandPage: React.FC = () => {
     }
   };
 
-  const handleSubmitFieldReport = (e: React.FormEvent) => {
+  const handleSubmitFieldReport = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFieldSubmitted(true);
-    setActionMsg(
-      lang === 'bn'
-        ? `দাগ নং ${fieldForm.dag_no} এর মাঠ তদন্ত প্রতিবেদন সফলভাবে দাখিল ও স্বাক্ষরিত হয়েছে।`
-        : `Field possession inspection report for Dag ${fieldForm.dag_no} submitted.`
-    );
+    try {
+      // F08: server-side persistence. Resolve plot_id from the entered dag_no.
+      const plots = await BhumiApi.getPlots();
+      const plot = (plots as any[]).find((p) => String(p.dag_no) === String(fieldForm.dag_no));
+      if (!plot) {
+        setActionMsg(
+          lang === 'bn'
+            ? `দাগ ${fieldForm.dag_no} এর জন্য কোনো প্লট পাওয়া যায়নি।`
+            : `No plot found for dag ${fieldForm.dag_no}.`
+        );
+        return;
+      }
+      const res = await BhumiApi.createFieldReport({
+        plot_id: Number(plot.id),
+        possession_status: fieldForm.possession,
+        boundary_status: fieldForm.boundary,
+        tax_status: fieldForm.tax_status,
+        remarks_bn: fieldForm.remarks,
+      });
+      setFieldSubmitted(true);
+      setActionMsg(
+        lang === 'bn'
+          ? (res.message_bn || `দাগ নং ${fieldForm.dag_no} এর মাঠ তদন্ত প্রতিবেদন সফলভাবে দাখিল ও স্বাক্ষরিত হয়েছে।`)
+          : (res.message_en || `Field possession inspection report for Dag ${fieldForm.dag_no} submitted.`)
+      );
+      setFieldForm({ ...fieldForm, remarks: '' });
+      loadAcLandData();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message_en || err?.message || 'Field report submission failed';
+      setActionMsg(msg);
+    }
   };
 
   const handleCreateSurveyBatch = async (e: React.FormEvent) => {
@@ -205,26 +314,50 @@ export const AcLandPage: React.FC = () => {
     }
   };
 
-  const handleSendSlaEscalation = () => {
-    setSlaNoticeSent(true);
-    setActionMsg(
-      lang === 'bn'
-        ? 'উপজেলা ভূমি কর্মকর্তা ও কানুনগো বরাবরে জরুরি এসএলএ তাগিদপত্র ইস্যু করা হয়েছে।'
-        : 'Urgent SLA escalation directive dispatched to land revenue staff.'
-    );
+  const handleSendSlaEscalation = async () => {
+    try {
+      // F08: server-side persistence. Issue an SLA escalation dispatch to the
+      // relevant target role (default: land_office_assistant for overdue mutations).
+      const res = await BhumiApi.createSlaDispatch({
+        case_reference: 'MUT-2026-0008',
+        target_role: 'land_office_assistant',
+        priority: 'URGENT',
+        notes_bn: 'দাগ ১০৮ এর নামজারি ৪৫ দিনের বেশি অতিবাহিত; সাত দিনের মধ্যে আদেশনামা দাখিল করুন।',
+      });
+      setSlaNoticeSent(true);
+      setActionMsg(
+        lang === 'bn'
+          ? (res.message_bn || 'উপজেলা ভূমি কর্মকর্তা ও কানুনগো বরাবরে জরুরি এসএলএ তাগিদপত্র ইস্যু করা হয়েছে।')
+          : (res.message_en || 'Urgent SLA escalation directive dispatched to land revenue staff.')
+      );
+      loadAcLandData();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message_en || err?.message || 'SLA dispatch failed';
+      setActionMsg(msg);
+    }
   };
 
   const handleDecision = async (mutationId: number, status: 'APPROVED' | 'REJECTED') => {
-    const note =
-      status === 'APPROVED'
-        ? 'এসি ল্যান্ড কর্তৃক অনুমোদিত এবং বিএস খতিয়ান স্বয়ংক্রিয়ভাবে হালনাগাদ করা হয়েছে।'
-        : 'এসি ল্যান্ড কর্তৃক কাগজপত্রের অসামঞ্জস্যতার কারণে নামজারি না-মঞ্জুর।';
-    const res = await BhumiApi.decideMutation(mutationId, status, note);
-    setActionMsg(lang === 'bn' ? res.message_bn : res.message_en);
-    if (selectedMutation && selectedMutation.id === mutationId) {
-      setSelectedMutation(null);
+    setDecisionLoading(true);
+    setModalError(null);
+    try {
+      const note =
+        status === 'APPROVED'
+          ? 'এসি ল্যান্ড কর্তৃক অনুমোদিত এবং বিএস খতিয়ান স্বয়ংক্রিয়ভাবে হালনাগাদ করা হয়েছে।'
+          : 'এসি ল্যান্ড কর্তৃক কাগজপত্রের অসামঞ্জস্যতার কারণে নামজারি না-মঞ্জুর।';
+      const res = await BhumiApi.decideMutation(mutationId, status, note);
+      setActionMsg(lang === 'bn' ? res.message_bn : res.message_en);
+      if (selectedMutation && selectedMutation.id === mutationId) {
+        setSelectedMutation(null);
+      }
+      loadAcLandData();
+    } catch (err: any) {
+      const errDetail = err?.response?.data?.detail?.message_bn || err?.response?.data?.message || err?.message;
+      setModalError(errDetail || 'সিদ্ধান্ত প্রক্রিয়াকরণে ত্রুটি হয়েছে।');
+      setActionMsg(errDetail || 'সিদ্ধান্ত প্রক্রিয়াকরণে ত্রুটি হয়েছে।');
+    } finally {
+      setDecisionLoading(false);
     }
-    loadAcLandData();
   };
 
   const handleReconcileKhatian = async (plotId: number, currentArea: number) => {
@@ -1104,23 +1237,38 @@ export const AcLandPage: React.FC = () => {
                 {t('তদন্তাধীন ও অনুমোদিত মাঠ প্রতিবেদন তালিকা:', 'Pending Field Inspection Records:')}
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 space-y-2">
-                  <div className="flex items-center justify-between font-bold text-xs text-emerald-950">
-                    <span>দাগ নং ১০১ • বিরুলিয়া</span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-200 text-emerald-900 text-[10px]">VERIFIED</span>
+                {fieldReportsList.map((fr: any) => (
+                  <div
+                    key={fr.id}
+                    className={`p-4 rounded-xl border space-y-2 ${
+                      fr.possession === 'VERIFIED'
+                        ? 'border-emerald-200 bg-emerald-50/40'
+                        : fr.possession === 'CONTESTED'
+                        ? 'border-amber-200 bg-amber-50/40'
+                        : 'border-slate-200 bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between font-bold text-xs">
+                      <span className="text-slate-900">
+                        {t('দাগ নং', 'Dag No')} {toBanglaDigits(fr.dag_no, lang)} • {fr.mouza_bn}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          fr.possession === 'VERIFIED'
+                            ? 'bg-emerald-200 text-emerald-900'
+                            : 'bg-amber-200 text-amber-900'
+                        }`}
+                      >
+                        {fr.possession}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-700 leading-relaxed">{fr.remarks}</p>
+                    <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono pt-1 border-t border-slate-100">
+                      <span>{fr.officer}</span>
+                      <span>{fr.date}</span>
+                    </div>
                   </div>
-                  <p className="text-xs text-slate-600">মাঠ সীমানা ও দখল আবেদনকারীর অনুকূলে পাওয়া গেছে। কোনো আপত্তি নেই।</p>
-                  <div className="text-[10px] text-slate-500 font-mono">ইনস্পেকশন অফিসার: মো. নুরুল ইসলাম (সার্ভেয়ার)</div>
-                </div>
-
-                <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/40 space-y-2">
-                  <div className="flex items-center justify-between font-bold text-xs text-amber-950">
-                    <span>দাগ নং ১০৭ • বিরুলিয়া</span>
-                    <span className="px-2 py-0.5 rounded bg-amber-200 text-amber-900 text-[10px]">DISCREPANCY</span>
-                  </div>
-                  <p className="text-xs text-slate-600">আরএস খতিয়ানে ১৮ শতক থাকলেও বিএস জরিপে ২৬ শতক দেখানো হয়েছে। অতিরিক্ত ৮ শতকের সীমানা বিরোধ বিদ্যমান।</p>
-                  <div className="text-[10px] text-slate-500 font-mono">তদন্ত কর্মকর্তা: এস এম জাকারিয়া (কানুনগো)</div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
@@ -1294,13 +1442,30 @@ export const AcLandPage: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 flex flex-wrap items-center justify-between gap-2 text-xs">
-                  <div>
-                    <span className="font-bold text-amber-950">কেস নং MUT-2026-0008 • দাগ ১০৮ • বিরুলিয়া</span>
-                    <p className="text-[11px] text-slate-600">ওয়ারিশদের উপস্থিতি না হওয়ায় ২২ দিন ধরে অপেক্ষমাণ।</p>
+                {slaEscalationsList.map((esc: any) => (
+                  <div
+                    key={esc.id}
+                    className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 flex flex-wrap items-center justify-between gap-2 text-xs"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-amber-950">
+                          {esc.case_no} • {t('দাগ', 'Dag')} {esc.dag_no} • {esc.mouza_bn}
+                        </span>
+                        <span className="font-mono text-[10px] text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded font-bold">
+                          {esc.id}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 mt-0.5">{esc.reason}</p>
+                      <div className="text-[10px] text-slate-500 font-mono mt-1">
+                        {t('জারি সময়:', 'Issued at:')} {esc.issued_at}
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold text-[10px]">
+                      {toBanglaDigits(esc.days_elapsed, lang)} {t('দিন অতিবাহিত', 'Days Elapsed')}
+                    </span>
                   </div>
-                  <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold text-[10px]">২২ দিন অতিবাহিত</span>
-                </div>
+                ))}
               </div>
             </div>
           </div>
@@ -1411,7 +1576,12 @@ export const AcLandPage: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              {onboardingBatches.map((batch: any) => (
+              {onboardingBatches.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 bg-white rounded-xl border border-dashed border-slate-300">
+                  {t('কোনো অনবোর্ডিং ব্যাচ অপেক্ষমান নেই।', 'No onboarding batches in pending review.')}
+                </div>
+              ) : (
+                onboardingBatches.map((batch: any) => (
                 <div key={batch.id} className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 shadow-xs">
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
                     <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
@@ -1446,7 +1616,7 @@ export const AcLandPage: React.FC = () => {
                     </div>
                   )}
                 </div>
-              ))}
+              )))}
             </div>
           </div>
         )}
@@ -1464,12 +1634,25 @@ export const AcLandPage: React.FC = () => {
                 </h3>
               </div>
               <button
-                onClick={() => setSelectedMutation(null)}
+                onClick={() => {
+                  setSelectedMutation(null);
+                  setModalError(null);
+                }}
                 className="p-1 rounded text-[#5F7A74]/80 hover:text-[#5F7A74] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {modalError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-start gap-2">
+                <ShieldAlert className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="block text-red-800">{t('অনুরোধ ব্যর্থ হয়েছে:', 'Request Failed:')}</strong>
+                  <span>{modalError}</span>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-3 text-xs text-[#0A1F1C]/90">
               <div className="p-3 bg-[#EDF7F4]/80 rounded-lg space-y-1 font-mono">
@@ -1508,15 +1691,17 @@ export const AcLandPage: React.FC = () => {
                 <>
                   <button
                     onClick={() => handleDecision(selectedMutation.id, 'REJECTED')}
-                    className="px-4 py-2 rounded-lg bg-[#FF3B4A] text-white text-xs font-bold cursor-pointer"
+                    disabled={decisionLoading}
+                    className="px-4 py-2 rounded-lg bg-[#FF3B4A] hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-bold cursor-pointer"
                   >
-                    {t('না-মঞ্জুর করুন', 'Reject')}
+                    {decisionLoading ? t('প্রক্রিয়াকরণ...', 'Processing...') : t('না-মঞ্জুর করুন', 'Reject')}
                   </button>
                   <button
                     onClick={() => handleDecision(selectedMutation.id, 'APPROVED')}
-                    className="px-4 py-2 rounded-lg bg-[#006A4E] text-white text-xs font-bold cursor-pointer"
+                    disabled={decisionLoading}
+                    className="px-4 py-2 rounded-lg bg-[#006A4E] hover:bg-emerald-800 disabled:opacity-50 text-white text-xs font-bold cursor-pointer"
                   >
-                    {t('শুনানি মঞ্জুর ও খতিয়ান হালনাগাদ', 'Approve & Mutate')}
+                    {decisionLoading ? t('প্রক্রিয়াকরণ...', 'Processing...') : t('শুনানি মঞ্জুর ও খতিয়ান হালনাগাদ', 'Approve & Mutate')}
                   </button>
                 </>
               )}

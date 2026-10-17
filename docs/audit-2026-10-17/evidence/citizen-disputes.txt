@@ -1,0 +1,192 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/home".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/home
+	2 container root
+		3 container
+			4 button ভূ BhumiShield National Land & Deed Trust Platform
+				5 text ভূ
+				6 text BhumiShield
+				364 text National Land & Deed Trust Platform
+			365 container প্রধান মেনু
+				366 button All Services
+				367 button Land Sale
+				368 button Cadastral Map
+				369 button Check Land
+				370 button Verify Deed
+				371 button Notices
+				372 button Blog
+				373 button Offices
+				374 button Citizen Vault
+				375 button Help
+			7 button Switch Language
+			8 button High Contrast
+				9 image
+			357 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				363 text ম
+				376 text মো. রফিকুল ইসলাম (নাগরিক)
+				377 text Citizen Land Portal
+				358 image
+		378 container
+			379 text ম
+			380 heading Md. Rafiqul Islam, Value: 3
+				381 text Md. Rafiqul Islam
+			382 text NID:  ****1001
+			383 button Collapse Menu
+				384 image
+			385 container
+				386 text CITIZEN SERVICES
+				387 button Overview & KPIs
+					388 image
+					389 text Overview & KPIs
+				390 button My Land & Plots 3, Help: My Land & Plots
+					391 image
+					392 text My Land & Plots
+					393 text 3
+				394 button Document Vault (L0-L3) ✔ 6, Help: Document Vault (L0-L3)
+					395 image
+					396 text Document Vault (L0-L3)
+					397 text ✔ 6
+				398 button My Registered Deeds 6, Help: My Registered Deeds
+					399 image
+					400 text My Registered Deeds
+					401 text 6
+				402 button 13-Step Transfer Pipeline 5, Help: 13-Step Transfer Pipeline
+					403 image
+					404 text 13-Step Transfer Pipeline
+					405 text 5
+				406 button Disputes & Objections
+					407 image
+					408 text Disputes & Objections
+				409 button Support Tickets & Helpdesk 2, Help: Support Tickets & Helpdesk
+					410 image
+					411 text Support Tickets & Helpdesk
+					412 text 2
+				413 button Profile & Demo Switcher
+					414 image
+					415 text Profile & Demo Switcher
+			416 image
+			417 text Land Hotline: 16122
+			418 text Call toll-free for land and khatian inquiries.
+			419 button Check Plot
+			420 button QR Deed
+			421 container
+				422 text Citizen Portal / আপত্তি ও বিরোধ ট্রাইব্যুনাল
+				423 heading Disputes & Objections, Value: 2
+					424 text Disputes & Objections
+				425 text Demo Profile:
+				426 button মোঃ রফিকুল ইসলাম
+				427 button রাবেয়া খাতুন (লক)
+				428 button আব্দুল করিম (বন্ধক)
+				429 button Refresh Data
+					430 image
+				431 button Check Before Buying
+					432 image
+					433 text Check Before Buying
+			434 container
+				435 image
+				436 heading File Land Fraud / Ownership Objection, Value: 3
+					437 text File Land Fraud / Ownership Objection
+				438 text Filing an objection flags the plot across Sub-Registrar and AC Land consoles. Select Plot (Dag):
+				439 pop up button (collapsed, settable) Value: বিরুলিয়া — দাগ নং 101, Secondary Actions: Expand
+					440 menu
+						441 (selected) বিরুলিয়া — দাগ নং 101
+						442 বিরুলিয়া — দাগ নং 102
+						443 বিরুলিয়া — দাগ নং 103
+						444 বিরুলিয়া — দাগ নং 104
+						445 বিরুলিয়া — দাগ নং 105
+						446 বিরুলিয়া — দাগ নং 106
+						447 বিরুলিয়া — দাগ নং 107
+						448 বিরুলিয়া — দাগ নং 108
+						449 বিরুলিয়া — দাগ নং 109
+						450 বিরুলিয়া — দাগ নং 110
+						451 বিরুলিয়া — দাগ নং 111
+						452 বিরুলিয়া — দাগ নং 112
+						453 বিরুলিয়া — দাগ নং 113
+						454 বিরুলিয়া — দাগ নং 114
+						455 বিরুলিয়া — দাগ নং 115
+						456 বিরুলিয়া — দাগ নং 116
+						457 বিরুলিয়া — দাগ নং 117
+						458 বিরুলিয়া — দাগ নং 118
+						459 বিরুলিয়া — দাগ নং 119
+						460 বিরুলিয়া — দাগ নং 120
+						461 বাসন — দাগ নং 201
+						462 বাসন — দাগ নং 202
+						463 বাসন — দাগ নং 203
+						464 বাসন — দাগ নং 204
+						465 বাসন — দাগ নং 205
+						466 বাসন — দাগ নং 206
+						467 বাসন — দাগ নং 207
+						468 বাসন — দাগ নং 208
+						469 বাসন — দাগ নং 209
+						470 বাসন — দাগ নং 210
+						471 বাসন — দাগ নং 211
+						472 বাসন — দাগ নং 212
+						473 বাসন — দাগ নং 213
+						474 বাসন — দাগ নং 214
+						475 বাসন — দাগ নং 215
+						476 বাসন — দাগ নং 216
+						477 বাসন — দাগ নং 217
+						478 বাসন — দাগ নং 218
+						479 বাসন — দাগ নং 219
+						480 বাসন — দাগ নং 220
+						481 পানাম — দাগ নং 301
+						482 পানাম — দাগ নং 302
+						483 পানাম — দাগ নং 303
+						484 পানাম — দাগ নং 304
+						485 পানাম — দাগ নং 305
+						486 পানাম — দাগ নং 306
+						487 পানাম — দাগ নং 307
+						488 পানাম — দাগ নং 308
+						489 পানাম — দাগ নং 309
+						490 পানাম — দাগ নং 310
+						491 পানাম — দাগ নং 311
+						492 পানাম — দাগ নং 312
+						493 পানাম — দাগ নং 313
+						494 পানাম — দাগ নং 314
+						495 পানাম — দাগ নং 315
+						496 পানাম — দাগ নং 316
+						497 পানাম — দাগ নং 317
+						498 পানাম — দাগ নং 318
+						499 পানাম — দাগ নং 319
+						500 পানাম — দাগ নং 320
+				501 text Objection Category:
+				502 pop up button (collapsed, settable) Value: Fake Deed / Forged POA, Secondary Actions: Expand
+					503 menu
+						504 (selected) Fake Deed / Forged POA
+						505 Heir Exclusion Dispute
+						506 Court Injunction
+						507 Boundary Grab
+				508 text Objection Details:
+				509 text entry area (settable) আমার অজান্তে জাল আমমোক্তারনামা তৈরি করে এই দাগের জমি বিক্রির চেষ্টা চলছে।
+				510 button Submit Official Objection
+					511 image
+					512 text Submit Official Objection
+			513 heading Filed Objections & Status, Value: 3
+				514 text Filed Objections & Status
+			515 text 0  টি রেকর্ড
+		268 container
+			269 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			270 content list
+				271 button Check Before Buy
+				272 button Land Sale Marketplace
+				273 button Cadastral Mouza Map
+				274 button Verify Deed QR Code
+				275 button Official Noticeboard
+				276 button Land Literacy Blog
+				277 button Offices & Service Points
+				278 button Citizen Sale Lock Vault
+			279 text Workspaces
+			280 content list
+				281 button Sub-Registrar Panel
+				282 button AC Land Tribunal
+				283 button Bank Lien & NOC
+				284 button National Ledger & Audit
+			285 text Support & Helpline
+			286 content list
+				287 text Land Service Call Center: 16122
+				288 text Ministry of Land (Official service hours)
+				289 text Check official service hours
+				290 button Frequently Asked Questions
+				291 button Bangladeshi Land Glossary
+			292 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 406 button Disputes & Objections

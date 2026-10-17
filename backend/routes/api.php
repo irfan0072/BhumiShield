@@ -161,6 +161,9 @@ return static function (string $method, string $uri, array $query, array $body):
         $sellerId = isset($query['seller_id']) ? (int) $query['seller_id'] : null;
         return WorkflowController::citizenCheckBeforeYouBuy(urldecode($m[1]), $area, $sellerId);
     }
+    if ($method === 'GET' && preg_match('#^/plots/([^/]+)/documents/(\d+)/download$#', $sub, $m)) {
+        return \App\Http\Controllers\Api\V1\CitizenVaultAndTicketController::downloadPlotDocument(urldecode($m[1]), (int) $m[2]);
+    }
     if ($method === 'GET' && preg_match('#^/plots/([^/]+)/documents$#', $sub, $m)) {
         return \App\Http\Controllers\Api\V1\CitizenVaultAndTicketController::listPlotDocuments(urldecode($m[1]));
     }
@@ -206,6 +209,13 @@ return static function (string $method, string $uri, array $query, array $body):
     if ($method === 'GET' && preg_match('#^/notices/([^/]+)$#', $sub, $m)) {
         return PublicMarketplaceAndPortalController::getNotice(urldecode($m[1]));
     }
+    if ($method === 'GET' && preg_match('#^/notices/([^/]+)/attachments/(\d+)/download$#', $sub, $m)) {
+        return PublicMarketplaceAndPortalController::downloadNoticeAttachment(
+            urldecode($m[1]),
+            (int) $m[2],
+            $query
+        );
+    }
     if ($method === 'GET' && $sub === '/blog') {
         return PublicMarketplaceAndPortalController::listBlogPosts($query);
     }
@@ -228,6 +238,18 @@ return static function (string $method, string $uri, array $query, array $body):
     }
     if ($method === 'POST' && preg_match('#^/listings/([^/]+)/enquire$#', $sub, $m)) {
         return PublicMarketplaceAndPortalController::createListingEnquiry(urldecode($m[1]), $body);
+    }
+    if ($method === 'GET' && preg_match('#^/listings/([^/]+)/enquiries$#', $sub, $m)) {
+        return PublicMarketplaceAndPortalController::listListingEnquiries(urldecode($m[1]));
+    }
+    if ($method === 'PATCH' && preg_match('#^/listings/([^/]+)/enquiries/(\d+)$#', $sub, $m)) {
+        return PublicMarketplaceAndPortalController::updateListingEnquiry(urldecode($m[1]), (int) $m[2], $body);
+    }
+    if ($method === 'GET' && $sub === '/appointments') {
+        return PublicMarketplaceAndPortalController::listAppointments($query);
+    }
+    if ($method === 'POST' && $sub === '/appointments') {
+        return PublicMarketplaceAndPortalController::createAppointment($body);
     }
     if ($method === 'GET' && ($sub === '/public/map/features' || $sub === '/map/features')) {
         return PublicMarketplaceAndPortalController::getMapFeatures($query);
@@ -259,6 +281,20 @@ return static function (string $method, string $uri, array $query, array $body):
         return OnboardingAndAppealsController::decideAppeal(urldecode($m[1]), $body);
     }
 
+    // 3e. F08 Field Operations — Field Reports & SLA Dispatches
+    if ($method === 'GET' && $sub === '/field-reports') {
+        return \App\Http\Controllers\Api\V1\FieldOperationsController::listFieldReports($query);
+    }
+    if ($method === 'POST' && $sub === '/field-reports') {
+        return \App\Http\Controllers\Api\V1\FieldOperationsController::createFieldReport($body);
+    }
+    if ($method === 'GET' && $sub === '/sla-dispatches') {
+        return \App\Http\Controllers\Api\V1\FieldOperationsController::listSlaDispatches($query);
+    }
+    if ($method === 'POST' && $sub === '/sla-dispatches') {
+        return \App\Http\Controllers\Api\V1\FieldOperationsController::createSlaDispatch($body);
+    }
+
     // 4. Sub-Registrar Controlling Routes (Protected by RoleMiddleware)
     if ($method === 'GET' && ($sub === '/scenarios' || $sub === '/demo-scenarios')) {
         return WorkflowController::listDemoScenarios();
@@ -272,8 +308,8 @@ return static function (string $method, string $uri, array $query, array $body):
         return WorkflowController::subRegistrarRegisterDeed($body, $actor);
     }
     if ($method === 'GET' && $sub === '/registrar/deeds') {
-        RoleMiddleware::authorize(['sub_registrar', 'admin']);
-        return RoleControlController::listRegistrarDeeds($query['status'] ?? null, $query['q'] ?? null);
+        $actor = RoleMiddleware::authorize(['sub_registrar', 'registry_data_officer', 'admin', 'auditor']);
+        return RoleControlController::listRegistrarDeeds($query['status'] ?? null, $query['q'] ?? null, $actor);
     }
     if ($method === 'POST' && preg_match('#^/registrar/deeds/(\d+)/status$#', $sub, $m)) {
         RoleMiddleware::authorize(['sub_registrar', 'admin']);
@@ -284,13 +320,13 @@ return static function (string $method, string $uri, array $query, array $body):
         return RoleControlController::calculateFees($val, (string) ($query['deed_type'] ?? 'SALE'));
     }
 
-    // 5. AC Land Controlling Routes (Protected by RoleMiddleware)
+    // 5. AC Land & Land Office Controlling Routes (Protected by RoleMiddleware)
     if ($method === 'GET' && $sub === '/mutations') {
-        RoleMiddleware::authorize(['ac_land', 'admin']);
+        RoleMiddleware::authorize(['ac_land', 'land_office_assistant', 'field_verification_officer', 'settlement_records_officer', 'settlement_checker', 'uno_supervisor', 'appellate_reviewer', 'admin', 'auditor']);
         return WorkflowController::listMutations($query['status'] ?? null);
     }
     if ($method === 'POST' && (preg_match('#^/mutations/(\d+)/decide$#', $sub, $m) || preg_match('#^/mutations/(\d+)/decision$#', $sub, $m))) {
-        $actor = RoleMiddleware::authorize(['ac_land']);
+        $actor = RoleMiddleware::authorize(['ac_land', 'admin']);
         if (isset($body['status']) && !isset($body['decision'])) {
             $body['decision'] = $body['status'];
         }
@@ -300,7 +336,7 @@ return static function (string $method, string $uri, array $query, array $body):
         return WorkflowController::decideMutationCase((int) $m[1], $body, $actor);
     }
     if ($method === 'GET' && $sub === '/acland/flagged-khatians') {
-        RoleMiddleware::authorize(['ac_land', 'admin']);
+        RoleMiddleware::authorize(['ac_land', 'land_office_assistant', 'settlement_records_officer', 'admin', 'auditor']);
         return RoleControlController::listFlaggedKhatians();
     }
     if ($method === 'POST' && preg_match('#^/acland/khatians/(\d+)/reconcile$#', $sub, $m)) {
@@ -314,19 +350,19 @@ return static function (string $method, string $uri, array $query, array $body):
 
     // 6. Bank Officer Controlling Routes (Protected by RoleMiddleware)
     if ($method === 'GET' && $sub === '/mortgages') {
-        RoleMiddleware::authorize(['bank_officer', 'admin']);
+        RoleMiddleware::authorize(['bank_officer', 'bank_manager', 'admin', 'auditor']);
         return WorkflowController::listMortgages();
     }
     if ($method === 'POST' && $sub === '/mortgages/collateral-check') {
-        RoleMiddleware::authorize(['bank_officer', 'admin']);
+        RoleMiddleware::authorize(['bank_officer', 'bank_manager', 'admin']);
         return WorkflowController::bankCollateralCheck($body);
     }
     if ($method === 'POST' && $sub === '/mortgages') {
-        $actor = RoleMiddleware::authorize(['bank_officer', 'admin']);
+        $actor = RoleMiddleware::authorize(['bank_officer', 'bank_manager', 'admin']);
         return WorkflowController::createMortgageLien($body, $actor);
     }
     if ($method === 'POST' && preg_match('#^/mortgages/(\d+)/release$#', $sub, $m)) {
-        $actor = RoleMiddleware::authorize(['bank_officer', 'admin']);
+        $actor = RoleMiddleware::authorize(['bank_officer', 'bank_manager', 'admin']);
         return WorkflowController::releaseMortgageLien((int) $m[1], $actor);
     }
     if ($method === 'GET' && preg_match('#^/mortgages/(\d+)/noc$#', $sub, $m)) {
@@ -335,14 +371,14 @@ return static function (string $method, string $uri, array $query, array $body):
 
     // 7. Audit Log, Bangla OCR & System Admin Routes
     if ($method === 'GET' && ($sub === '/audit-log' || $sub === '/audit-logs')) {
-        RoleMiddleware::authorize(['admin']);
+        RoleMiddleware::authorize(['admin', 'auditor']);
         return WorkflowController::getAuditLog();
     }
     if (($method === 'POST' || $method === 'GET') && ($sub === '/ocr/khatian-demo' || $sub === '/ocr-assist/sample')) {
         return WorkflowController::parseDummyKhatianOcr($body ?: $query);
     }
     if ($method === 'GET' && ($sub === '/admin/users' || $sub === '/users')) {
-        RoleMiddleware::authorize(['admin']);
+        RoleMiddleware::authorize(['admin', 'system_admin', 'auditor', 'support_agent', 'platform_moderator']);
         return SystemAdminController::adminListUsers($query['role'] ?? null, $query['q'] ?? null);
     }
     if ($method === 'POST' && ($sub === '/admin/users' || $sub === '/users')) {

@@ -1,0 +1,124 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/help".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/help
+	2 container root
+		3 container
+			4 button ভূ BhumiShield
+				5 text ভূ
+				6 text BhumiShield
+			7 button Switch Language
+			8 button High Contrast
+				9 image
+			10 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				11 text ত
+				12 image
+			13 button Menu
+				14 image
+		15 container
+			16 heading Help Center, FAQs & Bangladeshi Land Registry Glossary, Value: 1
+				17 image
+				18 text Help Center, FAQs & Bangladeshi Land Registry Glossary
+			19 text LandTech Guide v2.0 “Registration and mutation don’t talk to each other. We built the layer that checks every deed before it is registered, and proves afterwards that it was never tampered with.”
+			20 image
+			21 text ✔ Safe & Verified (Green) Seller is on the latest BS khatian, plot is unlocked, area is within share, and no active mortgage or dispute exists.
+			22 image
+			23 text ⚠ Needs Review (Amber) RS-to-BS khatian chain discrepancy, unresolved inheritance shares, or open citizen dispute under hearing.
+			24 image
+			25 text ✖ High Risk / Blocked (Red) Owner sale lock active, seller is not the owner, plot already sold/mortgaged, or cryptographic hash mismatch.
+			26 image
+			27 heading Official Land Service Fees & Ministry Circulars, Value: 2
+				28 text Official Land Service Fees & Ministry Circulars
+			29 text Official fees pursuant to Ministry of Land Circular dated 17 February 2026 (Memo: 31.00.0000.042.68.012.22.52) & statutory rules. Circular: 17 Feb 2026 FEE_KHATIAN_CERTIFIED_CIRCULAR_2026
+			30 heading Khatian Certified & Online Copy Fee (17 Feb 2026 Circular), Value: 3
+				31 text Khatian Certified & Online Copy Fee (17 Feb 2026 Circular)
+			32 text Gazetted Fee 120 ৳ FEE BREAKDOWN: Government Fee (per copy) : 100 ৳ Online Platform Service Charge : 20 ৳ Directorate of Land Records and Surveys (DLRS) CIRCULAR-2026-02-17-72
+			33 link Description: Official Portal ↗, Value: minland.gov.bd/pages/static-pages/694032df35ce18e1c0563b8d
+			34 text FEE_MOUZA_MAP_CIRCULAR_2026
+			35 heading Mouza Map Sheet Order Fee (17 Feb 2026 Circular), Value: 3
+				36 text Mouza Map Sheet Order Fee (17 Feb 2026 Circular)
+			37 text Gazetted Fee 545 ৳ FEE BREAKDOWN: Government Fee (per sheet) : 520 ৳ Online Processing Service Charge : 25 ৳ Directorate of Land Records and Surveys (DLRS) CIRCULAR-2026-02-17-72
+			38 link Description: Official Portal ↗, Value: minland.gov.bd/pages/static-pages/694032df35ce18e1c0563b8d
+			39 text FEE_EMUTATION_ACLAND
+			40 heading e-Mutation Application & DCR Fees, Value: 3
+				41 text e-Mutation Application & DCR Fees
+			42 text Gazetted Fee 1170 ৳ FEE BREAKDOWN: Court Fee (Application) : 20 ৳ Notice Serving Fee (Application) : 50 ৳ DCR Fee (Post-approval) : 1100 ৳ Office of the Assistant Commissioner (Land) MUT-NIRD-2026
+			43 link Description: Official Portal ↗, Value: mutation.land.gov.bd/nirdeshika
+			44 image
+			45 text Important Notice on Land Fees: BhumiShield never collects official fees or government payments. All application fees, court fees, and DCR charges must be paid directly on official government portals (e.g. eporcha.gov.bd, mutation.land.gov.bd). Deed registration duties are assessed authoritatively by the Sub-Registry Office.
+			46 image
+			47 heading Frequently Asked Questions & Answers, Value: 2
+				48 text Frequently Asked Questions & Answers
+			49 button 1. How does BhumiShield prevent land registry fraud in Bangladesh?
+				50 text 1. How does BhumiShield prevent land registry fraud in Bangladesh?
+				122 image
+			53 button 2. What is the "Check Before You Buy" feature?
+				54 text 2. What is the "Check Before You Buy" feature?
+				123 image
+			56 button 3. What is the Citizen Sale Lock and how does it work?
+				57 text 3. What is the Citizen Sale Lock and how does it work?
+				124 image
+			59 button 4. How does the CS, SA, RS, and BS Khatian lineage chain work across regions?
+				60 text 4. How does the CS, SA, RS, and BS Khatian lineage chain work across regions?
+				125 image
+			62 button 5. How does e-Mutation happen automatically after deed registration?
+				63 text 5. How does e-Mutation happen automatically after deed registration?
+				126 image
+			65 button 6. How do banks and financial institutions prevent double mortgaging?
+				66 text 6. How do banks and financial institutions prevent double mortgaging?
+				127 image
+			128 text Banks check real-time liens by plot Dag. Upon sanction, an immutable lien lock is stamped on the plot ledger, barring duplicate mortgages at other lenders. When repaid, a cryptographic verifiable Digital NOC is released.
+			68 image
+			69 heading Bangladeshi Land & Deed Registry Glossary, Value: 2
+				70 text Bangladeshi Land & Deed Registry Glossary
+			71 text সিএস জরিপ (CS Survey) Cadastral Survey (1888–1940) First scientific survey and mapping under British India; primary historical baseline for land title. এসএ খতিয়ান (SA Survey) State Acquisition (1956–1963) Record-of-rights created following abolition of the Zamindari system under the 1950 Tenancy Act. আরএস জরিপ (RS Survey) Revisional Survey (1965–1990s) District-wise revisional survey correcting past anomalies; remains the latest final record in multiple regions. বিএস / সিটি / বিডিএস জরিপ (BS & BDS) Bangladesh Survey / BDS Modern Bangladesh Survey (BS), Dhaka City Survey, and ongoing Bangladesh Digital Survey (BDS). Once finalized, it governs. সাফ কবলা দলিল (Saf Kabala) Absolute Sale Deed Deed effecting outright and irrevocable transfer of absolute land title for consideration. হেবা দলিল (Hiba) Gift / Transfer for Affection Unconditional gift transfer of land between close blood relatives under Islamic jurisprudence. নামজারি ও জমাভাগ (e-Mutation) e-Mutation & Revenue Splitting Post-registration process to create a new mutated khatian in the buyer’s name and assess rent. ডিজিটাল লিয়েন (Mortgage Lien) Bank Collateral Lien Collateral lien registered on a plot to secure commercial bank mortgage financing.
+			72 image
+			73 text Government Land Call Center & Grievance Cell For any land services or grievances, call Ministry of Land Call Center 16122 during official service hours (standard telecom charges apply). LAND HELPLINE ১৬১২২
+			74 button Go to Check-Before-You-Buy Wizard
+				75 image
+				76 text Go to Check-Before-You-Buy Wizard
+			77 button Verify Deed QR & Hash Chain
+				78 image
+				79 text Verify Deed QR & Hash Chain
+			80 button Open RBAC Matrix & 8 Demo Scenarios
+		81 container
+			82 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			83 content list
+				84 button Check Before Buy
+				85 button Land Sale Marketplace
+				86 button Cadastral Mouza Map
+				87 button Verify Deed QR Code
+				88 button Official Noticeboard
+				89 button Land Literacy Blog
+				90 button Offices & Service Points
+				91 button Citizen Sale Lock Vault
+			92 text Workspaces
+			93 content list
+				94 button Sub-Registrar Panel
+				95 button AC Land Tribunal
+				96 button Bank Lien & NOC
+				97 button National Ledger & Audit
+			98 text Support & Helpline
+			99 content list
+				100 text Land Service Call Center: 16122
+				101 text Ministry of Land (Official service hours)
+				102 text Check official service hours
+				103 button Frequently Asked Questions
+				104 button Bangladeshi Land Glossary
+			105 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+		106 container দ্রুত নেভিগেশন
+			107 button Home
+				108 image
+				109 text Home
+			110 button Check
+				111 image
+				112 text Check
+			113 button QR Scan, Help: QR Verify
+				114 image
+				115 text QR Scan
+			116 button Panel
+				117 image
+				118 text Panel
+			119 button Help
+				120 image
+				121 text Help
+
+The focused UI element is 65 button 6. How do banks and financial institutions prevent double mortgaging?

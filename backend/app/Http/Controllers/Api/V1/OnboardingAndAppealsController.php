@@ -262,15 +262,32 @@ final class OnboardingAndAppealsController
 
     public static function listAppeals(array $query = [], ?array $actor = null): array
     {
+        $user = $actor ?? JwtAuthService::getAuthenticatedUser();
+        if (!$user) {
+            throw new \RuntimeException(json_encode([
+                'status' => 401,
+                'code' => 'UNAUTHENTICATED',
+                'message_bn' => 'অনুমোদিত লগইন আবশ্যক।',
+                'message_en' => 'Authentication required.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
         $sql = 'SELECT a.*, p.plot_code, p.dag_no, p.dag_no_bn,
                        m.case_no, m.status AS mutation_status
                 FROM appeals a
                 JOIN plots p ON p.id = a.plot_id
-                JOIN mutations m ON m.id = a.mutation_id';
+                JOIN mutations m ON m.id = a.mutation_id
+                WHERE 1=1';
         $params = [];
 
+        // Scope to appellant if citizen (F02)
+        if ($user['role'] === 'citizen') {
+            $sql .= ' AND a.appellant_nid = ?';
+            $params[] = (string) ($user['nid'] ?? '');
+        }
+
         if (!empty($query['status'])) {
-            $sql .= ' WHERE a.status = ?';
+            $sql .= ' AND a.status = ?';
             $params[] = $query['status'];
         }
 
@@ -285,6 +302,16 @@ final class OnboardingAndAppealsController
 
     public static function getAppeal(string|int $idOrCode, ?array $actor = null): array
     {
+        $user = $actor ?? JwtAuthService::getAuthenticatedUser();
+        if (!$user) {
+            throw new \RuntimeException(json_encode([
+                'status' => 401,
+                'code' => 'UNAUTHENTICATED',
+                'message_bn' => 'অনুমোদিত লগইন আবশ্যক।',
+                'message_en' => 'Authentication required.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
         $appeal = null;
         if (is_numeric($idOrCode)) {
             $appeal = DB::selectOne(
@@ -314,6 +341,18 @@ final class OnboardingAndAppealsController
                 'message_bn' => 'আপিল রেকর্ডটি পাওয়া যায়নি।',
                 'message_en' => 'Appeal record not found.',
             ], JSON_UNESCAPED_UNICODE));
+        }
+
+        // Scope check for citizen (F02)
+        if ($user['role'] === 'citizen') {
+            if (($appeal['appellant_nid'] ?? '') !== ($user['nid'] ?? '')) {
+                throw new \RuntimeException(json_encode([
+                    'status' => 403,
+                    'code' => 'FORBIDDEN',
+                    'message_bn' => 'এই আপিল রেকর্ড দেখার অনুমতি আপনার নেই।',
+                    'message_en' => 'You are not authorized to view this appeal record.',
+                ], JSON_UNESCAPED_UNICODE));
+            }
         }
 
         return ['appeal' => PublicRecordService::forViewer($appeal)];
@@ -347,7 +386,7 @@ final class OnboardingAndAppealsController
             ]
         );
 
-        return self::getAppeal($appealId, $user);
+        return self::getAppeal($appealId, ['role' => $user['role'] ?? 'citizen', 'nid' => $appellantNid, 'username' => $user['username'] ?? 'citizen']);
     }
 
     public static function decideAppeal(string|int $idOrCode, array $payload, ?array $actor = null): array

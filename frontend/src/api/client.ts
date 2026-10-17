@@ -7,6 +7,20 @@ export const api = axios.create({
   timeout: 12000,
 });
 
+/**
+ * Unwraps a list response. Backend endpoints return one of three shapes:
+ *  - A bare array: `[{...}, {...}]`
+ *  - A paginated envelope: `{items: [...], total: N}`
+ *  - A single object (detail endpoints): `{...}` — returned as-is wrapped in an array
+ *    so that callers using `.map()` never crash on a non-list response.
+ */
+export function unwrapList<T = any>(res: any): T[] {
+  if (Array.isArray(res)) return res as T[];
+  if (res && Array.isArray(res.items)) return res.items as T[];
+  if (res && typeof res === 'object') return [res] as T[];
+  return [];
+}
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('bs_token');
   if (token) {
@@ -916,8 +930,8 @@ export const BhumiApi = {
     api.get(`/tickets/${codeOrId}`).then((r) => r.data),
 
   // Institutional Public Registers & Blog (Phase 3 & Tier B)
-  listOffices: (query?: any): Promise<any> =>
-    api.get('/offices', { params: query }).then((r) => r.data),
+  listOffices: (query?: any): Promise<any[]> =>
+    api.get('/offices', { params: query }).then((r) => unwrapList<any>(r.data)),
   listNotices: (query?: any): Promise<any> =>
     api.get('/notices', { params: query }).then((r) => r.data),
   getNotice: (slugOrId: string | number): Promise<any> =>
@@ -940,12 +954,45 @@ export const BhumiApi = {
     api.post('/listings', data).then((r) => r.data),
   createListingEnquiry: (codeOrId: string | number, data: any): Promise<any> =>
     api.post(`/listings/${codeOrId}/enquire`, data).then((r) => r.data),
+  listListingEnquiries: (codeOrId: string | number): Promise<any> =>
+    api.get(`/listings/${codeOrId}/enquiries`).then((r) => r.data),
+  updateListingEnquiry: (codeOrId: string | number, enquiryId: number, data: { status: string }): Promise<any> =>
+    api.patch(`/listings/${codeOrId}/enquiries/${enquiryId}`, data).then((r) => r.data),
+  createAppointment: (data: any): Promise<any> =>
+    api.post('/appointments', data).then((r) => r.data),
+  listAppointments: (params?: any): Promise<any> =>
+    api.get('/appointments', { params }).then((r) => r.data),
   getMapFeatures: (zoom?: number): Promise<any> =>
     api.get('/public/map/features', { params: { zoom } }).then((r) => r.data),
 
+  // F08 Field Operations — Field Inspection Reports & SLA Escalations
+  listFieldReports: (params?: { plot_id?: number }): Promise<any[]> =>
+    api.get('/field-reports', { params }).then((r) => unwrapList<any>(r.data)),
+  createFieldReport: (data: {
+    plot_id: number;
+    possession_status: string;
+    boundary_status: string;
+    tax_status: string;
+    remarks_bn: string;
+    latitude?: number;
+    longitude?: number;
+  }): Promise<any> =>
+    api.post('/field-reports', data).then((r) => r.data),
+  listSlaDispatches: (params?: { status?: string }): Promise<any[]> =>
+    api.get('/sla-dispatches', { params }).then((r) => unwrapList<any>(r.data)),
+  createSlaDispatch: (data: {
+    case_reference?: string;
+    target_role: string;
+    target_user_id?: number;
+    priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+    due_at?: string;
+    notes_bn: string;
+  }): Promise<any> =>
+    api.post('/sla-dispatches', data).then((r) => r.data),
+
   // Maker-Checker Staging Data Onboarding (Tier C Section 8.7)
-  listOnboardingBatches: (params?: { status?: string }): Promise<any> =>
-    api.get('/onboarding/batches', { params }).then((r) => r.data),
+  listOnboardingBatches: (params?: { status?: string }): Promise<any[]> =>
+    api.get('/onboarding/batches', { params }).then((r) => unwrapList<any>(r.data)),
   getOnboardingBatch: (idOrBatchNo: string | number): Promise<any> =>
     api.get(`/onboarding/batches/${idOrBatchNo}`).then((r) => r.data),
   createOnboardingBatch: (data: { record_type: string; items: any[]; [key: string]: any }): Promise<any> =>
@@ -954,8 +1001,8 @@ export const BhumiApi = {
     api.post(`/onboarding/batches/${idOrBatchNo}/decide`, { decision, officer_note }).then((r) => r.data),
 
   // Appellate Review Mirror & Legal Roles (Tier C Section 8.8)
-  listAppeals: (params?: { status?: string }): Promise<any> =>
-    api.get('/appeals', { params }).then((r) => r.data),
+  listAppeals: (params?: { status?: string }): Promise<any[]> =>
+    api.get('/appeals', { params }).then((r) => unwrapList<any>(r.data)),
   getAppeal: (idOrCode: string | number): Promise<any> =>
     api.get(`/appeals/${idOrCode}`).then((r) => r.data),
   createAppeal: (data: { mutation_id?: number; plot_id?: number; appellant_name_bn?: string; appellant_nid?: string; reason_bn: string }): Promise<any> =>

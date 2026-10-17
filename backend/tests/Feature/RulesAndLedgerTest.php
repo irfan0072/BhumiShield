@@ -437,7 +437,7 @@ final class RulesAndLedgerTest
         self::assertTrue($deedByCode !== null && $deedByCode['deed_no'] === 'DL-2026-1001');
 
         // 3. Citizen Document Vault (L0-L3)
-        $vault = \App\Http\Controllers\Api\V1\CitizenVaultAndTicketController::listPlotDocuments('PLT-DHK-SAV-0001');
+        $vault = \App\Http\Controllers\Api\V1\CitizenVaultAndTicketController::listPlotDocuments('PLT-DHK-SAV-0001', ['username' => 'citizen', 'role' => 'citizen', 'nid' => '9900001001']);
         self::assertTrue($vault['total'] >= 6, 'Must list all standard document templates');
         self::assertTrue($vault['verified_count'] >= 4, 'Plot 1 must have seeded L2/L3 documents');
         
@@ -461,13 +461,22 @@ final class RulesAndLedgerTest
         self::assertTrue((int) $trRes['current_step'] === 1);
         self::assertTrue($trRes['public_stage'] === 'START');
 
-        // Advance to step 8 (triggers biometric verification)
-        $advRes = \App\Services\TransferStateMachine::advanceStep($trRes['transfer_code'], [
-            'target_step' => 8,
-            'notes_bn' => 'বায়োমেট্রিক যাচাই সম্পাদন।',
-        ], ['username' => 'registrar', 'role' => 'sub_registrar']);
+        // Sequential step transitions to step 8
+        for ($s = 2; $s <= 8; $s++) {
+            $advRes = \App\Services\TransferStateMachine::advanceStep($trRes['transfer_code'], [
+                'target_step' => $s,
+                'notes_bn' => 'ধাপ ' . $s,
+            ], ['username' => 'citizen', 'role' => 'citizen', 'nid' => '9900001001']);
+        }
         self::assertTrue((int) $advRes['current_step'] === 8);
         self::assertTrue($advRes['public_stage'] === 'REGISTER');
+
+        // Advance to step 9 at registrar counter terminal (triggers biometric verification)
+        $advRes = \App\Services\TransferStateMachine::advanceStep($trRes['transfer_code'], [
+            'target_step' => 9,
+            'notes_bn' => 'বায়োমেট্রিক যাচাই সম্পাদন।',
+        ], ['username' => 'registrar', 'role' => 'sub_registrar']);
+        self::assertTrue((int) $advRes['current_step'] === 9);
         self::assertTrue(count($advRes['biometrics']) > 0, 'Biometric verification audit record must be generated');
         self::assertTrue($advRes['biometrics'][0]['match_status'] === 'MATCH');
 
@@ -476,8 +485,16 @@ final class RulesAndLedgerTest
         $apiPlot = $router('GET', '/api/v1/plots/PLT-DHK-SAV-0001', [], []);
         self::assertTrue(!empty($apiPlot['plot']['plot_code']));
 
+        $jwt = \App\Services\JwtAuthService::issueToken(['username' => 'citizen', 'role' => 'citizen', 'nid' => '9900001001']);
+        $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $jwt;
         $apiTransfers = $router('GET', '/api/v1/transfers', [], []);
-        self::assertTrue($apiTransfers['total'] >= 3);
+        self::assertTrue($apiTransfers['total'] >= 1, 'Citizen sees scoped transfers');
+
+        $adminJwt = \App\Services\JwtAuthService::issueToken(['username' => 'admin', 'role' => 'admin']);
+        $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $adminJwt;
+        $adminTransfers = $router('GET', '/api/v1/transfers', [], []);
+        unset($_SERVER['HTTP_AUTHORIZATION']);
+        self::assertTrue($adminTransfers['total'] >= 3, 'Admin sees all transfers across system');
     }
 }
 

@@ -1,0 +1,99 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/qr".
+0 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/qr
+	1 container root
+		2 container
+			3 button ভূ BhumiShield National Land & Deed Trust Platform
+				4 text ভূ
+				5 text BhumiShield
+				6 text National Land & Deed Trust Platform
+			7 container প্রধান মেনু
+				8 button All Services
+				9 button Land Sale
+				10 button Cadastral Map
+				11 button Check Land
+				12 button Verify Deed
+				13 button Notices
+				14 button Blog
+				15 button Offices
+				16 button Citizen Vault
+				17 button Help
+			18 button Switch Language
+			19 button High Contrast
+				20 image
+			21 button Sign In
+				22 image
+				23 text Sign In
+		24 container
+			101 heading QR & Hash Deed Verify, Value: 1
+				102 text QR & Hash Deed Verify
+			103 text Confirm Ed25519 signature and SHA-256 chain integrity from a deed number or QR.
+			104 heading Verify by deed number, Value: 2
+				105 image
+				106 text Verify by deed number
+			107 image
+			108 text Ed25519 + SHA-256 Scan a deed QR or enter a Deed Number below to verify its Ed25519 signature and SHA-256 hash chain. QUICK TEST DEMO DEEDS:
+			109 button DL-2026-1001 (Authentic Signed Deed)
+				110 image
+				111 text DL-2026-1001 (Authentic Signed Deed)
+			112 button DL-2026-1005 (Tampered Area Deed)
+				113 image
+				114 text DL-2026-1005 (Tampered Area Deed)
+			115 button DL-2026-1002 (Pending Mutation Deed)
+				116 image
+				117 text DL-2026-1002 (Pending Mutation Deed)
+			118 text field (settable) DL-2026-1001
+			119 image
+			120 button Verify Deed
+				121 image
+				122 text Verify Deed
+			123 image
+			124 text Live Tamper & Defense Simulation: 1-Click demo for hackathon evaluators If a rogue admin manually alters deed area in the DB, SHA-256 hash immediately fails and flags red.
+			125 button Simulate Tamper (Area -> 25 Decimal)
+				126 image
+				127 text Simulate Tamper (Area -> 25 Decimal)
+			128 button Restore Authentic Truth
+				129 image
+				130 text Restore Authentic Truth
+			145 image
+			146 text Failed to simulate tamper.
+			131 image
+			132 text ✔ Cryptographic Ed25519 Signature & Hash Chain Verified Deed DL-2026-1001 matches the Sub-Registry cryptographic Ed25519 signature. DL-2026-1001 Status: MUTATED
+			133 image QR for DL-2026-1001
+			134 button Print Certificate
+				135 image
+				136 text Print Certificate
+			137 heading Official Deed Metadata, Value: 3
+				138 image
+				139 text Official Deed Metadata
+			140 text Sub-Registry Record Deed Number DL-2026-1001 Deed Type SALE Mouza & Dag No Birulia , Dag 101 Seller মো. মিজানুর রহমান NID:  9900****17 Buyer মো. রফিকুল ইসলাম NID:  9900****01 Area & Share 20 Decimal ( Share: 1/1 ) Declared Value ৳  3,000,000
+			141 image
+			142 text Cryptographic Ledger & Ed25519 Audit CHAIN_INDEX # 1 STORED_CONTENT_HASH (নিবন্ধনকালে স্বাক্ষরিত হ্যাশ): d8bf4d44ee457fa7be03b20e41f286530338ba22d9df82db1960a18109922190 RECOMPUTED_HASH (বর্তমান ডাটাবেজের সরাসরি SHA-256 গণনা): d8bf4d44ee457fa7be03b20e41f286530338ba22d9df82db1960a18109922190 HASH_INTEGRITY: MATCHED (অক্ষত) ED25519_SIGNATURE: VALID (বৈধ) PREV_BLOCK_HASH (পূর্ববর্তী ব্লকের লিংক): 0000000000000000000000000000000000000000000000000000000000000000
+			143 image
+			144 text Each deed in BhumiShield is chained to the previous block. Silent data tampering is mathematically impossible.
+		76 container
+			77 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			78 content list
+				79 button Check Before Buy
+				80 button Land Sale Marketplace
+				81 button Cadastral Mouza Map
+				82 button Verify Deed QR Code
+				83 button Official Noticeboard
+				84 button Land Literacy Blog
+				85 button Offices & Service Points
+				86 button Citizen Sale Lock Vault
+			87 text Workspaces
+			88 content list
+				89 button Sub-Registrar Panel
+				90 button AC Land Tribunal
+				91 button Bank Lien & NOC
+				92 button National Ledger & Audit
+			93 text Support & Helpline
+			94 content list
+				95 text Land Service Call Center: 16122
+				96 text Ministry of Land (Official service hours)
+				97 text Check official service hours
+				98 button Frequently Asked Questions
+				99 button Bangladeshi Land Glossary
+			100 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 0 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/qr

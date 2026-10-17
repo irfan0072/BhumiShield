@@ -1,0 +1,72 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/home".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/home
+	2 container root
+		3 container
+			4 button ভূ BhumiShield National Land & Deed Trust Platform
+				5 text ভূ
+				6 text BhumiShield
+				7 text National Land & Deed Trust Platform
+			8 container প্রধান মেনু
+				9 button All Services
+				10 button Land Sale
+				11 button Cadastral Map
+				12 button Check Land
+				13 button Verify Deed
+				14 button Notices
+				15 button Blog
+				16 button Offices
+				17 button Citizen Vault
+				18 button Help
+			19 button Switch Language
+			20 button High Contrast
+				21 image
+			117 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				123 text ন
+				124 text নাজনীন সুলতানা (সহকারী সেটেলমেন্ট অফিসার - চেকার)
+				125 text Assistant Settlement Officer
+				118 image
+		27 container
+			126 image
+			127 image
+			128 text HTTP 403 • Forbidden Role
+			129 heading Access Denied — Insufficient Role Privileges, Value: 1
+				130 text Access Denied — Insufficient Role Privileges
+			131 text Access to this workspace is restricted according to strict RBAC policies. YOUR CURRENT PROFILE নাজনীন সুলতানা (সহকারী সেটেলমেন্ট অফিসার - চেকার) @ aso_dhaka  •  settlement_checker REQUIRED AUTHORIZED ROLE Citizen Land Portal Exclusive to authorized officer account
+			132 image
+			133 text Security Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.
+			134 button Switch to Authorized Account
+				135 image
+				136 text Switch to Authorized Account
+			137 button My Own Dashboard
+				138 image
+				139 text My Own Dashboard
+			140 button Home
+				141 image
+				142 text Home
+		45 container
+			46 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			47 content list
+				48 button Check Before Buy
+				49 button Land Sale Marketplace
+				50 button Cadastral Mouza Map
+				51 button Verify Deed QR Code
+				52 button Official Noticeboard
+				53 button Land Literacy Blog
+				54 button Offices & Service Points
+				55 button Citizen Sale Lock Vault
+			56 text Workspaces
+			57 content list
+				58 button Sub-Registrar Panel
+				59 button AC Land Tribunal
+				60 button Bank Lien & NOC
+				61 button National Ledger & Audit
+			62 text Support & Helpline
+			63 content list
+				64 text Land Service Call Center: 16122
+				65 text Ministry of Land (Official service hours)
+				66 text Check official service hours
+				67 button Frequently Asked Questions
+				68 button Bangladeshi Land Glossary
+			69 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/home

@@ -1,0 +1,192 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/home".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/home
+	2 container root
+		3 container
+			4 button ভূ BhumiShield National Land & Deed Trust Platform
+				5 text ভূ
+				6 text BhumiShield
+				364 text National Land & Deed Trust Platform
+			365 container প্রধান মেনু
+				366 button All Services
+				367 button Land Sale
+				368 button Cadastral Map
+				369 button Check Land
+				370 button Verify Deed
+				371 button Notices
+				372 button Blog
+				373 button Offices
+				374 button Citizen Vault
+				375 button Help
+			7 button Switch Language
+			8 button High Contrast
+				9 image
+			357 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				363 text ম
+				376 text মো. রফিকুল ইসলাম (নাগরিক)
+				377 text Citizen Land Portal
+				358 image
+		378 container
+			379 text ম
+			380 heading Md. Rafiqul Islam, Value: 3
+				381 text Md. Rafiqul Islam
+			382 text NID:  ****1001
+			383 button Collapse Menu
+				384 image
+			385 container
+				386 text CITIZEN SERVICES
+				387 button Overview & KPIs
+					388 image
+					389 text Overview & KPIs
+				390 button My Land & Plots 3, Help: My Land & Plots
+					391 image
+					392 text My Land & Plots
+					393 text 3
+				394 button Document Vault (L0-L3) ✔ 6, Help: Document Vault (L0-L3)
+					395 image
+					396 text Document Vault (L0-L3)
+					397 text ✔ 6
+				398 button My Registered Deeds 6, Help: My Registered Deeds
+					399 image
+					400 text My Registered Deeds
+					401 text 6
+				402 button 13-Step Transfer Pipeline 5, Help: 13-Step Transfer Pipeline
+					403 image
+					404 text 13-Step Transfer Pipeline
+					405 text 5
+				406 button Disputes & Objections
+					407 image
+					408 text Disputes & Objections
+				409 button Support Tickets & Helpdesk 2, Help: Support Tickets & Helpdesk
+					410 image
+					411 text Support Tickets & Helpdesk
+					412 text 2
+				413 button Profile & Demo Switcher
+					414 image
+					415 text Profile & Demo Switcher
+			416 image
+			417 text Land Hotline: 16122
+			418 text Call toll-free for land and khatian inquiries.
+			419 button Check Plot
+			420 button QR Deed
+			421 container
+				422 text Citizen Portal / নিবন্ধিত দলিল রেজিস্টার
+				423 heading My Registered Deeds, Value: 2
+					424 text My Registered Deeds
+				425 text Demo Profile:
+				426 button মোঃ রফিকুল ইসলাম
+				427 button রাবেয়া খাতুন (লক)
+				428 button আব্দুল করিম (বন্ধক)
+				429 button Refresh Data
+					430 image
+				431 button Check Before Buying
+					432 image
+					433 text Check Before Buying
+			434 heading Registered Deeds in Hash Ledger, Value: 3
+				435 text Registered Deeds in Hash Ledger
+			436 text Cryptographically sealed and signed by Sub-Registrar
+			437 text 6  টি দলিল প্রাপ্ত
+			438 image
+			439 text DL-2024-1070
+			440 text বিরুলিয়া  • দাগ  113 MUTATED Area:
+			441 container
+				442 text 8  শতক
+			443 text Deed Value:
+			444 container
+				445 text ৳  2950000
+			446 text Ed25519 Signed: 
+			447 text VALID
+			448 button View Deed QR & Proof
+				449 image
+				450 text View Deed QR & Proof
+			451 image
+			452 text DL-2018-1056
+			453 text পানাম  • দাগ  319 MUTATED Area:
+			454 container
+				455 text 8  শতক
+			456 text Deed Value:
+			457 container
+				458 text ৳  2600000
+			459 text Ed25519 Signed: 
+			460 text VALID
+			461 button View Deed QR & Proof
+				462 image
+				463 text View Deed QR & Proof
+			464 image
+			465 text DL-2020-1042
+			466 text পানাম  • দাগ  305 MUTATED Area:
+			467 container
+				468 text 8  শতক
+			469 text Deed Value:
+			470 container
+				471 text ৳  2250000
+			472 text Ed25519 Signed: 
+			473 text VALID
+			474 button View Deed QR & Proof
+				475 image
+				476 text View Deed QR & Proof
+			477 image
+			478 text DL-2022-1028
+			479 text বাসন  • দাগ  211 MUTATED Area:
+			480 container
+				481 text 8  শতক
+			482 text Deed Value:
+			483 container
+				484 text ৳  1900000
+			485 text Ed25519 Signed: 
+			486 text VALID
+			487 button View Deed QR & Proof
+				488 image
+				489 text View Deed QR & Proof
+			490 image
+			491 text DL-2024-1014
+			492 text বিরুলিয়া  • দাগ  117 MUTATED Area:
+			493 container
+				494 text 8  শতক
+			495 text Deed Value:
+			496 container
+				497 text ৳  1550000
+			498 text Ed25519 Signed: 
+			499 text VALID
+			500 button View Deed QR & Proof
+				501 image
+				502 text View Deed QR & Proof
+			503 image
+			504 text DL-2026-1001
+			505 text বিরুলিয়া  • দাগ  101 MUTATED Area:
+			506 container
+				507 text 20  শতক
+			508 text Deed Value:
+			509 container
+				510 text ৳  3000000
+			511 text Ed25519 Signed: 
+			512 text VALID
+			513 button View Deed QR & Proof
+				514 image
+				515 text View Deed QR & Proof
+		268 container
+			269 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			270 content list
+				271 button Check Before Buy
+				272 button Land Sale Marketplace
+				273 button Cadastral Mouza Map
+				274 button Verify Deed QR Code
+				275 button Official Noticeboard
+				276 button Land Literacy Blog
+				277 button Offices & Service Points
+				278 button Citizen Sale Lock Vault
+			279 text Workspaces
+			280 content list
+				281 button Sub-Registrar Panel
+				282 button AC Land Tribunal
+				283 button Bank Lien & NOC
+				284 button National Ledger & Audit
+			285 text Support & Helpline
+			286 content list
+				287 text Land Service Call Center: 16122
+				288 text Ministry of Land (Official service hours)
+				289 text Check official service hours
+				290 button Frequently Asked Questions
+				291 button Bangladeshi Land Glossary
+			292 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 398 button My Registered Deeds 6, Help: My Registered Deeds

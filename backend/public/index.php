@@ -25,6 +25,27 @@ $router = require __DIR__ . '/../routes/api.php';
 
 try {
     $response = $router($method, $uri, $query, $body);
+
+    // Binary dispatch envelope (F09: signed notice PDFs). If a route returns
+    // ['_binary' => true, 'status' => int, 'content_type' => '...',
+    //  'content_disposition' => '...', 'body' => '...'], stream the raw bytes
+    // and skip JSON encoding. Any other return is JSON-encoded as before.
+    if (is_array($response) && ($response['_binary'] ?? false) === true) {
+        $status = (int) ($response['status'] ?? 200);
+        $contentType = (string) ($response['content_type'] ?? 'application/octet-stream');
+        $disposition = (string) ($response['content_disposition'] ?? '');
+        // Clear any pre-set JSON content type from the bootstrap headers.
+        header_remove('Content-Type');
+        http_response_code($status);
+        header("Content-Type: {$contentType}");
+        if ($disposition !== '') {
+            header("Content-Disposition: {$disposition}");
+        }
+        header('Content-Length: ' . strlen((string) $response['body']));
+        echo (string) $response['body'];
+        exit;
+    }
+
     http_response_code(200);
     echo json_encode($response, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 } catch (\Throwable $e) {

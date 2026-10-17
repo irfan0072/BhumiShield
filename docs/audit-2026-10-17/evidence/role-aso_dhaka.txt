@@ -1,0 +1,108 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/auth".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/auth
+	2 container root
+		3 container
+			4 button ভূ BhumiShield
+				5 text ভূ
+				6 text BhumiShield
+			19 button Switch Language
+			20 button High Contrast
+				21 image
+			429 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				430 text ন
+				431 image
+			364 button Menu
+				365 image
+		25 container
+			385 text ভূ
+			386 heading BhumiShield Account Sign-In, Value: 1
+				387 text BhumiShield Account Sign-In
+			388 text Independent land-record workflow and verification application
+			389 button Sign In
+				390 image
+				391 text Sign In
+			392 button Citizen Register
+				393 image
+				394 text Citizen Register
+			432 button My Profile
+				433 image
+				434 text My Profile
+			435 image
+			436 text Signed in successfully!
+			395 heading Sign In to Your Workspace, Value: 2
+				396 text Sign In to Your Workspace
+			397 text Enter citizen or authorized officer credentials
+			398 text Username or NID:
+			399 container
+				400 text field (settable) aso_dhaka
+				401 image
+			402 text Password:
+			403 container
+				404 text field (settable) <redacted>
+				405 image
+				406 button Show password
+					407 image
+			408 button Sign In to Workspace
+				409 image
+				410 text Sign In to Workspace
+			411 container
+				412 text Don't have an account? 
+				413 button Register as Citizen
+			414 image
+			415 text Security Standards & Protocol
+			416 content list
+				417 container
+					418 text Ed25519 ক্রিপ্টোগ্রাফিক সুরক্ষা দলিলের জন্য Ed25519 স্বাক্ষর এবং সেশনের জন্য মেয়াদযুক্ত ও প্রত্যাহারযোগ্য টোকেন ব্যবহৃত হয়।
+				419 container
+					420 text কঠোর রোল-ভিত্তিক প্রবেশাধিকার সাব-রেজিস্ট্রার, এসি ল্যান্ড ও ব্যাংক অফিসার অ্যাকাউন্ট শুধুমাত্র সংশ্লিষ্ট প্রশাসনিক দপ্তর কর্তৃক ইস্যু করা হয়।
+				421 container
+					422 text কেন্দ্রীয় অডিট ট্রেইল সমর্থিত রেকর্ড পরিবর্তন ও দাপ্তরিক সিদ্ধান্ত অডিট ট্রেইলে নথিভুক্ত হয়।
+			423 image
+			424 text Emergency Support: National Helpline 16122
+			425 button (collapsed) Evaluator Prototype Test Credentials তথ্য দেখুন ▼, Secondary Actions: Expand
+				426 image
+				427 text Evaluator Prototype Test Credentials
+				428 text তথ্য দেখুন ▼
+		282 container
+			283 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			284 content list
+				285 button Check Before Buy
+				286 button Land Sale Marketplace
+				287 button Cadastral Mouza Map
+				288 button Verify Deed QR Code
+				289 button Official Noticeboard
+				290 button Land Literacy Blog
+				291 button Offices & Service Points
+				292 button Citizen Sale Lock Vault
+			293 text Workspaces
+			294 content list
+				295 button Sub-Registrar Panel
+				296 button AC Land Tribunal
+				297 button Bank Lien & NOC
+				298 button National Ledger & Audit
+			299 text Support & Helpline
+			300 content list
+				301 text Land Service Call Center: 16122
+				302 text Ministry of Land (Official service hours)
+				303 text Check official service hours
+				304 button Frequently Asked Questions
+				305 button Bangladeshi Land Glossary
+			306 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+		366 container দ্রুত নেভিগেশন
+			367 button Home
+				368 image
+				369 text Home
+			370 button Check
+				371 image
+				372 text Check
+			373 button QR Scan, Help: QR Verify
+				374 image
+				375 text QR Scan
+			376 button Panel
+				377 image
+				378 text Panel
+			379 button Help
+				380 image
+				381 text Help
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/auth

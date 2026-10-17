@@ -1,0 +1,18 @@
+{
+  "backend": {
+    "domain": 20,
+    "audit_regression": 29,
+    "tier_b": 6,
+    "tier_c": 6,
+    "total_passed": 61,
+    "failed": 0
+  },
+  "frozen_frontend": {
+    "typecheck": "passed",
+    "production_build": "passed",
+    "javascript_bytes_approx": 1046390,
+    "javascript_gzip_bytes_approx": 248300
+  },
+  "core_workflow_ui_acceptance": "incomplete; see audit coverage table",
+  "production_ready": false
+}

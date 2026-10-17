@@ -1,0 +1,88 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/auth".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/registrar
+	2 container root
+		3 container
+			4 button
+			5 button
+				6 image
+			7 button
+				8 image
+			9 button
+				10 image
+			11 button
+				12 image
+			13 button
+				14 image
+			15 button
+				16 image
+			17 button
+				18 image
+			19 button
+				20 image
+			21 button
+				22 image
+			23 button
+				24 image
+		25 container
+			26 button
+				27 image
+			28 text field (settable)
+			29 image
+			30 button
+			31 button
+				32 image
+			33 pop up button (collapsed) Secondary Actions: Expand
+				34 image
+		35 container
+			36 heading 1
+			37 button
+			38 image
+			39 button
+			40 image
+			41 button
+			42 image
+			43 button
+			44 image
+			45 heading 2
+				46 image
+			47 button
+				48 image
+			49 button
+				50 image
+			51 button
+				52 image
+			53 button
+				54 image
+			55 button
+				56 image
+			57 button
+				58 image
+			59 button
+				60 image
+			61 image
+			62 text field (settable)
+			63 button
+			64 button
+			65 button
+			66 button
+			67 button
+		68 container
+			69 content list
+				70 button
+				71 button
+				72 button
+				73 button
+				74 button
+				75 button
+				76 button
+				77 button
+			78 content list
+				79 button
+				80 button
+				81 button
+				82 button
+			83 content list
+				84 button
+				85 button
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/registrar

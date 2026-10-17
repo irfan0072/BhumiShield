@@ -1,0 +1,132 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/home".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/home
+	2 container root
+		3 container
+			4 button ভূ BhumiShield
+				5 text ভূ
+				6 text BhumiShield
+			7 button Switch Language
+			8 button High Contrast
+				9 image
+			357 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				363 text ম
+				358 image
+			13 button Menu
+				14 image
+		364 container
+			365 button
+				366 image
+			367 text Citizen Portal / সারসংক্ষেপ ও পরিসংখ্যান
+			368 heading Overview & KPIs, Value: 2
+				369 text Overview & KPIs
+			370 button Refresh Data
+				371 image
+			372 button Check Before Buying
+				373 image
+				374 text Check Before Buying
+			375 image
+			376 text NID-Verified Citizen Vault
+			377 heading Welcome, Md. Rafiqul Islam!, Value: 1
+				378 text Welcome, Md. Rafiqul Islam!
+			379 text Your registered land parcels, cryptographic deeds, owner sale locks, and mutation transfers are fully secured.
+			380 button View My Land
+				381 image
+				382 text View My Land
+			383 button + Start Transfer
+				384 image
+				385 text + Start Transfer
+			386 text MY PLOTS (BS)
+			387 container
+				388 text 3  টি দাগ
+			389 text View in Vault
+			390 image
+			391 image
+			392 text SALE-LOCKED
+			393 container
+				394 text 0  টি সুরক্ষিত
+			395 text Fraud Protection Active
+			396 image
+			397 text LINKED DEEDS
+			398 container
+				399 text 6  টি দলিল
+			400 text Ed25519 Verified
+			401 image
+			402 text ACTIVE TRANSFERS
+			403 container
+				404 text 5  টি কেস
+			405 text 13-Step Machine
+			406 image
+			407 image
+			408 heading My Land Parcels (BS Record), Value: 3
+				409 text My Land Parcels (BS Record)
+			410 button View All →
+			411 text বিরুলিয়া  — দাগ  101 🔓 উন্মুক্ত Khatian: 4101  •  Area:
+			412 container
+				413 text 20  শতক
+			414 button Lock
+				415 image
+				416 text Lock
+			417 text বিরুলিয়া  — দাগ  113 🔓 উন্মুক্ত Khatian: 4113  •  Area:
+			418 container
+				419 text 23  শতক
+			420 button Lock
+				421 image
+				422 text Lock
+			423 text বাসন  — দাগ  219 🔓 উন্মুক্ত Khatian: 4139  •  Area:
+			424 container
+				425 text 17  শতক
+			426 button Lock
+				427 image
+				428 text Lock
+			429 image
+			430 heading Transfer Pipeline In-Progress, Value: 3
+				431 text Transfer Pipeline In-Progress
+			432 button Open Tracker →
+			433 text TR-2026-000105 DRAFT
+			434 text বিরুলিয়া
+			435 text  — দাগ  106  ( 0.01  শতক) ধাপ  1  / ১৩ 8 % সম্পন্ন TR-2026-000104 COMPLETED
+			436 text বিরুলিয়া
+			437 text  — দাগ  101  ( 5  শতক) ধাপ  13  / ১৩ 100 % সম্পন্ন
+		268 container
+			269 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			270 content list
+				271 button Check Before Buy
+				272 button Land Sale Marketplace
+				273 button Cadastral Mouza Map
+				274 button Verify Deed QR Code
+				275 button Official Noticeboard
+				276 button Land Literacy Blog
+				277 button Offices & Service Points
+				278 button Citizen Sale Lock Vault
+			279 text Workspaces
+			280 content list
+				281 button Sub-Registrar Panel
+				282 button AC Land Tribunal
+				283 button Bank Lien & NOC
+				284 button National Ledger & Audit
+			285 text Support & Helpline
+			286 content list
+				287 text Land Service Call Center: 16122
+				288 text Ministry of Land (Official service hours)
+				289 text Check official service hours
+				290 button Frequently Asked Questions
+				291 button Bangladeshi Land Glossary
+			292 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+		293 container দ্রুত নেভিগেশন
+			294 button Home
+				295 image
+				296 text Home
+			297 button Check
+				298 image
+				299 text Check
+			300 button QR Scan, Help: QR Verify
+				301 image
+				302 text QR Scan
+			303 button Panel
+				304 image
+				305 text Panel
+			306 button Help
+				307 image
+				308 text Help
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/home

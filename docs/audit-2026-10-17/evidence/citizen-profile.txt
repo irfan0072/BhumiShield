@@ -1,0 +1,143 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/home".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/home
+	2 container root
+		3 container
+			4 button ভূ BhumiShield National Land & Deed Trust Platform
+				5 text ভূ
+				6 text BhumiShield
+				364 text National Land & Deed Trust Platform
+			365 container প্রধান মেনু
+				366 button All Services
+				367 button Land Sale
+				368 button Cadastral Map
+				369 button Check Land
+				370 button Verify Deed
+				371 button Notices
+				372 button Blog
+				373 button Offices
+				374 button Citizen Vault
+				375 button Help
+			7 button Switch Language
+			8 button High Contrast
+				9 image
+			357 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				363 text ম
+				376 text মো. রফিকুল ইসলাম (নাগরিক)
+				377 text Citizen Land Portal
+				358 image
+		378 container
+			379 text ম
+			380 heading Md. Rafiqul Islam, Value: 3
+				381 text Md. Rafiqul Islam
+			382 text NID:  ****1001
+			383 button Collapse Menu
+				384 image
+			385 container
+				386 text CITIZEN SERVICES
+				387 button Overview & KPIs
+					388 image
+					389 text Overview & KPIs
+				390 button My Land & Plots 3, Help: My Land & Plots
+					391 image
+					392 text My Land & Plots
+					393 text 3
+				394 button Document Vault (L0-L3) ✔ 6, Help: Document Vault (L0-L3)
+					395 image
+					396 text Document Vault (L0-L3)
+					397 text ✔ 6
+				398 button My Registered Deeds 6, Help: My Registered Deeds
+					399 image
+					400 text My Registered Deeds
+					401 text 6
+				402 button 13-Step Transfer Pipeline 5, Help: 13-Step Transfer Pipeline
+					403 image
+					404 text 13-Step Transfer Pipeline
+					405 text 5
+				406 button Disputes & Objections
+					407 image
+					408 text Disputes & Objections
+				409 button Support Tickets & Helpdesk 2, Help: Support Tickets & Helpdesk
+					410 image
+					411 text Support Tickets & Helpdesk
+					412 text 2
+				413 button Profile & Demo Switcher
+					414 image
+					415 text Profile & Demo Switcher
+			416 image
+			417 text Land Hotline: 16122
+			418 text Call toll-free for land and khatian inquiries.
+			419 button Check Plot
+			420 button QR Deed
+			421 container
+				422 text Citizen Portal / প্রোফাইল ও এনআইডি সুইচ
+				423 heading Profile & Demo Switcher, Value: 2
+					424 text Profile & Demo Switcher
+				425 text Demo Profile:
+				426 button মোঃ রফিকুল ইসলাম
+				427 button রাবেয়া খাতুন (লক)
+				428 button আব্দুল করিম (বন্ধক)
+				429 button Refresh Data
+					430 image
+				431 button Check Before Buying
+					432 image
+					433 text Check Before Buying
+			434 text ম
+			435 container
+				436 image
+				437 text NID Verified Citizen
+			438 heading মো. রফিকুল ইসলাম, Value: 3
+				439 text মো. রফিকুল ইসলাম
+			440 container
+				441 text Md. Rafiqul Islam  • NID:  9900001001
+			442 text Mobile Number:
+			443 text ০১৭****৫৮৯১
+			444 text Permanent Address:
+			445 text বিরুলিয়া, সাভার, ঢাকা
+			446 text Auth Protocol:
+			447 text Laravel Sanctum + Ed25519 Token
+			448 text Vault Plots:
+			449 container
+				450 text 3  টি রেকর্ড
+			451 image
+			452 heading Hackathon Judge & Demo Profile Switcher, Value: 4
+				453 text Hackathon Judge & Demo Profile Switcher
+			454 text Instantly switch between pre-seeded test scenarios:
+			455 button মোঃ রফিকুল ইসলাম দাগ ১০১ • নিষ্কণ্টক মালিক
+				456 text মোঃ রফিকুল ইসলাম
+				457 text দাগ ১০১ • নিষ্কণ্টক মালিক
+			458 button মোসাঃ রাবেয়া খাতুন দাগ ১০২ • বিক্রয় লক সক্রিয়
+				459 text মোসাঃ রাবেয়া খাতুন
+				460 text দাগ ১০২ • বিক্রয় লক সক্রিয়
+			461 button মোঃ আব্দুল করিম দাগ ১০৩ • ব্যাংক বন্ধকযুক্ত
+				462 text মোঃ আব্দুল করিম
+				463 text দাগ ১০৩ • ব্যাংক বন্ধকযুক্ত
+			464 container
+				465 text field (settable) 9900001001
+				466 button Lookup
+		268 container
+			269 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			270 content list
+				271 button Check Before Buy
+				272 button Land Sale Marketplace
+				273 button Cadastral Mouza Map
+				274 button Verify Deed QR Code
+				275 button Official Noticeboard
+				276 button Land Literacy Blog
+				277 button Offices & Service Points
+				278 button Citizen Sale Lock Vault
+			279 text Workspaces
+			280 content list
+				281 button Sub-Registrar Panel
+				282 button AC Land Tribunal
+				283 button Bank Lien & NOC
+				284 button National Ledger & Audit
+			285 text Support & Helpline
+			286 content list
+				287 text Land Service Call Center: 16122
+				288 text Ministry of Land (Official service hours)
+				289 text Check official service hours
+				290 button Frequently Asked Questions
+				291 button Bangladeshi Land Glossary
+			292 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 413 button Profile & Demo Switcher

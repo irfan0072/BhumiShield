@@ -1,0 +1,164 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/acland".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/acland
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা BCC LandTech
+				83 text ভূ
+				84 text ভূমি সুরক্ষা
+				85 text BCC LandTech
+			5 button Toggle Sidebar
+				6 image
+			86 text AC Land Panel Upazila Land Office • Ministry of Land
+			87 container Sidebar Navigation
+				88 text MENU
+				89 button e-Mutation Queue (Approval)
+					90 image
+					91 text e-Mutation Queue (Approval)
+				92 button Khatian Reconciliation
+					93 image
+					94 text Khatian Reconciliation
+				95 button Dispute Tribunal
+					96 image
+					97 text Dispute Tribunal
+				98 button Approve Staging Batches
+					99 image
+					100 text Approve Staging Batches
+				101 button Khatian Explorer
+					102 image
+					103 text Khatian Explorer
+				104 button Verify Deed
+					105 image
+					106 text Verify Deed
+			19 button Public Portal
+				20 image
+				107 text Public Portal
+			21 button Sign Out
+				22 image
+				108 text Sign Out
+		23 container
+			24 button Home
+				25 image
+				109 text Home
+			110 text / AC Land Panel
+			26 text field (settable)
+			27 image
+			28 button বাং
+			29 button Contrast
+				30 image
+			31 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				111 text ত
+				112 text তানভীর আহমেদ (সহকারী কমিশনার - ভূমি)
+				113 text AC Land Panel
+				32 image
+		33 container
+			34 heading AC Land Console, Value: 1
+				114 text AC Land Console
+			115 text Approve e-mutations, reconcile khatians, and hear citizen dispute cases.
+			116 text PENDING E-MUTATIONS 2
+			35 button Review Mutation Queue →
+			36 image
+			117 text KHATIAN DISCREPANCIES 2
+			37 button Resolve Discrepancies →
+			38 image
+			118 text DISPUTE TRIBUNAL 0
+			39 button Review Disputes →
+			40 image
+			119 text KHATIAN & DEED TRUST 97.5 %
+			41 button Verify Deed & Ledger →
+			42 image
+			43 heading e-Mutation Queue, Khatian Chain Reconciliation & Dispute Tribunal, Value: 2
+				44 image
+				120 text e-Mutation Queue, Khatian Chain Reconciliation & Dispute Tribunal
+			121 text Approve e-Mutation cases queued from Sub-Registry and update BS Khatian owner shares:
+			45 button e-Mutation Queue (Approval) (3)
+				46 image
+				122 text e-Mutation Queue (Approval)
+				123 text  (
+				124 text 3
+				125 text )
+			47 button Khatian & Heirs (2)
+				48 image
+				126 text Khatian & Heirs
+				127 text  (
+				128 text 2
+				129 text )
+			49 button Dispute Tribunal (0)
+				50 image
+				130 text Dispute Tribunal
+				131 text  (
+				132 text 0
+				133 text )
+			51 button Approve Staging Batches (undefined)
+				52 image
+				134 text Approve Staging Batches
+				135 text  (
+				136 text undefined
+				137 text )
+			53 button Appeals (undefined)
+				54 image
+				138 text Appeals
+				139 text  (
+				140 text undefined
+				141 text )
+			55 button Khatian Explorer
+				56 image
+				142 text Khatian Explorer
+			57 button Verify Deed
+				58 image
+				143 text Verify Deed
+			185 heading Officer Cryptographic Deed & Ledger Verifier, Value: 3
+				186 image
+				187 text Officer Cryptographic Deed & Ledger Verifier
+			188 text Verify Ed25519 digital signatures, SHA-256 ledger hashes, and document authenticity in-panel:
+			189 container
+				190 text field (settable) DL-2026-1001
+				191 image
+			192 button Verify
+			193 text Sample Records:
+			194 button DL-2026-1001 (বৈধ দলিল)
+			195 button DL-2024-1001 (২০২৪ দলিল)
+			196 button DL-2025-1004 (হেবা দলিল)
+			197 button NOC-2026-0001 (ব্যাংক NOC)
+			198 image
+			199 text ✔ CRYPTOGRAPHIC ED25519 SIGNATURE & HASH CHAIN VERIFIED # DL-2026-1001 Deed DL-2026-1001 matches the Sub-Registry cryptographic Ed25519 signature.
+			200 button View Certificate
+				201 image
+				202 text View Certificate
+			203 button Restore Authentic
+				204 image
+				205 text Restore Authentic
+			206 heading Deed Records & Parties, Value: 4
+				207 image
+				208 text Deed Records & Parties
+			209 text Deed Number: DL-2026-1001 Deed Type: SALE Mouza & Dag: Birulia  •  Dag 101 Area Decimal: 20 decimals Seller / Grantor: মো. মিজানুর রহমান NID:  9900****17 Buyer / Grantee: মো. রফিকুল ইসলাম NID:  9900****01 Declared Value: ৳ 0 Registration Status: MUTATED
+			210 heading Cryptographic Proof, Value: 4
+				211 image
+				212 text Cryptographic Proof
+			213 text Signature Algorithm: Ed25519-EdDSA (RFC 8032) Ed25519 Signature: 0xed25519_authentic_signature_verified Ledger Block Hash: 0xsha256_block_hash_verified_immutable Block Index:  # 1 ✔  Immutable on Ledger
+		65 container
+			178 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			66 content list
+				67 button Check Before Buy
+				68 button Land Sale Marketplace
+				69 button Cadastral Mouza Map
+				70 button Verify Deed QR Code
+				71 button Official Noticeboard
+				72 button Land Literacy Blog
+				73 button Offices & Service Points
+				74 button Citizen Sale Lock Vault
+			179 text Workspaces
+			75 content list
+				76 button Sub-Registrar Panel
+				77 button AC Land Tribunal
+				78 button Bank Lien & NOC
+				79 button National Ledger & Audit
+			180 text Support & Helpline
+			80 content list
+				181 text Land Service Call Center: 16122
+				182 text Ministry of Land (Official service hours)
+				183 text Check official service hours
+				81 button Frequently Asked Questions
+				82 button Bangladeshi Land Glossary
+			184 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 57 button Verify Deed

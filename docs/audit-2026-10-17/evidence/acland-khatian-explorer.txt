@@ -1,0 +1,852 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/acland".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/acland
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা BCC LandTech
+				83 text ভূ
+				84 text ভূমি সুরক্ষা
+				85 text BCC LandTech
+			5 button Toggle Sidebar
+				6 image
+			86 text AC Land Panel Upazila Land Office • Ministry of Land
+			87 container Sidebar Navigation
+				88 text MENU
+				89 button e-Mutation Queue (Approval)
+					90 image
+					91 text e-Mutation Queue (Approval)
+				92 button Khatian Reconciliation
+					93 image
+					94 text Khatian Reconciliation
+				95 button Dispute Tribunal
+					96 image
+					97 text Dispute Tribunal
+				98 button Approve Staging Batches
+					99 image
+					100 text Approve Staging Batches
+				101 button Khatian Explorer
+					102 image
+					103 text Khatian Explorer
+				104 button Verify Deed
+					105 image
+					106 text Verify Deed
+			19 button Public Portal
+				20 image
+				107 text Public Portal
+			21 button Sign Out
+				22 image
+				108 text Sign Out
+		23 container
+			24 button Home
+				25 image
+				109 text Home
+			110 text / AC Land Panel
+			26 text field (settable)
+			27 image
+			28 button বাং
+			29 button Contrast
+				30 image
+			31 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				111 text ত
+				112 text তানভীর আহমেদ (সহকারী কমিশনার - ভূমি)
+				113 text AC Land Panel
+				32 image
+		33 container
+			34 heading AC Land Console, Value: 1
+				114 text AC Land Console
+			115 text Approve e-mutations, reconcile khatians, and hear citizen dispute cases.
+			116 text PENDING E-MUTATIONS 2
+			35 button Review Mutation Queue →
+			36 image
+			117 text KHATIAN DISCREPANCIES 2
+			37 button Resolve Discrepancies →
+			38 image
+			118 text DISPUTE TRIBUNAL 0
+			39 button Review Disputes →
+			40 image
+			119 text KHATIAN & DEED TRUST 97.5 %
+			41 button Verify Deed & Ledger →
+			42 image
+			43 heading e-Mutation Queue, Khatian Chain Reconciliation & Dispute Tribunal, Value: 2
+				44 image
+				120 text e-Mutation Queue, Khatian Chain Reconciliation & Dispute Tribunal
+			121 text Approve e-Mutation cases queued from Sub-Registry and update BS Khatian owner shares:
+			45 button e-Mutation Queue (Approval) (3)
+				46 image
+				122 text e-Mutation Queue (Approval)
+				123 text  (
+				124 text 3
+				125 text )
+			47 button Khatian & Heirs (2)
+				48 image
+				126 text Khatian & Heirs
+				127 text  (
+				128 text 2
+				129 text )
+			49 button Dispute Tribunal (0)
+				50 image
+				130 text Dispute Tribunal
+				131 text  (
+				132 text 0
+				133 text )
+			51 button Approve Staging Batches (undefined)
+				52 image
+				134 text Approve Staging Batches
+				135 text  (
+				136 text undefined
+				137 text )
+			53 button Appeals (undefined)
+				54 image
+				138 text Appeals
+				139 text  (
+				140 text undefined
+				141 text )
+			55 button Khatian Explorer
+				56 image
+				142 text Khatian Explorer
+			57 button Verify Deed
+				58 image
+				143 text Verify Deed
+			185 heading Institutional Khatian Lineage & Chain Explorer, Value: 3
+				186 image
+				187 text Institutional Khatian Lineage & Chain Explorer
+			188 text Official CS, SA, RS and BS khatian lineage continuity, ownership shares and security status:
+			189 text field (settable)
+			190 image
+			191 text PLOTS & DAGS ( 60 )
+			192 container
+				193 button Birulia • Dag 101 20 dec JL # ✔ Safe
+					194 image
+					195 text Birulia
+					196 text  • 
+					197 text Dag
+					198 text 101
+					199 text 20
+					200 text dec
+					201 text JL #
+					202 text ✔ 
+					203 text Safe
+				204 button Birulia • Dag 102 15 dec JL # ✔ Safe
+					205 image
+					206 text Birulia
+					207 text  • 
+					208 text Dag
+					209 text 102
+					210 text 15
+					211 text dec
+					212 text JL #
+					213 text ✔ 
+					214 text Safe
+				215 button Birulia • Dag 103 24 dec JL # ✔ Safe
+					216 image
+					217 text Birulia
+					218 text  • 
+					219 text Dag
+					220 text 103
+					221 text 24
+					222 text dec
+					223 text JL #
+					224 text ✔ 
+					225 text Safe
+				226 button Birulia • Dag 104 16 dec JL # ✔ Safe
+					227 image
+					228 text Birulia
+					229 text  • 
+					230 text Dag
+					231 text 104
+					232 text 16
+					233 text dec
+					234 text JL #
+					235 text ✔ 
+					236 text Safe
+				237 button Birulia • Dag 105 20 dec JL # ✔ Safe
+					238 image
+					239 text Birulia
+					240 text  • 
+					241 text Dag
+					242 text 105
+					243 text 20
+					244 text dec
+					245 text JL #
+					246 text ✔ 
+					247 text Safe
+				248 button Birulia • Dag 106 30 dec JL # ✔ Safe
+					249 image
+					250 text Birulia
+					251 text  • 
+					252 text Dag
+					253 text 106
+					254 text 30
+					255 text dec
+					256 text JL #
+					257 text ✔ 
+					258 text Safe
+				259 button Birulia • Dag 107 18 dec JL # ✔ Safe
+					260 image
+					261 text Birulia
+					262 text  • 
+					263 text Dag
+					264 text 107
+					265 text 18
+					266 text dec
+					267 text JL #
+					268 text ✔ 
+					269 text Safe
+				270 button Birulia • Dag 108 22 dec JL # ✔ Safe
+					271 image
+					272 text Birulia
+					273 text  • 
+					274 text Dag
+					275 text 108
+					276 text 22
+					277 text dec
+					278 text JL #
+					279 text ✔ 
+					280 text Safe
+				281 button Birulia • Dag 109 16 dec JL # ✔ Safe
+					282 image
+					283 text Birulia
+					284 text  • 
+					285 text Dag
+					286 text 109
+					287 text 16
+					288 text dec
+					289 text JL #
+					290 text ✔ 
+					291 text Safe
+				292 button Birulia • Dag 110 25 dec JL # ✔ Safe
+					293 image
+					294 text Birulia
+					295 text  • 
+					296 text Dag
+					297 text 110
+					298 text 25
+					299 text dec
+					300 text JL #
+					301 text ✔ 
+					302 text Safe
+				303 button Birulia • Dag 111 17 dec JL # ✔ Safe
+					304 image
+					305 text Birulia
+					306 text  • 
+					307 text Dag
+					308 text 111
+					309 text 17
+					310 text dec
+					311 text JL #
+					312 text ✔ 
+					313 text Safe
+				314 button Birulia • Dag 112 20 dec JL # ✔ Safe
+					315 image
+					316 text Birulia
+					317 text  • 
+					318 text Dag
+					319 text 112
+					320 text 20
+					321 text dec
+					322 text JL #
+					323 text ✔ 
+					324 text Safe
+				325 button Birulia • Dag 113 23 dec JL # ✔ Safe
+					326 image
+					327 text Birulia
+					328 text  • 
+					329 text Dag
+					330 text 113
+					331 text 23
+					332 text dec
+					333 text JL #
+					334 text ✔ 
+					335 text Safe
+				336 button Birulia • Dag 114 26 dec JL # ✔ Safe
+					337 image
+					338 text Birulia
+					339 text  • 
+					340 text Dag
+					341 text 114
+					342 text 26
+					343 text dec
+					344 text JL #
+					345 text ✔ 
+					346 text Safe
+				347 button Birulia • Dag 115 29 dec JL # ✔ Safe
+					348 image
+					349 text Birulia
+					350 text  • 
+					351 text Dag
+					352 text 115
+					353 text 29
+					354 text dec
+					355 text JL #
+					356 text ✔ 
+					357 text Safe
+				358 button Birulia • Dag 116 32 dec JL # ✔ Safe
+					359 image
+					360 text Birulia
+					361 text  • 
+					362 text Dag
+					363 text 116
+					364 text 32
+					365 text dec
+					366 text JL #
+					367 text ✔ 
+					368 text Safe
+				369 button Birulia • Dag 117 35 dec JL # ✔ Safe
+					370 image
+					371 text Birulia
+					372 text  • 
+					373 text Dag
+					374 text 117
+					375 text 35
+					376 text dec
+					377 text JL #
+					378 text ✔ 
+					379 text Safe
+				380 button Birulia • Dag 118 38 dec JL # ✔ Safe
+					381 image
+					382 text Birulia
+					383 text  • 
+					384 text Dag
+					385 text 118
+					386 text 38
+					387 text dec
+					388 text JL #
+					389 text ✔ 
+					390 text Safe
+				391 button Birulia • Dag 119 13 dec JL # ✔ Safe
+					392 image
+					393 text Birulia
+					394 text  • 
+					395 text Dag
+					396 text 119
+					397 text 13
+					398 text dec
+					399 text JL #
+					400 text ✔ 
+					401 text Safe
+				402 button Birulia • Dag 120 16 dec JL # ✔ Safe
+					403 image
+					404 text Birulia
+					405 text  • 
+					406 text Dag
+					407 text 120
+					408 text 16
+					409 text dec
+					410 text JL #
+					411 text ✔ 
+					412 text Safe
+				413 button Bason • Dag 201 19 dec JL # ✔ Safe
+					414 image
+					415 text Bason
+					416 text  • 
+					417 text Dag
+					418 text 201
+					419 text 19
+					420 text dec
+					421 text JL #
+					422 text ✔ 
+					423 text Safe
+				424 button Bason • Dag 202 22 dec JL # ✔ Safe
+					425 image
+					426 text Bason
+					427 text  • 
+					428 text Dag
+					429 text 202
+					430 text 22
+					431 text dec
+					432 text JL #
+					433 text ✔ 
+					434 text Safe
+				435 button Bason • Dag 203 25 dec JL # ✔ Safe
+					436 image
+					437 text Bason
+					438 text  • 
+					439 text Dag
+					440 text 203
+					441 text 25
+					442 text dec
+					443 text JL #
+					444 text ✔ 
+					445 text Safe
+				446 button Bason • Dag 204 28 dec JL # ✔ Safe
+					447 image
+					448 text Bason
+					449 text  • 
+					450 text Dag
+					451 text 204
+					452 text 28
+					453 text dec
+					454 text JL #
+					455 text ✔ 
+					456 text Safe
+				457 button Bason • Dag 205 31 dec JL # ✔ Safe
+					458 image
+					459 text Bason
+					460 text  • 
+					461 text Dag
+					462 text 205
+					463 text 31
+					464 text dec
+					465 text JL #
+					466 text ✔ 
+					467 text Safe
+				468 button Bason • Dag 206 34 dec JL # ✔ Safe
+					469 image
+					470 text Bason
+					471 text  • 
+					472 text Dag
+					473 text 206
+					474 text 34
+					475 text dec
+					476 text JL #
+					477 text ✔ 
+					478 text Safe
+				479 button Bason • Dag 207 37 dec JL # ✔ Safe
+					480 image
+					481 text Bason
+					482 text  • 
+					483 text Dag
+					484 text 207
+					485 text 37
+					486 text dec
+					487 text JL #
+					488 text ✔ 
+					489 text Safe
+				490 button Bason • Dag 208 12 dec JL # ✔ Safe
+					491 image
+					492 text Bason
+					493 text  • 
+					494 text Dag
+					495 text 208
+					496 text 12
+					497 text dec
+					498 text JL #
+					499 text ✔ 
+					500 text Safe
+				501 button Bason • Dag 209 15 dec JL # ✔ Safe
+					502 image
+					503 text Bason
+					504 text  • 
+					505 text Dag
+					506 text 209
+					507 text 15
+					508 text dec
+					509 text JL #
+					510 text ✔ 
+					511 text Safe
+				512 button Bason • Dag 210 18 dec JL # ✔ Safe
+					513 image
+					514 text Bason
+					515 text  • 
+					516 text Dag
+					517 text 210
+					518 text 18
+					519 text dec
+					520 text JL #
+					521 text ✔ 
+					522 text Safe
+				523 button Bason • Dag 211 21 dec JL # ✔ Safe
+					524 image
+					525 text Bason
+					526 text  • 
+					527 text Dag
+					528 text 211
+					529 text 21
+					530 text dec
+					531 text JL #
+					532 text ✔ 
+					533 text Safe
+				534 button Bason • Dag 212 24 dec JL # ✔ Safe
+					535 image
+					536 text Bason
+					537 text  • 
+					538 text Dag
+					539 text 212
+					540 text 24
+					541 text dec
+					542 text JL #
+					543 text ✔ 
+					544 text Safe
+				545 button Bason • Dag 213 27 dec JL # ✔ Safe
+					546 image
+					547 text Bason
+					548 text  • 
+					549 text Dag
+					550 text 213
+					551 text 27
+					552 text dec
+					553 text JL #
+					554 text ✔ 
+					555 text Safe
+				556 button Bason • Dag 214 30 dec JL # ✔ Safe
+					557 image
+					558 text Bason
+					559 text  • 
+					560 text Dag
+					561 text 214
+					562 text 30
+					563 text dec
+					564 text JL #
+					565 text ✔ 
+					566 text Safe
+				567 button Bason • Dag 215 33 dec JL # ✔ Safe
+					568 image
+					569 text Bason
+					570 text  • 
+					571 text Dag
+					572 text 215
+					573 text 33
+					574 text dec
+					575 text JL #
+					576 text ✔ 
+					577 text Safe
+				578 button Bason • Dag 216 36 dec JL # ✔ Safe
+					579 image
+					580 text Bason
+					581 text  • 
+					582 text Dag
+					583 text 216
+					584 text 36
+					585 text dec
+					586 text JL #
+					587 text ✔ 
+					588 text Safe
+				589 button Bason • Dag 217 39 dec JL # ✔ Safe
+					590 image
+					591 text Bason
+					592 text  • 
+					593 text Dag
+					594 text 217
+					595 text 39
+					596 text dec
+					597 text JL #
+					598 text ✔ 
+					599 text Safe
+				600 button Bason • Dag 218 14 dec JL # ✔ Safe
+					601 image
+					602 text Bason
+					603 text  • 
+					604 text Dag
+					605 text 218
+					606 text 14
+					607 text dec
+					608 text JL #
+					609 text ✔ 
+					610 text Safe
+				611 button Bason • Dag 219 17 dec JL # ✔ Safe
+					612 image
+					613 text Bason
+					614 text  • 
+					615 text Dag
+					616 text 219
+					617 text 17
+					618 text dec
+					619 text JL #
+					620 text ✔ 
+					621 text Safe
+				622 button Bason • Dag 220 20 dec JL # ✔ Safe
+					623 image
+					624 text Bason
+					625 text  • 
+					626 text Dag
+					627 text 220
+					628 text 20
+					629 text dec
+					630 text JL #
+					631 text ✔ 
+					632 text Safe
+				633 button Panam • Dag 301 23 dec JL # ✔ Safe
+					634 image
+					635 text Panam
+					636 text  • 
+					637 text Dag
+					638 text 301
+					639 text 23
+					640 text dec
+					641 text JL #
+					642 text ✔ 
+					643 text Safe
+				644 button Panam • Dag 302 26 dec JL # ✔ Safe
+					645 image
+					646 text Panam
+					647 text  • 
+					648 text Dag
+					649 text 302
+					650 text 26
+					651 text dec
+					652 text JL #
+					653 text ✔ 
+					654 text Safe
+				655 button Panam • Dag 303 29 dec JL # ✔ Safe
+					656 image
+					657 text Panam
+					658 text  • 
+					659 text Dag
+					660 text 303
+					661 text 29
+					662 text dec
+					663 text JL #
+					664 text ✔ 
+					665 text Safe
+				666 button Panam • Dag 304 32 dec JL # ✔ Safe
+					667 image
+					668 text Panam
+					669 text  • 
+					670 text Dag
+					671 text 304
+					672 text 32
+					673 text dec
+					674 text JL #
+					675 text ✔ 
+					676 text Safe
+				677 button Panam • Dag 305 35 dec JL # ✔ Safe
+					678 image
+					679 text Panam
+					680 text  • 
+					681 text Dag
+					682 text 305
+					683 text 35
+					684 text dec
+					685 text JL #
+					686 text ✔ 
+					687 text Safe
+				688 button Panam • Dag 306 38 dec JL # ✔ Safe
+					689 image
+					690 text Panam
+					691 text  • 
+					692 text Dag
+					693 text 306
+					694 text 38
+					695 text dec
+					696 text JL #
+					697 text ✔ 
+					698 text Safe
+				699 button Panam • Dag 307 13 dec JL # ✔ Safe
+					700 image
+					701 text Panam
+					702 text  • 
+					703 text Dag
+					704 text 307
+					705 text 13
+					706 text dec
+					707 text JL #
+					708 text ✔ 
+					709 text Safe
+				710 button Panam • Dag 308 16 dec JL # ✔ Safe
+					711 image
+					712 text Panam
+					713 text  • 
+					714 text Dag
+					715 text 308
+					716 text 16
+					717 text dec
+					718 text JL #
+					719 text ✔ 
+					720 text Safe
+				721 button Panam • Dag 309 19 dec JL # ✔ Safe
+					722 image
+					723 text Panam
+					724 text  • 
+					725 text Dag
+					726 text 309
+					727 text 19
+					728 text dec
+					729 text JL #
+					730 text ✔ 
+					731 text Safe
+				732 button Panam • Dag 310 22 dec JL # ✔ Safe
+					733 image
+					734 text Panam
+					735 text  • 
+					736 text Dag
+					737 text 310
+					738 text 22
+					739 text dec
+					740 text JL #
+					741 text ✔ 
+					742 text Safe
+				743 button Panam • Dag 311 25 dec JL # ✔ Safe
+					744 image
+					745 text Panam
+					746 text  • 
+					747 text Dag
+					748 text 311
+					749 text 25
+					750 text dec
+					751 text JL #
+					752 text ✔ 
+					753 text Safe
+				754 button Panam • Dag 312 28 dec JL # ✔ Safe
+					755 image
+					756 text Panam
+					757 text  • 
+					758 text Dag
+					759 text 312
+					760 text 28
+					761 text dec
+					762 text JL #
+					763 text ✔ 
+					764 text Safe
+				765 button Panam • Dag 313 31 dec JL # ✔ Safe
+					766 image
+					767 text Panam
+					768 text  • 
+					769 text Dag
+					770 text 313
+					771 text 31
+					772 text dec
+					773 text JL #
+					774 text ✔ 
+					775 text Safe
+				776 button Panam • Dag 314 34 dec JL # ✔ Safe
+					777 image
+					778 text Panam
+					779 text  • 
+					780 text Dag
+					781 text 314
+					782 text 34
+					783 text dec
+					784 text JL #
+					785 text ✔ 
+					786 text Safe
+				787 button Panam • Dag 315 37 dec JL # ✔ Safe
+					788 image
+					789 text Panam
+					790 text  • 
+					791 text Dag
+					792 text 315
+					793 text 37
+					794 text dec
+					795 text JL #
+					796 text ✔ 
+					797 text Safe
+				798 button Panam • Dag 316 12 dec JL # ✔ Safe
+					799 image
+					800 text Panam
+					801 text  • 
+					802 text Dag
+					803 text 316
+					804 text 12
+					805 text dec
+					806 text JL #
+					807 text ✔ 
+					808 text Safe
+				809 button Panam • Dag 317 15 dec JL # ✔ Safe
+					810 image
+					811 text Panam
+					812 text  • 
+					813 text Dag
+					814 text 317
+					815 text 15
+					816 text dec
+					817 text JL #
+					818 text ✔ 
+					819 text Safe
+				820 button Panam • Dag 318 18 dec JL # ✔ Safe
+					821 image
+					822 text Panam
+					823 text  • 
+					824 text Dag
+					825 text 318
+					826 text 18
+					827 text dec
+					828 text JL #
+					829 text ✔ 
+					830 text Safe
+				831 button Panam • Dag 319 21 dec JL # ✔ Safe
+					832 image
+					833 text Panam
+					834 text  • 
+					835 text Dag
+					836 text 319
+					837 text 21
+					838 text dec
+					839 text JL #
+					840 text ✔ 
+					841 text Safe
+				842 button Panam • Dag 320 24 dec JL # ✔ Safe
+					843 image
+					844 text Panam
+					845 text  • 
+					846 text Dag
+					847 text 320
+					848 text 24
+					849 text dec
+					850 text JL #
+					851 text ✔ 
+					852 text Safe
+			853 text Dag No 101
+			854 heading (JL No: ), Value: 4
+				855 text ( JL No :  )
+			856 text সাভার ,  ঢাকা  •  Total Land Area:
+			857 container
+				858 text 20 decimals
+			859 button Reconcile Khatian
+				860 image
+				861 text Reconcile Khatian
+				862 image
+			863 text SALE LOCK
+			864 image
+			865 text Unlocked BANK LIEN
+			866 image
+			867 text No Bank Lien DISPUTE TRIBUNAL
+			868 image
+			869 text Clear Title LEDGER INTEGRITY
+			870 image
+			871 text Cryptographically Valid
+			872 heading Khatian Lineage Chain (CS → SA → RS → BS Reconciliation), Value: 3
+				873 text Khatian Lineage Chain (CS → SA → RS → BS Reconciliation)
+			874 text Continuity of land area and ownership shares from 1940 CS survey to latest BS survey: CS  ( 1915 )
+			875 image
+			876 text Anomaly
+			877 container
+				878 text Khatian No: 1001
+			879 container
+				880 text Recorded Area: 20 Decimal
+			881 text SA  ( 1960 )
+			882 image
+			883 text Anomaly
+			884 container
+				885 text Khatian No: 2001
+			886 container
+				887 text Recorded Area: 20 Decimal
+			888 text RS  ( 1982 )
+			889 image
+			890 text Anomaly
+			891 container
+				892 text Khatian No: 3001
+			893 container
+				894 text Recorded Area: 20 Decimal
+			895 text BS  ( 2016 )
+			896 image
+			897 text Anomaly
+			898 container
+				899 text Khatian No: 4101
+			900 container
+				901 text Recorded Area: 20 Decimal
+		65 container
+			178 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			66 content list
+				67 button Check Before Buy
+				68 button Land Sale Marketplace
+				69 button Cadastral Mouza Map
+				70 button Verify Deed QR Code
+				71 button Official Noticeboard
+				72 button Land Literacy Blog
+				73 button Offices & Service Points
+				74 button Citizen Sale Lock Vault
+			179 text Workspaces
+			75 content list
+				76 button Sub-Registrar Panel
+				77 button AC Land Tribunal
+				78 button Bank Lien & NOC
+				79 button National Ledger & Audit
+			180 text Support & Helpline
+			80 content list
+				181 text Land Service Call Center: 16122
+				182 text Ministry of Land (Official service hours)
+				183 text Check official service hours
+				81 button Frequently Asked Questions
+				82 button Bangladeshi Land Glossary
+			184 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 55 button Khatian Explorer

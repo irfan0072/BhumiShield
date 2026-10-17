@@ -1,0 +1,343 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/admin".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/admin
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা BCC LandTech
+				101 text ভূ
+				102 text ভূমি সুরক্ষা
+				103 text BCC LandTech
+			5 button Toggle Sidebar
+				6 image
+			104 text National Admin & Governance Panel Central Cryptographic Ledger Governance & Security
+			105 container Sidebar Navigation
+				106 text MENU
+				107 button Cryptographic Ledger
+					108 image
+					109 text Cryptographic Ledger
+				110 button Users & Access Control
+					111 image
+					112 text Users & Access Control
+				113 button Security Audit Trail
+					114 image
+					115 text Security Audit Trail
+				116 button Fraud Engine Policy
+					117 image
+					118 text Fraud Engine Policy
+				119 button RBAC Matrix
+					120 image
+					121 text RBAC Matrix
+				122 button Onboarding & Appeals
+					123 image
+					124 text Onboarding & Appeals
+				125 button Service & Fees
+					126 image
+					127 text Service & Fees
+				128 button Direct Role Oversight
+					129 image
+					130 text Direct Role Oversight
+				131 image
+				132 text SUPER ADMIN DIRECT ACCESS
+				133 button Citizen Vault, Help: Direct Login Without Password
+					134 text Citizen Vault
+					135 image
+				136 button Sub-Registrar, Help: Direct Login Without Password
+					137 text Sub-Registrar
+					138 image
+				139 button AC Land, Help: Direct Login Without Password
+					140 text AC Land
+					141 image
+				142 button Bank Officer, Help: Direct Login Without Password
+					143 text Bank Officer
+					144 image
+				145 button Super Admin, Help: Direct Login Without Password
+					146 text Super Admin
+					147 image
+			34 button Public Portal
+				35 image
+				148 text Public Portal
+			36 button Sign Out
+				37 image
+				149 text Sign Out
+		38 container
+			39 button Home
+				40 image
+				150 text Home
+			151 text / National Admin & Governance Panel
+			41 text field (settable)
+			42 image
+			43 button বাং
+			44 button Contrast
+				45 image
+			46 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				152 text স
+				153 text সিস্টেম অ্যাডমিন (ভূমি সুরক্ষা অ্যাডমিন)
+				154 text National Admin & Governance Panel
+				47 image
+		48 container
+			49 heading Central Governance & Admin Console, Value: 1
+				155 text Central Governance & Admin Console
+			156 text RBAC, hash ledger lab, officers directory, and append-only audit trail.
+			157 text System Administrator LEDGER HASH INTEGRITY 97.5 %
+			50 button Inspect Hash Lab →
+			51 image
+			158 text REGISTERED OFFICERS 23
+			52 button View User Directory →
+			53 image
+			159 text SECURITY AUDIT EVENTS 5
+			54 button Review Audit Logs →
+			55 image
+			160 text ROLE OVERSIGHT ৫টি  Roles
+			56 button Direct Role Access →
+			57 image
+			58 heading Central Governance, RBAC Matrix, Officers Directory & Cryptographic Audit, Value: 2
+				161 text Central Governance, RBAC Matrix, Officers Directory & Cryptographic Audit
+			59 button Hash Ledger Lab
+				60 image
+				162 text Hash Ledger Lab
+			61 button Officers CRUD
+				62 image
+				163 text Officers CRUD
+			63 button Audit Trail
+				64 image
+				164 text Audit Trail
+			65 button Policy Settings
+				66 image
+				165 text Policy Settings
+			67 button RBAC Matrix
+				68 image
+				166 text RBAC Matrix
+			69 button Service & Fees
+				70 image
+				167 text Service & Fees
+			71 button Onboarding & Appeals
+				72 image
+				168 text Onboarding & Appeals
+			73 button Case Library & OCR
+				74 image
+				169 text Case Library & OCR
+			75 button Direct Role Access
+				76 image
+				170 text Direct Role Access
+			184 heading Service Catalogue & Official Fee Registry Governance, Value: 2
+				185 image
+				186 text Service Catalogue & Official Fee Registry Governance
+			187 text Manage public-facing service catalogue, official HTTPS endpoints, and 17 Feb 2026 circular fee schedules.
+			188 button Service Catalogue (8)
+				189 text Service Catalogue
+				190 text  (
+				191 text 8
+				192 text )
+			193 button Fee Registry & Versions (4)
+				194 image
+				195 text Fee Registry & Versions
+				196 text  (
+				197 text 4
+				198 text )
+			199 button All
+			200 button Mutation
+			201 button Records/Maps
+			202 button Deed/Registry
+			203 button Mortgage
+			204 button Helpline
+			205 button Add New Service
+				206 image
+				207 text Add New Service
+			208 table
+				209 row
+					210 cell
+						211 text ক্রম
+					212 cell
+						213 text কোড ও শিরোনাম
+					214 cell
+						215 text ক্যাটাগরি
+					216 cell
+						217 text সেবা ধরন ও রুট
+					218 cell
+						219 text কর্তৃপক্ষ
+					220 cell
+						221 text অবস্থা
+					222 cell
+						223 text অ্যাকশন
+				224 row
+					225 cell
+						226 text # 1
+					227 cell
+						228 text Online e-Mutation Application & Tracking MUTATION_ACLAND
+					229 cell
+						230 text REVENUE_MUTATION
+					231 cell
+						232 text EXTERNAL_OFFICIAL
+						233 link Description: https://mutation.land.gov.bd/nirdeshika ↗, Value: mutation.land.gov.bd/nirdeshika
+						234 text route: / /acland
+					235 cell
+						236 text Land Reform Board & Ministry of Land
+					237 cell
+						238 text PUBLISHED
+					239 cell
+						240 button Edit, Help: সম্পাদনা করুন
+							241 image
+							242 text Edit
+						243 button Archive
+				244 row
+					245 cell
+						246 text # 2
+					247 cell
+						248 text Online Khatian & Certified Copy Application KHATIAN_ONLINE_COPY
+					249 cell
+						250 text RECORDS_MAPS
+					251 cell
+						252 text EXTERNAL_OFFICIAL
+						253 link Description: https://lsg-portal.land.gov.bd/vumisheba-fee ↗, Value: lsg-portal.land.gov.bd/vumisheba-fee
+						254 text route: / /check
+					255 cell
+						256 text Directorate of Land Records and Surveys (DLRS)
+					257 cell
+						258 text PUBLISHED
+					259 cell
+						260 button Edit, Help: সম্পাদনা করুন
+							261 image
+							262 text Edit
+						263 button Archive
+				264 row
+					265 cell
+						266 text # 3
+					267 cell
+						268 text Mouza Map Sheet Order MOUZA_MAP_SHEET
+					269 cell
+						270 text RECORDS_MAPS
+					271 cell
+						272 text EXTERNAL_OFFICIAL
+						273 link Description: https://lsg-portal.land.gov.bd/vumisheba-fee ↗, Value: lsg-portal.land.gov.bd/vumisheba-fee
+						274 text route: / /check
+					275 cell
+						276 text Directorate of Land Records and Surveys (DLRS)
+					277 cell
+						278 text PUBLISHED
+					279 cell
+						280 button Edit, Help: সম্পাদনা করুন
+							281 image
+							282 text Edit
+						283 button Archive
+				284 row
+					285 cell
+						286 text # 4
+					287 cell
+						288 text Online Land Development Tax (LD Tax) LAND_DEVELOPMENT_TAX
+					289 cell
+						290 text TAXATION
+					291 cell
+						292 text EXTERNAL_OFFICIAL
+						293 link Description: https://ldtax.gov.bd/ ↗, Value: ldtax.gov.bd/
+					294 cell
+						295 text Ministry of Land (Revenue Wing)
+					296 cell
+						297 text PUBLISHED
+					298 cell
+						299 button Edit, Help: সম্পাদনা করুন
+							300 image
+							301 text Edit
+						302 button Archive
+				303 row
+					304 cell
+						305 text # 5
+					306 cell
+						307 text Ongoing Survey Khatians & Settlement Records SURVEY_SETTLEMENT
+					308 cell
+						309 text RECORDS_MAPS
+					310 cell
+						311 text EXTERNAL_OFFICIAL
+						312 link Description: https://www.settlement.gov.bd/ ↗, Value: settlement.gov.bd/
+						313 text route: / /check
+					314 cell
+						315 text Directorate of Land Records and Surveys (DLRS)
+					316 cell
+						317 text PUBLISHED
+					318 cell
+						319 button Edit, Help: সম্পাদনা করুন
+							320 image
+							321 text Edit
+						322 button Archive
+				323 row
+					324 cell
+						325 text # 6
+					326 cell
+						327 text Land Service Call Center 16122 & Grievance Redress LAND_SERVICE_HELPLINE_16122
+					328 cell
+						329 text COMPLAINTS_SUPPORT
+					330 cell
+						331 text EXTERNAL_OFFICIAL
+						332 link Description: https://www.land.gov.bd/manual?lang=bn ↗, Value: land.gov.bd/manual?lang=bn
+					333 cell
+						334 text Ministry of Land
+					335 cell
+						336 text PUBLISHED
+					337 cell
+						338 button Edit, Help: সম্পাদনা করুন
+							339 image
+							340 text Edit
+						341 button Archive
+				342 row
+					343 cell
+						344 text # 7
+					345 cell
+						346 text Check Before You Buy (Khatian Chain & Lien Scanner) BHUMISHIELD_INTEGRITY_CHECK
+					347 cell
+						348 text INTEGRITY_VERIFICATION
+					349 cell
+						350 text INTERNAL
+						351 text route: / /check
+					352 cell
+						353 text BhumiShield Prototype (LandTech 2026)
+					354 cell
+						355 text PUBLISHED
+					356 cell
+						357 button Edit, Help: সম্পাদনা করুন
+							358 image
+							359 text Edit
+						360 button Archive
+				361 row
+					362 cell
+						363 text # 8
+					364 cell
+						365 text Digital Deed & NOC QR Verification BHUMISHIELD_QR_PROOF
+					366 cell
+						367 text INTEGRITY_VERIFICATION
+					368 cell
+						369 text INTERNAL
+						370 text route: / /qr
+					371 cell
+						372 text BhumiShield Prototype (LandTech 2026)
+					373 cell
+						374 text PUBLISHED
+					375 cell
+						376 button Edit, Help: সম্পাদনা করুন
+							377 image
+							378 text Edit
+						379 button Archive
+		83 container
+			177 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			84 content list
+				85 button Check Before Buy
+				86 button Land Sale Marketplace
+				87 button Cadastral Mouza Map
+				88 button Verify Deed QR Code
+				89 button Official Noticeboard
+				90 button Land Literacy Blog
+				91 button Offices & Service Points
+				92 button Citizen Sale Lock Vault
+			178 text Workspaces
+			93 content list
+				94 button Sub-Registrar Panel
+				95 button AC Land Tribunal
+				96 button Bank Lien & NOC
+				97 button National Ledger & Audit
+			179 text Support & Helpline
+			98 content list
+				180 text Land Service Call Center: 16122
+				181 text Ministry of Land (Official service hours)
+				182 text Check official service hours
+				99 button Frequently Asked Questions
+				100 button Bangladeshi Land Glossary
+			183 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 69 button Service & Fees

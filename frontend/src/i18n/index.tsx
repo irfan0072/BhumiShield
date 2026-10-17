@@ -136,6 +136,11 @@ export const AppUIProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const setRole = (r: UserRole) => {
     localStorage.setItem('bs_role', r);
     setRoleState(r);
+    // F13: clear the active sub-tab whenever the role changes so a deep-linked
+    // sub-tab from a previous role cannot leak into a new role's workspace.
+    // The role pages each render a default sub-tab based on the new role.
+    setActiveSubTab('');
+    try { localStorage.removeItem('bs_active_subtab'); } catch {}
   };
 
   const setUser = (u: AuthUser | null) => {

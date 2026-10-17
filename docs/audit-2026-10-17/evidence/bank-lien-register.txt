@@ -1,0 +1,142 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/bank".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/bank
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা BCC LandTech
+				76 text ভূ
+				77 text ভূমি সুরক্ষা
+				78 text BCC LandTech
+			5 button Toggle Sidebar
+				6 image
+			79 text Bank Mortgage Panel Commercial Bank Collateral & Lien Division
+			80 container Sidebar Navigation
+				81 text MENU
+				82 button Prepare Loan Lien (Maker)
+					83 image
+					84 text Prepare Loan Lien (Maker)
+				85 button Active Mortgages
+					86 image
+					87 text Active Mortgages
+				88 button Collateral Khatian Check
+					89 image
+					90 text Collateral Khatian Check
+			13 button Public Portal
+				14 image
+				91 text Public Portal
+			15 button Sign Out
+				16 image
+				92 text Sign Out
+		17 container
+			18 button Home
+				19 image
+				93 text Home
+			94 text / Bank Mortgage Panel
+			20 text field (settable)
+			21 image
+			22 button বাং
+			23 button Contrast
+				24 image
+			25 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				95 text ন
+				96 text নাজমুল হাসান (ব্যাংক কর্মকর্তা - ঋণ শাখা)
+				97 text Bank Mortgage Panel
+				26 image
+		27 container
+			28 heading Bank Credit Officer Console (Lien Maker), Value: 1
+				98 text Bank Credit Officer Console (Lien Maker)
+			99 text Verify collateral, prepare new mortgage lien drafts, and inspect khatian records.
+			100 text Lien Preparer (Maker) ACTIVE MORTGAGES 1
+			29 button View Lien Register →
+			30 image
+			101 text TOTAL COLLATERAL VALUE ৳ 0.25 Cr
+			31 button New Mortgage Lien →
+			32 image
+			102 text RELEASED NOCS 0
+			33 button View Release NOCs →
+			34 image
+			103 text DOUBLE MORTGAGE BLOCK ১০০%  Protected
+			35 button Verify Collateral →
+			36 image
+			37 heading Bank Mortgage & Lien Workspace, Value: 3
+				104 text Bank Mortgage & Lien Workspace
+			105 text Lien registry, new mortgage lock, and digital release NOCs:
+			38 button Prepare Loan Lien (Maker)
+				39 image
+				106 text Prepare Loan Lien (Maker)
+			40 button Mortgages & Liens (1)
+				41 image
+				107 text Mortgages & Liens
+				108 text  (
+				109 text 1
+				110 text )
+			42 button Collateral Khatian Check
+				43 image
+				111 text Collateral Khatian Check
+			233 heading Registered Bank Mortgages & Digital NOC Controls, Value: 2
+				234 text Registered Bank Mortgages & Digital NOC Controls
+			235 text Active liens and generated NOCs:
+			236 button All
+			237 button Active
+			238 button Released
+			239 image
+			240 text field (settable)
+			241 table
+				242 row
+					243 cell
+						244 text BANK & BRANCH
+					245 cell
+						246 text PLOT / DAG
+					247 cell
+						248 text BORROWER
+					249 cell
+						250 text LOAN AMOUNT
+					251 cell
+						252 text STATUS
+					253 cell
+						254 text ACTIONS
+				255 row
+					256 cell
+						257 text Sonali Bank PLC
+						258 text সাভার শাখা, ঢাকা
+					259 cell
+						260 text Dag 106
+					261 cell
+						262 text মো. মাহবুবুর রহমান
+					263 cell
+						264 text ৳ 2,500,000
+					265 cell
+						266 text 🔒 ACTIVE LIEN
+					267 cell
+						268 container Lien release & NOC approval must be performed by Branch Manager (Checker).
+							269 image
+							270 text Pending Checker
+						271 container Lien is ACTIVE. NOC cannot be issued until released.
+							272 image
+							273 text NOC Locked (Active)
+		58 container
+			226 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			59 content list
+				60 button Check Before Buy
+				61 button Land Sale Marketplace
+				62 button Cadastral Mouza Map
+				63 button Verify Deed QR Code
+				64 button Official Noticeboard
+				65 button Land Literacy Blog
+				66 button Offices & Service Points
+				67 button Citizen Sale Lock Vault
+			227 text Workspaces
+			68 content list
+				69 button Sub-Registrar Panel
+				70 button AC Land Tribunal
+				71 button Bank Lien & NOC
+				72 button National Ledger & Audit
+			228 text Support & Helpline
+			73 content list
+				229 text Land Service Call Center: 16122
+				230 text Ministry of Land (Official service hours)
+				231 text Check official service hours
+				74 button Frequently Asked Questions
+				75 button Bangladeshi Land Glossary
+			232 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 40 button Mortgages & Liens (1)

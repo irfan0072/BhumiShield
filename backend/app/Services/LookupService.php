@@ -112,4 +112,21 @@ final class LookupService
             [$val, $val]
         );
     }
+
+    public static function resolveListing(string|int $codeOrId): ?array
+    {
+        $val = trim((string) $codeOrId);
+        if ($val === '') {
+            return null;
+        }
+
+        if (ctype_digit($val)) {
+            $l = DB::selectOne('SELECT * FROM listings WHERE id = ?', [(int) $val]);
+            if ($l) {
+                return $l;
+            }
+        }
+
+        return DB::selectOne('SELECT * FROM listings WHERE listing_code = ? LIMIT 1', [$val]);
+    }
 }

@@ -1,0 +1,144 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/acland".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/acland
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা BCC LandTech
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text BCC LandTech
+			8 button Toggle Sidebar
+				9 image
+			10 text Field Verification Officer Union Land Office • Possession & LD Tax Verification
+			11 container Sidebar Navigation
+				12 text MENU
+				13 button Field Possession Inspection
+					14 image
+					15 text Field Possession Inspection
+				16 button Pending Verification Cases
+					17 image
+					18 text Pending Verification Cases
+				19 button Cadastral Boundary Lookup
+					20 image
+					21 text Cadastral Boundary Lookup
+				22 button Verify Deed
+					23 image
+					24 text Verify Deed
+			25 button Public Portal
+				26 image
+				27 text Public Portal
+			28 button Sign Out
+				29 image
+				30 text Sign Out
+		31 container
+			32 button Home
+				33 image
+				34 text Home
+			35 text / Field Verification Officer
+			36 text field (settable)
+			37 image
+			38 button বাং
+			39 button Contrast
+				40 image
+			41 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				42 text ম
+				43 text মো. জাহাঙ্গীর আলম (ফিল্ড ভেরিফিকেশন অফিসার)
+				44 text Field Verification Officer
+				45 image
+		46 container
+			47 heading Field Verification & Inspection Console, Value: 1
+				48 text Field Verification & Inspection Console
+			49 text On-site physical possession inspection, boundary verification, and LD Tax status.
+			50 text PENDING E-MUTATIONS 0
+			51 button Review Mutation Queue →
+			52 image
+			53 text KHATIAN DISCREPANCIES 0
+			54 button Resolve Discrepancies →
+			55 image
+			56 text DISPUTE TRIBUNAL 0
+			57 button Review Disputes →
+			58 image
+			59 text KHATIAN & DEED TRUST 100 %
+			60 button Verify Deed & Ledger →
+			61 image
+			62 heading e-Mutation Queue, Khatian Chain Reconciliation & Dispute Tribunal, Value: 2
+				63 image
+				64 text e-Mutation Queue, Khatian Chain Reconciliation & Dispute Tribunal
+			65 text Approve e-Mutation cases queued from Sub-Registry and update BS Khatian owner shares:
+			66 button Field Possession Inspection
+				67 image
+				68 text Field Possession Inspection
+			69 button Pending Verification Cases (0)
+				70 image
+				71 text Pending Verification Cases
+				72 text  (
+				73 text 0
+				74 text )
+			75 button Khatian Explorer
+				76 image
+				77 text Khatian Explorer
+			78 button Verify Deed
+				79 image
+				80 text Verify Deed
+			81 heading Field Possession & Boundary Inspection, Value: 3
+				82 image
+				83 text Field Possession & Boundary Inspection
+			84 text On-site field verification of physical possession, boundary demarcation, and land tax status prior to mutation approval.
+			85 text Select Plot (Dag):
+			86 pop up button (collapsed, settable) Value: দাগ ১০১ — বিরুলিয়া (আবেদনকারী: মো. রফিকুল ইসলাম), Secondary Actions: Expand
+				87 menu
+					88 (selected) দাগ ১০১ — বিরুলিয়া (আবেদনকারী: মো. রফিকুল ইসলাম)
+					89 দাগ ১০২ — বিরুলিয়া (তদন্তাধীন দ্বৈত বিক্রয়)
+					90 দাগ ১০৩ — বিরুলিয়া (অতিরিক্ত জমি তদন্ত)
+					91 দাগ ১০৭ — বিরুলিয়া (আরএস-বিএস সীমানা বিরোধ)
+					92 দাগ ১০৮ — বিরুলিয়া (ওয়ারিশ অংশ তদন্ত)
+			93 text Physical Possession Status:
+			94 pop up button (collapsed, settable) Value: ✔ আবেদনকারীর নিরঙ্কুশ দখল বিদ্যমান (Verified), Secondary Actions: Expand
+				95 menu
+					96 (selected) ✔ আবেদনকারীর নিরঙ্কুশ দখল বিদ্যমান (Verified)
+					97 ⚠ স্থানীয় ওয়ারিশদের সাথে দখল বিরোধ রয়েছে (Contested)
+					98 ✕ জমি পতিত / অনাবাদী অবস্থায় রয়েছে (Unoccupied)
+			99 text Boundary Demarcation Check:
+			100 pop up button (collapsed, settable) Value: ✔ মৌজা ম্যাপ ও সীমানা খুঁটির সাথে হুবহু মিল (Matched), Secondary Actions: Expand
+				101 menu
+					102 (selected) ✔ মৌজা ম্যাপ ও সীমানা খুঁটির সাথে হুবহু মিল (Matched)
+					103 ⚠ পার্শ্ববর্তী দাগের সাথে আংশিক সীমানা ব্যত্যয় (Disputed)
+			104 text LD Tax Payment Status:
+			105 pop up button (collapsed, settable) Value: ✔ বর্তমান অর্থবছর পর্যন্ত কর হালনাগাদ (Paid), Secondary Actions: Expand
+				106 menu
+					107 (selected) ✔ বর্তমান অর্থবছর পর্যন্ত কর হালনাগাদ (Paid)
+					108 ⚠ বকেয়া কর আদায়যোগ্য (Due)
+			109 text Surveyor Inspection Remarks:
+			110 text entry area (settable) জমির সরেজমিন সীমানা ও দখল আরএস এবং বিএস নকশার সাথে হুবহু মিলেছে।
+			111 button Submit Official Inspection Report
+				112 image
+				113 text Submit Official Inspection Report
+			114 heading Pending Field Inspection Records:, Value: 4
+				115 text Pending Field Inspection Records:
+			116 text দাগ নং ১০১ • বিরুলিয়া VERIFIED মাঠ সীমানা ও দখল আবেদনকারীর অনুকূলে পাওয়া গেছে। কোনো আপত্তি নেই। ইনস্পেকশন অফিসার: মো. নুরুল ইসলাম (সার্ভেয়ার) দাগ নং ১০৭ • বিরুলিয়া DISCREPANCY আরএস খতিয়ানে ১৮ শতক থাকলেও বিএস জরিপে ২৬ শতক দেখানো হয়েছে। অতিরিক্ত ৮ শতকের সীমানা বিরোধ বিদ্যমান। তদন্ত কর্মকর্তা: এস এম জাকারিয়া (কানুনগো)
+		117 container
+			118 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			119 content list
+				120 button Check Before Buy
+				121 button Land Sale Marketplace
+				122 button Cadastral Mouza Map
+				123 button Verify Deed QR Code
+				124 button Official Noticeboard
+				125 button Land Literacy Blog
+				126 button Offices & Service Points
+				127 button Citizen Sale Lock Vault
+			128 text Workspaces
+			129 content list
+				130 button Sub-Registrar Panel
+				131 button AC Land Tribunal
+				132 button Bank Lien & NOC
+				133 button National Ledger & Audit
+			134 text Support & Helpline
+			135 content list
+				136 text Land Service Call Center: 16122
+				137 text Ministry of Land (Official service hours)
+				138 text Check official service hours
+				139 button Frequently Asked Questions
+				140 button Bangladeshi Land Glossary
+			141 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/acland

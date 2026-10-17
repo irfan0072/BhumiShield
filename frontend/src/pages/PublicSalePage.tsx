@@ -463,7 +463,7 @@ export const PublicSalePage: React.FC<PublicSalePageProps> = ({ onNavigate }) =>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        {t('মোবাইল নম্বর (ডেমো)', 'Mobile Number (Demo)')} *
+                        {t('মোবাইল নম্বর (১১ ডিজিট)', 'Mobile Number (11 digits)')} *
                       </label>
                       <input
                         type="text"
@@ -642,7 +642,17 @@ export const PublicSalePage: React.FC<PublicSalePageProps> = ({ onNavigate }) =>
                   <button
                     type="button"
                     onClick={() => {
-                      const l = selectedListingDetail.listing;
+                      const l = {
+                        ...selectedListingDetail.listing,
+                        dag_no: selectedListingDetail.plot?.dag_no || selectedListingDetail.listing?.dag_no,
+                        dag_no_bn: selectedListingDetail.plot?.dag_no_bn || selectedListingDetail.listing?.dag_no_bn,
+                        mouza_bn: selectedListingDetail.plot?.mouza_bn || selectedListingDetail.listing?.mouza_bn,
+                        mouza_en: selectedListingDetail.plot?.mouza_en || selectedListingDetail.listing?.mouza_en,
+                        upazila_bn: selectedListingDetail.plot?.upazila_bn || selectedListingDetail.listing?.upazila_bn,
+                        upazila_en: selectedListingDetail.plot?.upazila_en || selectedListingDetail.listing?.upazila_en,
+                        district_bn: selectedListingDetail.plot?.district_bn || selectedListingDetail.listing?.district_bn,
+                        district_en: selectedListingDetail.plot?.district_en || selectedListingDetail.listing?.district_en,
+                      };
                       setSelectedListingDetail(null);
                       setEnquiryListing(l);
                     }}

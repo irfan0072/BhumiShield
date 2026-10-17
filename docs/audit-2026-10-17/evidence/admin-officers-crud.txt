@@ -1,0 +1,409 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/admin".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/admin
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা BCC LandTech
+				101 text ভূ
+				102 text ভূমি সুরক্ষা
+				103 text BCC LandTech
+			5 button Toggle Sidebar
+				6 image
+			104 text National Admin & Governance Panel Central Cryptographic Ledger Governance & Security
+			105 container Sidebar Navigation
+				106 text MENU
+				107 button Cryptographic Ledger
+					108 image
+					109 text Cryptographic Ledger
+				110 button Users & Access Control
+					111 image
+					112 text Users & Access Control
+				113 button Security Audit Trail
+					114 image
+					115 text Security Audit Trail
+				116 button Fraud Engine Policy
+					117 image
+					118 text Fraud Engine Policy
+				119 button RBAC Matrix
+					120 image
+					121 text RBAC Matrix
+				122 button Onboarding & Appeals
+					123 image
+					124 text Onboarding & Appeals
+				125 button Service & Fees
+					126 image
+					127 text Service & Fees
+				128 button Direct Role Oversight
+					129 image
+					130 text Direct Role Oversight
+				131 image
+				132 text SUPER ADMIN DIRECT ACCESS
+				133 button Citizen Vault, Help: Direct Login Without Password
+					134 text Citizen Vault
+					135 image
+				136 button Sub-Registrar, Help: Direct Login Without Password
+					137 text Sub-Registrar
+					138 image
+				139 button AC Land, Help: Direct Login Without Password
+					140 text AC Land
+					141 image
+				142 button Bank Officer, Help: Direct Login Without Password
+					143 text Bank Officer
+					144 image
+				145 button Super Admin, Help: Direct Login Without Password
+					146 text Super Admin
+					147 image
+			34 button Public Portal
+				35 image
+				148 text Public Portal
+			36 button Sign Out
+				37 image
+				149 text Sign Out
+		38 container
+			39 button Home
+				40 image
+				150 text Home
+			151 text / National Admin & Governance Panel
+			41 text field (settable)
+			42 image
+			43 button বাং
+			44 button Contrast
+				45 image
+			46 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				152 text স
+				153 text সিস্টেম অ্যাডমিন (ভূমি সুরক্ষা অ্যাডমিন)
+				154 text National Admin & Governance Panel
+				47 image
+		48 container
+			49 heading Central Governance & Admin Console, Value: 1
+				155 text Central Governance & Admin Console
+			156 text RBAC, hash ledger lab, officers directory, and append-only audit trail.
+			157 text System Administrator LEDGER HASH INTEGRITY 97.5 %
+			50 button Inspect Hash Lab →
+			51 image
+			158 text REGISTERED OFFICERS 23
+			52 button View User Directory →
+			53 image
+			159 text SECURITY AUDIT EVENTS 5
+			54 button Review Audit Logs →
+			55 image
+			160 text ROLE OVERSIGHT ৫টি  Roles
+			56 button Direct Role Access →
+			57 image
+			58 heading Central Governance, RBAC Matrix, Officers Directory & Cryptographic Audit, Value: 2
+				161 text Central Governance, RBAC Matrix, Officers Directory & Cryptographic Audit
+			59 button Hash Ledger Lab
+				60 image
+				162 text Hash Ledger Lab
+			61 button Officers CRUD
+				62 image
+				163 text Officers CRUD
+			63 button Audit Trail
+				64 image
+				164 text Audit Trail
+			65 button Policy Settings
+				66 image
+				165 text Policy Settings
+			67 button RBAC Matrix
+				68 image
+				166 text RBAC Matrix
+			69 button Service & Fees
+				70 image
+				167 text Service & Fees
+			71 button Onboarding & Appeals
+				72 image
+				168 text Onboarding & Appeals
+			73 button Case Library & OCR
+				74 image
+				169 text Case Library & OCR
+			75 button Direct Role Access
+				76 image
+				170 text Direct Role Access
+			184 heading Add New Officer / System Account, Value: 2
+				185 image
+				186 text Add New Officer / System Account
+			187 text field (settable)
+			188 text field (settable)
+			189 pop up button (collapsed, settable) Value: Sub-Registrar (সাব-রেজিস্ট্রার), Secondary Actions: Expand
+				190 menu
+					191 Citizen (নাগরিক)
+					192 (selected) Sub-Registrar (সাব-রেজিস্ট্রার)
+					193 AC Land (এসি ল্যান্ড)
+					194 Bank Officer (ব্যাংক কর্মকর্তা)
+					195 Admin (অ্যাডমিন)
+			196 text field (settable) 9900008888
+			197 text field (settable) সাভার সাব-রেজিস্ট্রি অফিস
+			198 button + Create Officer Account
+				199 text + 
+				200 text Create Officer Account
+			201 heading Registered Officers & Role Assignment Directory (23), Value: 2
+				202 text Registered Officers & Role Assignment Directory ( 23 )
+			203 text Md. Rafiqul Islam (Citizen) citizen ACTIVE ID Verified @ citizen  • NID:  9900001001  • Office:  নাগরিক পোর্টাল — সাভার, ঢাকা
+			204 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				205 menu
+					206 (selected) citizen
+					207 sub_registrar
+					208 ac_land
+					209 bank_officer
+					210 admin
+			211 button Disable
+			212 text Mst. Rabeya Khatun (Citizen - Heir) citizen ACTIVE ID Verified @ rabeya  • NID:  9900001002  • Office:  নাগরিক পোর্টাল — বিরুলিয়া, সাভার
+			213 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				214 menu
+					215 (selected) citizen
+					216 sub_registrar
+					217 ac_land
+					218 bank_officer
+					219 admin
+			220 button Disable
+			221 text Md. Shahinur Rahman (Service Point Operator) service_point_operator ACTIVE @ spo_birulia  • NID:  9900001999  • Office:  বিরুলিয়া ইউনিয়ন ডিজিটাল সেন্টার (ইউডিসি)
+			222 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				223 menu
+					224 (selected) citizen
+					225 sub_registrar
+					226 ac_land
+					227 bank_officer
+					228 admin
+			229 button Disable
+			230 text Farhana Yasmin (Sub-Registrar) sub_registrar ACTIVE @ registrar  • NID:  9900002001  • Office:  সাব-রেজিস্ট্রি অফিস, সাভার, ঢাকা
+			231 pop up button (collapsed, settable) Value: sub_registrar, Secondary Actions: Expand
+				232 menu
+					233 citizen
+					234 (selected) sub_registrar
+					235 ac_land
+					236 bank_officer
+					237 admin
+			238 button Disable
+			239 text Md. Shafiqul Alam (Sub-Registrar) sub_registrar ACTIVE @ registrar_gazipur  • NID:  9900002002  • Office:  সাব-রেজিস্ট্রি অফিস, গাজীপুর সদর
+			240 pop up button (collapsed, settable) Value: sub_registrar, Secondary Actions: Expand
+				241 menu
+					242 citizen
+					243 (selected) sub_registrar
+					244 ac_land
+					245 bank_officer
+					246 admin
+			247 button Disable
+			248 text Md. Kamrul Hasan (Registry Data Officer - Maker) registry_data_officer ACTIVE @ rdo_savar  • NID:  9900002003  • Office:  সাব-রেজিস্ট্রি অফিস, সাভার, ঢাকা
+			249 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				250 menu
+					251 (selected) citizen
+					252 sub_registrar
+					253 ac_land
+					254 bank_officer
+					255 admin
+			256 button Disable
+			257 button
+				258 image
+			259 text Tanvir Ahmed (AC Land) ac_land ACTIVE @ acland  • NID:  9900003001  • Office:  উপজেলা ভূমি অফিস, সাভার, ঢাকা
+			260 pop up button (collapsed, settable) Value: ac_land, Secondary Actions: Expand
+				261 menu
+					262 citizen
+					263 sub_registrar
+					264 (selected) ac_land
+					265 bank_officer
+					266 admin
+			267 button Disable
+			268 button
+				269 image
+			270 text Salma Akter (Land Office Assistant - Maker) land_office_assistant ACTIVE @ loa_savar  • NID:  9900003002  • Office:  উপজেলা ভূমি অফিস, সাভার, ঢাকা
+			271 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				272 menu
+					273 (selected) citizen
+					274 sub_registrar
+					275 ac_land
+					276 bank_officer
+					277 admin
+			278 button Disable
+			279 button
+				280 image
+			281 text Md. Jahangir Alam (Field Verification Officer) field_verification_officer ACTIVE @ fvo_savar  • NID:  9900003003  • Office:  ইউনিয়ন ভূমি অফিস, বিরুলিয়া, সাভার
+			282 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				283 menu
+					284 (selected) citizen
+					285 sub_registrar
+					286 ac_land
+					287 bank_officer
+					288 admin
+			289 button Disable
+			290 button
+				291 image
+			292 text Md. Delwar Hossain (Settlement Records Officer - Maker) settlement_records_officer ACTIVE @ sro_dhaka  • NID:  9900003004  • Office:  জোনাল সেটেলমেন্ট অফিস, ঢাকা
+			293 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				294 menu
+					295 (selected) citizen
+					296 sub_registrar
+					297 ac_land
+					298 bank_officer
+					299 admin
+			300 button Disable
+			301 button
+				302 image
+			303 text Nazneen Sultana (Assistant Settlement Officer - Checker) settlement_checker ACTIVE @ aso_dhaka  • NID:  9900003005  • Office:  জোনাল সেটেলমেন্ট অফিস, ঢাকা
+			304 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				305 menu
+					306 (selected) citizen
+					307 sub_registrar
+					308 ac_land
+					309 bank_officer
+					310 admin
+			311 button Disable
+			312 button
+				313 image
+			314 text Md. Mashiur Rahman (UNO Supervisor) uno_supervisor ACTIVE @ uno_savar  • NID:  9900003006  • Office:  উপজেলা নির্বাহী অফিসারের কার্যালয়, সাভার
+			315 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				316 menu
+					317 (selected) citizen
+					318 sub_registrar
+					319 ac_land
+					320 bank_officer
+					321 admin
+			322 button Disable
+			323 button
+				324 image
+			325 text Md. Saidur Rahman (ADC Revenue - Appellate Reviewer) appellate_reviewer ACTIVE @ appellate_reviewer  • NID:  9900003007  • Office:  জেলা প্রশাসকের কার্যালয় (রাজস্ব শাখা), ঢাকা
+			326 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				327 menu
+					328 (selected) citizen
+					329 sub_registrar
+					330 ac_land
+					331 bank_officer
+					332 admin
+			333 button Disable
+			334 button
+				335 image
+			336 text Nazmul Hasan (Bank Officer - Credit) bank_officer ACTIVE @ bank  • NID:  9900004001  • Office:  সোনালী ব্যাংক পিএলসি, সাভার শাখা (ডেমো)
+			337 pop up button (collapsed, settable) Value: bank_officer, Secondary Actions: Expand
+				338 menu
+					339 citizen
+					340 sub_registrar
+					341 ac_land
+					342 (selected) bank_officer
+					343 admin
+			344 button Disable
+			345 button
+				346 image
+			347 text Syeda Khaleda Parveen (Bank Branch Manager) bank_manager ACTIVE @ bank_manager  • NID:  9900004002  • Office:  সোনালী ব্যাংক পিএলসি, সাভার শাখা (ডেমো)
+			348 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				349 menu
+					350 (selected) citizen
+					351 sub_registrar
+					352 ac_land
+					353 bank_officer
+					354 admin
+			355 button Disable
+			356 button
+				357 image
+			358 text Mst. Farhana Afroz (Support Agent - 16122) support_agent ACTIVE @ support_agent  • NID:  9900004003  • Office:  ভূমি সেবা হেল্পলাইন কলসেন্টার ১৬১২২
+			359 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				360 menu
+					361 (selected) citizen
+					362 sub_registrar
+					363 ac_land
+					364 bank_officer
+					365 admin
+			366 button Disable
+			367 button
+				368 image
+			369 text Md. Fahim Chowdhury (Platform Moderator) platform_moderator ACTIVE @ platform_moderator  • NID:  9900004004  • Office:  ভূমি সুরক্ষা মার্কেটপ্লেস ও লিস্টিং সেল
+			370 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				371 menu
+					372 (selected) citizen
+					373 sub_registrar
+					374 ac_land
+					375 bank_officer
+					376 admin
+			377 button Disable
+			378 button
+				379 image
+			380 text Tanjila Haque (Content Editor) content_editor ACTIVE @ content_editor  • NID:  9900004005  • Office:  ভূমি প্রকাশনা ও জনসচেতনতা শাখা
+			381 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				382 menu
+					383 (selected) citizen
+					384 sub_registrar
+					385 ac_land
+					386 bank_officer
+					387 admin
+			388 button Disable
+			389 button
+				390 image
+			391 text Md. Atiqul Islam (Content Approver) content_approver ACTIVE @ content_approver  • NID:  9900004006  • Office:  ভূমি মন্ত্রণালয় জনসংযোগ উইং
+			392 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				393 menu
+					394 (selected) citizen
+					395 sub_registrar
+					396 ac_land
+					397 bank_officer
+					398 admin
+			399 button Disable
+			400 button
+				401 image
+			402 text System Admin (BhumiShield Admin) admin ACTIVE @ admin  • NID:  9900005001  • Office:  কেন্দ্রীয় সিস্টেম গভর্ন্যান্স ও কনফিগারেশন সেল
+			403 pop up button (collapsed, settable) Value: admin, Secondary Actions: Expand
+				404 menu
+					405 citizen
+					406 sub_registrar
+					407 ac_land
+					408 bank_officer
+					409 (selected) admin
+			410 button Disable
+			411 button
+				412 image
+			413 text Md. Shamsul Haque (National Cryptographic Auditor) auditor ACTIVE @ lead_auditor  • NID:  9900005002  • Office:  জাতীয় ভূমি লেজার অডিট অধিদপ্তর
+			414 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				415 menu
+					416 (selected) citizen
+					417 sub_registrar
+					418 ac_land
+					419 bank_officer
+					420 admin
+			421 button Disable
+			422 button
+				423 image
+			424 text Md. Tariq Hasan (DC Land Acquisition Officer) dc_acquisition_officer ACTIVE @ dc_la  • NID:  9900005003  • Office:  জেলা প্রশাসকের কার্যালয় (ভূমি অধিগ্রহণ শাখা)
+			425 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				426 menu
+					427 (selected) citizen
+					428 sub_registrar
+					429 ac_land
+					430 bank_officer
+					431 admin
+			432 button Disable
+			433 button
+				434 image
+			435 text Advocate Sirajul Karim (Civil Court User) lawyer_court_user ACTIVE @ lawyer  • NID:  9900005004  • Office:  ঢাকা জেলা ও দায়রা জজ আদালত বার
+			436 pop up button (collapsed, settable) Value: citizen, Secondary Actions: Expand
+				437 menu
+					438 (selected) citizen
+					439 sub_registrar
+					440 ac_land
+					441 bank_officer
+					442 admin
+			443 button Disable
+			444 button
+				445 image
+		83 container
+			177 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			84 content list
+				85 button Check Before Buy
+				86 button Land Sale Marketplace
+				87 button Cadastral Mouza Map
+				88 button Verify Deed QR Code
+				89 button Official Noticeboard
+				90 button Land Literacy Blog
+				91 button Offices & Service Points
+				92 button Citizen Sale Lock Vault
+			178 text Workspaces
+			93 content list
+				94 button Sub-Registrar Panel
+				95 button AC Land Tribunal
+				96 button Bank Lien & NOC
+				97 button National Ledger & Audit
+			179 text Support & Helpline
+			98 content list
+				180 text Land Service Call Center: 16122
+				181 text Ministry of Land (Official service hours)
+				182 text Check official service hours
+				99 button Frequently Asked Questions
+				100 button Bangladeshi Land Glossary
+			183 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 61 button Officers CRUD

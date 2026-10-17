@@ -128,6 +128,55 @@ export const NoticeboardPage: React.FC = () => {
     }
   };
 
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [verifyState, setVerifyState] = useState<{ ok: boolean; hash: string } | null>(null);
+
+  const handleDownloadNoticeDocument = async (att: NoticeAttachment) => {
+    const notice = notices.find((n) => n.id === att.notice_id);
+    if (!notice) return;
+    setDownloading(true);
+    setDownloadError(null);
+    try {
+      // F09: real government-signed PDF. The backend hashes the canonical
+      // envelope and signs the SHA-256 with Ed25519; the PDF body embeds
+      // both so a human reader (or verifier) can re-derive and check.
+      const apiBase = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8000';
+      const url = `${apiBase}/api/v1/notices/${encodeURIComponent(notice.notice_slug)}/attachments/${att.id}/download`;
+      const res = await fetch(url, { method: 'GET' });
+      if (!res.ok) {
+        throw new Error(`Download failed: HTTP ${res.status}`);
+      }
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `bhumi_notice_${notice.notice_slug}_${att.id}.sealed.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch (e: any) {
+      setDownloadError(e?.message || 'Download failed');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleVerifySeal = async (att: NoticeAttachment) => {
+    const notice = notices.find((n) => n.id === att.notice_id);
+    if (!notice) return;
+    try {
+      const apiBase = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8000';
+      const url = `${apiBase}/api/v1/notices/${encodeURIComponent(notice.notice_slug)}/attachments/${att.id}/download?verify=1`;
+      const res = await fetch(url, { method: 'GET' });
+      if (!res.ok) throw new Error(`Verify failed: HTTP ${res.status}`);
+      const data = await res.json();
+      setVerifyState({ ok: !!data.verified, hash: data.content_hash || '' });
+    } catch {
+      setVerifyState({ ok: false, hash: '' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -263,7 +312,7 @@ export const NoticeboardPage: React.FC = () => {
                           <button
                             key={att.id}
                             type="button"
-                            onClick={() => setSelectedAttachment(att)}
+                            onClick={() => { setSelectedAttachment(att); setVerifyState(null); setDownloadError(null); }}
                             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-[#006A4E] bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition cursor-pointer min-h-[44px]"
                           >
                             <FileText className="w-4 h-4 text-emerald-700" />
@@ -301,7 +350,6 @@ export const NoticeboardPage: React.FC = () => {
 
               <div className="text-center space-y-3">
                 <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl inline-block mx-auto">
-                  {/* Generated QR Placeholder / Mock */}
                   <div className="w-48 h-48 bg-white border border-slate-300 rounded-lg flex flex-col items-center justify-center p-2 text-center">
                     <QrCode className="w-32 h-32 text-slate-800" />
                     <span className="text-[10px] font-mono text-slate-500 break-all truncate max-w-full">
@@ -316,18 +364,40 @@ export const NoticeboardPage: React.FC = () => {
                   </p>
                   <p>
                     <strong>{t('আকার:', 'File Size:')}</strong>{' '}
-                    {Math.round(selectedAttachment.file_size_bytes / 1024)} KB (PDF)
+                    {Math.round(selectedAttachment.file_size_bytes / 1024)} KB (original)
                   </p>
                   <p className="font-mono text-[10px] text-slate-600 break-all">
                     <strong>SHA-256:</strong> {selectedAttachment.content_hash}
                   </p>
                   <p className="text-[11px] text-emerald-800">
-                    ✔ {t('গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের ডিজিটাল স্বাক্ষর দ্বারা সুরক্ষিত।', 'Cryptographically verified & signed by Government of Bangladesh.')}
+                    ✔ {t('সরকারি-স্বাক্ষরিত পিডিএফ (SHA-256 + Ed25519) — ডাউনলোড করে যাচাই করুন।',
+                         'Government-signed PDF (SHA-256 + Ed25519) — download to verify.')}
                   </p>
+                  {verifyState && (
+                    <p className={`text-[11px] font-semibold ${verifyState.ok ? 'text-emerald-700' : 'text-rose-700'}`}>
+                      {verifyState.ok
+                        ? t('✔ সিল যাচাই সফল — SHA-256 ও Ed25519 মিলেছে।',
+                             '✔ Seal verified — SHA-256 and Ed25519 match.')
+                        : t('✖ সিল যাচাই ব্যর্থ — স্বাক্ষর অমিল।',
+                             '✖ Seal verification FAILED — signature mismatch.')}
+                    </p>
+                  )}
+                  {downloadError && (
+                    <p className="text-[11px] font-semibold text-rose-700">
+                      {t('ত্রুটি:', 'Error:')} {downloadError}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <div className="flex flex-wrap justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => handleVerifySeal(selectedAttachment)}
+                  className="px-4 py-2 border border-emerald-300 text-emerald-800 rounded-lg text-xs font-semibold hover:bg-emerald-50 transition cursor-pointer min-h-[44px]"
+                >
+                  {t('সিল যাচাই করুন', 'Verify Seal')}
+                </button>
                 <button
                   type="button"
                   onClick={() => setSelectedAttachment(null)}
@@ -335,21 +405,19 @@ export const NoticeboardPage: React.FC = () => {
                 >
                   {t('বন্ধ করুন', 'Close')}
                 </button>
-                <a
-                  href={`#download-${selectedAttachment.id}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    alert(
-                      lang === 'bn'
-                        ? 'বিজ্ঞপ্তির ডিজিটাল কপি সফলভাবে ডাউনলোড হয়েছে (ডেমো)।'
-                        : 'Official notice copy downloaded successfully (demo).'
-                    );
-                  }}
-                  className="px-5 py-2 bg-[#006A4E] hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer min-h-[44px]"
+                <button
+                  type="button"
+                  onClick={() => handleDownloadNoticeDocument(selectedAttachment)}
+                  disabled={downloading}
+                  className="px-5 py-2 bg-[#006A4E] hover:bg-emerald-800 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer min-h-[44px]"
                 >
                   <Download className="w-4 h-4" />
-                  <span>{t('ডাউনলোড করুন', 'Download Notice')}</span>
-                </a>
+                  <span>
+                    {downloading
+                      ? t('ডাউনলোড হচ্ছে...', 'Downloading...')
+                      : t('সরকারি-স্বাক্ষরিত পিডিএফ ডাউনলোড', 'Download Signed PDF')}
+                  </span>
+                </button>
               </div>
             </div>
           </div>

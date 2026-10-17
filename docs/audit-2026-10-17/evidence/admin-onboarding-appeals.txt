@@ -1,0 +1,184 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/admin".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/admin
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা BCC LandTech
+				101 text ভূ
+				102 text ভূমি সুরক্ষা
+				103 text BCC LandTech
+			5 button Toggle Sidebar
+				6 image
+			104 text National Admin & Governance Panel Central Cryptographic Ledger Governance & Security
+			105 container Sidebar Navigation
+				106 text MENU
+				107 button Cryptographic Ledger
+					108 image
+					109 text Cryptographic Ledger
+				110 button Users & Access Control
+					111 image
+					112 text Users & Access Control
+				113 button Security Audit Trail
+					114 image
+					115 text Security Audit Trail
+				116 button Fraud Engine Policy
+					117 image
+					118 text Fraud Engine Policy
+				119 button RBAC Matrix
+					120 image
+					121 text RBAC Matrix
+				122 button Onboarding & Appeals
+					123 image
+					124 text Onboarding & Appeals
+				125 button Service & Fees
+					126 image
+					127 text Service & Fees
+				128 button Direct Role Oversight
+					129 image
+					130 text Direct Role Oversight
+				131 image
+				132 text SUPER ADMIN DIRECT ACCESS
+				133 button Citizen Vault, Help: Direct Login Without Password
+					134 text Citizen Vault
+					135 image
+				136 button Sub-Registrar, Help: Direct Login Without Password
+					137 text Sub-Registrar
+					138 image
+				139 button AC Land, Help: Direct Login Without Password
+					140 text AC Land
+					141 image
+				142 button Bank Officer, Help: Direct Login Without Password
+					143 text Bank Officer
+					144 image
+				145 button Super Admin, Help: Direct Login Without Password
+					146 text Super Admin
+					147 image
+			34 button Public Portal
+				35 image
+				148 text Public Portal
+			36 button Sign Out
+				37 image
+				149 text Sign Out
+		38 container
+			39 button Home
+				40 image
+				150 text Home
+			151 text / National Admin & Governance Panel
+			41 text field (settable)
+			42 image
+			43 button বাং
+			44 button Contrast
+				45 image
+			46 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				152 text স
+				153 text সিস্টেম অ্যাডমিন (ভূমি সুরক্ষা অ্যাডমিন)
+				154 text National Admin & Governance Panel
+				47 image
+		48 container
+			49 heading Central Governance & Admin Console, Value: 1
+				155 text Central Governance & Admin Console
+			156 text RBAC, hash ledger lab, officers directory, and append-only audit trail.
+			157 text System Administrator LEDGER HASH INTEGRITY 97.5 %
+			50 button Inspect Hash Lab →
+			51 image
+			158 text REGISTERED OFFICERS 23
+			52 button View User Directory →
+			53 image
+			159 text SECURITY AUDIT EVENTS 5
+			54 button Review Audit Logs →
+			55 image
+			160 text ROLE OVERSIGHT ৫টি  Roles
+			56 button Direct Role Access →
+			57 image
+			58 heading Central Governance, RBAC Matrix, Officers Directory & Cryptographic Audit, Value: 2
+				161 text Central Governance, RBAC Matrix, Officers Directory & Cryptographic Audit
+			59 button Hash Ledger Lab
+				60 image
+				162 text Hash Ledger Lab
+			61 button Officers CRUD
+				62 image
+				163 text Officers CRUD
+			63 button Audit Trail
+				64 image
+				164 text Audit Trail
+			65 button Policy Settings
+				66 image
+				165 text Policy Settings
+			67 button RBAC Matrix
+				68 image
+				166 text RBAC Matrix
+			69 button Service & Fees
+				70 image
+				167 text Service & Fees
+			71 button Onboarding & Appeals
+				72 image
+				168 text Onboarding & Appeals
+			73 button Case Library & OCR
+				74 image
+				169 text Case Library & OCR
+			75 button Direct Role Access
+				76 image
+				170 text Direct Role Access
+			184 heading Maker-Checker Onboarding & Appellate Review Tribunal, Value: 2
+				185 image
+				186 text Maker-Checker Onboarding & Appellate Review Tribunal
+			187 text Maker-Checker staging data verification with cryptographic proof packages and legal appellate stay orders.
+			188 button Staging Batches (2)
+				189 image
+				190 text Staging Batches
+				191 text  (
+				192 text 2
+				193 text )
+			194 button Appeals Mirror (1)
+				195 image
+				196 text Appeals Mirror
+				197 text  (
+				198 text 1
+				199 text )
+			200 text Four-Eyes Principle:
+			201 text Makers stage draft entries. Checkers verify payloads and cryptographic hash chains before granting approval. Makers cannot check their own batches.
+			202 button New Staging Batch
+				203 image
+				204 text New Staging Batch
+			205 text ONB-2026-0002
+			206 image
+			207 text APPROVED
+			208 heading Khatian Reconciliation Batch, Value: 3
+				209 text Khatian Reconciliation Batch
+			210 text Maker: মো. কামরুল হাসান (রেজিস্ট্রি ডাটা অফিসার - মেকার)  ( registry_data_officer ) Checker: ফারহানা ইয়াসমিন (সাব-রেজিস্ট্রার) Items Count: 1  টি Proof Hash: 145a125d1757acfe0db4e13feadf1fad14b0925dd12f2afb1e96ebd38a807bd4
+			211 button Inspect Payload →
+			212 text ONB-2026-0001
+			213 image
+			214 text SUBMITTED
+			215 heading Sale Deed Draft Batch, Value: 3
+				216 text Sale Deed Draft Batch
+			217 text Maker: মো. কামরুল হাসান (রেজিস্ট্রি ডাটা অফিসার - মেকার)  ( registry_data_officer ) Checker: Pending Review... Items Count: 2  টি Proof Hash: b4c4a612ec90680f64c653ce54d18aa66296b7d39789a6bb765da61b74a6340d
+			218 button Inspect Payload →
+			219 button ✔ Approve
+			220 button ✕ Reject
+		83 container
+			177 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			84 content list
+				85 button Check Before Buy
+				86 button Land Sale Marketplace
+				87 button Cadastral Mouza Map
+				88 button Verify Deed QR Code
+				89 button Official Noticeboard
+				90 button Land Literacy Blog
+				91 button Offices & Service Points
+				92 button Citizen Sale Lock Vault
+			178 text Workspaces
+			93 content list
+				94 button Sub-Registrar Panel
+				95 button AC Land Tribunal
+				96 button Bank Lien & NOC
+				97 button National Ledger & Audit
+			179 text Support & Helpline
+			98 content list
+				180 text Land Service Call Center: 16122
+				181 text Ministry of Land (Official service hours)
+				182 text Check official service hours
+				99 button Frequently Asked Questions
+				100 button Bangladeshi Land Glossary
+			183 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 71 button Onboarding & Appeals

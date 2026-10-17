@@ -1,0 +1,149 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/home".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/home
+	2 container root
+		3 container
+			4 button ভূ BhumiShield National Land & Deed Trust Platform
+				5 text ভূ
+				6 text BhumiShield
+				7 text National Land & Deed Trust Platform
+			8 container প্রধান মেনু
+				9 button All Services
+				10 button Land Sale
+				11 button Cadastral Map
+				12 button Check Land
+				13 button Verify Deed
+				14 button Notices
+				15 button Blog
+				16 button Offices
+				17 button Citizen Vault
+				18 button Help
+			19 button Switch Language
+			20 button High Contrast
+				21 image
+			199 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				200 text ম
+				201 text মো. শাহীনুর রহমান (সার্ভিস পয়েন্ট অপারেটর)
+				202 text Service Point Operator (UDC)
+				203 image
+		27 container
+			204 text না
+			205 heading Md. Shahinur Rahman (Service Point Operator), Value: 3
+				206 text Md. Shahinur Rahman (Service Point Operator)
+			207 text NID:  ****৫৮৯১
+			208 button Collapse Menu
+				209 image
+			210 container
+				211 text CITIZEN SERVICES
+				212 button Overview & KPIs
+					213 image
+					214 text Overview & KPIs
+				215 button My Land & Plots 0, Help: My Land & Plots
+					216 image
+					217 text My Land & Plots
+					218 text 0
+				219 button Document Vault (L0-L3)
+					220 image
+					221 text Document Vault (L0-L3)
+				222 button My Registered Deeds 0, Help: My Registered Deeds
+					223 image
+					224 text My Registered Deeds
+					225 text 0
+				226 button 13-Step Transfer Pipeline 5, Help: 13-Step Transfer Pipeline
+					227 image
+					228 text 13-Step Transfer Pipeline
+					229 text 5
+				230 button Disputes & Objections
+					231 image
+					232 text Disputes & Objections
+				233 button Support Tickets & Helpdesk 2, Help: Support Tickets & Helpdesk
+					234 image
+					235 text Support Tickets & Helpdesk
+					236 text 2
+				237 button Profile & Demo Switcher
+					238 image
+					239 text Profile & Demo Switcher
+			240 image
+			241 text Land Hotline: 16122
+			242 text Call toll-free for land and khatian inquiries.
+			243 button Check Plot
+			244 button QR Deed
+			245 container
+				246 text Citizen Portal / সারসংক্ষেপ ও পরিসংখ্যান
+				247 heading Overview & KPIs, Value: 2
+					248 text Overview & KPIs
+				249 text Demo Profile:
+				250 button মোঃ রফিকুল ইসলাম
+				251 button রাবেয়া খাতুন (লক)
+				252 button আব্দুল করিম (বন্ধক)
+				253 button Refresh Data
+					254 image
+				255 button Check Before Buying
+					256 image
+					257 text Check Before Buying
+			258 container
+				259 image
+				260 text NID-Verified Citizen Vault
+			261 heading Welcome, Md. Shahinur Rahman (Service Point Operator)!, Value: 1
+				262 text Welcome, Md. Shahinur Rahman (Service Point Operator)!
+			263 text Your registered land parcels, cryptographic deeds, owner sale locks, and mutation transfers are fully secured.
+			264 button View My Land
+				265 image
+				266 text View My Land
+			267 button + Start Transfer
+				268 image
+				269 text + Start Transfer
+			270 container
+				271 text MY PLOTS (BS) 0  টি দাগ View in Vault
+				272 image
+				273 image
+			274 container
+				275 text SALE-LOCKED 0  টি সুরক্ষিত Fraud Protection Active
+				276 image
+			277 container
+				278 text LINKED DEEDS 0  টি দলিল Ed25519 Verified
+				279 image
+			280 container
+				281 text ACTIVE TRANSFERS 5  টি কেস 13-Step Machine
+				282 image
+			283 image
+			284 heading My Land Parcels (BS Record), Value: 3
+				285 text My Land Parcels (BS Record)
+			286 button View All →
+			287 image
+			288 heading Transfer Pipeline In-Progress, Value: 3
+				289 text Transfer Pipeline In-Progress
+			290 button Open Tracker →
+			291 text TR-2026-000105 DRAFT
+			292 container
+				293 text বিরুলিয়া  — দাগ  106  ( 0.01  শতক)
+			294 text ধাপ  1  / ১৩ 8 % সম্পন্ন TR-2026-000104 COMPLETED
+			295 container
+				296 text বিরুলিয়া  — দাগ  101  ( 5  শতক)
+			297 text ধাপ  13  / ১৩ 100 % সম্পন্ন
+		127 container
+			128 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			129 content list
+				130 button Check Before Buy
+				131 button Land Sale Marketplace
+				132 button Cadastral Mouza Map
+				133 button Verify Deed QR Code
+				134 button Official Noticeboard
+				135 button Land Literacy Blog
+				136 button Offices & Service Points
+				137 button Citizen Sale Lock Vault
+			138 text Workspaces
+			139 content list
+				140 button Sub-Registrar Panel
+				141 button AC Land Tribunal
+				142 button Bank Lien & NOC
+				143 button National Ledger & Audit
+			144 text Support & Helpline
+			145 content list
+				146 text Land Service Call Center: 16122
+				147 text Ministry of Land (Official service hours)
+				148 text Check official service hours
+				149 button Frequently Asked Questions
+				150 button Bangladeshi Land Glossary
+			151 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/home

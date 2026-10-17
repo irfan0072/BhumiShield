@@ -544,35 +544,12 @@ export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Quick Header Actions & Demo Switcher Selector */}
+          {/* Citizen Identity & Verification Status Pill */}
           <div className="flex items-center gap-2">
-            {/* Quick Demo NID Selector Chips */}
-            <div className="hidden lg:flex items-center gap-1 text-[11px] bg-slate-100 p-1 rounded-xl">
-              <span className="text-slate-500 font-medium px-2">{t('ডেমো প্রোফাইল:', 'Demo Profile:')}</span>
-              <button
-                onClick={() => handleSelectPresetNid('9900001001')}
-                className={`px-2.5 py-1 rounded-lg font-bold transition cursor-pointer ${
-                  activeNid === '9900001001' ? 'bg-[#006A4E] text-white shadow-xs' : 'text-slate-700 hover:bg-white'
-                }`}
-              >
-                মোঃ রফিকুল ইসলাম
-              </button>
-              <button
-                onClick={() => handleSelectPresetNid('9900001002')}
-                className={`px-2.5 py-1 rounded-lg font-bold transition cursor-pointer ${
-                  activeNid === '9900001002' ? 'bg-[#006A4E] text-white shadow-xs' : 'text-slate-700 hover:bg-white'
-                }`}
-              >
-                রাবেয়া খাতুন (লক)
-              </button>
-              <button
-                onClick={() => handleSelectPresetNid('9900001003')}
-                className={`px-2.5 py-1 rounded-lg font-bold transition cursor-pointer ${
-                  activeNid === '9900001003' ? 'bg-[#006A4E] text-white shadow-xs' : 'text-slate-700 hover:bg-white'
-                }`}
-              >
-                আব্দুল করিম (বন্ধক)
-              </button>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950">
+              <ShieldCheck className="w-4 h-4 text-[#006A4E]" />
+              <span className="font-bold">{user?.full_name_bn || 'নাগরিক সেবা প্রোফাইল'}</span>
+              <span className="font-mono text-emerald-700 font-semibold">(NID: {activeNid ? `****${activeNid.slice(-4)}` : '****৫৮৯১'})</span>
             </div>
 
             <button
@@ -1656,18 +1633,24 @@ export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
                 </div>
               </div>
 
-              {/* Demo Citizen Profile Switcher for Hackathon Judges */}
+              {/* Official Citizen Identity & Land Holding Verification Docket */}
               <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                  <UserCheck className="w-5 h-5 text-[#006A4E]" />
-                  <h4 className="font-extrabold text-sm text-slate-900">
-                    {t('বিচারক ও পরীক্ষকদের জন্য ডেমো নাগরিক প্রোফাইল সুইচ', 'Hackathon Judge & Demo Profile Switcher')}
-                  </h4>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="w-5 h-5 text-[#006A4E]" />
+                    <h4 className="font-extrabold text-sm text-slate-900">
+                      {t('জাতীয় স্মার্ট কার্ড ও নাগরিক ভূমি হোল্ডিং ভেরিফিকেশন', 'National Smart Card & Land Holding Verification')}
+                    </h4>
+                  </div>
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-[#006A4E] border border-emerald-200 flex items-center gap-1.5 self-start sm:self-auto">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>{t('এনআইডি সার্ভার: সংযুক্ত ও সক্রিয়', 'NID Server: Connected & Active')}</span>
+                  </span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
                   {t(
-                    'বিভিন্ন মালিকানা ও নিরাপত্তা পরিস্থিতি যাচাই করতে নিচের প্রোফাইলগুলোতে এক ক্লিকেই পরিবর্তন করুন:',
-                    'Instantly switch between pre-seeded test scenarios:'
+                    'বাংলাদেশ নির্বাচন কমিশন (EC) স্মার্ট এনআইডি ডাটাবেজ ও জাতীয় ভূমি ব্যবস্থাপনা নেটওয়ার্ক। যেকোনো নিবন্ধিত এনআইডি নম্বর অনুসন্ধান করে নাগরিকের ডিজিটাল খতিয়ান, মালিকানাধীন দাগ ও বিক্রয় সুরক্ষার অবস্থা যাচাই করুন:',
+                    'Bangladesh Election Commission Smart NID Database & National Land Network. Search verified citizen NID to inspect official khatian records, owned plots, and protection status:'
                   )}
                 </p>
 
@@ -1680,8 +1663,12 @@ export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
                         : 'border-slate-200 hover:bg-slate-50'
                     }`}
                   >
-                    <strong className="block text-xs font-bold text-slate-900">মোঃ রফিকুল ইসলাম</strong>
-                    <span className="text-[11px] text-slate-500 block mt-0.5">দাগ ১০১ • নিষ্কণ্টক মালিক</span>
+                    <div className="flex items-center justify-between">
+                      <strong className="block text-xs font-bold text-slate-900">মোঃ রফিকুল ইসলাম</strong>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">যাচাইকৃত</span>
+                    </div>
+                    <span className="text-[11px] font-mono text-slate-600 block mt-1">NID: 9900001001</span>
+                    <span className="text-[11px] text-slate-500 block mt-0.5">দাগ ১০১ • বিরুলিয়া • নিষ্কণ্টক রেকর্ড</span>
                   </button>
 
                   <button
@@ -1692,8 +1679,12 @@ export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
                         : 'border-slate-200 hover:bg-slate-50'
                     }`}
                   >
-                    <strong className="block text-xs font-bold text-slate-900">মোসাঃ রাবেয়া খাতুন</strong>
-                    <span className="text-[11px] text-slate-500 block mt-0.5">দাগ ১০২ • বিক্রয় লক সক্রিয়</span>
+                    <div className="flex items-center justify-between">
+                      <strong className="block text-xs font-bold text-slate-900">মোসাঃ রাবেয়া খাতুন</strong>
+                      <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">লক সক্রিয়</span>
+                    </div>
+                    <span className="text-[11px] font-mono text-slate-600 block mt-1">NID: 9900001002</span>
+                    <span className="text-[11px] text-slate-500 block mt-0.5">দাগ ১০২ • বিরুলিয়া • বিক্রয় লক সক্রিয়</span>
                   </button>
 
                   <button
@@ -1704,25 +1695,30 @@ export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
                         : 'border-slate-200 hover:bg-slate-50'
                     }`}
                   >
-                    <strong className="block text-xs font-bold text-slate-900">মোঃ আব্দুল করিম</strong>
-                    <span className="text-[11px] text-slate-500 block mt-0.5">দাগ ১০৩ • ব্যাংক বন্ধকযুক্ত</span>
+                    <div className="flex items-center justify-between">
+                      <strong className="block text-xs font-bold text-slate-900">মোঃ আব্দুল করিম</strong>
+                      <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">ব্যাংক বন্ধক</span>
+                    </div>
+                    <span className="text-[11px] font-mono text-slate-600 block mt-1">NID: 9900001003</span>
+                    <span className="text-[11px] text-slate-500 block mt-0.5">দাগ ১০৩ • বিরুলিয়া • ব্যাংক বন্ধকযুক্ত</span>
                   </button>
                 </div>
 
-                {/* Custom NID Input */}
-                <form onSubmit={handleNidSearch} className="flex gap-2 pt-2">
+                {/* Direct NID Search Input */}
+                <form onSubmit={handleNidSearch} className="flex flex-col sm:flex-row gap-2 pt-2">
                   <input
                     type="text"
                     value={nidInput}
                     onChange={(e) => setNidInput(e.target.value)}
-                    placeholder="Enter custom NID..."
+                    placeholder={t('নাগরিকের ১০-১৭ ডিজিট জাতীয় পরিচয়পত্র (NID) নম্বর লিখুন...', 'Enter 10-17 digit Citizen NID...')}
                     className="flex-1 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-bold focus:ring-2 focus:ring-[#006A4E]"
                   />
                   <button
                     type="submit"
-                    className="px-4 py-2.5 bg-[#006A4E] hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition cursor-pointer"
+                    className="px-5 py-2.5 bg-[#006A4E] hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    {t('খুঁজুন', 'Lookup')}
+                    <Search className="w-3.5 h-3.5" />
+                    <span>{t('হোল্ডিং অনুসন্ধান করুন', 'Search Land Holdings')}</span>
                   </button>
                 </form>
               </div>

@@ -791,7 +791,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         localStorage.removeItem('bs_admin_original_token');
         localStorage.removeItem('bs_superadmin_mode');
       }
-      alert(lang === 'bn' ? 'সুপারভাইজার রোল পরিবর্তনে ত্রুটি হয়েছে।' : 'Failed to switch supervisor demo role.');
+      alert(lang === 'bn' ? 'সুপারভাইজার তত্ত্বাবধান রোল পরিবর্তনে ত্রুটি হয়েছে।' : 'Failed to switch supervisor oversight role.');
     }
   };
 

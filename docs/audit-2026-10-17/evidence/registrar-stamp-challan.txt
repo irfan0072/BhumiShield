@@ -1,0 +1,145 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/registrar".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/registrar
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা BCC LandTech
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text BCC LandTech
+			8 button Toggle Sidebar
+				9 image
+			10 text Sub-Registrar Panel Directorate of Registration • Ministry of Law
+			11 container Sidebar Navigation
+				12 text MENU
+				13 button Held Deeds Queue
+					14 image
+					15 text Held Deeds Queue
+				16 button Pre-Reg Gatekeeper
+					17 image
+					18 text Pre-Reg Gatekeeper
+				19 button Deeds Register
+					20 image
+					21 text Deeds Register
+				22 button Approve Staging Batches
+					23 image
+					24 text Approve Staging Batches
+				25 button Khatian Lineage
+					26 image
+					27 text Khatian Lineage
+				28 button Deed Ledger Verifier
+					29 image
+					30 text Deed Ledger Verifier
+				31 button Stamp Duty & Fees
+					32 image
+					33 text Stamp Duty & Fees
+			34 button Public Portal
+				35 image
+				36 text Public Portal
+			37 button Sign Out
+				38 image
+				39 text Sign Out
+		40 container
+			41 button Home
+				42 image
+				43 text Home
+			44 text / Sub-Registrar Panel
+			45 text field (settable)
+			46 image
+			47 button বাং
+			48 button Contrast
+				49 image
+			50 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				51 text ম
+				52 text মো. শফিকুল আলম (সাব-রেজিস্ট্রার)
+				53 text Sub-Registrar Panel
+				54 image
+		55 container
+			56 heading Sub-Registrar Console (Checker & Registration Authority), Value: 1
+				57 text Sub-Registrar Console (Checker & Registration Authority)
+			58 text Pre-registration gatekeeper, held queue resolution, counter biometrics, and Ed25519 deed sealing.
+			59 text TOTAL REGISTERED DEEDS 80
+			60 button View Deed Registry →
+			61 image
+			62 text HELD DEEDS QUEUE 0
+			63 button Review Held Hearings →
+			64 image
+			65 text REVENUE & STAMP DUTY ৳ 146.0  Lac
+			66 button Fee Calculator →
+			67 image
+			68 text CRYPTOGRAPHIC LEDGER 97.5 %
+			69 button Verify Ledger →
+			70 image
+			71 heading Pre-Registration Gatekeeper, Deed Control & Verification, Value: 2
+				72 image
+				73 text Pre-Registration Gatekeeper, Deed Control & Verification
+			74 text Run pre-registration fraud checks, manage held hearings, inspect khatian lineage and ledger proofs:
+			75 button Pre-Reg Gatekeeper
+				76 image
+				77 text Pre-Reg Gatekeeper
+			78 button Held Queue (0)
+				79 image
+				80 text Held Queue
+				81 text  (
+				82 text 0
+				83 text )
+			84 button Deed Registry (80)
+				85 image
+				86 text Deed Registry
+				87 text  (
+				88 text 80
+				89 text )
+			90 button Khatian Lineage
+				91 image
+				92 text Khatian Lineage
+			93 button Deed Verifier
+				94 image
+				95 text Deed Verifier
+			96 button Stamp & Challan
+				97 image
+				98 text Stamp & Challan
+			99 button Approve Staging Batches (undefined)
+				100 image
+				101 text Approve Staging Batches
+				102 text  (
+				103 text undefined
+				104 text )
+			1997 text This application does not issue government challans or payment documents. Any estimate shown here is a demonstration. Obtain authoritative registration duties from the registry office. Deed Type:
+			1998 pop up button (collapsed, settable) Value: Sale Deed (Saf Kabala), Secondary Actions: Expand
+				1999 menu
+					2000 (selected) Sale Deed (Saf Kabala)
+					2001 Hiba (Family Gift)
+					2002 Bank Mortgage Deed
+			2003 text Declared Market Value (BDT):
+			2004 stepper (settable, integer) 1500000
+			2005 button Calculate Demo Estimate
+			2006 button Preview Estimate
+				2007 image
+				2008 text Preview Estimate
+			2009 text Stamp Duty (1.5%) ৳ 22,500 কোড: ডেমো / আনুমানিক Registration Fee (1%) ৳ 15,000 ডেমো / আনুমানিক Local Govt Tax (3%) ৳ 45,000 উপজেলা / পৌরসভা তহবিল Capital Gain AIT (2%) ৳ 30,000 জাতীয় রাজস্ব বোর্ড (NBR) Demo Estimated Total ৳ 112,500 সরকারি চালান নয়
+		1972 container
+			1973 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			1974 content list
+				1975 button Check Before Buy
+				1976 button Land Sale Marketplace
+				1977 button Cadastral Mouza Map
+				1978 button Verify Deed QR Code
+				1979 button Official Noticeboard
+				1980 button Land Literacy Blog
+				1981 button Offices & Service Points
+				1982 button Citizen Sale Lock Vault
+			1983 text Workspaces
+			1984 content list
+				1985 button Sub-Registrar Panel
+				1986 button AC Land Tribunal
+				1987 button Bank Lien & NOC
+				1988 button National Ledger & Audit
+			1989 text Support & Helpline
+			1990 content list
+				1991 text Land Service Call Center: 16122
+				1992 text Ministry of Land (Official service hours)
+				1993 text Check official service hours
+				1994 button Frequently Asked Questions
+				1995 button Bangladeshi Land Glossary
+			1996 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 96 button Stamp & Challan

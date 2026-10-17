@@ -13,3 +13,5 @@ frontend/dist/
 .DS_Store
 .env
 .pytest_cache/
+*.bak*
+backend/storage/

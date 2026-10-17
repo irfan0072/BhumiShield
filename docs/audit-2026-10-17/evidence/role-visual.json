@@ -1,0 +1,913 @@
+[
+  {
+    "username": "spo_birulia",
+    "buttons": [
+      "",
+      "",
+      "Overview & KPIs",
+      "My Land & Plots0",
+      "Document Vault (L0-L3)",
+      "My Registered Deeds0",
+      "13-Step Transfer Pipeline5",
+      "Disputes & Objections",
+      "Support Tickets & Helpdesk2",
+      "Profile & Demo Switcher",
+      "Check Plot",
+      "QR Deed",
+      "",
+      "মোঃ রফিকুল ইসলাম",
+      "রাবেয়া খাতুন (লক)",
+      "আব্দুল করিম (বন্ধক)",
+      "",
+      "Check Before Buying",
+      "View My Land",
+      "+ Start Transfer",
+      "View All →",
+      "Open Tracker →"
+    ],
+    "fields": [],
+    "headings": [
+      "Md. Shahinur Rahman (Service Point Operator)",
+      "Overview & KPIs",
+      "Welcome, Md. Shahinur Rahman (Service Point Operator)!",
+      "My Land Parcels (BS Record)",
+      "Transfer Pipeline In-Progress"
+    ],
+    "overflow": false,
+    "text": "না\nMd. Shahinur Rahman (Service Point Operator)\nNID: ****৫৮৯১\nCITIZEN SERVICES\nOverview & KPIs\nMy Land & Plots\n0\nDocument Vault (L0-L3)\nMy Registered Deeds\n0\n13-Step Transfer Pipeline\n5\nDisputes & Objections\nSupport Tickets & Helpdesk\n2\nProfile & Demo Switcher\nLand Hotline: 16122\n\nCall toll-free for land and khatian inquiries.\n\nCheck Plot\nQR Deed\nCitizen Portal\n/\nসারসংক্ষেপ ও পরিসংখ্যান\nOverview & KPIs\nDemo Profile:\nমোঃ রফিকুল ইসলাম\nরাবেয়া খাতুন (লক)\nআব্দুল করিম (বন্ধক)\nCheck Before Buying\nNID-Verified Citizen Vault\nWelcome, Md. Shahinur Rahman (Service Point Operator)!\n\nYour registered land parcels, cryptographic deeds, owner sale locks, and mutation transfers are fully secured.\n\nView My Land\n+ Start Transfer\nMY PLOTS (BS)\n0 টি দাগ\nView in Vault\nSALE-LOCKED\n0 টি সুরক্ষিত\nFraud Protection Active\nLINKED DEEDS\n0 টি দলিল\nEd25519 Verified\nACTIVE TRANSFERS\n5 টি কেস\n13-Step Machine\nMy Land Parcels (BS Record)\nView All →\nTransfer Pipeline In-Progress\nOpen Tracker →\nTR-2026-000105\nDRAFT\nবিরুলিয়া — দাগ 106 (0.01 শতক)\nধাপ 1 / ১৩\n8% সম্পন্ন\nTR-2026-000104\nCOMPLETED\nবিরুলিয়া — দাগ 101 (5 শতক)",
+    "url": "http://localhost:62367/en/home",
+    "width": 1280
+  },
+  {
+    "username": "registrar",
+    "buttons": [
+      "View Deed Registry →",
+      "Review Held Hearings →",
+      "Fee Calculator →",
+      "Verify Ledger →",
+      "Pre-Reg Gatekeeper",
+      "Held Queue (0)",
+      "Deed Registry (0)",
+      "Khatian Lineage",
+      "Deed Verifier",
+      "Stamp & Challan",
+      "Approve Staging Batches (0)",
+      "All",
+      "Held",
+      "Registered",
+      "Pending Mutation",
+      "Rejected"
+    ],
+    "fields": [
+      {
+        "placeholder": "Search deed, dag or party...",
+        "tag": "INPUT",
+        "type": "text"
+      }
+    ],
+    "headings": [
+      "Sub-Registrar Console (Checker & Registration Authority)",
+      "Pre-Registration Gatekeeper, Deed Control & Verification"
+    ],
+    "overflow": false,
+    "text": "Sub-Registrar Console (Checker & Registration Authority)\n\nPre-registration gatekeeper, held queue resolution, counter biometrics, and Ed25519 deed sealing.\n\nTOTAL REGISTERED DEEDS\n0\nView Deed Registry →\nHELD DEEDS QUEUE\n0\nReview Held Hearings →\nREVENUE & STAMP DUTY\n৳12.0 Lac\nFee Calculator →\nCRYPTOGRAPHIC LEDGER\n100%\nVerify Ledger →\nPre-Registration Gatekeeper, Deed Control & Verification\n\nRun pre-registration fraud checks, manage held hearings, inspect khatian lineage and ledger proofs:\n\nPre-Reg Gatekeeper\nHeld Queue (0)\nDeed Registry (0)\nKhatian Lineage\nDeed Verifier\nStamp & Challan\nApprove Staging Batches (0)\nAll\nHeld\nRegistered\nPending Mutation\nRejected\nDEED ID\tMOUZA & DAG\tPARTIES\tAREA & PRICE\tSTATUS\tOFFICER ACTION\nNo deeds found matching criteria.",
+    "url": "http://localhost:62367/en/registrar",
+    "width": 1280
+  },
+  {
+    "username": "registrar_gazipur",
+    "buttons": [
+      "View Deed Registry →",
+      "Review Held Hearings →",
+      "Fee Calculator →",
+      "Verify Ledger →",
+      "Pre-Reg Gatekeeper",
+      "Held Queue (0)",
+      "Deed Registry (80)",
+      "Khatian Lineage",
+      "Deed Verifier",
+      "Stamp & Challan",
+      "Approve Staging Batches (undefined)",
+      "All",
+      "Held",
+      "Registered",
+      "Pending Mutation",
+      "Rejected",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✔ Release",
+      "✖ Reject",
+      "✔ Release",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject",
+      "✖ Reject"
+    ],
+    "fields": [
+      {
+        "placeholder": "Search deed, dag or party...",
+        "tag": "INPUT",
+        "type": "text"
+      }
+    ],
+    "headings": [
+      "Sub-Registrar Console (Checker & Registration Authority)",
+      "Pre-Registration Gatekeeper, Deed Control & Verification"
+    ],
+    "overflow": false,
+    "text": "Sub-Registrar Console (Checker & Registration Authority)\n\nPre-registration gatekeeper, held queue resolution, counter biometrics, and Ed25519 deed sealing.\n\nTOTAL REGISTERED DEEDS\n80\nView Deed Registry →\nHELD DEEDS QUEUE\n0\nReview Held Hearings →\nREVENUE & STAMP DUTY\n৳146.0 Lac\nFee Calculator →\nCRYPTOGRAPHIC LEDGER\n97.5%\nVerify Ledger →\nPre-Registration Gatekeeper, Deed Control & Verification\n\nRun pre-registration fraud checks, manage held hearings, inspect khatian lineage and ledger proofs:\n\nPre-Reg Gatekeeper\nHeld Queue (0)\nDeed Registry (80)\nKhatian Lineage\nDeed Verifier\nStamp & Challan\nApprove Staging Batches (undefined)\nAll\nHeld\nRegistered\nPending Mutation\nRejected\nDEED ID\tMOUZA & DAG\tPARTIES\tAREA & PRICE\tSTATUS\tOFFICER ACTION\n\nDL-2018-1080\nBlock #80 • SALE\n\tBason — Dag 203\t\nFrom:মো. ফারুক আহমেদ\nTo:মো. হারুন অর রশিদ\n\t\n8 dec\n৳3,200,000\n\tPENDING_MUTATION\t\n✖ Reject\n\n\nDL-2025-1079\nBlock #79 • INHERITANCE\n\tBason — Dag 202\t\nFrom:মো. সাইদুর রহমান\nTo:মো. ইকবাল হোসেন\n\t\n14 dec\n৳3,175,000\n\tPENDING_MUTATION\t\n✖ Reject\n\n\nDL-2024-1078\nBlock #78 • SALE\n\tBason — Dag 201\t\nFrom:মো. আশরাফুল ইসলাম\nTo",
+    "url": "http://localhost:62367/en/registrar",
+    "width": 1280
+  },
+  {
+    "username": "rdo_savar",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nমো. কামরুল হাসান (রেজিস্ট্রি ডাটা অফিসার - মেকার)\n@rdo_savar • registry_data_officer\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 1280
+  },
+  {
+    "username": "acland",
+    "buttons": [
+      "Review Mutation Queue →",
+      "Resolve Discrepancies →",
+      "Review Disputes →",
+      "Verify Deed & Ledger →",
+      "e-Mutation Queue (Approval) (3)",
+      "Khatian & Heirs (2)",
+      "Dispute Tribunal (0)",
+      "Approve Staging Batches (undefined)",
+      "Appeals (undefined)",
+      "Khatian Explorer",
+      "Verify Deed",
+      "All",
+      "Pending",
+      "Approved",
+      "Rejected",
+      "Details",
+      "Approve",
+      "Reject",
+      "Details",
+      "Approve",
+      "Reject",
+      "Details"
+    ],
+    "fields": [
+      {
+        "placeholder": "Search case, deed or party...",
+        "tag": "INPUT",
+        "type": "text"
+      }
+    ],
+    "headings": [
+      "AC Land Console",
+      "e-Mutation Queue, Khatian Chain Reconciliation & Dispute Tribunal"
+    ],
+    "overflow": false,
+    "text": "AC Land Console\n\nApprove e-mutations, reconcile khatians, and hear citizen dispute cases.\n\nPENDING E-MUTATIONS\n2\nReview Mutation Queue →\nKHATIAN DISCREPANCIES\n2\nResolve Discrepancies →\nDISPUTE TRIBUNAL\n0\nReview Disputes →\nKHATIAN & DEED TRUST\n97.5%\nVerify Deed & Ledger →\ne-Mutation Queue, Khatian Chain Reconciliation & Dispute Tribunal\n\nApprove e-Mutation cases queued from Sub-Registry and update BS Khatian owner shares:\n\ne-Mutation Queue (Approval) (3)\nKhatian & Heirs (2)\nDispute Tribunal (0)\nApprove Staging Batches (undefined)\nAppeals (undefined)\nKhatian Explorer\nVerify Deed\nAll\nPending\nApproved\nRejected\nCASE & DEED\tMOUZA & DAG\tPARTIES\tAREA\tSTATUS\tAC LAND DECISION\n\nMUT-2026-502\nDeed: DL-2026-1005\n\tBirulia — Dag 105\t\nFrom:মো. মনিরুজ্জামান\nTo:সালমা আক্তার\n\t25 Decimal\tPENDING\t\nDetails\nApprove\nReject\n\n\nMUT-2026-501\nDeed: DL-2026-1002\n\tBirulia — Dag 102\t\nFrom:আবদুল করিম\nTo:মো. জাহাঙ্গীর আলম\n\t15 Decimal\tPENDING\t\nDetails\nApprove\nReject\n\n\nMUT-2024-101\nDeed: DL-2026-1001\n\tBirulia — Dag 101\t\nFrom:মো. মিজানুর রহমান\nTo:মো. রফিকুল ইসলাম\n\t20 Decimal\tAPPROVED\t\nDetails",
+    "url": "http://localhost:62367/en/acland",
+    "width": 1280
+  },
+  {
+    "username": "loa_savar",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nসালমা আক্তার (ভূমি অফিস সহকারী - মেকার)\n@loa_savar • land_office_assistant\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 1280
+  },
+  {
+    "username": "fvo_savar",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nমো. জাহাঙ্গীর আলম (ফিল্ড ভেরিফিকেশন অফিসার)\n@fvo_savar • field_verification_officer\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 450
+  },
+  {
+    "username": "sro_dhaka",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nমো. দেলোয়ার হোসেন (সেটেলমেন্ট রেকর্ডস অফিসার - মেকার)\n@sro_dhaka • settlement_records_officer\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 450
+  },
+  {
+    "username": "aso_dhaka",
+    "buttons": [
+      "Sign In",
+      "Citizen Register",
+      "My Profile",
+      "",
+      "Sign In to Workspace",
+      "Register as Citizen"
+    ],
+    "fields": [
+      {
+        "placeholder": "e.g. citizen or registrar",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "placeholder": "••••••••",
+        "tag": "INPUT",
+        "type": "password"
+      }
+    ],
+    "headings": [
+      "BhumiShield Account Sign-In",
+      "Sign In to Your Workspace"
+    ],
+    "overflow": false,
+    "text": "ভূ\nBhumiShield Account Sign-In\n\nIndependent land-record workflow and verification application\n\nSign In\nCitizen Register\nMy Profile\nSigned in successfully!\nSign In to Your Workspace\n\nEnter citizen or authorized officer credentials\n\nUsername or NID:\nPassword:\nSign In to Workspace\nDon't have an account? Register as Citizen\nSecurity Standards & Protocol\nEd25519 ক্রিপ্টোগ্রাফিক সুরক্ষা\nদলিলের জন্য Ed25519 স্বাক্ষর এবং সেশনের জন্য মেয়াদযুক্ত ও প্রত্যাহারযোগ্য টোকেন ব্যবহৃত হয়।\nকঠোর রোল-ভিত্তিক প্রবেশাধিকার\nসাব-রেজিস্ট্রার, এসি ল্যান্ড ও ব্যাংক অফিসার অ্যাকাউন্ট শুধুমাত্র সংশ্লিষ্ট প্রশাসনিক দপ্তর কর্তৃক ইস্যু করা হয়।\nকেন্দ্রীয় অডিট ট্রেইল\nসমর্থিত রেকর্ড পরিবর্তন ও দাপ্তরিক সিদ্ধান্ত অডিট ট্রেইলে নথিভুক্ত হয়।\nEmergency Support: National Helpline 16122\nEvaluator Prototype Test Credentials\nতথ্য দেখুন ▼",
+    "url": "http://localhost:62367/en/auth",
+    "width": 450
+  },
+  {
+    "username": "uno_savar",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nমো. মশিউর রহমান (উপজেলা নির্বাহী কর্মকর্তা - তদারককারী)\n@uno_savar • uno_supervisor\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 450
+  },
+  {
+    "username": "appellate_reviewer",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nমো. সাইদুর রহমান (অতিরিক্ত জেলা প্রশাসক - রাজস্ব)\n@appellate_reviewer • appellate_reviewer\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 450
+  },
+  {
+    "username": "bank",
+    "buttons": [
+      "View Lien Register →",
+      "New Mortgage Lien →",
+      "View Release NOCs →",
+      "Verify Collateral →",
+      "Prepare Loan Lien (Maker)",
+      "Mortgages & Liens (1)",
+      "Collateral Khatian Check",
+      "Sonali Bank PLC",
+      "1. Verify Collateral & Prior Liens",
+      "2. Register New Mortgage Lien Lock"
+    ],
+    "fields": [
+      {
+        "placeholder": null,
+        "tag": "SELECT",
+        "type": null
+      },
+      {
+        "placeholder": null,
+        "tag": "SELECT",
+        "type": null
+      },
+      {
+        "placeholder": "Bank Name",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "placeholder": "Branch",
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "placeholder": null,
+        "tag": "INPUT",
+        "type": null
+      },
+      {
+        "placeholder": null,
+        "tag": "INPUT",
+        "type": "number"
+      },
+      {
+        "placeholder": null,
+        "tag": "INPUT",
+        "type": "number"
+      }
+    ],
+    "headings": [
+      "Bank Credit Officer Console (Lien Maker)",
+      "Bank Mortgage & Lien Workspace",
+      "Register New Bank Mortgage Lien & Collateral Lock"
+    ],
+    "overflow": false,
+    "text": "Bank Credit Officer Console (Lien Maker)\n\nVerify collateral, prepare new mortgage lien drafts, and inspect khatian records.\n\nLien Preparer (Maker)\nACTIVE MORTGAGES\n1\nView Lien Register →\nTOTAL COLLATERAL VALUE\n৳0.25 Cr\nNew Mortgage Lien →\nRELEASED NOCS\n0\nView Release NOCs →\nDOUBLE MORTGAGE BLOCK\n১০০% Protected\nVerify Collateral →\nBank Mortgage & Lien Workspace\n\nLien registry, new mortgage lock, and digital release NOCs:\n\nPrepare Loan Lien (Maker)\nMortgages & Liens (1)\nCollateral Khatian Check\nRegister New Bank Mortgage Lien & Collateral Lock\n\nVerify collateral ownership, prevent double-mortgaging, and lock the plot under active bank lien.\n\nQUICK BANK PRESETS:\nSonali Bank PLC\nSelect Plot (Dag):\nDag 101 (Birulia)\nDag 102 (Birulia)\nDag 103 (Birulia)\nDag 104 (Birulia)\nDag 105 (Birulia)\nDag 106 (Birulia)\nDag 107 (Birulia)\nDag 108 (Birulia)\nDag 109 (Birulia)\nDag 110 (Birulia)\nDag 111 (Birulia)\nDag 112 (Birulia)\nDag 113 (Birulia)\nDag 114 (Birulia)\nDag 115 (Birulia)\nDag 116 (Birulia)\nDag 117 (Birulia)\nDag 118 (Birulia)\nDag 119 (Birulia)\nDag 120 (Birulia)\nDag 201 (Bason)\nDag 202 (Bason)\nDag 2",
+    "url": "http://localhost:62367/en/bank",
+    "width": 450
+  },
+  {
+    "username": "bank_manager",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nসৈয়দা খালেদা পারভীন (শাখা ব্যবস্থাপক - ব্যাংক)\n@bank_manager • bank_manager\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 450
+  },
+  {
+    "username": "support_agent",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nমোসা. ফারহানা আফরোজ (সাপোর্ট এজেন্ট - ১৬১২২)\n@support_agent • support_agent\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 450
+  },
+  {
+    "username": "platform_moderator",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nমো. ফাহিম চৌধুরী (প্ল্যাটফর্ম মডারেটর)\n@platform_moderator • platform_moderator\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 450
+  },
+  {
+    "username": "content_editor",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nতানজিলা হক (কনটেন্ট এডিটর)\n@content_editor • content_editor\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 450
+  },
+  {
+    "username": "content_approver",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nমো. আতিকুল ইসলাম (কনটেন্ট অ্যাপ্রুভার)\n@content_approver • content_approver\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 450
+  },
+  {
+    "username": "admin",
+    "buttons": [
+      "Inspect Hash Lab →",
+      "View User Directory →",
+      "Review Audit Logs →",
+      "Direct Role Access →",
+      "Hash Ledger Lab",
+      "Officers CRUD",
+      "Audit Trail",
+      "Policy Settings",
+      "RBAC Matrix",
+      "Service & Fees",
+      "Onboarding & Appeals",
+      "Case Library & OCR",
+      "Direct Role Access",
+      "Simulate Storage Tamper (DL-2026-1005)",
+      "Restore Signed Ledger State"
+    ],
+    "fields": [],
+    "headings": [
+      "Central Governance & Admin Console",
+      "Central Governance, RBAC Matrix, Officers Directory & Cryptographic Audit",
+      "Cryptographic Hash-Chain Ledger & Integrity Audit Lab"
+    ],
+    "overflow": false,
+    "text": "Central Governance & Admin Console\n\nRBAC, hash ledger lab, officers directory, and append-only audit trail.\n\nSystem Administrator\nLEDGER HASH INTEGRITY\n100%\nInspect Hash Lab →\nREGISTERED OFFICERS\n0\nView User Directory →\nSECURITY AUDIT EVENTS\n0\nReview Audit Logs →\nROLE OVERSIGHT\n৫টি Roles\nDirect Role Access →\nCentral Governance, RBAC Matrix, Officers Directory & Cryptographic Audit\nHash Ledger Lab\nOfficers CRUD\nAudit Trail\nPolicy Settings\nRBAC Matrix\nService & Fees\nOnboarding & Appeals\nCase Library & OCR\nDirect Role Access\nCryptographic Hash-Chain Ledger & Integrity Audit Lab\n\nVerify how mutating a deed record in storage immediately invalidates the SHA-256 hash chain:\n\nSimulate Storage Tamper (DL-2026-1005)\nRestore Signed Ledger State",
+    "url": "http://localhost:62367/en/admin",
+    "width": 450
+  },
+  {
+    "username": "lead_auditor",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nমো. শামসুল হক (জাতীয় ক্রিপ্টোগ্রাফিক অডিটর)\n@lead_auditor • auditor\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 450
+  },
+  {
+    "username": "dc_la",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nমো. তারেক হাসান (এলএ কর্মকর্তা - অধিগ্রহণ)\n@dc_la • dc_acquisition_officer\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 450
+  },
+  {
+    "username": "lawyer",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nএডভোকেট সিরাজুল করিম (দেওয়ানি আদালত প্রতিনিধি)\n@lawyer • lawyer_court_user\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 450
+  },
+  {
+    "username": "rabeya",
+    "buttons": [
+      "",
+      "",
+      "Overview & KPIs",
+      "My Land & Plots1",
+      "Document Vault (L0-L3)",
+      "My Registered Deeds0",
+      "13-Step Transfer Pipeline5",
+      "Disputes & Objections",
+      "Support Tickets & Helpdesk2",
+      "Profile & Demo Switcher",
+      "Check Plot",
+      "QR Deed",
+      "",
+      "মোঃ রফিকুল ইসলাম",
+      "রাবেয়া খাতুন (লক)",
+      "আব্দুল করিম (বন্ধক)",
+      "",
+      "Check Before Buying",
+      "View My Land",
+      "+ Start Transfer",
+      "View All →",
+      "Lock",
+      "Open Tracker →"
+    ],
+    "fields": [],
+    "headings": [
+      "Mst. Rabeya Khatun",
+      "Overview & KPIs",
+      "Welcome, Mst. Rabeya Khatun!",
+      "My Land Parcels (BS Record)",
+      "Transfer Pipeline In-Progress"
+    ],
+    "overflow": false,
+    "text": "Citizen Portal\n/\nসারসংক্ষেপ ও পরিসংখ্যান\nOverview & KPIs\nCheck Before Buying\nNID-Verified Citizen Vault\nWelcome, Mst. Rabeya Khatun!\n\nYour registered land parcels, cryptographic deeds, owner sale locks, and mutation transfers are fully secured.\n\nView My Land\n+ Start Transfer\nMY PLOTS (BS)\n1 টি দাগ\nView in Vault\nSALE-LOCKED\n0 টি সুরক্ষিত\nFraud Protection Active\nLINKED DEEDS\n0 টি দলিল\nEd25519 Verified\nACTIVE TRANSFERS\n5 টি কেস\n13-Step Machine\nMy Land Parcels (BS Record)\nView All →\nবাসন — দাগ 220\n🔓 উন্মুক্ত\nKhatian: 4140 • Area: 20 শতক\nLock\nTransfer Pipeline In-Progress\nOpen Tracker →\nTR-2026-000105\nDRAFT\nবিরুলিয়া — দাগ 106 (0.01 শতক)\nধাপ 1 / ১৩\n8% সম্পন্ন\nTR-2026-000104\nCOMPLETED\nবিরুলিয়া — দাগ 101 (5 শতক)\nধাপ 13 / ১৩\n100% সম্পন্ন",
+    "url": "http://localhost:62367/en/home",
+    "width": 450
+  },
+  {
+    "username": "citizen",
+    "buttons": [
+      "",
+      "",
+      "Overview & KPIs",
+      "My Land & Plots3",
+      "Document Vault (L0-L3)✔ 6",
+      "My Registered Deeds6",
+      "13-Step Transfer Pipeline5",
+      "Disputes & Objections",
+      "Support Tickets & Helpdesk2",
+      "Profile & Demo Switcher",
+      "Check Plot",
+      "QR Deed",
+      "",
+      "মোঃ রফিকুল ইসলাম",
+      "রাবেয়া খাতুন (লক)",
+      "আব্দুল করিম (বন্ধক)",
+      "",
+      "Check Before Buying",
+      "View My Land",
+      "+ Start Transfer",
+      "View All →",
+      "Lock",
+      "Lock",
+      "Lock",
+      "Open Tracker →"
+    ],
+    "fields": [],
+    "headings": [
+      "Md. Rafiqul Islam",
+      "Overview & KPIs",
+      "Welcome, Md. Rafiqul Islam!",
+      "My Land Parcels (BS Record)",
+      "Transfer Pipeline In-Progress"
+    ],
+    "overflow": false,
+    "text": "Citizen Portal\n/\nসারসংক্ষেপ ও পরিসংখ্যান\nOverview & KPIs\nCheck Before Buying\nNID-Verified Citizen Vault\nWelcome, Md. Rafiqul Islam!\n\nYour registered land parcels, cryptographic deeds, owner sale locks, and mutation transfers are fully secured.\n\nView My Land\n+ Start Transfer\nMY PLOTS (BS)\n3 টি দাগ\nView in Vault\nSALE-LOCKED\n0 টি সুরক্ষিত\nFraud Protection Active\nLINKED DEEDS\n6 টি দলিল\nEd25519 Verified\nACTIVE TRANSFERS\n5 টি কেস\n13-Step Machine\nMy Land Parcels (BS Record)\nView All →\nবিরুলিয়া — দাগ 101\n🔓 উন্মুক্ত\nKhatian: 4101 • Area: 20 শতক\nLock\nবিরুলিয়া — দাগ 113\n🔓 উন্মুক্ত\nKhatian: 4113 • Area: 23 শতক\nLock\nবাসন — দাগ 219\n🔓 উন্মুক্ত\nKhatian: 4139 • Area: 17 শতক\nLock\nTransfer Pipeline In-Progress\nOpen Tracker →\nTR-2026-000105\nDRAFT\nবিরুলিয়া — দাগ 106 (0.01 শতক)\nধাপ 1 / ১৩\n8% সম্পন্ন\nTR-2026-000104\nCOMPLETED\nবিরুলিয়া — দাগ 101 (5 শতক)\nধাপ 13 / ১৩\n100% সম্পন্ন",
+    "url": "http://localhost:62367/en/home",
+    "width": 450
+  },
+  {
+    "username": "rdo_savar-manual-workspace",
+    "buttons": [
+      "View Deed Registry →",
+      "Review Held Hearings →",
+      "Fee Calculator →",
+      "Verify Ledger →",
+      "Pre-Reg Gatekeeper",
+      "Held Queue (0)",
+      "Deed Registry (0)",
+      "Khatian Lineage",
+      "Deed Verifier",
+      "Stamp & Challan",
+      "1. Run Pre-Registration Risk & Fee Check",
+      "2. Register Deed in Hash Ledger & Sign"
+    ],
+    "fields": [
+      {
+        "placeholder": null,
+        "tag": "SELECT",
+        "type": null
+      },
+      {
+        "placeholder": null,
+        "tag": "SELECT",
+        "type": null
+      },
+      {
+        "placeholder": null,
+        "tag": "SELECT",
+        "type": null
+      },
+      {
+        "placeholder": null,
+        "tag": "INPUT",
+        "type": "number"
+      },
+      {
+        "placeholder": null,
+        "tag": "INPUT",
+        "type": "text"
+      },
+      {
+        "placeholder": null,
+        "tag": "INPUT",
+        "type": "number"
+      }
+    ],
+    "headings": [
+      "Registry Data Entry Cell (Maker Console)",
+      "Pre-Registration Gatekeeper, Deed Control & Verification"
+    ],
+    "overflow": false,
+    "text": "Registry Data Entry Cell (Maker Console)\n\nDraft deed data entry, party NID validation, and treasury stamp duty calculation.\n\nTOTAL REGISTERED DEEDS\n0\nView Deed Registry →\nHELD DEEDS QUEUE\n0\nReview Held Hearings →\nREVENUE & STAMP DUTY\n৳12.0 Lac\nFee Calculator →\nCRYPTOGRAPHIC LEDGER\n100%\nVerify Ledger →\nPre-Registration Gatekeeper, Deed Control & Verification\n\nRun pre-registration fraud checks, manage held hearings, inspect khatian lineage and ledger proofs:\n\nPre-Reg Gatekeeper\nHeld Queue (0)\nDeed Registry (0)\nKhatian Lineage\nDeed Verifier\nStamp & Challan\nPlot / Dag No:\nSeller (with NID):\nBuyer (with NID):\nTransfer Area (Decimal):\nShare Fraction:\nDeclared Value (BDT):\nSelected Plot:\nধানমন্ডি • Dag 101\nSeller:\nবিক্রেতা\nBuyer:\nক্রেতা\nAUTOMATED 11-RULE GATEKEEPER ENGINE:\n1\nSeller NID & Heir Identity Check\n2\nCS -> SA -> RS -> BS Lineage\n3\nSeller Share Balance Calculation\n4\nMortgage Lien & Clearance Check\n5\nCivil Court Injunction Check\n6\nCitizen Biometric Sale Lock Status\n7\nVested / Khas Property Filter\n8\nSurvey Field Area Discrepancy Check\n9\nDuplicate Same-Day Filing Prevention\n10\nEd25519 ",
+    "url": "http://localhost:62367/en/registrar",
+    "width": 1280
+  },
+  {
+    "username": "fvo_savar-manual-workspace",
+    "buttons": [
+      "Review Mutation Queue →",
+      "Resolve Discrepancies →",
+      "Review Disputes →",
+      "Verify Deed & Ledger →",
+      "Field Possession Inspection",
+      "Pending Verification Cases (0)",
+      "Khatian Explorer",
+      "Verify Deed",
+      "Submit Official Inspection Report"
+    ],
+    "fields": [
+      {
+        "placeholder": null,
+        "tag": "SELECT",
+        "type": null
+      },
+      {
+        "placeholder": null,
+        "tag": "SELECT",
+        "type": null
+      },
+      {
+        "placeholder": null,
+        "tag": "SELECT",
+        "type": null
+      },
+      {
+        "placeholder": null,
+        "tag": "SELECT",
+        "type": null
+      },
+      {
+        "placeholder": null,
+        "tag": "TEXTAREA",
+        "type": null
+      }
+    ],
+    "headings": [
+      "Field Verification & Inspection Console",
+      "e-Mutation Queue, Khatian Chain Reconciliation & Dispute Tribunal",
+      "Field Possession & Boundary Inspection"
+    ],
+    "overflow": false,
+    "text": "Field Verification & Inspection Console\n\nOn-site physical possession inspection, boundary verification, and LD Tax status.\n\nPENDING E-MUTATIONS\n0\nReview Mutation Queue →\nKHATIAN DISCREPANCIES\n0\nResolve Discrepancies →\nDISPUTE TRIBUNAL\n0\nReview Disputes →\nKHATIAN & DEED TRUST\n100%\nVerify Deed & Ledger →\ne-Mutation Queue, Khatian Chain Reconciliation & Dispute Tribunal\n\nApprove e-Mutation cases queued from Sub-Registry and update BS Khatian owner shares:\n\nField Possession Inspection\nPending Verification Cases (0)\nKhatian Explorer\nVerify Deed\nField Possession & Boundary Inspection\n\nOn-site field verification of physical possession, boundary demarcation, and land tax status prior to mutation approval.\n\nSelect Plot (Dag):\nদাগ ১০১ — বিরুলিয়া (আবেদনকারী: মো. রফিকুল ইসলাম)\nদাগ ১০২ — বিরুলিয়া (তদন্তাধীন দ্বৈত বিক্রয়)\nদাগ ১০৩ — বিরুলিয়া (অতিরিক্ত জমি তদন্ত)\nদাগ ১০৭ — বিরুলিয়া (আরএস-বিএস সীমানা বিরোধ)\nদাগ ১০৮ — বিরুলিয়া (ওয়ারিশ অংশ তদন্ত)\nPhysical Possession Status:\n✔ আবেদনকারীর নিরঙ্কুশ দখল বিদ্যমান (Verified)\n⚠ স্থানীয় ওয়ারিশদের সাথে দখল বিরোধ রয়েছে (Contested)\n✕ জমি পতিত / অনাবাদী ",
+    "url": "http://localhost:62367/en/acland",
+    "width": 1280
+  },
+  {
+    "username": "bank_manager-manual-workspace",
+    "buttons": [
+      "View Lien Register →",
+      "New Mortgage Lien →",
+      "View Release NOCs →",
+      "Verify Collateral →",
+      "Lien Approval Queue (Checker) (0)",
+      "Release NOCs (0)",
+      "Register Lien",
+      "Collateral Khatian Check",
+      "All",
+      "Active",
+      "Released"
+    ],
+    "fields": [
+      {
+        "placeholder": "Search bank, dag or borrower...",
+        "tag": "INPUT",
+        "type": "text"
+      }
+    ],
+    "headings": [
+      "Bank Branch Manager Console (Checker)",
+      "Bank Mortgage & Lien Workspace",
+      "Registered Bank Mortgages & Digital NOC Controls"
+    ],
+    "overflow": false,
+    "text": "Bank Branch Manager Console (Checker)\n\nApprove mortgage liens, issue digital release NOC certificates, and oversee loan collateral.\n\nChecker & NOC Authority\nACTIVE MORTGAGES\n0\nView Lien Register →\nTOTAL COLLATERAL VALUE\n৳0.00 Cr\nNew Mortgage Lien →\nRELEASED NOCS\n0\nView Release NOCs →\nDOUBLE MORTGAGE BLOCK\n১০০% Protected\nVerify Collateral →\nBank Mortgage & Lien Workspace\n\nLien registry, new mortgage lock, and digital release NOCs:\n\nLien Approval Queue (Checker) (0)\nRelease NOCs (0)\nRegister Lien\nCollateral Khatian Check\nRegistered Bank Mortgages & Digital NOC Controls\n\nActive liens and generated NOCs:\n\nAll\nActive\nReleased\nBANK & BRANCH\tPLOT / DAG\tBORROWER\tLOAN AMOUNT\tSTATUS\tACTIONS\nNo mortgage records found.",
+    "url": "http://localhost:62367/en/bank",
+    "width": 1280
+  },
+  {
+    "username": "support_agent-manual-workspace",
+    "buttons": [
+      "Retry",
+      "Inspect Hash Lab →",
+      "View User Directory →",
+      "Review Audit Logs →",
+      "Direct Role Access →",
+      "Citizen & Officer Lookup",
+      "Audit Trail",
+      "Direct Login →",
+      "Direct Login →",
+      "Direct Login →",
+      "Direct Login →"
+    ],
+    "fields": [],
+    "headings": [
+      "Citizen Support & Helpline Desk (16122)",
+      "Central Governance, RBAC Matrix, Officers Directory & Cryptographic Audit",
+      "Super Admin Direct Role Inspection & Passwordless Access",
+      "Sub-Registrar Console",
+      "AC Land Console",
+      "Bank Mortgage Console",
+      "Citizen Land Portal"
+    ],
+    "overflow": false,
+    "text": "Citizen Support & Helpline Desk (16122)\n\nCitizen account search, ticket triage, and support audit logs.\n\nSupport Agent (16122)\nSome records could not be loaded. Please retry.Retry\nLEDGER HASH INTEGRITY\n97.5%\nInspect Hash Lab →\nREGISTERED OFFICERS\n23\nView User Directory →\nSECURITY AUDIT EVENTS\n0\nReview Audit Logs →\nROLE OVERSIGHT\n৫টি Roles\nDirect Role Access →\nCentral Governance, RBAC Matrix, Officers Directory & Cryptographic Audit\nCitizen & Officer Lookup\nAudit Trail\nSuper Admin Direct Role Inspection & Passwordless Access\n\nAs Super Admin, directly inspect any government agency or citizen portal dashboard without passwords:\n\nSub-Registrar Console\nDirectorate of Registration • Law Ministry\n\nPre-reg gatekeeper, 11 fraud rules, held queue & registry audit.\n\nDirect Login →\nAC Land Console\nUpazila Land Office • Ministry of Land\n\ne-Mutation approval, khatian reconciliation & dispute tribunal.\n\nDirect Login →\nBank Mortgage Console\nScheduled Commercial Bank Collateral\n\nCollateral check, double-mortgage plot lock & digital NOC release.\n\nDirect Login →\nCitizen Land Portal\nPublic Consumer Prop",
+    "url": "http://localhost:62367/en/admin",
+    "width": 1280
+  },
+  {
+    "username": "lead_auditor-manual-workspace",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nমো. শামসুল হক (জাতীয় ক্রিপ্টোগ্রাফিক অডিটর)\n@lead_auditor • auditor\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 1280
+  },
+  {
+    "username": "aso_dhaka-settled",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nনাজনীন সুলতানা (সহকারী সেটেলমেন্ট অফিসার - চেকার)\n@aso_dhaka • settlement_checker\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 1280
+  },
+  {
+    "username": "lead_auditor-settled",
+    "buttons": [
+      "Switch to Authorized Account",
+      "My Own Dashboard",
+      "Home"
+    ],
+    "fields": [],
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ],
+    "overflow": false,
+    "text": "HTTP 403 • Forbidden Role\nAccess Denied — Insufficient Role Privileges\n\nAccess to this workspace is restricted according to strict RBAC policies.\n\nYOUR CURRENT PROFILE\nমো. শামসুল হক (জাতীয় ক্রিপ্টোগ্রাফিক অডিটর)\n@lead_auditor • auditor\nREQUIRED AUTHORIZED ROLE\nCitizen Land Portal\nExclusive to authorized officer account\nSecurity Notice: Every unauthorized access attempt is immutably logged with cryptographic timestamp in the national audit ledger.\nSwitch to Authorized Account\nMy Own Dashboard\nHome",
+    "url": "http://localhost:62367/en/home",
+    "width": 1280
+  },
+  {
+    "username": "lead-auditor-manual-settled",
+    "buttons": [
+      "Retry",
+      "Inspect Hash Lab →",
+      "View User Directory →",
+      "Review Audit Logs →",
+      "Direct Role Access →",
+      "Hash Ledger Lab",
+      "Audit Trail",
+      "RBAC Matrix",
+      "Direct Login →",
+      "Direct Login →",
+      "Direct Login →",
+      "Direct Login →"
+    ],
+    "fields": [],
+    "headings": [
+      "Independent Security & Compliance Auditor",
+      "Central Governance, RBAC Matrix, Officers Directory & Cryptographic Audit",
+      "Super Admin Direct Role Inspection & Passwordless Access",
+      "Sub-Registrar Console",
+      "AC Land Console",
+      "Bank Mortgage Console",
+      "Citizen Land Portal"
+    ],
+    "overflow": false,
+    "text": "Independent Security & Compliance Auditor\n\nCryptographic hash ledger integrity, break-glass security logs, and RBAC compliance.\n\nIndependent Auditor\nSome records could not be loaded. Please retry.Retry\nLEDGER HASH INTEGRITY\n97.5%\nInspect Hash Lab →\nREGISTERED OFFICERS\n23\nView User Directory →\nSECURITY AUDIT EVENTS\n0\nReview Audit Logs →\nROLE OVERSIGHT\n৫টি Roles\nDirect Role Access →\nCentral Governance, RBAC Matrix, Officers Directory & Cryptographic Audit\nHash Ledger Lab\nAudit Trail\nRBAC Matrix\nSuper Admin Direct Role Inspection & Passwordless Access\n\nAs Super Admin, directly inspect any government agency or citizen portal dashboard without passwords:\n\nSub-Registrar Console\nDirectorate of Registration • Law Ministry\n\nPre-reg gatekeeper, 11 fraud rules, held queue & registry audit.\n\nDirect Login →\nAC Land Console\nUpazila Land Office • Ministry of Land\n\ne-Mutation approval, khatian reconciliation & dispute tribunal.\n\nDirect Login →\nBank Mortgage Console\nScheduled Commercial Bank Collateral\n\nCollateral check, double-mortgage plot lock & digital NOC release.\n\nDirect Login →\nCitizen Land Po",
+    "url": "http://localhost:62367/en/admin",
+    "width": 1280
+  }
+]

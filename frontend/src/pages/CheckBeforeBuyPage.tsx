@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAppUI } from '../i18n';
 import { BhumiApi, RiskReportResponse } from '../api/client';
 import { toBanglaDigits } from '../theme/tokens';
@@ -73,6 +73,32 @@ export const CheckBeforeBuyPage: React.FC = () => {
         setPlots(plts);
         setPersons(pers);
         setScenarios(scns);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const dagParam = urlParams.get('dag');
+        const plotIdParam = urlParams.get('plot_id');
+        const plotCodeParam = urlParams.get('plot_code');
+
+        if (dagParam) {
+          setPlotSearchQuery(dagParam);
+          const found = plts.find((p: any) => String(p.dag_no) === String(dagParam) || String(p.dag_no_bn) === String(dagParam));
+          if (found) {
+            setSelectedPlotId(Number(found.id));
+            if (found.location_id) setSelectedMouzaId(Number(found.location_id));
+          }
+        } else if (plotIdParam) {
+          const found = plts.find((p: any) => String(p.id) === String(plotIdParam));
+          if (found) {
+            setSelectedPlotId(Number(found.id));
+            if (found.location_id) setSelectedMouzaId(Number(found.location_id));
+          }
+        } else if (plotCodeParam) {
+          const found = plts.find((p: any) => String(p.plot_code).toUpperCase() === String(plotCodeParam).toUpperCase());
+          if (found) {
+            setSelectedPlotId(Number(found.id));
+            if (found.location_id) setSelectedMouzaId(Number(found.location_id));
+          }
+        }
       })
       .catch(() => {
         setErrorMsg(
@@ -89,6 +115,42 @@ export const CheckBeforeBuyPage: React.FC = () => {
       setPlotSearchQuery(pendingSearch);
     }
   }, []);
+
+  // F11: when arriving via a deep link (e.g. Map → Audit Plot), auto-run the
+  // pre-buy check so the user lands on a populated report rather than a blank
+  // form. The ref guard ensures a re-render or hot-reload does not trigger a
+  // second run, and that a user who manually clears the report is not
+  // ambushed by a re-fire on the same navigation.
+  const autoRunRef = useRef(false);
+  useEffect(() => {
+    if (autoRunRef.current) return;
+    if (plots.length === 0) return;
+    if (report !== null) return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const dagParam = urlParams.get('dag');
+    const plotIdParam = urlParams.get('plot_id');
+    const plotCodeParam = urlParams.get('plot_code');
+    if (!dagParam && !plotIdParam && !plotCodeParam) return;
+
+    let found: any = null;
+    if (dagParam) {
+      found = plots.find((p) => String(p.dag_no) === String(dagParam) || String(p.dag_no_bn) === String(dagParam));
+    } else if (plotIdParam) {
+      found = plots.find((p) => String(p.id) === String(plotIdParam));
+    } else if (plotCodeParam) {
+      found = plots.find((p) => String(p.plot_code).toUpperCase() === String(plotCodeParam).toUpperCase());
+    }
+    if (!found) return;
+
+    autoRunRef.current = true;
+    setSelectedPlotId(Number(found.id));
+    if (found.location_id) setSelectedMouzaId(Number(found.location_id));
+    // Defer one tick so the state setters above propagate to selectedPlotId
+    // and sellerId/proposedArea before runVerification reads them.
+    setTimeout(() => {
+      void runVerification(Number(found.id), sellerId, Number(proposedArea) > 0 ? Number(proposedArea) : 10);
+    }, 80);
+  }, [plots.length, report]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -253,16 +315,16 @@ export const CheckBeforeBuyPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <span className="text-xs sm:text-sm font-bold text-[#074f38]">
                   {t(
-                    'মূল্যায়নকারী ও টেস্ট দৃশ্যকল্পসমূহ (৮টি রেফারেন্স কেস)',
-                    'Evaluator & Demo Scenarios (8 Reference Cases)'
+                    'স্বয়ংক্রিয় ঝুঁকি সনাক্তকরণ রেফারেন্স প্রটোকল (৮টি কেস)',
+                    'Automated Risk Detection Reference Protocols (8 Standard Cases)'
                   )}
                 </span>
                 <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                  {t('১-ক্লিক অটো ফিল', '1-Click Auto Test')}
+                  {t('স্বয়ংক্রিয় ঝুঁকি বিশ্লেষণ', 'Automated Risk Rules')}
                 </span>
               </div>
               <div className="text-[11px] text-slate-500 hidden sm:block">
-                {t('ডাবল সেল, জাল দলিল, বন্ধক ও অমীমাংসিত ওয়ারিশের লাইভ সিমুলেশন', 'Simulate double sale, tampered deed, mortgages, and lineage conflicts')}
+                {t('ডাবল সেল, জাল দলিল, ব্যাংক বন্ধক ও অমীমাংসিত ওয়ারিশ ঝুঁকি সনাক্তকরণ', 'Automated detection of double sale, forged deeds, mortgages, and inheritance disputes')}
               </div>
             </div>
           </div>
@@ -1246,7 +1308,7 @@ export const CheckBeforeBuyPage: React.FC = () => {
                               : 'text-[#C4891A] font-bold'
                           }
                         >
-                          {d.is_tampered_demo ? '✖ TAMPERED' : d.status}
+                          {d.is_tampered_demo ? '✖ অখণ্ডতা লঙ্ঘন (TAMPERED)' : d.status}
                         </span>
                       </div>
                       <div className="mt-1 text-[#5F7A74]">

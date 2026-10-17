@@ -1,0 +1,131 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/home".
+0 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/home
+	1 container root
+		2 container
+			3 button ভূ BhumiShield National Land & Deed Trust Platform
+				4 text ভূ
+				5 text BhumiShield
+				6 text National Land & Deed Trust Platform
+			7 container প্রধান মেনু
+				8 button All Services
+				9 button Land Sale
+				10 button Cadastral Map
+				11 button Check Land
+				12 button Verify Deed
+				13 button Notices
+				14 button Blog
+				15 button Offices
+				16 button Citizen Vault
+				17 button Help
+			18 button Switch Language
+			19 button High Contrast
+				20 image
+			101 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				102 text ম
+				103 text মো. রফিকুল ইসলাম (নাগরিক)
+				104 text Citizen Land Portal
+				105 image
+		24 container
+			106 text ম
+			107 heading Md. Rafiqul Islam, Value: 3
+				108 text Md. Rafiqul Islam
+			109 text NID:  ****1001
+			110 button Collapse Menu
+				111 image
+			112 container
+				113 text CITIZEN SERVICES
+				114 button Overview & KPIs
+					115 image
+					116 text Overview & KPIs
+				117 button My Land & Plots 3, Help: My Land & Plots
+					118 image
+					119 text My Land & Plots
+					120 text 3
+				121 button Document Vault (L0-L3) ✔ 6, Help: Document Vault (L0-L3)
+					122 image
+					123 text Document Vault (L0-L3)
+					124 text ✔ 6
+				125 button My Registered Deeds 6, Help: My Registered Deeds
+					126 image
+					127 text My Registered Deeds
+					128 text 6
+				129 button 13-Step Transfer Pipeline 3, Help: 13-Step Transfer Pipeline
+					130 image
+					131 text 13-Step Transfer Pipeline
+					132 text 3
+				133 button Disputes & Objections
+					134 image
+					135 text Disputes & Objections
+				136 button Support Tickets & Helpdesk 2, Help: Support Tickets & Helpdesk
+					137 image
+					138 text Support Tickets & Helpdesk
+					139 text 2
+				140 button Profile & Demo Switcher
+					141 image
+					142 text Profile & Demo Switcher
+			143 image
+			144 text Land Hotline: 16122
+			145 text Call toll-free for land and khatian inquiries.
+			146 button Check Plot
+			147 button QR Deed
+			148 container
+				149 text Citizen Portal / সহায়তা টিকিট ও রেকর্ডরুম
+				150 heading Support Tickets & Helpdesk, Value: 2
+					151 text Support Tickets & Helpdesk
+				152 text Demo Profile:
+				153 button মোঃ রফিকুল ইসলাম
+				154 button রাবেয়া খাতুন (লক)
+				155 button আব্দুল করিম (বন্ধক)
+				156 button Refresh Data
+					157 image
+				158 button Check Before Buying
+					159 image
+					160 text Check Before Buying
+			219 image
+			220 text Document uploaded successfully with hash stored.
+			221 button
+				222 image
+			223 heading Support Tickets & Recordroom Tracking, Value: 3
+				224 text Support Tickets & Recordroom Tracking
+			225 text Live SLA tracking of requested document searches
+			226 button
+				227 image
+			228 text TKT-2026-000102 NEW
+			229 heading অনুপস্থিত দলিল সংগ্রহ অনুরোধ (দাগ নং ১০১), Value: 4
+				230 text অনুপস্থিত দলিল সংগ্রহ অনুরোধ (দাগ নং ১০১)
+			231 text দাগ নং ১০১-এর জন্য প্রয়োজনীয় GENERAL দলিলটি ডিজিটাল ভল্টে অনুপস্থিত। এটি রেকর্ড রুম হতে সংগ্রহ ও স্ক্যানের অনুরোধ করা হলো।
+			232 text Category:  MISSING_DOCUMENT Priority: 
+			233 text HIGH
+			234 text TKT-2026-000045 IN_PROGRESS
+			235 heading দাগ নং ১০৮-এর জন্য প্রয়োজনীয় ওয়ারিশান সনদ অনুপস্থিত, Value: 4
+				236 text দাগ নং ১০৮-এর জন্য প্রয়োজনীয় ওয়ারিশান সনদ অনুপস্থিত
+			237 text রেকর্ডীয় মালিক আলহাজ্ব নূরুল হক মৃত হওয়ায় বণ্টননামা ও ওয়ারিশ সনদ দাখিলের নির্দেশিকা প্রয়োজন।
+			238 text Category:  MISSING_DOCUMENT Priority: 
+			239 text HIGH
+		76 container
+			77 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			78 content list
+				79 button Check Before Buy
+				80 button Land Sale Marketplace
+				81 button Cadastral Mouza Map
+				82 button Verify Deed QR Code
+				83 button Official Noticeboard
+				84 button Land Literacy Blog
+				85 button Offices & Service Points
+				86 button Citizen Sale Lock Vault
+			87 text Workspaces
+			88 content list
+				89 button Sub-Registrar Panel
+				90 button AC Land Tribunal
+				91 button Bank Lien & NOC
+				92 button National Ledger & Audit
+			93 text Support & Helpline
+			94 content list
+				95 text Land Service Call Center: 16122
+				96 text Ministry of Land (Official service hours)
+				97 text Check official service hours
+				98 button Frequently Asked Questions
+				99 button Bangladeshi Land Glossary
+			100 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 136 button Support Tickets & Helpdesk 2, Help: Support Tickets & Helpdesk

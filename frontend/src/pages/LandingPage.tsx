@@ -612,17 +612,17 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
           <div className="mb-6 border-b border-slate-200 pb-3 flex items-end justify-between">
             <div>
               <h2 className="text-2xl font-bold text-slate-900">
-                {t('লাইভ রেফারেন্স টেস্ট সিনারিও', 'Live Test Scenarios')}
+                {t('ভূমি ঝুঁকি ও জালিয়াতি সনাক্তকরণ প্রটোকল', 'Land Risk & Fraud Detection Protocols')}
               </h2>
               <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
                 {t(
-                  'বিচারক ও পরীক্ষকদের জন্য ১-ক্লিক ঝুঁকি ও জালিয়াতি সনাক্তকরণ পরীক্ষা:',
-                  'One-click fraud prevention test scenarios for hackathon evaluators:'
+                  'ভূমি হস্তান্তর ও নিবন্ধনের ক্ষেত্রে ৮টি স্বয়ংক্রিয় ঝুঁকি ও জালিয়াতি সনাক্তকরণ প্রটোকল:',
+                  '8 Standard automated verification and fraud detection rules for land registration:'
                 )}
               </p>
             </div>
             <span className="text-xs font-bold px-2.5 py-1 rounded bg-[#E6F2EE] text-[#006A4E] hidden sm:inline-block">
-              8 Standard Cases
+              8 Standard Protocols
             </span>
           </div>
 

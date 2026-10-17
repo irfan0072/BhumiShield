@@ -1,0 +1,42 @@
+services:
+  # BhumiShield PHP API Backend (Render Free Web Service using Docker)
+  - type: web
+    name: bhumishield-api
+    runtime: docker
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    plan: free
+    region: singapore
+    envVars:
+      - key: APP_ENV
+        value: staging
+      - key: APP_DEBUG
+        value: "false"
+      - key: DB_CONNECTION
+        value: sqlite
+      - key: DB_DATABASE
+        value: /data/bhumishield.sqlite
+      - key: JWT_SECRET
+        generateValue: true
+      - key: REGISTRAR_ED25519_SEED_HEX
+        value: 4268756d69536869656c644c616e64546563683230323644656d6f5365656421
+      - key: PUBLIC_VERIFY_BASE_URL
+        value: https://bhumishield.vercel.app
+
+  # BhumiShield React Frontend (Optional static site on Render if not using Vercel)
+  - type: web
+    name: bhumishield-web
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    plan: free
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: bhumishield-api
+          property: url

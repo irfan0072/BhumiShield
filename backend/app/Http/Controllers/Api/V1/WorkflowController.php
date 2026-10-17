@@ -885,8 +885,8 @@ final class WorkflowController
              JOIN persons per ON per.id = m.borrower_id
              ORDER BY CASE WHEN m.status = 'ACTIVE' THEN 0 ELSE 1 END, m.id DESC"
         );
-        $actor = RoleMiddleware::authorize(['bank_officer', 'admin']);
-        if (($actor['role'] ?? '') !== 'admin') {
+        $actor = RoleMiddleware::authorize(['bank_officer', 'bank_manager', 'admin', 'auditor']);
+        if (($actor['role'] ?? '') !== 'admin' && ($actor['role'] ?? '') !== 'auditor') {
             $rows = array_values(array_filter($rows, static function (array $row) use ($actor): bool {
                 try { \App\Services\BankScopeService::assertCanManage($actor, (string) $row['bank_name_en']); return true; }
                 catch (\RuntimeException) { return false; }

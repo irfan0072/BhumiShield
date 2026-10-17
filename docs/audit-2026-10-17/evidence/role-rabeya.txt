@@ -1,0 +1,120 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/home".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/home
+	2 container root
+		3 container
+			4 button ভূ BhumiShield
+				5 text ভূ
+				6 text BhumiShield
+			7 button Switch Language
+			8 button High Contrast
+				9 image
+			356 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				357 text ম
+				358 image
+			13 button Menu
+				14 image
+		359 container
+			360 button
+				361 image
+			362 text Citizen Portal / সারসংক্ষেপ ও পরিসংখ্যান
+			363 heading Overview & KPIs, Value: 2
+				364 text Overview & KPIs
+			365 button Refresh Data
+				366 image
+			367 button Check Before Buying
+				368 image
+				369 text Check Before Buying
+			370 image
+			371 text NID-Verified Citizen Vault
+			372 heading Welcome, Mst. Rabeya Khatun!, Value: 1
+				373 text Welcome, Mst. Rabeya Khatun!
+			374 text Your registered land parcels, cryptographic deeds, owner sale locks, and mutation transfers are fully secured.
+			375 button View My Land
+				376 image
+				377 text View My Land
+			378 button + Start Transfer
+				379 image
+				380 text + Start Transfer
+			381 text MY PLOTS (BS)
+			382 container
+				383 text 1  টি দাগ
+			384 text View in Vault
+			385 image
+			386 image
+			387 text SALE-LOCKED
+			388 container
+				389 text 0  টি সুরক্ষিত
+			390 text Fraud Protection Active
+			391 image
+			392 text LINKED DEEDS
+			393 container
+				394 text 0  টি দলিল
+			395 text Ed25519 Verified
+			396 image
+			397 text ACTIVE TRANSFERS
+			398 container
+				399 text 5  টি কেস
+			400 text 13-Step Machine
+			401 image
+			402 image
+			403 heading My Land Parcels (BS Record), Value: 3
+				404 text My Land Parcels (BS Record)
+			405 button View All →
+			406 text বাসন  — দাগ  220 🔓 উন্মুক্ত Khatian: 4140  •  Area:
+			407 container
+				408 text 20  শতক
+			409 button Lock
+				410 image
+				411 text Lock
+			412 image
+			413 heading Transfer Pipeline In-Progress, Value: 3
+				414 text Transfer Pipeline In-Progress
+			415 button Open Tracker →
+			416 text TR-2026-000105 DRAFT
+			417 text বিরুলিয়া
+			418 text  — দাগ  106  ( 0.01  শতক) ধাপ  1  / ১৩ 8 % সম্পন্ন TR-2026-000104 COMPLETED
+			419 text বিরুলিয়া
+			420 text  — দাগ  101  ( 5  শতক) ধাপ  13  / ১৩ 100 % সম্পন্ন
+		268 container
+			269 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			270 content list
+				271 button Check Before Buy
+				272 button Land Sale Marketplace
+				273 button Cadastral Mouza Map
+				274 button Verify Deed QR Code
+				275 button Official Noticeboard
+				276 button Land Literacy Blog
+				277 button Offices & Service Points
+				278 button Citizen Sale Lock Vault
+			279 text Workspaces
+			280 content list
+				281 button Sub-Registrar Panel
+				282 button AC Land Tribunal
+				283 button Bank Lien & NOC
+				284 button National Ledger & Audit
+			285 text Support & Helpline
+			286 content list
+				287 text Land Service Call Center: 16122
+				288 text Ministry of Land (Official service hours)
+				289 text Check official service hours
+				290 button Frequently Asked Questions
+				291 button Bangladeshi Land Glossary
+			292 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+		293 container দ্রুত নেভিগেশন
+			294 button Home
+				295 image
+				296 text Home
+			297 button Check
+				298 image
+				299 text Check
+			300 button QR Scan, Help: QR Verify
+				301 image
+				302 text QR Scan
+			303 button Panel
+				304 image
+				305 text Panel
+			306 button Help
+				307 image
+				308 text Help
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/home

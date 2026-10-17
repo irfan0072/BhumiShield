@@ -1,0 +1,156 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/notices".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/notices
+	2 container root
+		3 container
+			4 button ভূ BhumiShield National Land & Deed Trust Platform
+				5 text ভূ
+				6 text BhumiShield
+				7 text National Land & Deed Trust Platform
+			8 container প্রধান মেনু
+				9 button All Services
+				10 button Land Sale
+				11 button Cadastral Map
+				12 button Check Land
+				13 button Verify Deed
+				14 button Notices
+				15 button Blog
+				16 button Offices
+				17 button Citizen Vault
+				18 button Help
+			19 button Switch Language
+			20 button High Contrast
+				21 image
+			22 button Sign In
+				23 image
+				24 text Sign In
+		25 container
+			319 image
+			320 text Official Notices & Circulars
+			321 heading Ministry of Land & Registration Noticeboard, Value: 1
+				322 text Ministry of Land & Registration Noticeboard
+			323 text All statutory circulars, mutation guidelines, registration fees, and public hearing schedules issued by the Government of Bangladesh, sealed with verifiable Ed25519 QR codes.
+			324 image
+			325 text field (settable)
+			326 pop up button (collapsed, settable) Value: All Categories, Secondary Actions: Expand
+				327 menu
+					328 (selected) All Categories
+					329 Circulars
+					330 Office Notices
+					331 Public Hearings
+					332 Fraud Warnings
+					333 Gazettes
+			334 pop up button (collapsed, settable) Value: All Scopes, Secondary Actions: Expand
+				335 menu
+					336 (selected) All Scopes
+					337 National
+					338 Upazila / Local
+			339 image
+			340 text Pinned Office Notice Local
+			341 heading Mandatory Counter Biometric Presence at Savar Sub-Registry Office, Value: 3
+				342 text Mandatory Counter Biometric Presence at Savar Sub-Registry Office
+			343 text Mandatory in-person counter biometric verification for deed registration parties at Savar Sub-Registry.
+			344 image
+			345 text 17 Oct 2026
+			346 image
+			347 text 0 views
+			348 button PDF & QR Seal
+				349 image
+				350 text PDF & QR Seal
+				351 image
+			352 image
+			353 text Pinned
+			354 image
+			355 text Urgent Policy Circular National
+			356 heading Circular on 28-Day Maximum Timeline for Online e-Mutation Processing, Value: 3
+				357 text Circular on 28-Day Maximum Timeline for Online e-Mutation Processing
+			358 text Ministry circular establishing a strict 28-working-day target for e-mutation case resolution.
+			359 image
+			360 text 17 Oct 2026
+			361 image
+			362 text 0 views
+			363 button PDF & QR Seal
+				364 image
+				365 text PDF & QR Seal
+				366 image
+			367 image
+			368 text Urgent Fraud Alert National
+			369 heading Public Warning Against Forged Power of Attorney Syndicates, Value: 3
+				370 text Public Warning Against Forged Power of Attorney Syndicates
+			371 text Alert for citizens and expatriates regarding verification safeguards against unauthorized power of attorney documents.
+			372 image
+			373 text 17 Oct 2026
+			374 image
+			375 text 0 views
+			376 button PDF & QR Seal
+				377 image
+				378 text PDF & QR Seal
+				379 image
+			380 text Official Gazette National
+			381 heading Official Gazette on Mandatory Digital NOC for Mortgaged Property Transactions, Value: 3
+				382 text Official Gazette on Mandatory Digital NOC for Mortgaged Property Transactions
+			383 text Official gazette notification prohibiting property registration without system-verified bank digital NOC.
+			384 image
+			385 text 17 Oct 2026
+			386 image
+			387 text 0 views
+			388 button PDF & QR Seal
+				389 image
+				390 text PDF & QR Seal
+				391 image
+			392 text Public Hearing Local
+			393 heading Special Field Hearing & Heir Mutation Verification Camp in Birulia Mouza, Value: 3
+				394 text Special Field Hearing & Heir Mutation Verification Camp in Birulia Mouza
+			395 text Public notice on upcoming field hearing and mutation camp in Birulia Union Land Office.
+			396 image
+			397 text 17 Oct 2026
+			398 image
+			399 text 0 views
+			400 button PDF & QR Seal
+				401 image
+				402 text PDF & QR Seal
+				403 image
+			404 image
+			405 heading Digital Notice QR Seal, Value: 3
+				406 text Digital Notice QR Seal
+			407 button
+				408 image
+			409 container
+				410 image
+				411 text https://bhumishield.gov.bd/bn/notices/notice-savar-registry-counter-biometric
+			412 container
+				413 text File Name: official_gazette_notice-savar-registry-counter-biometric.pdf
+			414 container
+				415 text File Size: 512  KB (PDF)
+			416 container
+				417 text SHA-256: 34e08f64a97d96a62a97739b35c40d9760a636706b92d654fc77799b4244b661
+			418 container
+				419 text ✔  Cryptographically verified & signed by Government of Bangladesh.
+			420 button Close
+			421 link Description: Download Notice, Value: localhost:62367/en/notices#download-2
+		294 container
+			295 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			296 content list
+				297 button Check Before Buy
+				298 button Land Sale Marketplace
+				299 button Cadastral Mouza Map
+				300 button Verify Deed QR Code
+				301 button Official Noticeboard
+				302 button Land Literacy Blog
+				303 button Offices & Service Points
+				304 button Citizen Sale Lock Vault
+			305 text Workspaces
+			306 content list
+				307 button Sub-Registrar Panel
+				308 button AC Land Tribunal
+				309 button Bank Lien & NOC
+				310 button National Ledger & Audit
+			311 text Support & Helpline
+			312 content list
+				313 text Land Service Call Center: 16122
+				314 text Ministry of Land (Official service hours)
+				315 text Check official service hours
+				316 button Frequently Asked Questions
+				317 button Bangladeshi Land Glossary
+			318 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 348 button PDF & QR Seal

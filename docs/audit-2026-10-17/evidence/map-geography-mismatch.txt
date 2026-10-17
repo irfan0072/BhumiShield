@@ -1,0 +1,288 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/map".
+0 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/map
+	1 container root
+		2 container
+			3 button ভূ BhumiShield National Land & Deed Trust Platform
+				4 text ভূ
+				5 text BhumiShield
+				6 text National Land & Deed Trust Platform
+			7 container প্রধান মেনু
+				8 button All Services
+				9 button Land Sale
+				10 button Cadastral Map
+				11 button Check Land
+				12 button Verify Deed
+				13 button Notices
+				14 button Blog
+				15 button Offices
+				16 button Citizen Vault
+				17 button Help
+			18 button Switch Language
+			19 button High Contrast
+				20 image
+			21 button Sign In
+				22 image
+				23 text Sign In
+		24 container
+			25 text ★ ভূ
+			26 heading Smart Bhumi Naksha — Digital Cadastral Map, Value: 1
+				27 text Smart Bhumi Naksha — Digital Cadastral Map
+			28 text NATIONAL PORTAL
+			29 text Mouza and Plot Based National Digital Land Zoning Project • Ministry of Land
+			30 container
+				31 button Land Map
+				32 button Project Objectives
+				33 button About Us
+				34 button Measurement Guide
+				35 button FAQ & Help
+			36 link Description: ১৬১২২, Help: ভূমি সেবা হটলাইন ১৬১২২, Value: tel:16122
+			37 button BhumiShield Portal
+				38 image
+				39 text BhumiShield Portal
+			40 text NOTICE
+			41 text Digital cadastral maps and land zoning attributes are displayed under the National Digital Land Zoning Project. For land assistance call 16122 (24/7). Unauthorized conversion of agricultural land is prohibited.
+			42 container
+				43 image
+				44 heading Search Menu, Value: 2
+					45 text Search Menu
+				46 text Mouza & Plot Digital Zoning
+				47 button Collapse Menu
+					48 image
+				49 text 1. Division
+				50 pop up button (collapsed, settable) Value: চট্টগ্রাম, Secondary Actions: Expand
+					51 menu
+						52 ঢাকা
+						53 (selected) চট্টগ্রাম
+						54 রাজশাহী
+						55 খুলনা
+						56 বরিশাল
+						57 সিলেট
+						58 রংপুর
+						59 ময়মনসিংহ
+				60 text 2. District
+				61 pop up button (collapsed, settable) Value: চট্টগ্রাম, Secondary Actions: Expand
+					62 menu
+						292 (selected) চট্টগ্রাম
+				66 text 3. Thana / Upazila
+				67 pop up button (collapsed, settable) Value: পাঁচলাইশ, Secondary Actions: Expand
+					68 menu
+						293 (selected) পাঁচলাইশ
+				72 text 4. Mouza
+				73 pop up button (collapsed, settable) Value: ষোলশহর (JL-18), Secondary Actions: Expand
+					74 menu
+						294 (selected) ষোলশহর (JL-18)
+				78 text 5. Sheet No
+				79 pop up button (collapsed, settable) Value: সিট-০১, Secondary Actions: Expand
+					80 menu
+						81 (selected) সিট-০১
+				83 text 6. Plot / Dag
+				84 pop up button (collapsed, settable) Value: দাগ ১০১, Secondary Actions: Expand
+					85 menu
+						86 (selected) দাগ ১০১
+						87 দাগ ১০২
+						88 দাগ ১০৩
+						89 দাগ ১০৪
+						90 দাগ ১০৫
+						91 দাগ ১০৬
+						92 দাগ ১০৭
+						93 দাগ ১০৮
+						94 দাগ ১০৯
+						95 দাগ ১১০
+						96 দাগ ১১১
+						97 দাগ ১১২
+						98 দাগ ১১৩
+						99 দাগ ১১৪
+						100 দাগ ১১৫
+						101 দাগ ১১৬
+						102 দাগ ১১৭
+						103 দাগ ১১৮
+						104 দাগ ১১৯
+						105 দাগ ১২০
+				106 button Land Use Summary
+					107 image
+					108 text Land Use Summary
+				109 button Land Zoning Summary
+					110 image
+					111 text Land Zoning Summary
+				112 button Go to Plot
+					113 image
+					114 text Go to Plot
+				115 button Reset
+					116 image
+					117 text Reset
+			118 button Important Links
+				119 image
+				120 text Important Links
+				121 image
+			122 container
+				123 text MAP LAYERS
+				124 button Cadastral Sheet
+					125 image
+					126 text Cadastral Sheet
+				127 button Digital Zoning
+					128 image
+					129 text Digital Zoning
+				130 button Satellite View
+					131 image
+					132 text Satellite View
+				133 button BhumiShield Trust
+					134 image
+					135 text BhumiShield Trust
+			136 container
+				137 container North Arrow
+					138 text ▲ N উ
+				139 button Zoom In
+					140 image
+				141 button Zoom Out
+					142 image
+				143 button Reset View
+					144 image
+			145 container
+				146 image
+				147 text ষোলশহর (JL-18)  • সিট- ০১ ০ ১০০ মি. ২০০ মি. 23.8587 ° N,  90.3181 ° E
+			148 image
+				149 container
+					150 text ১০১ 20  শতক ★ বিক্রির জন্য
+				151 container
+					152 text ১০২ 15  শতক
+				153 container
+					154 text ১০৩ 24.5  শতক 🏦 বন্ধকযুক্ত
+				155 container
+					156 text ১০৪ 16  শতক
+				157 container
+					158 text ১০৫ 32  শতক 🔒 লককৃত
+				159 container
+					160 text ১০৬ 18  শতক
+				161 container
+					162 text ১০৭ 22  শতক ★ বিক্রির জন্য
+				163 container
+					164 text ১০৮ 12.5  শতক
+				165 container
+					166 text ১০৯ 19  শতক
+				167 container
+					168 text ১১০ 14  শতক
+				169 container
+					170 text ১১১ 28  শতক ★ বিক্রির জন্য
+				171 container
+					172 text ১১২ 21  শতক
+				173 container
+					174 text ১১৩ 45  শতক 🔒 লককৃত
+				175 container
+					176 text ১১৪ 17.5  শতক
+				177 container
+					178 text ১১৫ 25  শতক 🏦 বন্ধকযুক্ত
+				179 container
+					180 text ১১৬ 16.5  শতক
+				181 container
+					182 text ১১৭ 23  শতক
+				183 container
+					184 text ১১৮ 30  শতক ★ বিক্রির জন্য
+				185 container
+					186 text ১১৯ 15  শতক
+				187 container
+					188 text ১২০ 19.5  শতক 🔒 লককৃত
+			189 container
+				190 image
+				191 heading Mouza & Plot Details, Value: 3
+					192 text Mouza & Plot Details
+				193 button Close Popup
+					194 image
+				195 text Plot Dag:
+				196 text ১০১
+				197 text বিক্রির জন্য সক্রিয়
+				198 table
+					199 row
+						200 cell
+							201 text Division & District
+						202 cell
+							203 text চট্টগ্রাম ,  চট্টগ্রাম
+					204 row
+						205 cell
+							206 text Thana / Upazila
+						207 cell
+							208 text পাঁচলাইশ
+					209 row
+						210 cell
+							211 text Mouza & JL No
+						212 cell
+							213 text বিরুলিয়া  (জে.এল  ১২ )
+					214 row
+						215 cell
+							216 text Sheet No
+						217 cell
+							218 text সিট- ০১
+					219 row
+						220 cell
+							221 text Khatian No
+						222 cell
+							223 text ১২০৪
+					224 row
+						225 cell
+							226 text Land Class
+						227 cell
+							228 text ভিটা (আবাসিক)
+					229 row
+						230 cell
+							231 text Land Area
+						232 cell
+							233 text 20  শতক ( 12.1  কাঠা)
+					234 row
+						235 cell
+							236 text Zoning Category
+						237 cell
+							238 text পরিকল্পিত আবাসন জোন
+					239 row
+						240 cell
+							241 text Owner (Masked)
+						242 cell
+							243 text মোঃ রফিকুল ইসলাম  ( ****৫৮৯১ )
+				244 text Price:
+				245 container
+					246 text ৳  4500000
+				247 button Audit Plot in BhumiShield
+					248 image
+					249 text Audit Plot in BhumiShield
+				250 button View in Sale Marketplace
+					251 image
+					252 text View in Sale Marketplace
+			253 text ★ ভূ
+			254 heading Smart Bhumi Naksha & Zoning, Value: 4
+				255 text Smart Bhumi Naksha & Zoning
+			256 text Ministry of Land, Govt of Bangladesh
+			257 text Integrated nationwide cadastral zoning and parcel boundary GIS portal under the Ministry of Land.
+			258 heading Official Government Links, Value: 5
+				259 text Official Government Links
+			260 content list
+				261 link Description: ভূমি মন্ত্রণালয় (minland.gov.bd), Value: minland.gov.bd/
+				262 link Description: ই-নামজারি পোর্টাল (e-Mutation), Value: mutation.land.gov.bd/
+				263 link Description: ডিজিটাল রেকর্ড রুম (ই-পর্চা), Value: eporcha.gov.bd/
+				264 link Description: জাতীয় ভূমি সেবা পোর্টাল (land.gov.bd), Value: land.gov.bd/
+			265 heading Mobile Apps & Guides, Value: 5
+				266 text Mobile Apps & Guides
+			267 content list
+				268 button স্মার্ট ভূমি নকশা ব্যবহার নির্দেশিকা
+					269 image
+					270 text স্মার্ট ভূমি নকশা ব্যবহার নির্দেশিকা
+				271 button ক্যাডাস্ট্রাল সার্ভে ও পরিমাপ নিয়মাবলী
+					272 image
+					273 text ক্যাডাস্ট্রাল সার্ভে ও পরিমাপ নিয়মাবলী
+				274 button নাগরিক চার্টার ও অভিযোগ প্রতিকার
+					275 image
+					276 text নাগরিক চার্টার ও অভিযোগ প্রতিকার
+				277 button যাচাইকৃত জমির হাট (Bhumi Marketplace)
+					278 image
+					279 text যাচাইকৃত জমির হাট (Bhumi Marketplace)
+			280 heading Contact & Support, Value: 5
+				281 text Contact & Support
+			282 image
+			283 text ভূমি ভবন, ৯৮ শহীদ তাজউদ্দীন আহমদ সরণি, তেজগাঁও, ঢাকা-১২০৮।
+			284 image
+			285 text হটলাইন: 
+			286 text ১৬১২২
+			287 text  (২৪ ঘণ্টা সার্বক্ষণিক)
+			288 image
+			289 text info@minland.gov.bd
+			290 text Copyright © 2026 Ministry of Land, Government of the People’s Republic of Bangladesh. All rights reserved.
+			291 text Technical Innovation & Security Architecture: BhumiShield • LandTech Hackathon 2026
+
+The focused UI element is 112 button Go to Plot

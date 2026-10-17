@@ -1,6 +1,9 @@
 #!/bin/sh
 set -eu
 umask 0007
+if [ -n "${PORT:-}" ]; then
+    sed -i "s/80/${PORT}/g" /etc/apache2/ports.conf /etc/apache2/sites-available/000-default.conf 2>/dev/null || true
+fi
 if [ "${APP_ENV:-development}" = "production" ]; then
     php -r "require '/app/vendor/autoload.php'; App\Services\JwtAuthService::getSecret(); App\Services\LedgerService::getPublicKeyHex();"
 fi

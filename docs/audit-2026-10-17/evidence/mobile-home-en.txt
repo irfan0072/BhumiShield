@@ -1,0 +1,311 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en
+	2 container root
+		3 container
+			4 button ভূ BhumiShield
+				5 text ভূ
+				6 text BhumiShield
+			19 button Switch Language
+			20 button High Contrast
+				21 image
+			22 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				23 text ম
+				26 image
+			309 button Menu
+				310 image
+		27 container
+			28 container
+				29 text Land & Deed Verification & Trust Prototype
+				30 heading Secure Land Verification & Deed Protection in One Place, Value: 1
+					31 text Secure Land Verification & Deed Protection in One Place
+				32 text No need to run between offices. Check ownership, detect tampered deeds, freeze plots with citizen sale locks, and track e-mutation — all from home.
+				33 button Check Before You Buy
+					34 image
+					35 text Check Before You Buy
+				36 button Verify Deed QR Code
+					37 image
+					38 text Verify Deed QR Code
+				39 heading Track Deed or Verify Plot, Value: 2
+					40 text Track Deed or Verify Plot
+				41 text Enter Deed Number like DL-2026-1001 or Plot Dag 101
+				42 button Deed Number / QR
+				43 button Plot Dag Check
+				44 text field (settable) DL-2026-1001
+				45 button Search
+					46 image
+					47 text Search
+				48 button DL-2026-1001 (অক্ষত) →
+					49 text DL-2026-1001 (অক্ষত)
+					50 text →
+				51 button DL-2026-1005 (টেম্পার) →
+					52 text DL-2026-1005 (টেম্পার)
+					53 text →
+				54 button দাগ ১০১ (ধানমন্ডি) →
+					55 text দাগ ১০১ (ধানমন্ডি)
+					56 text →
+				57 button দাগ ১০৬ (বন্ধকী দাগ) →
+					58 text দাগ ১০৬ (বন্ধকী দাগ)
+					59 text →
+			60 text 60
+			61 text Plots Monitored
+			62 text 240
+			63 text Khatians Indexed
+			64 text 80
+			65 text Deeds Chained
+			66 text 2
+			67 text Active Liens
+			68 text 1
+			69 text Mutations Done
+			70 text 21
+			71 text Active Officers
+			72 heading Services & Official Guidance, Value: 2
+				73 text Services & Official Guidance
+			74 text Official Ministry services and BhumiShield integrated trust layers
+			78 button All Services
+			79 button e-Mutation & Tax
+			80 button Khatian & Mouza Maps
+			81 button Deed & Registry
+			82 button Bank Lien & NOC
+			83 button Help & 16122 Call Center
+			84 link Online e-Mutation Application & Tracking AC Land online e-mutation submission, hearing and DCR lifecycle. Application fee court fee BDT 20 + notice fee BDT 50 = BDT 70, and post-approval DCR fee BDT 1100. Land Reform Board & Ministry of Land Official Portal ↗
+				85 image
+				86 text Online e-Mutation Application & Tracking
+				87 image
+				88 text AC Land online e-mutation submission, hearing and DCR lifecycle. Application fee court fee BDT 20 + notice fee BDT 50 = BDT 70, and post-approval DCR fee BDT 1100.
+				89 text Land Reform Board & Ministry of Land
+				90 text Official Portal ↗
+			91 link Online Khatian & Certified Copy Application Official khatian certified/online copy request. Ministry circular dated 17 February 2026 sets fee at Govt fee BDT 100 + Service fee BDT 20 = BDT 120. Directorate of Land Records and Surveys (DLRS) Official Portal ↗
+				92 image
+				93 text Online Khatian & Certified Copy Application
+				94 image
+				95 text Official khatian certified/online copy request. Ministry circular dated 17 February 2026 sets fee at Govt fee BDT 100 + Service fee BDT 20 = BDT 120.
+				96 text Directorate of Land Records and Surveys (DLRS)
+				97 text Official Portal ↗
+			98 link Mouza Map Sheet Order Authorized mouza map sheet copy. Ministry circular dated 17 February 2026 sets fee at Govt fee BDT 520 + Service fee BDT 25 = BDT 545. Directorate of Land Records and Surveys (DLRS) Official Portal ↗
+				99 image
+				100 text Mouza Map Sheet Order
+				101 image
+				102 text Authorized mouza map sheet copy. Ministry circular dated 17 February 2026 sets fee at Govt fee BDT 520 + Service fee BDT 25 = BDT 545.
+				103 text Directorate of Land Records and Surveys (DLRS)
+				104 text Official Portal ↗
+			105 link Online Land Development Tax (LD Tax) Guidance for holding registration and annual land development tax payment using citizen mobile, NID, and khatian records. Ministry of Land (Revenue Wing) Official Portal ↗
+				106 image
+				107 text Online Land Development Tax (LD Tax)
+				108 image
+				109 text Guidance for holding registration and annual land development tax payment using citizen mobile, NID, and khatian records.
+				110 text Ministry of Land (Revenue Wing)
+				111 text Official Portal ↗
+			112 link Ongoing Survey Khatians & Settlement Records Inspection of ongoing draft survey records (BDS, City Survey, Diara). Completed gazetted records transition to Deputy Commissioner record room. Directorate of Land Records and Surveys (DLRS) Official Portal ↗
+				113 image
+				114 text Ongoing Survey Khatians & Settlement Records
+				115 image
+				116 text Inspection of ongoing draft survey records (BDS, City Survey, Diara). Completed gazetted records transition to Deputy Commissioner record room.
+				117 text Directorate of Land Records and Surveys (DLRS)
+				118 text Official Portal ↗
+			119 link Land Service Call Center 16122 & Grievance Redress Ministry of Land institutional helpline 16122 (official working hours) and Grievance Redress System (GRS). Ministry of Land Official Portal ↗
+				120 image
+				121 text Land Service Call Center 16122 & Grievance Redress
+				122 image
+				123 text Ministry of Land institutional helpline 16122 (official working hours) and Grievance Redress System (GRS).
+				124 text Ministry of Land
+				125 text Official Portal ↗
+			126 button Check Before You Buy (Khatian Chain & Lien Scanner) Independent prototype evaluating CS, RS, BS lineage, bank mortgages, sale locks, and overselling risks. BhumiShield Prototype (LandTech 2026) Feature →
+				127 image
+				128 text Check Before You Buy (Khatian Chain & Lien Scanner)
+				129 image
+				130 text Independent prototype evaluating CS, RS, BS lineage, bank mortgages, sale locks, and overselling risks.
+				131 text BhumiShield Prototype (LandTech 2026)
+				132 text Feature →
+			133 button Digital Deed & NOC QR Verification Ed25519 cryptographic signature and SHA-256 hash-chain verification with live tamper detection. BhumiShield Prototype (LandTech 2026) Feature →
+				134 image
+				135 text Digital Deed & NOC QR Verification
+				136 image
+				137 text Ed25519 cryptographic signature and SHA-256 hash-chain verification with live tamper detection.
+				138 text BhumiShield Prototype (LandTech 2026)
+				139 text Feature →
+			140 text ⓘ Official government services belong to their respective authorities. BhumiShield is an independent LandTech 2026 prototype.
+			141 button View Official Fees & Circular Guide →
+			142 heading Five Role Workspaces, Value: 2
+				143 text Five Role Workspaces
+			144 text From citizen vault to national audit — each panel features dedicated controls:
+			145 button CITIZEN PORTAL Citizen Vault Sale locks & complaints Open Workspace
+				146 image
+				147 text CITIZEN PORTAL
+				148 heading Citizen Vault, Value: 3
+					149 text Citizen Vault
+				150 text Sale locks & complaints
+				151 text Open Workspace
+				152 image
+			153 button REGISTRATION DEPT Sub-Registrar 11-rule gatekeeper Open Workspace
+				154 image
+				155 text REGISTRATION DEPT
+				156 heading Sub-Registrar, Value: 3
+					157 text Sub-Registrar
+				158 text 11-rule gatekeeper
+				159 text Open Workspace
+				160 image
+			161 button LAND REVENUE OFFICE AC Land e-Mutation & Tribunal Open Workspace
+				162 image
+				163 text LAND REVENUE OFFICE
+				164 heading AC Land, Value: 3
+					165 text AC Land
+				166 text e-Mutation & Tribunal
+				167 text Open Workspace
+				168 image
+			169 button SCHEDULED BANKS Bank Officer Liens & Digital NOC Open Workspace
+				170 image
+				171 text SCHEDULED BANKS
+				172 heading Bank Officer, Value: 3
+					173 text Bank Officer
+				174 text Liens & Digital NOC
+				175 text Open Workspace
+				176 image
+			177 button NATIONAL GOVERNANCE System Admin RBAC & Audit Trail Open Workspace
+				178 image
+				179 text NATIONAL GOVERNANCE
+				180 heading System Admin, Value: 3
+					181 text System Admin
+				182 text RBAC & Audit Trail
+				183 text Open Workspace
+				184 image
+			185 heading Live Test Scenarios, Value: 2
+				186 text Live Test Scenarios
+			187 text One-click fraud prevention test scenarios for hackathon evaluators:
+			189 container
+				190 text # 1 SAFE 1. Clean Legitimate Sale (All Checks Pass) Run Test →
+			191 container
+				192 text # 2 HIGH_RISK 2. Double Sale of the Same Plot to Two Buyers Run Test →
+			193 container
+				194 text # 3 HIGH_RISK 3. Seller Selling More Area Than Owned Share Run Test →
+			195 container
+				196 text # 4 HIGH_RISK 4. Seller Is Not the Current Owner on Latest Khatian Run Test →
+			197 container
+				198 text # 5 HIGH_RISK 5. Stored Deed Tampered After Registration (Hash & Signature Mismatch) Run Test →
+			199 container
+				200 text # 6 HIGH_RISK 6. Plot Already Mortgaged Offered as Collateral Again Run Test →
+			201 container
+				202 text # 7 WARNING 7. Khatian Survey Chain Break (RS -> BS Area Discrepancy) Run Test →
+			203 container
+				204 text # 8 WARNING 8. Inheritance Case with Unresolved Heirs (Manual Review) Run Test →
+			205 heading Complete Trust in Three Steps, Value: 2
+				206 text Complete Trust in Three Steps
+			207 text From agreement to BS khatian update — mathematically unbroken continuity:
+			208 text ১
+			209 heading 1. Citizen Pre-Check, Value: 3
+				210 text 1. Citizen Pre-Check
+			211 text Verify survey lineage, seller share balance, and active bank mortgages before contract.
+			212 text ২
+			213 heading 2. 11-Rule Gatekeeper, Value: 3
+				214 text 2. 11-Rule Gatekeeper
+			215 text Automated gatekeeper rule execution, double registry prevention, and sourced fee guidance.
+			216 text ৩
+			217 heading 3. Signed Ledger & Mutation, Value: 3
+				218 text 3. Signed Ledger & Mutation
+			219 text Ed25519 cryptographic signing, hash-chain ledger, and automated e-mutation queuing.
+			220 heading Manual Registry vs BhumiShield, Value: 2
+				221 text Manual Registry vs BhumiShield
+			222 text Five land-record risks addressed within the records available to this application:
+			223 table
+				224 row
+					225 cell
+						226 text FRAUD RISK
+					227 cell
+						228 text TRADITIONAL MANUAL WAY
+					229 cell
+						230 text BHUMISHIELD SOLUTION
+				231 row
+					232 cell
+						233 text Double Sale Fraud
+					234 cell
+						235 image
+						236 text Slow volume updates; same land can be sold to multiple victims
+					237 cell
+						238 image
+						239 text Real-time share deduction; immediate duplicate registration block
+				240 row
+					241 cell
+						242 text Forged POA / Absentee Fraud
+					243 cell
+						244 image
+						245 text Absentee owners easily forged by land grabbers
+					246 cell
+						247 image
+						248 text Citizen Digital Sale Lock; strictly blocked at gatekeeper until owner unlocks
+				249 row
+					250 cell
+						251 text Lineage Manipulation
+					252 cell
+						253 image
+						254 text Manual verification impossible; fake khatian sheets forged
+					255 cell
+						256 image
+						257 text CS to RS/BS survey area continuity & inheritance audit
+				258 row
+					259 cell
+						260 text Mortgaged Plot Sale
+					261 cell
+						262 image
+						263 text No link between commercial banks and registry offices
+					264 cell
+						265 image
+						266 text Central real-time lien check & cryptographic clearance NOC
+				267 row
+					268 cell
+						269 text Physical Record Tampering
+					270 cell
+						271 image
+						272 text Physical register books can be altered by corrupt staff
+					273 cell
+						274 image
+						275 text SHA-256 hash chaining; altering 1 byte breaks the chain
+			276 container
+				277 image
+				278 text GOVERNMENT LAND CALL CENTER & GRIEVANCE CELL
+			279 heading Contact Official Land Support Directly, Value: 3
+				280 text Contact Official Land Support Directly
+			281 text Call Ministry of Land Call Center 16122 for assistance during official service hours (standard telecom charges apply).
+			282 text LAND HELPLINE ১৬১২২
+			283 button Help & FAQ →
+		284 container
+			285 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			286 content list
+				287 button Check Before Buy
+				288 button Land Sale Marketplace
+				289 button Cadastral Mouza Map
+				290 button Verify Deed QR Code
+				291 button Official Noticeboard
+				292 button Land Literacy Blog
+				293 button Offices & Service Points
+				294 button Citizen Sale Lock Vault
+			295 text Workspaces
+			296 content list
+				297 button Sub-Registrar Panel
+				298 button AC Land Tribunal
+				299 button Bank Lien & NOC
+				300 button National Ledger & Audit
+			301 text Support & Helpline
+			302 content list
+				303 text Land Service Call Center: 16122
+				304 text Ministry of Land (Official service hours)
+				305 text Check official service hours
+				306 button Frequently Asked Questions
+				307 button Bangladeshi Land Glossary
+			308 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+		311 container দ্রুত নেভিগেশন
+			312 button Home
+				313 image
+				314 text Home
+			315 button Check
+				316 image
+				317 text Check
+			318 button QR Scan, Help: QR Verify
+				319 image
+				320 text QR Scan
+			321 button Panel
+				322 image
+				323 text Panel
+			324 button Help
+				325 image
+				326 text Help
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en

@@ -53,6 +53,9 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
   const [appointmentPhone, setAppointmentPhone] = useState('');
   const [appointmentDate, setAppointmentDate] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookingError, setBookingError] = useState('');
+  const [bookingResult, setBookingResult] = useState<any | null>(null);
 
   const fetchOffices = () => {
     setLoading(true);
@@ -61,8 +64,8 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
     if (upazilaFilter) params.upazila = upazilaFilter;
 
     BhumiApi.listOffices(params)
-      .then((res) => {
-        setOffices(res.items || []);
+      .then((res: any) => {
+        setOffices(Array.isArray(res) ? res : (res?.items || []));
       })
       .catch((err) => {
         console.error('Failed to load offices', err);
@@ -120,16 +123,35 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
     return nameMatch || codeMatch || upazilaMatch;
   });
 
-  const handleBookingSubmit = (e: React.FormEvent) => {
+  const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setBookingSuccess(true);
-    setTimeout(() => {
-      setBookingOffice(null);
-      setBookingSuccess(false);
-      setAppointmentName('');
-      setAppointmentPhone('');
-      setAppointmentDate('');
-    }, 2200);
+    if (!bookingOffice) return;
+    setBookingLoading(true);
+    setBookingError('');
+    try {
+      const res = await BhumiApi.createAppointment({
+        office_id: bookingOffice.id,
+        citizen_name_bn: appointmentName,
+        citizen_phone: appointmentPhone,
+        slot_date: appointmentDate,
+        service_type: 'GENERAL_INQUIRY',
+      });
+      setBookingResult(res.appointment);
+      setBookingSuccess(true);
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail?.message_bn || err?.response?.data?.message || err.message;
+      setBookingError(msg || t('বুকিং প্রক্রিয়াকরণে ত্রুটি হয়েছে।', 'Failed to book appointment.'));
+    } finally {
+      setBookingLoading(false);
+    }
+  };
+
+  const handleViewOnMap = (off: OfficeItem) => {
+    if (off.latitude && off.longitude) {
+      onNavigate?.(`map?lat=${off.latitude}&lng=${off.longitude}&office_id=${off.id}`);
+    } else {
+      alert(t('এই দপ্তরের জিপিএস মানচিত্র স্থানাঙ্ক বর্তমানে হালনাগাদ করা হচ্ছে।', 'GPS coordinates for this office are currently being surveyed.'));
+    }
   };
 
   return (
@@ -277,7 +299,7 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
                   <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                     <button
                       type="button"
-                      onClick={() => onNavigate?.('map')}
+                      onClick={() => handleViewOnMap(off)}
                       className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition cursor-pointer min-h-[40px]"
                     >
                       <MapPin className="w-3.5 h-3.5" />
@@ -286,7 +308,12 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
 
                     <button
                       type="button"
-                      onClick={() => setBookingOffice(off)}
+                      onClick={() => {
+                        setBookingOffice(off);
+                        setBookingSuccess(false);
+                        setBookingResult(null);
+                        setBookingError('');
+                      }}
                       className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold text-white bg-[#006A4E] hover:bg-emerald-800 transition cursor-pointer min-h-[40px]"
                     >
                       <Calendar className="w-3.5 h-3.5" />
@@ -311,25 +338,64 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
                   </h3>
                 </div>
                 <button
-                  onClick={() => setBookingOffice(null)}
+                  onClick={() => {
+                    setBookingOffice(null);
+                    setBookingSuccess(false);
+                    setBookingResult(null);
+                    setBookingError('');
+                  }}
                   className="text-slate-400 hover:text-slate-600 transition p-1 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {bookingSuccess ? (
-                <div className="p-6 text-center space-y-2 bg-emerald-50 rounded-xl border border-emerald-200">
+              {bookingSuccess && bookingResult ? (
+                <div className="p-6 text-center space-y-3 bg-emerald-50 rounded-xl border border-emerald-200">
                   <ShieldCheck className="w-10 h-10 text-[#006A4E] mx-auto animate-bounce" />
-                  <p className="font-bold text-emerald-950 text-sm">
+                  <p className="font-bold text-emerald-950 text-base">
                     {t('✔ আপনার অ্যাপয়েন্টমেন্ট সফলভাবে নিবন্ধিত হয়েছে!', '✔ Appointment booked successfully!')}
                   </p>
+                  <div className="bg-white p-3 rounded-lg border border-emerald-200 text-left space-y-1 text-xs">
+                    <div>
+                      <span className="text-slate-500">{t('ট্র্যাকিং কোড:', 'Tracking Code:')}</span>{' '}
+                      <span className="font-mono font-bold text-[#006A4E]">{bookingResult.appointment_code}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500">{t('তারিখ ও সময়:', 'Date & Time:')}</span>{' '}
+                      <span className="font-semibold">{bookingResult.slot_date} ({bookingResult.slot_time})</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500">{t('সেবার ধরণ:', 'Service:')}</span>{' '}
+                      <span className="font-semibold">{bookingResult.service_type}</span>
+                    </div>
+                  </div>
                   <p className="text-xs text-emerald-800">
-                    {t('নির্ধারিত তারিখে প্রয়োজনীয় মূল কাগজপত্রসহ উপস্থিত হোন।', 'Please bring your original NID and documents on the selected date.')}
+                    {t('নির্ধারিত তারিখে প্রয়োজনীয় মূল কাগজপত্রসহ উপস্থিত হোন। ট্র্যাকিং কোডটি সংরক্ষণ করুন।', 'Please bring your original NID and documents on the selected date. Save your tracking code.')}
                   </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBookingOffice(null);
+                      setBookingSuccess(false);
+                      setBookingResult(null);
+                      setAppointmentName('');
+                      setAppointmentPhone('');
+                      setAppointmentDate('');
+                    }}
+                    className="mt-3 w-full py-2.5 bg-[#006A4E] text-white rounded-lg text-xs font-bold hover:bg-emerald-800 transition cursor-pointer min-h-[40px]"
+                  >
+                    {t('সম্পন্ন', 'Done')}
+                  </button>
                 </div>
               ) : (
                 <form onSubmit={handleBookingSubmit} className="space-y-4">
+                  {bookingError && (
+                    <div className="p-3 bg-red-50 text-red-700 text-xs rounded-lg border border-red-200">
+                      {bookingError}
+                    </div>
+                  )}
+
                   <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-700">
                     <p>
                       <strong>{t('নির্বাচিত দপ্তর:', 'Office:')}</strong>{' '}
@@ -385,15 +451,17 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
                     <button
                       type="button"
                       onClick={() => setBookingOffice(null)}
+                      disabled={bookingLoading}
                       className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer min-h-[44px]"
                     >
                       {t('বাতিল', 'Cancel')}
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2 bg-[#006A4E] hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition cursor-pointer min-h-[44px]"
+                      disabled={bookingLoading}
+                      className="px-5 py-2 bg-[#006A4E] hover:bg-emerald-800 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition cursor-pointer min-h-[44px]"
                     >
-                      {t('বুকিং নিশ্চিত করুন', 'Confirm Booking')}
+                      {bookingLoading ? t('বুকিং হচ্ছে...', 'Booking...') : t('বুকিং নিশ্চিত করুন', 'Confirm Booking')}
                     </button>
                   </div>
                 </form>

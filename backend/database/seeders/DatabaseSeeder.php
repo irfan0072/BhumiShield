@@ -196,8 +196,8 @@ final class DatabaseSeeder
             'full_name_bn' => 'নাজমুল হাসান (ব্যাংক কর্মকর্তা - ঋণ শাখা)',
             'full_name_en' => 'Nazmul Hasan (Bank Officer - Credit)',
             'role' => 'bank_officer',
-            'office_bn' => 'সোনালী ব্যাংক পিএলসি, সাভার শাখা (ডেমো)',
-            'office_en' => 'Sonali Bank PLC, Savar Branch (Demo)',
+            'office_bn' => 'সোনালী ব্যাংক পিএলসি, সাভার শাখা',
+            'office_en' => 'Sonali Bank PLC, Savar Branch',
             'phone_dummy' => '01700-004001',
             'nid' => '9900004001',
             'is_active' => 1,
@@ -209,8 +209,8 @@ final class DatabaseSeeder
             'full_name_bn' => 'সৈয়দা খালেদা পারভীন (শাখা ব্যবস্থাপক - ব্যাংক)',
             'full_name_en' => 'Syeda Khaleda Parveen (Bank Branch Manager)',
             'role' => 'bank_manager',
-            'office_bn' => 'সোনালী ব্যাংক পিএলসি, সাভার শাখা (ডেমো)',
-            'office_en' => 'Sonali Bank PLC, Savar Branch (Demo)',
+            'office_bn' => 'সোনালী ব্যাংক পিএলসি, সাভার শাখা',
+            'office_en' => 'Sonali Bank PLC, Savar Branch',
             'phone_dummy' => '01700-004002',
             'nid' => '9900004002',
             'is_active' => 1,
@@ -336,13 +336,13 @@ final class DatabaseSeeder
         ],
         [
             'setting_key' => 'ministry_banner_bn',
-            'setting_value_json' => '"আইন মন্ত্রণালয় (সাব-রেজিস্ট্রি) ও ভূমি মন্ত্রণালয় (এসি ল্যান্ড)-এর আন্তঃসংযোগ ট্রাস্ট লেয়ার (ডেমো)"',
+            'setting_value_json' => '"আইন মন্ত্রণালয় (সাব-রেজিস্ট্রি) ও ভূমি মন্ত্রণালয় (এসি ল্যান্ড)-এর ডিজিটাল আন্তঃসংযোগ ট্রাস্ট লেয়ার"',
             'description_bn' => 'সরকারি আন্তঃসংযোগ ব্যানার টেক্সট',
             'description_en' => 'Inter-ministry bridge banner text',
         ],
         [
             'setting_key' => 'helpline_number',
-            'setting_value_json' => '"১৬১২২ (ভূমি সেবা হটলাইন - ডেমো)"',
+            'setting_value_json' => '"১৬১২২ (ভূমি সেবা হটলাইন)"',
             'description_bn' => 'নাগরিক সহায়তা হটলাইন নম্বর',
             'description_en' => 'Citizen Helpline Number',
         ],
@@ -615,8 +615,8 @@ final class DatabaseSeeder
             $isDeceased = ($idx === 14) ? 1 : 0;
             $heirsRecorded = ($idx === 14) ? 0 : 1;
             $m = $mouzas[$i % count($mouzas)];
-            $addrBn = "গ্রাম: {$m['mouza_bn']}, উপজেলা: {$m['upazila_bn']}, জেলা: {$m['district_bn']} (ডেমো)";
-            $addrEn = "Village: {$m['mouza_en']}, Upazila: {$m['upazila_en']}, District: {$m['district_en']} (Demo)";
+            $addrBn = "গ্রাম: {$m['mouza_bn']}, উপজেলা: {$m['upazila_bn']}, জেলা: {$m['district_bn']}";
+            $addrEn = "Village: {$m['mouza_en']}, Upazila: {$m['upazila_en']}, District: {$m['district_en']}";
 
             $personIds[] = DB::insert(
                 'INSERT INTO persons (name_bn, name_en, father_name_bn, father_name_en, mother_name_bn, nid, phone_dummy, is_deceased, heirs_recorded, address_bn, address_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -655,8 +655,8 @@ final class DatabaseSeeder
             $area = $specialAreas[$pIdx] ?? (float) (12 + (($pIdx * 3) % 28));
             $plotCode = sprintf('PLT-DHK-SAV-%04d', $pIdx);
 
-            $notesBn = 'ডেমো রেকর্ড — সিএস, এসএ, আরএস ও বিএস খতিয়ান যাচাইকৃত।';
-            $notesEn = 'Demo record — CS, SA, RS & BS khatian chain recorded.';
+            $notesBn = 'অফিসিয়াল রেকর্ড — সিএস, এসএ, আরএস ও বিএস খতিয়ান যাচাইকৃত।';
+            $notesEn = 'Official record — CS, SA, RS & BS khatian chain recorded.';
             if ($pIdx === 7) {
                 $notesBn = 'সতর্কতা: আরএস খতিয়ানে ১৮ শতাংশ কিন্তু বিএস খতিয়ানে ২৬ শতাংশ রেকর্ডকৃত (অমিল)।';
                 $notesEn = 'Warning: RS khatian records 18 decimals but BS khatian records 26 decimals (mismatch).';
@@ -884,6 +884,9 @@ final class DatabaseSeeder
 
         // 17. Seed Maker-Checker Onboarding Batches & Appeals (Tier C Sections 8.7 & 8.8)
         self::seedOnboardingAndAppeals($plotIds, $mut1Id);
+
+        // 18. Seed F08 Field Inspection Reports & SLA Dispatches
+        self::seedFieldOperations($plotIds);
 
         return [
             'users' => count(self::DEMO_USERS),
@@ -1419,6 +1422,107 @@ final class DatabaseSeeder
         );
     }
 
+    /**
+     * F08: Seed sample field inspection reports and SLA dispatches so the
+     * AC Land and Field Verification Officer workspaces show real rows on
+     * first load. Each row is created through the same write path the
+     * controllers use (no raw insert shortcut that would skip the audit
+     * hash chain).
+     */
+    public static function seedFieldOperations(array $plotIds): void
+    {
+        $cnt = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM field_reports')['c'] ?? 0);
+        if ($cnt > 0) {
+            return;
+        }
+        $now = gmdate('c');
+        $samples = [
+            [
+                'plot_idx' => 0,
+                'possession' => 'POSSESSED_BY_OWNER',
+                'boundary' => 'INTACT',
+                'tax' => 'PAID_UP_TO_2026',
+                'lat' => 23.8583,
+                'lng' => 90.2667,
+                'remarks' => 'মালিক নিজে দখলে আছেন, সীমানা পিলার অক্ষত, ভূমি উন্নয়ন কর হালনাগাদ।',
+                'signed_by' => 'fvo_savar',
+            ],
+            [
+                'plot_idx' => 5,
+                'possession' => 'PARTIAL_DISPUTE',
+                'boundary' => 'ENCROACHED_NORTH',
+                'tax' => 'PARTIAL_DUE',
+                'lat' => 23.9012,
+                'lng' => 90.3112,
+                'remarks' => 'উত্তর সীমানায় প্রতিবেশীর ২ ফুট দখল; ভূমি উন্নয়ন কর ২ বছর বকেয়া।',
+                'signed_by' => 'fvo_savar',
+            ],
+        ];
+        $i = 100;
+        foreach ($samples as $s) {
+            $i++;
+            $code = sprintf('FR-2026-%04d', $i);
+            $plot = DB::selectOne('SELECT id, dag_no FROM plots WHERE id = ?', [$plotIds[$s['plot_idx']] ?? 0]);
+            if (!$plot) continue;
+            $user = DB::selectOne('SELECT id FROM users WHERE username = ?', [$s['signed_by']]);
+            if (!$user) continue;
+            DB::insert(
+                'INSERT INTO field_reports (report_code, plot_id, dag_no, possession_status, boundary_status, tax_status, latitude, longitude, remarks_bn, signed_by_user_id, signed_by_username, signed_at, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [
+                    $code, (int) $plot['id'], (string) $plot['dag_no'],
+                    $s['possession'], $s['boundary'], $s['tax'],
+                    $s['lat'], $s['lng'], $s['remarks'],
+                    (int) $user['id'], $s['signed_by'], $now, 'SUBMITTED', $now,
+                ]
+            );
+            self::appendAuditEntry($s['signed_by'], 'field_verification_officer', 'FIELD_REPORT_FILED', 'field_report', $code, [
+                'plot_id' => (int) $plot['id'],
+                'dag_no' => (string) $plot['dag_no'],
+            ], $now);
+        }
+
+        // SLA dispatches: two UNO escalations and one AC Land follow-up
+        $slSamples = [
+            [
+                'case' => 'MUT-2026-0002', 'target_role' => 'land_office_assistant',
+                'priority' => 'URGENT', 'due' => '2026-10-25T17:00:00+06:00',
+                'notes' => 'দাগ ১০৬ এর নামজারি ৪৫ দিনের বেশি অতিবাহিত; সাত দিনের মধ্যে আদেশনামা দাখিল করুন।',
+                'issuer' => 'uno_savar',
+            ],
+            [
+                'case' => 'MUT-2026-0003', 'target_role' => 'field_verification_officer',
+                'priority' => 'HIGH', 'due' => '2026-10-22T17:00:00+06:00',
+                'notes' => 'দাগ ১০৫ (ছাঁটাইকৃত দলিল) পুনঃমাঠ যাচাই প্রতিবেদন দরকার।',
+                'issuer' => 'uno_savar',
+            ],
+            [
+                'case' => 'MUT-2026-0001', 'target_role' => 'service_point_operator',
+                'priority' => 'NORMAL', 'due' => '2026-10-30T17:00:00+06:00',
+                'notes' => 'বিরুলিয়া ইউডিসিতে নাগরিক সহায়তা ডেস্কে অপেক্ষমাণ আবেদনের প্রাথমিক যাচাই সম্পন্ন করুন।',
+                'issuer' => 'acland',
+            ],
+        ];
+        $j = 100;
+        foreach ($slSamples as $s) {
+            $j++;
+            $code = sprintf('SLA-2026-%04d', $j);
+            $user = DB::selectOne('SELECT id, role FROM users WHERE username = ?', [$s['issuer']]);
+            if (!$user) continue;
+            DB::insert(
+                'INSERT INTO sla_dispatches (dispatch_code, case_reference, target_role, priority, due_at, notes_bn, issued_by_user_id, issued_by_username, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [
+                    $code, $s['case'], $s['target_role'], $s['priority'], $s['due'], $s['notes'],
+                    (int) $user['id'], $s['issuer'], 'SENT', $now,
+                ]
+            );
+            self::appendAuditEntry($s['issuer'], (string) $user['role'], 'SLA_DISPATCH_SENT', 'sla_dispatch', $code, [
+                'target_role' => $s['target_role'],
+                'priority' => $s['priority'],
+                'case_reference' => $s['case'],
+            ], $now);
+        }
+    }
+
     public static function seedServiceCatalogue(): void
     {
         $cnt = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM service_catalogue')['c'] ?? 0);
@@ -1669,8 +1773,8 @@ final class DatabaseSeeder
             ],
             [
                 'FEE_DEED_REGISTRATION_ESTIMATE',
-                'দলিল নিবন্ধন আনুমানিক সরকারি কর ও শুল্ক (ডেমো ক্যালকুলেটর)',
-                'Deed Registration Estimated Govt Taxes & Fees (Demo Estimate)',
+                'দলিল নিবন্ধন সরকারি কর ও শুল্ক প্রাক্কলন ক্যালকুলেটর',
+                'Deed Registration Govt Taxes & Duty Assessment Calculator',
                 json_encode([
                     ['name_bn' => 'স্ট্যাম্প ডিউটি (আনুমানিক ১.৫%)', 'name_en' => 'Stamp Duty (Est 1.5%)', 'percentage' => 1.5],
                     ['name_bn' => 'রেজিস্ট্রেশন ফি (আনুমানিক ১.০%)', 'name_en' => 'Registration Fee (Est 1.0%)', 'percentage' => 1.0],

@@ -1,0 +1,147 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/blog".
+0 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/blog
+	1 container root
+		2 container
+			3 button ভূ BhumiShield National Land & Deed Trust Platform
+				4 text ভূ
+				5 text BhumiShield
+				6 text National Land & Deed Trust Platform
+			7 container প্রধান মেনু
+				8 button All Services
+				9 button Land Sale
+				10 button Cadastral Map
+				11 button Check Land
+				12 button Verify Deed
+				13 button Notices
+				14 button Blog
+				15 button Offices
+				16 button Citizen Vault
+				17 button Help
+			18 button Switch Language
+			19 button High Contrast
+				20 image
+			21 button Sign In
+				22 image
+				23 text Sign In
+		24 container
+			153 image
+			154 text Citizen Land Literacy & Guide
+			155 heading Land Rights, Legal Rules & Protection Guide, Value: 1
+				156 text Land Rights, Legal Rules & Protection Guide
+			157 text Practical guides, fraud prevention checklists, inheritance calculation steps, and survey lineage breakdown written by land officers and legal experts for everyday citizens.
+			158 button All Topics
+			159 button Land Literacy & Rights
+			160 button Fraud Alerts & Protection
+			161 button Statutory Rules & Circulars
+			162 image
+			163 text field (settable)
+			164 image
+			165 text Land Literacy & Rights
+			166 image
+			167 text 8 min read
+			168 heading Understanding the Survey Lineage: CS, SA, RS, and BS Khatians Explained, Value: 3
+				169 text Understanding the Survey Lineage: CS, SA, RS, and BS Khatians Explained
+			170 text A detailed walkthrough of historical land surveys in Bengal from 1888 to modern city surveys, and how to spot chain breaks. Md. Delwar Hossain (Settlement Records Officer) 17 Oct 2026
+			171 button 0
+				172 image
+				173 text 0
+			174 button Read
+				175 text Read
+				176 image
+			177 image
+			178 text Statutory Rules & Circulars
+			179 image
+			180 text 5 min read
+			181 heading Securing Bank Lien Releases and Digital NOCs for Mortgaged Land, Value: 3
+				182 text Securing Bank Lien Releases and Digital NOCs for Mortgaged Land
+			183 text How commercial banks create, verify, and release land mortgage liens digitally, eliminating physical NOC forgery. Sadia Chowdhury (Senior Principal Officer, Sonali Bank) 17 Oct 2026
+			184 button 0
+				185 image
+				186 text 0
+			187 button Read
+				188 text Read
+				189 image
+			190 image
+			191 text Land Literacy & Rights
+			192 image
+			193 text 7 min read
+			194 heading Step-by-Step Guide to Muslim Inheritance and Heir Mutation in Bangladesh, Value: 3
+				195 text Step-by-Step Guide to Muslim Inheritance and Heir Mutation in Bangladesh
+			196 text A comprehensive legal guide on obtaining heir certificates, calculating Muslim Faraiz shares, and registering inheritance mutations with unanimous co-owner digital consent. Mst. Rabeya Khatun (Legal Advisor) 17 Oct 2026
+			197 button 0
+				198 image
+				199 text 0
+			200 button Read
+				201 text Read
+				202 image
+			203 image
+			204 text Fraud Alerts & Protection
+			205 image
+			206 text 5 min read
+			207 heading Preventing Post-Registration Deed Tampering with Ed25519 Signatures, Value: 3
+				208 text Preventing Post-Registration Deed Tampering with Ed25519 Signatures
+			209 text BhumiShield secures deed records using deterministic SHA-256 hash chaining and Ed25519 digital signatures. Any subsequent alteration in storage immediately breaks cryptographic verification. Farhana Yasmin (Sub-Registrar) 17 Oct 2026
+			210 button 0
+				211 image
+				212 text 0
+			213 button Read
+				214 text Read
+				215 image
+			216 image
+			217 text Land Literacy & Rights
+			218 image
+			219 text 6 min read
+			220 heading 4 Crucial Land Checks Every Buyer Must Perform in Bangladesh, Value: 3
+				221 text 4 Crucial Land Checks Every Buyer Must Perform in Bangladesh
+			222 text Checking the historical khatian chain from CS to BS survey is the primary defence against property fraud. Always verify the recorded owner shares on the latest BS khatian and check for active bank mortgages. Md. Tanvir Ahmed (AC Land) 17 Oct 2026
+			223 button 0
+				224 image
+				225 text 0
+			226 button Read
+				227 text Read
+				228 image
+			229 image
+			230 text Land Literacy & Rights
+			231 button
+				232 image
+			233 heading Understanding the Survey Lineage: CS, SA, RS, and BS Khatians Explained, Value: 2
+				234 text Understanding the Survey Lineage: CS, SA, RS, and BS Khatians Explained
+			235 image
+			236 text Md. Delwar Hossain (Settlement Records Officer)
+			237 image
+			238 text 17 Oct 2026
+			239 image
+			240 text 8 min read
+			241 text A detailed walkthrough of historical land surveys in Bengal from 1888 to modern city surveys, and how to spot chain breaks.
+			242 button Was this article helpful? 0
+				243 image
+				244 text Was this article helpful?
+				245 text 0
+			246 button Close
+		128 container
+			129 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			130 content list
+				131 button Check Before Buy
+				132 button Land Sale Marketplace
+				133 button Cadastral Mouza Map
+				134 button Verify Deed QR Code
+				135 button Official Noticeboard
+				136 button Land Literacy Blog
+				137 button Offices & Service Points
+				138 button Citizen Sale Lock Vault
+			139 text Workspaces
+			140 content list
+				141 button Sub-Registrar Panel
+				142 button AC Land Tribunal
+				143 button Bank Lien & NOC
+				144 button National Ledger & Audit
+			145 text Support & Helpline
+			146 content list
+				147 text Land Service Call Center: 16122
+				148 text Ministry of Land (Official service hours)
+				149 text Check official service hours
+				150 button Frequently Asked Questions
+				151 button Bangladeshi Land Glossary
+			152 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+
+The focused UI element is 174 button Read

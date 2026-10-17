@@ -120,7 +120,7 @@ export const OfficerDeedVerifier: React.FC<OfficerDeedVerifierProps> = ({
       setTamperSuccessMsg(lang === 'bn' ? res.message_bn : res.message_en);
       await handleVerify(deedCode);
     } catch {
-      setErrorMsg(t('টেম্পার সিমুলেশন ব্যর্থ হয়েছে।', 'Tamper simulation failed.'));
+      setErrorMsg(t('অখণ্ডতা অডিট টেস্ট ব্যর্থ হয়েছে।', 'Ledger integrity test failed.'));
     } finally {
       setTamperLoading(false);
     }
@@ -283,7 +283,7 @@ export const OfficerDeedVerifier: React.FC<OfficerDeedVerifierProps> = ({
                     className="px-3 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold border border-rose-200 flex items-center gap-1.5 transition cursor-pointer"
                   >
                     <Zap className="w-3.5 h-3.5 text-rose-600" />
-                    <span>{tamperLoading ? t('পরীক্ষা চলছে...', 'Testing...') : t('টেম্পার সিমুলেশন', 'Simulate Tamper')}</span>
+                    <span>{tamperLoading ? t('পরীক্ষা চলছে...', 'Testing...') : t('অডিট টেস্ট (Tamper Check)', 'Test Tamper Detection')}</span>
                   </button>
                 ) : (
                   <button
@@ -305,17 +305,27 @@ export const OfficerDeedVerifier: React.FC<OfficerDeedVerifierProps> = ({
             <div className="lg:col-span-7 panel p-5 space-y-4">
               <h4 className="font-bold text-sm text-[#074f38] border-b border-slate-100 pb-2 flex items-center gap-2">
                 <FileCheck className="w-4 h-4 text-[#006A4E]" />
-                <span>{t('দলিল রেকর্ড ও পক্ষগণের বিবরণ', 'Deed Records & Parties')}</span>
+                <span>
+                  {result.is_noc
+                    ? t('ব্যাংক লিয়েন দায়মুক্তি ও সনদের বিবরণ', 'Bank Lien Clearance & NOC Records')
+                    : t('দলিল রেকর্ড ও পক্ষগণের বিবরণ', 'Deed Records & Parties')}
+                </span>
               </h4>
 
               <div className="grid grid-cols-2 gap-4 text-xs">
                 <div>
-                  <span className="text-slate-500">{t('দলিল নম্বর:', 'Deed Number:')}</span>
+                  <span className="text-slate-500">
+                    {result.is_noc ? t('সনদ নম্বর:', 'Certificate No:') : t('দলিল নম্বর:', 'Deed Number:')}
+                  </span>
                   <div className="font-mono font-bold text-slate-800 text-sm mt-0.5">{result.deed.deed_no}</div>
                 </div>
                 <div>
-                  <span className="text-slate-500">{t('দলিলের ধরন:', 'Deed Type:')}</span>
-                  <div className="font-bold text-slate-800 mt-0.5">{result.deed.deed_type || 'SALE (বিক্রয় কোবালা)'}</div>
+                  <span className="text-slate-500">
+                    {result.is_noc ? t('সনদের ধরন:', 'Certificate Type:') : t('দলিলের ধরন:', 'Deed Type:')}
+                  </span>
+                  <div className="font-bold text-slate-800 mt-0.5">
+                    {result.is_noc ? t('ব্যাংক অনাপত্তিপত্র (NOC)', 'Bank Clearance (NOC)') : (result.deed.deed_type || 'SALE (বিক্রয় কোবালা)')}
+                  </div>
                 </div>
                 <div>
                   <span className="text-slate-500">{t('মৌজা ও দাগ:', 'Mouza & Dag:')}</span>
@@ -324,23 +334,33 @@ export const OfficerDeedVerifier: React.FC<OfficerDeedVerifierProps> = ({
                   </div>
                 </div>
                 <div>
-                  <span className="text-slate-500">{t('জমির পরিমাণ:', 'Area Decimal:')}</span>
+                  <span className="text-slate-500">
+                    {result.is_noc ? t('বন্ধক অব্যাহতিপ্রাপ্ত জমি:', 'Cleared Mortgaged Area:') : t('জমির পরিমাণ:', 'Area Decimal:')}
+                  </span>
                   <div className="font-bold text-slate-800 mt-0.5">
                     {toBanglaDigits(result.deed.area_decimal, lang)} {t('শতাংশ', 'decimals')}
                   </div>
                 </div>
                 <div>
-                  <span className="text-slate-500">{t('প্রথম পক্ষ (হস্তান্তরকারী / বিক্রেতা):', 'Seller / Grantor:')}</span>
+                  <span className="text-slate-500">
+                    {result.is_noc ? t('অর্থায়নকারী ব্যাংক ও শাখা:', 'Financing Bank & Branch:') : t('প্রথম পক্ষ (হস্তান্তরকারী / বিক্রেতা):', 'Seller / Grantor:')}
+                  </span>
                   <div className="font-bold text-slate-800 mt-0.5">{result.deed.seller_name_bn}</div>
-                  <div className="text-[10px] text-slate-500 font-mono">NID: {result.deed.seller_nid}</div>
+                  <div className="text-[10px] text-slate-500 font-mono">
+                    {result.is_noc ? `${t('শাখা:', 'Branch:')} ${result.deed.seller_nid}` : `NID: ${result.deed.seller_nid}`}
+                  </div>
                 </div>
                 <div>
-                  <span className="text-slate-500">{t('দ্বিতীয় পক্ষ (গ্রহীতা / ক্রেতা):', 'Buyer / Grantee:')}</span>
+                  <span className="text-slate-500">
+                    {result.is_noc ? t('দায়মুক্ত ঋণগ্রহীতা ও জমির মালিক:', 'Discharged Borrower & Owner:') : t('দ্বিতীয় পক্ষ (গ্রহীতা / ক্রেতা):', 'Buyer / Grantee:')}
+                  </span>
                   <div className="font-bold text-slate-800 mt-0.5">{result.deed.buyer_name_bn}</div>
                   <div className="text-[10px] text-slate-500 font-mono">NID: {result.deed.buyer_nid}</div>
                 </div>
                 <div>
-                  <span className="text-slate-500">{t('ঘোষিত মূল্য:', 'Declared Value:')}</span>
+                  <span className="text-slate-500">
+                    {result.is_noc ? t('পরিশোধিত ঋণ / দায়মুক্তি অঙ্ক:', 'Discharged Loan Amount:') : t('ঘোষিত মূল্য:', 'Declared Value:')}
+                  </span>
                   <div className="font-bold text-slate-800 mt-0.5">
                     ৳{toBanglaDigits(Number(result.deed.declared_value_bdt || 0).toLocaleString('en-US'), lang)}
                   </div>

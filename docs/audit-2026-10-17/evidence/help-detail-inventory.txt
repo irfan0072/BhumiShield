@@ -1,0 +1,221 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/acland".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/acland
+	2 container root
+		3 container
+			4 button
+				5 image
+			6 button Home
+				7 image
+				8 text Home
+			9 text / AC Land Panel
+			10 button বাং
+			11 button Contrast
+				12 image
+			13 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				14 text ত
+				15 image
+		16 container
+			17 heading AC Land Console, Value: 1
+				18 text AC Land Console
+			19 text Approve e-mutations, reconcile khatians, and hear citizen dispute cases.
+			20 text PENDING E-MUTATIONS 2
+			21 button Review Mutation Queue →
+			22 image
+			23 text KHATIAN DISCREPANCIES 2
+			24 button Resolve Discrepancies →
+			25 image
+			26 text DISPUTE TRIBUNAL 0
+			27 button Review Disputes →
+			28 image
+			29 text KHATIAN & DEED TRUST 97.5 %
+			30 button Verify Deed & Ledger →
+			31 image
+			32 heading e-Mutation Queue, Khatian Chain Reconciliation & Dispute Tribunal, Value: 2
+				33 image
+				34 text e-Mutation Queue, Khatian Chain Reconciliation & Dispute Tribunal
+			35 text Approve e-Mutation cases queued from Sub-Registry and update BS Khatian owner shares:
+			36 button e-Mutation Queue (Approval) (3)
+				37 image
+				38 text e-Mutation Queue (Approval)
+				39 text  (
+				40 text 3
+				41 text )
+			42 button Khatian & Heirs (2)
+				43 image
+				44 text Khatian & Heirs
+				45 text  (
+				46 text 2
+				47 text )
+			48 button Dispute Tribunal (0)
+				49 image
+				50 text Dispute Tribunal
+				51 text  (
+				52 text 0
+				53 text )
+			54 button Approve Staging Batches (undefined)
+				55 image
+				56 text Approve Staging Batches
+				57 text  (
+				58 text undefined
+				59 text )
+			60 button Appeals (undefined)
+				61 image
+				62 text Appeals
+				63 text  (
+				64 text undefined
+				65 text )
+			66 button Khatian Explorer
+				67 image
+				68 text Khatian Explorer
+			69 button Verify Deed
+				70 image
+				71 text Verify Deed
+			72 image
+			73 text field (settable)
+			74 button All
+			75 button Pending
+			76 button Approved
+			77 button Rejected
+			78 table
+				79 row
+					80 cell
+						81 text CASE & DEED
+					82 cell
+						83 text MOUZA & DAG
+					84 cell
+						85 text PARTIES
+					86 cell
+						87 text AREA
+					88 cell
+						89 text STATUS
+					90 cell
+						91 text AC LAND DECISION
+				92 row
+					93 cell
+						94 text MUT-2026-502
+						95 container
+							96 text Deed: DL-2026-1005
+					97 cell
+						98 text Birulia  —  Dag 105
+					99 cell
+						100 container
+							101 text From: মো. মনিরুজ্জামান
+						102 container
+							103 text To: সালমা আক্তার
+					104 cell
+						105 text 25 Decimal
+					106 cell
+						107 text PENDING
+					108 cell
+						109 button Details
+							110 image
+							111 text Details
+						112 button Approve
+							113 image
+							114 text Approve
+						115 button Reject
+							116 image
+							117 text Reject
+				118 row
+					119 cell
+						120 text MUT-2026-501
+						121 container
+							122 text Deed: DL-2026-1002
+					123 cell
+						124 text Birulia  —  Dag 102
+					125 cell
+						126 container
+							127 text From: আবদুল করিম
+						128 container
+							129 text To: মো. জাহাঙ্গীর আলম
+					130 cell
+						131 text 15 Decimal
+					132 cell
+						133 text PENDING
+					134 cell
+						135 button Details
+							136 image
+							137 text Details
+						138 button Approve
+							139 image
+							140 text Approve
+						141 button Reject
+							142 image
+							143 text Reject
+				144 row
+					145 cell
+						146 text MUT-2024-101
+						147 container
+							148 text Deed: DL-2026-1001
+					149 cell
+						150 text Birulia  —  Dag 101
+					151 cell
+						152 container
+							153 text From: মো. মিজানুর রহমান
+						154 container
+							155 text To: মো. রফিকুল ইসলাম
+					156 cell
+						157 text 20 Decimal
+					158 cell
+						159 text APPROVED
+					160 cell
+						161 button Details
+							162 image
+							163 text Details
+			205 container
+				206 image
+				207 heading e-Mutation Hearing Record, Value: 3
+					208 text e-Mutation Hearing Record
+				209 button
+					210 image
+				211 text CASE NO:
+				212 text MUT-2026-502
+				213 text REGISTERED DEED NO:
+				214 text DL-2026-1005
+				215 text MOUZA & DAG:
+				216 text বিরুলিয়া  — দাগ নং  105 Seller: মো. মনিরুজ্জামান Buyer: সালমা আক্তার Mutation Area: 25 Decimal Approving will deduct area from seller and mint new BS khatian entry for buyer.
+				217 button Reject
+				218 button Approve & Mutate
+		164 container
+			165 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			166 content list
+				167 button Check Before Buy
+				168 button Land Sale Marketplace
+				169 button Cadastral Mouza Map
+				170 button Verify Deed QR Code
+				171 button Official Noticeboard
+				172 button Land Literacy Blog
+				173 button Offices & Service Points
+				174 button Citizen Sale Lock Vault
+			175 text Workspaces
+			176 content list
+				177 button Sub-Registrar Panel
+				178 button AC Land Tribunal
+				179 button Bank Lien & NOC
+				180 button National Ledger & Audit
+			181 text Support & Helpline
+			182 content list
+				183 text Land Service Call Center: 16122
+				184 text Ministry of Land (Official service hours)
+				185 text Check official service hours
+				186 button Frequently Asked Questions
+				187 button Bangladeshi Land Glossary
+			188 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved.
+		189 container দ্রুত নেভিগেশন
+			190 button Home
+				191 image
+				192 text Home
+			193 button Check
+				194 image
+				195 text Check
+			196 button QR Scan, Help: QR Verify
+				197 image
+				198 text QR Scan
+			199 button Panel
+				200 image
+				201 text Panel
+			202 button Help
+				203 image
+				204 text Help
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/acland

@@ -1,0 +1,290 @@
+Browser tab: 10, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:62367/en/map".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:62367/en/map
+	2 container root
+		3 container
+			4 button ভূ BhumiShield
+				5 text ভূ
+				6 text BhumiShield
+			19 button Switch Language
+			20 button High Contrast
+				21 image
+			22 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				23 text ম
+				26 image
+			309 button Menu
+				310 image
+		27 container
+			327 text ★ ভূ
+			328 heading Smart Bhumi Naksha — Digital Cadastral Map, Value: 1
+				329 text Smart Bhumi Naksha — Digital Cadastral Map
+			330 text Mouza and Plot Based National Digital Land Zoning Project • Ministry of Land
+			331 button BhumiShield Portal
+				332 image
+				333 text BhumiShield Portal
+			334 text NOTICE
+			335 text Digital cadastral maps and land zoning attributes are displayed under the National Digital Land Zoning Project. For land assistance call 16122 (24/7). Unauthorized conversion of agricultural land is prohibited.
+			336 container
+				337 image
+				338 heading Search Menu, Value: 2
+					339 text Search Menu
+				340 text Mouza & Plot Digital Zoning
+				341 button Collapse Menu
+					342 image
+				343 text 1. Division
+				344 pop up button (collapsed, settable) Value: ঢাকা, Secondary Actions: Expand
+					345 menu
+						346 (selected) ঢাকা
+						347 চট্টগ্রাম
+						348 রাজশাহী
+						349 খুলনা
+						350 বরিশাল
+						351 সিলেট
+						352 রংপুর
+						353 ময়মনসিংহ
+				354 text 2. District
+				355 pop up button (collapsed, settable) Value: ঢাকা, Secondary Actions: Expand
+					356 menu
+						357 (selected) ঢাকা
+						358 গাজীপুর
+						359 নারায়ণগঞ্জ
+				360 text 3. Thana / Upazila
+				361 pop up button (collapsed, settable) Value: সাভার, Secondary Actions: Expand
+					362 menu
+						363 (selected) সাভার
+						364 ধানমন্ডি
+						365 তেজগাঁও
+				366 text 4. Mouza
+				367 pop up button (collapsed, settable) Value: বিরুলিয়া (JL-12), Secondary Actions: Expand
+					368 menu
+						369 (selected) বিরুলিয়া (JL-12)
+						370 আশুলিয়া (JL-01)
+						371 শিমুলিয়া (JL-15)
+				372 text 5. Sheet No
+				373 pop up button (collapsed, settable) Value: সিট-০১, Secondary Actions: Expand
+					374 menu
+						375 (selected) সিট-০১
+						376 সিট-০২
+				377 text 6. Plot / Dag
+				378 pop up button (collapsed, settable) Value: দাগ ১০১, Secondary Actions: Expand
+					379 menu
+						380 (selected) দাগ ১০১
+						381 দাগ ১০২
+						382 দাগ ১০৩
+						383 দাগ ১০৪
+						384 দাগ ১০৫
+						385 দাগ ১০৬
+						386 দাগ ১০৭
+						387 দাগ ১০৮
+						388 দাগ ১০৯
+						389 দাগ ১১০
+						390 দাগ ১১১
+						391 দাগ ১১২
+						392 দাগ ১১৩
+						393 দাগ ১১৪
+						394 দাগ ১১৫
+						395 দাগ ১১৬
+						396 দাগ ১১৭
+						397 দাগ ১১৮
+						398 দাগ ১১৯
+						399 দাগ ১২০
+				400 button Land Use Summary
+					401 image
+					402 text Land Use Summary
+				403 button Land Zoning Summary
+					404 image
+					405 text Land Zoning Summary
+				406 button Go to Plot
+					407 image
+					408 text Go to Plot
+				409 button Reset
+					410 image
+					411 text Reset
+			412 button Important Links
+				413 image
+				414 text Important Links
+				415 image
+			416 container
+				417 text MAP LAYERS
+				418 button Cadastral Sheet
+					419 image
+					420 text Cadastral Sheet
+				421 button Digital Zoning
+					422 image
+					423 text Digital Zoning
+				424 button Satellite View
+					425 image
+					426 text Satellite View
+				427 button BhumiShield Trust
+					428 image
+					429 text BhumiShield Trust
+			430 container
+				431 container North Arrow
+					432 text ▲ N উ
+				433 button Zoom In
+					434 image
+				435 button Zoom Out
+					436 image
+				437 button Reset View
+					438 image
+			439 image
+				440 container
+					441 text ১০১ 20  শতক ★ বিক্রির জন্য
+				442 container
+					443 text ১০২ 15  শতক
+				444 container
+					445 text ১০৩ 24.5  শতক 🏦 বন্ধকযুক্ত
+				446 container
+					447 text ১০৪ 16  শতক
+				448 container
+					449 text ১০৫ 32  শতক 🔒 লককৃত
+				450 container
+					451 text ১০৬ 18  শতক
+				452 container
+					453 text ১০৭ 22  শতক ★ বিক্রির জন্য
+				454 container
+					455 text ১০৮ 12.5  শতক
+				456 container
+					457 text ১০৯ 19  শতক
+				458 container
+					459 text ১১০ 14  শতক
+				460 container
+					461 text ১১১ 28  শতক ★ বিক্রির জন্য
+				462 container
+					463 text ১১২ 21  শতক
+				464 container
+					465 text ১১৩ 45  শতক 🔒 লককৃত
+				466 container
+					467 text ১১৪ 17.5  শতক
+				468 container
+					469 text ১১৫ 25  শতক 🏦 বন্ধকযুক্ত
+				470 container
+					471 text ১১৬ 16.5  শতক
+				472 container
+					473 text ১১৭ 23  শতক
+				474 container
+					475 text ১১৮ 30  শতক ★ বিক্রির জন্য
+				476 container
+					477 text ১১৯ 15  শতক
+				478 container
+					479 text ১২০ 19.5  শতক 🔒 লককৃত
+			480 container
+				481 image
+				482 heading Mouza & Plot Details, Value: 3
+					483 text Mouza & Plot Details
+				484 button Close Popup
+					485 image
+				486 text Plot Dag:
+				487 text ১০১
+				488 text বিক্রির জন্য সক্রিয়
+				489 table
+					490 row
+						491 cell
+							492 text Division & District
+						493 cell
+							494 text ঢাকা ,  ঢাকা
+					495 row
+						496 cell
+							497 text Thana / Upazila
+						498 cell
+							499 text সাভার
+					500 row
+						501 cell
+							502 text Mouza & JL No
+						503 cell
+							504 text বিরুলিয়া  (জে.এল  ১২ )
+					505 row
+						506 cell
+							507 text Sheet No
+						508 cell
+							509 text সিট- ০১
+					510 row
+						511 cell
+							512 text Khatian No
+						513 cell
+							514 text ১২০৪
+					515 row
+						516 cell
+							517 text Land Class
+						518 cell
+							519 text ভিটা (আবাসিক)
+					520 row
+						521 cell
+							522 text Land Area
+						523 cell
+							524 text 20  শতক ( 12.1  কাঠা)
+					525 row
+						526 cell
+							527 text Zoning Category
+						528 cell
+							529 text পরিকল্পিত আবাসন জোন
+					530 row
+						531 cell
+							532 text Owner (Masked)
+						533 cell
+							534 text মোঃ রফিকুল ইসলাম  ( ****৫৮৯১ )
+				535 text Price:
+				536 container
+					537 text ৳  4500000
+				538 button Audit Plot in BhumiShield
+					539 image
+					540 text Audit Plot in BhumiShield
+				541 button View in Sale Marketplace
+					542 image
+					543 text View in Sale Marketplace
+			544 text ★ ভূ
+			545 heading Smart Bhumi Naksha & Zoning, Value: 4
+				546 text Smart Bhumi Naksha & Zoning
+			547 text Ministry of Land, Govt of Bangladesh
+			548 text Integrated nationwide cadastral zoning and parcel boundary GIS portal under the Ministry of Land.
+			549 heading Official Government Links, Value: 5
+				550 text Official Government Links
+			551 content list
+				552 link Description: ভূমি মন্ত্রণালয় (minland.gov.bd), Value: minland.gov.bd/
+				553 link Description: ই-নামজারি পোর্টাল (e-Mutation), Value: mutation.land.gov.bd/
+				554 link Description: ডিজিটাল রেকর্ড রুম (ই-পর্চা), Value: eporcha.gov.bd/
+				555 link Description: জাতীয় ভূমি সেবা পোর্টাল (land.gov.bd), Value: land.gov.bd/
+			556 heading Mobile Apps & Guides, Value: 5
+				557 text Mobile Apps & Guides
+			558 content list
+				559 button স্মার্ট ভূমি নকশা ব্যবহার নির্দেশিকা
+					560 image
+					561 text স্মার্ট ভূমি নকশা ব্যবহার নির্দেশিকা
+				562 button ক্যাডাস্ট্রাল সার্ভে ও পরিমাপ নিয়মাবলী
+					563 image
+					564 text ক্যাডাস্ট্রাল সার্ভে ও পরিমাপ নিয়মাবলী
+				565 button নাগরিক চার্টার ও অভিযোগ প্রতিকার
+					566 image
+					567 text নাগরিক চার্টার ও অভিযোগ প্রতিকার
+				568 button যাচাইকৃত জমির হাট (Bhumi Marketplace)
+					569 image
+					570 text যাচাইকৃত জমির হাট (Bhumi Marketplace)
+			571 heading Contact & Support, Value: 5
+				572 text Contact & Support
+			573 image
+			574 text ভূমি ভবন, ৯৮ শহীদ তাজউদ্দীন আহমদ সরণি, তেজগাঁও, ঢাকা-১২০৮।
+			575 image
+			576 text হটলাইন: 
+			577 text ১৬১২২
+			578 text  (২৪ ঘণ্টা সার্বক্ষণিক)
+			579 image
+			580 text info@minland.gov.bd
+			581 text Copyright © 2026 Ministry of Land, Government of the People’s Republic of Bangladesh. All rights reserved.
+			582 text Technical Innovation & Security Architecture: BhumiShield • LandTech Hackathon 2026
+		311 container দ্রুত নেভিগেশন
+			312 button Home
+				313 image
+				314 text Home
+			315 button Check
+				316 image
+				317 text Check
+			318 button QR Scan, Help: QR Verify
+				319 image
+				320 text QR Scan
+			321 button Panel
+				322 image
+				323 text Panel
+			324 button Help
+				325 image
+				326 text Help
+
+The focused UI element is 309 button Menu

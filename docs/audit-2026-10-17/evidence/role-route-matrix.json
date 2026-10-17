@@ -1,0 +1,1658 @@
+[
+  {
+    "username": "citizen",
+    "role": "citizen",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "rabeya",
+    "role": "citizen",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "spo_birulia",
+    "role": "service_point_operator",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "registrar",
+    "role": "sub_registrar",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 200,
+        "code": null,
+        "count": 80
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 200,
+        "code": null,
+        "count": 2
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "registrar_gazipur",
+    "role": "sub_registrar",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 200,
+        "code": null,
+        "count": 80
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 200,
+        "code": null,
+        "count": 2
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "rdo_savar",
+    "role": "registry_data_officer",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 200,
+        "code": null,
+        "count": 2
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "acland",
+    "role": "ac_land",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/acland/flagged-khatians": {
+        "status": 200,
+        "code": null,
+        "count": 2
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 200,
+        "code": null,
+        "count": 2
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "loa_savar",
+    "role": "land_office_assistant",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 200,
+        "code": null,
+        "count": 2
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "fvo_savar",
+    "role": "field_verification_officer",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "sro_dhaka",
+    "role": "settlement_records_officer",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 200,
+        "code": null,
+        "count": 2
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "aso_dhaka",
+    "role": "settlement_checker",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 200,
+        "code": null,
+        "count": 2
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "uno_savar",
+    "role": "uno_supervisor",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "appellate_reviewer",
+    "role": "appellate_reviewer",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "bank",
+    "role": "bank_officer",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "bank_manager",
+    "role": "bank_manager",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "support_agent",
+    "role": "support_agent",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "platform_moderator",
+    "role": "platform_moderator",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "content_editor",
+    "role": "content_editor",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "content_approver",
+    "role": "content_approver",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "admin",
+    "role": "admin",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 404,
+        "code": "NID_NOT_FOUND",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 200,
+        "code": null,
+        "count": 80
+      },
+      "/mutations": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/acland/flagged-khatians": {
+        "status": 200,
+        "code": null,
+        "count": 2
+      },
+      "/mortgages": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/admin/users": {
+        "status": 200,
+        "code": null,
+        "count": 23
+      },
+      "/audit-log": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/onboarding/batches": {
+        "status": 200,
+        "code": null,
+        "count": 2
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "lead_auditor",
+    "role": "auditor",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "dc_la",
+    "role": "dc_acquisition_officer",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  },
+  {
+    "username": "lawyer",
+    "role": "lawyer_court_user",
+    "login_status": 200,
+    "routes": {
+      "/auth/me": {
+        "status": 200,
+        "code": null,
+        "count": null
+      },
+      "/citizen/my-properties": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/transfers": {
+        "status": 200,
+        "code": null,
+        "count": 3
+      },
+      "/tickets": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/registrar/deeds": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mutations": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/acland/flagged-khatians": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/mortgages": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/admin/users": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/audit-log": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/onboarding/batches": {
+        "status": 403,
+        "code": "FORBIDDEN_ROLE",
+        "count": null
+      },
+      "/appeals": {
+        "status": 200,
+        "code": null,
+        "count": 1
+      },
+      "/settings": {
+        "status": 200,
+        "code": null,
+        "count": 9
+      }
+    }
+  }
+]
