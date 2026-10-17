@@ -34,7 +34,11 @@ import {
   Scale,
   ListChecks,
   Calculator,
-  KeyRound
+  KeyRound,
+  CheckCircle2,
+  Settings,
+  AlertOctagon,
+  Sparkles
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -643,53 +647,182 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
     }
   };
 
-  // Nagorik portal (home) matches frontside consumer design
-  const isPublicPage = ['landing', 'home', 'check', 'qr', 'help', 'auth'].includes(activeTab);
+  // Public pages accessible directly without officer sidebar layout
+  const isPublicPage = ['landing', 'home', 'check', 'qr', 'help', 'auth', 'sale', 'notices', 'blog', 'map', 'offices'].includes(activeTab);
   const currentRoleMeta = ROLE_META[role] || ROLE_META['citizen'];
 
   const getRoleSidebarItems = () => {
+    // 1. Citizen (Owner / Buyer / Heir)
     if (role === 'citizen') {
       return [
-        { id: 'home', label: t('নাগরিক ভল্ট', 'Citizen Vault'), icon: <ShieldCheck className="w-4 h-4" /> },
-        { id: 'check', label: t('কেনার আগে জমি যাচাই', 'Check Before Buy'), icon: <Search className="w-4 h-4" /> },
-        { id: 'qr', label: t('QR দলিল যাচাই', 'Verify Deed QR'), icon: <QrCode className="w-4 h-4" /> },
+        { id: 'vault', label: t('আমার জমির ভল্ট (L0-L3)', 'My Land Vault (L0-L3)'), icon: <ShieldCheck className="w-4 h-4" /> },
+        { id: 'transfers', label: t('১৩-ধাপের হস্তান্তর ট্র্যাকার', '13-Step Transfers'), icon: <Sparkles className="w-4 h-4" /> },
+        { id: 'disputes', label: t('আপত্তি ও বিরোধ দাখিল', 'Dispute Objections'), icon: <AlertOctagon className="w-4 h-4" /> },
+        { id: 'tickets', label: t('আমার সহায়তা টিকিট', 'Support Tickets'), icon: <FileText className="w-4 h-4" /> },
         { id: 'profile', label: t('প্রোফাইল সেটিংস', 'Profile Settings'), icon: <UserCheck className="w-4 h-4" /> },
-        { id: 'help', label: t('সহায়িকা ও FAQ', 'Help & FAQ'), icon: <HelpCircle className="w-4 h-4" /> },
       ];
     }
+    // 2. Service Point Operator (UDC)
+    if (role === 'service_point_operator') {
+      return [
+        { id: 'vault', label: t('নাগরিক সেবা ও ভল্ট ডেস্ক', 'Citizen Vault Desk'), icon: <ShieldCheck className="w-4 h-4" /> },
+        { id: 'transfers', label: t('নাগরিকের পক্ষে হস্তান্তর', 'File Transfer on Behalf'), icon: <Sparkles className="w-4 h-4" /> },
+        { id: 'tickets', label: t('নাগরিক টিকিট ডেস্ক', 'Citizen Ticket Desk'), icon: <FileText className="w-4 h-4" /> },
+        { id: 'profile', label: t('অপারেটর প্রোফাইল', 'Operator Profile'), icon: <UserCheck className="w-4 h-4" /> },
+      ];
+    }
+    // 3. Registry Data Officer (Maker)
+    if (role === 'registry_data_officer') {
+      return [
+        { id: 'wizard', label: t('নতুন দলিল ড্রাফট এন্ট্রি (মেকার)', 'Draft Deed Entry (Maker)'), icon: <FileSpreadsheet className="w-4 h-4" /> },
+        { id: 'fees', label: t('স্ট্যাম্প ডিউটি ও চালান হিসাব', 'Stamp Duty & Fees'), icon: <Calculator className="w-4 h-4" /> },
+        { id: 'khatian', label: t('খতিয়ান ও দাগ অনুসন্ধান', 'Khatian & Dag Lookup'), icon: <Search className="w-4 h-4" /> },
+        { id: 'deeds', label: t('জমা দেওয়া ড্রাফট কিউ', 'Submitted Drafts Queue'), icon: <ListChecks className="w-4 h-4" /> },
+        { id: 'verifier', label: t('দলিল লেজার যাচাই', 'Deed Ledger Verifier'), icon: <QrCode className="w-4 h-4" /> },
+      ];
+    }
+    // 4. Sub-Registrar (Checker Authority)
     if (role === 'sub_registrar') {
       return [
-        { id: 'wizard', label: t('নতুন দলিল ও প্রাক-যাচাই', 'Pre-Reg Gatekeeper'), icon: <FileSpreadsheet className="w-4 h-4" /> },
         { id: 'held', label: t('স্থগিত দলিল (HELD) কিউ', 'Held Deeds Queue'), icon: <ShieldAlert className="w-4 h-4" /> },
+        { id: 'wizard', label: t('প্রাক-নিবন্ধন গেটকিপার', 'Pre-Reg Gatekeeper'), icon: <FileSpreadsheet className="w-4 h-4" /> },
         { id: 'deeds', label: t('দলিল রেজিস্টার রেকর্ড', 'Deeds Register'), icon: <ListChecks className="w-4 h-4" /> },
+        { id: 'onboarding', label: t('অনবোর্ডিং ব্যাচ অনুমোদন', 'Approve Staging Batches'), icon: <Layers className="w-4 h-4" /> },
         { id: 'khatian', label: t('খতিয়ান পরম্পরা ও রেকর্ড', 'Khatian Lineage'), icon: <Search className="w-4 h-4" /> },
         { id: 'verifier', label: t('দলিল লেজার যাচাই', 'Deed Ledger Verifier'), icon: <QrCode className="w-4 h-4" /> },
         { id: 'fees', label: t('সরকারি শুল্ক ও ফি', 'Stamp Duty & Fees'), icon: <Calculator className="w-4 h-4" /> },
       ];
     }
-    if (role === 'ac_land') {
+    // 5. Land Office Assistant (Maker)
+    if (role === 'land_office_assistant') {
       return [
-        { id: 'mutations', label: t('ই-মিউটেশন কিউ', 'e-Mutation Queue'), icon: <Clock className="w-4 h-4" /> },
-        { id: 'khatians', label: t('খতিয়ান ও ওয়ারিশ সমন্বয়', 'Khatian Reconciliation'), icon: <GitCompareArrows className="w-4 h-4" /> },
-        { id: 'disputes', label: t('বিরোধ ট্রাইব্যুনাল', 'Dispute Tribunal'), icon: <Scale className="w-4 h-4" /> },
+        { id: 'mutations', label: t('নামজারি আবেদন কিউ (মেকার)', 'Process Mutation Queue (Maker)'), icon: <Clock className="w-4 h-4" /> },
+        { id: 'khatians', label: t('ওয়ারিশ ও হিস্যা যাচাই', 'Heir & Share Verification'), icon: <GitCompareArrows className="w-4 h-4" /> },
         { id: 'explorer', label: t('খতিয়ান ও দাগ অনুসন্ধান', 'Khatian Explorer'), icon: <Search className="w-4 h-4" /> },
         { id: 'verifier', label: t('দলিল সত্যতা যাচাই', 'Verify Deed'), icon: <QrCode className="w-4 h-4" /> },
       ];
     }
+    // 6. Field Verification Officer / Surveyor
+    if (role === 'field_verification_officer') {
+      return [
+        { id: 'field_reports', label: t('মাঠ তদন্ত ও দখল যাচাই', 'Field Possession Inspection'), icon: <Search className="w-4 h-4" /> },
+        { id: 'mutations', label: t('তদন্তাধীন নামজারি কিউ', 'Pending Verification Cases'), icon: <Clock className="w-4 h-4" /> },
+        { id: 'explorer', label: t('মৌজা ও সীমানা নকশা', 'Cadastral Boundary Lookup'), icon: <Layers className="w-4 h-4" /> },
+        { id: 'verifier', label: t('দলিল সত্যতা যাচাই', 'Verify Deed'), icon: <QrCode className="w-4 h-4" /> },
+      ];
+    }
+    // 7. Settlement Records Officer (Maker)
+    if (role === 'settlement_records_officer') {
+      return [
+        { id: 'survey_batches', label: t('জরিপ ব্যাচ এন্ট্রি (মেকার)', 'Survey Batch Entry (Maker)'), icon: <FileSpreadsheet className="w-4 h-4" /> },
+        { id: 'khatians', label: t('সিএস-এসএ-আরএস-বিএস রূপান্তর', 'Survey Lineage Ingestion'), icon: <GitCompareArrows className="w-4 h-4" /> },
+        { id: 'explorer', label: t('খতিয়ান ও দাগ অনুসন্ধান', 'Khatian Explorer'), icon: <Search className="w-4 h-4" /> },
+        { id: 'verifier', label: t('দলিল সত্যতা যাচাই', 'Verify Deed'), icon: <QrCode className="w-4 h-4" /> },
+      ];
+    }
+    // 8. Settlement Checker (Assistant Settlement Officer)
+    if (role === 'settlement_checker') {
+      return [
+        { id: 'onboarding', label: t('জরিপ ব্যাচ অনুমোদন (চেকার)', 'Approve Survey Batches (Checker)'), icon: <CheckCircle2 className="w-4 h-4" /> },
+        { id: 'khatians', label: t('খতিয়ান অখণ্ডতা ও গেজেট', 'Khatian Integrity & Gazette'), icon: <GitCompareArrows className="w-4 h-4" /> },
+        { id: 'explorer', label: t('খতিয়ান ও দাগ অনুসন্ধান', 'Khatian Explorer'), icon: <Search className="w-4 h-4" /> },
+        { id: 'verifier', label: t('দলিল সত্যতা যাচাই', 'Verify Deed'), icon: <QrCode className="w-4 h-4" /> },
+      ];
+    }
+    // 9. UNO Supervisor
+    if (role === 'uno_supervisor') {
+      return [
+        { id: 'sla_overview', label: t('উপজেলা এসএলএ পারফরম্যান্স', 'Upazila SLA Performance'), icon: <Clock className="w-4 h-4" /> },
+        { id: 'mutations', label: t('নামজারি তদারকি কিউ', 'Mutation Oversight Queue'), icon: <ListChecks className="w-4 h-4" /> },
+        { id: 'appeals', label: t('আপিল ও অভিযোগ মনিটরিং', 'Appeals & Dispute Monitoring'), icon: <Scale className="w-4 h-4" /> },
+        { id: 'explorer', label: t('খতিয়ান ও দাগ অনুসন্ধান', 'Khatian Explorer'), icon: <Search className="w-4 h-4" /> },
+      ];
+    }
+    // 10. Appellate Reviewer (ADC Revenue)
+    if (role === 'appellate_reviewer') {
+      return [
+        { id: 'appeals', label: t('রাজস্ব আপিল ও ট্রাইব্যুনাল শুনানি', 'Revenue Appeals & Hearings'), icon: <Scale className="w-4 h-4" /> },
+        { id: 'disputes', label: t('বিরোধ ট্রাইব্যুনাল রেকর্ডস', 'Dispute Tribunal Records'), icon: <AlertOctagon className="w-4 h-4" /> },
+        { id: 'mutations', label: t('বিরোধপূর্ণ নামজারি রেকর্ড', 'Contested Mutations'), icon: <Clock className="w-4 h-4" /> },
+        { id: 'explorer', label: t('খতিয়ান ও দাগ অনুসন্ধান', 'Khatian Explorer'), icon: <Search className="w-4 h-4" /> },
+      ];
+    }
+    // 11. AC Land (Sole Mutation Decider Authority)
+    if (role === 'ac_land') {
+      return [
+        { id: 'mutations', label: t('ই-মিউটেশন কিউ (অনুমোদন)', 'e-Mutation Queue (Approval)'), icon: <Clock className="w-4 h-4" /> },
+        { id: 'khatians', label: t('খতিয়ান ও ওয়ারিশ সমন্বয়', 'Khatian Reconciliation'), icon: <GitCompareArrows className="w-4 h-4" /> },
+        { id: 'disputes', label: t('বিরোধ ট্রাইব্যুনাল', 'Dispute Tribunal'), icon: <Scale className="w-4 h-4" /> },
+        { id: 'onboarding', label: t('অনবোর্ডিং ব্যাচ অনুমোদন (চেকার)', 'Approve Staging Batches'), icon: <CheckCircle2 className="w-4 h-4" /> },
+        { id: 'explorer', label: t('খতিয়ান ও দাগ অনুসন্ধান', 'Khatian Explorer'), icon: <Search className="w-4 h-4" /> },
+        { id: 'verifier', label: t('দলিল সত্যতা যাচাই', 'Verify Deed'), icon: <QrCode className="w-4 h-4" /> },
+      ];
+    }
+    // 12. Bank Officer (Lien Maker)
     if (role === 'bank_officer') {
       return [
+        { id: 'new_lien', label: t('নতুন লিয়েন আবেদন (মেকার)', 'Prepare Loan Lien (Maker)'), icon: <Lock className="w-4 h-4" /> },
         { id: 'mortgages', label: t('লিয়েন ও জামানত রেজিস্টার', 'Active Mortgages'), icon: <Building2 className="w-4 h-4" /> },
-        { id: 'new_lien', label: t('নতুন লিয়েন অন্তর্ভুক্তি', 'Register New Lien'), icon: <Lock className="w-4 h-4" /> },
-        { id: 'noc', label: t('এনওসি (NOC) সনদপত্র', 'Release NOC'), icon: <FileText className="w-4 h-4" /> },
         { id: 'khatian', label: t('জামানত খতিয়ান যাচাই', 'Collateral Khatian Check'), icon: <Search className="w-4 h-4" /> },
       ];
     }
+    // 13. Bank Manager (Lien Checker & NOC Authority)
+    if (role === 'bank_manager') {
+      return [
+        { id: 'mortgages', label: t('লিয়েন অনুমোদন কিউ (চেকার)', 'Approve Liens (Checker)'), icon: <Building2 className="w-4 h-4" /> },
+        { id: 'noc', label: t('এনওসি (NOC) সনদপত্র জারি', 'Issue Release NOC Certificate'), icon: <FileText className="w-4 h-4" /> },
+        { id: 'new_lien', label: t('নতুন লিয়েন অন্তর্ভুক্তি', 'Register New Lien'), icon: <Lock className="w-4 h-4" /> },
+        { id: 'khatian', label: t('জামানত খতিয়ান যাচাই', 'Collateral Khatian Check'), icon: <Search className="w-4 h-4" /> },
+      ];
+    }
+    // 14. Support Agent (Helpline 16122)
+    if (role === 'support_agent') {
+      return [
+        { id: 'tickets', label: t('নাগরিক টিকিট কিউ ও ট্রায়াজ', 'Citizen Support Tickets'), icon: <FileText className="w-4 h-4" /> },
+        { id: 'users', label: t('নাগরিক একাউন্ট অনুসন্ধান', 'Citizen Account Lookup'), icon: <UserCheck className="w-4 h-4" /> },
+        { id: 'audit', label: t('সাপোর্ট অডিট ট্রেইল', 'Support Audit Log'), icon: <FileSpreadsheet className="w-4 h-4" /> },
+      ];
+    }
+    // 15. Platform Moderator (Marketplace & Listings)
+    if (role === 'platform_moderator') {
+      return [
+        { id: 'onboarding_appeals', label: t('অনবোর্ডিং ও আপিল ওভারসাইট', 'Onboarding & Appeals'), icon: <Scale className="w-4 h-4" /> },
+        { id: 'catalogue', label: t('সার্ভিস ক্যাটালগ ও ফি', 'Service Directory & Fees'), icon: <Layers className="w-4 h-4" /> },
+        { id: 'audit', label: t('মডারেশন অডিট লগ', 'Moderation Audit Trail'), icon: <FileSpreadsheet className="w-4 h-4" /> },
+      ];
+    }
+    // 16. Content Editor
+    if (role === 'content_editor') {
+      return [
+        { id: 'catalogue', label: t('সার্ভিস নির্দেশিকা ও তথ্য', 'Service Catalogue & Guides'), icon: <Layers className="w-4 h-4" /> },
+        { id: 'settings', label: t('আইনি বিজ্ঞপ্তি ও কনফিগারেশন', 'Policy & Notice Settings'), icon: <Settings className="w-4 h-4" /> },
+        { id: 'audit', label: t('পাবলিশিং অডিট লগ', 'Publishing Audit Log'), icon: <FileSpreadsheet className="w-4 h-4" /> },
+      ];
+    }
+    // 17. Content Approver
+    if (role === 'content_approver') {
+      return [
+        { id: 'settings', label: t('বিজ্ঞপ্তি প্রকাশনা অনুমোদন (সিল)', 'Approve Notices (QR Seal)'), icon: <CheckCircle2 className="w-4 h-4" /> },
+        { id: 'catalogue', label: t('সার্ভিস ডিরেক্টরি প্রকাশনা', 'Publish Service Catalogue'), icon: <Layers className="w-4 h-4" /> },
+        { id: 'audit', label: t('অনুমোদন অডিট লগ', 'Approver Audit Trail'), icon: <FileSpreadsheet className="w-4 h-4" /> },
+      ];
+    }
+    // 18. Auditor
+    if (role === 'auditor') {
+      return [
+        { id: 'ledger', label: t('ক্রিপ্টোগ্রাফিক লেজার অখণ্ডতা', 'Cryptographic Ledger Integrity'), icon: <ShieldCheck className="w-4 h-4" /> },
+        { id: 'audit', label: t('ব্রেক-গ্লাস ও পিআইআই অডিট লগ', 'Security & Break-Glass Audit'), icon: <FileSpreadsheet className="w-4 h-4" /> },
+        { id: 'rbac', label: t('রোল এখতিয়ার ম্যাট্রিক্স', 'Jurisdiction & Access Matrix'), icon: <KeyRound className="w-4 h-4" /> },
+      ];
+    }
+    // 19. System Admin / Admin
     return [
       { id: 'ledger', label: t('ক্রিপ্টোগ্রাফিক লেজার ও অখণ্ডতা', 'Cryptographic Ledger'), icon: <ShieldCheck className="w-4 h-4" /> },
       { id: 'users', label: t('ইউজার ও রোল ব্যবস্থাপনা', 'Users & Access Control'), icon: <UserCheck className="w-4 h-4" /> },
       { id: 'audit', label: t('সিকিউরিটি অডিট ট্রেইল', 'Security Audit Trail'), icon: <FileSpreadsheet className="w-4 h-4" /> },
-      { id: 'settings', label: t('জালিয়াতি প্রতিরোধ সেটিংস', 'Fraud Engine Policy'), icon: <Lock className="w-4 h-4" /> },
+      { id: 'settings', label: t('জালিয়াতি প্রতিরোধ সেটিংস', 'Fraud Engine Policy'), icon: <Settings className="w-4 h-4" /> },
       { id: 'rbac', label: t('রোল পারমিশন ম্যাট্রিক্স', 'RBAC Matrix'), icon: <KeyRound className="w-4 h-4" /> },
+      { id: 'onboarding_appeals', label: t('অনবোর্ডিং ও আপিল ওভারসাইট', 'Onboarding & Appeals'), icon: <Scale className="w-4 h-4" /> },
       { id: 'catalogue', label: t('সার্ভিস ও ফি ডিরেক্টরি', 'Service & Fees'), icon: <Layers className="w-4 h-4" /> },
       { id: 'direct_access', label: t('সুপার অ্যাডমিন তত্ত্বাবধান', 'Direct Role Oversight'), icon: <ShieldAlert className="w-4 h-4" /> },
     ];
@@ -1111,7 +1244,16 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                 key={item.id}
                 onClick={() => {
                   onNavigate?.();
-                  if (isOfficerRole) {
+                  if (role === 'citizen') {
+                    if (item.id === 'profile') {
+                      setActiveTab('profile');
+                    } else {
+                      setActiveSubTab(item.id);
+                      if (activeTab !== 'home') {
+                        setActiveTab('home');
+                      }
+                    }
+                  } else if (isOfficerRole) {
                     setActiveSubTab(item.id);
                     const expectedTab = ROLE_DASHBOARD_MAP[role] || 'home';
                     if (activeTab !== expectedTab) {

@@ -23,21 +23,23 @@ import {
   Layers
 } from 'lucide-react';
 
-export type SubRegistrarTab = 'wizard' | 'held' | 'deeds' | 'khatian' | 'verifier' | 'fees';
+export type SubRegistrarTab = 'wizard' | 'held' | 'deeds' | 'khatian' | 'verifier' | 'fees' | 'onboarding';
 
 export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNavigate }) => {
   const { lang, role, setRole, setUser, setToken, activeSubTab, setActiveSubTab, t } = useAppUI();
   const [subTab, setSubTab] = useState<SubRegistrarTab>(() => {
-    if (activeSubTab && ['wizard', 'held', 'deeds', 'khatian', 'verifier', 'fees'].includes(activeSubTab)) {
+    if (activeSubTab && ['wizard', 'held', 'deeds', 'khatian', 'verifier', 'fees', 'onboarding'].includes(activeSubTab)) {
       return activeSubTab as SubRegistrarTab;
     }
-    return 'wizard';
+    if (role === 'registry_data_officer') return 'wizard';
+    return 'held';
   });
 
   const [plots, setPlots] = useState<any[]>([]);
   const [persons, setPersons] = useState<any[]>([]);
   const [deedsList, setDeedsList] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
+  const [onboardingBatches, setOnboardingBatches] = useState<any[]>([]);
 
   const [plotId, setPlotId] = useState<number>(1);
   const [sellerId, setSellerId] = useState<number>(1);
@@ -66,12 +68,14 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
       BhumiApi.getPersons(),
       BhumiApi.listRegistrarDeeds(),
       BhumiApi.getStatsSummary(),
+      BhumiApi.listOnboardingBatches().catch(() => []),
     ])
-      .then(([plts, pers, dds, st]) => {
+      .then(([plts, pers, dds, st, batches]) => {
         setPlots(plts);
         setPersons(pers);
         setDeedsList(dds);
         setStats(st);
+        setOnboardingBatches(batches);
       })
       .catch(() => {});
   };
@@ -84,7 +88,7 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
   }, []);
 
   useEffect(() => {
-    if (activeSubTab && ['wizard', 'held', 'deeds', 'khatian', 'verifier', 'fees'].includes(activeSubTab)) {
+    if (activeSubTab && ['wizard', 'held', 'deeds', 'khatian', 'verifier', 'fees', 'onboarding'].includes(activeSubTab)) {
       setSubTab(activeSubTab as SubRegistrarTab);
       if (activeSubTab === 'held') {
         setDeedStatusFilter('HELD');
@@ -101,6 +105,16 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
       setDeedStatusFilter('HELD');
     } else if (target === 'deeds') {
       setDeedStatusFilter('ALL');
+    }
+  };
+
+  const handleDecideBatch = async (batchId: number, status: 'APPROVED' | 'REJECTED') => {
+    try {
+      const res = await BhumiApi.decideOnboardingBatch(batchId, status, 'সাব-রেজিস্ট্রার কর্তৃক যাচাইপূর্বক অনুমোদন প্রদান করা হলো।');
+      setStatusMsg(lang === 'bn' ? res.message_bn : res.message_en);
+      loadRegistrarData();
+    } catch (err: any) {
+      setStatusMsg(err.message || 'অনবোর্ডিং ব্যাচ প্রক্রিয়াকরণে ত্রুটি হয়েছে।');
     }
   };
 
@@ -244,17 +258,25 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
   return (
     <div className="space-y-6">
       <header className="page-intro animate-rise">
-        <h1>{t('সাব-রেজিস্ট্রার কনসোল', 'Sub-Registrar Console')}</h1>
-        <p>{t('প্রাক-নিবন্ধন গেটকিপার, হোল্ড কিউ ও স্ট্যাম্প শুল্ক — রেকর্ডভিত্তিক মূল্যায়ন।', 'Pre-registration gatekeeper, hold queue and demonstration fee guidance.')}</p>
+        <h1>
+          {role === 'registry_data_officer'
+            ? t('রেজিস্ট্রি ডাটা এন্ট্রি সেল (মেকার কনসোল)', 'Registry Data Entry Cell (Maker Console)')
+            : t('সাব-রেজিস্ট্রার কনসোল (চেকার ও নিবন্ধন কর্তৃপক্ষ)', 'Sub-Registrar Console (Checker & Registration Authority)')}
+        </h1>
+        <p>
+          {role === 'registry_data_officer'
+            ? t('নতুন দলিল ড্রাফট এন্ট্রি, ক্রেতা-বিক্রেতা ডাটা যাচাই ও সরকারি স্ট্যাম্প ফি ও চালান হিসাব।', 'Draft deed data entry, party NID validation, and treasury stamp duty calculation.')
+            : t('প্রাক-নিবন্ধন গেটকিপার, স্থগিত দলিল (HELD) কিউ, কাউন্টার বায়োমেট্রিক ও ক্রিপ্টোগ্রাফিক সিল।', 'Pre-registration gatekeeper, held queue resolution, counter biometrics, and Ed25519 deed sealing.')}
+        </p>
       </header>
-      {/* RBAC Guard Notice if not logged in as sub_registrar or admin */}
-      {role !== 'sub_registrar' && role !== 'admin' && (
+      {/* RBAC Guard Notice if not in an authorized registry role */}
+      {!['sub_registrar', 'registry_data_officer', 'admin', 'system_admin'].includes(role) && (
         <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 flex flex-wrap items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-2 text-xs font-bold text-[#0A1F1C]">
             <KeyRound className="w-4 h-4 text-[#C4891A]" />
             <span>
               {t(
-                'দাপ্তরিক অ্যাক্সেস নোটিউট: সাব-রেজিস্ট্রার কন্ট্রোল পূর্ণাঙ্গভাবে ব্যবহার করতে সাব-রেজিস্ট্রার সেশনে প্রবেশ করুন।',
+                'দাপ্তরিক অ্যাক্সেস নোটিশ: সাব-রেজিস্ট্রার কন্ট্রোল পূর্ণাঙ্গভাবে ব্যবহার করতে সাব-রেজিস্ট্রার সেশনে প্রবেশ করুন।',
                 'Access Notice: Switch to the Sub-Registrar Officer session to execute deeds and release held records.'
               )}
             </span>
@@ -445,6 +467,22 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
               <Calculator className="w-4 h-4" />
               <span>{t('সরকারি ফি ও চালান', 'Stamp & Challan')}</span>
             </button>
+            {role !== 'registry_data_officer' && (
+              <button
+                onClick={() => handleTabChange('onboarding')}
+                className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+                  subTab === 'onboarding'
+                    ? 'bg-[#006A4E] text-white shadow-xs'
+                    : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+                }`}
+              >
+                <Layers className="w-4 h-4" />
+                <span>
+                  {t('অনবোর্ডিং ব্যাচ অনুমোদন (চেকার)', 'Approve Staging Batches')} (
+                  {toBanglaDigits(onboardingBatches.length, lang)})
+                </span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -878,6 +916,76 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
               handleTabChange('wizard');
             }}
           />
+        )}
+
+        {/* TAB 6: Onboarding Batch Review (Sub-Registrar Checker) */}
+        {subTab === 'onboarding' && (
+          <div className="space-y-6">
+            <div className="bg-[#F4F9F6] p-5 rounded-xl border border-[#006A4E]/15">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-bold text-base text-[#074f38] flex items-center gap-2 mb-1">
+                    <CheckCircle2 className="w-5 h-5 text-[#006A4E]" />
+                    <span>{t('রেজিস্ট্রি ডাটা অনবোর্ডিং ব্যাচ অনুমোদন (চার-চক্ষু নীতি)', 'Registry Data Onboarding Approvals')}</span>
+                  </h3>
+                  <p className="text-xs text-[#5F7A74]">
+                    {t(
+                      'রেজিস্ট্রি ডাটা এন্ট্রি অফিসার (মেকার) কর্তৃক আপলোডকৃত দলিলের অনবোর্ডিং ব্যাচ পর্যালোচনা এবং সাব-রেজিস্ট্রার (চেকার) হিসেবে চূড়ান্ত অনুমোদন। প্রস্তুতকারী নিজে অনুমোদন করতে পারবেন না।',
+                      'Four-eyes principle: Registry Data Officer (Maker) enters draft records; Sub-Registrar (Checker) verifies and issues final approval.'
+                    )}
+                  </p>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-emerald-100 text-[#006A4E] text-xs font-bold">
+                  {toBanglaDigits(onboardingBatches.length, lang)} {t('টি ব্যাচ অপেক্ষমান', 'Batches in Queue')}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {onboardingBatches.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 bg-white rounded-xl border border-dashed border-slate-300">
+                  {t('কোনো অনবোর্ডিং ব্যাচ অপেক্ষমান নেই।', 'No onboarding batches in pending review.')}
+                </div>
+              ) : (
+                onboardingBatches.map((batch: any) => (
+                  <div key={batch.id} className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 shadow-xs">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
+                      <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
+                        <span>{batch.batch_no}</span>
+                        <span className="text-xs text-slate-500">• {batch.record_type}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${batch.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' : batch.status === 'REJECTED' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>
+                          {batch.status}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 font-mono">আইটেম সংখ্যা: {batch.total_records || 1} টি</span>
+                    </div>
+
+                    <div className="text-xs text-slate-600 font-mono break-all">
+                      SHA-256 Batch Hash: {batch.batch_hash}
+                    </div>
+
+                    {batch.status === 'SUBMITTED' && (
+                      <div className="flex justify-end gap-2 pt-2 border-t">
+                        <button
+                          onClick={() => handleDecideBatch(batch.id, 'APPROVED')}
+                          className="px-4 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>{t('✔ ব্যাচ অনুমোদন ও লেজারে অন্তর্ভুক্তি', 'Approve Batch')}</span>
+                        </button>
+                        <button
+                          onClick={() => handleDecideBatch(batch.id, 'REJECTED')}
+                          className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                        >
+                          <span>✕ {t('বাতিল (Reject)', 'Reject')}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         )}
       </div>
 

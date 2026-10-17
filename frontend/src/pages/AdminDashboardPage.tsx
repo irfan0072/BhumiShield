@@ -61,6 +61,28 @@ export type AdminTab =
 
 export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNavigate }) => {
   const { lang, role, setRole, user, setUser, token, setToken, activeSubTab, setActiveSubTab, t } = useAppUI();
+
+  const roleAllowedTabs: Record<string, AdminTab[]> = {
+    auditor: ['ledger', 'audit', 'rbac'],
+    support_agent: ['users', 'audit'],
+    platform_moderator: ['onboarding_appeals', 'catalogue', 'audit'],
+    content_editor: ['catalogue', 'settings', 'audit'],
+    content_approver: ['settings', 'catalogue', 'audit'],
+    system_admin: ['ledger', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'onboarding_appeals', 'scenarios', 'direct_access'],
+    admin: ['ledger', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'onboarding_appeals', 'scenarios', 'direct_access'],
+  };
+  const allowedTabs: AdminTab[] = roleAllowedTabs[role] || [
+    'ledger',
+    'users',
+    'audit',
+    'settings',
+    'rbac',
+    'catalogue',
+    'onboarding_appeals',
+    'scenarios',
+    'direct_access',
+  ];
+
   const [subTab, setSubTab] = useState<AdminTab>(() => {
     if (
       activeSubTab &&
@@ -70,6 +92,11 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     ) {
       return activeSubTab as AdminTab;
     }
+    if (role === 'support_agent') return 'users';
+    if (role === 'platform_moderator') return 'onboarding_appeals';
+    if (role === 'content_editor') return 'catalogue';
+    if (role === 'content_approver') return 'settings';
+    if (role === 'auditor') return 'ledger';
     return 'ledger';
   });
 
@@ -414,8 +441,49 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   return (
     <div className="space-y-6">
       <header className="page-intro animate-rise">
-        <h1>{t('কেন্দ্রীয় গভর্ন্যান্স', 'Central Governance')}</h1>
-        <p>{t('RBAC, হ্যাশ লেজার ল্যাব, ইউজার ডিরেক্টরি ও অপরিবর্তনীয় অডিট ট্রেইল।', 'RBAC, hash ledger lab, officers directory, and append-only audit trail.')}</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1>
+              {role === 'support_agent'
+                ? t('নাগরিক সহায়তা ও হেল্পলাইন ডেস্ক (১৬১২২)', 'Citizen Support & Helpline Desk (16122)')
+                : role === 'platform_moderator'
+                ? t('প্ল্যাটফর্ম মডারেশন ও সার্ভিস ওভারসাইট', 'Platform Moderation & Oversight')
+                : role === 'content_editor'
+                ? t('কন্টেন্ট এডিটর ও সেবা নির্দেশিকা কনসোল', 'Content Editor & Service Guidelines Console')
+                : role === 'content_approver'
+                ? t('কন্টেন্ট অ্যাপ্রুভার ও প্রকাশনা কর্তৃপক্ষ', 'Content Approver & Publishing Authority')
+                : role === 'auditor'
+                ? t('স্বাধীন নিরাপত্তা ও সম্মতি নিরীক্ষক কনসোল', 'Independent Security & Compliance Auditor')
+                : t('কেন্দ্রীয় গভর্ন্যান্স ও অ্যাডমিন কনসোল', 'Central Governance & Admin Console')}
+            </h1>
+            <p>
+              {role === 'support_agent'
+                ? t('নাগরিক একাউন্ট অনুসন্ধান, অভিযোগ ট্রায়াজ এবং সাধারণ সহায়তা অডিট।', 'Citizen account search, ticket triage, and support audit logs.')
+                : role === 'platform_moderator'
+                ? t('অনবোর্ডিং ব্যাচ পর্যবেক্ষণ, আপিল নিরীক্ষা এবং সার্ভিস ক্যাটালগ পর্যালোচনা।', 'Onboarding batch monitoring, appeals review, and service directory oversight.')
+                : role === 'content_editor'
+                ? t('নাগরিক সেবা ক্যাটালগ ও ফি চার্ট খসড়া প্রণয়ন ও আপডেট।', 'Draft and edit service directory, guidelines, and fee schedules.')
+                : role === 'content_approver'
+                ? t('খসড়া সেবা ও ফি নির্দেশিকা চূড়ান্ত অনুমোদন এবং আইনি বিজ্ঞপ্তি প্রকাশনা।', 'Approve and publish draft service catalogues, fees, and policy notices.')
+                : role === 'auditor'
+                ? t('ক্রিপ্টোগ্রাফিক লেজার অখণ্ডতা, ব্রেক-গ্লাস অডিট ট্রেইল এবং রোল এক্সেস সম্মতি যাচাই।', 'Cryptographic hash ledger integrity, break-glass security logs, and RBAC compliance.')
+                : t('RBAC, হ্যাশ লেজার ল্যাব, ইউজার ডিরেক্টরি ও অপরিবর্তনীয় অডিট ট্রেইল।', 'RBAC, hash ledger lab, officers directory, and append-only audit trail.')}
+            </p>
+          </div>
+          <span className="px-3 py-1.5 rounded-full text-xs font-bold border border-emerald-300 bg-emerald-50 text-emerald-900">
+            {role === 'support_agent'
+              ? t('সাপোর্ট এজেন্ট (১৬১২২)', 'Support Agent (16122)')
+              : role === 'platform_moderator'
+              ? t('প্ল্যাটফর্ম মডারেটর', 'Platform Moderator')
+              : role === 'content_editor'
+              ? t('কন্টেন্ট এডিটর (মেকার)', 'Content Editor (Maker)')
+              : role === 'content_approver'
+              ? t('কন্টেন্ট অ্যাপ্রুভার (চেকার)', 'Content Approver (Checker)')
+              : role === 'auditor'
+              ? t('স্বাধীন নিরীক্ষক', 'Independent Auditor')
+              : t('সিস্টেম অ্যাডমিনিস্ট্রেটর', 'System Administrator')}
+          </span>
+        </div>
       </header>
       {loadError && <div role="alert" className="panel p-4 text-red-700">{loadError}<button onClick={refreshAll} className="ml-3 underline">{t('আবার চেষ্টা', 'Retry')}</button></div>}
       {/* Admin Operational KPI Strip (Role-Specific) */}
@@ -513,84 +581,98 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
         </div>
 
         <div className="flex flex-wrap gap-1.5">
-          <button
-            onClick={() => handleTabChange('ledger')}
-            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-              subTab === 'ledger'
-                ? 'bg-[#006A4E] text-white'
-                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-            }`}
-          >
-            <Lock className="w-3.5 h-3.5" />
-            <span>{t('হ্যাশ লেজার ল্যাব', 'Hash Ledger Lab')}</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('users')}
-            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-              subTab === 'users'
-                ? 'bg-[#006A4E] text-white'
-                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-            }`}
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span>{t('ইউজার ডিরেক্টরি', 'Officers CRUD')}</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('audit')}
-            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-              subTab === 'audit'
-                ? 'bg-[#006A4E] text-white'
-                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-            }`}
-          >
-            <History className="w-3.5 h-3.5" />
-            <span>{t('অডিট লগ', 'Audit Trail')}</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('settings')}
-            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-              subTab === 'settings'
-                ? 'bg-[#006A4E] text-white'
-                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-            }`}
-          >
-            <Settings className="w-3.5 h-3.5" />
-            <span>{t('সিস্টেম পলিসি', 'Policy Settings')}</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('rbac')}
-            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-              subTab === 'rbac'
-                ? 'bg-[#006A4E] text-white'
-                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-            }`}
-          >
-            <KeyRound className="w-3.5 h-3.5" />
-            <span>{t('RBAC ম্যাট্রিক্স', 'RBAC Matrix')}</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('catalogue')}
-            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-              subTab === 'catalogue'
-                ? 'bg-[#006A4E] text-white'
-                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-            }`}
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>{t('সার্ভিস ও ফি ডিরেক্টরি', 'Service & Fees')}</span>
-          </button>
-          <button
-            onClick={() => handleTabChange('onboarding_appeals')}
-            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-              subTab === 'onboarding_appeals'
-                ? 'bg-[#006A4E] text-white shadow-xs'
-                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
-            }`}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            <span>{t('অনবোর্ডিং ও আপিল', 'Onboarding & Appeals')}</span>
-          </button>
-          {import.meta.env.DEV && (
+          {allowedTabs.includes('ledger') && (
+            <button
+              onClick={() => handleTabChange('ledger')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+                subTab === 'ledger'
+                  ? 'bg-[#006A4E] text-white'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+              }`}
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>{t('হ্যাশ লেজার ল্যাব', 'Hash Ledger Lab')}</span>
+            </button>
+          )}
+          {allowedTabs.includes('users') && (
+            <button
+              onClick={() => handleTabChange('users')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+                subTab === 'users'
+                  ? 'bg-[#006A4E] text-white'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>{role === 'support_agent' ? t('নাগরিক ও অফিসার ডিরেক্টরি', 'Citizen & Officer Lookup') : t('ইউজার ডিরেক্টরি', 'Officers CRUD')}</span>
+            </button>
+          )}
+          {allowedTabs.includes('audit') && (
+            <button
+              onClick={() => handleTabChange('audit')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+                subTab === 'audit'
+                  ? 'bg-[#006A4E] text-white'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+              }`}
+            >
+              <History className="w-3.5 h-3.5" />
+              <span>{t('অডিট লগ', 'Audit Trail')}</span>
+            </button>
+          )}
+          {allowedTabs.includes('settings') && (
+            <button
+              onClick={() => handleTabChange('settings')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+                subTab === 'settings'
+                  ? 'bg-[#006A4E] text-white'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+              }`}
+            >
+              <Settings className="w-3.5 h-3.5" />
+              <span>{t('সিস্টেম পলিসি ও নোটিশ', 'Policy Settings')}</span>
+            </button>
+          )}
+          {allowedTabs.includes('rbac') && (
+            <button
+              onClick={() => handleTabChange('rbac')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+                subTab === 'rbac'
+                  ? 'bg-[#006A4E] text-white'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+              }`}
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>{t('RBAC ম্যাট্রিক্স', 'RBAC Matrix')}</span>
+            </button>
+          )}
+          {allowedTabs.includes('catalogue') && (
+            <button
+              onClick={() => handleTabChange('catalogue')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+                subTab === 'catalogue'
+                  ? 'bg-[#006A4E] text-white'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>{t('সার্ভিস ও ফি ডিরেক্টরি', 'Service & Fees')}</span>
+            </button>
+          )}
+          {allowedTabs.includes('onboarding_appeals') && (
+            <button
+              onClick={() => handleTabChange('onboarding_appeals')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+                subTab === 'onboarding_appeals'
+                  ? 'bg-[#006A4E] text-white shadow-xs'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span>{t('অনবোর্ডিং ও আপিল', 'Onboarding & Appeals')}</span>
+            </button>
+          )}
+          {import.meta.env.DEV && allowedTabs.includes('scenarios') && (
             <button
               onClick={() => handleTabChange('scenarios')}
               className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
@@ -603,17 +685,19 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
               <span>{t('যাচাই কেস ও OCR', 'Case Library & OCR')}</span>
             </button>
           )}
-          <button
-            onClick={() => handleTabChange('direct_access')}
-            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-              subTab === 'direct_access'
-                ? 'bg-[#C4891A] text-white shadow-xs'
-                : 'bg-[#FBF3E0] text-[#7A540E] hover:bg-[#F5E6BE]'
-            }`}
-          >
-            <ShieldAlert className="w-3.5 h-3.5" />
-            <span>{t('রোল তত্ত্বাবধান', 'Direct Role Access')}</span>
-          </button>
+          {allowedTabs.includes('direct_access') && (
+            <button
+              onClick={() => handleTabChange('direct_access')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+                subTab === 'direct_access'
+                  ? 'bg-[#C4891A] text-white shadow-xs'
+                  : 'bg-[#FBF3E0] text-[#7A540E] hover:bg-[#F5E6BE]'
+              }`}
+            >
+              <ShieldAlert className="w-3.5 h-3.5" />
+              <span>{t('রোল তত্ত্বাবধান', 'Direct Role Access')}</span>
+            </button>
+          )}
         </div>
       </div>
 
