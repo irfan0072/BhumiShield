@@ -1222,7 +1222,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
 
             {/* Desktop Navigation Links with Dropdown Menus */}
             <nav className="hidden items-center justify-center gap-1 xl:gap-1.5 lg:flex flex-nowrap" aria-label="প্রধান মেনু">
-              {/* 1. All Services (Home) */}
+              {/* 1. Services (Home) */}
               <button
                 type="button"
                 onClick={() => setActiveTab('landing')}
@@ -1233,13 +1233,13 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                 }`}
               >
                 <Home className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>{t('সকল সেবা', 'All Services')}</span>
+                <span>{t('সেবাসমূহ', 'Services')}</span>
               </button>
 
-              {/* 2. Land & Deed Services Dropdown */}
+              {/* 2. Land Services Dropdown */}
               <PublicNavDropdown
                 id="services"
-                label={t('ভূমি ও দলিল সেবা', 'Land & Deed Services')}
+                label={t('ভূমি সেবা', 'Land Services')}
                 icon={<ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />}
                 activeChildIds={['check', 'qr', 'map', 'sale', 'home']}
                 activeTab={activeTab}
@@ -1250,10 +1250,10 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                 t={t}
               />
 
-              {/* 3. Information & Notices Dropdown */}
+              {/* 3. Notice Dropdown */}
               <PublicNavDropdown
                 id="info"
-                label={t('তথ্য ও নোটিশ', 'Notices & Info')}
+                label={t('নোটিশ', 'Notices')}
                 icon={<Bell className="w-3.5 h-3.5 text-amber-600" />}
                 activeChildIds={['notices', 'offices', 'blog']}
                 activeTab={activeTab}
@@ -1264,10 +1264,10 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                 t={t}
               />
 
-              {/* 4. Help & Support Dropdown */}
+              {/* 4. Helpline Dropdown */}
               <PublicNavDropdown
                 id="help"
-                label={t('সহায়িকা ও হেল্পলাইন', 'Help & Hotline')}
+                label={t('হেল্পলাইন', 'Helpline')}
                 icon={<HelpCircle className="w-3.5 h-3.5 text-emerald-600" />}
                 activeChildIds={['help']}
                 activeTab={activeTab}
@@ -1347,7 +1347,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         {/* Main Content */}
         <main className={`flex-1 w-full ${activeTab === 'landing' || activeTab === 'map' || activeTab === 'home' ? '' : 'py-8 px-4 max-w-7xl mx-auto'}`}>{children}</main>
 
-        {/* Clean Footer (bcc.zohirrayhan.com style, suppressed on map page which has its own map.land.gov.bd institutional footer) */}
+        {/* Clean Footer */}
         {activeTab !== 'map' && <InstitutionalFooter t={t} onNavigate={setActiveTab} />}
 
         {/* Mobile Slide-Over Drawer */}
@@ -1385,15 +1385,15 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                     }`}
                   >
                     <Home className="w-4 h-4 text-emerald-400" />
-                    <span>{t('সকল সেবা ও হোম', 'All Services / Home')}</span>
+                    <span>{t('সেবাসমূহ', 'Services')}</span>
                   </button>
                 </div>
 
-                {/* 2. Land & Deed Services Group */}
+                {/* 2. Land Services Group */}
                 <div className="pt-2 border-t border-white/10">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 px-3 mb-1.5 flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{t('ভূমি ও দলিল সেবা', 'Land & Deed Services')}</span>
+                    <span>{t('ভূমি সেবা', 'Land Services')}</span>
                   </div>
                   <div className="space-y-1">
                     <button
@@ -1474,11 +1474,11 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                   </div>
                 </div>
 
-                {/* 3. Information & Notices Group */}
+                {/* 3. Notice Group */}
                 <div className="pt-2 border-t border-white/10">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-amber-400 px-3 mb-1.5 flex items-center gap-1.5">
                     <Bell className="w-3.5 h-3.5 text-amber-400" />
-                    <span>{t('তথ্য ও নোটিশ', 'Information & Notices')}</span>
+                    <span>{t('নোটিশ', 'Notices')}</span>
                   </div>
                   <div className="space-y-1">
                     <button
@@ -1529,11 +1529,11 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                   </div>
                 </div>
 
-                {/* 4. Help & Support Group */}
+                {/* 4. Helpline Group */}
                 <div className="pt-2 border-t border-white/10">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 px-3 mb-1.5 flex items-center gap-1.5">
                     <HelpCircle className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{t('সহায়িকা ও যোগাযোগ', 'Help & Contact')}</span>
+                    <span>{t('হেল্পলাইন', 'Helpline')}</span>
                   </div>
                   <div className="space-y-1">
                     <button
@@ -1593,7 +1593,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
           </div>
         )}
 
-        {/* Mobile Bottom Dock (bcc.zohirrayhan.com style) */}
+        {/* Mobile Bottom Dock */}
         <MobileBottomDock activeTab={activeTab} setActiveTab={setActiveTab} role={role} t={t} />
       </div>
     );
@@ -2070,7 +2070,7 @@ const InstitutionalFooter: React.FC<{
   </footer>
 );
 
-// Mobile Floating Bottom Dock Matching bcc.zohirrayhan.com
+// Mobile Floating Bottom Dock
 const MobileBottomDock: React.FC<{
   activeTab: string;
   setActiveTab: (tab: string) => void;
@@ -2089,7 +2089,7 @@ const MobileBottomDock: React.FC<{
         }`}
       >
         <Home className="h-5 w-5" />
-        <span className="truncate">{t('সেবাসমূহ', 'Home')}</span>
+        <span className="truncate">{t('সেবাসমূহ', 'Services')}</span>
       </button>
 
       <button
@@ -2102,7 +2102,7 @@ const MobileBottomDock: React.FC<{
         <span className="truncate">{t('যাচাই', 'Check')}</span>
       </button>
 
-      {/* Center Floating Action Button (like bcc.zohirrayhan.com camera button) */}
+      {/* Center Floating Action Button */}
       <div className="flex flex-1 justify-center">
         <button
           onClick={() => setActiveTab('qr')}
