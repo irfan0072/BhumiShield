@@ -505,6 +505,166 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
   );
 };
 
+interface DropdownItemConfig {
+  id: string;
+  label: string;
+  subtitle: string;
+  icon: React.ReactNode;
+  iconBg: string;
+  badge?: string;
+  onClick: () => void;
+  isActive?: boolean;
+}
+
+interface PublicNavDropdownProps {
+  id: string;
+  label: string;
+  icon?: React.ReactNode;
+  activeChildIds: string[];
+  activeTab: string;
+  items: DropdownItemConfig[];
+  openDropdown: string | null;
+  setOpenDropdown: (id: string | null) => void;
+  navTimerRef: React.MutableRefObject<NodeJS.Timeout | null>;
+  t: (bn: string, en: string) => string;
+}
+
+export const PublicNavDropdown: React.FC<PublicNavDropdownProps> = ({
+  id,
+  label,
+  icon,
+  activeChildIds,
+  activeTab,
+  items,
+  openDropdown,
+  setOpenDropdown,
+  navTimerRef,
+  t,
+}) => {
+  const isOpen = openDropdown === id;
+  const isGroupActive = activeChildIds.includes(activeTab);
+
+  const handleMouseEnter = () => {
+    if (navTimerRef.current) {
+      clearTimeout(navTimerRef.current);
+      navTimerRef.current = null;
+    }
+    setOpenDropdown(id);
+  };
+
+  const handleMouseLeave = () => {
+    if (navTimerRef.current) {
+      clearTimeout(navTimerRef.current);
+    }
+    navTimerRef.current = setTimeout(() => {
+      setOpenDropdown(null);
+    }, 180);
+  };
+
+  const handleClickToggle = () => {
+    if (navTimerRef.current) {
+      clearTimeout(navTimerRef.current);
+      navTimerRef.current = null;
+    }
+    setOpenDropdown(isOpen ? null : id);
+  };
+
+  return (
+    <div
+      data-nav-dropdown={id}
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <button
+        type="button"
+        onClick={handleClickToggle}
+        aria-haspopup="true"
+        aria-expanded={isOpen}
+        className={`group flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer min-h-[38px] select-none ${
+          isGroupActive
+            ? 'text-[#006A4E] bg-emerald-50 font-bold border border-emerald-200/80 shadow-2xs'
+            : isOpen
+            ? 'text-slate-900 bg-slate-100 font-bold'
+            : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100/80'
+        }`}
+      >
+        {icon && <span className="shrink-0">{icon}</span>}
+        <span>{label}</span>
+        <ChevronDown
+          className={`w-3.5 h-3.5 transition-transform duration-200 shrink-0 ${
+            isOpen
+              ? 'rotate-180 text-emerald-700'
+              : isGroupActive
+              ? 'text-emerald-700'
+              : 'text-slate-400 group-hover:text-slate-600'
+          }`}
+        />
+      </button>
+
+      {isOpen && (
+        <div
+          className="absolute left-0 top-full mt-1.5 w-80 sm:w-[340px] bg-white rounded-2xl shadow-xl border border-slate-200/90 p-2 z-50 animate-in fade-in slide-in-from-top-1 duration-150 ring-1 ring-slate-900/5 text-slate-800"
+          role="menu"
+          aria-orientation="vertical"
+        >
+          <div className="space-y-1">
+            {items.map((item) => {
+              const active = item.isActive;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    item.onClick();
+                    setOpenDropdown(null);
+                  }}
+                  className={`group w-full p-2 rounded-xl text-left flex items-start gap-3 transition-colors cursor-pointer select-none ${
+                    active
+                      ? 'bg-emerald-50 text-emerald-950 font-semibold ring-1 ring-emerald-500/20'
+                      : 'hover:bg-slate-50 text-slate-700'
+                  }`}
+                  role="menuitem"
+                >
+                  <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${item.iconBg}`}>
+                    {item.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-1">
+                      <span
+                        className={`text-xs font-bold truncate ${
+                          active ? 'text-[#006A4E]' : 'text-slate-800 group-hover:text-slate-900'
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+                      {item.badge && (
+                        <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200/60 leading-none">
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-500 leading-snug mt-0.5 line-clamp-1">
+                      {item.subtitle}
+                    </p>
+                  </div>
+                  <ChevronRight
+                    className={`w-3.5 h-3.5 shrink-0 self-center transition-transform ${
+                      active
+                        ? 'text-emerald-600 translate-x-0.5'
+                        : 'text-slate-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5'
+                    }`}
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const NavbarAndLayout: React.FC<LayoutProps> = ({
   activeTab,
   setActiveTab,
@@ -567,6 +727,39 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
       window.removeEventListener('online', onOnline);
     };
   }, []);
+
+  const [openNavDropdown, setOpenNavDropdown] = useState<string | null>(null);
+  const navDropdownTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setOpenNavDropdown(null);
+  }, [activeTab]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (openNavDropdown) {
+        const target = e.target as HTMLElement;
+        if (!target.closest('[data-nav-dropdown]')) {
+          setOpenNavDropdown(null);
+        }
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpenNavDropdown(null);
+      }
+    };
+    if (openNavDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [openNavDropdown]);
 
   const [isSuperAdminMode, setIsSuperAdminMode] = useState<boolean>(
     () => import.meta.env.DEV && localStorage.getItem('bs_superadmin_mode') === '1'
@@ -888,6 +1081,114 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
 
   // Clean Public Header & Layout (Modeled after bcc.zohirrayhan.com)
   if (isPublicPage) {
+    const landServicesItems: DropdownItemConfig[] = [
+      {
+        id: 'check',
+        label: t('জমি কেনার আগে যাচাই', 'Check Before Buy'),
+        subtitle: t('মালিকানা, খতিয়ান চেইন ও লিয়েন ঝুঁকি বিশ্লেষণ', 'Title chain, ownership & legal liens'),
+        icon: <Search className="w-4 h-4 text-emerald-700" />,
+        iconBg: 'bg-emerald-100',
+        badge: t('যাচাই', 'Verify'),
+        onClick: () => setActiveTab('check'),
+        isActive: activeTab === 'check',
+      },
+      {
+        id: 'qr',
+        label: t('দলিল QR কোড যাচাই', 'Verify Deed QR'),
+        subtitle: t('Ed25519 ক্রিপ্টোগ্রাফিক ডিজিটাল সিল পরীক্ষা', 'Ed25519 cryptographic deed authenticity'),
+        icon: <QrCode className="w-4 h-4 text-cyan-700" />,
+        iconBg: 'bg-cyan-100',
+        badge: t('নিবন্ধন', 'Secure'),
+        onClick: () => setActiveTab('qr'),
+        isActive: activeTab === 'qr',
+      },
+      {
+        id: 'map',
+        label: t('মৌজা ম্যাপ ও ডিজিটাল দাগ', 'Cadastral Mouza Map'),
+        subtitle: t('ডিএলআরএস সিএস/এসএ/আরএস ও স্যাটেলাইট নকশা ভিউ', 'Interactive plot polygons & DLRS map view'),
+        icon: <Layers className="w-4 h-4 text-indigo-700" />,
+        iconBg: 'bg-indigo-100',
+        badge: t('লাইভ নকশা', 'Live GIS'),
+        onClick: () => setActiveTab('map'),
+        isActive: activeTab === 'map',
+      },
+      {
+        id: 'sale',
+        label: t('জমির হাট (নিরাপদ বাজার)', 'Land Marketplace (Sale)'),
+        subtitle: t('যাচাইকৃত ভেটিং সম্পন্ন সুরক্ষিত জমি ক্রয়-বিক্রয়', 'Verified fraud-free property listings'),
+        icon: <Building2 className="w-4 h-4 text-amber-700" />,
+        iconBg: 'bg-amber-100',
+        onClick: () => setActiveTab('sale'),
+        isActive: activeTab === 'sale',
+      },
+      {
+        id: 'home',
+        label: t('নাগরিক ভল্ট ও ড্যাশবোর্ড', 'Citizen Property Vault'),
+        subtitle: t('আমার জমি, খতিয়ান ভল্ট ও ১৩-ধাপের হস্তান্তর ট্র্যাকার', 'My landholdings, khatians & 13-step tracker'),
+        icon: <ShieldCheck className="w-4 h-4 text-[#006A4E]" />,
+        iconBg: 'bg-emerald-100',
+        badge: t('পোর্টাল', 'Portal'),
+        onClick: () => setActiveTab('home'),
+        isActive: activeTab === 'home',
+      },
+    ];
+
+    const infoNoticesItems: DropdownItemConfig[] = [
+      {
+        id: 'notices',
+        label: t('পাবলিক নোটিশ ও গেজেট', 'Public Notices & Gazettes'),
+        subtitle: t('সরকারি ভূমি বিজ্ঞপ্তি, নিলাম ও আপত্তি আদেশ', 'Government land orders, auctions & notices'),
+        icon: <Bell className="w-4 h-4 text-amber-700" />,
+        iconBg: 'bg-amber-100',
+        badge: t('গেজেট', 'Gazette'),
+        onClick: () => setActiveTab('notices'),
+        isActive: activeTab === 'notices',
+      },
+      {
+        id: 'offices',
+        label: t('দপ্তরসমূহ ও সেবা কেন্দ্র', 'Offices & Service Points'),
+        subtitle: t('উপজেলা ভূমি অফিস ও সাব-রেজিস্ট্রি তালিকা', 'AC Land, Sub-Registry & UDC locator'),
+        icon: <Landmark className="w-4 h-4 text-purple-700" />,
+        iconBg: 'bg-purple-100',
+        onClick: () => setActiveTab('offices'),
+        isActive: activeTab === 'offices',
+      },
+      {
+        id: 'blog',
+        label: t('ভূমি আইন ও সচেতনতা ব্লগ', 'Land Legal Guide & Blog'),
+        subtitle: t('নামজারি, রেজিস্ট্রেশন ও উত্তরাধিকার আইন গাইড', 'Mutation, inheritance laws & citizen guides'),
+        icon: <FileText className="w-4 h-4 text-blue-700" />,
+        iconBg: 'bg-blue-100',
+        onClick: () => setActiveTab('blog'),
+        isActive: activeTab === 'blog',
+      },
+    ];
+
+    const helpSupportItems: DropdownItemConfig[] = [
+      {
+        id: 'help',
+        label: t('ব্যবহারকারী সহায়িকা ও FAQ', 'Help Guide & FAQs'),
+        subtitle: t('সচরাচর জিজ্ঞাসা, ভিডিও গাইড ও পরিভাষা কোষ', 'Frequently asked questions & land terminology'),
+        icon: <HelpCircle className="w-4 h-4 text-emerald-700" />,
+        iconBg: 'bg-emerald-100',
+        badge: t('সহায়িকা', 'Guide'),
+        onClick: () => setActiveTab('help'),
+        isActive: activeTab === 'help',
+      },
+      {
+        id: 'hotline',
+        label: t('জাতীয় হেল্পলাইন ১৬১২২', 'National Hotline 16122'),
+        subtitle: t('ভূমি সেবা ও নাগরিক সহায়তা সংক্রান্ত সার্বক্ষণিক কল সেন্টার', '24/7 Citizen land support toll-free hotline'),
+        icon: <PhoneCall className="w-4 h-4 text-rose-700" />,
+        iconBg: 'bg-rose-100',
+        badge: t('টোল-ফ্রি', 'Toll-Free'),
+        onClick: () => {
+          window.location.href = 'tel:16122';
+        },
+        isActive: false,
+      },
+    ];
+
     return (
       <div className="min-h-screen flex flex-col bg-white text-slate-800 pb-28 lg:pb-0">
         {/* Top Accent Gradient Bar — Exactly like bcc.zohirrayhan.com */}
@@ -913,95 +1214,79 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                 <span className="block truncate text-sm sm:text-base font-bold text-slate-900">
                   {t('ভূমি সুরক্ষা', 'BhumiShield')}
                 </span>
-                <span className="hidden truncate text-xs text-slate-500 sm:block">
+                <span className="hidden truncate text-xs text-slate-500 xl:block">
                   {t('জাতীয় জমি ও দলিল নিরাপত্তা প্ল্যাটফর্ম', 'National Land & Deed Trust Platform')}
                 </span>
               </span>
             </button>
 
-            {/* Desktop Navigation Links */}
-            <nav className="hidden items-center justify-center gap-0.5 xl:gap-1 lg:flex flex-wrap" aria-label="প্রধান মেনু">
+            {/* Desktop Navigation Links with Dropdown Menus */}
+            <nav className="hidden items-center justify-center gap-1 xl:gap-1.5 lg:flex flex-nowrap" aria-label="প্রধান মেনু">
+              {/* 1. All Services (Home) */}
               <button
+                type="button"
                 onClick={() => setActiveTab('landing')}
-                className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer min-h-[38px] ${
-                  activeTab === 'landing' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer min-h-[38px] select-none ${
+                  activeTab === 'landing'
+                    ? 'text-[#006A4E] bg-emerald-50 font-bold border border-emerald-200/80 shadow-2xs'
+                    : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100/80'
                 }`}
               >
-                {t('সকল সেবা', 'All Services')}
+                <Home className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>{t('সকল সেবা', 'All Services')}</span>
               </button>
+
+              {/* 2. Land & Deed Services Dropdown */}
+              <PublicNavDropdown
+                id="services"
+                label={t('ভূমি ও দলিল সেবা', 'Land & Deed Services')}
+                icon={<ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />}
+                activeChildIds={['check', 'qr', 'map', 'sale', 'home']}
+                activeTab={activeTab}
+                items={landServicesItems}
+                openDropdown={openNavDropdown}
+                setOpenDropdown={setOpenNavDropdown}
+                navTimerRef={navDropdownTimerRef}
+                t={t}
+              />
+
+              {/* 3. Information & Notices Dropdown */}
+              <PublicNavDropdown
+                id="info"
+                label={t('তথ্য ও নোটিশ', 'Notices & Info')}
+                icon={<Bell className="w-3.5 h-3.5 text-amber-600" />}
+                activeChildIds={['notices', 'offices', 'blog']}
+                activeTab={activeTab}
+                items={infoNoticesItems}
+                openDropdown={openNavDropdown}
+                setOpenDropdown={setOpenNavDropdown}
+                navTimerRef={navDropdownTimerRef}
+                t={t}
+              />
+
+              {/* 4. Help & Support Dropdown */}
+              <PublicNavDropdown
+                id="help"
+                label={t('সহায়িকা ও হেল্পলাইন', 'Help & Hotline')}
+                icon={<HelpCircle className="w-3.5 h-3.5 text-emerald-600" />}
+                activeChildIds={['help']}
+                activeTab={activeTab}
+                items={helpSupportItems}
+                openDropdown={openNavDropdown}
+                setOpenDropdown={setOpenNavDropdown}
+                navTimerRef={navDropdownTimerRef}
+                t={t}
+              />
+
+              {/* Quick Verify CTA Button */}
               <button
-                onClick={() => setActiveTab('sale')}
-                className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer min-h-[38px] ${
-                  activeTab === 'sale' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {t('জমির হাট', 'Land Sale')}
-              </button>
-              <button
-                onClick={() => setActiveTab('map')}
-                className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer min-h-[38px] ${
-                  activeTab === 'map' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {t('মৌজা ম্যাপ', 'Cadastral Map')}
-              </button>
-              <button
+                type="button"
                 onClick={() => setActiveTab('check')}
-                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer min-h-[38px] ${
-                  activeTab === 'check' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
+                className="hidden xl:inline-flex items-center gap-1.5 ml-1 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#006A4E] text-xs font-bold border border-emerald-200/90 transition-all cursor-pointer shadow-2xs"
+                title={t('জমি কেনার আগে তাৎক্ষণিক যাচাই', 'Instant Plot Verification')}
               >
-                {t('জমি যাচাই', 'Check Land')}
-              </button>
-              <button
-                onClick={() => setActiveTab('qr')}
-                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer min-h-[38px] ${
-                  activeTab === 'qr' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {t('দলিল QR', 'Verify Deed')}
-              </button>
-              <button
-                onClick={() => setActiveTab('notices')}
-                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer min-h-[38px] ${
-                  activeTab === 'notices' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {t('নোটিশ', 'Notices')}
-              </button>
-              <button
-                onClick={() => setActiveTab('blog')}
-                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer min-h-[38px] ${
-                  activeTab === 'blog' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {t('ভূমি ব্লগ', 'Blog')}
-              </button>
-              <button
-                onClick={() => setActiveTab('offices')}
-                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer min-h-[38px] ${
-                  activeTab === 'offices' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {t('দপ্তরসমূহ', 'Offices')}
-              </button>
-              <button
-                onClick={() => setActiveTab('home')}
-                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer min-h-[38px] ${
-                  activeTab === 'home'
-                    ? 'text-[#006A4E] bg-emerald-50 font-bold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {t('নাগরিক ভল্ট', 'Citizen Vault')}
-              </button>
-              <button
-                onClick={() => setActiveTab('help')}
-                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer min-h-[38px] ${
-                  activeTab === 'help' ? 'text-[#006A4E] bg-emerald-50 font-bold' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {t('সহায়িকা', 'Help')}
+                <Search className="w-3.5 h-3.5 text-emerald-700" />
+                <span>{t('জমি যাচাই', 'Verify Plot')}</span>
               </button>
             </nav>
 
@@ -1088,120 +1373,210 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
               </div>
 
               <div className="flex-1 py-4 px-3 space-y-4 overflow-y-auto">
+                {/* 1. Primary Service */}
                 <div className="space-y-1">
                   <button
                     onClick={() => {
                       setMobileDrawerOpen(false);
                       setActiveTab('landing');
                     }}
-                    className="w-full px-3 py-2.5 rounded-lg text-xs font-bold text-left flex items-center gap-2 bg-white/10 text-white"
+                    className={`w-full px-3 py-2.5 rounded-xl text-xs font-bold text-left flex items-center gap-2.5 transition ${
+                      activeTab === 'landing' ? 'bg-[#006A4E] text-white shadow-xs' : 'text-white/80 hover:bg-white/10'
+                    }`}
                   >
                     <Home className="w-4 h-4 text-emerald-400" />
-                    <span>{t('হোম / সকল সেবা', 'Home / Services')}</span>
+                    <span>{t('সকল সেবা ও হোম', 'All Services / Home')}</span>
                   </button>
-                  <button
-                    onClick={() => {
-                      setMobileDrawerOpen(false);
-                      setActiveTab('sale');
-                    }}
-                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2 text-white/80 hover:bg-white/5"
-                  >
-                    <Building2 className="w-4 h-4 text-emerald-400" />
-                    <span>{t('জমির হাট (বিক্রয়)', 'Land Sale')}</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMobileDrawerOpen(false);
-                      setActiveTab('map');
-                    }}
-                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2 text-white/80 hover:bg-white/5"
-                  >
-                    <Layers className="w-4 h-4 text-emerald-400" />
-                    <span>{t('মৌজা ম্যাপ', 'Cadastral Map')}</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMobileDrawerOpen(false);
-                      setActiveTab('check');
-                    }}
-                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2 text-white/80 hover:bg-white/5"
-                  >
-                    <Search className="w-4 h-4 text-emerald-400" />
-                    <span>{t('জমি কেনার আগে যাচাই', 'Check Before Buy')}</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMobileDrawerOpen(false);
-                      setActiveTab('qr');
-                    }}
-                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2 text-white/80 hover:bg-white/5"
-                  >
-                    <QrCode className="w-4 h-4 text-emerald-400" />
-                    <span>{t('দলিল QR কোড যাচাই', 'Verify Deed QR')}</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMobileDrawerOpen(false);
-                      setActiveTab('notices');
-                    }}
-                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2 text-white/80 hover:bg-white/5"
-                  >
-                    <Bell className="w-4 h-4 text-emerald-400" />
-                    <span>{t('নোটিশবোর্ড', 'Notices')}</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMobileDrawerOpen(false);
-                      setActiveTab('blog');
-                    }}
-                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2 text-white/80 hover:bg-white/5"
-                  >
-                    <FileText className="w-4 h-4 text-emerald-400" />
-                    <span>{t('ভূমি ব্লগ ও আইন', 'Blog & Legal Guide')}</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMobileDrawerOpen(false);
-                      setActiveTab('offices');
-                    }}
-                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2 text-white/80 hover:bg-white/5"
-                  >
-                    <Landmark className="w-4 h-4 text-emerald-400" />
-                    <span>{t('দপ্তরসমূহ ও সেবা কেন্দ্র', 'Offices & Service Points')}</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMobileDrawerOpen(false);
-                      setActiveTab('home');
-                    }}
-                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2 text-white/80 hover:bg-white/5"
-                  >
-                    <Lock className="w-4 h-4 text-emerald-400" />
-                    <span>{t('নাগরিক ভল্ট ও আবেদন', 'Citizen Vault & Transfers')}</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMobileDrawerOpen(false);
-                      setActiveTab('help');
-                    }}
-                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center gap-2 text-white/80 hover:bg-white/5"
-                  >
-                    <HelpCircle className="w-4 h-4 text-emerald-400" />
-                    <span>{t('সহায়িকা ও পরিভাষা কোষ', 'Help & Glossary')}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={toggleHighContrast}
-                    className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center justify-between text-white/80 hover:bg-white/5 border border-white/10"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Contrast className="w-4 h-4 text-emerald-400" />
-                      <span>{t('উচ্চ কনট্রাস্ট মোড', 'High Contrast Mode')}</span>
-                    </span>
-                    <span className="text-[10px] uppercase font-bold text-emerald-400">
-                      {highContrast ? t('চালু', 'ON') : t('বন্ধ', 'OFF')}
-                    </span>
-                  </button>
+                </div>
+
+                {/* 2. Land & Deed Services Group */}
+                <div className="pt-2 border-t border-white/10">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 px-3 mb-1.5 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{t('ভূমি ও দলিল সেবা', 'Land & Deed Services')}</span>
+                  </div>
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => {
+                        setMobileDrawerOpen(false);
+                        setActiveTab('check');
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg text-xs font-semibold text-left flex items-center justify-between transition ${
+                        activeTab === 'check' ? 'bg-white/15 text-white font-bold' : 'text-white/80 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Search className="w-4 h-4 text-emerald-400" />
+                        <span>{t('জমি কেনার আগে যাচাই', 'Check Before Buy')}</span>
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 opacity-40" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMobileDrawerOpen(false);
+                        setActiveTab('qr');
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg text-xs font-semibold text-left flex items-center justify-between transition ${
+                        activeTab === 'qr' ? 'bg-white/15 text-white font-bold' : 'text-white/80 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <QrCode className="w-4 h-4 text-cyan-400" />
+                        <span>{t('দলিল QR কোড যাচাই', 'Verify Deed QR')}</span>
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 opacity-40" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMobileDrawerOpen(false);
+                        setActiveTab('map');
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg text-xs font-semibold text-left flex items-center justify-between transition ${
+                        activeTab === 'map' ? 'bg-white/15 text-white font-bold' : 'text-white/80 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-indigo-400" />
+                        <span>{t('মৌজা ম্যাপ ও ডিজিটাল দাগ', 'Cadastral Map')}</span>
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 opacity-40" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMobileDrawerOpen(false);
+                        setActiveTab('sale');
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg text-xs font-semibold text-left flex items-center justify-between transition ${
+                        activeTab === 'sale' ? 'bg-white/15 text-white font-bold' : 'text-white/80 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-amber-400" />
+                        <span>{t('জমির হাট (নিরাপদ বাজার)', 'Land Marketplace')}</span>
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 opacity-40" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMobileDrawerOpen(false);
+                        setActiveTab('home');
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg text-xs font-semibold text-left flex items-center justify-between transition ${
+                        activeTab === 'home' ? 'bg-white/15 text-white font-bold' : 'text-white/80 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-emerald-400" />
+                        <span>{t('নাগরিক ভল্ট ও ড্যাশবোর্ড', 'Citizen Vault & Transfers')}</span>
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 opacity-40" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3. Information & Notices Group */}
+                <div className="pt-2 border-t border-white/10">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-amber-400 px-3 mb-1.5 flex items-center gap-1.5">
+                    <Bell className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{t('তথ্য ও নোটিশ', 'Information & Notices')}</span>
+                  </div>
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => {
+                        setMobileDrawerOpen(false);
+                        setActiveTab('notices');
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg text-xs font-semibold text-left flex items-center justify-between transition ${
+                        activeTab === 'notices' ? 'bg-white/15 text-white font-bold' : 'text-white/80 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Bell className="w-4 h-4 text-amber-400" />
+                        <span>{t('পাবলিক নোটিশ ও গেজেট', 'Public Notices & Gazettes')}</span>
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 opacity-40" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMobileDrawerOpen(false);
+                        setActiveTab('offices');
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg text-xs font-semibold text-left flex items-center justify-between transition ${
+                        activeTab === 'offices' ? 'bg-white/15 text-white font-bold' : 'text-white/80 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Landmark className="w-4 h-4 text-purple-400" />
+                        <span>{t('দপ্তরসমূহ ও সেবা কেন্দ্র', 'Offices & Service Points')}</span>
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 opacity-40" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMobileDrawerOpen(false);
+                        setActiveTab('blog');
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg text-xs font-semibold text-left flex items-center justify-between transition ${
+                        activeTab === 'blog' ? 'bg-white/15 text-white font-bold' : 'text-white/80 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-blue-400" />
+                        <span>{t('ভূমি আইন ও সচেতনতা ব্লগ', 'Land Legal Guide & Blog')}</span>
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 opacity-40" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* 4. Help & Support Group */}
+                <div className="pt-2 border-t border-white/10">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 px-3 mb-1.5 flex items-center gap-1.5">
+                    <HelpCircle className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{t('সহায়িকা ও যোগাযোগ', 'Help & Contact')}</span>
+                  </div>
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => {
+                        setMobileDrawerOpen(false);
+                        setActiveTab('help');
+                      }}
+                      className={`w-full px-3 py-2 rounded-lg text-xs font-semibold text-left flex items-center justify-between transition ${
+                        activeTab === 'help' ? 'bg-white/15 text-white font-bold' : 'text-white/80 hover:bg-white/5'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <HelpCircle className="w-4 h-4 text-emerald-400" />
+                        <span>{t('সহায়িকা ও পরিভাষা কোষ (FAQ)', 'Help & Glossary')}</span>
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 opacity-40" />
+                    </button>
+                    <a
+                      href="tel:16122"
+                      className="w-full px-3 py-2 rounded-lg text-xs font-semibold text-left flex items-center justify-between text-white/80 hover:bg-white/5 transition"
+                    >
+                      <span className="flex items-center gap-2">
+                        <PhoneCall className="w-4 h-4 text-rose-400" />
+                        <span>{t('ভূমি হটলাইন ১৬১২২', 'Land Hotline 16122')}</span>
+                      </span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">
+                        {t('টোল-ফ্রি', 'Toll-Free')}
+                      </span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={toggleHighContrast}
+                      className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold text-left flex items-center justify-between text-white/80 hover:bg-white/5 border border-white/10"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Contrast className="w-4 h-4 text-emerald-400" />
+                        <span>{t('উচ্চ কনট্রাস্ট মোড', 'High Contrast Mode')}</span>
+                      </span>
+                      <span className="text-[10px] uppercase font-bold text-emerald-400">
+                        {highContrast ? t('চালু', 'ON') : t('বন্ধ', 'OFF')}
+                      </span>
+                    </button>
+                  </div>
                 </div>
 
                 {import.meta.env.DEV && (user?.role === 'admin' || isSuperAdminMode) && (
