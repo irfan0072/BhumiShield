@@ -40,7 +40,7 @@ import {
   Clock
 } from 'lucide-react';
 
-const ROLE_DASHBOARD_MAP: Record<UserRole, string> = {
+const ROLE_DASHBOARD_MAP: Record<string, string> = {
   citizen: 'home',
   sub_registrar: 'registrar',
   ac_land: 'acland',

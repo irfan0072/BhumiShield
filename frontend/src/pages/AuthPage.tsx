@@ -18,7 +18,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 
-const ROLE_ROUTE: Record<UserRole, string> = {
+const ROLE_ROUTE: Record<string, string> = {
   citizen: 'home',
   sub_registrar: 'registrar',
   ac_land: 'acland',

@@ -730,7 +730,15 @@ export const BhumiApi = {
     const target = deedNo && deedNo !== '1' ? deedNo : 'DL-2026-1005';
     return api.post(`/ledger/tamper/${encodeURIComponent(target)}`, { new_area_decimal: newArea }).then((r) => r.data);
   },
+  tamperDeedRecord: (deedNo: string = 'DL-2026-1005', newArea: number = 25.0) => {
+    const target = deedNo && deedNo !== '1' ? deedNo : 'DL-2026-1005';
+    return api.post(`/ledger/tamper/${encodeURIComponent(target)}`, { new_area_decimal: newArea }).then((r) => r.data);
+  },
   restoreDeedDemo: (deedNo: string = 'DL-2026-1005') => {
+    const target = deedNo && deedNo !== '1' ? deedNo : 'DL-2026-1005';
+    return api.post(`/ledger/restore/${encodeURIComponent(target)}`).then((r) => r.data);
+  },
+  resetLedger: (deedNo?: string) => {
     const target = deedNo && deedNo !== '1' ? deedNo : 'DL-2026-1005';
     return api.post(`/ledger/restore/${encodeURIComponent(target)}`).then((r) => r.data);
   },
@@ -940,10 +948,10 @@ export const BhumiApi = {
     api.get('/onboarding/batches', { params }).then((r) => r.data),
   getOnboardingBatch: (idOrBatchNo: string | number): Promise<any> =>
     api.get(`/onboarding/batches/${idOrBatchNo}`).then((r) => r.data),
-  createOnboardingBatch: (data: { record_type: string; items: any[] }): Promise<any> =>
+  createOnboardingBatch: (data: { record_type: string; items: any[]; [key: string]: any }): Promise<any> =>
     api.post('/onboarding/batches', data).then((r) => r.data),
-  decideOnboardingBatch: (idOrBatchNo: string | number, decision: 'APPROVED' | 'REJECTED'): Promise<any> =>
-    api.post(`/onboarding/batches/${idOrBatchNo}/decide`, { decision }).then((r) => r.data),
+  decideOnboardingBatch: (idOrBatchNo: string | number, decision: 'APPROVED' | 'REJECTED', officer_note?: string): Promise<any> =>
+    api.post(`/onboarding/batches/${idOrBatchNo}/decide`, { decision, officer_note }).then((r) => r.data),
 
   // Appellate Review Mirror & Legal Roles (Tier C Section 8.8)
   listAppeals: (params?: { status?: string }): Promise<any> =>
@@ -952,7 +960,9 @@ export const BhumiApi = {
     api.get(`/appeals/${idOrCode}`).then((r) => r.data),
   createAppeal: (data: { mutation_id?: number; plot_id?: number; appellant_name_bn?: string; appellant_nid?: string; reason_bn: string }): Promise<any> =>
     api.post('/appeals', data).then((r) => r.data),
-  decideAppeal: (idOrCode: string | number, data: { status: string; decision_note_bn: string }): Promise<any> =>
-    api.post(`/appeals/${idOrCode}/decide`, data).then((r) => r.data),
+  decideAppeal: (idOrCode: string | number, dataOrStatus: string | { status: string; decision_note_bn: string }, note?: string): Promise<any> => {
+    const payload = typeof dataOrStatus === 'string' ? { status: dataOrStatus, decision_note_bn: note || '' } : dataOrStatus;
+    return api.post(`/appeals/${idOrCode}/decide`, payload).then((r) => r.data);
+  },
 };
 

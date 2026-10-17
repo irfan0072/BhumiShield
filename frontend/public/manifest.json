@@ -1,0 +1,21 @@
+{
+  "name": "ভূমি সুরক্ষা (BhumiShield)",
+  "short_name": "BhumiShield",
+  "description": "জাতীয় জমি ও দলিল নিরাপত্তা ট্রাস্ট প্ল্যাটফর্ম (LandTech 2026)",
+  "start_url": "/bn",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#006A4E",
+  "icons": [
+    {
+      "src": "/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

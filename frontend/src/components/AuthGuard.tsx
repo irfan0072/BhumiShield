@@ -24,7 +24,7 @@ interface AuthGuardProps {
   children: React.ReactNode;
 }
 
-const ROLE_NAMES: Record<UserRole, { bn: string; en: string; tab: string }> = {
+const ROLE_NAMES: Partial<Record<UserRole, { bn: string; en: string; tab: string }>> = {
   citizen: {
     bn: 'নাগরিক (Citizen)',
     en: 'Citizen',

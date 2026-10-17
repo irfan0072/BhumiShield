@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { AppUIProvider } from './i18n';
+import React, { useState, useEffect } from 'react';
+import { AppUIProvider, useAppUI } from './i18n';
 import { NavbarAndLayout } from './components/NavbarAndLayout';
 import { AuthGuard } from './components/AuthGuard';
 import { LandingPage } from './pages/LandingPage';

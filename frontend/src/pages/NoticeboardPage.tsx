@@ -43,6 +43,7 @@ interface NoticeItem {
   is_urgent: number;
   published_by: string;
   published_at: string;
+  created_at?: string;
   view_count: number;
   download_count: number;
   attachment_count: number;

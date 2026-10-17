@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { toBanglaDigits } from '../theme/tokens';
 
 export type Lang = 'bn' | 'en';
 export type FontStep = 0 | 1 | 2; // 18px, 20px, 22px
@@ -56,6 +57,8 @@ interface AppUIContextType {
   setActiveSubTab: (sub: string) => void;
   logout: () => void;
   t: (bn: string, en: string) => string;
+  formatNumber: (val: number | string) => string;
+  formatDate: (val: string | Date | null | undefined) => string;
 }
 
 const AppUIContext = createContext<AppUIContextType | null>(null);
@@ -166,6 +169,23 @@ export const AppUIProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const t = (bn: string, en: string) => (lang === 'bn' ? bn : en);
 
+  const formatNumber = (val: number | string) => toBanglaDigits(val, lang);
+
+  const formatDate = (val: string | Date | null | undefined) => {
+    if (!val) return '—';
+    try {
+      const d = typeof val === 'string' ? new Date(val) : val;
+      if (isNaN(d.getTime())) return String(val);
+      if (lang === 'bn') {
+        const formatted = d.toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' });
+        return toBanglaDigits(formatted, 'bn');
+      }
+      return d.toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch {
+      return String(val);
+    }
+  };
+
   return (
     <AppUIContext.Provider
       value={{
@@ -186,6 +206,8 @@ export const AppUIProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setActiveSubTab,
         logout,
         t,
+        formatNumber,
+        formatDate,
       }}
     >
       {children}
