@@ -3,7 +3,7 @@
 [![LandTech Hackathon 2026](https://img.shields.io/badge/LandTech%20Hackathon-2026%20Track%201-006A4E)](https://daffodilvarsity.edu.bd)
 [![PHP](https://img.shields.io/badge/PHP-8.3%20%7C%208.4-777BB4)](https://php.net)
 [![React](https://img.shields.io/badge/React-18%20%7C%20TypeScript-61DAFB)](https://react.dev)
-[![Tests](https://img.shields.io/badge/Tests-61%20Passed%2C%200%20Failed-success)](backend/tests/)
+[![Tests](https://img.shields.io/badge/Tests-128%20Passed%2C%200%20Failed-success)](backend/tests/)
 
 > **ভূমি সুরক্ষা (BhumiShield)** হলো একটি স্বাধীন ক্রিপ্টোগ্রাফিক ট্রাস্ট লেয়ার ও সমন্বিত ল্যান্ড রেকর্ড ম্যানেজমেন্ট সিস্টেম। এটি সাব-রেজিস্ট্রি (নিবন্ধন অধিদপ্তর) এবং সহকারী কমিশনার - ভূমি (উপজেলা ভূমি অফিস)-এর মধ্যে বাস্তব সময়ের সংযোগ স্থাপন করে জাল দলিল, ডাবল সেল, খতিয়ান টেম্পারিং এবং অবৈধ নামজারি প্রতিহত করে।
 
@@ -24,7 +24,7 @@
 
 2. **Ed25519 ডিজিটাল স্বাক্ষর ও কিউআর সনদ (`/bn/qr`):**
    - নিবন্ধিত দলিলের ক্রিপ্টোগ্রাফিক হ্যাশ-চেইন ও ডিজিটাল কিউআর কোড।
-   - **লাইভ টেম্পারিং ডেমো:** ডাটাবেজে জমির পরিমাণ অবৈধভাবে পরিবর্তন করা হলে মুহূর্তের মধ্যে লাল সতর্কতা প্রদর্শন ও ১-ক্লিকে লেজার রিস্টোরেশন।
+   - **অপারেটর কনসোল সিকিউরিটি ড্রিল:** ডাটাবেজে টেম্পারিং পরীক্ষা কেবল অপারেটর কনসোল কমান্ডের মাধ্যমে নিশ্চিতকরণ সহ কার্যকর হয় (`php artisan bhumi:drill:tamper {deed_code} --confirm` এবং `php artisan bhumi:drill:restore {deed_code} --confirm`)। ইউআই-তে কোনো কৃত্রিম টেম্পার বাটন রাখা হয়নি এবং প্রোডাকশন পরিবেশে এই ড্রিল স্বয়ংক্রিয়ভাবে ব্লক হয়।
 
 3. **নাগরিকের প্রপার্টি ভল্ট (L0–L3) ও ২-ট্যাপ টিকেট (`/bn/home`):**
    - বিএস খতিয়ান অনুযায়ী ব্যক্তিগত জমির তালিকা ও **মালিকানা বিক্রয় লক (🔒)**।
@@ -89,25 +89,55 @@ npm run dev
 ব্যাকএন্ডে কোনো বহিরাগত ডিপেন্ডেন্সি ব্যতিরেকে বিশুদ্ধ সেলফ-কনটেইন্ড টেস্ট রানার অন্তর্ভুক্ত রয়েছে:
 
 ```sh
-# সম্পূর্ণ টেস্ট সুইট একসাথে রান করতে (৬১টি টেস্ট)
+# সম্পূর্ণ টেস্ট সুইট একসাথে রান করতে (১২৮টি টেস্ট ও ১৩টি টেস্ট সুইট)
 php backend/artisan test
-```
 
-অথবা পৃথক টেস্ট সুইট:
+# সিআই গেট চেক (কোডবেসে কোনো 'scenario' কি-ওয়ার্ড থাকা নিষিদ্ধ)
+./scripts/ci-gate-no-scenarios.sh
+```
+**ফলাফল:** **128 passed, 0 failed (100% Green across 13 test suites).**
+
+---
+
+## 👥 প্রমিত টেস্ট অ্যাকাউন্ট তালিকা (Fixed Role Test Accounts)
+
+সকল অ্যাকাউন্টের ডিফল্ট পাসওয়ার্ড: `demo123`
+
+| রোল (Role) | ইউজারনেম | পদবি ও অফিস | সিন্থেটিক এনআইডি |
+| :--- | :--- | :--- | :--- |
+| **Citizen (বিক্রেতা)** | `citizen` | মো. রফিকুল ইসলাম (নাগরিক) | `9900001001` |
+| **Citizen (ওয়ারিশ/ক্রেতা)** | `rabeya` | মোসা. রাবেয়া খাতুন (নাগরিক - ওয়ারিশ) | `9900001002` |
+| **Service Point Operator** | `spo_birulia` | বিরুলিয়া ইউনিয়ন ডিজিটাল সেন্টার অপারেটর | `9900001999` |
+| **Sub-Registrar** | `registrar` | ফারহানা ইয়াসমিন (সাব-রেজিস্ট্রার, সাভার) | `9900002001` |
+| **Registry Data Officer** | `rdo_savar` | মো. কামরুল হাসান (মেকার ডাটা এন্ট্রি) | `9900002003` |
+| **AC Land** | `acland` | তানভীর আহমেদ (সহকারী কমিশনার - ভূমি, সাভার) | `9900003001` |
+| **Land Office Assistant** | `loa_savar` | সালমা আক্তার (ভূমি অফিস সহকারী - মেকার) | `9900003002` |
+| **Field Verification Officer**| `fvo_savar` | মো. জাহাঙ্গীর আলম (ফিল্ড ভেরিফিকেশন অফিসার) | `9900003003` |
+| **Settlement Records Officer**| `sro_dhaka` | মো. দেলোয়ার হোসেন (সেটেলমেন্ট রেকর্ডস অফিসার) | `9900003004` |
+| **Settlement Checker** | `aso_dhaka` | নাজনীন সুলতানা (সহকারী সেটেলমেন্ট অফিসার) | `9900003005` |
+| **UNO Supervisor** | `uno_savar` | মো. মশিউর রহমান (উপজেলা নির্বাহী কর্মকর্তা) | `9900003006` |
+| **Appellate Reviewer** | `appellate_reviewer` | মো. সাইদুর রহমান (অতিরিক্ত জেলা প্রশাসক - রাজস্ব) | `9900003007` |
+| **Bank Officer** | `bank` | নাজমুল হাসান (সোনালী ব্যাংক পিএলসি - ঋণ শাখা) | `9900004001` |
+| **Bank Manager** | `bank_manager` | সৈয়দা খালেদা পারভীন (শাখা ব্যবস্থাপক) | `9900004002` |
+| **Support Agent** | `support_agent` | মোসা. ফারহানা আফরোজ (১৬১২২ সাপোর্ট ডেস্ক) | `9900004003` |
+| **Platform Moderator** | `platform_moderator`| মো. ফাহিম চৌধুরী (মার্কেটপ্লেস মডারেটর) | `9900004004` |
+| **Content Editor** | `content_editor` | তানজিলা হক (নোটিশ ও ব্লগ মেকার) | `9900004005` |
+| **Content Approver** | `content_approver`| মো. আতিকুল ইসলাম (অফিস প্রধান - অ্যাপ্রুভার) | `9900004006` |
+| **National Auditor** | `lead_auditor` | মো. শামসুল হক (জাতীয় ক্রিপ্টোগ্রাফিক অডিটর) | `9900005002` |
+| **System Admin** | `admin` | সিস্টেম অ্যাডমিন (ভূমি সুরক্ষা অ্যাডমিন) | `9900005001` |
+
+---
+
+## 🏗️ সিন্থেটিক ওয়ার্ল্ড ফ্যাক্টরি ও সিমুলেটেড গেটওয়ে (World Factory & Boundaries)
+
 ```sh
-# ১. রুল ইঞ্জিন ও ক্রিপ্টোগ্রাফিক লেজার টেস্ট (২০টি টেস্ট)
-php -r "require 'backend/vendor/autoload.php'; exit(\Tests\Feature\RulesAndLedgerTest::runAll());"
+# ডিটারমিনিস্টিক পাইলট ডেটা ফ্যাক্টরি (১২ মাসের টাইমলাইন সিমুলেশন সহ)
+php artisan bhumi:seed-world --profile=pilot --seed=2026 [--fresh]
 
-# ২. রোল-বেসড এক্সেস কন্ট্রোল ও অডিট রিগ্রেশন টেস্ট (২৯টি টেস্ট)
-php -r "require 'backend/vendor/autoload.php'; exit(\Tests\Feature\RoleAuditRegressionTest::runAll());"
-
-# ৩. পাবলিক মার্কেটপ্লেস, নোটিশ, ব্লগ ও ক্যাডার্স্টাল ম্যাপ টেস্ট (৬টি টেস্ট)
-php -r "require 'backend/vendor/autoload.php'; exit(\Tests\Feature\TierBPortalAndMarketplaceTest::runAll());"
-
-# ৪. মেকার-চেকার স্ট্যাজিং ও আপিল ট্রাইব্যুনাল টেস্ট (৬টি টেস্ট)
-php -r "require 'backend/vendor/autoload.php'; exit(\Tests\Feature\TierCOnboardingAndAppealsTest::runAll());"
+# সিমুলেটেড এসএমএস ও ওটিপি আউটবক্স পরিদর্শন
+GET http://127.0.0.1:8008/api/v1/dev/outbox
+# অথবা ইউআই থেকে: /bn/admin?tab=dev_outbox
 ```
-**ফলাফল:** **61 passed, 0 failed (100% Green).**
 
 ---
 
