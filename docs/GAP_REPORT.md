@@ -164,11 +164,20 @@ flowchart TD
 
 ---
 
-## 6. Definition of Done Checklist for Tier A
+## 6. Definition of Done Checklist
 
-- [x] Step 0 complete: `docs/CURRENT_STATE.md` and `docs/GAP_REPORT.md` created.
-- [ ] Phase 2 complete: All 18 roles seeded with demo accounts; DB-level guard restricts `ownerships` writes strictly to `ac_land` (`ApproveMutation`); automated test passes.
-- [ ] Phase 3 complete: Friendly `/bn` and `/en` routes active with 301 redirects; privacy masking verified on all public and citizen endpoints.
-- [ ] Phase 4 complete: Transfer state machine operational with all 13 steps; mock biometric counter check required before deed registration; AC Land acts as sole mutation approver.
-- [ ] Phase 5 complete: Plot documents vault displays L0–L3 trust levels; missing document button creates pre-filled ticket in 2 taps.
-- [ ] Phase 6 complete: Layout verified at 360px, 768px, and 1280px with AA contrast; all 8 original demo scenarios pass; `docs/DEMO_SCRIPT.md` delivered.
+### Tier A (Round 1 Submission Complete)
+- [x] **Step 0 Complete:** `docs/CURRENT_STATE.md` and `docs/GAP_REPORT.md` created.
+- [x] **Phase 2 Complete:** All 18 Spatie RBAC roles seeded with jurisdiction scoping; SQLite triggers (`trg_guard_ownership_insert`, `trg_guard_ownership_update`, `trg_guard_ownership_delete`) strictly restrict `ownerships` mutations to `ac_land` (`ApproveMutation`).
+- [x] **Phase 3 Complete:** Friendly bilingual `/bn` and `/en` routing active; privacy masking verified on all public and citizen endpoints (NID masked, phone hidden).
+- [x] **Phase 4 Complete:** Transfer state machine operational with all 13 steps mapped to 5 citizen stages (`START`, `VERIFY`, `REGISTER`, `REVIEW`, `DONE`); mock counter biometric check logged before deed registration; AC Land sole mutation approver.
+- [x] **Phase 5 Complete:** Plot documents vault displays L0–L3 trust levels; missing document button creates pre-filled SLA support ticket in 2 taps (`TKT-2026-XXXXXX`).
+- [x] **Phase 6 Complete:** Layout verified at 360px, 768px, and 1280px with AA contrast; all 8 original demo scenarios pass; `docs/DEMO_SCRIPT.md` delivered.
+
+### Tier B (Final Preparation Complete)
+- [x] **Land Sale Marketplace (`/bn/sale` & `/en/sale`):** Verified unencumbered land listings, filtered by district/upazila/mouza/price, in-app enquiry without phone disclosure, and instant fraud check jump.
+- [x] **Official Noticeboard (`/bn/notices` & `/en/notices`):** 5 official gazettes/circulars with categories, pinned/urgent alerts, SHA-256 seal, and QR verification stamp preview.
+- [x] **Educational Blog (`/bn/blog` & `/en/blog`):** 5 land literacy & fraud prevention guides, category filtering, reading time, and interactive helpful feedback counter.
+- [x] **Office & Service Point Locator (`/bn/offices` & `/en/offices`):** Registry, AC Land, UDC Service Points, and Bank Branches with addresses, contacts, operating hours, and in-person appointment booking.
+- [x] **Cadastral Mouza Map (`/bn/map` & `/en/map`):** Zoom-aware visualizer (Upazila clusters <= 9, Mouza clusters 10–13, Plot boundaries >= 14) with interactive sidebar inspector.
+- [x] **Automated Test Suite:** 55 tests passing (20 Rules & Ledger tests, 29 Audit Regression tests, 6 Tier B Marketplace/Portal tests).
