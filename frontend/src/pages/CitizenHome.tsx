@@ -81,6 +81,12 @@ export const CitizenHome: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
     'আমার অজান্তে জাল আমমোক্তারনামা তৈরি করে এই দাগের জমি বিক্রির চেষ্টা চলছে।'
   );
   const [submittingDispute, setSubmittingDispute] = useState(false);
+  const [activeSection, setActiveSection] = useState<'all' | 'vault' | 'transfers' | 'disputes'>(() => {
+    const path = window.location.pathname.toLowerCase();
+    if (path.includes('/my/transfers')) return 'transfers';
+    if (path.includes('/my/tickets') || path.includes('/my/land')) return 'vault';
+    return 'all';
+  });
 
   const loadTransfers = () => {
     setLoadingTransfers(true);
@@ -495,8 +501,57 @@ export const CitizenHome: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
         </div>
       </div>
 
+      {/* Citizen Sub-Navigation Strip (Vault, Transfers, Disputes) */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={() => setActiveSection('all')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer min-h-[38px] ${
+            activeSection === 'all'
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+          }`}
+        >
+          <Layers className="w-3.5 h-3.5" />
+          <span>{t('সকল বিবরণ', 'All Overview')}</span>
+        </button>
+        <button
+          onClick={() => setActiveSection('vault')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer min-h-[38px] ${
+            activeSection === 'vault'
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+          }`}
+        >
+          <Lock className="w-3.5 h-3.5" />
+          <span>{t('জমির ভল্ট ও প্রামাণ্য সনদ (L0–L3)', 'Land Vault & Docs (L0-L3)')}</span>
+        </button>
+        <button
+          onClick={() => setActiveSection('transfers')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer min-h-[38px] ${
+            activeSection === 'transfers'
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>{t('১৩-ধাপের হস্তান্তর ট্র্যাকার', '13-Step Transfers')} ({toBanglaDigits(transfers.length, lang)})</span>
+        </button>
+        <button
+          onClick={() => setActiveSection('disputes')}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer min-h-[38px] ${
+            activeSection === 'disputes'
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+          }`}
+        >
+          <AlertOctagon className="w-3.5 h-3.5" />
+          <span>{t('আপত্তি ও বিরোধ দাখিল', 'Dispute Objections')}</span>
+        </button>
+      </div>
+
       {/* Citizen Control 1: My Land Vault + Plot Sale Protection Lock (🔒 বিক্রয় লক) */}
-      {vault?.found && vault.person ? (
+      {(activeSection === 'all' || activeSection === 'vault') && (
+        vault?.found && vault.person ? (
         <div className="panel p-6 space-y-5 animate-rise-delay">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#006A4E]/10 pb-4">
             <div>
@@ -841,6 +896,7 @@ export const CitizenHome: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
             )}
           </p>
         </div>
+      )
       )}
 
       {/* Ticket Success Alert Banner */}
@@ -867,6 +923,7 @@ export const CitizenHome: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
       )}
 
       {/* Citizen Control: 13-Step Transfer State Machine Stepper with 5 Citizen Stages */}
+      {(activeSection === 'all' || activeSection === 'transfers') && (
       <div className="panel p-6 space-y-5 animate-rise">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#006A4E]/10 pb-4">
           <div>
@@ -1015,8 +1072,10 @@ export const CitizenHome: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
           </div>
         )}
       </div>
+      )}
 
       {/* Citizen Control 2: File Land Fraud / Ownership Dispute (অভিযোগ ও আপত্তি দাখিল) */}
+      {(activeSection === 'all' || activeSection === 'disputes') && (
       <div className="panel p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         <form onSubmit={handleFileDispute} className="lg:col-span-6 space-y-4">
           <h3 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
@@ -1133,6 +1192,7 @@ export const CitizenHome: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
           </div>
         </div>
       </div>
+      )}
 
       {/* Deed Proof Modal (F19) */}
       {(selectedDeedModal || loadingDeedModal) && (

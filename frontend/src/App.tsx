@@ -49,7 +49,7 @@ const getInitialTab = (): string => {
   if (cleanPath.startsWith('/map')) return 'map';
   if (cleanPath.startsWith('/offices')) return 'offices';
   if (cleanPath.startsWith('/help')) return 'help';
-  if (cleanPath.startsWith('/home') || cleanPath.startsWith('/portal') || cleanPath.startsWith('/my/land')) return 'home';
+  if (cleanPath.startsWith('/home') || cleanPath.startsWith('/portal') || cleanPath.startsWith('/my/land') || cleanPath.startsWith('/my/transfers') || cleanPath.startsWith('/my/tickets')) return 'home';
   if (cleanPath.startsWith('/registrar')) return 'registrar';
   if (cleanPath.startsWith('/acland')) return 'acland';
   if (cleanPath.startsWith('/bank')) return 'bank';

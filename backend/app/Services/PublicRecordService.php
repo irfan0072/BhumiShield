@@ -3,10 +3,17 @@ declare(strict_types=1);
 namespace App\Services;
 final class PublicRecordService
 {
-    public static function forViewer(array $data): array
+    public static function forViewer(array $data, ?array $actor = null): array
     {
-        $actor = JwtAuthService::getAuthenticatedUser();
-        if ($actor && in_array($actor['role'] ?? '', ['sub_registrar','ac_land','bank_officer','admin'], true)) return $data;
+        $officerRoles = [
+            'sub_registrar', 'registry_data_officer', 'registry_auditor',
+            'ac_land', 'land_office_assistant', 'field_verification_officer', 'kanungo',
+            'settlement_records_officer', 'settlement_checker',
+            'uno_supervisor', 'appellate_reviewer',
+            'bank_officer', 'bank_manager',
+            'admin', 'system_admin', 'auditor'
+        ];
+        if ($actor && in_array($actor['role'] ?? '', $officerRoles, true)) return $data;
         return self::minimize($data);
     }
     public static function minimize(array $data): array
