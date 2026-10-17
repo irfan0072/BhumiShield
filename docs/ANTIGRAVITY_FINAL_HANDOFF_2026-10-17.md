@@ -1,0 +1,32 @@
+# Antigravity continuation prompt
+
+Continue BhumiShield from the current preserved workspace. Read `docs/OVERNIGHT_FINAL_AUDIT_2026-10-17.md`, `docs/CODEX_FINAL_UI_FINDINGS_2026-10-17.md`, `docs/CODEX_RELEASE_ACCEPTANCE_2026-10-17.md` and the production runbook first. Recheck each finding: some were repaired after discovery. Do not reintroduce an old defect or count a milestone report as test proof.
+
+The overnight cutoff has passed. This document is a handoff, not permission to continue unattended beyond the cutoff. Start only in a new user-authorized work session.
+
+## Preserve these boundaries
+
+- Original backup: `/Users/apple/BhumiShield-Backups/2026-10-17_03-01-19/`. Preserve the current state with another backup before further work.
+- Never reset/reseed the working DB, discard existing work, deploy/publish externally, make government/payment submissions, change real passwords, or grant real security access automatically.
+- Respect headless permission denial. Do not alter permission settings or retry the denied Git-status operation through another tool. Do not read/copy/access the previously denied temporary concurrency report. No Git commands are needed for this task.
+- Use isolated synthetic databases for writes, independent tests and browser workflows. Do not test approvals, freezes, lien release or identity grants on working records.
+- One source writer at a time. Use exact scoped file edits; earlier CLI sessions repeatedly read files without editing. If a read tool returns only metadata or a write fails, stop and report the concrete issue instead of looping or claiming success.
+
+The current source also contains expanded Tier B/C roles and newer staging/appeal features added after the overnight implementation window. Preserve and inspect those implementations before changing anything. The original five-role browser audit does not certify the newer roles. Current61PHP tests and88HTTP checks pass, but end-to-end browser proof for the expanded surface is still required.
+
+## Remaining work in priority order
+
+1. Recheck production admin after the repaired independent loads and disabled-demo guards. Confirm actual users/settings/catalogue/audit/RBAC data loads in the compiled build. Verify draft→publish→archive→republish in browser; Archive now uses the real soft-archive endpoint. New services default to draft. Exercise English/Bengali service text and fee version history after refresh.
+2. AC Land UI still needs visible localized errors, pending-action guards and useful evidence/reasons. A tampered mutation is denied by the server but its dialog previously showed no response. Keep the case open on failure, show the server denial in the dialog/page, never show success on a rejected request. Replace canned claims of completed hearings with officer-entered reasons/evidence. Preserve backend ownership/conservation/state safeguards.
+3. Finish constrained dynamic site content through the existing settings seam: brand titles, bilingual notices/support hours/contact, FAQs and glossary. Validate an allowlist, types, lengths, bounded numeric values, safe plain text and JSON structure; reject the entire invalid update before any write. Use one transaction plus audit entry. Public pages must consume persisted values; admin controls must actually edit them and survive reload. Security/identity/RBAC invariants cannot become optional toggles. Existing generic settings currently accept arbitrary keys/types and some saved values have no public consumer.
+4. Complete service/fee editor fields: English descriptions/titles/components, review/effective dates, source/authority, publication and availability. Preserve fee snapshots, sums and provenance. Do not invent official registration rates or payment success. Keep unverified registration estimates unpublished and the production demo calculator unavailable.
+5. Finish bilingual content accuracy. Remove remaining Bengali claims of universal CS→SA→RS→BS sequence and live ministry integration; actual sequence/status varies by locality. The application evaluates available records, not legal title. Risk-assessment printing now has an independent header and no SAFE→signature inference; verify its final rendered copy. Distinguish bad QR-link hash from actual stored-record tampering. Official service links and current fee provenance are in the research document.
+6. Recheck all roles with synthetic accounts and actual form submissions. Bank form now submits selected borrower/area and assigned bank identity, and institution scope is server-enforced. Non-admin users cannot self-change their office; verify profile UI behavior and admin-managed staff office fields. Never loosen assignment checks to make a demo selector succeed. Check mobile390 header, dialogs, keyboard actions, high contrast and both language font stacks.
+7. Inspect the existing staging/onboarding and review workflow, then complete only the missing parts needed for real records. Do not interpret "dynamic" as a generic unaudited SQL editor. Real identity/records/bank/payment adapters, keys, callbacks, retention and service authority must be supplied and verified; absent providers must remain visibly unavailable.
+8. Review production abuse protection, login throttling, session storage, audit-log access and privacy with an accountable operator. SQLite is the validated local target; PostgreSQL/key rotation need separate proof. Rebuild and retest the final Docker images after all source changes; earlier14/14 runtime checks covered an earlier image snapshot.
+
+## Required final proof
+
+Run `php artisan test` in backend and strict TypeScript plus production build in frontend. Use real HTTP routes against isolated DBs for object/role scope, inactive/expired sessions, bank self-reassignment, cross-bank actions, duplicate mutation/lien races, public-response privacy and real QR decoding. Verify backup restore separately. Browser QA must show actual persisted results after reload; click every distinct action destination and document untested combinations honestly. Preserve Hind Siliguri for Bengali and Manrope for English, using the existing homepage palette and spacing.
+
+Only report a production release when both local acceptance and operator/provider release gates pass. Otherwise deliver a tested release candidate with a specific unresolved list, evidence and responsible next actions. Do not claim the whole site is dynamic, every button is tested or official services are connected when those conditions are unproved.

@@ -1,0 +1,58 @@
+[
+  {
+    "check": "Apache API behind Nginx production proxy ready",
+    "pass": true
+  },
+  {
+    "check": "compiled frontend serves successfully",
+    "pass": true
+  },
+  {
+    "check": "proof deep link serves compiled SPA fallback",
+    "pass": true
+  },
+  {
+    "check": "container deed signature verifies with configured key",
+    "pass": true
+  },
+  {
+    "check": "production-runtime synthetic citizen login",
+    "pass": true
+  },
+  {
+    "check": "production-runtime synthetic registrar login",
+    "pass": true
+  },
+  {
+    "check": "production-runtime synthetic acland login",
+    "pass": true
+  },
+  {
+    "check": "production-runtime synthetic bank login",
+    "pass": true
+  },
+  {
+    "check": "production-runtime synthetic admin login",
+    "pass": true
+  },
+  {
+    "check": "published guidance available from production runtime",
+    "pass": true
+  },
+  {
+    "check": "only sourced schedules published",
+    "pass": true
+  },
+  {
+    "check": "tamper simulator unavailable in production",
+    "pass": true
+  },
+  {
+    "check": "unverified fee assessment unavailable in production",
+    "pass": true
+  },
+  {
+    "check": "restart preserves published records",
+    "pass": true
+  }
+]

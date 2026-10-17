@@ -1,0 +1,693 @@
+[
+  {
+    "check": "health",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "anonymous admin directory",
+    "status": 401,
+    "expected": [
+      401
+    ],
+    "pass": true,
+    "code": "AUTH_REQUIRED"
+  },
+  {
+    "check": "anonymous registration write",
+    "status": 401,
+    "expected": [
+      401
+    ],
+    "pass": true,
+    "code": "AUTH_REQUIRED"
+  },
+  {
+    "check": "malformed token",
+    "status": 401,
+    "expected": [
+      401
+    ],
+    "pass": true,
+    "code": "AUTH_REQUIRED"
+  },
+  {
+    "check": "login requires explicit password",
+    "status": 401,
+    "expected": [
+      401,
+      422
+    ],
+    "pass": true,
+    "code": "INVALID_CREDENTIALS"
+  },
+  {
+    "check": "citizen login",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "registrar login",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "acland login",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "bank login",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "admin login",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "successful legacy login upgrades stored password hash",
+    "pass": true
+  },
+  {
+    "check": "expired signed token denied",
+    "status": 401,
+    "expected": [
+      401
+    ],
+    "pass": true,
+    "code": "AUTH_REQUIRED"
+  },
+  {
+    "check": "inactive account token denied",
+    "status": 401,
+    "expected": [
+      401,
+      403
+    ],
+    "pass": true,
+    "code": "AUTH_REQUIRED"
+  },
+  {
+    "check": "citizen forbidden admin directory",
+    "status": 403,
+    "expected": [
+      403
+    ],
+    "pass": true,
+    "code": "FORBIDDEN_ROLE"
+  },
+  {
+    "check": "citizen forbidden mutation write",
+    "status": 403,
+    "expected": [
+      403
+    ],
+    "pass": true,
+    "code": "FORBIDDEN_ROLE"
+  },
+  {
+    "check": "citizen own vault",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "non-owner plot lock forbidden",
+    "status": 403,
+    "expected": [
+      403
+    ],
+    "pass": true,
+    "code": "FORBIDDEN_NOT_PLOT_OWNER"
+  },
+  {
+    "check": "active lien NOC forbidden",
+    "status": 422,
+    "expected": [
+      403,
+      422
+    ],
+    "pass": true,
+    "code": "ACTIVE_LIEN_CANNOT_ISSUE_NOC"
+  },
+  {
+    "check": "bank cannot release another institution lien",
+    "status": 403,
+    "expected": [
+      403
+    ],
+    "pass": true,
+    "code": "UNAUTHORIZED_BANK_SCOPE"
+  },
+  {
+    "check": "bank cannot issue foreign-bank NOC",
+    "status": 403,
+    "expected": [
+      403
+    ],
+    "pass": true,
+    "code": "UNAUTHORIZED_BANK_SCOPE"
+  },
+  {
+    "check": "bank cannot self-assign another office",
+    "status": 403,
+    "expected": [
+      403
+    ],
+    "pass": true,
+    "code": "OFFICE_ASSIGNMENT_ADMIN_ONLY"
+  },
+  {
+    "check": "bank cannot create under another institution",
+    "status": 403,
+    "expected": [
+      403
+    ],
+    "pass": true,
+    "code": "UNAUTHORIZED_BANK_SCOPE"
+  },
+  {
+    "check": "generic bank label cannot bypass scope",
+    "status": 403,
+    "expected": [
+      403
+    ],
+    "pass": true,
+    "code": "UNAUTHORIZED_BANK_SCOPE"
+  },
+  {
+    "check": "missing bank assignment fails closed",
+    "status": 403,
+    "expected": [
+      403
+    ],
+    "pass": true,
+    "code": "UNAUTHORIZED_BANK_SCOPE"
+  },
+  {
+    "check": "admin preserves released foreign-bank access",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "negative registration area rejected",
+    "status": 422,
+    "expected": [
+      422
+    ],
+    "pass": true,
+    "code": "INVALID_AREA"
+  },
+  {
+    "check": "tampered mutation approval blocked",
+    "status": 422,
+    "expected": [
+      409,
+      422
+    ],
+    "pass": true,
+    "code": "DEED_VERIFICATION_FAILED"
+  },
+  {
+    "check": "duplicate terminal mutation decision rejected",
+    "status": 409,
+    "expected": [
+      409,
+      422
+    ],
+    "pass": true,
+    "code": "MUTATION_ALREADY_DECIDED"
+  },
+  {
+    "check": "repeat decision leaves ownership unchanged",
+    "pass": true
+  },
+  {
+    "check": "public deed integrity view",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "last administrator cannot deactivate",
+    "status": 400,
+    "expected": [
+      400,
+      403,
+      409,
+      422
+    ],
+    "pass": true,
+    "code": "CANNOT_DEMOTE_LAST_ADMIN"
+  },
+  {
+    "check": "last-admin rejection has domain error code",
+    "pass": true
+  },
+  {
+    "check": "E2E registrar precheck",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "E2E clean transaction safe",
+    "pass": true
+  },
+  {
+    "check": "E2E signed registration",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "E2E registration queued mutation",
+    "pass": true
+  },
+  {
+    "check": "E2E exactly one mutation case",
+    "pass": true
+  },
+  {
+    "check": "E2E mutation approval",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "E2E seller debit buyer credit conserve23",
+    "pass": true
+  },
+  {
+    "check": "E2E all latest fractions match ownership area",
+    "pass": true
+  },
+  {
+    "check": "E2E buyer vault via admin scope",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "E2E buyer vault contains acquired plot",
+    "pass": true
+  },
+  {
+    "check": "E2E deed remains cryptographically intact",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "E2E signed content valid after mutation",
+    "pass": true
+  },
+  {
+    "check": "E2E new owner collateral lien",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "E2E duplicate active lien blocked",
+    "status": 409,
+    "expected": [
+      409,
+      422
+    ],
+    "pass": true,
+    "code": "COLLATERAL_HIGH_RISK_BLOCKED"
+  },
+  {
+    "check": "E2E authorized lien release",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "E2E released signed NOC",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "E2E repeat NOC reads stable certificate",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "E2E NOC hash stable",
+    "pass": true
+  },
+  {
+    "check": "E2E public NOC proof",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "E2E public NOC verifies",
+    "pass": true
+  },
+  {
+    "check": "published service catalogue",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "published service catalogue has sourced entries",
+    "pass": true
+  },
+  {
+    "check": "anonymous service administration denied",
+    "status": 401,
+    "expected": [
+      401
+    ],
+    "pass": true,
+    "code": "AUTH_REQUIRED"
+  },
+  {
+    "check": "citizen service creation forbidden",
+    "status": 403,
+    "expected": [
+      403
+    ],
+    "pass": true,
+    "code": "FORBIDDEN_ROLE"
+  },
+  {
+    "check": "service unsafe destination rejected",
+    "status": 422,
+    "expected": [
+      422
+    ],
+    "pass": true,
+    "code": "INVALID_HTTPS_URL"
+  },
+  {
+    "check": "admin creates draft service",
+    "status": 200,
+    "expected": [
+      200,
+      201
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "created service has persisted identifier",
+    "pass": true
+  },
+  {
+    "check": "unpublished service hidden from public detail",
+    "status": 404,
+    "expected": [
+      404
+    ],
+    "pass": true,
+    "code": "SERVICE_NOT_FOUND"
+  },
+  {
+    "check": "admin edits bilingual service",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "admin publishes saved service",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "published service visible by code",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "public service reflects persisted bilingual edit",
+    "pass": true
+  },
+  {
+    "check": "public catalogue search works",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "catalogue search finds newly published record",
+    "pass": true
+  },
+  {
+    "check": "service edit rejects unsafe source URL",
+    "status": 422,
+    "expected": [
+      422
+    ],
+    "pass": true,
+    "code": "INVALID_HTTPS_URL"
+  },
+  {
+    "check": "admin archives service",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "archived service hidden from public detail",
+    "status": 404,
+    "expected": [
+      404
+    ],
+    "pass": true,
+    "code": "SERVICE_NOT_FOUND"
+  },
+  {
+    "check": "archive preserves service record",
+    "pass": true
+  },
+  {
+    "check": "published fee registry",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "sourced khatian fee total120 and map fee total545 published",
+    "pass": true
+  },
+  {
+    "check": "citizen fee changes forbidden",
+    "status": 403,
+    "expected": [
+      403
+    ],
+    "pass": true,
+    "code": "FORBIDDEN_ROLE"
+  },
+  {
+    "check": "negative fee amount rejected",
+    "status": 422,
+    "expected": [
+      422
+    ],
+    "pass": true,
+    "code": "INVALID_FEE_AMOUNT"
+  },
+  {
+    "check": "invalid fee date rejected",
+    "status": 422,
+    "expected": [
+      422
+    ],
+    "pass": true,
+    "code": "INVALID_EFFECTIVE_DATE"
+  },
+  {
+    "check": "admin changes versioned fee",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "fee edit increments version and preserves previous amount",
+    "pass": true
+  },
+  {
+    "check": "public fee reload reflects persisted edit",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "updated fee amount persists publicly",
+    "pass": true
+  },
+  {
+    "check": "anonymous persons response safely scoped",
+    "status": 200,
+    "expected": [
+      200,
+      401,
+      403
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "anonymous persons does not leak NID/address directory",
+    "pass": true
+  },
+  {
+    "check": "unverified owner identity registration",
+    "status": 200,
+    "expected": [
+      200,
+      201,
+      403,
+      409,
+      422
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "unverified existing NID cannot claim portfolio authority",
+    "status": 200,
+    "pass": true
+  },
+  {
+    "check": "inactive admin cannot provision admin through public registration",
+    "status": 403,
+    "expected": [
+      401,
+      403
+    ],
+    "pass": true,
+    "code": "UNAUTHORIZED_ROLE_PROVISIONING"
+  },
+  {
+    "check": "inactive admin provisioning persists no account",
+    "pass": true
+  },
+  {
+    "check": "password change with current credential",
+    "status": 200,
+    "expected": [
+      200
+    ],
+    "pass": true,
+    "code": null
+  },
+  {
+    "check": "old citizen token revoked after password change",
+    "status": 401,
+    "expected": [
+      401,
+      403
+    ],
+    "pass": true,
+    "code": "SESSION_REVOKED"
+  },
+  {
+    "check": "supervisor CORS header allowed",
+    "pass": true
+  }
+]

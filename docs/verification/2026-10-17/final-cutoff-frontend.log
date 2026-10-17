@@ -1,0 +1,22 @@
+
+> bhumishield-web@2.0.0 build
+> vite build --outDir /private/tmp/bhumishield-overnight-20261017/final-cutoff-build
+
+vite v6.4.4 building for production...
+
+(!) outDir /private/tmp/bhumishield-overnight-20261017/final-cutoff-build is not inside project root and will not be emptied.
+Use --emptyOutDir to override.
+
+transforming...
+✓ 1670 modules transformed.
+rendering chunks...
+computing gzip size...
+../../../../../../private/tmp/bhumishield-overnight-20261017/final-cutoff-build/index.html                     1.33 kB │ gzip:   0.70 kB
+../../../../../../private/tmp/bhumishield-overnight-20261017/final-cutoff-build/assets/index-CalKVimu.css     93.13 kB │ gzip:  15.50 kB
+../../../../../../private/tmp/bhumishield-overnight-20261017/final-cutoff-build/assets/index-7jBaaQ8h.js   1,045.91 kB │ gzip: 248.12 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 2.67s

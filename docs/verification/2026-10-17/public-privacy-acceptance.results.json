@@ -1,0 +1,48 @@
+[
+  {
+    "check": "anonymous minimized /persons",
+    "pass": true,
+    "status": 200,
+    "private_paths": []
+  },
+  {
+    "check": "anonymous minimized /persons?plot_id=1",
+    "pass": true,
+    "status": 200,
+    "private_paths": []
+  },
+  {
+    "check": "anonymous minimized /plots/1/check-before-you-buy",
+    "pass": true,
+    "status": 200,
+    "private_paths": []
+  },
+  {
+    "check": "anonymous minimized /plots/6/check-before-you-buy",
+    "pass": true,
+    "status": 200,
+    "private_paths": []
+  },
+  {
+    "check": "anonymous minimized /verify/deed/1",
+    "pass": true,
+    "status": 200,
+    "private_paths": []
+  },
+  {
+    "check": "anonymous minimized /ledger/verify?limit=5",
+    "pass": true,
+    "status": 200,
+    "private_paths": []
+  },
+  {
+    "check": "anonymous minimized /citizen/disputes",
+    "pass": true,
+    "status": 200,
+    "private_paths": []
+  },
+  {
+    "check": "privacy response preserves cryptographic verdict",
+    "pass": true
+  }
+]

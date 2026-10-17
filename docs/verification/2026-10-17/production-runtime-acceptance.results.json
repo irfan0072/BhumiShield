@@ -1,0 +1,70 @@
+[
+  {
+    "check": "empty production storage readiness503",
+    "pass": true
+  },
+  {
+    "check": "requests do not initialize or seed empty storage",
+    "pass": true
+  },
+  {
+    "check": "migrated valid production storage ready",
+    "pass": true
+  },
+  {
+    "check": "production demo disabled /ledger/tamper/1",
+    "pass": true
+  },
+  {
+    "check": "production demo disabled /ledger/restore/1",
+    "pass": true
+  },
+  {
+    "check": "production demo disabled /auth/switch-demo-role",
+    "pass": true
+  },
+  {
+    "check": "production demo disabled /scenarios",
+    "pass": true
+  },
+  {
+    "check": "production demo disabled /ocr/khatian-demo",
+    "pass": true
+  },
+  {
+    "check": "production destructive CLI denied migrate:fresh --seed",
+    "pass": true
+  },
+  {
+    "check": "production destructive CLI denied db:seed",
+    "pass": true
+  },
+  {
+    "check": "production destructive CLI denied migrate --fresh",
+    "pass": true
+  },
+  {
+    "check": "reference guidance init creates no accounts or land records",
+    "pass": true
+  },
+  {
+    "check": "unverified registration estimate stays draft",
+    "pass": true
+  },
+  {
+    "check": "explicit first operator enrollment works on isolated storage",
+    "pass": true
+  },
+  {
+    "check": "existing administrator cannot be replaced by bootstrap",
+    "pass": true
+  },
+  {
+    "check": "bootstrap creates exactly one operator",
+    "pass": true
+  },
+  {
+    "check": "production requests fail503 on missing schema",
+    "pass": true
+  }
+]

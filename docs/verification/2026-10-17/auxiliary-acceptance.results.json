@@ -1,0 +1,32 @@
+[
+  {
+    "check": "concurrency_acceptance.py",
+    "exit_code": 0,
+    "pass": true
+  },
+  {
+    "check": "production_config_probes.py",
+    "exit_code": 0,
+    "pass": true
+  },
+  {
+    "check": "qr_acceptance.py",
+    "exit_code": 0,
+    "pass": true
+  },
+  {
+    "check": "password_acceptance.py",
+    "exit_code": 0,
+    "pass": true
+  },
+  {
+    "check": "migration_acceptance.py",
+    "exit_code": 0,
+    "pass": true
+  },
+  {
+    "check": "risk_adapter_acceptance.py",
+    "exit_code": 0,
+    "pass": true
+  }
+]
