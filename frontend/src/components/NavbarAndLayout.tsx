@@ -1060,10 +1060,10 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         </header>
 
         {/* Main Content */}
-        <main className={`flex-1 w-full ${activeTab === 'landing' ? '' : 'py-8 px-4 max-w-7xl mx-auto'}`}>{children}</main>
+        <main className={`flex-1 w-full ${activeTab === 'landing' || activeTab === 'map' ? '' : 'py-8 px-4 max-w-7xl mx-auto'}`}>{children}</main>
 
-        {/* Clean Footer (bcc.zohirrayhan.com style) */}
-        <InstitutionalFooter t={t} onNavigate={setActiveTab} />
+        {/* Clean Footer (bcc.zohirrayhan.com style, suppressed on map page which has its own map.land.gov.bd institutional footer) */}
+        {activeTab !== 'map' && <InstitutionalFooter t={t} onNavigate={setActiveTab} />}
 
         {/* Mobile Slide-Over Drawer */}
         {mobileDrawerOpen && (
