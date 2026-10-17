@@ -12,5 +12,5 @@ chown www-data:www-data /data
 for file in /data/bhumishield.sqlite /data/bhumishield.sqlite-wal /data/bhumishield.sqlite-shm; do
     if [ -f "$file" ]; then chown www-data:www-data "$file"; fi
 done
-su -s /bin/sh www-data -c 'cd /app && php artisan migrate'
+su -s /bin/sh www-data -c 'cd /app && php artisan migrate --seed || php artisan migrate'
 exec "$@"
