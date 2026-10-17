@@ -2,7 +2,27 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export type Lang = 'bn' | 'en';
 export type FontStep = 0 | 1 | 2; // 18px, 20px, 22px
-export type UserRole = 'citizen' | 'sub_registrar' | 'ac_land' | 'bank_officer' | 'admin';
+export type UserRole =
+  | 'citizen'
+  | 'service_point_operator'
+  | 'sub_registrar'
+  | 'registry_data_officer'
+  | 'ac_land'
+  | 'land_office_assistant'
+  | 'field_verification_officer'
+  | 'settlement_records_officer'
+  | 'settlement_checker'
+  | 'uno_supervisor'
+  | 'appellate_reviewer'
+  | 'bank_officer'
+  | 'bank_manager'
+  | 'support_agent'
+  | 'platform_moderator'
+  | 'content_editor'
+  | 'content_approver'
+  | 'system_admin'
+  | 'auditor'
+  | 'admin';
 
 export interface AuthUser {
   id: number;
@@ -40,8 +60,17 @@ interface AppUIContextType {
 
 const AppUIContext = createContext<AppUIContextType | null>(null);
 
+const detectInitialLang = (): Lang => {
+  const p = window.location.pathname.toLowerCase();
+  if (p.startsWith('/en') || p === '/en') return 'en';
+  if (p.startsWith('/bn') || p === '/bn') return 'bn';
+  const saved = localStorage.getItem('bs_lang');
+  if (saved === 'en' || saved === 'bn') return saved;
+  return 'bn';
+};
+
 export const AppUIProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [lang, setLangState] = useState<Lang>(() => (localStorage.getItem('bs_lang') as Lang) || 'bn');
+  const [lang, setLangState] = useState<Lang>(detectInitialLang);
   const [fontStep, setFontStep] = useState<FontStep>(() => Number(localStorage.getItem('bs_font') || 0) as FontStep);
   const [highContrast, setHighContrast] = useState<boolean>(() => localStorage.getItem('bs_hc') === '1');
   const [user, setUserState] = useState<AuthUser | null>(() => {
@@ -82,7 +111,21 @@ export const AppUIProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [highContrast]);
 
-  const setLang = (l: Lang) => setLangState(l);
+  const setLang = (l: Lang) => {
+    setLangState(l);
+    // synchronize URL language prefix
+    try {
+      const url = new URL(window.location.href);
+      const parts = url.pathname.split('/').filter(Boolean);
+      if (parts.length > 0 && (parts[0] === 'bn' || parts[0] === 'en')) {
+        parts[0] = l;
+        url.pathname = '/' + parts.join('/');
+      } else {
+        url.pathname = '/' + l + (url.pathname === '/' ? '' : url.pathname);
+      }
+      window.history.replaceState({}, '', url.toString());
+    } catch {}
+  };
   const increaseFont = () => setFontStep((prev) => (prev < 2 ? ((prev + 1) as FontStep) : prev));
   const decreaseFont = () => setFontStep((prev) => (prev > 0 ? ((prev - 1) as FontStep) : prev));
   const toggleHighContrast = () => setHighContrast((prev) => !prev);

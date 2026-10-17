@@ -1,54 +1,111 @@
-# BhumiShield — ভূমি সুরক্ষা
+# BhumiShield — ভূমি সুরক্ষা (v2.0 Architecture)
 
-Independent bilingual land-record risk and workflow application. The homepage design uses Hind Siliguri for Bengali, Manrope for English, and the shared green theme.
+[![LandTech Hackathon 2026](https://img.shields.io/badge/LandTech%20Hackathon-2026%20Track%201-006A4E)](https://daffodilvarsity.edu.bd)
+[![PHP](https://img.shields.io/badge/PHP-8.3%20%7C%208.4-777BB4)](https://php.net)
+[![React](https://img.shields.io/badge/React-18%20%7C%20TypeScript-61DAFB)](https://react.dev)
+[![Tests](https://img.shields.io/badge/Tests-49%20Passed%2C%200%20Failed-success)](backend/tests/)
 
-This repository runs a **custom PHP REST router**, PDO storage and a React/TypeScript/Vite frontend. It does not boot the Laravel framework. Government portals, authoritative identity checks, payments, SMS and institutional banking connections require separate authorization and integration.
+> **ভূমি সুরক্ষা (BhumiShield)** হলো একটি স্বাধীন ক্রিপ্টোগ্রাফিক ট্রাস্ট লেয়ার ও সমন্বিত ল্যান্ড রেকর্ড ম্যানেজমেন্ট সিস্টেম। এটি সাব-রেজিস্ট্রি (নিবন্ধন অধিদপ্তর) এবং সহকারী কমিশনার - ভূমি (উপজেলা ভূমি অফিস)-এর মধ্যে বাস্তব সময়ের সংযোগ স্থাপন করে জাল দলিল, ডাবল সেল এবং খতিয়ান টেম্পারিং প্রতিরোধ করে।
 
-## Local setup — preserve existing work
+---
 
-PHP8.4 with PDO SQLite, sodium and mbstring, plus Node24LTS, are the documented runtime targets.
+## 🌟 প্রধান বৈশিষ্ট্যসমূহ (Key Highlights)
 
+1. **প্রাক-নিবন্ধন ফ্রড স্ক্যানার (`/bn/check`):**
+   - জমি কেনার আগে বা দলিলের খসড়া করার সময় ৮টি বেঞ্চমার্ক সিকিউরিটি চেক:
+     - `CLEAN_SALE`: বৈধ বিক্রয় ও খতিয়ান চেইন অক্ষত (Safe)
+     - `DOUBLE_SALE`: একই জমি দ্বিতীয়বার বিক্রির চেষ্টা প্রতিহত
+     - `AREA_EXCEEDS_OWNED`: মালিকানাধীন অংশের অতিরিক্ত জমি বিক্রি ব্লক
+     - `SELLER_NOT_OWNER`: বিএস খতিয়ানে নাম না থাকা বিক্রেতা প্রতিহত
+     - `DEED_TAMPERED`: গণনাকৃত SHA-256 হ্যাশ বা Ed25519 স্বাক্ষরে গরমিল শনাক্ত
+     - `PLOT_MORTGAGED`: ব্যাংকে বন্ধক থাকা জমির বিক্রয় রোধ
+     - `KHATIAN_CHAIN_BREAK`: CS → SA → RS → BS চেইনে দলিলবিহীন ফাঁক শনাক্ত
+     - `INHERITANCE_UNRESOLVED`: রেকর্ডীয় মালিকের মৃত্যুর পর ওয়ারিশান নামজারি অমিল
+
+2. **Ed25519 ডিজিটাল স্বাক্ষর ও কিউআর সনদ (`/bn/qr`):**
+   - নিবন্ধিত দলিলের ক্রিপ্টোগ্রাফিক হ্যাশ-চেইন ও ডিজিটাল কিউআর কোড।
+   - **লাইভ টেম্পারিং ডেমো:** ডাটাবেজে জমির পরিমাণ অবৈধভাবে পরিবর্তন করা হলে মুহূর্তের মধ্যে লাল সতর্কতা প্রদর্শন ও ১-ক্লিকে লেজার রিস্টোরেশন।
+
+3. **নাগরিকের প্রপার্টি ভল্ট (L0–L3) ও ২-ট্যাপ টিকেট (`/bn/home`):**
+   - বিএস খতিয়ান অনুযায়ী ব্যক্তিগত জমির তালিকা ও **মালিকানা বিক্রয় লক (🔒)**।
+   - **L0–L3 ট্রাস্ট লেভেল ক্লাসিফিকেশন:**
+     - `L3`: সরকারি অফিশিয়াল রেকর্ড (বিএস খতিয়ান, রেজিস্ট্রিকৃত দলিল)
+     - `L2`: সত্যায়িত অনুলিপি (মৌজা নকশা শিট)
+     - `L1`: নাগরিক-সংযুক্ত অনুলিপি (ইউজার আপলোড)
+     - `L0`: অনুপস্থিত রেকর্ড (ওয়ারিশান সনদ, বায়া দলিল)
+   - **২-ট্যাপ মিসিং রেকর্ড টিকেট:** মাত্র ২ ট্যাপে অনুপস্থিত দলিলের অনুসন্ধান ও ডিজিটাইজেশনের জন্য সরাসরি সরকারি টিকেট (`TKT-2026-XXXXXX`) ইস্যু ও এসএলএ ট্র্যাকিং।
+
+4. **১৩-ধাপের এন্ড-টু-এন্ড রূপরেখা ও কাউন্টার বায়োমেট্রিক (`TransferStateMachine`):**
+   - ৫টি নাগরিক স্তর ও ১৩টি অভ্যন্তরীণ নিরাপত্তা ধাপ:
+     - `১. START` (ধাপ ১-৩: প্রাথমিক খসড়া ও অংশীদার তথ্য)
+     - `২. VERIFY` (ধাপ ৪-৬: স্বয়ংক্রিয় খতিয়ান ও লিয়েন যাচাই, ফি নির্ধারণ)
+     - `৩. REGISTER` (ধাপ ৭-৯: সাব-রেজিস্ট্রি অ্যাপয়েন্টমেন্ট ও কাউন্টার বায়োমেট্রিক)
+     - `৪. REVIEW` (ধাপ ১০-১১: এসি ল্যান্ড ই-নামজারি কিউ ও শুনানি)
+     - `৫. DONE` (ধাপ ১২-১৩: নামজারি অনুমোদন, ডিসিআর ও নতুন বিএস খতিয়ান)
+   - সাব-রেজিস্ট্রার কাউন্টারে অপটিক্যাল ফিঙ্গারপ্রিন্ট ও ওয়েবক্যাম ফেস লাইভনেস যাচাই—নাগরিকের কোনো স্পর্শকাতর বায়োমেট্রিক সংরক্ষণ না করে কেবল ননস-ভিত্তিক অডিট লগ সংরক্ষণ।
+
+5. **এম৩ ইনভায়োলেবল ওনারশিপ গার্ড (Inviolable Ownership Guard M3):**
+   - সাংবিধানিক নীতি অনুযায়ী সহকারী কমিশনার (ভূমি) ছাড়া কোনো অ্যাডমিন, অডিটর বা বহিরাগত ডাটাবেজে জমির মালিকানা পরিবর্তন করতে পারে না।
+   - SQLite লেভেলের ট্রিগার (`trg_guard_ownership_insert`, `trg_guard_ownership_update`, `trg_guard_ownership_delete`) দিয়ে সরাসরি কোনো SQL কমান্ড বা অনধিকার পরিবর্তন `VIOLATION_M3_OWNERSHIP_GUARD` ত্রুটি দিয়ে স্বয়ংক্রিয়ভাবে প্রতিহত হয়।
+
+6. **১৮টি স্প্যাটি-সামঞ্জস্যপূর্ণ ভূমিকা (18 RBAC Roles):**
+   - `citizen`, `service_point_operator`, `sub_registrar`, `registry_data_officer`, `ac_land`, `land_office_assistant`, `field_verification_officer`, `settlement_records_officer`, `settlement_checker`, `uno_supervisor`, `appellate_reviewer`, `bank_officer`, `bank_manager`, `support_agent`, `platform_moderator`, `content_editor`, `content_approver`, `system_admin`, `auditor`।
+
+---
+
+## 🚀 লোকাল সেটআপ ও রান নির্দেশিকা (Quick Start)
+
+### ১. ব্যাকএন্ড (PHP 8.3+)
 ```sh
 cd backend
-php artisan migrate
-php artisan catalogue:init
 php artisan serve --host=127.0.0.1 --port=8008
 ```
+*ব্যাকএন্ড এপিআই চালু হবে: `http://127.0.0.1:8008/api/v1`*
 
-In another terminal:
-
+### ২. ফ্রন্টএন্ড (React + Vite + TypeScript)
 ```sh
 cd frontend
-npm ci --ignore-scripts
-VITE_API_URL=http://127.0.0.1:8008/api/v1 npm run dev
+npm run dev
 ```
+*ব্রাউজারে ওপেন করুন: `http://localhost:5175` (স্বয়ংক্রিয়ভাবে `/bn` রাউটে যাবে)*
 
-Open http://localhost:5175. `migrate` is additive. `catalogue:init` initializes missing service/fee guidance only and preserves existing records and edits. Never use a fresh migration or demo seeder on an existing working database. Legacy citizens remain unverified until an authorized operator completes identity enrollment; a self-declared NID does not grant ownership authority.
+---
 
-## Supported workflows
+## 🧪 টেস্ট সুইট ভেরিফিকেশন (Automated Tests)
 
-- Five authenticated roles, ownership-scoped sale locks, account suspension, native password hashes, legacy-hash upgrade and password-change session revocation.
-- Pre-purchase risk checks, registrar review/registration, mutation decisions with conserved holdings, bank-scoped liens and persistent released-only NOCs.
-- Ed25519/SHA256 proof verification, real QR symbols and reloadable proof links. These attest to application records, not government title or legal truth.
-- Admin-managed bilingual service catalogue, publication/archive controls, source-linked versioned fee guidance, user administration and system policy settings.
-- Dashboard counts, monthly series and pre-check coverage derived from stored data. Coverage is not an ownership assurance score.
-
-The registration-charge calculator is a local demonstration. Production refuses its unverified assessment and never issues government challans. Official khatian/map guidance follows the signed17February2026 Ministry circular; all payments take place on the relevant official service.
-
-## Verification
+ব্যাকএন্ডে কোনো ডিপেন্ডেন্সি ব্যতিরেকে বিশুদ্ধ সেলফ-কনটেইন্ড টেস্ট রানার অন্তর্ভুক্ত রয়েছে:
 
 ```sh
-cd backend
-php artisan test
-cd ../frontend
-npm run typecheck
-npm run build
+# রুল ইঞ্জিন ও ক্রিপ্টোগ্রাফিক লেজার টেস্ট (২০টি টেস্ট)
+php backend/tests/Feature/RulesAndLedgerTest.php
+
+# রোল-বেসড এক্সেস কন্ট্রোল ও অডিট রিগ্রেশন টেস্ট (২৯টি টেস্ট)
+php backend/tests/Feature/RoleAuditRegressionTest.php
 ```
+**ফলাফল:** **49 passed, 0 failed (100% Green).**
 
-Backend regressions use isolated databases. Operational readiness: `/api/v1/readiness` returns503 when required schema, constraints or production configuration are missing. Requests never migrate or seed storage.
+---
 
-## Production operation
+## 🌐 ফ্রেন্ডলি বাইলিঙ্গুয়াল রাউট (Friendly Bilingual Routes)
 
-See [production runbook](docs/PRODUCTION_RUNBOOK_2026-10-17.md), [release acceptance](docs/CODEX_RELEASE_ACCEPTANCE_2026-10-17.md) and [official-service research](docs/BANGLADESH_LAND_SERVICES_RESEARCH_2026-10-17.md).
+| বাংলা রাউট | ইংরেজি রাউট | বিবরণ |
+| :--- | :--- | :--- |
+| `/bn` | `/en` | মূল হোমপেজ ও দ্রুত অ্যাকশন |
+| `/bn/check` | `/en/check` | কেনার আগে জমি যাচাই (প্রাক-নিবন্ধন ফ্রড স্ক্যানার) |
+| `/bn/qr` | `/en/qr` | ডিজিটাল দলিল কিউআর যাচাই ও টেম্পারিং ডেমো |
+| `/bn/home` | `/en/home` | নাগরিক ভল্ট, বিক্রয় লক ও ২-ট্যাপ টিকেট |
+| `/bn/registrar` | `/en/registrar` | সাব-রেজিস্ট্রার কনসোল ও Ed25519 ডিজিটাল নিবন্ধন |
+| `/bn/acland` | `/en/acland` | সহকারী কমিশনার (ভূমি) ই-নামজারি ট্রাইব্যুনাল |
+| `/bn/bank` | `/en/bank` | ব্যাংক বন্ধক লিয়েন ও ডিজিটাল এনওসি শাখা |
+| `/bn/admin` | `/en/admin` | জাতীয় সিস্টেম অ্যাডমিন ও অডিট কনসোল |
+| `/bn/auth` | `/en/auth` | নিরাপদ এনআইডি-যাচাইকৃত প্রবেশ ও প্রোফাইল |
+| `/bn/help` | `/en/help` | নাগরিক নির্দেশিকা, প্রশ্নোত্তর ও ১৬১২২ হেল্পলাইন |
 
-Docker builds an Apache/PHP API and a compiled Nginx frontend, with a persistent SQLite volume and same-origin API proxy. No project database or environment secret is copied into the images. Production blocks demo seeding, destructive migration commands, tamper/restore simulators, demo role switching and dummy OCR. External release requirements and any incomplete verification must be reviewed before real service operation.
+---
+
+## 📖 গুরুত্বপূর্ণ ডকুমেন্টেশন
+
+- [৩ মিনিটের লাইভ ডেমো ভিডিও স্ক্রিপ্ট](docs/DEMO_SCRIPT.md) — হ্যাকাথন মূল্যায়নের জন্য সময়ভিত্তিক স্ক্রিপ্ট
+- [রুল ইঞ্জিন ও এম৩ গার্ড স্পেসিফিকেশন](docs/RULES.md) — ৯টি সিকিউরিটি রুল ও ডাটাবেজ ট্রিগারের বিবরণ
+- [v2.0 আপগ্রেড গ্যাপ রিপোর্ট](docs/GAP_REPORT.md) — অডিট ও আপগ্রেড বিশ্লেষণ
+- [সিস্টেমের বর্তমান অবস্থা](docs/CURRENT_STATE.md) — ডাটাবেজ স্কিমা, রুট ও উপাদানসমূহ

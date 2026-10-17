@@ -882,4 +882,37 @@ export const BhumiApi = {
     api.put(`/admin/fees/${id}`, data).then((r) => r.data),
   verifyCitizenIdentity: (userId: number): Promise<{ user_id: number; is_identity_verified: number; message_bn: string; message_en: string }> =>
     api.post(`/admin/users/${userId}/verify-identity`).then((r) => r.data),
+
+  // Citizen Vault & Document Checklist (Phase 5)
+  getPlotDocuments: (plotCodeOrId: string | number): Promise<any> =>
+    api.get(`/plots/${plotCodeOrId}/documents`).then((r) => r.data),
+  uploadPlotDocument: (plotCodeOrId: string | number, data: { doc_type: string; document_no?: string; notes_bn?: string; file_name?: string }): Promise<any> =>
+    api.post(`/plots/${plotCodeOrId}/documents`, data).then((r) => r.data),
+  requestMissingDocument: (plotCodeOrId: string | number, data: { doc_type: string; notes_bn?: string }): Promise<any> =>
+    api.post(`/plots/${plotCodeOrId}/request-missing-document`, data).then((r) => r.data),
+
+  // 13-Step Transfer State Machine (Phase 4)
+  listTransfers: (query?: any): Promise<any> =>
+    api.get('/transfers', { params: query }).then((r) => r.data),
+  createTransfer: (data: any): Promise<any> =>
+    api.post('/transfers', data).then((r) => r.data),
+  getTransfer: (codeOrId: string | number): Promise<any> =>
+    api.get(`/transfers/${codeOrId}`).then((r) => r.data),
+  advanceTransfer: (codeOrId: string | number, data: any): Promise<any> =>
+    api.post(`/transfers/${codeOrId}/advance`, data).then((r) => r.data),
+
+  // SLA Support Tickets & Tracking (Phase 5)
+  listTickets: (query?: any): Promise<any> =>
+    api.get('/tickets', { params: query }).then((r) => r.data),
+  getTicket: (codeOrId: string | number): Promise<any> =>
+    api.get(`/tickets/${codeOrId}`).then((r) => r.data),
+
+  // Institutional Public Registers & Blog (Phase 3)
+  listOffices: (): Promise<any> =>
+    api.get('/offices').then((r) => r.data),
+  listNotices: (): Promise<any> =>
+    api.get('/notices').then((r) => r.data),
+  listBlogPosts: (category?: string): Promise<any> =>
+    api.get('/blog', { params: { category } }).then((r) => r.data),
 };
+
