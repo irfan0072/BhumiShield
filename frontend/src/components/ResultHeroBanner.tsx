@@ -11,7 +11,7 @@ export const ResultHeroBanner: React.FC<{ report: RiskReportResponse }> = ({ rep
   const isWarn = report.status === 'WARNING';
 
   const bgClass = isSafe
-    ? 'bg-[#0D6B5C] text-white'
+    ? 'bg-[#006A4E] text-white'
     : isWarn
     ? 'bg-[#C4891A] text-white'
     : 'bg-[#FF3B4A] text-white';
@@ -40,7 +40,7 @@ export const ResultHeroBanner: React.FC<{ report: RiskReportResponse }> = ({ rep
             <IconComp className="w-9 h-9" />
           </div>
           <div>
-            <div className="font-display text-2xl md:text-3xl tracking-tight">
+            <div className="font-bold text-2xl md:text-3xl tracking-tight">
               {lang === 'bn' ? report.badge_bn : report.badge_en}
             </div>
             <p className="mt-2 text-base md:text-lg font-medium opacity-95 max-w-2xl">
@@ -61,7 +61,7 @@ export const ResultHeroBanner: React.FC<{ report: RiskReportResponse }> = ({ rep
           )}
           <button
             onClick={() => window.print()}
-            className="px-4 py-2.5 rounded-lg bg-white text-[#0A1F1C] hover:bg-[#EDF4F1] font-semibold flex items-center gap-2 cursor-pointer"
+            className="px-4 py-2.5 rounded-lg bg-white text-[#0A1F1C] hover:bg-[#EDF7F4] font-semibold flex items-center gap-2 cursor-pointer"
           >
             <Printer className="w-5 h-5" />
             <span>{t('প্রিন্ট / PDF', 'Print / PDF')}</span>
@@ -70,7 +70,7 @@ export const ResultHeroBanner: React.FC<{ report: RiskReportResponse }> = ({ rep
       </div>
 
       <div className="p-6 space-y-4">
-        <h3 className="font-display text-xl text-[#062823]">
+        <h3 className="font-bold text-xl text-[#074f38]">
           {t('প্রধান পর্যবেক্ষণসমূহ (সহজ ভাষায়):', 'Key Observations (Plain Language):')}
         </h3>
 
@@ -81,7 +81,7 @@ export const ResultHeroBanner: React.FC<{ report: RiskReportResponse }> = ({ rep
                 ? 'border-l-[6px] border-[#FF3B4A] bg-[#FFF0F1]'
                 : f.severity === 'WARNING'
                 ? 'border-l-[6px] border-[#C4891A] bg-[#FBF3E0]'
-                : 'border-l-[6px] border-[#0D6B5C] bg-[#E8F5F1]';
+                : 'border-l-[6px] border-[#006A4E] bg-emerald-50/80';
 
             const badgeClass =
               f.severity === 'HIGH'
@@ -98,7 +98,7 @@ export const ResultHeroBanner: React.FC<{ report: RiskReportResponse }> = ({ rep
                 : t('নিরাপদ', 'Safe');
 
             return (
-              <div key={idx} className={`p-4 rounded-xl ${cardStyle} border border-[#0D6B5C]/10`}>
+              <div key={idx} className={`p-4 rounded-xl ${cardStyle} border border-[#006A4E]/10`}>
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-bold text-base md:text-lg text-[#0A1F1C]">
                     {lang === 'bn' ? f.title_bn : f.title_en}
@@ -108,7 +108,7 @@ export const ResultHeroBanner: React.FC<{ report: RiskReportResponse }> = ({ rep
                 <p className="mt-1.5 text-sm text-[#0A1F1C]/90">
                   {lang === 'bn' ? f.detail_bn : f.detail_en}
                 </p>
-                <p className="mt-2 text-sm font-semibold text-[#0D6B5C]">
+                <p className="mt-2 text-sm font-semibold text-[#006A4E]">
                   {t('করণীয়:', 'Action:')} {lang === 'bn' ? f.action_bn : f.action_en}
                 </p>
               </div>
@@ -116,8 +116,8 @@ export const ResultHeroBanner: React.FC<{ report: RiskReportResponse }> = ({ rep
           })}
         </div>
 
-        <div className="p-4 rounded-xl bg-[#EDF4F1]/80 border border-[#0D6B5C]/20">
-          <div className="font-display text-lg text-[#0D6B5C]">
+        <div className="p-4 rounded-xl bg-[#EDF7F4] border border-[#006A4E]/20">
+          <div className="font-bold text-lg text-[#006A4E]">
             {t('পরবর্তী করণীয় (What to do next):', 'Next Step (What to do next):')}
           </div>
           <p className="mt-1 font-medium text-[#0A1F1C]">
@@ -125,10 +125,10 @@ export const ResultHeroBanner: React.FC<{ report: RiskReportResponse }> = ({ rep
           </p>
         </div>
 
-        <div className="pt-2 border-t border-[#0D6B5C]/12">
+        <div className="pt-2 border-t border-[#006A4E]/12">
           <button
             onClick={() => setShowTech(!showTech)}
-            className="text-sm font-bold text-[#5F7A74] hover:text-[#0D6B5C] flex items-center gap-1.5 cursor-pointer"
+            className="text-sm font-bold text-[#5F7A74] hover:text-[#006A4E] flex items-center gap-1.5 cursor-pointer"
           >
             {showTech ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             <span>
@@ -140,7 +140,7 @@ export const ResultHeroBanner: React.FC<{ report: RiskReportResponse }> = ({ rep
           </button>
 
           {showTech && (
-            <div className="mt-3 p-4 rounded-xl bg-[#062823] text-[#7CDB6A] font-mono text-xs overflow-x-auto space-y-2">
+            <div className="mt-3 p-4 rounded-xl bg-slate-900 text-emerald-300 font-mono text-xs overflow-x-auto space-y-2">
               <div>STATUS: {report.status}</div>
               <div>
                 TRIGGERED_RULES: {report.findings.map((f) => `${f.rule_code}(${f.severity})`).join(', ')}

@@ -360,7 +360,7 @@ final class RulesAndLedgerTest
         $fees = RoleControlController::calculateFees(2000000, 'SALE');
         self::assertTrue($fees['total_govt_fees_bdt'] === 150000);
 
-        $noc = RoleControlController::generateLienNoc(3);
+        $noc = RoleControlController::generateLienNoc(3, ['username'=>'admin', 'role'=>'admin']);
         self::assertTrue(str_starts_with($noc['noc_no'], 'NOC-2026-') && strlen($noc['noc_hash']) === 64);
 
         $flagged = RoleControlController::listFlaggedKhatians();

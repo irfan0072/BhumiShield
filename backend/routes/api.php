@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\LedgerVerificationController;
 use App\Http\Controllers\Api\V1\RoleControlController;
+use App\Http\Controllers\Api\V1\ServiceCatalogueController;
 use App\Http\Controllers\Api\V1\SystemAdminController;
 use App\Http\Controllers\Api\V1\WorkflowController;
 use App\Http\Middleware\RoleMiddleware;
@@ -15,15 +16,6 @@ use Database\Seeders\DatabaseSeeder;
  * Laravel API Router (/api/v1/* and /api/*) with RoleMiddleware guards.
  */
 return static function (string $method, string $uri, array $query, array $body): array {
-    try {
-        $row = DB::selectOne('SELECT COUNT(*) AS cnt FROM plots');
-        if (!$row || ((int) $row['cnt']) === 0) {
-            (new DatabaseSeeder())->run(true);
-        }
-    } catch (\Throwable) {
-        (new DatabaseSeeder())->run(true);
-    }
-
     $path = '/' . trim($uri, '/');
     if (str_starts_with($path, '/api/v1/')) {
         $sub = '/' . substr($path, 8);
@@ -33,31 +25,67 @@ return static function (string $method, string $uri, array $query, array $body):
         $sub = $path;
     }
 
-    if ($method === 'GET' && ($sub === '/health' || $sub === '/')) {
-        return [
-            'status' => 'ok',
-            'framework' => 'Laravel 11 (PHP ' . PHP_VERSION . ')',
-            'rbac_middleware' => 'RoleMiddleware Active',
-            'service' => 'BhumiShield Laravel API (Demo / ডেমো ডেটা)',
-            'disclaimer_bn' => 'ভূমি সুরক্ষা শুধুমাত্র ঝুঁকি চিহ্নিত করে; চূড়ান্ত আইনি সিদ্ধান্ত সংশ্লিষ্ট সরকারি কর্মকর্তার।',
-            'disclaimer_en' => 'BhumiShield flags risk for a human officer to decide. It never declares legal truth.',
+    if (strtolower((string) env('APP_ENV', 'development')) === 'production') {
+        $demoOnly = preg_match('#^/ledger/(tamper|restore)/#', $sub)
+            || in_array($sub, ['/auth/switch-demo-role', '/auth/demo-users', '/scenarios', '/demo-scenarios', '/ocr/khatian-demo', '/ocr-assist/sample'], true);
+        if ($demoOnly) {
+            throw new \RuntimeException(json_encode([
+                'status' => 404, 'code' => 'DEMO_FEATURE_DISABLED',
+                'message_bn' => 'ডেমো সুবিধাটি প্রোডাকশনে চালু নেই।',
+                'message_en' => 'This demonstration feature is disabled in production.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+    }
+
+    $isHealthRequest = $method === 'GET' && in_array($sub, ['/health', '/readiness', '/'], true);
+    if ($isHealthRequest || strtolower((string) env('APP_ENV', 'development')) === 'production') {
+        $state = \App\Services\ReadinessService::inspect();
+        if (!$state['ready']) {
+            throw new \RuntimeException(json_encode([
+                'status' => 503, 'code' => 'SERVICE_NOT_READY', 'issues' => $state['issues'],
+                'message_bn' => 'সেবা প্রস্তুত নয়। অপারেটরকে ডাটাবেজ মাইগ্রেশন ও কনফিগারেশন যাচাই করতে হবে।',
+                'message_en' => 'Service is not ready. The operator must check migrations and configuration.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+        if ($isHealthRequest) return [
+            'status' => 'ok', 'ready' => true, 'database' => 'connected',
+            'framework' => 'Custom PHP REST runtime', 'service' => 'BhumiShield',
+            'mode' => strtolower((string) env('APP_ENV', 'development')),
+            'disclaimer_en' => 'Independent land-record workflow and risk application; not a government authority.',
         ];
     }
 
     // 1. Public & Admin Ledger Verification Routes
-    if ($method === 'GET' && (preg_match('#^/verify/deed/([^/]+)$#', $sub, $m) || preg_match('#^/deeds/verify/([^/]+)$#', $sub, $m))) {
+    if ($method === 'GET' && preg_match('#^/verify/noc/([^/]+)$#', $sub, $m)) {
+        $qrSetting = DB::selectOne("SELECT setting_value_json FROM site_settings WHERE setting_key = 'public_qr_verification_enabled'");
+        $publicEnabled = $qrSetting ? (json_decode((string) $qrSetting['setting_value_json'], true) !== false) : true;
+        if (!$publicEnabled) {
+            RoleMiddleware::authorize(['citizen', 'sub_registrar', 'ac_land', 'bank_officer', 'admin']);
+        }
+        return RoleControlController::verifyLienNoc(urldecode($m[1]), $query['h'] ?? null);
+    }
+    if ($method === 'GET' && (
+        preg_match('#^/verify/deed/([^/]+)$#', $sub, $m) ||
+        preg_match('#^/deeds/verify/([^/]+)$#', $sub, $m) ||
+        preg_match('#^/verify/(?!noc/)([^/]+)$#', $sub, $m)
+    )) {
+        $qrSetting = DB::selectOne("SELECT setting_value_json FROM site_settings WHERE setting_key = 'public_qr_verification_enabled'");
+        $publicEnabled = $qrSetting ? (json_decode((string) $qrSetting['setting_value_json'], true) !== false) : true;
+        if (!$publicEnabled) {
+            RoleMiddleware::authorize(['citizen', 'sub_registrar', 'ac_land', 'bank_officer', 'admin']);
+        }
         return LedgerVerificationController::verifySingleDeed(urldecode($m[1]), $query['h'] ?? null);
     }
     if ($method === 'GET' && ($sub === '/ledger/verify' || $sub === '/ledger/verify-chain')) {
         return LedgerVerificationController::verifyFullLedger((int) ($query['limit'] ?? 25));
     }
-    if ($method === 'POST' && preg_match('#^/ledger/tamper/(\d+)$#', $sub, $m)) {
+    if ($method === 'POST' && preg_match('#^/ledger/tamper/([^/]+)$#', $sub, $m)) {
         $actor = RoleMiddleware::authorize(['admin', 'sub_registrar']);
-        return LedgerVerificationController::simulateTampering((int) $m[1], $body, $actor);
+        return LedgerVerificationController::simulateTampering(urldecode($m[1]), $body, $actor);
     }
-    if ($method === 'POST' && preg_match('#^/ledger/restore/(\d+)$#', $sub, $m)) {
+    if ($method === 'POST' && preg_match('#^/ledger/restore/([^/]+)$#', $sub, $m)) {
         $actor = RoleMiddleware::authorize(['admin', 'sub_registrar']);
-        return LedgerVerificationController::restoreTamperedDeed((int) $m[1], $actor);
+        return LedgerVerificationController::restoreTamperedDeed(urldecode($m[1]), $actor);
     }
 
     // 2. Authentication, Role Switching & RBAC Permissions Matrix
@@ -109,7 +137,7 @@ return static function (string $method, string $uri, array $query, array $body):
         return ['items' => $plots, 'total' => count($plots)];
     }
     if ($method === 'GET' && $sub === '/persons') {
-        return WorkflowController::listPersons();
+        return WorkflowController::listPersons($query);
     }
     if ($method === 'GET' && ($sub === '/citizen/my-properties' || $sub === '/citizen/my-vault')) {
         RoleMiddleware::authorize(['citizen', 'admin']);
@@ -219,8 +247,8 @@ return static function (string $method, string $uri, array $query, array $body):
         return SystemAdminController::adminListUsers($query['role'] ?? null, $query['q'] ?? null);
     }
     if ($method === 'POST' && ($sub === '/admin/users' || $sub === '/users')) {
-        RoleMiddleware::authorize(['admin']);
-        return SystemAdminController::registerUser($body);
+        $actor = RoleMiddleware::authorize(['admin']);
+        return SystemAdminController::registerUser($body, $actor);
     }
     if ($method === 'PUT' && (preg_match('#^/admin/users/(\d+)$#', $sub, $m) || preg_match('#^/users/(\d+)$#', $sub, $m))) {
         $actor = RoleMiddleware::authorize(['admin']);
@@ -239,6 +267,51 @@ return static function (string $method, string $uri, array $query, array $body):
     }
     if ($method === 'GET' && ($sub === '/analytics/summary' || $sub === '/stats/summary')) {
         return SystemAdminController::getAnalyticsSummary();
+    }
+
+    // 8. Service Catalogue & Fee Registry (Bilingual, Source-Linked)
+    if ($method === 'GET' && $sub === '/services') {
+        return ServiceCatalogueController::listPublicServices($query['category'] ?? null, $query['q'] ?? null);
+    }
+    if ($method === 'GET' && preg_match('#^/services/([^/]+)$#', $sub, $m)) {
+        return ServiceCatalogueController::getPublicService(urldecode($m[1]));
+    }
+    if ($method === 'GET' && $sub === '/fees') {
+        return ServiceCatalogueController::listPublicFees();
+    }
+
+    // Admin Service Catalogue & Fee Registry Management
+    if ($method === 'GET' && $sub === '/admin/services') {
+        RoleMiddleware::authorize(['admin']);
+        return ServiceCatalogueController::listAdminServices();
+    }
+    if ($method === 'POST' && $sub === '/admin/services') {
+        $actor = RoleMiddleware::authorize(['admin']);
+        return ServiceCatalogueController::createService($body, $actor);
+    }
+    if ($method === 'PUT' && preg_match('#^/admin/services/(\d+)$#', $sub, $m)) {
+        $actor = RoleMiddleware::authorize(['admin']);
+        return ServiceCatalogueController::updateService((int) $m[1], $body, $actor);
+    }
+    if ($method === 'POST' && preg_match('#^/admin/services/(\d+)/toggle-publish$#', $sub, $m)) {
+        $actor = RoleMiddleware::authorize(['admin']);
+        return ServiceCatalogueController::togglePublishService((int) $m[1], $actor);
+    }
+    if ($method === 'DELETE' && preg_match('#^/admin/services/(\d+)$#', $sub, $m)) {
+        $actor = RoleMiddleware::authorize(['admin']);
+        return ServiceCatalogueController::archiveService((int) $m[1], $actor);
+    }
+    if ($method === 'GET' && $sub === '/admin/fees') {
+        RoleMiddleware::authorize(['admin']);
+        return ServiceCatalogueController::listAdminFees();
+    }
+    if ($method === 'PUT' && preg_match('#^/admin/fees/(\d+)$#', $sub, $m)) {
+        $actor = RoleMiddleware::authorize(['admin']);
+        return ServiceCatalogueController::updateFee((int) $m[1], $body, $actor);
+    }
+    if ($method === 'POST' && preg_match('#^/admin/users/(\d+)/verify-identity$#', $sub, $m)) {
+        $actor = RoleMiddleware::authorize(['admin']);
+        return SystemAdminController::verifyCitizenIdentity((int) $m[1], $actor);
     }
 
     throw new \RuntimeException(json_encode([

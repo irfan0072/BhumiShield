@@ -7,16 +7,25 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 use Database\Migrations\CreateBhumishieldTables;
 use Database\Seeders\DatabaseSeeder;
+use Tests\Feature\RoleAuditRegressionTest;
 use Tests\Feature\RulesAndLedgerTest;
 
 $args = array_slice($argv, 1);
 $command = $args[0] ?? 'list';
 
+if (strtolower((string) env('APP_ENV', 'development')) === 'production'
+    && (in_array($command, ['migrate:fresh', 'db:seed'], true)
+        || in_array('--fresh', $args, true) || in_array('--seed', $args, true))) {
+    fwrite(STDERR, "Destructive migration and synthetic seeding are disabled in production.\n");
+    exit(1);
+}
+
+
 switch ($command) {
     case 'migrate':
         $fresh = in_array('--fresh', $args, true);
         (new CreateBhumishieldTables())->up($fresh);
-        echo "INFO  Running Laravel migrations... DONE\n";
+        echo "INFO  Running additive schema migrations... DONE\n";
         if (in_array('--seed', $args, true)) {
             $summary = (new DatabaseSeeder())->run(false);
             echo 'INFO  Database seeded successfully: ' . json_encode($summary) . "\n";
@@ -24,6 +33,13 @@ switch ($command) {
         exit(0);
 
     case 'migrate:fresh':
+        $env = getenv('APP_ENV') ?: ($_ENV['APP_ENV'] ?? 'local');
+        $hasForce = in_array('--force', $args, true);
+        if ($env === 'production' && !$hasForce) {
+            echo "ERROR: Cannot run migrate:fresh in production without --force!\n";
+            echo "       Destructive operation aborted to prevent data loss.\n";
+            exit(1);
+        }
         $seed = in_array('--seed', $args, true);
         if ($seed) {
             $summary = (new DatabaseSeeder())->run(true);
@@ -33,6 +49,47 @@ switch ($command) {
             (new CreateBhumishieldTables())->up(true);
             echo "INFO  Dropped all tables and re-ran migrations.\n";
         }
+        exit(0);
+
+    case 'operator:create':
+        if (!in_array('--initial-admin', $args, true)) {
+            fwrite(STDERR, "Use --initial-admin for explicit first-operator enrollment.\n");
+            exit(1);
+        }
+        $username = trim((string) getenv('BOOTSTRAP_ADMIN_USERNAME'));
+        $password = (string) getenv('BOOTSTRAP_ADMIN_PASSWORD');
+        if (!preg_match('/^[A-Za-z0-9][A-Za-z0-9_.-]{2,63}$/D', $username) || strlen($password) < 16) {
+            fwrite(STDERR, "Supply a valid BOOTSTRAP_ADMIN_USERNAME and a password of at least16characters through the environment.\n");
+            exit(1);
+        }
+        if (!\App\Services\ReadinessService::inspect()['ready']) {
+            fwrite(STDERR, "Run additive migrations and configure production secrets before operator enrollment.\n");
+            exit(1);
+        }
+        try {
+            \App\Support\DB::transaction(static function () use ($username, $password): void {
+                $admin = \App\Support\DB::selectOne("SELECT COUNT(*) AS c FROM users WHERE role = 'admin'");
+                if ((int) $admin['c'] !== 0) throw new \RuntimeException('An administrator already exists. Use authorized account administration.');
+                \App\Support\DB::insert(
+                    'INSERT INTO users (username, full_name_bn, full_name_en, role, office_bn, office_en, nid, phone_dummy, is_active, is_identity_verified, token_version, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [$username, $username, $username, 'admin', 'স্বাধীন অ্যাপ অপারেটর', 'Independent application operator', '', '', 1, 0, 1, \App\Services\JwtAuthService::hashPassword($password), gmdate('c')]
+                );
+                DatabaseSeeder::appendAuditEntry($username, 'admin', 'INITIAL_OPERATOR_ENROLLED', 'user', $username, ['enrollment' => 'explicit-local-operator-command'], gmdate('c'));
+            });
+            echo "INFO  Initial operator enrolled. Clear bootstrap variables after use.\n";
+            exit(0);
+        } catch (\Throwable $e) {
+            fwrite(STDERR, "Operator enrollment rejected: " . $e->getMessage() . "\n");
+            exit(1);
+        }
+
+    case 'catalogue:init':
+        (new CreateBhumishieldTables())->up(false);
+        \App\Support\DB::transaction(static function (): void {
+            DatabaseSeeder::seedServiceCatalogue();
+            DatabaseSeeder::seedServiceFeesRegistry();
+        });
+        echo "INFO  Missing service/fee guidance initialized; existing records and edits preserved.\n";
         exit(0);
 
     case 'db:seed':
@@ -53,21 +110,24 @@ switch ($command) {
         }
         $docRoot = __DIR__ . '/public';
         $routerScript = __DIR__ . '/public/index.php';
-        echo "INFO  BhumiShield Laravel 11 Development Server started on http://{$host}:{$port}\n";
+        echo "INFO  BhumiShield Custom API Server (PHP " . PHP_VERSION . ") started on http://{$host}:{$port}\n";
         echo "      Press Ctrl+C to stop the server\n";
         passthru(escapeshellarg(PHP_BINARY) . ' -S ' . escapeshellarg("{$host}:{$port}") . ' -t ' . escapeshellarg($docRoot) . ' ' . escapeshellarg($routerScript));
         exit(0);
 
     case 'test':
-        $code = RulesAndLedgerTest::runAll();
-        exit($code);
+        $c1 = RulesAndLedgerTest::runAll();
+        $c2 = RoleAuditRegressionTest::runAll();
+        exit(($c1 === 0 && $c2 === 0) ? 0 : 1);
 
     default:
-        echo "BhumiShield Laravel 11 Artisan Console (PHP " . PHP_VERSION . ")\n\n";
+        echo "BhumiShield Custom Artisan Console (PHP " . PHP_VERSION . ")\n";
+        echo "Architecture: Custom PSR-4 Microframework with PDO SQLite/PostgreSQL Engine\n\n";
         echo "Available commands:\n";
-        echo "  php artisan migrate:fresh --seed   Drop tables, run migrations, and seed 60 plots + 8 scenarios\n";
+        echo "  php artisan migrate                Run additive migrations safely without dropping data\n";
+        echo "  php artisan migrate:fresh --seed   Drop tables, run migrations, and seed demo database (requires --force in production)\n";
         echo "  php artisan db:seed                Seed the BhumiShield demo database\n";
-        echo "  php artisan serve --port=8000      Start the Laravel API server on port 8000\n";
-        echo "  php artisan test                   Run the 15-test Fraud Rules & Ledger test suite\n";
+        echo "  php artisan serve --port=8000      Start the API server on port 8000\n";
+        echo "  php artisan test                   Run the full automated test suite\n";
         exit(0);
 }

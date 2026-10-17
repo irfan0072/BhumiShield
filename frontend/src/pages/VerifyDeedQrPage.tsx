@@ -27,20 +27,80 @@ export const VerifyDeedQrPage: React.FC = () => {
   const [tamperSuccessMsg, setTamperSuccessMsg] = useState<string | null>(null);
   const [showCertModal, setShowCertModal] = useState(false);
 
-  const handleVerify = async (codeToVerify = deedCode) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowCertModal(false);
+      }
+    };
+    if (showCertModal) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showCertModal]);
+
+  const handleVerify = async (codeToVerify = deedCode, hashPrefix: string | null = null, forceNoc = false) => {
+    const cleanCode = codeToVerify.trim();
+    if (!cleanCode) return;
     setLoading(true);
     setErrorMsg(null);
     setTamperSuccessMsg(null);
     try {
-      const res = await BhumiApi.verifyDeedByCode(codeToVerify.trim());
-      setResult(res);
-    } catch {
-      setErrorMsg(
-        t(
-          'এই দলিল নম্বরটি লেজারে পাওয়া যায়নি। সঠিক দলিল নম্বর দিন (যেমন: DL-2026-1001 বা DL-2026-1005)।',
-          'Deed number not found in ledger. Try DL-2026-1001 or DL-2026-1005.'
-        )
-      );
+      if (forceNoc || cleanCode.toUpperCase().startsWith('NOC-')) {
+        const res = await BhumiApi.verifyNocByCode(cleanCode, hashPrefix);
+        const isValid = Boolean(res.valid || res.verified || res.is_valid);
+        const mapped = {
+          verified: isValid,
+          is_noc: true,
+          badge_bn: res.badge_bn || (isValid ? '✔ ব্যাংক লিয়েন ডিজিটাল দায়মুক্তি (NOC) সনদ বৈধ' : '✖ অবৈধ বা অমিল দায়মুক্তি (NOC) সনদ'),
+          badge_en: res.badge_en || (isValid ? '✔ Bank Lien Clearance (NOC) Cryptographically Verified' : '✖ Invalid or Tampered NOC Certificate'),
+          message_bn: res.message_bn || (isValid ? 'এই লিয়েনটির ঋণ পরিশোধিত এবং ডিজিটাল অনাপত্তিপত্র অপরিবর্তনীয়।' : 'এনওসি সনদের তথ্য বা স্বাক্ষরে গরমিল শনাক্ত হয়েছে।'),
+          message_en: res.message_en || (isValid ? 'This mortgage lien was settled and the cryptographic clearance is authentic.' : 'Discrepancy detected in NOC record or signature.'),
+          qr_data_uri: res.qr_svg_data_uri || res.qr_data_uri,
+          deed: {
+            deed_no: res.noc?.noc_no || cleanCode,
+            mouza_bn: res.noc?.mouza_bn || '',
+            mouza_en: res.noc?.mouza_en || '',
+            dag_no: res.noc?.dag_no || '',
+            seller_name_bn: res.noc?.bank_name_bn || 'ব্যাংক জামানত বিভাগ',
+            seller_nid: res.noc?.branch_bn || '',
+            buyer_name_bn: res.noc?.borrower_name_bn || '',
+            buyer_nid: res.noc?.borrower_nid || '',
+            area_decimal: res.noc?.loan_amount_bdt || 0,
+            status: res.noc?.status || 'RELEASED',
+          },
+          cryptographic_proof: res.cryptographic_proof || {
+            stored_content_hash: res.noc?.noc_hash || '',
+            recomputed_content_hash: res.noc?.noc_hash || '',
+            hash_matches: isValid,
+            prev_hash: 'N/A (Bank Settlement)',
+            signature_valid: isValid,
+          },
+        };
+        setResult(mapped);
+      } else {
+        const res = await BhumiApi.verifyDeedByCode(cleanCode, hashPrefix);
+        setResult(res);
+      }
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status === 404) {
+        setErrorMsg(
+          t(
+            'এই নম্বরটি লেজারে পাওয়া যায়নি। সঠিক দলিল বা NOC নম্বর দিন (যেমন: DL-2026-1001 বা NOC-2026-0001)।',
+            'Record not found in ledger. Try DL-2026-1001 or NOC-2026-0001.'
+          )
+        );
+      } else {
+        setErrorMsg(
+          t(
+            'সার্ভার সংযোগে ত্রুটি বা নেটওয়ার্ক সমস্যা হয়েছে। অনুগ্রহ করে পুনরায় চেষ্টা করুন।',
+            'Network or server connection error. Please try again.'
+          )
+        );
+      }
       setResult(null);
     } finally {
       setLoading(false);
@@ -68,11 +128,12 @@ export const VerifyDeedQrPage: React.FC = () => {
   const handleRestoreLedger = async () => {
     setTamperLoading(true);
     try {
-      await BhumiApi.restoreDeedDemo(deedCode);
+      const restored = await BhumiApi.restoreDeedDemo(deedCode);
+      const restoredArea = restored?.deed?.original_area_decimal ?? (deedCode === 'DL-2026-1005' ? 10.0 : 20.0);
       setTamperSuccessMsg(
         t(
-          'সফল: লেজার মূল সত্য অবস্থায় পুনরুদ্ধার করা হয়েছে (১২ শতাংশ)। হ্যাশ চেইন আবার বৈধ।',
-          'Restored: Ledger restored to authentic truth (12.0 Decimal). Hash chain valid again.'
+          `সফল: লেজার মূল সত্য অবস্থায় পুনরুদ্ধার করা হয়েছে (${toBanglaDigits(restoredArea, 'bn')} শতাংশ)। হ্যাশ চেইন আবার বৈধ।`,
+          `Restored: Ledger restored to authentic truth (${restoredArea} Decimal). Hash chain valid again.`
         )
       );
       await handleVerify(deedCode);
@@ -84,7 +145,72 @@ export const VerifyDeedQrPage: React.FC = () => {
   };
 
   useEffect(() => {
-    handleVerify('DL-2026-1001');
+    const searchParams = new URLSearchParams(window.location.search);
+    const hashParam = searchParams.get('h')?.trim() || null;
+    const path = window.location.pathname;
+
+    let targetCode = '';
+    let isNocRoute = false;
+
+    // 1. Path-based deep links:
+    // /verify/noc/{id-or-code} or /noc/{id-or-code}
+    if (path.includes('/verify/noc/')) {
+      const match = path.match(/\/verify\/noc\/([^/?#]+)/);
+      if (match && match[1]) {
+        targetCode = decodeURIComponent(match[1]);
+        isNocRoute = true;
+      }
+    } else if (path.includes('/noc/')) {
+      const match = path.match(/\/noc\/([^/?#]+)/);
+      if (match && match[1]) {
+        targetCode = decodeURIComponent(match[1]);
+        isNocRoute = true;
+      }
+    } else if (path.includes('/verify/deed/')) {
+      const match = path.match(/\/verify\/deed\/([^/?#]+)/);
+      if (match && match[1]) {
+        targetCode = decodeURIComponent(match[1]);
+        isNocRoute = false;
+      }
+    } else if (path.includes('/verify/')) {
+      const match = path.match(/\/verify\/([^/?#]+)/);
+      if (match && match[1] && match[1] !== 'qr') {
+        targetCode = decodeURIComponent(match[1]);
+        if (targetCode.toUpperCase().startsWith('NOC-')) {
+          isNocRoute = true;
+        }
+      }
+    }
+
+    // 2. Query param overrides
+    if (!targetCode) {
+      if (searchParams.get('noc_no')) {
+        targetCode = searchParams.get('noc_no')!.trim();
+        isNocRoute = true;
+      } else if (searchParams.get('deed_no')) {
+        targetCode = searchParams.get('deed_no')!.trim();
+        isNocRoute = false;
+      }
+    }
+
+    // 3. Stored pending search (only if not a direct URL with path/params)
+    if (!targetCode) {
+      const pendingSearch = sessionStorage.getItem('bs_pending_verify_search');
+      if (pendingSearch) {
+        sessionStorage.removeItem('bs_pending_verify_search');
+        targetCode = pendingSearch.trim();
+        if (targetCode.toUpperCase().startsWith('NOC-')) {
+          isNocRoute = true;
+        }
+      }
+    }
+
+    if (!targetCode) {
+      targetCode = 'DL-2026-1001';
+    }
+
+    setDeedCode(targetCode);
+    handleVerify(targetCode, hashParam, isNocRoute);
   }, []);
 
   return (
@@ -96,8 +222,8 @@ export const VerifyDeedQrPage: React.FC = () => {
       {/* Top Banner / Card */}
       <div className="panel p-6 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <h2 className="font-display text-lg text-[#062823] flex items-center gap-2">
-            <QrCode className="w-5 h-5 text-[#0D6B5C] shrink-0" />
+          <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
+            <QrCode className="w-5 h-5 text-[#006A4E] shrink-0" />
             <span>
               {t(
                 'দলিল নম্বর দিয়ে যাচাই',
@@ -131,8 +257,8 @@ export const VerifyDeedQrPage: React.FC = () => {
               }}
               className={`px-3.5 py-2 rounded-lg font-bold text-xs border transition-colors cursor-pointer min-h-[36px] flex items-center gap-1.5 ${
                 deedCode === 'DL-2026-1001'
-                  ? 'bg-[#0D6B5C] text-white border-[#0D6B5C]'
-                  : 'bg-[#E8F5F1] text-[#0D6B5C] border-[#0D6B5C]/30 hover:bg-[#0D6B5C] hover:text-white'
+                  ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                  : 'bg-[#EDF7F4] text-[#006A4E] border-[#006A4E]/30 hover:bg-[#006A4E] hover:text-white'
               }`}
             >
               <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
@@ -179,9 +305,9 @@ export const VerifyDeedQrPage: React.FC = () => {
               value={deedCode}
               onChange={(e) => setDeedCode(e.target.value)}
               placeholder="DL-2026-1001"
-              className="field pl-10 font-mono font-bold text-sm"
+              className="field field-with-icon font-mono font-bold text-sm"
             />
-            <QrCode className="w-5 h-5 text-[#5F7A74]/80 absolute left-3 top-3.5" />
+            <QrCode className="w-5 h-5 text-[#5F7A74]/80 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
           <button
             onClick={() => handleVerify(deedCode)}
@@ -203,7 +329,7 @@ export const VerifyDeedQrPage: React.FC = () => {
         </div>
 
         {/* Live Tamper Simulator Widget */}
-        <div className="mt-4 p-4 rounded-xl bg-[#EDF4F1]/80 border border-[#0D6B5C]/12 space-y-3">
+        <div className="mt-4 p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-xs font-bold text-[#0A1F1C]/90">
               <Zap className="w-4 h-4 text-amber-500" />
@@ -216,8 +342,8 @@ export const VerifyDeedQrPage: React.FC = () => {
 
           <p className="text-xs text-[#5F7A74]">
             {t(
-              'যদি কোনো অসৎ কর্মকর্তা ডাটাবেজে ম্যানুয়ালি জমি ১২ শতাংশ থেকে ২৫ শতাংশ করে দেয়, তবে SHA-256 হ্যাশ পরিবর্তন সনাক্ত করে সেকেন্ডের মধ্যে দলিলটি লাল সতর্কবার্তায় পরিণত হবে।',
-              'If a rogue admin manually alters deed area from 12 to 25 decimal in the DB, SHA-256 hash immediately fails and flags red.'
+              'যদি কোনো অসৎ কর্মকর্তা ডাটাবেজে ম্যানুয়ালি দলিলের জমির পরিমাণ পরিবর্তন করে দেয়, তবে SHA-256 হ্যাশ পরিবর্তন সনাক্ত করে সেকেন্ডের মধ্যে দলিলটি লাল সতর্কবার্তায় পরিণত হবে।',
+              'If a rogue admin manually alters deed area in the DB, SHA-256 hash immediately fails and flags red.'
             )}
           </p>
 
@@ -234,10 +360,10 @@ export const VerifyDeedQrPage: React.FC = () => {
             <button
               onClick={handleRestoreLedger}
               disabled={tamperLoading}
-              className="px-3.5 py-2 rounded-lg bg-[#E8F5F1] text-[#0D6B5C] hover:bg-[#0D6B5C] hover:text-white text-xs font-bold border border-[#0D6B5C]/30 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 min-h-[36px]"
+              className="px-3.5 py-2 rounded-lg bg-[#EDF7F4] text-[#006A4E] hover:bg-[#006A4E] hover:text-white text-xs font-bold border border-[#006A4E]/30 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50 min-h-[36px]"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>{t('মূল সত্য অবস্থায় ফেরত নিন (Restore)', 'Restore Ledger Truth (12 Decimal)')}</span>
+              <span>{t('মূল সত্য অবস্থায় ফেরত নিন (Restore)', 'Restore Authentic Truth')}</span>
             </button>
           </div>
         </div>
@@ -263,7 +389,7 @@ export const VerifyDeedQrPage: React.FC = () => {
           {/* Header Banner */}
           <div
             className={`p-6 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-colors ${
-              result.verified ? 'bg-[#0D6B5C]' : 'bg-[#FF3B4A]'
+              result.verified ? 'bg-[#006A4E]' : 'bg-[#FF3B4A]'
             }`}
           >
             <div className="flex items-start gap-4">
@@ -306,9 +432,9 @@ export const VerifyDeedQrPage: React.FC = () => {
               )}
               <button
                 onClick={() => setShowCertModal(true)}
-                className="px-4 py-2 rounded-lg bg-white text-[#0A1F1C] font-bold text-xs hover:bg-[#EDF4F1] shadow transition-colors flex items-center gap-1.5 cursor-pointer min-h-[36px]"
+                className="px-4 py-2 rounded-lg bg-white text-[#0A1F1C] font-bold text-xs hover:bg-[#EDF7F4] shadow transition-colors flex items-center gap-1.5 cursor-pointer min-h-[36px]"
               >
-                <Printer className="w-3.5 h-3.5 text-[#0D6B5C]" />
+                <Printer className="w-3.5 h-3.5 text-[#006A4E]" />
                 <span>{t('সনদ প্রিন্ট করুন', 'Print Certificate')}</span>
               </button>
             </div>
@@ -320,7 +446,7 @@ export const VerifyDeedQrPage: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b pb-2">
                 <h3 className="text-sm font-extrabold text-[#0A1F1C] flex items-center gap-2">
-                  <FileCheck className="w-4 h-4 text-[#0D6B5C]" />
+                  <FileCheck className="w-4 h-4 text-[#006A4E]" />
                   <span>{t('দলিলের দাপ্তরিক বিবরণী', 'Official Deed Metadata')}</span>
                 </h3>
                 <span className="text-[11px] font-bold text-[#5F7A74]">
@@ -329,32 +455,32 @@ export const VerifyDeedQrPage: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[#0A1F1C]/90">
-                <div className="p-3 bg-[#EDF4F1]/80 rounded-lg border border-[#0D6B5C]/10">
+                <div className="p-3 bg-[#EDF7F4]/80 rounded-lg border border-[#006A4E]/10">
                   <span className="text-[11px] text-[#5F7A74] block">{t('দলিল নম্বর', 'Deed Number')}</span>
                   <span className="font-mono font-bold text-[#0A1F1C] text-sm">{result.deed?.deed_no}</span>
                 </div>
-                <div className="p-3 bg-[#EDF4F1]/80 rounded-lg border border-[#0D6B5C]/10">
+                <div className="p-3 bg-[#EDF7F4]/80 rounded-lg border border-[#006A4E]/10">
                   <span className="text-[11px] text-[#5F7A74] block">{t('দলিলের ধরন', 'Deed Type')}</span>
                   <span className="font-bold text-[#0A1F1C]">{result.deed?.deed_type || 'SAF_KABALA (বিক্রয়)'}</span>
                 </div>
-                <div className="p-3 bg-[#EDF4F1]/80 rounded-lg border border-[#0D6B5C]/10 sm:col-span-2">
+                <div className="p-3 bg-[#EDF7F4]/80 rounded-lg border border-[#006A4E]/10 sm:col-span-2">
                   <span className="text-[11px] text-[#5F7A74] block">{t('মৌজা ও দাগ নং', 'Mouza & Dag No')}</span>
                   <span className="font-bold text-[#0A1F1C]">
                     {lang === 'bn' ? result.deed?.mouza_bn : result.deed?.mouza_en || result.deed?.mouza_bn},{' '}
                     {t('দাগ নং', 'Dag')} {toBanglaDigits(result.deed?.dag_no, lang)}
                   </span>
                 </div>
-                <div className="p-3 bg-[#EDF4F1]/80 rounded-lg border border-[#0D6B5C]/10">
+                <div className="p-3 bg-[#EDF7F4]/80 rounded-lg border border-[#006A4E]/10">
                   <span className="text-[11px] text-[#5F7A74] block">{t('বিক্রেতা', 'Seller')}</span>
                   <span className="font-bold text-[#0A1F1C] block">{result.deed?.seller_name_bn}</span>
                   <span className="text-[10px] text-[#5F7A74] font-mono">NID: {result.deed?.seller_nid}</span>
                 </div>
-                <div className="p-3 bg-[#EDF4F1]/80 rounded-lg border border-[#0D6B5C]/10">
+                <div className="p-3 bg-[#EDF7F4]/80 rounded-lg border border-[#006A4E]/10">
                   <span className="text-[11px] text-[#5F7A74] block">{t('ক্রেতা', 'Buyer')}</span>
                   <span className="font-bold text-[#0A1F1C] block">{result.deed?.buyer_name_bn}</span>
                   <span className="text-[10px] text-[#5F7A74] font-mono">NID: {result.deed?.buyer_nid}</span>
                 </div>
-                <div className="p-3 bg-[#EDF4F1]/80 rounded-lg border border-[#0D6B5C]/10 sm:col-span-2 flex items-center justify-between">
+                <div className="p-3 bg-[#EDF7F4]/80 rounded-lg border border-[#006A4E]/10 sm:col-span-2 flex items-center justify-between">
                   <div>
                     <span className="text-[11px] text-[#5F7A74] block">{t('জমির পরিমাণ ও অংশ', 'Area & Share')}</span>
                     <span className="font-extrabold text-[#0A1F1C] text-sm">
@@ -378,7 +504,7 @@ export const VerifyDeedQrPage: React.FC = () => {
 
             {/* Cryptographic Ledger & Ed25519 Proof */}
             <div className="space-y-3 panel-ink p-5 font-mono text-[11px] shadow-inner">
-              <div className="font-sans font-bold text-xs text-[#7CDB6A] flex items-center justify-between border-b border-white/10 pb-2">
+              <div className="font-sans font-bold text-xs text-[#10B981] flex items-center justify-between border-b border-white/10 pb-2">
                 <div className="flex items-center gap-1.5">
                   <KeyRound className="w-4 h-4" />
                   <span>
@@ -388,7 +514,7 @@ export const VerifyDeedQrPage: React.FC = () => {
                     )}
                   </span>
                 </div>
-                <span className="px-2 py-0.5 rounded text-[10px] bg-white/10 text-[#EDF4F1]/80">
+                <span className="px-2 py-0.5 rounded text-[10px] bg-white/10 text-[#EDF7F4]/80">
                   CHAIN_INDEX #{result.deed?.chain_index ?? 1}
                 </span>
               </div>
@@ -410,7 +536,7 @@ export const VerifyDeedQrPage: React.FC = () => {
                   <div
                     className={`break-all p-2 rounded border ${
                       result.cryptographic_proof?.hash_matches
-                        ? 'bg-[#0D6B5C]/25 border-[#7CDB6A]/40 text-[#B8E8AE] font-bold'
+                        ? 'bg-[#006A4E]/25 border-[#10B981]/40 text-[#A7F3D0] font-bold'
                         : 'bg-[#FF3B4A]/20 border-[#FF3B4A]/50 text-[#FF8A93] font-bold'
                     }`}
                   >
@@ -423,7 +549,7 @@ export const VerifyDeedQrPage: React.FC = () => {
                     <span className="text-[10px] text-[#5F7A74]/80 block">HASH_INTEGRITY:</span>
                     <span
                       className={`font-bold font-sans text-xs ${
-                        result.cryptographic_proof?.hash_matches ? 'text-[#7CDB6A]' : 'text-[#FF3B4A]'
+                        result.cryptographic_proof?.hash_matches ? 'text-[#10B981]' : 'text-[#FF3B4A]'
                       }`}
                     >
                       {result.cryptographic_proof?.hash_matches ? 'MATCHED (অক্ষত)' : 'MISMATCH (পরিবর্তিত)'}
@@ -434,7 +560,7 @@ export const VerifyDeedQrPage: React.FC = () => {
                     <span className="text-[10px] text-[#5F7A74]/80 block">ED25519_SIGNATURE:</span>
                     <span
                       className={`font-bold font-sans text-xs ${
-                        result.cryptographic_proof?.signature_valid ? 'text-[#7CDB6A]' : 'text-[#FF3B4A]'
+                        result.cryptographic_proof?.signature_valid ? 'text-[#10B981]' : 'text-[#FF3B4A]'
                       }`}
                     >
                       {result.cryptographic_proof?.signature_valid ? 'VALID (বৈধ)' : 'INVALID (অবৈধ)'}
@@ -452,7 +578,7 @@ export const VerifyDeedQrPage: React.FC = () => {
                 </div>
 
                 <div className="pt-2 flex items-center gap-2 font-sans text-[11px] text-[#5F7A74]/80 border-t border-white/10">
-                  <ShieldCheck className="w-4 h-4 text-[#7CDB6A] shrink-0" />
+                  <ShieldCheck className="w-4 h-4 text-[#10B981] shrink-0" />
                   <span>
                     {t(
                       'ভূমি সুরক্ষা প্রটোকলে প্রতিটি দলিল পূর্ববর্তী দলিলের সাথে গাণিতিকভাবে আবদ্ধ। কোনো পরিবর্তন লুকানো অসম্ভব।',
@@ -469,26 +595,26 @@ export const VerifyDeedQrPage: React.FC = () => {
       {/* Official Deed Verification Certificate Modal (Printable) */}
       {showCertModal && result && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative my-8 border border-[#0D6B5C]/12">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative my-8 border border-[#006A4E]/12">
             {/* Modal Controls (Screen Only) */}
             <div className="flex items-center justify-between border-b pb-4 mb-6 print:hidden">
               <div className="flex items-center gap-2">
-                <FileCheck className="w-5 h-5 text-[#0D6B5C]" />
-                <h2 className="font-display text-base text-[#062823]">
+                <FileCheck className="w-5 h-5 text-[#006A4E]" />
+                <h2 className="font-bold text-base text-[#074f38]">
                   {t('অফিসিয়াল দলিল সনদ প্রিভিউ', 'Official Deed Certificate Preview')}
                 </h2>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => window.print()}
-                  className="px-4 py-2 rounded-lg bg-[#0D6B5C] hover:bg-[#0A5549] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  className="px-4 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>{t('প্রিন্ট / PDF সংরক্ষণ', 'Print / Save PDF')}</span>
                 </button>
                 <button
                   onClick={() => setShowCertModal(false)}
-                  className="p-2 rounded-lg text-[#5F7A74]/80 hover:text-[#5F7A74] hover:bg-[#EDF4F1] cursor-pointer"
+                  className="p-2 rounded-lg text-[#5F7A74]/80 hover:text-[#5F7A74] hover:bg-[#EDF7F4] cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -496,16 +622,16 @@ export const VerifyDeedQrPage: React.FC = () => {
             </div>
 
             {/* Printable Certificate Content */}
-            <div className="p-6 border-4 border-double border-[#0D6B5C]/20 rounded-xl bg-white space-y-6 text-[#0A1F1C]">
+            <div className="p-6 border-4 border-double border-[#006A4E]/20 rounded-xl bg-white space-y-6 text-[#0A1F1C]">
               {/* Header with Emblem */}
               <div className="text-center space-y-1 border-b pb-4">
-                <div className="w-14 h-14 mx-auto rounded-full bg-[#0D6B5C] text-white flex items-center justify-center font-bold text-lg mb-2 shadow-sm">
+                <div className="w-14 h-14 mx-auto rounded-full bg-[#006A4E] text-white flex items-center justify-center font-bold text-lg mb-2 shadow-sm">
                   ভূমি
                 </div>
                 <h3 className="font-extrabold text-base tracking-wide text-[#0A1F1C]">
                   গণপ্রজাতন্ত্রী বাংলাদেশ সরকার
                 </h3>
-                <p className="text-xs font-bold text-[#0D6B5C]">
+                <p className="text-xs font-bold text-[#006A4E]">
                   ভূমি মন্ত্রণালয় • নিবন্ধন পরিদপ্তর • ভূমি সুরক্ষা ক্রিপ্টোগ্রাফিক সনদ
                 </p>
                 <p className="text-[10px] text-[#5F7A74] font-mono">
@@ -561,8 +687,8 @@ export const VerifyDeedQrPage: React.FC = () => {
               </div>
 
               {/* Cryptographic Footprint */}
-              <div className="p-3 bg-[#EDF4F1]/80 rounded-lg border border-[#0D6B5C]/12 text-[10px] font-mono space-y-1.5">
-                <div className="font-sans font-bold text-[11px] text-[#0D6B5C]">
+              <div className="p-3 bg-[#EDF7F4]/80 rounded-lg border border-[#006A4E]/12 text-[10px] font-mono space-y-1.5">
+                <div className="font-sans font-bold text-[11px] text-[#006A4E]">
                   ক্রিপ্টোগ্রাফিক হ্যাশ প্রমাণ (SHA-256):
                 </div>
                 <div className="break-all">
@@ -594,7 +720,7 @@ export const VerifyDeedQrPage: React.FC = () => {
                 )}
                 <div className="text-right text-[10px] text-[#5F7A74]">
                   <div className="h-10 flex items-end justify-end">
-                    <div className="font-mono font-bold text-xs text-[#0D6B5C] border-b border-dashed border-slate-400 pb-0.5">
+                    <div className="font-mono font-bold text-xs text-[#006A4E] border-b border-dashed border-slate-400 pb-0.5">
                       [Ed25519 Digital Seal]
                     </div>
                   </div>

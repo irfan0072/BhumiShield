@@ -90,24 +90,13 @@ final class RoleMiddleware
     {
         $user = $overrideUser ?? JwtAuthService::getAuthenticatedUser();
 
-        // Check if strict RBAC is explicitly enabled in site_settings or via header
-        $strictRbacRow = DB::selectOne("SELECT setting_value_json FROM site_settings WHERE setting_key = 'enforce_strict_rbac'");
-        $strictRbac = $strictRbacRow ? (json_decode((string) $strictRbacRow['setting_value_json'], true) === true) : false;
-        $hasBearer = !empty($_SERVER['HTTP_AUTHORIZATION']);
-
         if (!$user) {
-            if ($strictRbac || $hasBearer) {
-                throw new \RuntimeException(json_encode([
-                    'status' => 401,
-                    'code' => 'AUTH_REQUIRED',
-                    'message_bn' => 'এই প্যানেল বা অ্যাকশনটি ব্যবহারের জন্য অনুমোদিত অ্যাকাউন্টে লগইন করা আবশ্যক।',
-                    'message_en' => 'Authentication required. Please sign in with an authorized account.',
-                ], JSON_UNESCAPED_UNICODE));
-            }
-            // Fallback to default role actor when running internal tests without HTTP headers
-            $defaultRole = $allowedRoles[0] ?? 'admin';
-            $fallback = DB::selectOne('SELECT * FROM users WHERE role = ? AND is_active = 1 LIMIT 1', [$defaultRole]);
-            return $fallback ?: ['id' => 1, 'username' => $defaultRole, 'role' => $defaultRole, 'is_active' => 1];
+            throw new \RuntimeException(json_encode([
+                'status' => 401,
+                'code' => 'AUTH_REQUIRED',
+                'message_bn' => 'এই প্যানেল বা অ্যাকশনটি ব্যবহারের জন্য অনুমোদিত অ্যাকাউন্টে লগইন করা আবশ্যক।',
+                'message_en' => 'Authentication required. Please sign in with an authorized account.',
+            ], JSON_UNESCAPED_UNICODE));
         }
 
         if (((int) ($user['is_active'] ?? 1)) === 0) {

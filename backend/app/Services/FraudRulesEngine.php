@@ -315,13 +315,13 @@ final class FraudRulesEngine
     public static function checkRapidResale(
         array $existingDeeds,
         int $thresholdDays = 30,
-        string $referenceIso = '2026-10-16T18:00:00+06:00'
+        ?string $referenceIso = null
     ): ?array {
         if (empty($existingDeeds)) {
             return null;
         }
         try {
-            $refDt = new \DateTimeImmutable($referenceIso);
+            $refDt = new \DateTimeImmutable($referenceIso ?? 'now', new \DateTimeZone('UTC'));
         } catch (\Throwable) {
             return null;
         }
@@ -448,6 +448,46 @@ final class FraudRulesEngine
         ];
     }
 
+    public static function getRapidResaleDays(): int
+    {
+        try {
+            $row = \App\Support\DB::selectOne("SELECT setting_value_json FROM site_settings WHERE setting_key = 'rapid_resale_days'");
+            if ($row && !empty($row['setting_value_json'])) {
+                $val = json_decode((string) $row['setting_value_json'], true);
+                if (is_numeric($val) && (int) $val > 0) {
+                    return (int) $val;
+                }
+            }
+        } catch (\Throwable) {
+        }
+        return 30;
+    }
+
+    public static function checkDisputeFrozen(array $disputes, array $plot = []): ?array
+    {
+        $frozen = array_values(array_filter($disputes, fn(array $d) => ($d["status"] ?? "") === "UPHELD_FROZEN"));
+        if (empty($frozen)) {
+            return null;
+        }
+        $first = $frozen[0];
+        $dagBn = $plot["dag_no_bn"] ?? self::toBnNum($plot["dag_no"] ?? "");
+        return [
+            "rule_id" => "PLOT_TRANSFER_FROZEN",
+            "severity" => "HIGH_RISK",
+            "score_delta" => 100,
+            "title_bn" => "আদালত বা সহকারী কমিশনার (ভূমি) কর্তৃক এই দাগের সকল হস্তান্তর স্থগিত / ফ্রিজ (FROZEN) করা হয়েছে",
+            "title_en" => "Plot Transfer Is Frozen by Court / AC Land Tribunal Order",
+            "message_bn" => "দাগ নং {$dagBn}-এ অভিযোগ কেস নং {$first['case_no']} অনুযায়ী জমি স্থগিতাদেশ (UPHELD_FROZEN) বলবৎ রয়েছে। এসি ল্যান্ড কর্তৃক স্থগিতাদেশ প্রত্যাহার না হওয়া পর্যন্ত কোনো দলিল নিবন্ধন বা হস্তান্তর আইনত নিষিদ্ধ।",
+            "message_en" => "Plot transfers on Dag {$plot['dag_no']} are strictly frozen under Tribunal Case {$first['case_no']}. All deed registration and mutations are prohibited.",
+            "evidence" => [
+                "dispute_id" => $first["id"] ?? null,
+                "case_no" => $first["case_no"],
+                "status" => "UPHELD_FROZEN",
+                "dispute_type" => $first["dispute_type"] ?? "TRIBUNAL_FREEZE",
+            ],
+        ];
+    }
+
     public static function checkActiveDisputes(array $disputes): ?array
     {
         $open = array_values(array_filter($disputes, fn(array $d) => ($d["status"] ?? "") === "OPEN"));
@@ -489,6 +529,7 @@ final class FraudRulesEngine
         $latestKhatianNo = (string) ($bsKhatians[0]['khatian_no'] ?? '');
 
         $rawFlags = [
+            self::checkDisputeFrozen($disputes, $plot),
             self::checkOwnerSaleLocked($plot),
             self::checkDeedTampered($existingDeeds),
             self::checkActiveDisputes($disputes),
@@ -499,7 +540,7 @@ final class FraudRulesEngine
             self::checkNidMismatch($sellerPerson, $submittedSellerNid, $submittedSellerName),
             self::checkKhatianChainBreak($khatianRecords),
             self::checkInheritanceUnresolved($sellerPerson, $latestOwnerPersons, $khatianRecords),
-            $checkRapidResaleFlag ? self::checkRapidResale($existingDeeds) : null,
+            $checkRapidResaleFlag ? self::checkRapidResale($existingDeeds, self::getRapidResaleDays()) : null,
         ];
 
         $flags = array_values(array_filter($rawFlags, fn($f) => $f !== null));

@@ -35,17 +35,18 @@ export const AuthPage: React.FC<{
     user && mode === 'profile' ? 'profile' : 'login'
   );
 
-  const [username, setUsername] = useState('citizen');
-  const [password, setPassword] = useState('demo123');
+  const isDemoMode = import.meta.env.DEV;
+  const [username, setUsername] = useState(isDemoMode ? 'citizen' : '');
+  const [password, setPassword] = useState(isDemoMode ? 'demo123' : '');
   const [showPassword, setShowPassword] = useState(false);
 
   // Registration state - strictly locked to citizen
   const [regUsername, setRegUsername] = useState('');
-  const [regPassword, setRegPassword] = useState('demo123');
+  const [regPassword, setRegPassword] = useState(isDemoMode ? 'demo123' : '');
   const [regNameBn, setRegNameBn] = useState('');
   const [regNameEn, setRegNameEn] = useState('');
-  const [regNid, setRegNid] = useState('9900001099');
-  const [regPhone, setRegPhone] = useState('01700-000999');
+  const [regNid, setRegNid] = useState(isDemoMode ? '9900001099' : '');
+  const [regPhone, setRegPhone] = useState(isDemoMode ? '01700-000999' : '');
   const [regOffice, setRegOffice] = useState('ঢাকা, বাংলাদেশ');
 
   // Profile update state
@@ -54,6 +55,7 @@ export const AuthPage: React.FC<{
   const [profPhone, setProfPhone] = useState(user?.phone_mock || '');
   const [profOffice, setProfOffice] = useState(user?.office_name || '');
   const [profNewPass, setProfNewPass] = useState('');
+  const [profCurrentPass, setProfCurrentPass] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -132,7 +134,8 @@ export const AuthPage: React.FC<{
         full_name_bn: profNameBn,
         full_name_en: profNameEn,
         phone_mock: profPhone,
-        office_name: profOffice,
+        ...(user?.role === 'admin' ? { office_name: profOffice } : {}),
+        current_password: profNewPass ? profCurrentPass : undefined,
         new_password: profNewPass || undefined,
       });
       setUser(res.user);
@@ -152,10 +155,10 @@ export const AuthPage: React.FC<{
           <span>ভূ</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-          {t('ভূমি সুরক্ষা গেটওয়ে', 'BhumiShield Single Sign-On Gateway')}
+          {t('ভূমি সুরক্ষা গেটওয়ে', 'BhumiShield Account Sign-In')}
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 font-medium">
-          {t('নিবন্ধন অধিদপ্তর ও ভূমি মন্ত্রণালয় · জাতীয় ভূমি ও দলিল ডিজিটাল প্ল্যাটফর্ম', 'National Land & Deed Verification Authority · Government of Bangladesh')}
+          {t('স্বাধীন ভূমি রেকর্ড ও যাচাই অ্যাপ্লিকেশন', 'Independent land-record workflow and verification application')}
         </p>
       </div>
 
@@ -243,7 +246,7 @@ export const AuthPage: React.FC<{
                     className="w-full pl-10 pr-3.5 py-2.5 rounded-lg border border-slate-300 font-mono text-sm focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20 focus:outline-none"
                     required
                   />
-                  <UserCheck className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <UserCheck className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
               </div>
 
@@ -260,7 +263,7 @@ export const AuthPage: React.FC<{
                     className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-slate-300 font-mono text-sm focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20 focus:outline-none"
                     required
                   />
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
@@ -309,7 +312,7 @@ export const AuthPage: React.FC<{
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-1.5 shrink-0" />
                   <div>
                     <span className="font-bold text-slate-800 block">Ed25519 ক্রিপ্টোগ্রাফিক সুরক্ষা</span>
-                    <span>প্রতিটি সেশন এবং এপিআই অনুরোধ ডিজিটাল ক্রিপ্টোগ্রাফিক স্বাক্ষর ও টোকেন দ্বারা সংরক্ষিত।</span>
+                    <span>দলিলের জন্য Ed25519 স্বাক্ষর এবং সেশনের জন্য মেয়াদযুক্ত ও প্রত্যাহারযোগ্য টোকেন ব্যবহৃত হয়।</span>
                   </div>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -323,7 +326,7 @@ export const AuthPage: React.FC<{
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-1.5 shrink-0" />
                   <div>
                     <span className="font-bold text-slate-800 block">কেন্দ্রীয় অডিট ট্রেইল</span>
-                    <span>অননুমোদিত যেকোনো অনুপ্রবেশ প্রচেষ্টা জাতীয় লেজারে টাইমস্ট্যাম্পসহ অডিট লগে রেকর্ড করা হয়।</span>
+                    <span>সমর্থিত রেকর্ড পরিবর্তন ও দাপ্তরিক সিদ্ধান্ত অডিট ট্রেইলে নথিভুক্ত হয়।</span>
                   </div>
                 </li>
               </ul>
@@ -337,14 +340,14 @@ export const AuthPage: React.FC<{
         )}
 
         {/* Evaluator Reference Helper (Clean collapsible disclosure for hackathon testing without exposing bypass buttons) */}
-        {tab === 'login' && (
+        {isDemoMode && tab === 'login' && (
           <details className="mt-8 border border-slate-200 rounded-xl bg-slate-50/70 overflow-hidden text-xs">
             <summary className="px-4 py-3 font-semibold text-slate-600 cursor-pointer flex items-center justify-between hover:text-slate-900 select-none">
               <span className="flex items-center gap-2">
                 <KeyRound className="w-3.5 h-3.5 text-emerald-700" />
                 <span>{t('মূল্যায়নকারী ও পরীক্ষক ডেমো নির্দেশিকা (Evaluator Test Credentials)', 'Evaluator Prototype Test Credentials')}</span>
               </span>
-              <span className="text-[11px] text-slate-400 font-mono">তথ্য দেখুন ▼</span>
+              <span className="text-[11px] text-slate-400 font-medium">তথ্য দেখুন ▼</span>
             </summary>
             <div className="p-4 pt-1 border-t border-slate-200 text-slate-600 space-y-2 text-xs bg-white">
               <p className="text-slate-500">
@@ -576,9 +579,14 @@ export const AuthPage: React.FC<{
                 <input
                   type="text"
                   value={profOffice}
+                  readOnly={user?.role !== 'admin'}
                   onChange={(e) => setProfOffice(e.target.value)}
                   className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
                 />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold" htmlFor="profile-current-password">{t('বর্তমান পাসওয়ার্ড (পরিবর্তনের জন্য)', 'Current Password (to change password)')}</label>
+                <input id="profile-current-password" type="password" autoComplete="current-password" className="field" value={profCurrentPass} onChange={(e) => setProfCurrentPass(e.target.value)} />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-slate-700 mb-1">
@@ -586,6 +594,7 @@ export const AuthPage: React.FC<{
                 </label>
                 <input
                   type="password"
+                  autoComplete="new-password"
                   value={profNewPass}
                   onChange={(e) => setProfNewPass(e.target.value)}
                   placeholder="••••••••"

@@ -3,7 +3,8 @@ import { useAppUI } from '../i18n';
 import { BhumiApi, RiskReportResponse } from '../api/client';
 import { toBanglaDigits } from '../theme/tokens';
 import { ResultHeroBanner } from '../components/ResultHeroBanner';
-import { VelzonOverviewSection } from '../components/VelzonOverviewSection';
+import { OfficerKhatianExplorer } from '../components/OfficerKhatianExplorer';
+import { OfficerDeedVerifier } from '../components/OfficerDeedVerifier';
 import {
   FileSpreadsheet,
   ShieldAlert,
@@ -16,12 +17,22 @@ import {
   X,
   FileText,
   BadgeAlert,
-  ArrowRight
+  ArrowRight,
+  ShieldCheck,
+  QrCode,
+  Layers
 } from 'lucide-react';
 
-export const SubRegistrarPage: React.FC = () => {
-  const { lang, role, setRole, setUser, setToken, t } = useAppUI();
-  const [subTab, setSubTab] = useState<'wizard' | 'deeds' | 'fees'>('wizard');
+export type SubRegistrarTab = 'wizard' | 'held' | 'deeds' | 'khatian' | 'verifier' | 'fees';
+
+export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNavigate }) => {
+  const { lang, role, setRole, setUser, setToken, activeSubTab, setActiveSubTab, t } = useAppUI();
+  const [subTab, setSubTab] = useState<SubRegistrarTab>(() => {
+    if (activeSubTab && ['wizard', 'held', 'deeds', 'khatian', 'verifier', 'fees'].includes(activeSubTab)) {
+      return activeSubTab as SubRegistrarTab;
+    }
+    return 'wizard';
+  });
 
   const [plots, setPlots] = useState<any[]>([]);
   const [persons, setPersons] = useState<any[]>([]);
@@ -71,6 +82,41 @@ export const SubRegistrarPage: React.FC = () => {
       .then((res) => setFeeBreakdown(res))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (activeSubTab && ['wizard', 'held', 'deeds', 'khatian', 'verifier', 'fees'].includes(activeSubTab)) {
+      setSubTab(activeSubTab as SubRegistrarTab);
+      if (activeSubTab === 'held') {
+        setDeedStatusFilter('HELD');
+      } else if (activeSubTab === 'deeds') {
+        setDeedStatusFilter('ALL');
+      }
+    }
+  }, [activeSubTab]);
+
+  const handleTabChange = (target: SubRegistrarTab) => {
+    setSubTab(target);
+    setActiveSubTab(target);
+    if (target === 'held') {
+      setDeedStatusFilter('HELD');
+    } else if (target === 'deeds') {
+      setDeedStatusFilter('ALL');
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowChallanModal(false);
+      }
+    };
+    if (showChallanModal) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showChallanModal]);
 
   const switchToRegistrarRole = async () => {
     const res = await BhumiApi.switchDemoRole('sub_registrar');
@@ -147,8 +193,13 @@ export const SubRegistrarPage: React.FC = () => {
   };
 
   const handleCalculateCustomFee = async () => {
-    const res = await BhumiApi.calculateFees(Number(declaredValue) || 1000000, deedTypeFee);
-    setFeeBreakdown(res);
+    try {
+      const res = await BhumiApi.calculateFees(Number(declaredValue) || 1000000, deedTypeFee);
+      setFeeBreakdown(res);
+    } catch (error: any) {
+      setFeeBreakdown(null);
+      setStatusMsg(lang === 'bn' ? error?.response?.data?.message_bn || 'ফি নির্ধারণ করা যাচ্ছে না।' : error?.response?.data?.message_en || 'Fee assessment is unavailable.');
+    }
   };
 
   // Filtered deeds
@@ -194,7 +245,7 @@ export const SubRegistrarPage: React.FC = () => {
     <div className="space-y-6">
       <header className="page-intro animate-rise">
         <h1>{t('সাব-রেজিস্ট্রার কনসোল', 'Sub-Registrar Console')}</h1>
-        <p>{t('প্রাক-নিবন্ধন গেটকিপার, হোল্ড কিউ ও স্ট্যাম্প শুল্ক — দাপ্তরিক দলিল নিয়ন্ত্রণ।', 'Pre-registration gatekeeper, hold queue, and stamp fees — official deed control.')}</p>
+        <p>{t('প্রাক-নিবন্ধন গেটকিপার, হোল্ড কিউ ও স্ট্যাম্প শুল্ক — রেকর্ডভিত্তিক মূল্যায়ন।', 'Pre-registration gatekeeper, hold queue and demonstration fee guidance.')}</p>
       </header>
       {/* RBAC Guard Notice if not logged in as sub_registrar or admin */}
       {role !== 'sub_registrar' && role !== 'admin' && (
@@ -210,83 +261,195 @@ export const SubRegistrarPage: React.FC = () => {
           </div>
           <button
             onClick={switchToRegistrarRole}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#062823] hover:bg-[#041A1C] text-white font-bold text-xs cursor-pointer min-h-[36px] transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#074f38] hover:bg-[#053b2a] text-white font-bold text-xs cursor-pointer min-h-[36px] transition-colors"
           >
             {t('সাব-রেজিস্ট্রার প্যানেলে প্রবেশ করুন →', 'Activate Sub-Registrar Session →')}
           </button>
         </div>
       )}
 
-      {/* Registry overview */}
-      <VelzonOverviewSection
-        role="sub_registrar"
-        stats={stats}
-        onQuickAction={() => setSubTab('deeds')}
-      />
+      {/* Sub-Registrar Operational KPI Strip (Role-Specific) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-rise">
+        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+              {t('মোট নিবন্ধিত দলিল', 'Total Registered Deeds')}
+            </div>
+            <div className="text-2xl font-extrabold text-[#0A1F1C] mt-1">
+              {toBanglaDigits(stats?.kpis?.total_deeds ?? deedsList.length, lang)}
+            </div>
+            <button
+              onClick={() => handleTabChange('deeds')}
+              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+            >
+              {t('দলিল রেজিস্টার দেখুন →', 'View Deed Registry →')}
+            </button>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+            <FileSpreadsheet className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+              {t('স্থগিত দলিল (HELD কিউ)', 'Held Deeds Queue')}
+            </div>
+            <div className="text-2xl font-extrabold text-[#C4891A] mt-1">
+              {toBanglaDigits(deedsList.filter((d) => d.status === 'HELD').length, lang)}
+            </div>
+            <button
+              onClick={() => handleTabChange('held')}
+              className="text-xs text-[#C4891A] font-semibold hover:underline mt-1 block cursor-pointer"
+            >
+              {t('শুনানি ও নিষ্পত্তি কিউ →', 'Review Held Hearings →')}
+            </button>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-amber-50 text-[#C4891A] flex items-center justify-center">
+            <ShieldAlert className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+              {t('সংগৃহীত শুল্ক ও রাজস্ব', 'Revenue & Stamp Duty')}
+            </div>
+            <div className="text-2xl font-extrabold text-[#0A1F1C] mt-1">
+              ৳{toBanglaDigits((((stats?.kpis?.total_deed_value_bdt ?? 15000000) * 0.08) / 100000).toFixed(1), lang)} Lac
+            </div>
+            <button
+              onClick={() => handleTabChange('fees')}
+              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+            >
+              {t('শুল্ক ক্যালকুলেটর →', 'Fee Calculator →')}
+            </button>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+            <Calculator className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+              {t('ক্রিপ্টোগ্রাফিক লেজার', 'Cryptographic Ledger')}
+            </div>
+            <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
+              {toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}%
+            </div>
+            <button
+              onClick={() => handleTabChange('verifier')}
+              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+            >
+              {t('লেজার অখণ্ডতা যাচাই →', 'Verify Ledger →')}
+            </button>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
 
       {/* Operational Controlling Card */}
       <div className="panel p-6 space-y-6 animate-rise-delay">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#0D6B5C]/10 pb-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
           <div>
-            <h2 className="font-display text-lg md:text-xl text-[#062823] flex items-center gap-2">
-              <FileSpreadsheet className="w-5 h-5 text-[#0D6B5C]" />
+            <h2 className="font-bold text-lg md:text-xl text-[#074f38] flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-[#006A4E]" />
               <span>
                 {t(
                   'সাব-রেজিস্ট্রার প্রাক-নিবন্ধন গেটকিপার ও দলিল রেজিস্টার কন্ট্রোল',
-                  'Pre-Registration Gatekeeper, Deed Control & Stamp Duty Calculator'
+                  'Pre-Registration Gatekeeper, Deed Control & Verification'
                 )}
               </span>
             </h2>
             <p className="text-xs text-[#5F7A74] mt-0.5">
               {t(
-                'দলিল সম্পাদনের পূর্বে ১১টি রুল পরীক্ষা, স্থগিত দলিল (HELD) শুনানি নিষ্পত্তি এবং সরকারি রাজস্ব হিসাব:',
-                'Run 11 pre-registration fraud checks, manage HELD deeds, and calculate government fees:'
+                'দলিল সম্পাদনের পূর্বে ১১টি রুল পরীক্ষা, স্থগিত দলিল (HELD) শুনানি নিষ্পত্তি, খতিয়ান চেইন ও লেজার যাচাই:',
+                'Run pre-registration fraud checks, manage held hearings, inspect khatian lineage and ledger proofs:'
               )}
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setSubTab('wizard')}
-              className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[38px] transition-colors ${
+              onClick={() => handleTabChange('wizard')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
                 subTab === 'wizard'
-                  ? 'bg-[#0D6B5C] text-white shadow-xs'
-                  : 'bg-[#EDF4F1] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+                  ? 'bg-[#006A4E] text-white shadow-xs'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
               }`}
             >
               <FileSpreadsheet className="w-4 h-4" />
               <span>{t('নতুন দলিল ও প্রাক-যাচাই', 'Pre-Reg Gatekeeper')}</span>
             </button>
             <button
-              onClick={() => setSubTab('deeds')}
-              className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[38px] transition-colors ${
+              onClick={() => handleTabChange('held')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+                subTab === 'held'
+                  ? 'bg-[#C4891A] text-white shadow-xs'
+                  : 'bg-[#FBF3E0] text-[#7A540E] hover:bg-[#F5E6BE]'
+              }`}
+            >
+              <ShieldAlert className="w-4 h-4" />
+              <span>
+                {t('স্থগিত (HELD) কিউ', 'Held Queue')} (
+                {toBanglaDigits(deedsList.filter((d) => d.status === 'HELD').length, lang)})
+              </span>
+            </button>
+            <button
+              onClick={() => handleTabChange('deeds')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
                 subTab === 'deeds'
-                  ? 'bg-[#0D6B5C] text-white shadow-xs'
-                  : 'bg-[#EDF4F1] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+                  ? 'bg-[#006A4E] text-white shadow-xs'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
               }`}
             >
               <ListChecks className="w-4 h-4" />
               <span>
-                {t('দলিল রেজিস্টার ও হোল্ড কন্ট্রোল', 'Deed Registry & Hold Queue')} (
+                {t('দলিল রেজিস্টার', 'Deed Registry')} (
                 {toBanglaDigits(deedsList.length, lang)})
               </span>
             </button>
             <button
-              onClick={() => setSubTab('fees')}
-              className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[38px] transition-colors ${
+              onClick={() => handleTabChange('khatian')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+                subTab === 'khatian'
+                  ? 'bg-[#006A4E] text-white shadow-xs'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+              }`}
+            >
+              <Search className="w-4 h-4" />
+              <span>{t('খতিয়ান পরম্পরা', 'Khatian Lineage')}</span>
+            </button>
+            <button
+              onClick={() => handleTabChange('verifier')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+                subTab === 'verifier'
+                  ? 'bg-[#006A4E] text-white shadow-xs'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+              }`}
+            >
+              <QrCode className="w-4 h-4" />
+              <span>{t('দলিল লেজার যাচাই', 'Deed Verifier')}</span>
+            </button>
+            <button
+              onClick={() => handleTabChange('fees')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
                 subTab === 'fees'
-                  ? 'bg-[#0D6B5C] text-white shadow-xs'
-                  : 'bg-[#EDF4F1] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+                  ? 'bg-[#006A4E] text-white shadow-xs'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
               }`}
             >
               <Calculator className="w-4 h-4" />
-              <span>{t('সরকারি শুল্ক ও ফি ক্যালকুলেটর', 'Stamp & Fee Calculator')}</span>
+              <span>{t('সরকারি ফি ও চালান', 'Stamp & Challan')}</span>
             </button>
           </div>
         </div>
 
         {statusMsg && (
-          <div className="p-4 rounded-xl bg-[#E8F5F1] border-l-4 border-[#0D6B5C] text-[#0D6B5C] font-bold text-xs flex items-center gap-2">
+          <div className="p-4 rounded-xl bg-[#EDF7F4] border-l-4 border-[#006A4E] text-[#006A4E] font-bold text-xs flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span>{statusMsg}</span>
           </div>
@@ -306,7 +469,7 @@ export const SubRegistrarPage: React.FC = () => {
                   onChange={(e) => setPlotId(Number(e.target.value))}
                   className="field text-xs font-semibold bg-[#F5FAF8]"
                 >
-                  {plots.slice(0, 25).map((p) => (
+                  {plots.map((p) => (
                     <option key={p.id} value={p.id}>
                       {lang === 'bn' ? p.mouza_bn : p.mouza_en} — {t('দাগ', 'Dag')} {p.dag_no} (
                       {p.total_area_decimal} dec)
@@ -325,7 +488,7 @@ export const SubRegistrarPage: React.FC = () => {
                   onChange={(e) => setSellerId(Number(e.target.value))}
                   className="field text-xs font-semibold bg-[#F5FAF8]"
                 >
-                  {persons.slice(0, 15).map((per) => (
+                  {persons.map((per) => (
                     <option key={per.id} value={per.id}>
                       {lang === 'bn' ? per.name_bn : per.name_en} ({per.nid_mock})
                     </option>
@@ -342,7 +505,7 @@ export const SubRegistrarPage: React.FC = () => {
                   onChange={(e) => setBuyerId(Number(e.target.value))}
                   className="field text-xs font-semibold bg-[#F5FAF8]"
                 >
-                  {persons.slice(0, 15).map((per) => (
+                  {persons.map((per) => (
                     <option key={per.id} value={per.id}>
                       {lang === 'bn' ? per.name_bn : per.name_en} ({per.nid_mock})
                     </option>
@@ -389,10 +552,10 @@ export const SubRegistrarPage: React.FC = () => {
             </div>
 
             {/* Quick Context Summary Box */}
-            <div className="p-3.5 bg-[#EDF4F1]/80 rounded-xl border border-[#0D6B5C]/12 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="p-3.5 bg-[#EDF7F4]/80 rounded-xl border border-[#006A4E]/12 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
                 <span className="font-bold text-[#0A1F1C]/90">{t('নির্বাচিত প্লট:', 'Selected Plot:')}</span>
-                <span className="px-2 py-0.5 rounded bg-white border border-[#0D6B5C]/20 font-bold text-[#0A1F1C]">
+                <span className="px-2 py-0.5 rounded bg-white border border-[#006A4E]/20 font-bold text-[#0A1F1C]">
                   {lang === 'bn' ? selectedPlot?.mouza_bn : selectedPlot?.mouza_en || 'ধানমন্ডি'} • {t('দাগ', 'Dag')} {selectedPlot?.dag_no || '101'}
                 </span>
                 {Number(selectedPlot?.owner_sale_locked) === 1 && (
@@ -413,16 +576,16 @@ export const SubRegistrarPage: React.FC = () => {
             {/* Gatekeeper 11-Rule Preview Checklist */}
             <div className="space-y-2">
               <h4 className="text-xs font-extrabold text-[#0A1F1C]/90 uppercase tracking-wider flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-[#0D6B5C]" />
+                <ShieldAlert className="w-4 h-4 text-[#006A4E]" />
                 <span>{t('স্বয়ংক্রিয় ১১টি গেটকিপার রুলস ইঞ্জিন:', 'Automated 11-Rule Gatekeeper Engine:')}</span>
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-[11px]">
                 {gatekeeperRules.map((rule) => (
                   <div
                     key={rule.id}
-                    className="p-2.5 rounded-lg border border-[#0D6B5C]/12 bg-white flex items-center gap-2 text-[#0A1F1C]/90"
+                    className="p-2.5 rounded-lg border border-[#006A4E]/12 bg-white flex items-center gap-2 text-[#0A1F1C]/90"
                   >
-                    <span className="w-5 h-5 rounded-full bg-[#E8F5F1] text-[#0D6B5C] font-bold text-[10px] flex items-center justify-center shrink-0">
+                    <span className="w-5 h-5 rounded-full bg-[#EDF7F4] text-[#006A4E] font-bold text-[10px] flex items-center justify-center shrink-0">
                       {rule.id}
                     </span>
                     <span className="font-medium truncate">
@@ -451,7 +614,7 @@ export const SubRegistrarPage: React.FC = () => {
               <button
                 onClick={handleRegisterDeed}
                 disabled={loading}
-                className="px-5 py-2.5 rounded-lg bg-[#062823] hover:bg-[#041A1C] text-white text-xs font-extrabold cursor-pointer min-h-[42px] shadow-sm flex items-center gap-2 transition-all disabled:opacity-50"
+                className="px-5 py-2.5 rounded-lg bg-[#074f38] hover:bg-[#053b2a] text-white text-xs font-extrabold cursor-pointer min-h-[42px] shadow-sm flex items-center gap-2 transition-all disabled:opacity-50"
               >
                 <KeyRound className="w-4 h-4" />
                 <span>
@@ -466,18 +629,18 @@ export const SubRegistrarPage: React.FC = () => {
         )}
 
         {/* TAB 2: Deed Registry & Hold / Release Control Table */}
-        {subTab === 'deeds' && (
+        {(subTab === 'deeds' || subTab === 'held') && (
           <div className="space-y-4">
             {/* Search and Status Filters */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#EDF4F1]/80 p-3 rounded-xl border border-[#0D6B5C]/12">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#EDF7F4]/80 p-3 rounded-xl border border-[#006A4E]/12">
               <div className="relative flex-1 max-w-sm">
-                <Search className="w-4 h-4 text-[#5F7A74]/80 absolute left-3 top-3" />
+                <Search className="w-4 h-4 text-[#5F7A74]/80 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
                   value={deedSearch}
                   onChange={(e) => setDeedSearch(e.target.value)}
                   placeholder={t('দলিল নং, দাগ বা নাম খুঁজুন...', 'Search deed, dag or party...')}
-                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#0D6B5C]/20 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#0D6B5C]/30"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#006A4E]/20 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
                 />
               </div>
 
@@ -488,8 +651,8 @@ export const SubRegistrarPage: React.FC = () => {
                     onClick={() => setDeedStatusFilter(st)}
                     className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-colors cursor-pointer min-h-[32px] ${
                       deedStatusFilter === st
-                        ? 'bg-[#0D6B5C] text-white shadow-xs'
-                        : 'bg-white text-[#5F7A74] border border-[#0D6B5C]/12 hover:bg-[#EDF4F1]'
+                        ? 'bg-[#006A4E] text-white shadow-xs'
+                        : 'bg-white text-[#5F7A74] border border-[#006A4E]/12 hover:bg-[#EDF7F4]'
                     }`}
                   >
                     {st === 'ALL'
@@ -507,7 +670,7 @@ export const SubRegistrarPage: React.FC = () => {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto rounded-xl border border-[#0D6B5C]/12">
+            <div className="overflow-x-auto rounded-xl border border-[#006A4E]/12">
               <table className="table-modern text-xs">
                 <thead>
                   <tr className="">
@@ -521,7 +684,7 @@ export const SubRegistrarPage: React.FC = () => {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#0D6B5C]/10 bg-white">
+                <tbody className="divide-y divide-[#006A4E]/10 bg-white">
                   {filteredDeeds.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-8 text-center text-[#5F7A74]">
@@ -530,8 +693,8 @@ export const SubRegistrarPage: React.FC = () => {
                     </tr>
                   ) : (
                     filteredDeeds.map((d) => (
-                      <tr key={d.id} className="hover:bg-[#EDF4F1]/80 transition-colors">
-                        <td className="py-3 px-3 font-mono font-bold text-[#062823]">
+                      <tr key={d.id} className="hover:bg-[#EDF7F4]/80 transition-colors">
+                        <td className="py-3 px-3 font-mono font-bold text-[#074f38]">
                           <div>{d.deed_no}</div>
                           <div className="text-[10px] text-[#5F7A74]/80 font-sans">
                             Block #{d.chain_index} • {d.deed_type || 'SAF_KABALA'}
@@ -574,7 +737,7 @@ export const SubRegistrarPage: React.FC = () => {
                             {d.status !== 'PENDING_MUTATION' && d.status !== 'MUTATED' && (
                               <button
                                 onClick={() => handleUpdateDeedStatus(d.id, 'REGISTERED')}
-                                className="px-2.5 py-1 rounded bg-[#0D6B5C] hover:bg-[#0A5549] text-white font-bold text-[11px] cursor-pointer min-h-[30px] transition-colors"
+                                className="px-2.5 py-1 rounded bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-[11px] cursor-pointer min-h-[30px] transition-colors"
                               >
                                 ✔ {t('রিলিজ', 'Release')}
                               </button>
@@ -599,6 +762,7 @@ export const SubRegistrarPage: React.FC = () => {
         )}
 
         {/* TAB 3: Official Stamp Duty & Registration Fee Calculator */}
+        {subTab === 'fees' && <p role="note" className="rounded-xl bg-amber-50 border border-amber-200 p-4 text-sm">{t('এই অ্যাপ সরকারি চালান বা অর্থপ্রদানের নথি ইস্যু করে না। এখানে প্রদর্শিত হিসাব কেবল ডেমো। চূড়ান্ত নিবন্ধন কর ও শুল্কের জন্য সংশ্লিষ্ট সরকারি নিবন্ধন অফিসের নির্দেশনা অনুসরণ করুন।', 'This application does not issue government challans or payment documents. Any estimate shown here is a demonstration. Obtain authoritative registration duties from the registry office.')}</p>}
         {subTab === 'fees' && feeBreakdown && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -630,59 +794,90 @@ export const SubRegistrarPage: React.FC = () => {
               <div className="flex items-end gap-2">
                 <button
                   onClick={handleCalculateCustomFee}
-                  className="flex-1 py-2.5 rounded-lg bg-[#0D6B5C] hover:bg-[#0A5549] text-white text-xs font-extrabold cursor-pointer min-h-[40px] shadow-sm transition-colors"
+                  disabled={!import.meta.env.DEV}
+                  className="flex-1 py-2.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-extrabold cursor-pointer min-h-[40px] shadow-sm transition-colors"
                 >
-                  {t('ফি হিসাব করুন', 'Calculate Official Fees')}
+                  {t('ডেমো আনুমানিক হিসাব', 'Calculate Demo Estimate')}
                 </button>
                 <button
                   onClick={() => setShowChallanModal(true)}
                   className="px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold cursor-pointer min-h-[40px] flex items-center gap-1.5 shadow-sm"
                 >
                   <Printer className="w-3.5 h-3.5" />
-                  <span>{t('চালান প্রিভিউ', 'Treasury Challan')}</span>
+                  <span>{t('আনুমানিক হিসাব দেখুন', 'Preview Estimate')}</span>
                 </button>
               </div>
             </div>
 
             {/* Fee Breakdown Cards */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-2">
-              <div className="p-4 rounded-xl bg-[#EDF4F1]/80 border border-[#0D6B5C]/12">
-                <div className="text-[11px] text-[#5F7A74]">{t('স্ট্যাম্প শুল্ক (১.৫%)', 'Stamp Duty (1.5%)')}</div>
+              <div className="p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12">
+                <div className="text-[11px] text-[#5F7A74]">
+                  {feeBreakdown.stamp_duty_rate_label
+                    ? t(`স্ট্যাম্প শুল্ক (${feeBreakdown.stamp_duty_rate_label})`, `Stamp Duty (${feeBreakdown.stamp_duty_rate_label})`)
+                    : t('স্ট্যাম্প শুল্ক (১.৫%)', 'Stamp Duty (1.5%)')}
+                </div>
                 <div className="text-base font-extrabold text-[#0A1F1C] mt-1">
                   ৳{toBanglaDigits(feeBreakdown.breakdown.stamp_duty_bdt.toLocaleString(), lang)}
                 </div>
-                <div className="text-[10px] text-[#5F7A74]/80 mt-1">কোড: 1-1101-0025-2671</div>
+                <div className="text-[10px] text-[#5F7A74]/80 mt-1">কোড: ডেমো / আনুমানিক</div>
               </div>
-              <div className="p-4 rounded-xl bg-[#EDF4F1]/80 border border-[#0D6B5C]/12">
-                <div className="text-[11px] text-[#5F7A74]">{t('রেজিস্ট্রেশন ফি (১%)', 'Registration Fee (1%)')}</div>
+              <div className="p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12">
+                <div className="text-[11px] text-[#5F7A74]">
+                  {feeBreakdown.registration_fee_rate_label
+                    ? t(`রেজিস্ট্রেশন ফি (${feeBreakdown.registration_fee_rate_label})`, `Registration Fee (${feeBreakdown.registration_fee_rate_label})`)
+                    : t('রেজিস্ট্রেশন ফি (১%)', 'Registration Fee (1%)')}
+                </div>
                 <div className="text-base font-extrabold text-[#0A1F1C] mt-1">
                   ৳{toBanglaDigits(feeBreakdown.breakdown.registration_fee_bdt.toLocaleString(), lang)}
                 </div>
-                <div className="text-[10px] text-[#5F7A74]/80 mt-1">কোড: 1-2101-0001-1801</div>
+                <div className="text-[10px] text-[#5F7A74]/80 mt-1">ডেমো / আনুমানিক</div>
               </div>
-              <div className="p-4 rounded-xl bg-[#EDF4F1]/80 border border-[#0D6B5C]/12">
+              <div className="p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12">
                 <div className="text-[11px] text-[#5F7A74]">{t('স্থানীয় সরকার কর (৩%)', 'Local Govt Tax (3%)')}</div>
                 <div className="text-base font-extrabold text-[#0A1F1C] mt-1">
                   ৳{toBanglaDigits(feeBreakdown.breakdown.local_govt_tax_bdt.toLocaleString(), lang)}
                 </div>
                 <div className="text-[10px] text-[#5F7A74]/80 mt-1">উপজেলা / পৌরসভা তহবিল</div>
               </div>
-              <div className="p-4 rounded-xl bg-[#EDF4F1]/80 border border-[#0D6B5C]/12">
+              <div className="p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12">
                 <div className="text-[11px] text-[#5F7A74]">{t('উৎস কর / গেইন ট্যাক্স (২%)', 'Capital Gain AIT (2%)')}</div>
                 <div className="text-base font-extrabold text-[#0A1F1C] mt-1">
                   ৳{toBanglaDigits(feeBreakdown.breakdown.ait_gain_tax_bdt.toLocaleString(), lang)}
                 </div>
                 <div className="text-[10px] text-[#5F7A74]/80 mt-1">জাতীয় রাজস্ব বোর্ড (NBR)</div>
               </div>
-              <div className="p-4 rounded-xl bg-[#E8F5F1] border-2 border-[#0D6B5C]">
-                <div className="text-[11px] font-bold text-[#0D6B5C]">{t('সর্বমোট সরকারি ফি', 'Total Payable Fee')}</div>
-                <div className="text-lg font-extrabold text-[#0D6B5C] mt-1">
+              <div className="p-4 rounded-xl bg-[#EDF7F4] border-2 border-[#006A4E]">
+                <div className="text-[11px] font-bold text-[#006A4E]">{t('ডেমো আনুমানিক মোট', 'Demo Estimated Total')}</div>
+                <div className="text-lg font-extrabold text-[#006A4E] mt-1">
                   ৳{toBanglaDigits(feeBreakdown.total_payable_bdt.toLocaleString(), lang)}
                 </div>
-                <div className="text-[10px] text-[#0D6B5C]/80 mt-1 font-bold">ই-চালান যোগ্য</div>
+                <div className="text-[10px] text-[#006A4E]/80 mt-1 font-bold">সরকারি চালান নয়</div>
               </div>
             </div>
           </div>
+        )}
+
+        {/* TAB 4: In-Panel Officer Khatian Lineage & Chain Reconciliation */}
+        {subTab === 'khatian' && (
+          <OfficerKhatianExplorer
+            onSelectPlotForAction={(selectedId) => {
+              setPlotId(selectedId);
+              handleTabChange('wizard');
+            }}
+            actionLabel={t('এই প্লটে দলিল নিবন্ধন শুরু করুন', 'Start Deed Registration')}
+            actionType="wizard"
+          />
+        )}
+
+        {/* TAB 5: In-Panel Officer Cryptographic Deed & Ledger Verifier */}
+        {subTab === 'verifier' && (
+          <OfficerDeedVerifier
+            onNavigateToWizard={(selectedPlotId) => {
+              setPlotId(selectedPlotId);
+              handleTabChange('wizard');
+            }}
+          />
         )}
       </div>
 
@@ -692,7 +887,7 @@ export const SubRegistrarPage: React.FC = () => {
         <div
           className={`p-6 rounded-xl border-2 ${
             createdDeedResult.deed.status === 'REGISTERED'
-              ? 'bg-[#E8F5F1] border-[#0D6B5C]'
+              ? 'bg-[#EDF7F4] border-[#006A4E]'
               : 'bg-[#FFF0F1] border-[#FF3B4A]'
           }`}
         >
@@ -700,7 +895,7 @@ export const SubRegistrarPage: React.FC = () => {
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 font-extrabold text-lg">
                 {createdDeedResult.deed.status === 'REGISTERED' ? (
-                  <CheckCircle2 className="w-6 h-6 text-[#0D6B5C]" />
+                  <CheckCircle2 className="w-6 h-6 text-[#006A4E]" />
                 ) : (
                   <ShieldAlert className="w-6 h-6 text-[#FF3B4A]" />
                 )}
@@ -719,7 +914,7 @@ export const SubRegistrarPage: React.FC = () => {
             </div>
 
             {createdDeedResult.qr_data_uri && (
-              <div className="bg-white p-2 rounded-xl border border-[#0D6B5C]/20 shrink-0">
+              <div className="bg-white p-2 rounded-xl border border-[#006A4E]/20 shrink-0">
                 <img
                   src={createdDeedResult.qr_data_uri}
                   alt="Deed QR"
@@ -734,56 +929,56 @@ export const SubRegistrarPage: React.FC = () => {
       {/* Printable Treasury Fee Challan Modal */}
       {showChallanModal && feeBreakdown && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl relative my-8 border border-[#0D6B5C]/12">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl relative my-8 border border-[#006A4E]/12">
             <div className="flex items-center justify-between border-b pb-3 mb-4 print:hidden">
               <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-[#0D6B5C]" />
+                <FileText className="w-5 h-5 text-[#006A4E]" />
                 <h3 className="font-extrabold text-[#0A1F1C] text-sm">
-                  {t('সরকারি রাজস্ব চালান ফরম (টিআর ফরম নং ৭)', 'Treasury Challan Form (TR Form 7)')}
+                  {t('আনুমানিক ফি হিসাব — সরকারি চালান নয়', 'Informational Estimate — Not a Payment Document')}
                 </h3>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => window.print()}
-                  className="px-3.5 py-1.5 rounded-lg bg-[#0D6B5C] text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-lg bg-[#006A4E] text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
                 >
                   <Printer className="w-3.5 h-3.5" />
-                  <span>{t('প্রিন্ট চালান', 'Print Challan')}</span>
+                  <span>{t('হিসাব প্রিন্ট করুন', 'Print Estimate')}</span>
                 </button>
                 <button
                   onClick={() => setShowChallanModal(false)}
-                  className="p-1.5 rounded-lg text-[#5F7A74]/80 hover:text-[#5F7A74] hover:bg-[#EDF4F1] cursor-pointer"
+                  className="p-1.5 rounded-lg text-[#5F7A74]/80 hover:text-[#5F7A74] hover:bg-[#EDF7F4] cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
-            <div className="p-5 border-2 border-[#0D6B5C]/20 rounded-xl space-y-4 text-xs text-[#0A1F1C]">
+            <div className="p-5 border-2 border-[#006A4E]/20 rounded-xl space-y-4 text-xs text-[#0A1F1C]">
               <div className="text-center border-b pb-3 space-y-0.5">
-                <p className="font-bold text-[#0A1F1C]">গণপ্রজাতন্ত্রী বাংলাদেশ সরকার</p>
-                <p className="font-extrabold text-[#0D6B5C]">ভূমি নিবন্ধন ও রাজস্ব জমা চালান</p>
+                <p className="font-bold text-[#0A1F1C]">ভূমি সুরক্ষা — স্বাধীন প্রোটোটাইপ</p>
+                <p className="font-extrabold text-[#006A4E]">ডেমো আনুমানিক হিসাব — অর্থ প্রদানের জন্য নয়</p>
                 <p className="text-[10px] text-[#5F7A74] font-mono">
-                  CHALLAN ID: BHM-CHLN-{Date.now().toString().slice(-8)}
+                  ESTIMATE REF: BHM-CHLN-{Date.now().toString().slice(-8)}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-[11px]">
                 <div>দলিলের ঘোষিত মূল্য: <strong>৳{Number(declaredValue).toLocaleString()}</strong></div>
                 <div>দলিলের ধরন: <strong>{deedTypeFee}</strong></div>
-                <div>অর্থনৈতিক কোড: <strong>1-1101-0025-2671</strong></div>
-                <div>চালানের উৎস: <strong>ভূমি সুরক্ষা সাব-রেজিস্ট্রি</strong></div>
+                <div>হিসাবের ধরন: <strong>ডেমো / আনুমানিক</strong></div>
+                <div>হিসাবের উৎস: <strong>ভূমি সুরক্ষা প্রোটোটাইপ</strong></div>
               </div>
 
-              <table className="w-full border-collapse text-[11px] border border-[#0D6B5C]/12">
+              <table className="w-full border-collapse text-[11px] border border-[#006A4E]/12">
                 <thead>
-                  <tr className="bg-[#EDF4F1]/80 border-b border-[#0D6B5C]/12">
+                  <tr className="bg-[#EDF7F4]/80 border-b border-[#006A4E]/12">
                     <th className="p-2 text-left">ফি/শুল্কের খাত</th>
                     <th className="p-2 text-right">হার</th>
                     <th className="p-2 text-right">পরিমাণ (টাকা)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#0D6B5C]/10">
+                <tbody className="divide-y divide-[#006A4E]/10">
                   <tr>
                     <td className="p-2">স্ট্যাম্প শুল্ক (Stamp Duty)</td>
                     <td className="p-2 text-right">১.৫%</td>
@@ -812,8 +1007,8 @@ export const SubRegistrarPage: React.FC = () => {
                       ৳{feeBreakdown.breakdown.ait_gain_tax_bdt.toLocaleString()}
                     </td>
                   </tr>
-                  <tr className="bg-[#E8F5F1] font-bold text-[#0D6B5C]">
-                    <td className="p-2" colSpan={2}>সর্বমোট প্রদেয় সরকারি রাজস্ব:</td>
+                  <tr className="bg-[#EDF7F4] font-bold text-[#006A4E]">
+                    <td className="p-2" colSpan={2}>ডেমো আনুমানিক মোট:</td>
                     <td className="p-2 text-right font-mono text-sm">
                       ৳{feeBreakdown.total_payable_bdt.toLocaleString()}
                     </td>
@@ -823,12 +1018,12 @@ export const SubRegistrarPage: React.FC = () => {
 
               <div className="flex justify-between items-end pt-4 border-t text-[10px] text-[#5F7A74]">
                 <div>
-                  <p>জমাদানকারী ব্যাংক: বাংলাদেশ ব্যাংক / সোনালী ব্যাংক</p>
-                  <p>স্বয়ংক্রিয় ই-চালান সিস্টেম দ্বারা যাচাইকৃত</p>
+                  <p>এই নথি দিয়ে কোনো অর্থ প্রদান করবেন না।</p>
+                  <p>চূড়ান্ত ফি ও চালানের জন্য সরকারি নিবন্ধন অফিসের নির্দেশনা অনুসরণ করুন।</p>
                 </div>
                 <div className="text-right">
-                  <div className="font-mono font-bold text-[#0D6B5C]">[Digital Treasury Seal]</div>
-                  <p>সাব-রেজিস্ট্রার কার্যালয়</p>
+                  <div className="font-mono font-bold text-[#006A4E]">[INFORMATIONAL ESTIMATE]</div>
+                  <p>সরকারি নথি নয়</p>
                 </div>
               </div>
             </div>

@@ -3,7 +3,7 @@ import { useAppUI } from '../i18n';
 import { BhumiApi, RiskReportResponse } from '../api/client';
 import { toBanglaDigits } from '../theme/tokens';
 import { ResultHeroBanner } from '../components/ResultHeroBanner';
-import { VelzonOverviewSection } from '../components/VelzonOverviewSection';
+import { OfficerKhatianExplorer } from '../components/OfficerKhatianExplorer';
 import {
   Building2,
   Lock,
@@ -16,11 +16,21 @@ import {
   Search,
   CheckCircle2,
   AlertTriangle,
-  FileText
+  FileText,
+  ShieldCheck,
+  PlusCircle
 } from 'lucide-react';
 
+export type BankTab = 'mortgages' | 'new_lien' | 'noc' | 'khatian';
+
 export const BankOfficerPage: React.FC = () => {
-  const { lang, role, setRole, setUser, setToken, t } = useAppUI();
+  const { lang, role, user, setRole, setUser, setToken, activeSubTab, setActiveSubTab, t } = useAppUI();
+  const [subTab, setSubTab] = useState<BankTab>(() => {
+    if (activeSubTab && ['mortgages', 'new_lien', 'noc', 'khatian'].includes(activeSubTab)) {
+      return activeSubTab as BankTab;
+    }
+    return 'mortgages';
+  });
   const [plots, setPlots] = useState<any[]>([]);
   const [persons, setPersons] = useState<any[]>([]);
   const [mortgages, setMortgages] = useState<any[]>([]);
@@ -28,7 +38,9 @@ export const BankOfficerPage: React.FC = () => {
 
   const [plotId, setPlotId] = useState<number>(6);
   const [borrowerId, setBorrowerId] = useState<number>(11);
-  const [bankNameBn, setBankNameBn] = useState('বাংলাদেশ কৃষি ব্যাংক');
+  const [bankNameBn, setBankNameBn] = useState(user?.office_bn?.split(',')[0] || '');
+  const [bankNameEn, setBankNameEn] = useState(user?.office_en?.split(',')[0] || '');
+  const [mortgagedArea, setMortgagedArea] = useState('1');
   const [branchName, setBranchName] = useState('সাভার শাখা');
   const [loanAmount, setLoanAmount] = useState('3000000');
 
@@ -61,12 +73,47 @@ export const BankOfficerPage: React.FC = () => {
       setPersons(pers);
       setMortgages(mrts);
       setStats(st);
-    });
+    }).catch(() => setErrorMsg(t('তথ্য লোড করা যায়নি।', 'Could not load bank records.')));
   };
 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (activeSubTab && ['mortgages', 'new_lien', 'noc', 'khatian'].includes(activeSubTab)) {
+      setSubTab(activeSubTab as BankTab);
+      if (activeSubTab === 'noc') {
+        setStatusFilter('RELEASED');
+      } else if (activeSubTab === 'mortgages') {
+        setStatusFilter('ALL');
+      }
+    }
+  }, [activeSubTab]);
+
+  const handleTabChange = (target: BankTab) => {
+    setSubTab(target);
+    setActiveSubTab(target);
+    if (target === 'noc') {
+      setStatusFilter('RELEASED');
+    } else if (target === 'mortgages') {
+      setStatusFilter('ALL');
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setNocModalData(null);
+      }
+    };
+    if (nocModalData) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [nocModalData]);
 
   const switchToBankRole = async () => {
     const res = await BhumiApi.switchDemoRole('bank_officer');
@@ -83,11 +130,13 @@ export const BankOfficerPage: React.FC = () => {
     setActionMsg(null);
     setLoading(true);
     try {
-      const res = await BhumiApi.checkBeforeBuy({
-        plot_id: Number(plotId),
-        deed_type: 'MORTGAGE',
+      const res = await BhumiApi.checkBankCollateral({
+        plot_id: Number(plotId), borrower_id: Number(borrowerId),
+        area_mortgaged_decimal: Number(mortgagedArea),
       });
       setCollateralReport(res);
+    } catch (err: any) {
+      setErrorMsg((lang === 'bn' ? err?.response?.data?.message_bn : err?.response?.data?.message_en) || t('জামানত যাচাই ব্যর্থ।', 'Collateral check failed.'));
     } finally {
       setLoading(false);
     }
@@ -102,14 +151,15 @@ export const BankOfficerPage: React.FC = () => {
         plot_id: Number(plotId),
         borrower_id: Number(borrowerId),
         bank_name_bn: bankNameBn,
-        bank_name_en: 'Commercial Bank',
+        bank_name_en: bankNameEn,
+        area_mortgaged_decimal: Number(mortgagedArea),
         branch_name: branchName,
         loan_amount_bdt: Number(loanAmount),
       });
       setActionMsg(lang === 'bn' ? res.message_bn : res.message_en);
       loadData();
     } catch (err: any) {
-      const detail = err?.response?.data?.detail;
+      const detail = err?.response?.data?.detail || err?.response?.data;
       setErrorMsg(
         detail
           ? lang === 'bn'
@@ -141,8 +191,13 @@ export const BankOfficerPage: React.FC = () => {
   };
 
   const handleViewNoc = async (id: number) => {
-    const res = await BhumiApi.getMortgageNoc(id);
-    setNocModalData(res);
+    try {
+      const res = await BhumiApi.getMortgageNoc(id);
+      setNocModalData(res);
+    } catch (err: any) {
+      const msg = (lang === 'bn' ? err?.response?.data?.message_bn : err?.response?.data?.message_en) || t('এনওসি সনদ লোড করা সম্ভব হয়নি।', 'Failed to load NOC certificate.');
+      setErrorMsg(msg);
+    }
   };
 
   const filteredMortgages = useMemo(() => {
@@ -182,57 +237,207 @@ export const BankOfficerPage: React.FC = () => {
           </div>
           <button
             onClick={switchToBankRole}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#062823] hover:bg-[#041A1C] text-white font-bold text-xs cursor-pointer min-h-[36px] transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#074f38] hover:bg-[#053b2a] text-white font-bold text-xs cursor-pointer min-h-[36px] transition-colors"
           >
             {t('ব্যাংক প্যানেলে প্রবেশ করুন →', 'Activate Bank Officer Session →')}
           </button>
         </div>
       )}
 
-      {/* Registry overview */}
-      <VelzonOverviewSection
-        role="bank_officer"
-        stats={stats}
-        onQuickAction={handleCheckCollateral}
-      />
+      {/* Bank Officer Operational KPI Strip (Role-Specific) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-rise">
+        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+              {t('সক্রিয় ব্যাংক লিয়েন', 'Active Mortgages')}
+            </div>
+            <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
+              {toBanglaDigits(mortgages.filter((m) => m.status === 'ACTIVE').length, lang)}
+            </div>
+            <button
+              onClick={() => handleTabChange('mortgages')}
+              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+            >
+              {t('লিয়েন রেজিস্টার দেখুন →', 'View Lien Register →')}
+            </button>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+            <Building2 className="w-6 h-6" />
+          </div>
+        </div>
 
-      {/* Main Mortgage Operation Card */}
-      <div className="panel p-6 space-y-6 animate-rise-delay">
-        <div className="border-b border-[#0D6B5C]/10 pb-4">
-          <h2 className="font-display text-lg md:text-xl text-[#062823] flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-[#0D6B5C]" />
-            <span>
-              {t(
-                'জামানত যাচাই, লিয়েন লক এবং ডিজিটাল ছাড়পত্র (NOC) সনদ',
-                'Collateral Verification, Lien Lock & Digital NOC Certificate'
-              )}
-            </span>
-          </h2>
-          <p className="text-xs text-[#5F7A74] mt-0.5">
-            {t(
-              'একই জমি একাধিক ব্যাংকে বন্ধক রাখা (Double Mortgage) প্রতিরোধ করুন এবং ঋণ পরিশোধে QR সহ ডিজিটাল NOC ইস্যু করুন।',
-              'Prevent double-mortgaging across banks and issue QR-signed Digital NOC certificates upon loan repayment.'
-            )}
+        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+              {t('মোট ঋণকৃত জামানত', 'Total Collateral Value')}
+            </div>
+            <div className="text-2xl font-extrabold text-[#0A1F1C] mt-1">
+              ৳{toBanglaDigits(
+                (
+                  mortgages
+                    .filter((m) => m.status === 'ACTIVE')
+                    .reduce((sum, m) => sum + Number(m.loan_amount_bdt || 0), 0) / 10000000
+                ).toFixed(2),
+                lang
+              )}{' '}
+              Cr
+            </div>
+            <button
+              onClick={() => handleTabChange('new_lien')}
+              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+            >
+              {t('নতুন লিয়েন অন্তর্ভুক্তি →', 'New Mortgage Lien →')}
+            </button>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+            <Lock className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+              {t('ইস্যুকৃত ডিজিটাল NOC', 'Released NOCs')}
+            </div>
+            <div className="text-2xl font-extrabold text-emerald-700 mt-1">
+              {toBanglaDigits(mortgages.filter((m) => m.status === 'RELEASED').length, lang)}
+            </div>
+            <button
+              onClick={() => handleTabChange('noc')}
+              className="text-xs text-emerald-700 font-semibold hover:underline mt-1 block cursor-pointer"
+            >
+              {t('ছাড়পত্র সনদপত্র দেখুন →', 'View Release NOCs →')}
+            </button>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+            <FileBadge className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+              {t('দ্বৈত বন্ধক প্রতিরোধ', 'Double Mortgage Block')}
+            </div>
+            <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
+              ১০০% {t('সুরক্ষিত', 'Protected')}
+            </div>
+            <button
+              onClick={() => handleTabChange('khatian')}
+              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+            >
+              {t('জামানত খতিয়ান যাচাই →', 'Verify Collateral →')}
+            </button>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+
+      {/* Control Panel SubTab Switcher */}
+      <div className="panel p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-rise-delay">
+        <div>
+          <h3 className="font-bold text-sm text-[#074f38]">
+            {t('ব্যাংক জামানত ও লিয়েন ওয়ার্কস্পেস', 'Bank Mortgage & Lien Workspace')}
+          </h3>
+          <p className="text-xs text-[#5F7A74]">
+            {t('লিয়েন রেজিস্টার, নতুন বন্ধক ও ডিজিটাল অনাপত্তিপত্র কন্ট্রোল:', 'Lien registry, new mortgage lock, and digital release NOCs:')}
           </p>
         </div>
 
-        {/* Bank Presets */}
-        <div className="space-y-1.5">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => handleTabChange('mortgages')}
+            className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+              subTab === 'mortgages'
+                ? 'bg-[#006A4E] text-white shadow-xs'
+                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+            }`}
+          >
+            <Building2 className="w-4 h-4" />
+            <span>
+              {t('লিয়েন ও জামানত রেজিস্টার', 'Mortgages & Liens')} ({toBanglaDigits(mortgages.length, lang)})
+            </span>
+          </button>
+          <button
+            onClick={() => handleTabChange('new_lien')}
+            className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+              subTab === 'new_lien'
+                ? 'bg-[#006A4E] text-white shadow-xs'
+                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+            }`}
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>{t('নতুন লিয়েন অন্তর্ভুক্তি', 'Register Lien')}</span>
+          </button>
+          <button
+            onClick={() => handleTabChange('noc')}
+            className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+              subTab === 'noc'
+                ? 'bg-[#006A4E] text-white shadow-xs'
+                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+            }`}
+          >
+            <FileBadge className="w-4 h-4" />
+            <span>
+              {t('ডিজিটাল ছাড়পত্র (NOC)', 'Release NOCs')} (
+              {toBanglaDigits(mortgages.filter((m) => m.status === 'RELEASED').length, lang)})
+            </span>
+          </button>
+          <button
+            onClick={() => handleTabChange('khatian')}
+            className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+              subTab === 'khatian'
+                ? 'bg-[#006A4E] text-white shadow-xs'
+                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+            }`}
+          >
+            <Search className="w-4 h-4" />
+            <span>{t('জামানত খতিয়ান যাচাই', 'Collateral Khatian')}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* New Mortgage Registration Form */}
+      {subTab === 'new_lien' && (
+        <div className="panel p-6 space-y-6 animate-rise-delay">
+          <div className="border-b border-[#006A4E]/10 pb-4">
+            <h2 className="font-bold text-lg md:text-xl text-[#074f38] flex items-center gap-2">
+              <PlusCircle className="w-5 h-5 text-[#006A4E]" />
+              <span>
+                {t(
+                  'নতুন ব্যাংক মর্টগেজ লিয়েন অন্তর্ভুক্তি ও জামানত লক',
+                  'Register New Bank Mortgage Lien & Collateral Lock'
+                )}
+              </span>
+            </h2>
+            <p className="text-xs text-[#5F7A74] mt-0.5">
+              {t(
+                'একই জমি একাধিক ব্যাংকে বন্ধক রাখা (Double Mortgage) প্রতিরোধ করুন এবং প্লট লিয়েন কার্যকর করুন।',
+                'Verify collateral ownership, prevent double-mortgaging, and lock the plot under active bank lien.'
+              )}
+            </p>
+          </div>
+
+          {/* Bank Presets */}
+          <div className="space-y-1.5">
           <label className="text-xs font-bold text-[#5F7A74] uppercase tracking-wider">
             {t('দ্রুত ব্যাংক নির্বাচন করুন:', 'Quick Bank Presets:')}
           </label>
           <div className="flex flex-wrap gap-2">
-            {bankPresets.map((b) => (
+            {bankPresets.filter((b) => role === 'admin' || b.en === user?.office_en?.split(',')[0]).map((b) => (
               <button
                 key={b.bn}
                 onClick={() => {
                   setBankNameBn(b.bn);
+                  setBankNameEn(b.en);
                   setBranchName(b.branch);
                 }}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer min-h-[34px] ${
                   bankNameBn === b.bn
-                    ? 'bg-[#0D6B5C] text-white border-[#0D6B5C] shadow-xs'
-                    : 'bg-[#EDF4F1]/80 text-[#0A1F1C]/90 border-[#0D6B5C]/12 hover:bg-[#EDF4F1]'
+                    ? 'bg-[#006A4E] text-white border-[#006A4E] shadow-xs'
+                    : 'bg-[#EDF7F4]/80 text-[#0A1F1C]/90 border-[#006A4E]/12 hover:bg-[#EDF7F4]'
                 }`}
               >
                 {lang === 'bn' ? b.bn : b.en}
@@ -252,7 +457,7 @@ export const BankOfficerPage: React.FC = () => {
               onChange={(e) => setPlotId(Number(e.target.value))}
               className="field text-xs font-semibold bg-[#F5FAF8]"
             >
-              {plots.slice(0, 20).map((p) => (
+              {plots.map((p) => (
                 <option key={p.id} value={p.id}>
                   {t('দাগ নং', 'Dag')} {p.dag_no} ({lang === 'bn' ? p.mouza_bn : p.mouza_en})
                   {Number(p.owner_sale_locked) === 1 ? ' [🔒 LOCKED]' : ''}
@@ -270,7 +475,7 @@ export const BankOfficerPage: React.FC = () => {
               onChange={(e) => setBorrowerId(Number(e.target.value))}
               className="field text-xs font-semibold bg-[#F5FAF8]"
             >
-              {persons.slice(0, 15).map((per) => (
+              {persons.map((per) => (
                 <option key={per.id} value={per.id}>
                   {lang === 'bn' ? per.name_bn : per.name_en} ({per.nid_mock})
                 </option>
@@ -286,20 +491,29 @@ export const BankOfficerPage: React.FC = () => {
               <input
                 type="text"
                 value={bankNameBn}
+                readOnly={role !== 'admin'}
                 onChange={(e) => setBankNameBn(e.target.value)}
                 placeholder="Bank Name"
-                className="w-2/3 field text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#0D6B5C]/30"
+                className="w-2/3 field text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
               />
               <input
                 type="text"
                 value={branchName}
                 onChange={(e) => setBranchName(e.target.value)}
                 placeholder="Branch"
-                className="w-1/3 field text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#0D6B5C]/30"
+                className="w-1/3 field text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
               />
             </div>
           </div>
 
+          <div>
+            <label className="label" htmlFor="bank-identity-en">{t('প্রতিষ্ঠানের ইংরেজি নাম', 'Assigned Bank (English)')}</label>
+            <input id="bank-identity-en" className="field" value={bankNameEn} readOnly={role !== 'admin'} onChange={(e) => setBankNameEn(e.target.value)} />
+          </div>
+          <div>
+            <label className="label" htmlFor="mortgaged-area">{t('বন্ধকী জমি (শতাংশ)', 'Mortgaged Area (Decimal)')}</label>
+            <input id="mortgaged-area" type="number" min="0.0001" step="any" className="field" value={mortgagedArea} onChange={(e) => setMortgagedArea(e.target.value)} />
+          </div>
           <div>
             <label className="label">
               {t('ঋণের পরিমাণ (টাকা):', 'Loan Amount (BDT):')}
@@ -330,7 +544,7 @@ export const BankOfficerPage: React.FC = () => {
           <button
             onClick={handleRegisterLien}
             disabled={loading}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#062823] hover:bg-[#041A1C] text-white text-xs font-bold cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-[#074f38] hover:bg-[#053b2a] text-white text-xs font-bold cursor-pointer disabled:opacity-50"
           >
             <Lock className="w-4 h-4" />
             <span>{t('২. নতুন মর্টগেজ লিয়েন লক করুন', '2. Register New Mortgage Lien Lock')}</span>
@@ -345,20 +559,22 @@ export const BankOfficerPage: React.FC = () => {
         )}
 
         {actionMsg && (
-          <div className="p-4 rounded-xl bg-[#E8F5F1] border-l-4 border-[#0D6B5C] font-bold text-xs text-[#0D6B5C] flex items-center gap-2">
+          <div className="p-4 rounded-xl bg-[#EDF7F4] border-l-4 border-[#006A4E] font-bold text-xs text-[#006A4E] flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span>{actionMsg}</span>
           </div>
         )}
       </div>
+      )}
 
-      {collateralReport && <ResultHeroBanner report={collateralReport} />}
+      {collateralReport && subTab === 'new_lien' && <ResultHeroBanner report={collateralReport} />}
 
       {/* Active & Released Mortgages Table */}
+      {(subTab === 'mortgages' || subTab === 'noc') && (
       <div className="panel p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="font-display text-base text-[#062823]">
+            <h2 className="font-bold text-base text-[#074f38]">
               {t(
                 'নিবন্ধিত ব্যাংক মর্টগেজ রেজিস্টার ও ডিজিটাল ছাড়পত্র (NOC) কন্ট্রোল',
                 'Registered Bank Mortgages & Digital NOC Controls'
@@ -376,8 +592,8 @@ export const BankOfficerPage: React.FC = () => {
                 onClick={() => setStatusFilter(st)}
                 className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-colors cursor-pointer min-h-[32px] ${
                   statusFilter === st
-                    ? 'bg-[#0D6B5C] text-white shadow-xs'
-                    : 'bg-[#EDF4F1] text-[#5F7A74] hover:bg-[#E4EFEA]'
+                    ? 'bg-[#006A4E] text-white shadow-xs'
+                    : 'bg-[#EDF7F4] text-[#5F7A74] hover:bg-[#E4EFEA]'
                 }`}
               >
                 {st === 'ALL' ? t('সকল', 'All') : st === 'ACTIVE' ? t('সক্রিয় (ACTIVE)', 'Active') : t('অবমুক্ত (RELEASED)', 'Released')}
@@ -388,17 +604,17 @@ export const BankOfficerPage: React.FC = () => {
 
         {/* Search */}
         <div className="relative max-w-sm">
-          <Search className="w-4 h-4 text-[#5F7A74]/80 absolute left-3 top-3" />
+          <Search className="w-4 h-4 text-[#5F7A74]/80 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('ব্যাংক, দাগ বা ঋণগ্রহীতার নাম খুঁজুন...', 'Search bank, dag or borrower...')}
-            className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#0D6B5C]/20 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#0D6B5C]/30"
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#006A4E]/20 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
           />
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-[#0D6B5C]/12">
+        <div className="overflow-x-auto rounded-xl border border-[#006A4E]/12">
           <table className="table-modern text-xs">
             <thead>
               <tr className="">
@@ -410,7 +626,7 @@ export const BankOfficerPage: React.FC = () => {
                 <th className="py-3 px-3 font-bold text-right">{t('অ্যাকশন ও সনদ', 'Actions')}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#0D6B5C]/10 bg-white">
+            <tbody className="divide-y divide-[#006A4E]/10 bg-white">
               {filteredMortgages.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-[#5F7A74]">
@@ -419,7 +635,7 @@ export const BankOfficerPage: React.FC = () => {
                 </tr>
               ) : (
                 filteredMortgages.map((m) => (
-                  <tr key={m.id} className="hover:bg-[#EDF4F1]/80 transition-colors">
+                  <tr key={m.id} className="hover:bg-[#EDF7F4]/80 transition-colors">
                     <td className="py-3 px-3 font-bold text-[#0A1F1C]">
                       <div>{lang === 'bn' ? m.bank_name_bn : m.bank_name_en}</div>
                       <div className="text-[10px] text-[#5F7A74]/80 font-sans">{m.branch_name}</div>
@@ -443,23 +659,33 @@ export const BankOfficerPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-3 px-3 text-right">
-                      <div className="inline-flex gap-1.5">
-                        {m.status === 'ACTIVE' && (
+                      <div className="inline-flex gap-1.5 items-center">
+                        {m.status === 'ACTIVE' ? (
+                          <>
+                            <button
+                              onClick={() => handleRelease(m.id)}
+                              className="px-2.5 py-1 rounded border border-[#006A4E] text-[#006A4E] hover:bg-[#006A4E] hover:text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer min-h-[30px] transition-colors"
+                            >
+                              <Unlock className="w-3.5 h-3.5" />
+                              <span>{t('অবমুক্ত করুন', 'Release Lien')}</span>
+                            </button>
+                            <span
+                              title={t('লিয়েন সক্রিয় থাকায় দায়মুক্তি সনদ (NOC) ইস্যু করা নিষিদ্ধ। ঋণ পরিশোধ করে অবমুক্ত করুন।', 'Lien is ACTIVE. NOC cannot be issued until released.')}
+                              className="px-2 py-1 rounded bg-slate-100 text-slate-500 font-semibold text-[10px] inline-flex items-center gap-1 cursor-not-allowed border border-slate-200"
+                            >
+                              <Lock className="w-3 h-3 text-slate-400" />
+                              <span>{t('NOC অনুপলব্ধ (লিয়েন সক্রিয়)', 'NOC Locked (Active)')}</span>
+                            </span>
+                          </>
+                        ) : (
                           <button
-                            onClick={() => handleRelease(m.id)}
-                            className="px-2.5 py-1 rounded border border-[#0D6B5C] text-[#0D6B5C] hover:bg-[#0D6B5C] hover:text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer min-h-[30px] transition-colors"
+                            onClick={() => handleViewNoc(m.id)}
+                            className="px-2.5 py-1 rounded bg-[#074f38] hover:bg-[#053b2a] text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer min-h-[30px] transition-colors shadow-xs"
                           >
-                            <Unlock className="w-3.5 h-3.5" />
-                            <span>{t('অবমুক্ত করুন', 'Release Lien')}</span>
+                            <FileBadge className="w-3.5 h-3.5" />
+                            <span>{t('ডিজিটাল NOC', 'Digital NOC')}</span>
                           </button>
                         )}
-                        <button
-                          onClick={() => handleViewNoc(m.id)}
-                          className="px-2.5 py-1 rounded bg-[#062823] hover:bg-[#041A1C] text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer min-h-[30px] transition-colors"
-                        >
-                          <FileBadge className="w-3.5 h-3.5" />
-                          <span>{t('ডিজিটাল NOC', 'Digital NOC')}</span>
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -469,14 +695,27 @@ export const BankOfficerPage: React.FC = () => {
           </table>
         </div>
       </div>
+      )}
+
+      {/* Collateral Khatian Explorer */}
+      {subTab === 'khatian' && (
+        <OfficerKhatianExplorer
+          onSelectPlotForAction={(selectedId) => {
+            setPlotId(selectedId);
+            handleTabChange('new_lien');
+          }}
+          actionLabel={t('এই প্লটে নতুন বন্ধক রাখুন', 'Register Mortgage on Plot')}
+          actionType="lien"
+        />
+      )}
 
       {/* Printable Digital NOC Certificate Modal */}
       {nocModalData && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 md:p-8 shadow-2xl border border-[#0D6B5C]/12 space-y-6 relative my-8">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 md:p-8 shadow-2xl border border-[#006A4E]/12 space-y-6 relative my-8">
             <div className="flex items-center justify-between border-b pb-4 print:hidden">
               <div className="flex items-center gap-2">
-                <FileBadge className="w-6 h-6 text-[#0D6B5C]" />
+                <FileBadge className="w-6 h-6 text-[#006A4E]" />
                 <h3 className="font-extrabold text-[#0A1F1C] text-base">
                   {t('ব্যাংক মর্টগেজ ছাড়পত্র প্রিভিউ', 'Mortgage NOC Certificate Preview')}
                 </h3>
@@ -484,14 +723,14 @@ export const BankOfficerPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => window.print()}
-                  className="px-4 py-2 rounded-lg bg-[#0D6B5C] hover:bg-[#0A5549] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm"
+                  className="px-4 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-sm"
                 >
                   <Printer className="w-3.5 h-3.5" />
                   <span>{t('প্রিন্ট / PDF সংরক্ষণ', 'Print / Save PDF')}</span>
                 </button>
                 <button
                   onClick={() => setNocModalData(null)}
-                  className="p-2 rounded-lg text-[#5F7A74]/80 hover:text-[#5F7A74] hover:bg-[#EDF4F1] cursor-pointer"
+                  className="p-2 rounded-lg text-[#5F7A74]/80 hover:text-[#5F7A74] hover:bg-[#EDF7F4] cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -499,15 +738,15 @@ export const BankOfficerPage: React.FC = () => {
             </div>
 
             {/* Official NOC Certificate Sheet */}
-            <div className="p-6 border-4 border-double border-[#0D6B5C]/20 rounded-xl bg-white space-y-5 text-[#0A1F1C]">
+            <div className="p-6 border-4 border-double border-[#006A4E]/20 rounded-xl bg-white space-y-5 text-[#0A1F1C]">
               <div className="text-center space-y-1 border-b pb-4">
-                <div className="w-14 h-14 mx-auto rounded-full bg-[#0D6B5C] text-white flex items-center justify-center font-bold text-lg mb-2 shadow-sm">
+                <div className="w-14 h-14 mx-auto rounded-full bg-[#006A4E] text-white flex items-center justify-center font-bold text-lg mb-2 shadow-sm">
                   ব্যাংক
                 </div>
                 <h4 className="font-extrabold text-base tracking-wide text-[#0A1F1C]">
                   {nocModalData.lien?.bank_name_bn}
                 </h4>
-                <p className="text-xs font-bold text-[#0D6B5C]">
+                <p className="text-xs font-bold text-[#006A4E]">
                   {nocModalData.lien?.branch_name} • ক্রেডিট অ্যাডমিনিস্ট্রেশন ও লিগ্যাল বিভাগ
                 </p>
                 <p className="text-[10px] text-[#5F7A74] font-mono mt-1">
@@ -519,7 +758,7 @@ export const BankOfficerPage: React.FC = () => {
                 ✔ বন্ধক দায়মুক্তি প্রত্যয়ন: বর্ণিত দাগের জমির বিরুদ্ধে ব্যাংকের কোনো আর্থিক দাবি বা লিয়েন অবশিষ্ট নেই।
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-xs bg-[#EDF4F1]/80 p-4 rounded-xl border border-[#0D6B5C]/12">
+              <div className="grid grid-cols-2 gap-3 text-xs bg-[#EDF7F4]/80 p-4 rounded-xl border border-[#006A4E]/12">
                 <div>
                   <span className="text-[10px] text-[#5F7A74] block">ঋণগ্রহীতা:</span>
                   <strong>{nocModalData.lien?.borrower_name_bn}</strong>
@@ -557,7 +796,7 @@ export const BankOfficerPage: React.FC = () => {
                     <img
                       src={nocModalData.qr_data_uri}
                       alt="NOC QR"
-                      className="w-16 h-16 rounded border border-[#0D6B5C]/20 p-1 bg-white"
+                      className="w-16 h-16 rounded border border-[#006A4E]/20 p-1 bg-white"
                     />
                     <div className="text-[10px] text-[#5F7A74]">
                       <p className="font-bold text-[#0A1F1C]/90">QR কোড স্ক্যান করে</p>
@@ -568,7 +807,7 @@ export const BankOfficerPage: React.FC = () => {
                 )}
 
                 <div className="text-right text-[10px] text-[#5F7A74]">
-                  <div className="font-mono font-bold text-xs text-[#0D6B5C] border-b border-dashed border-slate-400 pb-0.5">
+                  <div className="font-mono font-bold text-xs text-[#006A4E] border-b border-dashed border-slate-400 pb-0.5">
                     [Authorized Bank Seal]
                   </div>
                   <p className="font-bold mt-1">শাখা ব্যবস্থাপক / অনুমোদিত কর্মকর্তা</p>

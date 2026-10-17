@@ -22,6 +22,10 @@ final class DB
 
         $testDb = getenv('BHUMISHIELD_TEST_DB');
         $connType = strtolower((string) env('DB_CONNECTION', 'sqlite'));
+        if (!$testDb && !in_array($connType, ['sqlite', 'pgsql', 'postgres'], true)) {
+            throw new \RuntimeException('Unsupported database driver. Configure sqlite or pgsql explicitly.');
+        }
+
 
         if (!$testDb && ($connType === 'pgsql' || $connType === 'postgres')) {
             try {
@@ -30,15 +34,19 @@ final class DB
                 $dbname = (string) env('DB_DATABASE', 'bhumishield');
                 $user = (string) env('DB_USERNAME', 'bhumishield');
                 $pass = (string) env('DB_PASSWORD', 'bhumishield_demo_2026');
-                $dsn = "pgsql:host={$host};port={$port};dbname={$dbname}";
+                $dsn = "pgsql:host={$host};port={$port};dbname={$dbname};connect_timeout=5";
                 self::$pdo = new PDO($dsn, $user, $pass, [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 ]);
                 self::$isPostgres = true;
                 return self::$pdo;
-            } catch (\Throwable) {
-                // Fallback to SQLite if Postgres is not reachable locally
+            } catch (\Throwable $e) {
+                $appEnv = strtolower((string) env('APP_ENV', 'development'));
+                if ($appEnv === 'production') {
+                    throw new \RuntimeException("Production PostgreSQL database unreachable: " . $e->getMessage());
+                }
+                // Fallback to SQLite only in development/local demo mode
             }
         }
 
@@ -54,6 +62,12 @@ final class DB
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         self::$pdo->exec('PRAGMA foreign_keys = ON;');
+        self::$pdo->exec('PRAGMA busy_timeout = 15000;');
+        try {
+            self::$pdo->exec('PRAGMA journal_mode = WAL;');
+        } catch (\Throwable) {
+            // Memory or temporary DB may not support WAL
+        }
         self::$isPostgres = false;
         return self::$pdo;
     }
@@ -111,4 +125,52 @@ final class DB
     {
         self::connection()->exec($ddl);
     }
+
+    public static function transaction(callable $callback, int $maxRetries = 5): mixed
+    {
+        $pdo = self::connection();
+        $inTransaction = $pdo->inTransaction();
+        $attempts = 0;
+
+        while (true) {
+            $attempts++;
+            if (!$inTransaction) {
+                try {
+                    if (self::$isPostgres) {
+                        $pdo->beginTransaction();
+                    } else {
+                        $pdo->exec('BEGIN IMMEDIATE;');
+                    }
+                } catch (\PDOException $pe) {
+                    if ($attempts < $maxRetries && (str_contains($pe->getMessage(), 'busy') || str_contains($pe->getMessage(), 'locked'))) {
+                        usleep(random_int(10000, 50000));
+                        continue;
+                    }
+                    throw $pe;
+                }
+            }
+
+            try {
+                $result = $callback();
+                if (!$inTransaction) {
+                    $pdo->commit();
+                }
+                return $result;
+            } catch (\Throwable $e) {
+                if (!$inTransaction && $pdo->inTransaction()) {
+                    try {
+                        $pdo->rollBack();
+                    } catch (\Throwable) {
+                        // ignore rollback failure
+                    }
+                }
+                if ($e instanceof \PDOException && $attempts < $maxRetries && (str_contains($e->getMessage(), 'busy') || str_contains($e->getMessage(), 'locked'))) {
+                    usleep(random_int(10000, 50000));
+                    continue;
+                }
+                throw $e;
+            }
+        }
+    }
 }
+

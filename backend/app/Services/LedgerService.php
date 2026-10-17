@@ -19,10 +19,20 @@ final class LedgerService
         if (self::$secretKey !== null && self::$publicKey !== null) {
             return;
         }
-        $seedHex = (string) env(
-            'REGISTRAR_ED25519_SEED_HEX',
-            '4268756d69536869656c644c616e64546563683230323644656d6f5365656421'
-        );
+        $appEnv = strtolower((string) env('APP_ENV', 'development'));
+        $seedHex = (string) env('REGISTRAR_ED25519_SEED_HEX', '');
+        $demoSeed = '4268756d69536869656c644c616e64546563683230323644656d6f5365656421';
+
+        if ($appEnv === 'production') {
+            if (!preg_match('/^[0-9a-fA-F]{64}$/D', $seedHex) || $seedHex === $demoSeed) {
+                throw new \RuntimeException(
+                    'SECURITY CRITICAL: REGISTRAR_ED25519_SEED_HEX is missing, matches demo seed, or has insufficient length in production environment. Service must fail closed.'
+                );
+            }
+        } elseif ($seedHex === '') {
+            $seedHex = $demoSeed;
+        }
+
         $seed = @hex2bin($seedHex);
         if ($seed === false || strlen($seed) !== SODIUM_CRYPTO_SIGN_SEEDBYTES) {
             $seed = hash('sha256', $seedHex, true);
@@ -133,7 +143,7 @@ final class LedgerService
 
     public static function buildVerifyUrl(int $deedId, string $contentHash): string
     {
-        $base = rtrim((string) env('PUBLIC_VERIFY_BASE_URL', 'http://localhost:5173'), '/');
+        $base = rtrim((string) env('PUBLIC_VERIFY_BASE_URL', 'http://localhost:5175'), '/');
         $short = substr($contentHash, 0, 12);
         return "{$base}/verify/{$deedId}?h={$short}";
     }
@@ -148,17 +158,8 @@ final class LedgerService
             }
         }
 
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">'
-            . '<rect width="120" height="120" fill="#ffffff"/>'
-            . '<rect x="8" y="8" width="32" height="32" fill="none" stroke="#006A4E" stroke-width="6"/>'
-            . '<rect x="18" y="18" width="12" height="12" fill="#006A4E"/>'
-            . '<rect x="80" y="8" width="32" height="32" fill="none" stroke="#006A4E" stroke-width="6"/>'
-            . '<rect x="90" y="18" width="12" height="12" fill="#006A4E"/>'
-            . '<rect x="8" y="80" width="32" height="32" fill="none" stroke="#006A4E" stroke-width="6"/>'
-            . '<rect x="18" y="90" width="12" height="12" fill="#006A4E"/>'
-            . '<circle cx="60" cy="60" r="10" fill="#F42A41"/>'
-            . '</svg>';
-        return 'data:image/svg+xml;base64,' . base64_encode($svg);
+        // Standards-compliant decodable pure-PHP QR Code generation (ISO/IEC 18004)
+        return QrCodeService::generateSvgDataUri($payload, 5, 4, '#006A4E');
     }
 
     public static function verifyDeedRecord(array $deedRow, ?string $expectedPrevHash = null): array

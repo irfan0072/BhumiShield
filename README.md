@@ -1,39 +1,54 @@
-# ভূমি সুরক্ষা (BhumiShield) — LandTech Innovation Hackathon 2026
+# BhumiShield — ভূমি সুরক্ষা
 
-> *"Registration and mutation don't talk to each other. We built the layer that checks every deed before it is registered, and proves afterwards that it was never tampered with."*
+Independent bilingual land-record risk and workflow application. The homepage design uses Hind Siliguri for Bengali, Manrope for English, and the shared green theme.
 
-## 1. Overview & Legal Disclaimer
-**BhumiShield ("ভূমি সুরক্ষা")** is an independent pre-registration verification and tamper-evident hash-chained ledger layer connecting Sub-Registry (Ministry of Law), AC Land (Ministry of Land), and Banks.
-- **Legal Disclaimer:** BhumiShield flags risk for a human officer to decide. It never declares final legal truth.
-- **Hackathon Compliance:** Uses **100% synthetic dummy data (`Demo / ডেমো ডেটা`)**, an internal Mock NID service, and makes zero calls to live government servers.
+This repository runs a **custom PHP REST router**, PDO storage and a React/TypeScript/Vite frontend. It does not boot the Laravel framework. Government portals, authoritative identity checks, payments, SMS and institutional banking connections require separate authorization and integration.
 
-## 2. Upgraded Role-Based Middleware & Role-Wise Controlling Systems
-- **Laravel 11 RBAC Middleware (`app/Http/Middleware/RoleMiddleware.php`)**: Enforces JWT authentication, active user status (`is_active = 1`), and granular role permissions across all 5 roles (`citizen`, `sub_registrar`, `ac_land`, `bank_officer`, `admin`).
-- **5 Dedicated Role Dashboards & Controlling Systems**:
-  1. **Citizen (`citizen`)**: Land Vault with live **Plot Sale Protection Lock (`🔒 বিক্রয় লক`)** toggle (`POST /api/v1/citizen/plots/{id}/toggle-lock`), **Citizen Land Fraud / Dispute Filing** (`POST /api/v1/citizen/disputes`), QR Deed Scanner, and 3-Step Check-Before-You-Buy Wizard.
-  2. **Sub-Registrar (`sub_registrar`)**: 11-Rule Pre-Registration Gatekeeper, **Government Stamp Duty & Registration Fee Calculator** (`GET /api/v1/registrar/calculate-fees`), and **Deed Registry Hold/Release/Reject Control Table** (`POST /api/v1/registrar/deeds/{id}/status`).
-  3. **AC Land Officer (`ac_land`)**: e-Mutation Queue (`POST /api/v1/mutations/{id}/decision`), **Flagged BS Khatian Chain & Heirs Reconciliation Panel** (`POST /api/v1/acland/khatians/{plot_id}/reconcile`), and **Citizen Dispute Tribunal** (`POST /api/v1/acland/disputes/{id}/resolve`).
-  4. **Bank Officer (`bank_officer`)**: Collateral Verification, Lien Lock, Lien Release, and **Printable QR-Signed Digital NOC Certificate** (`GET /api/v1/mortgages/{id}/noc`).
-  5. **Admin & Auditor (`admin`)**: **Interactive RBAC Permission Matrix** (`GET /api/v1/auth/permissions`), Users CRUD (`GET/POST/PUT/DELETE /api/v1/users`), Dynamic Site & Rules Engine Settings (`enforce_strict_rbac`), Live Tamper Simulator, 8 Demo Scenarios, Legacy OCR Assist, and Append-Only Hash-Chained Audit Log.
+## Local setup — preserve existing work
 
-## 3. How to Run Locally (Mac / XAMPP / CLI)
+PHP8.4 with PDO SQLite, sodium and mbstring, plus Node24LTS, are the documented runtime targets.
 
-### Backend (Laravel 11 / PHP 8.4)
-```bash
+```sh
 cd backend
-php artisan migrate:fresh --seed
-php artisan test
-php artisan serve --host=127.0.0.1 --port=8000
+php artisan migrate
+php artisan catalogue:init
+php artisan serve --host=127.0.0.1 --port=8008
 ```
 
-### Frontend (React 19 + TypeScript + Tailwind CSS v4)
-```bash
+In another terminal:
+
+```sh
 cd frontend
-npm install
-npm run dev -- --host 127.0.0.1 --port 5173
+npm ci --ignore-scripts
+VITE_API_URL=http://127.0.0.1:8008/api/v1 npm run dev
 ```
 
-## 4. Open-Source Libraries & AI Tools Disclosure
-- **Backend:** PHP 8.4, Laravel 11 structure, PHP `ext-sodium` (Ed25519 signatures), `hash('sha256')`, PDO SQLite/PostgreSQL.
-- **Frontend:** React 19, Vite 6, TypeScript, Tailwind CSS v4, Lucide Icons, Axios, Web Speech API (`bn-BD`).
-- **AI Tools Used:** Gemini coding assistant used for architecture scaffolding, synthetic Bangladeshi land dataset generation, and automated test authoring during the LandTech Innovation Hackathon 2026.
+Open http://localhost:5175. `migrate` is additive. `catalogue:init` initializes missing service/fee guidance only and preserves existing records and edits. Never use a fresh migration or demo seeder on an existing working database. Legacy citizens remain unverified until an authorized operator completes identity enrollment; a self-declared NID does not grant ownership authority.
+
+## Supported workflows
+
+- Five authenticated roles, ownership-scoped sale locks, account suspension, native password hashes, legacy-hash upgrade and password-change session revocation.
+- Pre-purchase risk checks, registrar review/registration, mutation decisions with conserved holdings, bank-scoped liens and persistent released-only NOCs.
+- Ed25519/SHA256 proof verification, real QR symbols and reloadable proof links. These attest to application records, not government title or legal truth.
+- Admin-managed bilingual service catalogue, publication/archive controls, source-linked versioned fee guidance, user administration and system policy settings.
+- Dashboard counts, monthly series and pre-check coverage derived from stored data. Coverage is not an ownership assurance score.
+
+The registration-charge calculator is a local demonstration. Production refuses its unverified assessment and never issues government challans. Official khatian/map guidance follows the signed17February2026 Ministry circular; all payments take place on the relevant official service.
+
+## Verification
+
+```sh
+cd backend
+php artisan test
+cd ../frontend
+npm run typecheck
+npm run build
+```
+
+Backend regressions use isolated databases. Operational readiness: `/api/v1/readiness` returns503 when required schema, constraints or production configuration are missing. Requests never migrate or seed storage.
+
+## Production operation
+
+See [production runbook](docs/PRODUCTION_RUNBOOK_2026-10-17.md), [release acceptance](docs/CODEX_RELEASE_ACCEPTANCE_2026-10-17.md) and [official-service research](docs/BANGLADESH_LAND_SERVICES_RESEARCH_2026-10-17.md).
+
+Docker builds an Apache/PHP API and a compiled Nginx frontend, with a persistent SQLite volume and same-origin API proxy. No project database or environment secret is copied into the images. Production blocks demo seeding, destructive migration commands, tamper/restore simulators, demo role switching and dummy OCR. External release requirements and any incomplete verification must be reviewed before real service operation.

@@ -19,6 +19,74 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+export interface ServiceCatalogueItem {
+  id: number;
+  category: string;
+  service_code: string;
+  title_bn: string;
+  title_en: string;
+  description_bn: string;
+  description_en: string;
+  service_type: 'INTERNAL_FEATURE' | 'EXTERNAL_OFFICIAL' | 'HYBRID_GUIDANCE';
+  internal_route?: string | null;
+  external_url?: string | null;
+  source_url?: string | null;
+  authority_name_bn: string;
+  authority_name_en: string;
+  badge_bn: string;
+  badge_en: string;
+  is_published: number;
+  display_order: number;
+  last_reviewed_date: string;
+  created_at: string;
+  updated_at: string;
+  associated_fee?: ServiceFeeItem | null;
+}
+
+export interface FeeComponent {
+  name_bn: string;
+  name_en: string;
+  amount_bdt: number;
+  type: string;
+  note_bn?: string;
+  note_en?: string;
+}
+
+export interface FeeHistoryEntry {
+  version: number;
+  total_bdt: number;
+  components: FeeComponent[];
+  legal_basis_bn: string;
+  circular_no: string;
+  effective_date: string;
+  source_url: string;
+  updated_by: string;
+  updated_at: string;
+}
+
+export interface ServiceFeeItem {
+  id: number;
+  service_code: string;
+  title_bn: string;
+  title_en: string;
+  components_json?: string;
+  components: FeeComponent[];
+  total_bdt: number;
+  authority_name_bn: string;
+  authority_name_en: string;
+  legal_basis_bn: string;
+  legal_basis_en: string;
+  circular_no: string;
+  effective_date: string;
+  source_url: string;
+  is_estimate: number;
+  is_published: number;
+  version: number;
+  history?: FeeHistoryEntry[];
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Finding {
   rule_code: string;
   severity: 'SAFE' | 'WARNING' | 'HIGH';
@@ -89,55 +157,184 @@ export interface RiskReportResponse {
 }
 
 function normalizeRiskBundle(raw: any): RiskReportResponse {
-  if (raw && raw.findings && raw.status) {
+  // I05: Fail closed if response is missing, empty, or malformed
+  if (!raw || typeof raw !== 'object' || Object.keys(raw).length === 0) {
+    return {
+      status: 'HIGH_RISK',
+      badge_bn: '✖ যাচাই তথ্য অনুপস্থিত',
+      badge_en: '✖ Verification Unavailable',
+      summary_bn: 'সার্ভার থেকে কোনো যাচাইকরণ তথ্য বা খতিয়ান রেকর্ড পাওয়া যায়নি।',
+      summary_en: 'No verification record returned from server. Do not proceed.',
+      next_step_bn: 'ভূমি অফিসে যোগাযোগ করুন।',
+      next_step_en: 'Contact local land office.',
+      findings: [
+        {
+          rule_code: 'VERIFICATION_DATA_UNAVAILABLE',
+          severity: 'HIGH',
+          title_bn: 'যাচাই তথ্য উপলব্ধ নয়',
+          title_en: 'Verification Data Unavailable',
+          detail_bn: 'সার্ভার থেকে কোনো যাচাইকরণ তথ্য বা খতিয়ান রেকর্ড পাওয়া যায়নি। লেনদেন সম্পন্ন করবেন না।',
+          detail_en: 'No verification record was returned by the server. Do not proceed with any transaction.',
+          action_bn: 'সংশ্লিষ্ট ভূমি অফিস বা সাব-রেজিস্ট্রি অফিসে সরাসরি যোগাযোগ করুন।',
+          action_en: 'Contact the relevant land office or Sub-Registry directly.',
+        },
+      ],
+      khatian_chain: [],
+      active_mortgages: [],
+      deed_history: [],
+      disclaimer_bn: 'যাচাই তথ্য অসম্পূর্ণ হওয়ায় সিস্টেম এটিকে উচ্চ ঝুঁকিপূর্ণ হিসেবে চিহ্নিত করেছে।',
+      disclaimer_en: 'System marked this as high risk because verification data is incomplete.',
+    };
+  }
+
+  const rr = raw?.risk_report || raw;
+  const rawVerdict = rr?.verdict || rr?.status || raw?.status;
+  const knownStatuses = ['SAFE', 'WARNING', 'REVIEW', 'HIGH_RISK'];
+
+  // Unknown or missing verdict fails closed to HIGH_RISK
+  if (!rawVerdict || !knownStatuses.includes(String(rawVerdict).toUpperCase())) {
+    return {
+      status: 'HIGH_RISK',
+      badge_bn: '✖ অজানা যাচাই স্ট্যাটাস',
+      badge_en: '✖ Unknown Verification Status',
+      summary_bn: `সার্ভার হতে অপ্রত্যাশিত বা অজানা স্ট্যাটাস (${rawVerdict || 'MISSING'}) প্রদান করা হয়েছে।`,
+      summary_en: `Server returned unexpected or unknown verification status (${rawVerdict || 'MISSING'}).`,
+      next_step_bn: 'সিস্টেম অ্যাডমিন বা ভূমি অফিসে যোগাযোগ করুন।',
+      next_step_en: 'Contact system administrator or local land office.',
+      findings: [
+        {
+          rule_code: 'UNKNOWN_VERIFICATION_STATUS',
+          severity: 'HIGH',
+          title_bn: 'অজানা যাচাইকরণ প্রতিক্রিয়া',
+          title_en: 'Unknown Verification Response',
+          detail_bn: `সার্ভার হতে প্রত্যাশিত মান ব্যতীত স্ট্যাটাস (${rawVerdict || 'MISSING'}) এসেছে। লেনদেন স্থগিত রাখুন।`,
+          detail_en: `Server returned non-standard status (${rawVerdict || 'MISSING'}). Hold transaction.`,
+          action_bn: 'ভূমি অফিসে যোগাযোগ করুন।',
+          action_en: 'Contact the land office.',
+        },
+      ],
+      khatian_chain: [],
+      active_mortgages: [],
+      deed_history: [],
+      disclaimer_bn: 'যাচাই প্রতিক্রিয়া অগ্রহণযোগ্য হওয়ায় এটিকে উচ্চ ঝুঁকিপূর্ণ হিসেবে গণ্য করা হয়েছে।',
+      disclaimer_en: 'Treated as high risk due to unverified response.',
+    };
+  }
+
+  const upperVerdict = String(rawVerdict).toUpperCase();
+  const status: 'SAFE' | 'WARNING' | 'HIGH_RISK' =
+    upperVerdict === 'HIGH_RISK' ? 'HIGH_RISK' : upperVerdict === 'REVIEW' || upperVerdict === 'WARNING' ? 'WARNING' : 'SAFE';
+
+  // Supporting evidence check (plot, khatian_chain, deed_history, or owners)
+  const hasPlot = !!(raw?.plot || rr?.plot);
+  const rawKhatians = raw?.khatian_chain || rr?.khatian_chain || [];
+  const rawDeeds = raw?.deeds || raw?.deed_history || rr?.deeds || rr?.deed_history || [];
+  const rawOwners = raw?.ownership_history || rr?.ownership_history || raw?.current_owners || rr?.current_owners || [];
+  const hasEvidence =
+    hasPlot ||
+    (Array.isArray(rawKhatians) && rawKhatians.length > 0) ||
+    (Array.isArray(rawDeeds) && rawDeeds.length > 0) ||
+    (Array.isArray(rawOwners) && rawOwners.length > 0);
+
+  // Bare SAFE without plot or supporting evidence fails closed to HIGH_RISK
+  if (status === 'SAFE' && !hasEvidence) {
+    return {
+      status: 'HIGH_RISK',
+      badge_bn: '✖ অপর্যাপ্ত যাচাইকরণ প্রমাণ',
+      badge_en: '✖ Insufficient Evidence',
+      summary_bn: 'সার্ভার থেকে নিরাপদ ঘোষণা আসলেও কোনো প্লট, খতিয়ান বা দলিল প্রমাণ পাওয়া যায়নি।',
+      summary_en: 'Verification returned SAFE but lacked required plot, khatian, or deed evidence. Do not proceed.',
+      next_step_bn: 'ভূমি অফিসে যোগাযোগ করে পূর্ণাঙ্গ রেকর্ড যাচাই করুন।',
+      next_step_en: 'Contact land office to obtain complete records.',
+      findings: [
+        {
+          rule_code: 'INSUFFICIENT_EVIDENCE',
+          severity: 'HIGH',
+          title_bn: 'যাচাই প্রমাণের ঘাটতি',
+          title_en: 'Insufficient Verification Evidence',
+          detail_bn: 'কোনো সহায়ক প্লট, খতিয়ান রেকর্ড বা রেজিস্ট্রি দলিল ব্যতীত নিরাপদ হিসেবে বিবেচনা করা সম্ভব নয়।',
+          detail_en: 'Cannot verify plot safety without supporting khatian records, plot details, or deed history.',
+          action_bn: 'সহকারী কমিশনার (ভূমি) বা সাব-রেজিস্ট্রারের দপ্তরে সরাসরি রেকর্ড যাচাই করুন।',
+          action_en: 'Verify physical land records directly with AC Land or Sub-Registrar.',
+        },
+      ],
+      khatian_chain: [],
+      active_mortgages: [],
+      deed_history: [],
+      disclaimer_bn: 'অপর্যাপ্ত তথ্যের কারণে সিস্টেম এই লেনদেনকে উচ্চ ঝুঁকিপূর্ণ হিসেবে চিহ্নিত করেছে।',
+      disclaimer_en: 'Marked as high risk due to insufficient evidence.',
+    };
+  }
+
+  // Fast path for authentic, already-normalized bundle with valid status and evidence
+  if (
+    raw &&
+    typeof raw === 'object' &&
+    ['SAFE', 'WARNING', 'HIGH_RISK'].includes(raw.status) &&
+    Array.isArray(raw.findings) &&
+    raw.findings.length > 0 &&
+    (raw.status !== 'SAFE' || hasEvidence)
+  ) {
     return raw as RiskReportResponse;
   }
-  const rr = raw?.risk_report || raw || {};
-  const verdict = rr.verdict || rr.status || 'SAFE';
-  const status: 'SAFE' | 'WARNING' | 'HIGH_RISK' =
-    verdict === 'HIGH_RISK' ? 'HIGH_RISK' : verdict === 'REVIEW' || verdict === 'WARNING' ? 'WARNING' : 'SAFE';
 
-  const rawFlags = rr.flags || rr.findings || [];
-  const findings: Finding[] =
-    rawFlags.length > 0
-      ? rawFlags.map((f: any) => ({
-          rule_code: f.rule_id || f.rule_code || 'CHECK_RULE',
-          severity:
-            f.severity === 'HIGH_RISK' || f.severity === 'HIGH'
-              ? 'HIGH'
-              : f.severity === 'REVIEW' || f.severity === 'WARNING'
-              ? 'WARNING'
-              : 'SAFE',
-          title_bn: f.title_bn || 'পর্যবেক্ষণ',
-          title_en: f.title_en || 'Observation',
-          detail_bn: f.message_bn || f.detail_bn || '',
-          detail_en: f.message_en || f.detail_en || '',
-          action_bn:
-            f.severity === 'HIGH_RISK'
-              ? 'এই লেনদেন স্থগিত রাখুন এবং মূল বালাম ও খতিয়ান যাচাই করুন।'
-              : 'সংশ্লিষ্ট এসি ল্যান্ড বা সাব-রেজিস্ট্রারের ম্যানুয়াল অনুমোদন নিন।',
-          action_en:
-            f.severity === 'HIGH_RISK'
-              ? 'Hold this transaction and inspect physical registry volumes.'
-              : 'Obtain manual officer verification from AC Land / Sub-Registrar.',
-        }))
-      : [
-          {
-            rule_code: 'ALL_CHECKS_PASSED',
-            severity: 'SAFE',
-            title_bn: 'মালিকানা চেইন, ডিজিটাল স্বাক্ষর ও ব্যাংক বন্ধক যাচাই সফল',
-            title_en: 'Ownership Lineage, Cryptographic Hash & Lien Checks Passed',
-            detail_bn:
-              'সিএস → এসএ → আরএস → বিএস খতিয়ান পরম্পরা, বিক্রেতার মালিকানা অংশ এবং লেজার স্বাক্ষরে কোনো অসামঞ্জস্য পাওয়া যায়নি।',
-            detail_en:
-              'CS -> SA -> RS -> BS khatian lineage, seller share fraction, and cryptographic ledger checks passed.',
-            action_bn: 'আপনি নির্বিঘ্নে প্রাক-নিবন্ধন ও দলিল সম্পাদন প্রক্রিয়া এগিয়ে নিতে পারেন।',
-            action_en: 'You may safely proceed with pre-registration and deed execution.',
-          },
-        ];
+  const rawFlags = Array.isArray(rr.flags) ? rr.flags : Array.isArray(rr.findings) ? rr.findings : [];
+  let findings: Finding[];
 
-  const ownershipHistory = raw?.ownership_history || raw?.current_owners || [];
-  const rawKhatians = raw?.khatian_chain || [];
+  if (rawFlags.length > 0) {
+    findings = rawFlags.map((f: any) => ({
+      rule_code: f.rule_id || f.rule_code || 'CHECK_RULE',
+      severity:
+        f.severity === 'HIGH_RISK' || f.severity === 'HIGH'
+          ? 'HIGH'
+          : f.severity === 'REVIEW' || f.severity === 'WARNING'
+          ? 'WARNING'
+          : 'SAFE',
+      title_bn: f.title_bn || 'পর্যবেক্ষণ',
+      title_en: f.title_en || 'Observation',
+      detail_bn: f.message_bn || f.detail_bn || '',
+      detail_en: f.message_en || f.detail_en || '',
+      action_bn:
+        f.severity === 'HIGH_RISK'
+          ? 'এই লেনদেন স্থগিত রাখুন এবং মূল বালাম ও খতিয়ান যাচাই করুন।'
+          : 'সংশ্লিষ্ট এসি ল্যান্ড বা সাব-রেজিস্ট্রারের ম্যানুয়াল অনুমোদন নিন।',
+      action_en:
+        f.severity === 'HIGH_RISK'
+          ? 'Hold this transaction and inspect physical registry volumes.'
+          : 'Obtain manual officer verification from AC Land / Sub-Registrar.',
+    }));
+  } else if (status === 'SAFE') {
+    // Only synthesize ALL_CHECKS_PASSED if status is explicitly SAFE
+    findings = [
+      {
+        rule_code: 'ALL_CHECKS_PASSED',
+        severity: 'SAFE',
+        title_bn: 'মালিকানা চেইন, ডিজিটাল স্বাক্ষর ও ব্যাংক বন্ধক যাচাই সম্পন্ন',
+        title_en: 'Ownership Lineage, Cryptographic Hash & Lien Checks Passed',
+        detail_bn:
+          'সিএস/আরএস/বিএস খতিয়ান পরম্পরা, বিক্রেতার স্বত্ব এবং ক্রিপ্টোগ্রাফিক লেজার স্বাক্ষরে কোনো অসঙ্গতি শনাক্ত হয়নি।',
+        detail_en:
+          'CS/RS/BS khatian lineage, seller share entitlement, and cryptographic ledger checks verified.',
+        action_bn: 'নিয়মমাফিক সরকারি ফি জমা দিয়ে পরবর্তী কার্যক্রম পরিচালনা করতে পারেন।',
+        action_en: 'You may proceed with normal official registration fees.',
+      },
+    ];
+  } else {
+    findings = [
+      {
+        rule_code: 'UNSPECIFIED_RISK_WARNING',
+        severity: status === 'HIGH_RISK' ? 'HIGH' : 'WARNING',
+        title_bn: 'সতর্কতা: যাচাইকরণে অসঙ্গতি চিহ্নিত',
+        title_en: 'Warning: Discrepancy Detected',
+        detail_bn: 'রেকর্ড বিশ্লেষণে সম্ভাব্য ঝুঁকি বা অসম্পূর্ণ তথ্য শনাক্ত হয়েছে।',
+        detail_en: 'Potential risk or incomplete record identified in analysis.',
+        action_bn: 'ভূমি রেকর্ড ম্যানুয়ালি যাচাই করুন।',
+        action_en: 'Verify land records manually.',
+      },
+    ];
+  }
+
+  const ownershipHistory = rawOwners;
   const khatianChain = rawKhatians.map((k: any) => {
     const kOwners = ownershipHistory
       .filter((o: any) => Number(o.khatian_id) === Number(k.id))
@@ -397,6 +594,12 @@ export const BhumiApi = {
         },
       };
     }),
+  verifyNocByCode: (nocNo: string, hashPrefix?: string | null) =>
+    api
+      .get(`/verify/noc/${encodeURIComponent(nocNo)}`, {
+        params: hashPrefix ? { h: hashPrefix } : {},
+      })
+      .then((r) => r.data),
 
   // Core Domain Endpoints
   getLocations: () =>
@@ -413,14 +616,29 @@ export const BhumiApi = {
       }
       return plots;
     }),
-  getPersons: () =>
-    api.get('/persons').then((r) => {
-      const items = r.data.items || r.data || [];
-      return items.map((p: any) => ({
-        ...p,
-        nid_mock: p.nid || p.nid_mock || '',
-      }));
-    }),
+  getPlotDetail: async (plotId: number) => {
+    const res = await api.get(`/plots/${plotId}/check-before-you-buy`);
+    return {
+      ...(res.data.plot || {}),
+      owners: res.data.owners || [],
+      khatian_chain: res.data.khatian_chain || [],
+      rules: res.data.rules || [],
+    };
+  },
+  getKhatianChain: async (plotId: number) => {
+    const res = await api.get(`/plots/${plotId}/check-before-you-buy`);
+    return res.data.khatian_chain || [];
+  },
+  getPersons: (plotId?: number) =>
+    api
+      .get('/persons', { params: plotId ? { plot_id: plotId } : {} })
+      .then((r) => {
+        const items = r.data.items || r.data || [];
+        return items.map((p: any) => ({
+          ...p,
+          nid_mock: p.nid || p.nid_mock || '',
+        }));
+      }),
   checkBeforeBuy: async (payload: {
     plot_id: number;
     seller_nid?: string;
@@ -436,8 +654,12 @@ export const BhumiApi = {
     });
     return normalizeRiskBundle(r.data);
   },
-  verifyDeedByCode: (deedNo: string) =>
-    api.get(`/verify/deed/${encodeURIComponent(deedNo)}`).then((r) => {
+  verifyDeedByCode: (deedNo: string, hashPrefix?: string | null) =>
+    api
+      .get(`/verify/deed/${encodeURIComponent(deedNo)}`, {
+        params: hashPrefix ? { h: hashPrefix } : {},
+      })
+      .then((r) => {
       const d = r.data;
       if (d.cryptographic_proof) return d;
       const ver = d.verification || {};
@@ -445,10 +667,10 @@ export const BhumiApi = {
         verified: Boolean(ver.is_valid),
         badge_bn: ver.is_valid
           ? '✔ দলিলের ডিজিটাল স্বাক্ষর ও হ্যাশ চেইন সম্পূর্ণ অক্ষত'
-          : '✖ সতর্কতা: এই দলিলের তথ্য পরিবর্তন (Tamper) করা হয়েছে!',
+          : d.qr_short_hash_matches === false ? '✖ প্রুফ লিংকের হ্যাশ এই রেকর্ডের সাথে মেলে না' : '✖ সংরক্ষিত দলিল যাচাই ব্যর্থ',
         badge_en: ver.is_valid
           ? '✔ Cryptographic Ed25519 Signature & Hash Chain Verified'
-          : '✖ ALERT: Deed Content Was Tampered After Registration!',
+          : d.qr_short_hash_matches === false ? '✖ Proof link hash does not match this record' : '✖ Stored deed verification failed',
         message_bn: (d.reasons_bn || [])[0] || '',
         message_en: (d.reasons_en || [])[0] || '',
         qr_data_uri: d.qr_svg_data_uri,
@@ -487,6 +709,7 @@ export const BhumiApi = {
         seller_id: payload.seller_id,
         buyer_id: payload.buyer_id,
         requested_area_decimal: payload.area_decimal,
+        share_fraction: payload.share_fraction,
         price_bdt: payload.declared_value_bdt,
       })
       .then((r) => {
@@ -503,29 +726,30 @@ export const BhumiApi = {
           },
         };
       }),
-  tamperDeedDemo: (_deedNo: string, newArea: number) =>
-    api.post('/ledger/tamper/1', { new_area_decimal: newArea }).then((r) => r.data),
-  restoreDeedDemo: (_deedNo: string) =>
-    Promise.all([api.post('/ledger/restore/1'), api.post('/ledger/restore/5')]).then(
-      ([r1]) => r1.data
-    ),
+  tamperDeedDemo: (deedNo: string = 'DL-2026-1005', newArea: number = 25.0) => {
+    const target = deedNo && deedNo !== '1' ? deedNo : 'DL-2026-1005';
+    return api.post(`/ledger/tamper/${encodeURIComponent(target)}`, { new_area_decimal: newArea }).then((r) => r.data);
+  },
+  restoreDeedDemo: (deedNo: string = 'DL-2026-1005') => {
+    const target = deedNo && deedNo !== '1' ? deedNo : 'DL-2026-1005';
+    return api.post(`/ledger/restore/${encodeURIComponent(target)}`).then((r) => r.data);
+  },
   getLedgerState: () =>
     api.get('/ledger/verify').then((r) => {
       const d = r.data;
       const sample = d.chain_sample || [];
+      const brokenList = d.broken_links || d.broken_blocks || sample.filter((b: any) => !b.is_valid);
       return {
         chain_intact: Boolean(d.is_valid),
         daily_merkle_root: d.merkle_root,
         total_blocks: d.total_deeds,
         verified_count: d.verified_count,
-        broken_blocks: sample
-          .filter((b: any) => !b.is_valid)
-          .map((b: any) => ({
-            chain_index: b.chain_index,
-            deed_no: b.deed_no,
-            stored_hash: b.stored_hash,
-            recomputed_hash: b.recomputed_hash,
-          })),
+        broken_blocks: brokenList.map((b: any) => ({
+          chain_index: b.chain_index,
+          deed_no: b.deed_no,
+          stored_hash: b.stored_hash,
+          recomputed_hash: b.recomputed_hash,
+        })),
         chain_sample: sample,
       };
     }),
@@ -534,7 +758,7 @@ export const BhumiApi = {
       const items = r.data.items || r.data || [];
       return items.map((m: any) => ({
         ...m,
-        share_fraction: '1/2',
+        share_fraction: m.share_fraction || '1/2',
         decision_note_bn: m.decision_reason_bn || '',
       }));
     }),
@@ -554,6 +778,10 @@ export const BhumiApi = {
         loan_amount_bdt: Number(m.amount_bdt ?? m.loan_amount_bdt ?? 0),
       }));
     }),
+  checkBankCollateral: async (payload: { plot_id: number; borrower_id: number; area_mortgaged_decimal: number }) => {
+    const response = await api.post('/mortgages/collateral-check', payload);
+    return normalizeRiskBundle(response.data);
+  },
   createMortgage: (payload: {
     plot_id: number;
     borrower_id: number;
@@ -561,6 +789,7 @@ export const BhumiApi = {
     bank_name_en: string;
     branch_name: string;
     loan_amount_bdt: number;
+    area_mortgaged_decimal: number;
   }) =>
     api
       .post('/mortgages', {
@@ -570,7 +799,7 @@ export const BhumiApi = {
         bank_name_en: payload.bank_name_en,
         branch_bn: payload.branch_name,
         requested_loan_bdt: payload.loan_amount_bdt,
-        area_mortgaged_decimal: 12.0,
+        area_mortgaged_decimal: payload.area_mortgaged_decimal,
       })
       .then((r) => r.data),
   releaseMortgage: (lienId: number) =>
@@ -616,15 +845,41 @@ export const BhumiApi = {
   getOcrSample: () =>
     api.post('/ocr/khatian-demo', { preset_id: 'bs_4101' }).then((r) => {
       const d = r.data;
-      if (d.extracted_fields && !Array.isArray(d.extracted_fields)) return d;
+      if (d.extracted_fields && !Array.isArray(d.extracted_fields)) {
+        return d;
+      }
       const fieldsObj: Record<string, any> = {};
       (d.extracted_fields || []).forEach((f: any) => {
         fieldsObj[f.label_en || f.field_key] = {
           value: f.extracted_value_bn,
-          confidence: f.confidence,
-          low_confidence: f.needs_human_confirmation,
+          confidence: typeof f.confidence === 'number' ? f.confidence : 0.95,
+          low_confidence: Boolean(f.needs_human_confirmation || f.low_confidence),
         };
       });
       return { extracted_fields: fieldsObj };
     }),
+
+  // Service Catalogue & Fees (Phase 2)
+  listPublicServices: (category?: string, q?: string): Promise<{ items: ServiceCatalogueItem[]; total: number; disclaimer_bn: string; disclaimer_en: string }> =>
+    api.get('/services', { params: { category, q } }).then((r) => r.data),
+  getPublicService: (codeOrId: string | number): Promise<{ service: ServiceCatalogueItem }> =>
+    api.get(`/services/${codeOrId}`).then((r) => r.data),
+  listPublicFees: (): Promise<{ items: ServiceFeeItem[]; total: number; circular_note_bn: string; circular_note_en: string }> =>
+    api.get('/fees').then((r) => r.data),
+  listAdminServices: (): Promise<{ items: ServiceCatalogueItem[]; total: number }> =>
+    api.get('/admin/services').then((r) => r.data),
+  createService: (data: Partial<ServiceCatalogueItem>): Promise<{ service: ServiceCatalogueItem; message_bn: string; message_en: string }> =>
+    api.post('/admin/services', data).then((r) => r.data),
+  updateService: (id: number, data: Partial<ServiceCatalogueItem>): Promise<{ service: ServiceCatalogueItem; message_bn: string; message_en: string }> =>
+    api.put(`/admin/services/${id}`, data).then((r) => r.data),
+  togglePublishService: (id: number): Promise<{ id: number; is_published: number; message_bn: string; message_en: string }> =>
+    api.post(`/admin/services/${id}/toggle-publish`).then((r) => r.data),
+  archiveService: (id: number): Promise<{ id: number; is_published: number; message_bn: string; message_en: string }> =>
+    api.delete(`/admin/services/${id}`).then((r) => r.data),
+  listAdminFees: (): Promise<{ items: ServiceFeeItem[]; total: number }> =>
+    api.get('/admin/fees').then((r) => r.data),
+  updateFee: (id: number, data: Partial<ServiceFeeItem>): Promise<{ fee: ServiceFeeItem; message_bn: string; message_en: string }> =>
+    api.put(`/admin/fees/${id}`, data).then((r) => r.data),
+  verifyCitizenIdentity: (userId: number): Promise<{ user_id: number; is_identity_verified: number; message_bn: string; message_en: string }> =>
+    api.post(`/admin/users/${userId}/verify-identity`).then((r) => r.data),
 };

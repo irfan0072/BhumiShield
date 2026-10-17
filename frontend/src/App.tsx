@@ -14,8 +14,46 @@ import { HelpPage } from './pages/HelpPage';
 import { AuthPage } from './pages/AuthPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
+const getInitialTab = (): string => {
+  const path = window.location.pathname.toLowerCase();
+  const search = new URLSearchParams(window.location.search);
+  if (
+    path.startsWith('/verify') ||
+    path.startsWith('/noc') ||
+    search.has('h') ||
+    search.has('deed_no') ||
+    search.has('noc_no')
+  ) {
+    return 'qr';
+  }
+  if (path.startsWith('/check') || search.has('plot_id')) {
+    return 'check';
+  }
+  if (path.startsWith('/help')) return 'help';
+  if (path.startsWith('/home')) return 'home';
+  if (path.startsWith('/registrar')) return 'registrar';
+  if (path.startsWith('/acland')) return 'acland';
+  if (path.startsWith('/bank')) return 'bank';
+  if (path.startsWith('/admin')) return 'admin';
+  if (path.startsWith('/auth')) return 'auth';
+  const tabParam = search.get('tab');
+  if (tabParam && ['landing', 'home', 'check', 'qr', 'help', 'auth', 'registrar', 'acland', 'bank', 'admin', 'profile'].includes(tabParam)) return tabParam;
+  return 'landing';
+};
+
 export const AppContent: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>('landing');
+  const [activeTab, setActiveTabState] = useState<string>(getInitialTab);
+
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    // synchronize URL without reload
+    const currentUrl = new URL(window.location.href);
+    currentUrl.pathname = '/';
+    currentUrl.search = '';
+    currentUrl.hash = '';
+    if (tab !== 'landing') currentUrl.searchParams.set('tab', tab);
+    window.history.replaceState({}, '', currentUrl.toString());
+  };
 
   return (
     <NavbarAndLayout activeTab={activeTab} setActiveTab={setActiveTab}>
@@ -49,7 +87,7 @@ export const AppContent: React.FC = () => {
           deptEn="Directorate of Registration • Ministry of Law"
           onNavigate={setActiveTab}
         >
-          <SubRegistrarPage />
+          <SubRegistrarPage onNavigate={setActiveTab} />
         </AuthGuard>
       )}
 

@@ -7,7 +7,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 // CORS Headers for React Frontend
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, X-Admin-Supervisor-Token, X-Role-Override');
 header('Content-Type: application/json; charset=utf-8');
 
 $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
@@ -39,7 +39,9 @@ try {
         echo json_encode([
             'code' => 'SERVER_ERROR',
             'message_bn' => 'সার্ভারে একটি ত্রুটি ঘটেছে। অনুগ্রহ করে আবার চেষ্টা করুন।',
-            'message_en' => $e->getMessage(),
+            'message_en' => strtolower((string) env('APP_ENV', 'development')) === 'production'
+                ? 'An internal server error occurred. Please try again or contact support.'
+                : $e->getMessage(),
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 }

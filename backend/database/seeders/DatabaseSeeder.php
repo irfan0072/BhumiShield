@@ -278,6 +278,9 @@ final class DatabaseSeeder
 
     public function run(bool $reset = true): array
     {
+        if (strtolower((string) env('APP_ENV', 'development')) === 'production') {
+            throw new \RuntimeException('Synthetic demo seeding is disabled in production.');
+        }
         $migration = new CreateBhumishieldTables();
         $migration->up($reset);
 
@@ -288,10 +291,10 @@ final class DatabaseSeeder
             }
         }
 
-        // 1. Seed Users
+        // 1. Seed Users (Explicitly verified synthetic demo accounts)
         foreach (self::DEMO_USERS as $u) {
             DB::insert(
-                'INSERT INTO users (username, email, full_name_bn, full_name_en, role, office_bn, office_en, phone_dummy, nid, is_active, password_hash, last_login_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                'INSERT INTO users (username, email, full_name_bn, full_name_en, role, office_bn, office_en, phone_dummy, nid, is_active, is_identity_verified, token_version, password_hash, last_login_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, ?, ?, ?)',
                 [
                     $u['username'],
                     $u['email'],
@@ -514,7 +517,7 @@ final class DatabaseSeeder
         // 5. Seed 80 Deeds in a Cryptographic Hash Chain
         $chainState = ['next_deed_index' => 1, 'last_deed_hash' => LedgerService::GENESIS_HASH];
 
-        $deed1Id = self::appendDeed($chainState, 'DL-2024-1001', 'SALE', $personIds[16], $personIds[0], $plotIds[0], '1/1', 20.0, 3000000, 'MUTATED', '2024-03-15T11:20:00+06:00');
+        $deed1Id = self::appendDeed($chainState, 'DL-2026-1001', 'SALE', $personIds[16], $personIds[0], $plotIds[0], '1/1', 20.0, 3000000, 'MUTATED', '2024-03-15T11:20:00+06:00');
         $deed2Id = self::appendDeed($chainState, 'DL-2026-1002', 'SALE', $personIds[2], $personIds[3], $plotIds[1], '1/1', 15.0, 2400000, 'PENDING_MUTATION', '2026-10-02T14:10:00+06:00');
         self::appendDeed($chainState, 'DL-2023-1003', 'INHERITANCE', $personIds[17], $personIds[5], $plotIds[2], '1/2', 12.0, 0, 'MUTATED', '2023-06-11T10:00:00+06:00');
         self::appendDeed($chainState, 'DL-2022-1004', 'SALE', $personIds[8], $personIds[7], $plotIds[3], '1/1', 16.0, 2100000, 'MUTATED', '2022-09-20T12:30:00+06:00');
@@ -610,6 +613,10 @@ final class DatabaseSeeder
             'note_bn' => 'দাগ নং ১০৬-এ সোনালী ব্যাংকের ২৫ লক্ষ টাকার বন্ধক এন্ট্রি',
         ], '2026-08-12T11:32:00+06:00');
 
+        // 10. Seed Canonical Service Catalogue & Fee Registry (Phase 2)
+        self::seedServiceCatalogue();
+        self::seedServiceFeesRegistry();
+
         return [
             'users' => count(self::DEMO_USERS),
             'mouzas' => count($locationIds),
@@ -619,5 +626,288 @@ final class DatabaseSeeder
             'deeds' => $chainState['next_deed_index'] - 1,
             'scenarios' => count($scenarios),
         ];
+    }
+
+    public static function seedServiceCatalogue(): void
+    {
+        $cnt = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM service_catalogue')['c'] ?? 0);
+        if ($cnt > 0) {
+            return;
+        }
+
+        $nowIso = gmdate('c');
+        $services = [
+            [
+                'REVENUE_MUTATION',
+                'MUTATION_ACLAND',
+                'অনলাইন ই-নামজারি আবেদন ও ট্র্যাকিং',
+                'Online e-Mutation Application & Tracking',
+                'সহকারী কমিশনার (ভূমি) কার্যালয়ে ই-নামজারি আবেদন দাখিল, শুনানি ও ডিসিআর ফি পরিশোধের অফিসিয়াল প্রক্রিয়া। আবেদন ফি কোর্ট ফি ২০ টাকা + নোটিশ জারি ৫০ টাকা = ৭০ টাকা এবং অনুমোদনের পর ডিসিআর ফি ১১০০ টাকা।',
+                'AC Land online e-mutation submission, hearing and DCR lifecycle. Application fee court fee BDT 20 + notice fee BDT 50 = BDT 70, and post-approval DCR fee BDT 1100.',
+                'EXTERNAL_OFFICIAL',
+                '/acland',
+                'https://mutation.land.gov.bd/nirdeshika',
+                'https://mutation.land.gov.bd/',
+                'ভূমি সংস্কার বোর্ড ও ভূমি মন্ত্রণালয়',
+                'Land Reform Board & Ministry of Land',
+                'অফিশিয়াল সেবা',
+                'Official Portal',
+                1,
+                1,
+                '2026-10-17',
+            ],
+            [
+                'RECORDS_MAPS',
+                'KHATIAN_ONLINE_COPY',
+                'অনলাইন খতিয়ান ও সার্টিফাইড কপি আবেদন',
+                'Online Khatian & Certified Copy Application',
+                'ভূমি রেকর্ড ও জরিপ অধিদপ্তরের প্রস্তুতকৃত খতিয়ানের অনলাইন/সার্টিফাইড কপির আবেদন। ভূমি মন্ত্রণালয়ের ১৭ ফেব্রুয়ারি ২০২৬ তারিখের সার্কুলার অনুযায়ী প্রতি কপি ফি সরকারি ফি ১০০ টাকা + সার্ভিস চার্জ ২০ টাকা = মোট ১২০ টাকা।',
+                'Official khatian certified/online copy request. Ministry circular dated 17 February 2026 sets fee at Govt fee BDT 100 + Service fee BDT 20 = BDT 120.',
+                'EXTERNAL_OFFICIAL',
+                '/check',
+                'https://lsg-portal.land.gov.bd/vumisheba-fee',
+                'https://minland.gov.bd/pages/static-pages/694032df35ce18e1c0563b8d',
+                'ভূমি রেকর্ড ও জরিপ অধিদপ্তর',
+                'Directorate of Land Records and Surveys (DLRS)',
+                '১৭ ফেব্রু ২০২৬ সার্কুলার',
+                '17 Feb 2026 Circular',
+                1,
+                2,
+                '2026-10-17',
+            ],
+            [
+                'RECORDS_MAPS',
+                'MOUZA_MAP_SHEET',
+                'মৌজা নকশা (ম্যাপ শিট) আবেদন',
+                'Mouza Map Sheet Order',
+                'সিএস, আরএস ও বিএস জরিপের অনুমোদিত মৌজা ম্যাপ শিট আবেদন। ১৭ ফেব্রুয়ারি ২০২৬ তারিখের সার্কুলার অনুযায়ী প্রতি শিট ফি সরকারি ফি ৫২০ টাকা + সার্ভিস চার্জ ২৫ টাকা = মোট ৫৪৫ টাকা।',
+                'Authorized mouza map sheet copy. Ministry circular dated 17 February 2026 sets fee at Govt fee BDT 520 + Service fee BDT 25 = BDT 545.',
+                'EXTERNAL_OFFICIAL',
+                '/check',
+                'https://lsg-portal.land.gov.bd/vumisheba-fee',
+                'https://minland.gov.bd/pages/static-pages/694032df35ce18e1c0563b8d',
+                'ভূমি রেকর্ড ও জরিপ অধিদপ্তর',
+                'Directorate of Land Records and Surveys (DLRS)',
+                '১৭ ফেব্রু ২০২৬ সার্কুলার',
+                '17 Feb 2026 Circular',
+                1,
+                3,
+                '2026-10-17',
+            ],
+            [
+                'TAXATION',
+                'LAND_DEVELOPMENT_TAX',
+                'অনলাইন ভূমি উন্নয়ন কর (এলডি ট্যাক্স)',
+                'Online Land Development Tax (LD Tax)',
+                'নাগরিক মোবাইল নম্বর, জাতীয় পরিচয়পত্র (এনআইডি) ও খতিয়ান নম্বর দিয়ে হোল্ডিং এন্ট্রি এবং বার্ষিক ভূমি উন্নয়ন কর পরিশোধের প্রস্তুতিমূলক নির্দেশিকা।',
+                'Guidance for holding registration and annual land development tax payment using citizen mobile, NID, and khatian records.',
+                'EXTERNAL_OFFICIAL',
+                null,
+                'https://ldtax.gov.bd/',
+                'https://ldtax.gov.bd/manual',
+                'ভূমি মন্ত্রণালয় (রাজস্ব উইং)',
+                'Ministry of Land (Revenue Wing)',
+                'রাজস্ব সেবা',
+                'Revenue Service',
+                1,
+                4,
+                '2026-10-17',
+            ],
+            [
+                'RECORDS_MAPS',
+                'SURVEY_SETTLEMENT',
+                'চলমান জরিপ খতিয়ান ও সেটেলমেন্ট রেকর্ড',
+                'Ongoing Survey Khatians & Settlement Records',
+                'চলমান জরিপের (বিডিএস, সিটি জরিপ, দিয়ারা) ড্রাফট প্রকাশনা পরিদর্শন। চূড়ান্তভাবে গেজেটভুক্ত রেকর্ড জেলা প্রশাসকের রেকর্ডরুমে হস্তান্তরিত হয়।',
+                'Inspection of ongoing draft survey records (BDS, City Survey, Diara). Completed gazetted records transition to Deputy Commissioner record room.',
+                'EXTERNAL_OFFICIAL',
+                '/check',
+                'https://www.settlement.gov.bd/',
+                'https://www.settlement.gov.bd/',
+                'ভূমি রেকর্ড ও জরিপ অধিদপ্তর',
+                'Directorate of Land Records and Surveys (DLRS)',
+                'জরিপ উইং',
+                'Survey Wing',
+                1,
+                5,
+                '2026-10-17',
+            ],
+            [
+                'COMPLAINTS_SUPPORT',
+                'LAND_SERVICE_HELPLINE_16122',
+                'ভূমি সেবা কলসেন্টার ১৬১২২ ও অভিযোগ নিষ্পত্তি',
+                'Land Service Call Center 16122 & Grievance Redress',
+                'ভূমি মন্ত্রণালয়ের প্রাতিষ্ঠানিক কলসেন্টার ১৬১২২ (অফিস চলাকালীন) এবং অভিযোগ প্রতিকার ব্যবস্থাপনা (জিআরএস)।',
+                'Ministry of Land institutional helpline 16122 (official working hours) and Grievance Redress System (GRS).',
+                'EXTERNAL_OFFICIAL',
+                null,
+                'https://www.land.gov.bd/manual?lang=bn',
+                'https://minland.gov.bd/pages/notices/%E0%A6%85%E0%A6%AD%E0%A6%BF%E0%A6%AF%E0%A7%87%E0%A6%BE%E0%A6%97-%E0%A6%AC%E0%A7%8D%E0%A6%AF%E0%A6%AC%E0%A6%B8%E0%A7%8D%E0%A6%A5%E0%A6%BE%E0%A6%AA%E0%A6%A8%E0%A6%BE-%E0%A6%A8%E0%A6%BF%E0%A6%B0%E0%A7%8D%E0%A6%A6%E0%A7%87%E0%A6%B6%E0%A6%BF%E0%A6%95%E0%A6%BE-%E0%A7%A8%E0%A7%A6%E0%A7%A8%E0%A7%AC-vhvoa4-699448a66973d7dc51151d4f',
+                'ভূমি মন্ত্রণালয়',
+                'Ministry of Land',
+                'হেল্পলাইন ১৬১২২',
+                'Helpline 16122',
+                1,
+                6,
+                '2026-10-17',
+            ],
+            [
+                'INTEGRITY_VERIFICATION',
+                'BHUMISHIELD_INTEGRITY_CHECK',
+                'জমি কেনার আগে যাচাই (খতিয়ান পরম্পরা ও বন্ধক স্ক্যান)',
+                'Check Before You Buy (Khatian Chain & Lien Scanner)',
+                'সিএস, আরএস, বিএস জরিপ খতিয়ান মিল, ব্যাংক বন্ধক, মালিকানা বিক্রয় লক এবং জালিয়াতির ঝুঁকি শনাক্তকরণের স্বাধীন প্রোটোটাইপ টুল।',
+                'Independent prototype evaluating CS, RS, BS lineage, bank mortgages, sale locks, and overselling risks.',
+                'INTERNAL',
+                '/check',
+                null,
+                'https://landtech2026.bhumishield.local',
+                'ভূমি সুরক্ষা প্রোটোটাইপ (LandTech 2026)',
+                'BhumiShield Prototype (LandTech 2026)',
+                'লোকাল ট্রাস্ট ইঞ্জিন',
+                'Local Trust Engine',
+                1,
+                7,
+                '2026-10-17',
+            ],
+            [
+                'INTEGRITY_VERIFICATION',
+                'BHUMISHIELD_QR_PROOF',
+                'ডিজিটাল দলিল ও এনওসি কিউআর ভেরিফিকেশন',
+                'Digital Deed & NOC QR Verification',
+                'Ed25519 ক্রিপ্টোগ্রাফিক ডিজিটাল স্বাক্ষর ও শ্যা-২৫৬ হ্যাশ চেইন যাচাইকরণ। ডাটাবেজে কোনো তথ্য পরিবর্তন করা হলে তাৎক্ষণিক ধরা পড়ে।',
+                'Ed25519 cryptographic signature and SHA-256 hash-chain verification with live tamper detection.',
+                'INTERNAL',
+                '/qr',
+                null,
+                'https://landtech2026.bhumishield.local',
+                'ভূমি সুরক্ষা প্রোটোটাইপ (LandTech 2026)',
+                'BhumiShield Prototype (LandTech 2026)',
+                'ক্রিপ্টোগ্রাফিক প্রুফ',
+                'Cryptographic Proof',
+                1,
+                8,
+                '2026-10-17',
+            ],
+        ];
+
+        foreach ($services as $svc) {
+            DB::insert(
+                'INSERT INTO service_catalogue (category, service_code, title_bn, title_en, description_bn, description_en, service_type, internal_route, external_url, source_url, authority_name_bn, authority_name_en, badge_bn, badge_en, is_published, display_order, last_reviewed_date, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [...$svc, $nowIso, $nowIso]
+            );
+        }
+    }
+
+    public static function seedServiceFeesRegistry(): void
+    {
+        $cnt = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM service_fees_registry')['c'] ?? 0);
+        if ($cnt > 0) {
+            return;
+        }
+
+        $nowIso = gmdate('c');
+        $fees = [
+            [
+                'FEE_KHATIAN_COPY',
+                'অনলাইন খতিয়ান / সার্টিফাইড কপি ফি',
+                'Online Khatian / Certified Copy Fee',
+                json_encode([
+                    ['name_bn' => 'সরকারি ফি', 'name_en' => 'Government Fee', 'amount_bdt' => 100],
+                    ['name_bn' => 'সার্ভিস চার্জ', 'name_en' => 'Service Charge', 'amount_bdt' => 20],
+                ], JSON_UNESCAPED_UNICODE),
+                120.0,
+                'BDT',
+                'ভূমি রেকর্ড ও জরিপ অধিদপ্তর',
+                'Directorate of Land Records and Surveys (DLRS)',
+                'ভূমি মন্ত্রণালয়ের ১৭ ফেব্রুয়ারি ২০২৬ তারিখের স্মারক সার্কুলার',
+                'Ministry of Land signed circular dated 17 February 2026',
+                '474d0828-7c66-4f0d-98c3-78105e0009d9',
+                '2026-02-17',
+                'https://minland.gov.bd/pages/static-pages/694032df35ce18e1c0563b8d',
+                0,
+                1,
+                1,
+                '[]',
+            ],
+            [
+                'FEE_MOUZA_MAP',
+                'মৌজা নকশা (ম্যাপ শিট) ফি',
+                'Mouza Map Sheet Fee',
+                json_encode([
+                    ['name_bn' => 'সরকারি ফি', 'name_en' => 'Government Fee', 'amount_bdt' => 520],
+                    ['name_bn' => 'সার্ভিস চার্জ', 'name_en' => 'Service Charge', 'amount_bdt' => 25],
+                ], JSON_UNESCAPED_UNICODE),
+                545.0,
+                'BDT',
+                'ভূমি রেকর্ড ও জরিপ অধিদপ্তর',
+                'Directorate of Land Records and Surveys (DLRS)',
+                'ভূমি মন্ত্রণালয়ের ১৭ ফেব্রুয়ারি ২০২৬ তারিখের স্মারক সার্কুলার',
+                'Ministry of Land signed circular dated 17 February 2026',
+                '474d0828-7c66-4f0d-98c3-78105e0009d9',
+                '2026-02-17',
+                'https://minland.gov.bd/pages/static-pages/694032df35ce18e1c0563b8d',
+                0,
+                1,
+                1,
+                '[]',
+            ],
+            [
+                'FEE_EMUTATION_ACLAND',
+                'ই-নামজারি আবেদন ও ডিসিআর ফি',
+                'e-Mutation Application & DCR Fees',
+                json_encode([
+                    ['name_bn' => 'কোর্ট ফি (আবেদনকালীন)', 'name_en' => 'Court Fee (Application)', 'amount_bdt' => 20],
+                    ['name_bn' => 'নোটিশ জারি ফি (আবেদনকালীন)', 'name_en' => 'Notice Serving Fee (Application)', 'amount_bdt' => 50],
+                    ['name_bn' => 'ডিসিআর ফি (অনুমোদন পরবর্তী)', 'name_en' => 'DCR Fee (Post-approval)', 'amount_bdt' => 1100],
+                ], JSON_UNESCAPED_UNICODE),
+                1170.0,
+                'BDT',
+                'সহকারী কমিশনার (ভূমি) কার্যালয়',
+                'Office of the Assistant Commissioner (Land)',
+                'ভূমি সংস্কার বোর্ড নামজারি নির্দেশিকা ও অর্থ আইন',
+                'Land Reform Board Mutation Guidelines & Finance Act',
+                'MUT-NIRD-2026',
+                '2026-01-01',
+                'https://mutation.land.gov.bd/nirdeshika',
+                0,
+                1,
+                1,
+                '[]',
+            ],
+            [
+                'FEE_DEED_REGISTRATION_ESTIMATE',
+                'দলিল নিবন্ধন আনুমানিক সরকারি কর ও শুল্ক (ডেমো ক্যালকুলেটর)',
+                'Deed Registration Estimated Govt Taxes & Fees (Demo Estimate)',
+                json_encode([
+                    ['name_bn' => 'স্ট্যাম্প ডিউটি (আনুমানিক ১.৫%)', 'name_en' => 'Stamp Duty (Est 1.5%)', 'percentage' => 1.5],
+                    ['name_bn' => 'রেজিস্ট্রেশন ফি (আনুমানিক ১.০%)', 'name_en' => 'Registration Fee (Est 1.0%)', 'percentage' => 1.0],
+                    ['name_bn' => 'স্থানীয় সরকার কর (আনুমানিক ২.০%)', 'name_en' => 'Local Govt Tax (Est 2.0%)', 'percentage' => 2.0],
+                    ['name_bn' => 'উৎস কর / এআইটি (আনুমানিক ৩.০%)', 'name_en' => 'Source Tax / AIT (Est 3.0%)', 'percentage' => 3.0],
+                ], JSON_UNESCAPED_UNICODE),
+                75000.0,
+                'BDT',
+                'নিবন্ধন অধিদপ্তর ও জাতীয় রাজস্ব বোর্ড',
+                'Directorate of Registration & National Board of Revenue',
+                'রেজিস্ট্রেশন আইন ও অর্থ আইন (অনলাইন আনুমানিক হিসাব, চূড়ান্ত সরকারি চালান নয়)',
+                'Registration Act & Finance Act (Informational estimate only, not official challan)',
+                'REG-EST-2025-09',
+                '2025-09-01',
+                'https://rd.portal.gov.bd/pages/static-pages/6922dc81933eb65569e10b8b',
+                1,
+                0,
+                1,
+                '[]',
+            ],
+        ];
+
+        foreach ($fees as $fee) {
+            DB::insert(
+                'INSERT INTO service_fees_registry (service_code, title_bn, title_en, components_json, total_bdt, currency, authority_name_bn, authority_name_en, legal_basis_bn, legal_basis_en, circular_no, effective_date, source_url, is_estimate, is_published, version, history_json, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [...$fee, $nowIso, $nowIso]
+            );
+        }
     }
 }

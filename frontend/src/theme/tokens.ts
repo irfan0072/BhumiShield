@@ -1,23 +1,27 @@
 export const THEME = {
-  ink: '#062823',
-  inkDeep: '#041A1C',
-  teal: '#0D6B5C',
-  tealHover: '#0A5549',
-  leaf: '#7CDB6A',
+  ink: '#074f38',
+  inkDeep: '#053b2a',
+  teal: '#006A4E',
+  tealHover: '#00553e',
+  brandGreen: '#006A4E',
+  brandGreenHover: '#00553e',
+  brandDark: '#074f38',
+  brandLight: '#EDF7F4',
+  leaf: '#10B981',
   seal: '#FF3B4A',
   warn: '#C4891A',
-  fog: '#EDF4F1',
-  mist: '#F5FAF8',
+  fog: '#F8FAF9',
+  mist: '#FFFFFF',
   textMain: '#0A1F1C',
   textMuted: '#5F7A74',
-  // legacy aliases used by older call sites
-  flagGreen: '#0D6B5C',
-  flagGreenLight: '#E6F2EE',
+  // legacy aliases mapped to canonical palette
+  flagGreen: '#006A4E',
+  flagGreenLight: '#EDF7F4',
   flagRed: '#FF3B4A',
   flagRedLight: '#FFE8EA',
   amberWarn: '#C4891A',
   amberLight: '#FEF3C7',
-  bgPage: '#EDF4F1',
+  bgPage: '#F8FAF9',
 };
 
 export function toBanglaDigits(input: string | number, lang: 'bn' | 'en'): string {

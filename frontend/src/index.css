@@ -1,26 +1,30 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--font-ui);
+}
+
 :root {
-  --ink: #062823;
-  --ink-deep: #041A1C;
-  --teal: #0D6B5C;
-  --teal-hover: #0A5549;
-  --leaf: #7CDB6A;
-  --leaf-dim: #B8E8AE;
+  --ink: #074f38;
+  --ink-deep: #053b2a;
+  --teal: #006A4E;
+  --teal-hover: #00553e;
+  --leaf: #10B981;
+  --leaf-dim: #D1FAE5;
   --seal: #FF3B4A;
   --warn: #C4891A;
-  --fog: #EDF4F1;
-  --mist: #F5FAF8;
+  --fog: #F8FAF9;
+  --mist: #FFFFFF;
   --paper: #FFFFFF;
   --text-main: #0A1F1C;
   --text-muted: #5F7A74;
-  --line: rgba(13, 107, 92, 0.14);
+  --line: rgba(0, 106, 78, 0.14);
   --base-font-size: 17px;
-  --font-display: "Noto Serif Bengali", "Fraunces", Georgia, serif;
+  --font-display: inherit;
   --font-ui: "Manrope", "Hind Siliguri", system-ui, sans-serif;
   --font-bn: "Hind Siliguri", "Noto Sans Bengali", sans-serif;
   --radius: 12px;
-  --shadow-panel: 0 1px 0 rgba(13, 107, 92, 0.06), 0 18px 48px -28px rgba(6, 40, 35, 0.45);
+  --shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 25px -5px rgba(0, 106, 78, 0.04);
 }
 
 html {
@@ -29,23 +33,21 @@ html {
   line-height: 1.55;
   background-color: var(--fog);
   color: var(--text-main);
-  overflow-x: hidden;
 }
 
-html[lang="bn"],
+html[lang^="bn"],
 html:lang(bn) {
   font-family: var(--font-bn);
 }
 
 body {
   margin: 0;
-  overflow-x: hidden;
   background-color: var(--fog);
   color: var(--text-main);
   background-image:
-    radial-gradient(ellipse 120% 80% at 10% -20%, rgba(124, 219, 106, 0.18), transparent 55%),
-    radial-gradient(ellipse 90% 60% at 100% 0%, rgba(13, 107, 92, 0.12), transparent 50%),
-    linear-gradient(180deg, var(--mist) 0%, var(--fog) 40%, #E4EFEA 100%);
+    radial-gradient(ellipse 120% 80% at 10% -20%, rgba(0, 106, 78, 0.05), transparent 55%),
+    radial-gradient(ellipse 90% 60% at 100% 0%, rgba(0, 106, 78, 0.04), transparent 50%),
+    linear-gradient(180deg, var(--mist) 0%, var(--fog) 40%, #EBF4F0 100%);
   background-attachment: fixed;
 }
 
@@ -66,7 +68,7 @@ html.high-contrast .card-surface {
 }
 
 *:focus-visible {
-  outline: 3px solid var(--leaf);
+  outline: 2.5px solid #006A4E;
   outline-offset: 2px;
 }
 
@@ -75,9 +77,9 @@ html.high-contrast .card-surface {
 }
 
 .font-display {
-  font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-family: inherit;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .font-ui {
@@ -88,27 +90,26 @@ html.high-contrast .card-surface {
 .mesh-bg {
   background-color: var(--ink-deep);
   background-image:
-    linear-gradient(rgba(124, 219, 106, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(124, 219, 106, 0.04) 1px, transparent 1px),
-    radial-gradient(ellipse at 20% 30%, rgba(13, 107, 92, 0.55), transparent 55%),
-    radial-gradient(ellipse at 80% 70%, rgba(124, 219, 106, 0.12), transparent 50%);
+    linear-gradient(rgba(16, 185, 129, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.04) 1px, transparent 1px),
+    radial-gradient(ellipse at 20% 30%, rgba(0, 106, 78, 0.55), transparent 55%),
+    radial-gradient(ellipse at 80% 70%, rgba(16, 185, 129, 0.12), transparent 50%);
   background-size: 48px 48px, 48px 48px, 100% 100%, 100% 100%;
 }
 
 .panel {
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid var(--line);
+  background: #ffffff;
+  border: 1px solid rgba(0, 106, 78, 0.12);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-panel);
-  backdrop-filter: blur(10px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 25px -5px rgba(0, 106, 78, 0.04);
 }
 
 .panel-ink {
-  background: linear-gradient(145deg, #0A3D36 0%, var(--ink) 55%, #041A1C 100%);
+  background: linear-gradient(145deg, #074f38 0%, #053b2a 100%);
   color: #F2FBF7;
-  border: 1px solid rgba(124, 219, 106, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.22);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-panel);
+  box-shadow: 0 12px 32px -12px rgba(5, 59, 42, 0.4);
 }
 
 .btn-primary {
@@ -118,18 +119,18 @@ html.high-contrast .card-surface {
   gap: 0.5rem;
   padding: 0.65rem 1.25rem;
   border-radius: 10px;
-  background: var(--teal);
+  background: #006A4E;
   color: #fff;
   font-weight: 650;
   letter-spacing: 0.01em;
   border: none;
   cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 8px 24px -12px rgba(13, 107, 92, 0.7);
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 12px -2px rgba(0, 106, 78, 0.35);
 }
 
 .btn-primary:hover {
-  background: var(--teal-hover);
+  background: #00553e;
   transform: translateY(-1px);
 }
 
@@ -140,16 +141,16 @@ html.high-contrast .card-surface {
   gap: 0.5rem;
   padding: 0.65rem 1.25rem;
   border-radius: 10px;
-  background: var(--leaf);
-  color: var(--ink-deep);
+  background: #006A4E;
+  color: #ffffff;
   font-weight: 700;
   border: none;
   cursor: pointer;
-  transition: transform 0.2s ease, filter 0.2s ease;
+  transition: transform 0.15s ease, background 0.15s ease;
 }
 
 .btn-leaf:hover {
-  filter: brightness(1.05);
+  background: #00553e;
   transform: translateY(-1px);
 }
 
@@ -161,16 +162,16 @@ html.high-contrast .card-surface {
   padding: 0.65rem 1.15rem;
   border-radius: 10px;
   background: transparent;
-  color: var(--teal);
+  color: #006A4E;
   font-weight: 650;
-  border: 1.5px solid rgba(13, 107, 92, 0.28);
+  border: 1.5px solid rgba(0, 106, 78, 0.28);
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .btn-ghost:hover {
-  background: rgba(13, 107, 92, 0.06);
-  border-color: var(--teal);
+  background: rgba(0, 106, 78, 0.06);
+  border-color: #006A4E;
 }
 
 .btn-danger {
@@ -190,7 +191,7 @@ html.high-contrast .card-surface {
 .field {
   width: 100%;
   border-radius: 10px;
-  border: 1.5px solid rgba(13, 107, 92, 0.2);
+  border: 1.5px solid rgba(0, 106, 78, 0.2);
   background: #fff;
   padding: 0.65rem 0.9rem;
   color: var(--text-main);
@@ -203,8 +204,13 @@ html.high-contrast .card-surface {
 }
 
 .field:focus {
-  border-color: var(--teal);
-  box-shadow: 0 0 0 3px rgba(124, 219, 106, 0.28);
+  border-color: #006A4E;
+  box-shadow: 0 0 0 3px rgba(0, 106, 78, 0.18);
+}
+
+.field.field-with-icon,
+.field-with-icon {
+  padding-left: 2.75rem !important;
 }
 
 .label {
@@ -221,8 +227,9 @@ html.high-contrast .card-surface {
 }
 
 .page-intro h1 {
-  font-family: var(--font-display);
+  font-family: inherit;
   font-size: clamp(1.55rem, 2.4vw, 2.1rem);
+  font-weight: 700;
   line-height: 1.25;
   color: var(--ink);
   margin: 0 0 0.4rem;
@@ -236,9 +243,9 @@ html.high-contrast .card-surface {
 }
 
 .status-safe {
-  background: rgba(13, 107, 92, 0.1);
-  color: var(--teal);
-  border: 1px solid rgba(13, 107, 92, 0.25);
+  background: rgba(0, 106, 78, 0.08);
+  color: #006A4E;
+  border: 1px solid rgba(0, 106, 78, 0.22);
 }
 
 .status-warn {
@@ -290,7 +297,7 @@ html.high-contrast .card-surface {
     text-shadow: 0 0 0 transparent;
   }
   50% {
-    text-shadow: 0 0 28px rgba(124, 219, 106, 0.35);
+    text-shadow: 0 0 28px rgba(0, 106, 78, 0.35);
   }
 }
 
@@ -327,17 +334,17 @@ html.high-contrast .card-surface {
   color: var(--text-muted);
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--line);
-  background: rgba(13, 107, 92, 0.04);
+  background: rgba(0, 106, 78, 0.04);
 }
 
 .table-modern td {
   padding: 0.85rem 1rem;
-  border-bottom: 1px solid rgba(13, 107, 92, 0.08);
+  border-bottom: 1px solid rgba(0, 106, 78, 0.08);
   vertical-align: middle;
 }
 
 .table-modern tr:hover td {
-  background: rgba(124, 219, 106, 0.06);
+  background: rgba(0, 106, 78, 0.03);
 }
 
 ::-webkit-scrollbar {
@@ -348,11 +355,11 @@ html.high-contrast .card-surface {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(13, 107, 92, 0.35);
+  background: rgba(0, 106, 78, 0.35);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(13, 107, 92, 0.55);
+  background: rgba(0, 106, 78, 0.55);
 }
 
 @media print {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppUI, UserRole } from '../i18n';
-import { BhumiApi } from '../api/client';
+import { BhumiApi, ServiceCatalogueItem } from '../api/client';
 import { toBanglaDigits } from '../theme/tokens';
 import {
   ShieldCheck,
@@ -21,7 +21,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   XOctagon,
-  KeyRound
+  KeyRound,
+  ExternalLink
 } from 'lucide-react';
 
 const ROLE_ROUTE: Record<UserRole, string> = {
@@ -38,6 +39,9 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
   const [locations, setLocations] = useState<any[]>([]);
   const [plots, setPlots] = useState<any[]>([]);
   const [scenarios, setScenarios] = useState<any[]>([]);
+  const [catalogueServices, setCatalogueServices] = useState<ServiceCatalogueItem[]>([]);
+  const [catalogueState, setCatalogueState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [selectedServiceCat, setSelectedServiceCat] = useState<string>('ALL');
   
   // Track/Search Card state
   const [searchType, setSearchType] = useState<'deed' | 'plot'>('deed');
@@ -46,19 +50,24 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
   const [selectedPlotId, setSelectedPlotId] = useState<number>(1);
 
   useEffect(() => {
-    Promise.all([
+    Promise.allSettled([
       BhumiApi.getStatsSummary(),
       BhumiApi.getLocations(),
       BhumiApi.getPlots(),
-      BhumiApi.getDemoScenarios(),
+      import.meta.env.DEV ? BhumiApi.getDemoScenarios() : Promise.resolve([]),
+      BhumiApi.listPublicServices(),
     ])
-      .then(([st, locs, plts, scns]) => {
-        setStats(st);
-        setLocations(locs);
-        setPlots(plts);
-        setScenarios(scns);
+      .then(([st, locs, plts, scns, svcs]) => {
+        if (st.status === 'fulfilled') setStats(st.value);
+        if (locs.status === 'fulfilled') setLocations(locs.value);
+        if (plts.status === 'fulfilled') setPlots(plts.value);
+        if (scns.status === 'fulfilled') setScenarios(scns.value);
+        if (svcs.status === 'fulfilled') {
+          setCatalogueServices(svcs.value?.items || []);
+          setCatalogueState('ready');
+        } else setCatalogueState('error');
       })
-      .catch(() => {});
+      .catch(() => setCatalogueState('error'));
   }, []);
 
   const enterRolePortal = (targetRole: UserRole) => {
@@ -99,8 +108,8 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
       id: 'vault',
       title_bn: 'নাগরিক ডিজিটাল বিক্রয় লক',
       title_en: 'Citizen Sale Lock Vault',
-      desc_bn: 'প্রবাসী ও প্রবীণ নাগরিকদের জমি অননুমোদিত বা জাল দলিল হস্তান্তর থেকে বায়োমেট্রিক লকে সুরক্ষিত রাখা',
-      desc_en: 'Protect ancestral land from fraudulent deeds and power-of-attorney using biometric locks',
+      desc_bn: 'প্রবাসী ও প্রবীণ নাগরিকদের জমি অননুমোদিত বা জাল দলিল হস্তান্তর থেকে নাগরিক ভল্ট ডিজিটাল লকে সুরক্ষিত রাখা',
+      desc_en: 'Protect ancestral land from fraudulent deeds and power-of-attorney using citizen digital vault locks',
       icon: <Lock className="w-6 h-6" />,
       action: () => enterRolePortal('citizen')
     },
@@ -168,37 +177,39 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
         <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-emerald-500/25 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 left-1/3 h-80 w-80 rounded-full bg-amber-500/15 blur-3xl" />
 
-        <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-14 lg:grid-cols-[1.3fr_1fr] lg:py-20 items-center">
+        <div className="relative mx-auto grid max-w-7xl gap-8 px-4 py-12 lg:gap-10 lg:grid-cols-[1.3fr_1fr] lg:py-20 items-center w-full min-w-0">
           {/* Left Text Block */}
-          <div>
+          <div className="w-full min-w-0">
             <p className="mb-3.5 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1 text-xs md:text-sm text-emerald-100 ring-1 ring-white/20 font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>{t('সকল ভূমি ও দলিল সেবা এক প্ল্যাটফর্মে', 'Centralized Land & Deed Trust Platform')}</span>
+              <span>{t('ভূমি ও দলিল নিরাপত্তা ট্রাস্ট প্ল্যাটফর্ম (প্রোটোটাইপ)', 'Land & Deed Verification & Trust Prototype')}</span>
             </p>
 
-            <h1 className="text-3xl font-bold leading-tight sm:text-5xl tracking-tight text-white">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight text-white break-words">
               {t('আপনার জমির নিরাপত্তা, এখন এক জায়গায়', 'Secure Land Verification & Deed Protection in One Place')}
             </h1>
 
-            <p className="mt-4 max-w-xl text-base sm:text-lg text-emerald-100/90 leading-relaxed font-normal">
+            <p className="mt-4 max-w-xl text-sm sm:text-base lg:text-lg text-emerald-100/90 leading-relaxed font-normal break-words">
               {t(
                 'কোন অফিসে যেতে হবে তা জানার দরকার নেই। বায়না করার আগেই মালিকানা যাচাই করুন, দলিল টেম্পার সনাক্ত করুন, বিক্রয় লক করুন এবং নামজারি ট্র্যাক করুন — ঘরে বসেই।',
                 'No need to run between offices. Check ownership, detect tampered deeds, freeze plots with citizen sale locks, and track e-mutation — all from home.'
               )}
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row flex-wrap gap-3 w-full">
               <button
+                type="button"
                 onClick={() => onNavigate('check')}
-                className="inline-flex h-12 items-center gap-2 rounded-lg bg-white px-5 font-bold text-[#074f38] hover:bg-emerald-50 shadow-sm transition-all cursor-pointer"
+                className="inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-white px-5 font-bold text-[#074f38] hover:bg-emerald-50 shadow-sm transition-all cursor-pointer text-sm sm:text-base"
               >
                 <Search className="w-5 h-5 text-[#074f38]" />
                 <span>{t('জমি কেনার আগে যাচাই', 'Check Before You Buy')}</span>
               </button>
 
               <button
+                type="button"
                 onClick={() => onNavigate('qr')}
-                className="inline-flex h-12 items-center gap-2 rounded-lg bg-white/10 px-5 font-semibold text-white ring-1 ring-white/30 hover:bg-white/20 transition-all cursor-pointer"
+                className="inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-white/10 px-5 font-semibold text-white ring-1 ring-white/30 hover:bg-white/20 transition-all cursor-pointer text-sm sm:text-base"
               >
                 <QrCode className="w-5 h-5 text-emerald-300" />
                 <span>{t('দলিল QR কোড যাচাই', 'Verify Deed QR Code')}</span>
@@ -207,7 +218,7 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
           </div>
 
           {/* Right Card — Track Deed or Plot (Matching bcc.zohirrayhan.com) */}
-          <div className="rounded-2xl border border-gray-200/90 bg-white shadow-xl self-center p-6 text-slate-800">
+          <div className="rounded-2xl border border-gray-200/90 bg-white shadow-xl self-center p-4 sm:p-6 text-slate-800 w-full min-w-0 max-w-full">
             <h2 className="text-lg font-bold text-slate-900">
               {t('আবেদন বা দলিলের অবস্থা জানুন', 'Track Deed or Verify Plot')}
             </h2>
@@ -252,7 +263,7 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
                   />
                   <button
                     type="submit"
-                    className="inline-flex items-center justify-center gap-1.5 rounded-lg font-bold h-11 px-5 bg-[#006A4E] hover:bg-[#00553e] text-white transition-colors cursor-pointer text-sm shadow-xs"
+                    className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg font-bold h-11 px-4 sm:px-5 bg-[#006A4E] hover:bg-[#00553e] text-white transition-colors cursor-pointer text-sm shadow-xs whitespace-nowrap"
                   >
                     <Search className="w-4 h-4" />
                     <span>{t('খুঁজুন', 'Search')}</span>
@@ -345,12 +356,12 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
         <section className="mx-auto max-w-7xl px-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {[
-              [t('নিবন্ধিত দাগ', 'Plots Monitored'), stats.kpis?.total_plots ?? 60],
-              [t('ডিজিটাল খতিয়ান', 'Khatians Indexed'), stats.kpis?.total_khatians ?? 240],
-              [t('স্বাক্ষরিত দলিল', 'Deeds Chained'), stats.kpis?.total_deeds ?? 80],
-              [t('সক্রিয় ব্যাংক বন্ধক', 'Active Liens'), stats.kpis?.active_mortgages_count ?? 6],
-              [t('ই-মিউটেশন সম্পন্ন', 'Mutations Done'), stats.kpis?.pending_mutations ?? 8],
-              [t('দাপ্তরিক কর্মকর্তা', 'Active Officers'), stats.kpis?.total_users ?? 7],
+              [t('নিবন্ধিত দাগ', 'Plots Monitored'), stats.kpis?.total_plots ?? 0],
+              [t('ডিজিটাল খতিয়ান', 'Khatians Indexed'), stats.kpis?.total_khatians ?? 0],
+              [t('স্বাক্ষরিত দলিল', 'Deeds Chained'), stats.kpis?.total_deeds ?? 0],
+              [t('সক্রিয় ব্যাংক বন্ধক', 'Active Liens'), stats.kpis?.active_mortgages_count ?? 0],
+              [t('ই-মিউটেশন সম্পন্ন', 'Mutations Done'), stats.kpis?.approved_mutations ?? 0],
+              [t('দাপ্তরিক কর্মকর্তা', 'Active Officers'), stats.kpis?.active_officers_count ?? 0],
             ].map(([label, value]) => (
               <div key={String(label)} className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs">
                 <div className="text-xl sm:text-2xl font-extrabold text-[#074f38] font-mono">
@@ -363,47 +374,159 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
         </section>
       )}
 
-      {/* Core Services Grid — Styled Exactly Like bcc.zohirrayhan.com */}
+      {/* Dynamic Bilingual Service Catalogue & Source-Linked Guidance */}
       <section className="mx-auto max-w-7xl px-4">
-        <div className="mb-6 flex items-end justify-between gap-4 border-b border-slate-200 pb-3">
+        <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-3">
           <div>
             <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
-              {t('সেবাসমূহ', 'Services')}
+              {t('সেবাসমূহ ও নির্দেশিকা', 'Services & Official Guidance')}
             </h2>
             <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
-              {t('আপনার প্রয়োজনীয় ভূমি সেবা নির্বাচন করুন', 'Select your required land & deed service')}
+              {t(
+                'ভূমি মন্ত্রণালয় ও নিবন্ধন অধিদপ্তরের অফিসিয়াল সেবা এবং ভূমি সুরক্ষার সমন্বিত ট্রাস্ট লেয়ার',
+                'Official Ministry services and BhumiShield integrated trust layers'
+              )}
             </p>
           </div>
           <button
-            onClick={() => onNavigate('check')}
+            onClick={() => onNavigate('help')}
             className="hidden text-xs sm:text-sm font-semibold text-emerald-800 hover:text-emerald-950 sm:flex items-center gap-1 cursor-pointer"
           >
-            <span>{t('সকল সেবা ও ওয়ার্কস্পেস', 'All Services & Workspaces')}</span>
+            <span>{t('সরকারি ফি ও সার্কুলার তালিকা', 'Official Fees & Circulars')}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {coreServices.map((srv) => (
-            <div
-              key={srv.id}
-              onClick={srv.action}
-              className="group rounded-xl border border-gray-200 bg-white shadow-card flex gap-4 p-5 transition hover:border-emerald-400 hover:shadow-md cursor-pointer"
+        {/* Category Filter Pills */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {[
+            { id: 'ALL', name_bn: 'সকল সেবা', name_en: 'All Services' },
+            { id: 'REVENUE_MUTATION', name_bn: 'ই-নামজারি ও খাজনা', name_en: 'e-Mutation & Tax' },
+            { id: 'RECORD_MAPS', name_bn: 'খতিয়ান ও মৌজা ম্যাপ', name_en: 'Khatian & Mouza Maps' },
+            { id: 'LAND_REGISTRATION', name_bn: 'দলিল ও প্রাক-নিবন্ধন', name_en: 'Deed & Registry' },
+            { id: 'FINANCE_MORTGAGE', name_bn: 'ব্যাংক জামানত ও লিয়েন', name_en: 'Bank Lien & NOC' },
+            { id: 'HELPLINE_INFO', name_bn: 'সহায়িকা ও কল সেন্টার', name_en: 'Help & 16122 Call Center' },
+          ].map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedServiceCat(cat.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[32px] ${
+                selectedServiceCat === cat.id
+                  ? 'bg-[#006A4E] text-white shadow-2xs'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
             >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 group-hover:bg-[#006A4E] group-hover:text-white transition-colors shadow-2xs">
-                {srv.icon}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center justify-between font-bold text-slate-900 text-sm sm:text-base">
-                  <span>{lang === 'bn' ? srv.title_bn : srv.title_en}</span>
-                  <ArrowRight className="h-4 w-4 opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100 text-emerald-700 shrink-0" />
-                </span>
-                <span className="mt-1 block text-xs sm:text-sm text-slate-500 leading-relaxed font-normal">
-                  {lang === 'bn' ? srv.desc_bn : srv.desc_en}
-                </span>
-              </span>
-            </div>
+              {lang === 'bn' ? cat.name_bn : cat.name_en}
+            </button>
           ))}
+        </div>
+
+        {catalogueState !== 'ready' && <p role="status" className="mb-4 text-sm text-slate-600">{catalogueState === 'loading' ? t('সেবার তালিকা লোড হচ্ছে…', 'Loading service catalogue…') : t('সেবার তালিকা এখন পাওয়া যাচ্ছে না। আবার চেষ্টা করতে পৃষ্ঠা রিফ্রেশ করুন।', 'Service catalogue is unavailable. Refresh the page to retry.')}</p>}
+        {catalogueState === 'ready' && !catalogueServices.some((s) => selectedServiceCat === 'ALL' || s.category === selectedServiceCat) && <p className="mb-4 text-sm">{t('এই বিভাগে প্রকাশিত সেবা নেই।', 'No published services in this category.')}</p>}
+        {/* Services Cards Grid */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {catalogueServices.filter((s) => selectedServiceCat === 'ALL' || s.category === selectedServiceCat).map((srv: any) => {
+            const isCatalogueItem = 'service_code' in srv;
+            const isExternal = isCatalogueItem && srv.service_type === 'EXTERNAL_OFFICIAL' && Boolean(srv.external_url);
+            
+            const handleClick = () => {
+              if (isCatalogueItem) {
+                if (isExternal && srv.external_url) {
+                  window.open(srv.external_url, '_blank', 'noopener,noreferrer');
+                } else if (srv.internal_route) {
+                  onNavigate(srv.internal_route);
+                } else {
+                  onNavigate('check');
+                }
+              } else {
+                srv.action?.();
+              }
+            };
+
+            const icon = isCatalogueItem
+              ? (() => {
+                  const cd = (srv.service_code || '').toUpperCase();
+                  const c = (srv.category || '').toUpperCase();
+                  if (cd.includes('MUTATION') || c === 'REVENUE_MUTATION') return <Landmark className="w-6 h-6" />;
+                  if (cd.includes('KHATIAN') || cd.includes('MAP') || c === 'RECORD_MAPS') return <FileSpreadsheet className="w-6 h-6" />;
+                  if (cd.includes('DEED') || c === 'LAND_REGISTRATION') return <FileText className="w-6 h-6" />;
+                  if (cd.includes('MORTGAGE') || c === 'FINANCE_MORTGAGE') return <Building2 className="w-6 h-6" />;
+                  if (cd.includes('DISPUTE') || c === 'DISPUTE_CITIZEN') return <Scale className="w-6 h-6" />;
+                  if (cd.includes('HELPLINE') || c === 'HELPLINE_INFO') return <PhoneCall className="w-6 h-6" />;
+                  if (cd.includes('QR') || cd.includes('INTEGRITY')) return <QrCode className="w-6 h-6" />;
+                  return <Search className="w-6 h-6" />;
+                })()
+              : srv.icon;
+
+            const title = lang === 'bn' ? srv.title_bn : srv.title_en;
+            const desc = lang === 'bn' ? (srv.description_bn || srv.desc_bn) : (srv.description_en || srv.desc_en);
+            const authority = isCatalogueItem ? (lang === 'bn' ? srv.authority_name_bn : srv.authority_name_en) : null;
+
+            return (
+              <div
+                key={srv.id}
+                onClick={handleClick}
+                role={isExternal ? 'link' : 'button'}
+                tabIndex={0}
+                onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleClick(); } }}
+                className="group rounded-xl border border-gray-200 bg-white shadow-card flex flex-col justify-between p-5 transition hover:border-emerald-400 hover:shadow-md cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-[#006A4E] focus-visible:outline-none"
+              >
+                <div className="flex gap-4">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 group-hover:bg-[#006A4E] group-hover:text-white transition-colors shadow-2xs">
+                    {icon}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-bold text-slate-900 text-sm sm:text-base group-hover:text-[#006A4E] transition-colors">
+                        {title}
+                      </span>
+                      {isExternal ? (
+                        <ExternalLink className="h-4 w-4 text-emerald-700 shrink-0 opacity-80 group-hover:opacity-100" />
+                      ) : (
+                        <ArrowRight className="h-4 w-4 opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100 text-emerald-700 shrink-0" />
+                      )}
+                    </div>
+                    <p className="mt-1 text-xs sm:text-sm text-slate-500 leading-relaxed font-normal line-clamp-2">
+                      {desc}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-500 font-medium">
+                    {authority || (lang === 'bn' ? 'ভূমি সুরক্ষা ট্রাস্ট ফিচার' : 'BhumiShield Feature')}
+                  </span>
+                  <span
+                    className={`font-semibold px-2 py-0.5 rounded-full ${
+                      isExternal
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                        : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    }`}
+                  >
+                    {isExternal
+                      ? t('অফিসিয়াল পোর্টাল ↗', 'Official Portal ↗')
+                      : t('সরাসরি ফিচার →', 'Feature →')}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Informational Disclaimer Banner */}
+        <div className="mt-4 p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <span>
+            {t(
+              'ⓘ সরকারি সেবাসমূহ সংশ্লিষ্ট ভূমি অফিসের কর্তৃত্বাধীন। ভূমি সুরক্ষা একটি স্বাধীন ল্যান্ডটেক ২০২৬ প্রোটোটাইপ।',
+              'ⓘ Official government services belong to their respective authorities. BhumiShield is an independent LandTech 2026 prototype.'
+            )}
+          </span>
+          <button
+            onClick={() => onNavigate('help')}
+            className="text-emerald-800 font-bold hover:underline shrink-0 cursor-pointer"
+          >
+            {t('সরকারি ফি ও সার্কুলার নির্দেশিকা দেখুন →', 'View Official Fees & Circular Guide →')}
+          </button>
         </div>
       </section>
 
@@ -459,10 +582,11 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
               dept: t('জাতীয় গভর্ন্যান্স', 'National Governance')
             },
           ].map((item) => (
-            <div
+            <button
+              type="button"
               key={item.role}
               onClick={() => enterRolePortal(item.role)}
-              className="rounded-xl border border-slate-200 bg-white p-5 hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+              className="rounded-xl border border-slate-200 bg-white p-5 hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group text-left w-full focus-visible:ring-2 focus-visible:ring-[#006A4E] focus-visible:outline-none"
             >
               <div>
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] group-hover:bg-[#006A4E] group-hover:text-white flex items-center justify-center transition-colors">
@@ -477,7 +601,7 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
                 <span>{t('প্যানেল খুলুন', 'Open Workspace')}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </section>
@@ -579,7 +703,7 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
                 title: t('১১-রুল গেটকিপার স্ক্যান', '2. 11-Rule Gatekeeper'),
                 desc: t(
                   'সাব-রেজিস্ট্রির ডেস্কে স্বয়ংক্রিয় ১১টি রুল যাচাই, দ্বৈত রেজিস্ট্রি ব্লক ও সরকারি ফি চালানের হিসাব।',
-                  'Automated gatekeeper rule execution, double registry prevention, and treasury challans.'
+                  'Automated gatekeeper rule execution, double registry prevention, and sourced fee guidance.'
                 ),
                 color: 'text-blue-700 bg-blue-100'
               },
@@ -614,7 +738,7 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
           <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
             {t(
               'বাংলাদেশের প্রচলিত ভূমি ব্যবস্থাপনার ৫টি প্রধান ফাঁক যেখানে সিস্টেম প্রতিরোধ গড়ে তোলে:',
-              'The 5 major land loopholes in Bangladesh eliminated by BhumiShield:'
+              'Five land-record risks addressed within the records available to this application:'
             )}
           </p>
         </div>
@@ -638,12 +762,12 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
                 [
                   t('জাল আমমোক্তারনামা (Forged POA)', 'Forged POA / Absentee Fraud'),
                   t('প্রবাসে বা দূরে থাকলে ভুয়া কাগজপত্র দিয়ে জমি আত্মসাতের সুযোগ', 'Absentee owners easily forged by land grabbers'),
-                  t('নাগরিক বায়োমেট্রিক বিক্রয় লক; মালিকের OTP ছাড়া রেজিস্ট্রি সম্পূর্ণ অসম্ভব', 'Citizen Sale Lock; strictly aborted until owner unlocks')
+                  t('নাগরিক ডিজিটাল বিক্রয় লক; ভল্ট থেকে মালিকের অনুমোদন বা ডিজিটাল আনলক ছাড়া রেজিস্ট্রি স্বয়ংক্রিয়ভাবে অবরুদ্ধ', 'Citizen Digital Sale Lock; strictly blocked at gatekeeper until owner unlocks')
                 ],
                 [
                   t('খতিয়ান চেইন ফাঁকি (Lineage Break)', 'Lineage Manipulation'),
                   t('ম্যানুয়ালি সিএস-এসএ-আরএস মিলিয়ে দেখা অসম্ভব; ভুয়া পরচা ব্যবহার', 'Manual verification impossible; fake khatian sheets forged'),
-                  t('সিএস (১৯৪০) → বিএস (২০১২) খতিয়ানের মোট জমি ও ফারায়েজ গাণিতিক নিরীক্ষা', 'CS to BS survey area continuity & Islamic inheritance audit')
+                  t('সিএস (১৮৮৮-১৯৪০) থেকে প্রযোজ্য আরএস/বিএস খতিয়ানের মোট জমি ও ফারায়েজ ধারাবাহিকতা নিরীক্ষা', 'CS to RS/BS survey area continuity & inheritance audit')
                 ],
                 [
                   t('বন্ধকী জমি গোপনে বিক্রি (Mortgaged Sale)', 'Mortgaged Plot Sale'),
@@ -683,22 +807,22 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
           <div className="space-y-1.5 text-center md:text-left">
             <div className="inline-flex items-center gap-2 text-emerald-300 text-xs font-bold uppercase tracking-wider">
               <PhoneCall className="w-4 h-4" />
-              <span>{t('সরকারি ভূমি সেবা ও অভিযোগ হটলাইন', 'Government Land Helpline & Grievance Cell')}</span>
+              <span>{t('সরকারি ভূমি সেবা কল সেন্টার ও অভিযোগ হটলাইন', 'Government Land Call Center & Grievance Cell')}</span>
             </div>
             <h3 className="text-xl sm:text-2xl font-bold">
-              {t('যে কোনো জমি প্রতারণার তাৎক্ষণিক তথ্য দিন', 'Report Land Registry Malpractice Instantly')}
+              {t('ভূমি সেবা সংক্রান্ত যেকোনো তথ্যের জন্য কল করুন', 'Contact Official Land Support Directly')}
             </h3>
             <p className="text-xs sm:text-sm text-emerald-100/80 max-w-xl">
               {t(
-                'টোল-ফ্রি হটলাইন ১৬১২২ এ কল করে সরাসরি ভূমি মন্ত্রণালয়ের সেবা নিন। ২৪ ঘণ্টা সেবা চালু রয়েছে।',
-                'Call toll-free 16122 for direct assistance from the Ministry of Land. Service available 24/7.'
+                'ভূমি মন্ত্রণালয়ের নাগরিক সেবা কল সেন্টার ১৬১২২ এ কল করে তথ্য ও সহায়তা নিন (সরকারি সময়সূচী অনুযায়ী সেবা চালু; টেলিকম অপারেটর নির্ধারিত কল চার্জ প্রযোজ্য)।',
+                'Call Ministry of Land Call Center 16122 for assistance during official service hours (standard telecom charges apply).'
               )}
             </p>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
             <div className="bg-white/10 px-5 py-3 rounded-xl text-center border border-white/20">
-              <span className="text-[10px] text-emerald-200 block uppercase font-bold tracking-wider">Toll Free</span>
+              <span className="text-[10px] text-emerald-200 block uppercase font-bold tracking-wider">Land Helpline</span>
               <span className="text-2xl font-extrabold font-mono tracking-wider text-white">১৬১২২</span>
             </div>
             <button

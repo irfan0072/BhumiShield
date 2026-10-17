@@ -28,12 +28,14 @@ final class SystemAdminController
             'phone_dummy' => $u['phone_dummy'] ?? '01700-001001',
             'nid' => $u['nid'] ?? '9900001001',
             'is_active' => (int) ($u['is_active'] ?? 1),
+            'is_identity_verified' => (int) ($u['is_identity_verified'] ?? 1),
+            'token_version' => (int) ($u['token_version'] ?? 1),
             'last_login_at' => $u['last_login_at'] ?? null,
             'created_at' => $u['created_at'] ?? null,
         ];
     }
 
-    public static function registerUser(array $req): array
+    public static function registerUser(array $req, ?array $actor = null): array
     {
         $uname = strtolower(trim((string) ($req['username'] ?? '')));
         if (strlen($uname) < 3) {
@@ -55,15 +57,30 @@ final class SystemAdminController
             ], JSON_UNESCAPED_UNICODE));
         }
 
-        // Security check: Only an authenticated Admin can provision officer or admin accounts.
-        // Public self-registration is strictly restricted to 'citizen' role.
-        $currentUser = JwtAuthService::getAuthenticatedUser();
-        if ($currentUser && ($currentUser['role'] ?? '') === 'admin') {
+        // I02: Security check: Only an active, authenticated Admin can provision officer or admin accounts.
+        // If an unauthenticated caller or suspended admin attempts to register non-citizen role, fail closed with 403.
+        $currentUser = $actor ?? JwtAuthService::getAuthenticatedUser();
+        $isAdmin = $currentUser && ($currentUser['role'] ?? '') === 'admin' && ((int) ($currentUser['is_active'] ?? 0)) === 1;
+        $requestedRole = (string) ($req['role'] ?? 'citizen');
+
+        if ($requestedRole !== 'citizen') {
+            if (!$isAdmin) {
+                $code = ($currentUser && ($currentUser['role'] ?? '') === 'admin' && ((int) ($currentUser['is_active'] ?? 0)) === 0)
+                    ? 'INACTIVE_ADMIN_CANNOT_PROVISION_ROLES'
+                    : 'UNAUTHORIZED_ROLE_PROVISIONING';
+                throw new \RuntimeException(json_encode([
+                    'status' => 403,
+                    'code' => $code,
+                    'message_bn' => 'কর্মকর্তা বা অ্যাডমিন অ্যাকাউন্ট তৈরি করতে সক্রিয় অ্যাডমিন হিসেবে লগইন থাকা আবশ্যক।',
+                    'message_en' => 'Only active administrators can provision officer or administrator accounts.',
+                ], JSON_UNESCAPED_UNICODE));
+            }
             $allowedRoles = ['citizen', 'sub_registrar', 'ac_land', 'bank_officer', 'admin'];
-            $role = in_array($req['role'] ?? 'citizen', $allowedRoles, true) ? (string) $req['role'] : 'citizen';
+            $role = in_array($requestedRole, $allowedRoles, true) ? $requestedRole : 'citizen';
         } else {
             $role = 'citizen';
         }
+
         $nowIso = gmdate('c');
         $email = strtolower(trim((string) ($req['email'] ?? "{$uname}@demo.bhumishield.gov.bd")));
         $nameBn = trim((string) ($req['full_name_bn'] ?? $uname));
@@ -74,9 +91,24 @@ final class SystemAdminController
         $nid = trim((string) ($req['nid'] ?? ($req['nid_mock'] ?? '9900009999')));
         $password = (string) ($req['password'] ?? 'demo123');
 
+        // F13: NID uniqueness safeguard across user accounts
+        $existingNidUser = DB::selectOne('SELECT id, username FROM users WHERE nid = ?', [$nid]);
+        if ($existingNidUser) {
+            throw new \RuntimeException(json_encode([
+                'status' => 409,
+                'code' => 'NID_ALREADY_REGISTERED',
+                'message_bn' => "এই জাতীয় পরিচয়পত্র (NID: {$nid}) ইতিমধ্যে অন্য একটি অ্যাকাউন্টে ({$existingNidUser['username']}) নিবন্ধিত আছে।",
+                'message_en' => "NID {$nid} is already linked to another user account ({$existingNidUser['username']}).",
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        // I01: Identity verification. Self-registered public citizens start unverified (0)
+        // to prevent unauthorized portfolio takeover. Admin-provisioned accounts start verified (1).
+        $isIdentityVerified = $isAdmin ? 1 : 0;
+
         $userId = DB::insert(
-            'INSERT INTO users (username, email, full_name_bn, full_name_en, role, office_bn, office_en, phone_dummy, nid, is_active, password_hash, last_login_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)',
-            [$uname, $email, $nameBn, $nameEn, $role, $officeBn, $officeEn, $phone, $nid, JwtAuthService::hashPassword($password), $nowIso, $nowIso]
+            'INSERT INTO users (username, email, full_name_bn, full_name_en, role, office_bn, office_en, phone_dummy, nid, is_active, is_identity_verified, token_version, password_hash, last_login_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 1, ?, ?, ?)',
+            [$uname, $email, $nameBn, $nameEn, $role, $officeBn, $officeEn, $phone, $nid, $isIdentityVerified, JwtAuthService::hashPassword($password), $nowIso, $nowIso]
         );
 
         $existingPerson = DB::selectOne('SELECT id FROM persons WHERE nid = ?', [$nid]);
@@ -97,7 +129,8 @@ final class SystemAdminController
                 'username' => $uname,
                 'role' => $role,
                 'nid' => $nid,
-                'note_bn' => "নতুন ব্যবহারকারী নিবন্ধন: {$nameBn} ({$role})",
+                'is_identity_verified' => $isIdentityVerified,
+                'note_bn' => "নতুন ব্যবহারকারী নিবন্ধন: {$nameBn} ({$role}) [ভেরিফাইড: {$isIdentityVerified}]",
             ],
             $nowIso
         );
@@ -140,6 +173,31 @@ final class SystemAdminController
             ], JSON_UNESCAPED_UNICODE));
         }
 
+        if (($u['role'] ?? '') !== 'admin') {
+            foreach (['office_bn', 'office_en'] as $field) {
+                $requested = $req[$field] ?? ($req['office_name'] ?? $u[$field]);
+                if ((string) $requested !== (string) $u[$field]) {
+                    throw new \RuntimeException(json_encode(['status'=>403,'code'=>'OFFICE_ASSIGNMENT_ADMIN_ONLY','message_bn'=>'প্রতিষ্ঠান বা কার্যালয় পরিবর্তনের জন্য অ্যাডমিনের অনুমোদন প্রয়োজন।','message_en'=>'An administrator must change institution or office assignments.'], JSON_UNESCAPED_UNICODE));
+                }
+            }
+        }
+        $newToken = null;
+        if (!empty($req['new_password'])) {
+            if (strlen((string) $req['new_password']) < 8) throw new \RuntimeException(json_encode(['status'=>422,'code'=>'PASSWORD_TOO_SHORT','message_bn'=>'নতুন পাসওয়ার্ডে কমপক্ষে ৮টি অক্ষর থাকতে হবে।','message_en'=>'New password must contain at least 8 characters.'], JSON_UNESCAPED_UNICODE));
+            $currPass = (string) ($req['current_password'] ?? '');
+            if (!JwtAuthService::verifyPassword($currPass, (string) $u['password_hash'])) {
+                throw new \RuntimeException(json_encode([
+                    'status' => 400,
+                    'code' => 'WRONG_CURRENT_PASSWORD',
+                    'message_bn' => 'পাসওয়ার্ড পরিবর্তনের জন্য বর্তমান পাসওয়ার্ডটি সঠিক হতে হবে।',
+                    'message_en' => 'Current password is required and must be correct to change password.',
+                ], JSON_UNESCAPED_UNICODE));
+            }
+            $newVer = ((int) ($u['token_version'] ?? 1)) + 1;
+            DB::statement('UPDATE users SET password_hash = ?, token_version = ? WHERE id = ?', [JwtAuthService::hashPassword((string) $req['new_password']), $newVer, $u['id']]);
+            $newToken = JwtAuthService::createToken(['sub' => $u['username'], 'role' => $u['role'], 'ver' => $newVer]);
+        }
+
         DB::statement(
             'UPDATE users SET full_name_bn = ?, full_name_en = ?, email = ?, phone_dummy = ?, office_bn = ?, office_en = ? WHERE id = ?',
             [
@@ -152,15 +210,17 @@ final class SystemAdminController
                 $u['id'],
             ]
         );
-        if (!empty($req['new_password'])) {
-            DB::statement('UPDATE users SET password_hash = ? WHERE id = ?', [JwtAuthService::hashPassword((string) $req['new_password']), $u['id']]);
-        }
         $updated = DB::selectOne('SELECT * FROM users WHERE id = ?', [$u['id']]);
-        return [
+        $res = [
             'user' => self::serializeUser($updated),
             'message_bn' => 'প্রোফাইল তথ্য সফলভাবে হালনাগাদ করা হয়েছে।',
             'message_en' => 'Profile updated successfully.',
         ];
+        if ($newToken !== null) {
+            $res['access_token'] = $newToken;
+            $res['token_type'] = 'bearer';
+        }
+        return $res;
     }
 
     public static function changePassword(array $req, ?array $user = null): array
@@ -177,6 +237,7 @@ final class SystemAdminController
 
         $currPass = (string) ($req['current_password'] ?? '');
         $newPass = (string) ($req['new_password'] ?? '');
+        if (strlen($newPass) < 8) throw new \RuntimeException(json_encode(['status'=>422,'code'=>'PASSWORD_TOO_SHORT','message_bn'=>'নতুন পাসওয়ার্ডে কমপক্ষে ৮টি অক্ষর থাকতে হবে।','message_en'=>'New password must contain at least 8 characters.'], JSON_UNESCAPED_UNICODE));
         if (!JwtAuthService::verifyPassword($currPass, (string) $u['password_hash'])) {
             throw new \RuntimeException(json_encode([
                 'status' => 400,
@@ -186,20 +247,68 @@ final class SystemAdminController
             ], JSON_UNESCAPED_UNICODE));
         }
 
-        DB::statement('UPDATE users SET password_hash = ? WHERE id = ?', [JwtAuthService::hashPassword($newPass), $u['id']]);
+        // I03: Invalidate previous sessions by incrementing token_version
+        $newVer = ((int) ($u['token_version'] ?? 1)) + 1;
+        DB::statement('UPDATE users SET password_hash = ?, token_version = ? WHERE id = ?', [JwtAuthService::hashPassword($newPass), $newVer, $u['id']]);
+        $newToken = JwtAuthService::createToken(['sub' => $u['username'], 'role' => $u['role'], 'ver' => $newVer]);
+
         return [
-            'message_bn' => 'পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে।',
-            'message_en' => 'Password changed successfully.',
+            'access_token' => $newToken,
+            'token_type' => 'bearer',
+            'token_version' => $newVer,
+            'message_bn' => 'পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে এবং পূর্ববর্তী সকল সেশন বাতিল করা হয়েছে।',
+            'message_en' => 'Password changed successfully and all prior sessions revoked.',
         ];
     }
 
     public static function getCitizenLinkedProperties(?string $nid = null, ?array $user = null): array
     {
         $u = $user ?? JwtAuthService::getAuthenticatedUser() ?? [];
-        $targetNid = trim((string) ($nid ?: ($u['nid'] ?? '9900001001')));
+        $targetNid = trim((string) ($nid ?: ($u['nid'] ?? '')));
+
+        if ($targetNid === '') {
+            $targetNid = '9900001001';
+        }
+
+        // I01: Prevent unverified citizen accounts from claiming an existing owner's portfolio
+        if (!empty($u) && ($u['role'] ?? '') === 'citizen' && ((int) ($u['is_identity_verified'] ?? 1)) === 0) {
+            return [
+                'found' => true,
+                'is_verified' => false,
+                'is_identity_verified' => false,
+                'verification_status' => 'PENDING_OFFICIAL_VERIFICATION',
+                'person' => [
+                    'name_bn' => $u['full_name_bn'] ?? 'নাগরিক',
+                    'name_en' => $u['full_name_en'] ?? 'Citizen',
+                    'nid' => substr((string) ($u['nid'] ?? ''), 0, 4) . '****' . substr((string) ($u['nid'] ?? ''), -2),
+                ],
+                'plots' => [],
+                'owned_plots' => [],
+                'deeds' => [],
+                'message_bn' => 'আপনার জাতীয় পরিচয়পত্র (NID) এখনও অফিশিয়ালি ভেরিফাই করা হয়নি। জমির তথ্য দেখতে ইউনিয়ন ডিজিটাল সেন্টার বা সহকারী কমিশনার (ভূমি) অফিসে ভেরিফিকেশন সম্পন্ন করুন। ডেমো অ্যাকাউন্টে (citizen/demo123) ইতিমধ্যে ভেরিফাইড প্রোফাইল রয়েছে।',
+                'message_en' => 'National ID is pending official verification. Please verify your identity at the land office. Demo accounts are pre-verified.',
+            ];
+        }
+
+        // F13: Private vault boundary - if citizen is authenticated and specifies a different NID
+        if (!empty($u) && ($u['role'] ?? '') === 'citizen' && $nid !== null && trim($nid) !== '' && trim($nid) !== trim((string) ($u['nid'] ?? ''))) {
+            throw new \RuntimeException(json_encode([
+                'status' => 403,
+                'code' => 'FORBIDDEN_VAULT_ACCESS',
+                'message_bn' => 'অন্য নাগরিকের ব্যক্তিগত ল্যান্ড ভল্ট দেখার অনুমতি আপনার নেই।',
+                'message_en' => 'You are not authorized to access another citizen\'s private land vault.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
         $person = DB::selectOne('SELECT * FROM persons WHERE nid = ?', [$targetNid]);
         if (!$person) {
-            $person = DB::selectOne('SELECT * FROM persons WHERE id = 1');
+            // F13: Honest 404, NEVER fall back to person 1!
+            throw new \RuntimeException(json_encode([
+                'status' => 404,
+                'code' => 'NID_NOT_FOUND',
+                'message_bn' => "জাতীয় পরিচয়পত্র (NID: {$targetNid})-এর বিপরীতে কোনো নাগরিকের রেকর্ড পাওয়া যায়নি।",
+                'message_en' => "No citizen record found for NID {$targetNid}.",
+            ], JSON_UNESCAPED_UNICODE));
         }
 
         $ownedPlots = DB::select(
@@ -232,7 +341,10 @@ final class SystemAdminController
 
         return [
             'found' => true,
+            'is_verified' => true,
+            'is_identity_verified' => true,
             'person' => $person,
+            'plots' => $ownedPlots,
             'owned_plots' => $ownedPlots,
             'deeds' => $deeds,
         ];
@@ -270,6 +382,32 @@ final class SystemAdminController
             ], JSON_UNESCAPED_UNICODE));
         }
 
+        // F18: Validate allowed roles
+        $allowedRoles = ['citizen', 'sub_registrar', 'ac_land', 'bank_officer', 'admin'];
+        $newRole = (string) ($req['role'] ?? $curr['role']);
+        if (!in_array($newRole, $allowedRoles, true)) {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'INVALID_ROLE',
+                'message_bn' => 'অননুমোদিত বা ভুল ইউজার রোল প্রদান করা হয়েছে।',
+                'message_en' => 'Invalid role specified.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        // F18: Protect last active administrator from demotion or deactivation
+        $newIsActive = isset($req['is_active']) ? (int) $req['is_active'] : (int) $curr['is_active'];
+        if (($curr['role'] === 'admin' && (int) $curr['is_active'] === 1) && ($newRole !== 'admin' || $newIsActive === 0)) {
+            $activeAdminsCount = (int) (DB::selectOne("SELECT COUNT(*) AS c FROM users WHERE role = 'admin' AND is_active = 1")['c'] ?? 0);
+            if ($activeAdminsCount <= 1) {
+                throw new \RuntimeException(json_encode([
+                    'status' => 400,
+                    'code' => 'CANNOT_DEMOTE_LAST_ADMIN',
+                    'message_bn' => 'সিস্টেমের সর্বশেষ সক্রিয় অ্যাডমিনের রোল পরিবর্তন বা নিষ্ক্রিয় করা যাবে না।',
+                    'message_en' => 'Cannot demote or deactivate the last active administrator.',
+                ], JSON_UNESCAPED_UNICODE));
+            }
+        }
+
         $newPassHash = !empty($req['new_password'])
             ? JwtAuthService::hashPassword((string) $req['new_password'])
             : $curr['password_hash'];
@@ -280,12 +418,12 @@ final class SystemAdminController
                 $req['full_name_bn'] ?? $curr['full_name_bn'],
                 $req['full_name_en'] ?? $curr['full_name_en'],
                 $req['email'] ?? $curr['email'],
-                $req['role'] ?? $curr['role'],
+                $newRole,
                 $req['office_bn'] ?? ($req['office_name'] ?? $curr['office_bn']),
                 $req['office_en'] ?? ($req['office_name'] ?? $curr['office_en']),
                 $req['phone_dummy'] ?? $curr['phone_dummy'],
                 $req['nid'] ?? $curr['nid'],
-                isset($req['is_active']) ? (int) $req['is_active'] : (int) $curr['is_active'],
+                $newIsActive,
                 $newPassHash,
                 $targetUserId,
             ]
@@ -300,8 +438,8 @@ final class SystemAdminController
             (string) $targetUserId,
             [
                 'username' => $curr['username'],
-                'new_role' => $req['role'] ?? $curr['role'],
-                'is_active' => isset($req['is_active']) ? (int) $req['is_active'] : (int) $curr['is_active'],
+                'new_role' => $newRole,
+                'is_active' => $newIsActive,
                 'note_bn' => "ব্যবহারকারী '{$curr['username']}'-এর প্রোফাইল/ভূমিকা হালনাগাদ করা হয়েছে",
             ],
             gmdate('c')
@@ -335,6 +473,19 @@ final class SystemAdminController
             ], JSON_UNESCAPED_UNICODE));
         }
 
+        // F18: Protect last active administrator from deletion
+        if ($curr['role'] === 'admin') {
+            $activeAdminsCount = (int) (DB::selectOne("SELECT COUNT(*) AS c FROM users WHERE role = 'admin' AND is_active = 1")['c'] ?? 0);
+            if ($activeAdminsCount <= 1) {
+                throw new \RuntimeException(json_encode([
+                    'status' => 400,
+                    'code' => 'CANNOT_DELETE_LAST_ADMIN',
+                    'message_bn' => 'সিস্টেমের সর্বশেষ সক্রিয় অ্যাডমিন অ্যাকাউন্ট মুছে ফেলা যাবে না।',
+                    'message_en' => 'Cannot delete the last active administrator.',
+                ], JSON_UNESCAPED_UNICODE));
+            }
+        }
+
         DB::statement('DELETE FROM users WHERE id = ?', [$targetUserId]);
         $actor = $user ?? JwtAuthService::getAuthenticatedUser() ?? ['username' => 'admin', 'role' => 'admin'];
         DatabaseSeeder::appendAuditEntry(
@@ -351,6 +502,53 @@ final class SystemAdminController
             'deleted_id' => $targetUserId,
             'message_bn' => 'ব্যবহারকারী সফলভাবে অপসারণ করা হয়েছে।',
             'message_en' => 'User removed successfully.',
+        ];
+    }
+
+    public static function verifyCitizenIdentity(int $targetUserId, ?array $user = null): array
+    {
+        $actor = $user ?? JwtAuthService::getAuthenticatedUser();
+        if (!$actor || ($actor['role'] ?? '') !== 'admin' || ((int) ($actor['is_active'] ?? 0)) !== 1) {
+            throw new \RuntimeException(json_encode([
+                'status' => 403,
+                'code' => 'UNAUTHORIZED',
+                'message_bn' => 'নাগরিকের জাতীয় পরিচয়পত্র ভেরিফাই করতে সক্রিয় অ্যাডমিন অধিকার প্রয়োজন।',
+                'message_en' => 'Only active administrators can verify citizen identity.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $userRow = DB::selectOne('SELECT * FROM users WHERE id = ?', [$targetUserId]);
+        if (!$userRow) {
+            throw new \RuntimeException(json_encode([
+                'status' => 404,
+                'code' => 'USER_NOT_FOUND',
+                'message_bn' => 'ব্যবহারকারী পাওয়া যায়নি।',
+                'message_en' => 'User not found.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        DB::statement('UPDATE users SET is_identity_verified = 1 WHERE id = ?', [$targetUserId]);
+
+        DatabaseSeeder::appendAuditEntry(
+            (string) ($actor['username'] ?? 'admin'),
+            (string) ($actor['role'] ?? 'admin'),
+            'CITIZEN_IDENTITY_VERIFIED',
+            'user',
+            (string) $targetUserId,
+            [
+                'username' => $userRow['username'],
+                'nid' => $userRow['nid'] ?? '',
+                'note_bn' => "নাগরিকের জাতীয় পরিচয়পত্র যাচাইকরণ সম্পন্ন: {$userRow['username']}",
+            ],
+            gmdate('c')
+        );
+
+        return [
+            'id' => $targetUserId,
+            'username' => $userRow['username'],
+            'is_identity_verified' => 1,
+            'message_bn' => 'নাগরিকের জাতীয় পরিচয়পত্র সফলভাবে ভেরিফাই করা হয়েছে।',
+            'message_en' => 'Citizen identity verified successfully.',
         ];
     }
 
@@ -455,29 +653,48 @@ final class SystemAdminController
              ORDER BY l.id ASC'
         );
 
-        $coveragePercentages = [92, 84, 78];
-        foreach ($mouzaStats as $idx => &$ms) {
-            $ms['verification_coverage_pct'] = $coveragePercentages[$idx % count($coveragePercentages)];
+        foreach ($mouzaStats as &$ms) {
+            $checked = DB::selectOne(
+                'SELECT COUNT(DISTINCT r.plot_id) AS c FROM risk_reports r JOIN plots p ON p.id = r.plot_id WHERE p.location_id = ?',
+                [$ms['id']]
+            );
+            $ms['checked_plot_count'] = (int) ($checked['c'] ?? 0);
+            $ms['verification_coverage_pct'] = (int) $ms['plot_count'] > 0
+                ? round(100 * $ms['checked_plot_count'] / (int) $ms['plot_count'], 2) : 0;
         }
         unset($ms);
 
         $roleCounts = DB::select('SELECT role, COUNT(*) AS count FROM users GROUP BY role');
         $recentAudit = DB::select('SELECT * FROM audit_log ORDER BY chain_index DESC LIMIT 8');
 
-        $monthlySeries = [
-            ['month' => 'Jan', 'month_bn' => 'জানু', 'deeds' => 48, 'mutations' => 42, 'blocked_risks' => 4],
-            ['month' => 'Feb', 'month_bn' => 'ফেব্রু', 'deeds' => 62, 'mutations' => 55, 'blocked_risks' => 6],
-            ['month' => 'Mar', 'month_bn' => 'মার্চ', 'deeds' => 54, 'mutations' => 49, 'blocked_risks' => 5],
-            ['month' => 'Apr', 'month_bn' => 'এপ্রিল', 'deeds' => 78, 'mutations' => 68, 'blocked_risks' => 9],
-            ['month' => 'May', 'month_bn' => 'মে', 'deeds' => 65, 'mutations' => 58, 'blocked_risks' => 4],
-            ['month' => 'Jun', 'month_bn' => 'জুন', 'deeds' => 71, 'mutations' => 64, 'blocked_risks' => 7],
-            ['month' => 'Jul', 'month_bn' => 'জুলাই', 'deeds' => 52, 'mutations' => 47, 'blocked_risks' => 3],
-            ['month' => 'Aug', 'month_bn' => 'আগস্ট', 'deeds' => 44, 'mutations' => 39, 'blocked_risks' => 5],
-            ['month' => 'Sep', 'month_bn' => 'সেপ্টে', 'deeds' => 74, 'mutations' => 67, 'blocked_risks' => 8],
-            ['month' => 'Oct', 'month_bn' => 'অক্টো', 'deeds' => count($allDeeds), 'mutations' => $approvedMut + $pendingMut, 'blocked_risks' => 7],
-            ['month' => 'Nov', 'month_bn' => 'নভে', 'deeds' => 69, 'mutations' => 63, 'blocked_risks' => 5],
-            ['month' => 'Dec', 'month_bn' => 'ডিসে', 'deeds' => 58, 'mutations' => 53, 'blocked_risks' => 4],
-        ];
+        $months = [];
+        $addMonth = static function (string $date, string $metric) use (&$months): void {
+            $key = substr($date, 0, 7);
+            if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $key)) return;
+            if (!isset($months[$key])) {
+                $months[$key] = ['period' => $key, 'month' => gmdate('M Y', strtotime($key . '-01')), 'month_bn' => $key,
+                    'deeds' => 0, 'mutations' => 0, 'blocked_risks' => 0];
+            }
+            $months[$key][$metric]++;
+        };
+        foreach ($allDeeds as $deed) $addMonth((string) $deed['created_at'], 'deeds');
+        foreach (DB::select("SELECT created_at, decided_at FROM mutations WHERE status = 'APPROVED'") as $mutation) {
+            $addMonth((string) ($mutation['decided_at'] ?: $mutation['created_at']), 'mutations');
+        }
+        foreach (DB::select("SELECT created_at FROM risk_reports WHERE verdict = 'HIGH_RISK'") as $report) {
+            $addMonth((string) $report['created_at'], 'blocked_risks');
+        }
+        $first = $months ? min(array_keys($months)) : gmdate('Y-m');
+        $cursor = new \DateTimeImmutable($first . '-01', new \DateTimeZone('UTC'));
+        $last = max(gmdate('Y-m'), $months ? max(array_keys($months)) : gmdate('Y-m'));
+        while ($cursor->format('Y-m') <= $last) {
+            $key = $cursor->format('Y-m');
+            $months[$key] ??= ['period' => $key, 'month' => $cursor->format('M Y'), 'month_bn' => $key,
+                'deeds' => 0, 'mutations' => 0, 'blocked_risks' => 0];
+            $cursor = $cursor->modify('+1 month');
+        }
+        ksort($months);
+        $monthlySeries = array_values($months);
 
         return [
             'kpis' => [
@@ -485,13 +702,17 @@ final class SystemAdminController
                 'total_khatians' => $khatiansCnt,
                 'total_persons' => $personsCnt,
                 'total_users' => $usersCnt,
+                'active_officers_count' => (int) (DB::selectOne("SELECT COUNT(*) AS c FROM users WHERE is_active = 1 AND role != 'citizen'")['c'] ?? 0),
                 'total_deeds' => count($allDeeds),
+                'held_deeds_count' => (int) (DB::selectOne("SELECT COUNT(*) AS c FROM deeds WHERE status = 'HELD'")['c'] ?? 0),
+                'issued_noc_count' => (int) (DB::selectOne('SELECT COUNT(*) AS c FROM noc_certificates')['c'] ?? 0),
                 'total_deed_value_bdt' => $totalDeedValueBdt,
                 'locked_plots_count' => $lockedPlotsCnt,
                 'open_disputes_count' => $openDisputesCnt,
                 'ledger_is_valid' => $ledgerStatus['is_valid'],
                 'ledger_verified_deeds' => $ledgerStatus['verified_count'],
                 'ledger_broken_deeds' => $ledgerStatus['broken_count'],
+                'ledger_integrity_pct' => count($allDeeds) > 0 ? round(($ledgerStatus['verified_count'] / count($allDeeds)) * 100, 2) : null,
                 'merkle_root' => $ledgerStatus['merkle_root'],
                 'pending_mutations' => $pendingMut,
                 'approved_mutations' => $approvedMut,

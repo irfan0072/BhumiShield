@@ -13,6 +13,8 @@ export interface AuthUser {
   nid_mock: string;
   phone_mock: string;
   office_name?: string;
+  office_bn?: string;
+  office_en?: string;
   is_active: number;
 }
 
@@ -30,6 +32,8 @@ interface AppUIContextType {
   setUser: (u: AuthUser | null) => void;
   token: string | null;
   setToken: (t: string | null) => void;
+  activeSubTab: string;
+  setActiveSubTab: (sub: string) => void;
   logout: () => void;
   t: (bn: string, en: string) => string;
 }
@@ -56,6 +60,7 @@ export const AppUIProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     return (localStorage.getItem('bs_role') as UserRole) || 'citizen';
   });
+  const [activeSubTab, setActiveSubTab] = useState<string>('');
 
   useEffect(() => {
     localStorage.setItem('bs_lang', lang);
@@ -107,8 +112,12 @@ export const AppUIProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const logout = () => {
+    localStorage.removeItem('bs_token');
+    localStorage.removeItem('bs_user');
+    localStorage.removeItem('bs_superadmin_mode');
+    localStorage.removeItem('bs_admin_original_token');
     setUser(null);
-    setToken(null);
+    setTokenState(null);
     setRole('citizen');
   };
 
@@ -130,6 +139,8 @@ export const AppUIProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setUser,
         token,
         setToken,
+        activeSubTab,
+        setActiveSubTab,
         logout,
         t,
       }}

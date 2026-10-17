@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS users (
     phone_dummy TEXT DEFAULT '01700-000000',
     nid TEXT DEFAULT '9900001001',
     is_active INTEGER NOT NULL DEFAULT 1,
+    token_version INTEGER NOT NULL DEFAULT 1,
+    is_identity_verified INTEGER NOT NULL DEFAULT 0,
     password_hash TEXT NOT NULL,
     last_login_at TEXT,
     created_at TEXT NOT NULL
@@ -227,6 +229,76 @@ CREATE TABLE IF NOT EXISTS demo_scenarios (
     seller_nid_override TEXT,
     recommended_view TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS noc_certificates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    lien_id INTEGER UNIQUE NOT NULL REFERENCES mortgages_liens(id),
+    noc_no TEXT UNIQUE NOT NULL,
+    bank_name_bn TEXT NOT NULL,
+    bank_name_en TEXT NOT NULL,
+    branch_bn TEXT NOT NULL,
+    borrower_name_bn TEXT NOT NULL,
+    borrower_name_en TEXT NOT NULL,
+    borrower_nid TEXT NOT NULL,
+    mouza_bn TEXT NOT NULL,
+    mouza_en TEXT NOT NULL,
+    dag_no TEXT NOT NULL,
+    dag_no_bn TEXT NOT NULL,
+    amount_bdt INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'RELEASED',
+    released_at TEXT NOT NULL,
+    noc_hash TEXT NOT NULL,
+    ed25519_signature TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS service_catalogue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category TEXT NOT NULL,
+    service_code TEXT UNIQUE NOT NULL,
+    title_bn TEXT NOT NULL,
+    title_en TEXT NOT NULL,
+    description_bn TEXT NOT NULL,
+    description_en TEXT NOT NULL,
+    service_type TEXT NOT NULL,
+    internal_route TEXT,
+    external_url TEXT,
+    source_url TEXT,
+    authority_name_bn TEXT NOT NULL,
+    authority_name_en TEXT NOT NULL,
+    badge_bn TEXT,
+    badge_en TEXT,
+    is_published INTEGER NOT NULL DEFAULT 1,
+    display_order INTEGER NOT NULL DEFAULT 0,
+    last_reviewed_date TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS service_fees_registry (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    service_code TEXT UNIQUE NOT NULL,
+    title_bn TEXT NOT NULL,
+    title_en TEXT NOT NULL,
+    components_json TEXT NOT NULL,
+    total_bdt REAL NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'BDT',
+    authority_name_bn TEXT NOT NULL,
+    authority_name_en TEXT NOT NULL,
+    legal_basis_bn TEXT NOT NULL,
+    legal_basis_en TEXT NOT NULL,
+    circular_no TEXT,
+    effective_date TEXT NOT NULL,
+    source_url TEXT NOT NULL,
+    is_estimate INTEGER NOT NULL DEFAULT 0,
+    is_published INTEGER NOT NULL DEFAULT 1,
+    version INTEGER NOT NULL DEFAULT 1,
+    history_json TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_active_mortgage_per_plot ON mortgages_liens (plot_id) WHERE status = 'ACTIVE';
 SQL;
 
         if (DB::isPostgres()) {
@@ -237,11 +309,32 @@ SQL;
         } else {
             $pdo->exec($ddl);
         }
+
+        // Idempotent schema patches for existing databases
+        $patches = [
+            'ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 1',
+            'ALTER TABLE users ADD COLUMN is_identity_verified INTEGER NOT NULL DEFAULT 0',
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_active_mortgage_per_plot ON mortgages_liens (plot_id) WHERE status = 'ACTIVE'",
+        ];
+        foreach ($patches as $patch) {
+            try {
+                if (DB::isPostgres()) {
+                    DB::execRaw($patch . ';');
+                } else {
+                    $pdo->exec($patch . ';');
+                }
+            } catch (\Throwable) {
+                // Column or index already exists
+            }
+        }
     }
 
     public function down(): void
     {
         $tables = [
+            'service_fees_registry',
+            'service_catalogue',
+            'noc_certificates',
             'demo_scenarios',
             'risk_reports',
             'audit_log',
@@ -266,3 +359,4 @@ SQL;
         }
     }
 }
+

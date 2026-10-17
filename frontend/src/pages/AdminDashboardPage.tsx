@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAppUI, UserRole } from '../i18n';
-import { BhumiApi, RiskReportResponse } from '../api/client';
+import { BhumiApi, RiskReportResponse, ServiceCatalogueItem, ServiceFeeItem, FeeComponent } from '../api/client';
 import { toBanglaDigits } from '../theme/tokens';
 import { ResultHeroBanner } from '../components/ResultHeroBanner';
-import { VelzonOverviewSection } from '../components/VelzonOverviewSection';
 import {
   Lock,
   Flame,
@@ -17,6 +16,23 @@ import {
   UserPlus,
   Trash2,
   KeyRound,
+  BookOpen,
+  Plus,
+  Edit2,
+  Archive,
+  Globe,
+  Coins,
+  ExternalLink,
+  ArrowRight,
+  Eye,
+  RefreshCw,
+  UserCheck,
+  ShieldCheck,
+  ShieldAlert,
+  Building2,
+  Landmark,
+  FileSpreadsheet,
+  Layers
 } from 'lucide-react';
 
 const ROLE_DASHBOARD_MAP: Record<UserRole, string> = {
@@ -27,11 +43,29 @@ const ROLE_DASHBOARD_MAP: Record<UserRole, string> = {
   admin: 'admin',
 };
 
+export type AdminTab =
+  | 'ledger'
+  | 'users'
+  | 'audit'
+  | 'settings'
+  | 'rbac'
+  | 'catalogue'
+  | 'scenarios'
+  | 'direct_access';
+
 export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNavigate }) => {
-  const { lang, role, setRole, user, setUser, token, setToken, t } = useAppUI();
-  const [subTab, setSubTab] = useState<
-    'rbac' | 'ledger' | 'scenarios' | 'users' | 'settings' | 'audit'
-  >('rbac');
+  const { lang, role, setRole, user, setUser, token, setToken, activeSubTab, setActiveSubTab, t } = useAppUI();
+  const [subTab, setSubTab] = useState<AdminTab>(() => {
+    if (
+      activeSubTab &&
+      ['ledger', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'scenarios', 'direct_access'].includes(
+        activeSubTab
+      )
+    ) {
+      return activeSubTab as AdminTab;
+    }
+    return 'ledger';
+  });
 
   const [ledgerState, setLedgerState] = useState<any | null>(null);
   const [scenarios, setScenarios] = useState<any[]>([]);
@@ -50,39 +84,61 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   const [newNid, setNewNid] = useState('9900008888');
   const [newOffice, setNewOffice] = useState('সাভার সাব-রেজিস্ট্রি অফিস');
 
+  // Service Catalogue & Fees State (Phase 2)
+  const [adminServices, setAdminServices] = useState<ServiceCatalogueItem[]>([]);
+  const [adminFees, setAdminFees] = useState<ServiceFeeItem[]>([]);
+  const [catalogueSubTab, setCatalogueSubTab] = useState<'services' | 'fees'>('services');
+  const [selectedFeeHistory, setSelectedFeeHistory] = useState<ServiceFeeItem | null>(null);
+  const [editingService, setEditingService] = useState<Partial<ServiceCatalogueItem> | null>(null);
+  const [editingFee, setEditingFee] = useState<Partial<ServiceFeeItem> | null>(null);
+  const [catalogueNotice, setCatalogueNotice] = useState<{ msg: string; err?: boolean } | null>(null);
+  const [adminServiceCatFilter, setAdminServiceCatFilter] = useState<string>('ALL');
+
   // Site Settings state
   const [settingsList, setSettingsList] = useState<any[]>([]);
   const [settingsMap, setSettingsMap] = useState<Record<string, string>>({});
   const [saveMsg, setSaveMsg] = useState('');
+  const [loadError, setLoadError] = useState('');
 
-  const refreshAll = () => {
-    Promise.all([
+  const refreshAll = async () => {
+    const results = await Promise.allSettled([
       BhumiApi.getLedgerState(),
-      BhumiApi.getDemoScenarios(),
+      import.meta.env.DEV ? BhumiApi.getDemoScenarios() : Promise.resolve([]),
       BhumiApi.getAuditLogs(),
-      BhumiApi.getOcrSample(),
-      BhumiApi.listUsers(),
-      BhumiApi.getSettings(),
-      BhumiApi.getPermissions(),
-      BhumiApi.getStatsSummary(),
-    ])
-      .then(([ldg, scns, logs, ocr, usrs, stgs, perms, st]) => {
-        setLedgerState(ldg);
-        setScenarios(scns);
-        setAuditLogs(logs);
-        setOcrSample(ocr);
-        setUsersList(usrs);
-        setSettingsList(stgs.items || []);
-        setSettingsMap(stgs.map || stgs.settings || {});
-        setPermissionsData(perms);
-        setStats(st);
-      })
-      .catch(() => {});
+      import.meta.env.DEV ? BhumiApi.getOcrSample() : Promise.resolve(null),
+      BhumiApi.listUsers(), BhumiApi.getSettings(), BhumiApi.getPermissions(),
+      BhumiApi.getStatsSummary(), BhumiApi.listAdminServices(), BhumiApi.listAdminFees(),
+    ]);
+    const setters: ((value: any) => void)[] = [
+      setLedgerState, setScenarios, setAuditLogs, setOcrSample, setUsersList,
+      (value) => { setSettingsList(value.items || []); setSettingsMap(value.map || value.settings || {}); },
+      setPermissionsData, setStats, (value) => setAdminServices(value?.items || []),
+      (value) => setAdminFees(value?.items || []),
+    ];
+    results.forEach((result, i) => { if (result.status === 'fulfilled') setters[i](result.value); });
+    setLoadError(results.some((result) => result.status === 'rejected')
+      ? t('কিছু তথ্য লোড হয়নি। আবার চেষ্টা করুন।', 'Some records could not be loaded. Please retry.') : '');
   };
 
   useEffect(() => {
     refreshAll();
   }, []);
+
+  useEffect(() => {
+    if (
+      activeSubTab &&
+      ['ledger', 'users', 'audit', 'settings', 'rbac', 'catalogue', 'scenarios', 'direct_access'].includes(
+        activeSubTab
+      )
+    ) {
+      setSubTab(activeSubTab as AdminTab);
+    }
+  }, [activeSubTab]);
+
+  const handleTabChange = (target: AdminTab) => {
+    setSubTab(target);
+    setActiveSubTab(target);
+  };
 
   const switchToAdminRole = async (targetRole: UserRole = 'admin') => {
     if (!localStorage.getItem('bs_superadmin_mode') && token) {
@@ -103,12 +159,12 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   };
 
   const handleTamper = async () => {
-    await BhumiApi.tamperDeedDemo('DL-2026-1001', 99.0);
+    await BhumiApi.tamperDeedDemo('DL-2026-1005', 25.0);
     refreshAll();
   };
 
   const handleRestore = async () => {
-    await BhumiApi.restoreDeedDemo('DL-2026-1001');
+    await BhumiApi.restoreDeedDemo('DL-2026-1005');
     refreshAll();
   };
 
@@ -161,6 +217,79 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     } catch {}
   };
 
+  const handleVerifyCitizen = async (userId: number) => {
+    try {
+      const res = await BhumiApi.verifyCitizenIdentity(userId);
+      setCatalogueNotice({ msg: res.message_bn || 'নাগরিক আইডি সফলভাবে যাচাইকৃত হয়েছে।' });
+      refreshAll();
+      setTimeout(() => setCatalogueNotice(null), 4000);
+    } catch (err: any) {
+      setCatalogueNotice({ msg: err?.response?.data?.message_bn || 'আইডি যাচাইকরণে ব্যর্থ হয়েছে।', err: true });
+      setTimeout(() => setCatalogueNotice(null), 4000);
+    }
+  };
+
+  const handleTogglePublishService = async (id: number) => {
+    try {
+      const item = adminServices.find((service) => service.id === id);
+      if (!item) return;
+      const res = Number(item.is_published) === 1 ? await BhumiApi.archiveService(id) : await BhumiApi.updateService(id, { is_published: 1 });
+      setCatalogueNotice({ msg: res.message_bn });
+      refreshAll();
+      setTimeout(() => setCatalogueNotice(null), 3000);
+    } catch (err: any) {
+      setCatalogueNotice({ msg: err?.response?.data?.message_bn || 'প্রকাশনা পরিবর্তনে ত্রুটি হয়েছে।', err: true });
+    }
+  };
+
+  const handleArchiveService = async (id: number) => {
+    try {
+      const res = await BhumiApi.archiveService(id);
+      setCatalogueNotice({ msg: res.message_bn });
+      refreshAll();
+      setTimeout(() => setCatalogueNotice(null), 3000);
+    } catch (err: any) {
+      setCatalogueNotice({ msg: err?.response?.data?.message_bn || 'আর্কাইভে ব্যর্থ হয়েছে।', err: true });
+    }
+  };
+
+  const handleSaveService = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingService) return;
+    try {
+      if (editingService.id) {
+        const res = await BhumiApi.updateService(editingService.id, editingService);
+        setCatalogueNotice({ msg: res.message_bn });
+      } else {
+        const res = await BhumiApi.createService(editingService);
+        setCatalogueNotice({ msg: res.message_bn });
+      }
+      setEditingService(null);
+      refreshAll();
+      setTimeout(() => setCatalogueNotice(null), 3000);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message_bn || err?.response?.data?.error || 'সেবা সংরক্ষণে ব্যর্থ হয়েছে। HTTPS URL নিশ্চিত করুন।';
+      setCatalogueNotice({ msg, err: true });
+      setTimeout(() => setCatalogueNotice(null), 5000);
+    }
+  };
+
+  const handleSaveFee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingFee || !editingFee.id) return;
+    try {
+      const res = await BhumiApi.updateFee(editingFee.id, editingFee);
+      setCatalogueNotice({ msg: res.message_bn });
+      setEditingFee(null);
+      refreshAll();
+      setTimeout(() => setCatalogueNotice(null), 4000);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message_bn || err?.response?.data?.error || 'ফি তথ্য সংরক্ষণে ত্রুটি হয়েছে।';
+      setCatalogueNotice({ msg, err: true });
+      setTimeout(() => setCatalogueNotice(null), 5000);
+    }
+  };
+
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     await BhumiApi.updateSettings(settingsMap);
@@ -175,17 +304,94 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
         <h1>{t('কেন্দ্রীয় গভর্ন্যান্স', 'Central Governance')}</h1>
         <p>{t('RBAC, হ্যাশ লেজার ল্যাব, ইউজার ডিরেক্টরি ও অপরিবর্তনীয় অডিট ট্রেইল।', 'RBAC, hash ledger lab, officers directory, and append-only audit trail.')}</p>
       </header>
-      {/* Registry overview */}
-      <VelzonOverviewSection
-        role="admin"
-        stats={stats}
-        onQuickAction={() => setSubTab('ledger')}
-      />
+      {loadError && <div role="alert" className="panel p-4 text-red-700">{loadError}<button onClick={refreshAll} className="ml-3 underline">{t('আবার চেষ্টা', 'Retry')}</button></div>}
+      {/* Admin Operational KPI Strip (Role-Specific) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-rise">
+        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+              {t('ব্লকচেইন লেজার অখণ্ডতা', 'Ledger Hash Integrity')}
+            </div>
+            <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
+              {toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}%
+            </div>
+            <button
+              onClick={() => handleTabChange('ledger')}
+              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+            >
+              {t('হ্যাশ লেজার ল্যাব দেখুন →', 'Inspect Hash Lab →')}
+            </button>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+            <Lock className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+              {t('কর্মকর্তা ও ইউজার সংখ্যা', 'Registered Officers')}
+            </div>
+            <div className="text-2xl font-extrabold text-[#0A1F1C] mt-1">
+              {toBanglaDigits(usersList.length || stats?.kpis?.total_users || 0, lang)}
+            </div>
+            <button
+              onClick={() => handleTabChange('users')}
+              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+            >
+              {t('ইউজার ডিরেক্টরি দেখুন →', 'View User Directory →')}
+            </button>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+            <Users className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+              {t('সিকিউরিটি অডিট ট্রেইল', 'Security Audit Events')}
+            </div>
+            <div className="text-2xl font-extrabold text-[#0A1F1C] mt-1">
+              {toBanglaDigits(auditLogs.length, lang)}
+            </div>
+            <button
+              onClick={() => handleTabChange('audit')}
+              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+            >
+              {t('অডিট লগ পর্যালোচনা →', 'Review Audit Logs →')}
+            </button>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+            <History className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+              {t('সুপার অ্যাডমিন নজরদারি', 'Role Oversight')}
+            </div>
+            <div className="text-2xl font-extrabold text-amber-600 mt-1">
+              ৫টি {t('রোল উন্মুক্ত', 'Roles')}
+            </div>
+            <button
+              onClick={() => handleTabChange('direct_access')}
+              className="text-xs text-amber-700 font-semibold hover:underline mt-1 block cursor-pointer"
+            >
+              {t('সরাসরি রোল অ্যাক্সেস →', 'Direct Role Access →')}
+            </button>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <ShieldAlert className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
 
       {/* Governance Sub-navigation Tabs */}
       <div className="panel p-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="font-display text-base md:text-lg text-[#062823]">
+          <h2 className="font-bold text-base md:text-lg text-[#074f38]">
             {t(
               'কেন্দ্রীয় গভর্ন্যান্স, RBAC ম্যাট্রিক্স, ইউজার ডিরেক্টরি ও ক্রিপ্টোগ্রাফিক অডিট',
               'Central Governance, RBAC Matrix, Officers Directory & Cryptographic Audit'
@@ -195,70 +401,94 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
 
         <div className="flex flex-wrap gap-1.5">
           <button
-            onClick={() => setSubTab('rbac')}
-            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-              subTab === 'rbac'
-                ? 'bg-[#0D6B5C] text-white'
-                : 'bg-[#EDF4F1] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-            }`}
-          >
-            <KeyRound className="w-3.5 h-3.5" />
-            <span>{t('RBAC ম্যাট্রিক্স', 'RBAC Matrix')}</span>
-          </button>
-          <button
-            onClick={() => setSubTab('ledger')}
+            onClick={() => handleTabChange('ledger')}
             className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
               subTab === 'ledger'
-                ? 'bg-[#0D6B5C] text-white'
-                : 'bg-[#EDF4F1] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+                ? 'bg-[#006A4E] text-white'
+                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
             }`}
           >
             <Lock className="w-3.5 h-3.5" />
             <span>{t('হ্যাশ লেজার ল্যাব', 'Hash Ledger Lab')}</span>
           </button>
           <button
-            onClick={() => setSubTab('scenarios')}
-            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-              subTab === 'scenarios'
-                ? 'bg-[#0D6B5C] text-white'
-                : 'bg-[#EDF4F1] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-            }`}
-          >
-            <FileSearch className="w-3.5 h-3.5" />
-            <span>{t('যাচাই কেস ও OCR', 'Case Library & OCR')}</span>
-          </button>
-          <button
-            onClick={() => setSubTab('users')}
+            onClick={() => handleTabChange('users')}
             className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
               subTab === 'users'
-                ? 'bg-[#0D6B5C] text-white'
-                : 'bg-[#EDF4F1] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+                ? 'bg-[#006A4E] text-white'
+                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
             }`}
           >
             <Users className="w-3.5 h-3.5" />
             <span>{t('ইউজার ডিরেক্টরি', 'Officers CRUD')}</span>
           </button>
           <button
-            onClick={() => setSubTab('settings')}
+            onClick={() => handleTabChange('audit')}
+            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+              subTab === 'audit'
+                ? 'bg-[#006A4E] text-white'
+                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+            }`}
+          >
+            <History className="w-3.5 h-3.5" />
+            <span>{t('অডিট লগ', 'Audit Trail')}</span>
+          </button>
+          <button
+            onClick={() => handleTabChange('settings')}
             className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
               subTab === 'settings'
-                ? 'bg-[#0D6B5C] text-white'
-                : 'bg-[#EDF4F1] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+                ? 'bg-[#006A4E] text-white'
+                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
             }`}
           >
             <Settings className="w-3.5 h-3.5" />
             <span>{t('সিস্টেম পলিসি', 'Policy Settings')}</span>
           </button>
           <button
-            onClick={() => setSubTab('audit')}
+            onClick={() => handleTabChange('rbac')}
             className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
-              subTab === 'audit'
-                ? 'bg-[#0D6B5C] text-white'
-                : 'bg-[#EDF4F1] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+              subTab === 'rbac'
+                ? 'bg-[#006A4E] text-white'
+                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
             }`}
           >
-            <History className="w-3.5 h-3.5" />
-            <span>{t('অডিট লগ', 'Audit Trail')}</span>
+            <KeyRound className="w-3.5 h-3.5" />
+            <span>{t('RBAC ম্যাট্রিক্স', 'RBAC Matrix')}</span>
+          </button>
+          <button
+            onClick={() => handleTabChange('catalogue')}
+            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+              subTab === 'catalogue'
+                ? 'bg-[#006A4E] text-white'
+                : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>{t('সার্ভিস ও ফি ডিরেক্টরি', 'Service & Fees')}</span>
+          </button>
+          {import.meta.env.DEV && (
+            <button
+              onClick={() => handleTabChange('scenarios')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+                subTab === 'scenarios'
+                  ? 'bg-[#006A4E] text-white'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+              }`}
+            >
+              <FileSearch className="w-3.5 h-3.5" />
+              <span>{t('যাচাই কেস ও OCR', 'Case Library & OCR')}</span>
+            </button>
+          )}
+          <button
+            onClick={() => handleTabChange('direct_access')}
+            className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] ${
+              subTab === 'direct_access'
+                ? 'bg-[#C4891A] text-white shadow-xs'
+                : 'bg-[#FBF3E0] text-[#7A540E] hover:bg-[#F5E6BE]'
+            }`}
+          >
+            <ShieldAlert className="w-3.5 h-3.5" />
+            <span>{t('রোল তত্ত্বাবধান', 'Direct Role Access')}</span>
           </button>
         </div>
       </div>
@@ -266,10 +496,10 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       {/* TAB 1: RBAC Middleware Permission Matrix */}
       {subTab === 'rbac' && permissionsData && (
         <div className="panel p-6 space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#0D6B5C]/10 pb-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
             <div>
-              <h2 className="font-display text-lg text-[#062823] flex items-center gap-2">
-                <KeyRound className="w-5 h-5 text-[#0D6B5C]" />
+              <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
+                <KeyRound className="w-5 h-5 text-[#006A4E]" />
                 <span>
                   {t(
                     'রোল-ভিত্তিক অ্যাক্সেস কন্ট্রোল ও কন্ট্রোলিং ম্যাট্রিক্স (RoleMiddleware.php)',
@@ -298,22 +528,22 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                   key={rKey}
                   className={`p-5 rounded-xl border flex flex-col justify-between ${
                     isCurrent
-                      ? 'border-[#0D6B5C] bg-[#E8F5F1]/30'
-                      : 'border-[#0D6B5C]/12 bg-[#EDF4F1]/60'
+                      ? 'border-[#006A4E] bg-[#EDF7F4]/30'
+                      : 'border-[#006A4E]/12 bg-[#EDF7F4]/60'
                   }`}
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-mono font-extrabold text-[11px] px-2.5 py-0.5 rounded bg-[#062823] text-white">
+                      <span className="font-mono font-extrabold text-[11px] px-2.5 py-0.5 rounded bg-[#074f38] text-white">
                         {rKey}
                       </span>
                       {isCurrent && (
-                        <span className="text-[11px] font-extrabold text-[#0D6B5C]">
+                        <span className="text-[11px] font-extrabold text-[#006A4E]">
                           ● {t('সক্রিয় সেশন', 'ACTIVE')}
                         </span>
                       )}
                     </div>
-                    <h3 className="font-display text-base text-[#062823]">
+                    <h3 className="font-bold text-base text-[#074f38]">
                       {lang === 'bn'
                         ? rData.title_bn || rData.label_bn
                         : rData.title_en || rData.label_en}
@@ -326,7 +556,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                         {permsList.map((cap: string) => (
                           <span
                             key={cap}
-                            className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-white border border-[#0D6B5C]/12 text-[#0A1F1C]/90"
+                            className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-white border border-[#006A4E]/12 text-[#0A1F1C]/90"
                           >
                             ✔ {cap}
                           </span>
@@ -335,18 +565,18 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-[#0D6B5C]/12 flex items-center justify-between">
+                  <div className="mt-4 pt-3 border-t border-[#006A4E]/12 flex items-center justify-between">
                     <span className="text-[11px] font-mono text-[#5F7A74]">
                       Panel: {rData.dashboard_tab || rData.dashboard_route || rKey}
                     </span>
-                    <button
+                    {import.meta.env.DEV && (<button
                       onClick={() => switchToAdminRole(rKey as UserRole)}
                       className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black flex items-center gap-1.5 cursor-pointer min-h-[32px] shadow-xs"
                       title={t('পাসওয়ার্ড ছাড়া সরাসরি লগইন করুন', 'Direct Login Without Password')}
                     >
                       <KeyRound className="w-3.5 h-3.5 text-slate-950" />
                       <span>{t('পাসওয়ার্ডহীন সরাসরি এক্সেস', 'Direct Login (No Password)')}</span>
-                    </button>
+                    </button>)}
                   </div>
                 </div>
               );
@@ -360,8 +590,8 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
         <div className="panel p-6 space-y-5">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <h2 className="font-display text-lg text-[#062823] flex items-center gap-2">
-                <Lock className="w-5 h-5 text-[#0D6B5C]" />
+              <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
+                <Lock className="w-5 h-5 text-[#006A4E]" />
                 <span>
                   {t(
                     'ক্রিপ্টোগ্রাফিক হ্যাশ-চেইন লেজার ও ইন্টিগ্রিটি অডিট ল্যাব',
@@ -378,27 +608,27 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <button
+              {import.meta.env.DEV && (<button
                 onClick={handleTamper}
                 className="btn-danger text-xs flex items-center gap-1.5 cursor-pointer min-h-[38px]"
               >
                 <Flame className="w-4 h-4" />
                 <span>
                   {t(
-                    'DL-2026-1001 আন-অথরাইজড মিউটেশন টেস্ট',
-                    'Simulate Storage Tamper (DL-2026-1001)'
+                    'DL-2026-1005 আন-অথরাইজড মিউটেশন টেস্ট',
+                    'Simulate Storage Tamper (DL-2026-1005)'
                   )}
                 </span>
-              </button>
-              <button
+              </button>)}
+              {import.meta.env.DEV && (<button
                 onClick={handleRestore}
-                className="px-4 py-2 rounded-lg bg-[#0D6B5C] hover:bg-[#0A5549] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer min-h-[38px]"
+                className="px-4 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer min-h-[38px]"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>
                   {t('মূল স্বাক্ষরিত তথ্য পুনরুদ্ধার করুন', 'Restore Signed Ledger State')}
                 </span>
-              </button>
+              </button>)}
             </div>
           </div>
 
@@ -406,14 +636,14 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
             <div
               className={`p-5 rounded-xl border-2 ${
                 ledgerState.chain_intact
-                  ? 'bg-[#E8F5F1] border-[#0D6B5C]'
+                  ? 'bg-[#EDF7F4] border-[#006A4E]'
                   : 'bg-[#FFF0F1] border-[#FF3B4A]'
               }`}
             >
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="font-extrabold text-base flex items-center gap-2">
                   {ledgerState.chain_intact ? (
-                    <CheckCircle2 className="w-6 h-6 text-[#0D6B5C]" />
+                    <CheckCircle2 className="w-6 h-6 text-[#006A4E]" />
                   ) : (
                     <XOctagon className="w-6 h-6 text-[#FF3B4A]" />
                   )}
@@ -459,7 +689,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       )}
 
       {/* TAB 3: Verification Case Library & OCR Assist */}
-      {subTab === 'scenarios' && (
+      {import.meta.env.DEV && subTab === 'scenarios' && (
         <div className="space-y-6">
           <div className="panel p-6 space-y-4">
             <h2 className="text-lg font-extrabold text-[#0A1F1C]">
@@ -473,7 +703,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
               {scenarios.map((sc) => (
                 <div
                   key={sc.code}
-                  className="p-4 rounded-xl bg-[#EDF4F1]/80 border border-[#0D6B5C]/12 flex flex-col justify-between gap-3"
+                  className="p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12 flex flex-col justify-between gap-3"
                 >
                   <div>
                     <div className="flex items-center justify-between">
@@ -499,7 +729,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                   </div>
                   <button
                     onClick={() => handleRunScenario(sc.code)}
-                    className="self-start px-3.5 py-1.5 rounded-lg bg-[#062823] hover:bg-[#0D6B5C] text-white text-xs font-bold cursor-pointer min-h-[34px]"
+                    className="self-start px-3.5 py-1.5 rounded-lg bg-[#074f38] hover:bg-[#006A4E] text-white text-xs font-bold cursor-pointer min-h-[34px]"
                   >
                     {t('কেস বিশ্লেষণ দেখুন →', 'Inspect Case Report →')}
                   </button>
@@ -510,10 +740,10 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
 
           {activeScenarioReport && <ResultHeroBanner report={activeScenarioReport} />}
 
-          {ocrSample && (
+          {ocrSample && ocrSample.extracted_fields && (
             <div className="panel p-6 space-y-4">
               <div className="flex items-center gap-2">
-                <FileSearch className="w-5 h-5 text-[#0D6B5C]" />
+                <FileSearch className="w-5 h-5 text-[#006A4E]" />
                 <h2 className="text-lg font-extrabold text-[#0A1F1C]">
                   {t(
                     'পুরাতন স্ক্যানকৃত খতিয়ান ডিজিটাইজেশন সহায়ক (Bangla OCR Assist + মানব যাচাই)',
@@ -521,28 +751,44 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                   )}
                 </h2>
               </div>
+
+              {/* Demo Prototype Disclaimer Banner (F20) */}
+              <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-900 font-medium">
+                <strong>{t('নমুনা OCR ড্রাফট সহায়ক:', 'DEMO OCR ASSIST COPY:')}</strong>{' '}
+                {t(
+                  'এটি ঐতিহাসিক হস্তলিখিত খতিয়ানের নমুনা ডিজিটাল ড্রাফট। সকল ফিল্ড ভূমি কর্মকর্তা দ্বারা ম্যানুয়াল নিরীক্ষা সাপেক্ষ।',
+                  'This is a demo digital draft from simulated historical khatian scans. All fields require human officer verification before legal acceptance.'
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {Object.entries(ocrSample.extracted_fields).map(([key, val]: [string, any]) => (
-                  <div
-                    key={key}
-                    className={`p-3 rounded-xl border ${
-                      val.low_confidence
-                        ? 'bg-amber-50 border-amber-300'
-                        : 'bg-[#EDF4F1]/80 border-[#0D6B5C]/12'
-                    }`}
-                  >
-                    <div className="text-[11px] font-bold uppercase text-[#5F7A74]">{key}</div>
-                    <input
-                      type="text"
-                      defaultValue={val.value}
-                      className="w-full mt-1 p-2 rounded bg-white border border-[#0D6B5C]/20 text-xs font-bold"
-                    />
-                    <div className="text-[11px] mt-1 font-semibold">
-                      Confidence: {Math.round(val.confidence * 100)}%{' '}
-                      {val.low_confidence && t('⚠ মানব যাচাই প্রয়োজন', '⚠ Officer Review Needed')}
+                {Object.entries(ocrSample.extracted_fields).map(([key, val]: [string, any]) => {
+                  const confNum =
+                    typeof val?.confidence === 'number' && !isNaN(val.confidence)
+                      ? Math.round(val.confidence * 100)
+                      : 95;
+                  return (
+                    <div
+                      key={key}
+                      className={`p-3 rounded-xl border ${
+                        val.low_confidence
+                          ? 'bg-amber-50 border-amber-300'
+                          : 'bg-[#EDF7F4]/80 border-[#006A4E]/12'
+                      }`}
+                    >
+                      <div className="text-[11px] font-bold uppercase text-[#5F7A74]">{key}</div>
+                      <input
+                        type="text"
+                        defaultValue={val.value}
+                        className="w-full mt-1 p-2 rounded bg-white border border-[#006A4E]/20 text-xs font-bold"
+                      />
+                      <div className="text-[11px] mt-1 font-semibold">
+                        Confidence: {confNum}%{' '}
+                        {val.low_confidence && t('⚠ মানব যাচাই প্রয়োজন', '⚠ Officer Review Needed')}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -553,8 +799,8 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       {subTab === 'users' && (
         <div className="space-y-6">
           <div className="panel p-6 space-y-4">
-            <h2 className="font-display text-lg text-[#062823] flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-[#0D6B5C]" />
+            <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-[#006A4E]" />
               <span>
                 {t('নতুন কর্মকর্তা / ব্যবহারকারী যুক্ত করুন', 'Add New Officer / System Account')}
               </span>
@@ -612,7 +858,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
           </div>
 
           <div className="panel p-6 space-y-4">
-            <h2 className="font-display text-base text-[#062823]">
+            <h2 className="font-bold text-base text-[#074f38]">
               {t('সকল নিবন্ধিত কর্মকর্তা ও রোল নিয়ন্ত্রণ ডিরেক্টরি', 'Registered Officers & Role Assignment Directory')}{' '}
               ({toBanglaDigits(usersList.length, lang)})
             </h2>
@@ -620,12 +866,12 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
               {usersList.map((u) => (
                 <div
                   key={u.id}
-                  className="p-4 rounded-xl bg-[#EDF4F1]/80 border border-[#0D6B5C]/12 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                  className="p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
                 >
                   <div>
                     <div className="font-bold text-sm text-[#0A1F1C] flex items-center gap-2">
                       <span>{lang === 'bn' ? u.full_name_bn : u.full_name_en}</span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#062823] text-white font-bold">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#074f38] text-white font-bold">
                         {u.role}
                       </span>
                       <span
@@ -637,6 +883,19 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                       >
                         {u.is_active ? 'ACTIVE' : 'DISABLED'}
                       </span>
+                      {u.role === 'citizen' && (
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-lg font-bold ${
+                            Number(u.is_identity_verified) === 1
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {Number(u.is_identity_verified) === 1
+                            ? t('আইডি যাচাইকৃত', 'ID Verified')
+                            : t('আইডি যাচাই পেন্ডিং', 'ID Pending')}
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-[#5F7A74] font-mono mt-1">
                       @{u.username} • NID: {u.nid_mock} • Office: {u.office_name}
@@ -644,10 +903,20 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
+                    {u.role === 'citizen' && Number(u.is_identity_verified) !== 1 && (
+                      <button
+                        onClick={() => handleVerifyCitizen(u.id)}
+                        className="px-2.5 py-1 rounded bg-[#006A4E] text-white text-xs font-bold hover:bg-[#00553e] cursor-pointer min-h-[34px] flex items-center gap-1 shadow-2xs"
+                        title={t('নাগরিকের জাতীয় পরিচয়পত্র যাচাই ও স্বত্ব সক্রিয়করণ', 'Verify Citizen NID and activate vault')}
+                      >
+                        <UserCheck className="w-3.5 h-3.5" />
+                        <span>{t('আইডি যাচাই করুন', 'Verify Citizen')}</span>
+                      </button>
+                    )}
                     <select
                       value={u.role}
                       onChange={(e) => handleChangeUserRole(u, e.target.value)}
-                      className="px-2.5 py-1 rounded border border-[#0D6B5C]/20 bg-white text-xs font-bold min-h-[34px]"
+                      className="px-2.5 py-1 rounded border border-[#006A4E]/20 bg-white text-xs font-bold min-h-[34px]"
                     >
                       <option value="citizen">citizen</option>
                       <option value="sub_registrar">sub_registrar</option>
@@ -657,7 +926,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                     </select>
                     <button
                       onClick={() => handleToggleUserStatus(u)}
-                      className="px-3 py-1 rounded border border-[#0D6B5C]/20 text-xs font-bold hover:bg-[#E4EFEA] cursor-pointer min-h-[34px]"
+                      className="px-3 py-1 rounded border border-[#006A4E]/20 text-xs font-bold hover:bg-[#E2EFE9] cursor-pointer min-h-[34px]"
                     >
                       {u.is_active
                         ? t('নিষ্ক্রিয় করুন', 'Disable')
@@ -679,12 +948,889 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
         </div>
       )}
 
+      {/* TAB 4.5: Service Catalogue & Fee Registry (Phase 2) */}
+      {subTab === 'catalogue' && (
+        <div className="space-y-6">
+          {/* Notification Banner */}
+          {catalogueNotice && (
+            <div
+              className={`p-4 rounded-xl border flex items-center justify-between text-xs font-bold ${
+                catalogueNotice.err
+                  ? 'bg-rose-50 border-rose-300 text-rose-800'
+                  : 'bg-emerald-50 border-emerald-300 text-emerald-800'
+              }`}
+            >
+              <span>{catalogueNotice.msg}</span>
+              <button
+                onClick={() => setCatalogueNotice(null)}
+                className="text-slate-500 hover:text-slate-800 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Sub-Header & Sub-Navigation */}
+          <div className="panel p-6 space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
+              <div>
+                <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-[#006A4E]" />
+                  <span>
+                    {t(
+                      'সার্ভিস ক্যাটালগ ও অফিসিয়াল ফি রেজিস্ট্রি গভর্ন্যান্স',
+                      'Service Catalogue & Official Fee Registry Governance'
+                    )}
+                  </span>
+                </h2>
+                <p className="text-xs text-[#5F7A74] mt-0.5">
+                  {t(
+                    'ভূমি মন্ত্রণালয় ও নিবন্ধন অধিদপ্তরের অফিসিয়াল সেবা পরিচালনা, ইউআরএল উৎস এবং ১৭ ফেব্রুয়ারি ২০২৬ সার্কুলার ফি ভার্সনিং।',
+                    'Manage public-facing service catalogue, official HTTPS endpoints, and 17 Feb 2026 circular fee schedules.'
+                  )}
+                </p>
+              </div>
+
+              {/* Sub-Tab Switcher */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCatalogueSubTab('services')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[34px] ${
+                    catalogueSubTab === 'services'
+                      ? 'bg-[#006A4E] text-white'
+                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+                  }`}
+                >
+                  {t('সেবা ক্যাটালগ', 'Service Catalogue')} ({toBanglaDigits(adminServices.length, lang)})
+                </button>
+                <button
+                  onClick={() => setCatalogueSubTab('fees')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[34px] ${
+                    catalogueSubTab === 'fees'
+                      ? 'bg-[#006A4E] text-white'
+                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+                  }`}
+                >
+                  <Coins className="w-3.5 h-3.5 inline mr-1" />
+                  {t('ফি রেজিস্ট্রি ও ভার্সনিং', 'Fee Registry & Versions')} ({toBanglaDigits(adminFees.length, lang)})
+                </button>
+              </div>
+            </div>
+
+            {/* SUB-VIEW 1: SERVICES CATALOGUE CRUD */}
+            {catalogueSubTab === 'services' && (
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  {/* Category Filter Pills */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { id: 'ALL', name_bn: 'সকল সেবা', name_en: 'All' },
+                      { id: 'REVENUE_MUTATION', name_bn: 'নামজারি ও রাজস্ব', name_en: 'Mutation' },
+                      { id: 'RECORD_MAPS', name_bn: 'খতিয়ান ও ম্যাপ', name_en: 'Records/Maps' },
+                      { id: 'LAND_REGISTRATION', name_bn: 'দলিল ও নিবন্ধন', name_en: 'Deed/Registry' },
+                      { id: 'FINANCE_MORTGAGE', name_bn: 'ব্যাংক বন্ধক', name_en: 'Mortgage' },
+                      { id: 'HELPLINE_INFO', name_bn: 'সহায়িকা ও হেল্পলাইন', name_en: 'Helpline' },
+                    ].map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setAdminServiceCatFilter(cat.id)}
+                        className={`px-2.5 py-1 rounded text-xs font-bold transition-all cursor-pointer min-h-[30px] ${
+                          adminServiceCatFilter === cat.id
+                            ? 'bg-[#074f38] text-white'
+                            : 'bg-white border border-[#006A4E]/20 text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        {lang === 'bn' ? cat.name_bn : cat.name_en}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setEditingService({
+                        service_code: '',
+                        title_bn: '',
+                        title_en: '',
+                        category: 'REVENUE_MUTATION',
+                        description_bn: '',
+                        description_en: '',
+                        service_type: 'INTERNAL_FEATURE',
+                        internal_route: 'check',
+                        external_url: '',
+                        source_url: 'https://land.gov.bd',
+                        authority_name_bn: 'ভূমি মন্ত্রণালয়',
+                        authority_name_en: 'Ministry of Land',
+                        badge_bn: 'নির্দেশিকা',
+                        badge_en: 'Guidance',
+                        is_published: 0,
+                        display_order: (adminServices.length + 1) * 10,
+                        last_reviewed_date: new Date().toISOString().slice(0, 10),
+                      })
+                    }
+                    className="btn-primary text-xs flex items-center gap-1.5 cursor-pointer self-start sm:self-auto min-h-[34px]"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{t('নতুন সেবা যুক্ত করুন', 'Add New Service')}</span>
+                  </button>
+                </div>
+
+                {/* Services Table */}
+                <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                      <tr>
+                        <th className="py-2.5 px-3 font-bold">ক্রম</th>
+                        <th className="py-2.5 px-3 font-bold">কোড ও শিরোনাম</th>
+                        <th className="py-2.5 px-3 font-bold">ক্যাটাগরি</th>
+                        <th className="py-2.5 px-3 font-bold">সেবা ধরন ও রুট</th>
+                        <th className="py-2.5 px-3 font-bold">কর্তৃপক্ষ</th>
+                        <th className="py-2.5 px-3 font-bold">অবস্থা</th>
+                        <th className="py-2.5 px-3 font-bold text-right">অ্যাকশন</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {adminServices
+                        .filter(
+                          (s) =>
+                            adminServiceCatFilter === 'ALL' || s.category === adminServiceCatFilter
+                        )
+                        .map((s) => (
+                          <tr key={s.id} className="hover:bg-slate-50/70">
+                            <td className="py-2.5 px-3 font-mono font-bold text-slate-400">
+                              #{s.display_order}
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <span className="font-bold text-slate-900 block">
+                                {lang === 'bn' ? s.title_bn : s.title_en}
+                              </span>
+                              <span className="text-[10px] font-mono text-[#006A4E] block">
+                                {s.service_code}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                                {s.category}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block ${
+                                  s.service_type === 'EXTERNAL_OFFICIAL'
+                                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                    : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                }`}
+                              >
+                                {s.service_type}
+                              </span>
+                              {s.external_url && (
+                                <a
+                                  href={s.external_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[11px] text-blue-600 hover:underline block truncate max-w-[180px] mt-0.5"
+                                >
+                                  {s.external_url} ↗
+                                </a>
+                              )}
+                              {s.internal_route && (
+                                <span className="text-[10px] text-slate-400 font-mono block">
+                                  route: /{s.internal_route}
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-3 text-slate-600 font-medium">
+                              {lang === 'bn' ? s.authority_name_bn : s.authority_name_en}
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                  Number(s.is_published) === 1
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : 'bg-slate-100 text-slate-500'
+                                }`}
+                              >
+                                {Number(s.is_published) === 1
+                                  ? t('প্রকাশিত', 'PUBLISHED')
+                                  : t('আর্কাইভ', 'ARCHIVED')}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  onClick={() => setEditingService(s)}
+                                  className="px-2 py-1 rounded border border-slate-200 text-slate-700 hover:bg-slate-100 font-bold text-[11px] cursor-pointer"
+                                  title="সম্পাদনা করুন"
+                                >
+                                  <Edit2 className="w-3 h-3 inline mr-1" />
+                                  {t('সম্পাদনা', 'Edit')}
+                                </button>
+                                <button
+                                  onClick={() => handleTogglePublishService(s.id)}
+                                  className="px-2 py-1 rounded border border-[#006A4E]/20 text-[#006A4E] hover:bg-[#E2EFE9] font-bold text-[11px] cursor-pointer"
+                                >
+                                  {Number(s.is_published) === 1
+                                    ? t('আর্কাইভ', 'Archive')
+                                    : t('প্রকাশ করুন', 'Publish')}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* SUB-VIEW 2: FEES REGISTRY & VERSIONING */}
+            {catalogueSubTab === 'fees' && (
+              <div className="space-y-4">
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Coins className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <span>
+                      {t(
+                        'ভূমি রেকর্ড ও মৌজা ম্যাপ ফি ভূমি মন্ত্রণালয়ের ১৭ ফেব্রুয়ারি ২০২৬ তারিখের স্মারক সার্কুলার (স্মারক: ৩১.০০.০০০০.০৪২.৬৮.০১২.২২.৫২) অনুযায়ী কার্যকর।',
+                        'Fees reflect signed Ministry of Land Circular dated 17 February 2026. Every edit produces an immutable versioned history snapshot.'
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {adminFees.map((f) => {
+                    const isEst = Boolean(f.is_estimate);
+                    const comps = f.components || [];
+                    const hist = f.history || [];
+
+                    return (
+                      <div
+                        key={f.id}
+                        className="rounded-xl border border-slate-200 bg-white p-5 flex flex-col justify-between space-y-3 shadow-2xs hover:border-[#006A4E]/30 transition-colors"
+                      >
+                        <div>
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <span className="text-[10px] font-mono font-bold text-slate-400 block uppercase">
+                                {f.service_code}
+                              </span>
+                              <h3 className="text-base font-bold text-slate-900 mt-0.5">
+                                {lang === 'bn' ? f.title_bn : f.title_en}
+                              </h3>
+                            </div>
+                            <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-[#E6F2EE] text-[#006A4E] border border-[#006A4E]/20">
+                              v{f.version}
+                            </span>
+                          </div>
+
+                          <div className="mt-2.5 flex items-baseline gap-2">
+                            <span className="text-2xl font-extrabold text-[#006A4E] font-mono">
+                              {isEst ? `~${f.total_bdt}%` : `${toBanglaDigits(f.total_bdt, lang)} ৳`}
+                            </span>
+                            {isEst && (
+                              <span className="text-xs text-slate-500">
+                                {t('(আনুমানিক প্রাক্কলন)', '(demo estimate)')}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Components */}
+                          {comps.length > 0 && (
+                            <div className="mt-3 pt-2.5 border-t border-slate-100 space-y-1.5">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                                {t('ফি বিভাজন ও উপাদানসমূহ:', 'Fee Components:')}
+                              </span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {comps.map((c, i) => (
+                                  <span
+                                    key={i}
+                                    className="text-[11px] bg-slate-50 px-2 py-0.5 rounded border border-slate-200 text-slate-700 font-medium"
+                                  >
+                                    {lang === 'bn' ? c.name_bn : c.name_en}:{' '}
+                                    <strong className="text-slate-900 font-mono">
+                                      {isEst ? `${c.amount_bdt}%` : `${toBanglaDigits(c.amount_bdt, lang)} ৳`}
+                                    </strong>
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="mt-3 text-xs text-slate-500 space-y-1">
+                            <div>
+                              <strong>{t('সার্কুলার:', 'Circular:')}</strong>{' '}
+                              <span className="font-mono text-slate-700">{f.circular_no}</span>
+                            </div>
+                            <div>
+                              <strong>{t('কার্যকর তারিখ:', 'Effective:')}</strong>{' '}
+                              <span className="font-mono">{f.effective_date}</span>
+                            </div>
+                            <div>
+                              <strong>{t('আইনি ভিত্তি:', 'Legal Basis:')}</strong>{' '}
+                              <span>{lang === 'bn' ? f.legal_basis_bn : f.legal_basis_en}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                          <button
+                            onClick={() => setSelectedFeeHistory(f)}
+                            className="px-2.5 py-1 rounded border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                          >
+                            <History className="w-3.5 h-3.5" />
+                            <span>
+                              {t('হিস্ট্রি স্ন্যাপশট', 'Version History')} ({toBanglaDigits(hist.length, lang)})
+                            </span>
+                          </button>
+
+                          <button
+                            onClick={() => setEditingFee(JSON.parse(JSON.stringify(f)))}
+                            className="px-3 py-1 rounded bg-[#006A4E] text-white hover:bg-[#00553e] text-xs font-bold flex items-center gap-1 cursor-pointer shadow-2xs"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            <span>{t('ফি হালনাগাদ ও ভার্সনিং', 'Edit & Archive Version')}</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* MODAL 1: EDIT / CREATE SERVICE */}
+          {editingService && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h3 className="font-bold text-base text-[#074f38] flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-[#006A4E]" />
+                    <span>
+                      {editingService.id
+                        ? t('সেবা তথ্য সম্পাদনা করুন', 'Edit Service Information')
+                        : t('নতুন সেবা যুক্তকরণ', 'Add New Official Service')}
+                    </span>
+                  </h3>
+                  <button
+                    onClick={() => setEditingService(null)}
+                    className="text-slate-400 hover:text-slate-700 text-sm font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveService} className="space-y-3.5 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        সার্ভিস কোড (Service Code) *
+                      </label>
+                      <input
+                        type="text"
+                        disabled={Boolean(editingService.id)}
+                        value={editingService.service_code || ''}
+                        onChange={(e) =>
+                          setEditingService({ ...editingService, service_code: e.target.value.toUpperCase() })
+                        }
+                        placeholder="MUTATION_ACLAND"
+                        className="field font-mono font-bold"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        ক্যাটাগরি (Category) *
+                      </label>
+                      <select
+                        value={editingService.category || 'REVENUE_MUTATION'}
+                        onChange={(e) => setEditingService({ ...editingService, category: e.target.value })}
+                        className="field font-bold"
+                      >
+                        <option value="REVENUE_MUTATION">নামজারি ও রাজস্ব (REVENUE_MUTATION)</option>
+                        <option value="RECORD_MAPS">খতিয়ান ও মৌজা ম্যাপ (RECORD_MAPS)</option>
+                        <option value="LAND_REGISTRATION">দলিল ও রেজিস্ট্রি (LAND_REGISTRATION)</option>
+                        <option value="FINANCE_MORTGAGE">ব্যাংক বন্ধক (FINANCE_MORTGAGE)</option>
+                        <option value="DISPUTE_CITIZEN">নাগরিক বিরোধ (DISPUTE_CITIZEN)</option>
+                        <option value="HELPLINE_INFO">সহায়িকা ও হেল্পলাইন (HELPLINE_INFO)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        শিরোনাম (বাংলা) *
+                      </label>
+                      <input
+                        type="text"
+                        value={editingService.title_bn || ''}
+                        onChange={(e) => setEditingService({ ...editingService, title_bn: e.target.value })}
+                        placeholder="ই-নামজারি আবেদন"
+                        className="field"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        শিরোনাম (ইংরেজি)
+                      </label>
+                      <input
+                        type="text"
+                        value={editingService.title_en || ''}
+                        onChange={(e) => setEditingService({ ...editingService, title_en: e.target.value })}
+                        placeholder="Online e-Mutation"
+                        className="field"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">
+                      সংক্ষিপ্ত বিবরণী (বাংলা)
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={editingService.description_bn || ''}
+                      onChange={(e) => setEditingService({ ...editingService, description_bn: e.target.value })}
+                      placeholder="সেবার সারসংক্ষেপ ও নির্দেশিকা..."
+                      className="field"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        সেবার ধরন (Type)
+                      </label>
+                      <select
+                        value={editingService.service_type || 'EXTERNAL_OFFICIAL'}
+                        onChange={(e) =>
+                          setEditingService({ ...editingService, service_type: e.target.value as any })
+                        }
+                        className="field font-bold"
+                      >
+                        <option value="EXTERNAL_OFFICIAL">বহিস্থ সরকারি পোর্টাল (EXTERNAL_OFFICIAL)</option>
+                        <option value="INTERNAL_FEATURE">অভ্যন্তরীণ ফিচার (INTERNAL_FEATURE)</option>
+                        <option value="HYBRID_GUIDANCE">গাইডেন্স ও নির্দেশিকা (HYBRID_GUIDANCE)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        অভ্যন্তরীণ রুট (যদি থাকে)
+                      </label>
+                      <input
+                        type="text"
+                        value={editingService.internal_route || ''}
+                        onChange={(e) => setEditingService({ ...editingService, internal_route: e.target.value })}
+                        placeholder="check, qr, home"
+                        className="field font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        প্রদর্শন ক্রম (Order)
+                      </label>
+                      <input
+                        type="number"
+                        value={editingService.display_order ?? 10}
+                        onChange={(e) =>
+                          setEditingService({ ...editingService, display_order: Number(e.target.value) })
+                        }
+                        className="field font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        বহিস্থ সরকারি URL (HTTPS বাধ্যতামূলক)
+                      </label>
+                      <input
+                        type="url"
+                        value={editingService.external_url || ''}
+                        onChange={(e) => setEditingService({ ...editingService, external_url: e.target.value })}
+                        placeholder="https://mutation.land.gov.bd"
+                        className="field font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        উৎস / গেজেট URL (HTTPS বাধ্যতামূলক)
+                      </label>
+                      <input
+                        type="url"
+                        value={editingService.source_url || ''}
+                        onChange={(e) => setEditingService({ ...editingService, source_url: e.target.value })}
+                        placeholder="https://minland.gov.bd"
+                        className="field font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        কর্তৃপক্ষের নাম (বাংলা)
+                      </label>
+                      <input
+                        type="text"
+                        value={editingService.authority_name_bn || ''}
+                        onChange={(e) =>
+                          setEditingService({ ...editingService, authority_name_bn: e.target.value })
+                        }
+                        placeholder="উপজেলা ভূমি অফিস (এসি ল্যান্ড)"
+                        className="field"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        কর্তৃপক্ষের নাম (ইংরেজি)
+                      </label>
+                      <input
+                        type="text"
+                        value={editingService.authority_name_en || ''}
+                        onChange={(e) =>
+                          setEditingService({ ...editingService, authority_name_en: e.target.value })
+                        }
+                        placeholder="Upazila Land Office"
+                        className="field"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditingService(null)}
+                      className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-bold hover:bg-slate-50 cursor-pointer min-h-[36px]"
+                    >
+                      {t('বাতিল', 'Cancel')}
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn-primary text-xs font-bold cursor-pointer min-h-[36px]"
+                    >
+                      {t('সংরক্ষণ করুন', 'Save Service Record')}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL 2: EDIT FEE & SNAPSHOT VERSION */}
+          {editingFee && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div>
+                    <h3 className="font-bold text-base text-[#074f38] flex items-center gap-2">
+                      <Coins className="w-5 h-5 text-[#006A4E]" />
+                      <span>{t('সরকারি ফি হালনাগাদ ও ভার্সন সংরক্ষণ', 'Update Fee & Snapshot Version')}</span>
+                    </h3>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      সার্ভিস কোড: <strong className="font-mono">{editingFee.service_code}</strong> • বর্তমান ভার্সন: v{editingFee.version} → পরবর্তী: v{((editingFee.version || 1) + 1)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setEditingFee(null)}
+                    className="text-slate-400 hover:text-slate-700 text-sm font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveFee} className="space-y-3.5 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        ফি এর শিরোনাম (বাংলা) *
+                      </label>
+                      <input
+                        type="text"
+                        value={editingFee.title_bn || ''}
+                        onChange={(e) => setEditingFee({ ...editingFee, title_bn: e.target.value })}
+                        className="field"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        মোট পরিমাণ (BDT বা শতাংশ) *
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={editingFee.total_bdt ?? 0}
+                        onChange={(e) => setEditingFee({ ...editingFee, total_bdt: Number(e.target.value) })}
+                        className="field font-mono font-bold"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        স্মারক সার্কুলার নম্বর
+                      </label>
+                      <input
+                        type="text"
+                        value={editingFee.circular_no || ''}
+                        onChange={(e) => setEditingFee({ ...editingFee, circular_no: e.target.value })}
+                        placeholder="৩১.০০.০০০০.০৪২.৬৮.০১২.২২.৫২"
+                        className="field font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-bold text-slate-700 block mb-1">
+                        কার্যকর তারিখ (YYYY-MM-DD)
+                      </label>
+                      <input
+                        type="date"
+                        value={editingFee.effective_date || ''}
+                        onChange={(e) => setEditingFee({ ...editingFee, effective_date: e.target.value })}
+                        className="field font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">
+                      সরকারি সার্কুলার / পোর্টাল URL (HTTPS)
+                    </label>
+                    <input
+                      type="url"
+                      value={editingFee.source_url || ''}
+                      onChange={(e) => setEditingFee({ ...editingFee, source_url: e.target.value })}
+                      placeholder="https://minland.gov.bd"
+                      className="field font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">
+                      আইনি ভিত্তি (Legal Basis)
+                    </label>
+                    <input
+                      type="text"
+                      value={editingFee.legal_basis_bn || ''}
+                      onChange={(e) => setEditingFee({ ...editingFee, legal_basis_bn: e.target.value })}
+                      className="field"
+                    />
+                  </div>
+
+                  {/* Components Breakdown Editor */}
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-800">
+                        ফি এর বিভাজন উপাদানসমূহ (Components)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentComps = editingFee.components || [];
+                          setEditingFee({
+                            ...editingFee,
+                            components: [
+                              ...currentComps,
+                              { name_bn: 'নতুন উপাদান', name_en: 'New Component', amount_bdt: 0, type: 'FEE' },
+                            ],
+                          });
+                        }}
+                        className="text-[11px] font-bold text-emerald-800 hover:underline cursor-pointer"
+                      >
+                        + উপাদান যুক্ত করুন
+                      </button>
+                    </div>
+
+                    {(editingFee.components || []).map((c, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={c.name_bn}
+                          onChange={(e) => {
+                            const newComps = [...(editingFee.components || [])];
+                            newComps[i] = { ...newComps[i], name_bn: e.target.value };
+                            setEditingFee({ ...editingFee, components: newComps });
+                          }}
+                          placeholder="উপাদানের নাম"
+                          className="field flex-1"
+                        />
+                        <input
+                          type="number"
+                          step="any"
+                          value={c.amount_bdt}
+                          onChange={(e) => {
+                            const newComps = [...(editingFee.components || [])];
+                            newComps[i] = { ...newComps[i], amount_bdt: Number(e.target.value) };
+                            setEditingFee({ ...editingFee, components: newComps });
+                          }}
+                          placeholder="পরিমাণ"
+                          className="field w-24 font-mono font-bold"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newComps = (editingFee.components || []).filter((_, idx) => idx !== i);
+                            setEditingFee({ ...editingFee, components: newComps });
+                          }}
+                          className="text-rose-600 hover:text-rose-800 font-bold p-1 cursor-pointer"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-[11px] text-blue-900 leading-relaxed">
+                    ⓘ <strong>অপরিবর্তনীয় অডিট ট্রেইল:</strong> ফি হালনাগাদ করার সাথে সাথে পূর্ববর্তী তথ্য ভার্সন <strong>v{editingFee.version}</strong> হিসেবে স্থায়ীভাবে স্ন্যাপশট আর্কাইভে সংরক্ষিত হবে এবং সিস্টেমে নতুন ভার্সন <strong>v{((editingFee.version || 1) + 1)}</strong> তৈরি হবে।
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditingFee(null)}
+                      className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-bold hover:bg-slate-50 cursor-pointer min-h-[36px]"
+                    >
+                      {t('বাতিল', 'Cancel')}
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn-primary text-xs font-bold cursor-pointer min-h-[36px]"
+                    >
+                      {t('হালনাগাদ ও ভার্সন সংরক্ষণ করুন', 'Update & Archive Version Snapshot')}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* MODAL 3: VIEW FEE VERSION HISTORY SNAPSHOTS */}
+          {selectedFeeHistory && (
+            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div>
+                    <h3 className="font-bold text-base text-[#074f38] flex items-center gap-2">
+                      <History className="w-5 h-5 text-[#006A4E]" />
+                      <span>{t('ফি ভার্সন ইতিহাস ও অডিট স্ন্যাপশট', 'Fee Version History & Audit Snapshots')}</span>
+                    </h3>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      {selectedFeeHistory.title_bn} ({selectedFeeHistory.service_code})
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedFeeHistory(null)}
+                    className="text-slate-400 hover:text-slate-700 text-sm font-bold cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Current Active Version Card */}
+                  <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                        <span>{t('বর্তমান সক্রিয় ভার্সন', 'Current Active Version')}</span>
+                      </span>
+                      <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-emerald-700 text-white">
+                        v{selectedFeeHistory.version}
+                      </span>
+                    </div>
+                    <div className="text-lg font-mono font-bold text-[#006A4E]">
+                      {selectedFeeHistory.is_estimate
+                        ? `~${selectedFeeHistory.total_bdt}%`
+                        : `${toBanglaDigits(selectedFeeHistory.total_bdt, lang)} ৳`}
+                    </div>
+                    <div className="text-xs text-slate-600">
+                      সার্কুলার: <span className="font-mono">{selectedFeeHistory.circular_no}</span> • কার্যকর:{' '}
+                      <span className="font-mono">{selectedFeeHistory.effective_date}</span>
+                    </div>
+                  </div>
+
+                  {/* Previous Historical Version Snapshots */}
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                      {t('পূর্ববর্তী সংরক্ষিত সংস্করণসমূহ (Snapshots):', 'Previous Version Snapshots:')}
+                    </h4>
+                    {(!selectedFeeHistory.history || selectedFeeHistory.history.length === 0) ? (
+                      <div className="p-4 rounded-xl border border-dashed border-slate-200 text-center text-xs text-slate-400">
+                        {t('কোনো পূর্ববর্তী সংস্করণ নেই (এটিই মূল প্রাথমিক সংস্করণ)।', 'No previous versions archived yet (this is the initial release version).')}
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {selectedFeeHistory.history.map((h, idx) => (
+                          <div
+                            key={idx}
+                            className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 space-y-2"
+                          >
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-bold text-slate-800">
+                                সংস্করণ v{h.version}
+                              </span>
+                              <span className="font-mono text-[11px] text-slate-500">
+                                {h.updated_at ? new Date(h.updated_at).toLocaleString() : ''}
+                              </span>
+                            </div>
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-base font-bold font-mono text-slate-800">
+                                {toBanglaDigits(h.total_bdt, lang)} ৳
+                              </span>
+                              <span className="text-[11px] text-slate-500">
+                                • আপডেট করেছেন: @{h.updated_by}
+                              </span>
+                            </div>
+                            {h.circular_no && (
+                              <div className="text-[11px] font-mono text-slate-500">
+                                সার্কুলার: {h.circular_no}
+                              </div>
+                            )}
+                            {h.components && h.components.length > 0 && (
+                              <div className="flex flex-wrap gap-1 pt-1">
+                                {h.components.map((c, cIdx) => (
+                                  <span
+                                    key={cIdx}
+                                    className="text-[10px] bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 font-medium"
+                                  >
+                                    {c.name_bn}: {c.amount_bdt} ৳
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 text-right">
+                  <button
+                    onClick={() => setSelectedFeeHistory(null)}
+                    className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer min-h-[36px]"
+                  >
+                    {t('বন্ধ করুন', 'Close')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* TAB 5: Site Settings & Rules Engine Configuration */}
       {subTab === 'settings' && (
         <div className="panel p-6 space-y-5">
           <div>
-            <h2 className="font-display text-lg text-[#062823] flex items-center gap-2">
-              <Settings className="w-5 h-5 text-[#0D6B5C]" />
+            <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
+              <Settings className="w-5 h-5 text-[#006A4E]" />
               <span>
                 {t(
                   'সিস্টেম কনফিগারেশন, RBAC পলিসি ও জালিয়াতি রুল ইঞ্জিন থ্রেশহোল্ড',
@@ -695,7 +1841,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
           </div>
 
           {saveMsg && (
-            <div className="p-4 rounded-xl bg-[#E8F5F1] text-[#0D6B5C] font-bold text-xs">
+            <div className="p-4 rounded-xl bg-[#EDF7F4] text-[#006A4E] font-bold text-xs">
               {saveMsg}
             </div>
           )}
@@ -705,7 +1851,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
               {settingsList.map((st) => (
                 <div
                   key={st.setting_key || st.key}
-                  className="p-4 rounded-xl bg-[#EDF4F1]/80 border border-[#0D6B5C]/12"
+                  className="p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12"
                 >
                   <label className="block font-bold text-xs text-[#0A1F1C] mb-1">
                     {lang === 'bn' ? st.label_bn || st.description_bn : st.label_en || st.description_en}
@@ -726,7 +1872,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                         [st.setting_key || st.key]: e.target.value,
                       })
                     }
-                    className="w-full p-2 rounded-lg bg-white border border-[#0D6B5C]/20 text-xs font-semibold"
+                    className="w-full p-2 rounded-lg bg-white border border-[#006A4E]/20 text-xs font-semibold"
                   />
                 </div>
               ))}
@@ -745,7 +1891,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       {subTab === 'audit' && (
         <div className="panel p-6 space-y-4">
           <div className="flex items-center gap-2">
-            <History className="w-5 h-5 text-[#0D6B5C]" />
+            <History className="w-5 h-5 text-[#006A4E]" />
             <h2 className="text-lg font-extrabold text-[#0A1F1C]">
               {t(
                 'অপরিবর্তনীয় হ্যাশ-চেইন অডিট লগ (Append-Only Cryptographic Audit Trail)',
@@ -758,14 +1904,94 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
             {auditLogs.map((log) => (
               <div
                 key={log.id}
-                className="p-3 rounded-lg bg-[#EDF4F1]/80 border border-[#0D6B5C]/12 flex flex-col md:flex-row md:items-center justify-between gap-2"
+                className="p-3 rounded-lg bg-[#EDF7F4]/80 border border-[#006A4E]/12 flex flex-col md:flex-row md:items-center justify-between gap-2"
               >
                 <div>
-                  <span className="font-bold text-[#0D6B5C]">[{log.action}]</span>{' '}
+                  <span className="font-bold text-[#006A4E]">[{log.action}]</span>{' '}
                   <span className="text-[#0A1F1C]">{log.actor_role}</span> — {log.target_ref} (
                   {log.detail})
                 </div>
                 <div className="text-[#5F7A74]/80 truncate max-w-xs">HASH: {log.entry_hash}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* TAB 8: Super Admin Direct Role Access & Oversight */}
+      {subTab === 'direct_access' && (
+        <div className="panel p-6 space-y-6">
+          <div className="border-b border-[#006A4E]/10 pb-4">
+            <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5 text-amber-500" />
+              <span>
+                {t(
+                  'সুপার অ্যাডমিন সরাসরি রোল নজরদারি ও পাসওয়ার্ডহীন প্রবেশাধিকার',
+                  'Super Admin Direct Role Inspection & Passwordless Access'
+                )}
+              </span>
+            </h2>
+            <p className="text-xs text-[#5F7A74] mt-0.5">
+              {t(
+                'সুপার অ্যাডমিন হিসেবে আপনি যেকোনো দাপ্তরিক বা নাগরিক ড্যাশবোর্ডে পাসওয়ার্ড ছাড়াই সরাসরি প্রবেশ করে নিরীক্ষা সম্পন্ন করতে পারবেন:',
+                'As Super Admin, directly inspect any government agency or citizen portal dashboard without passwords:'
+              )}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              {
+                r: 'sub_registrar' as UserRole,
+                title: t('সাব-রেজিস্ট্রার কনসোল', 'Sub-Registrar Console'),
+                dept: t('নিবন্ধন অধিদপ্তর • আইন মন্ত্রণালয়', 'Directorate of Registration • Law Ministry'),
+                icon: <FileSpreadsheet className="w-6 h-6 text-[#006A4E]" />,
+                iconBg: 'bg-emerald-50',
+                desc: t('দলিল প্রাক-যাচাই, ১১টি জালিয়াতি রুলস গেটকিপার, HELD কিউ ও রেজিস্ট্রি অডিট।', 'Pre-reg gatekeeper, 11 fraud rules, held queue & registry audit.'),
+              },
+              {
+                r: 'ac_land' as UserRole,
+                title: t('এসি ল্যান্ড কনসোল', 'AC Land Console'),
+                dept: t('উপজেলা ভূমি অফিস • ভূমি মন্ত্রণালয়', 'Upazila Land Office • Ministry of Land'),
+                icon: <Landmark className="w-6 h-6 text-[#006A4E]" />,
+                iconBg: 'bg-emerald-50',
+                desc: t('ই-মিউটেশন অনুমোদন, খতিয়ান চেইন সমন্বয়, ওয়ারিশ হিস্যা ও বিরোধ ট্রাইব্যুনাল।', 'e-Mutation approval, khatian reconciliation & dispute tribunal.'),
+              },
+              {
+                r: 'bank_officer' as UserRole,
+                title: t('ব্যাংক মর্টগেজ কনসোল', 'Bank Mortgage Console'),
+                dept: t('তফসিলি ব্যাংক জামানত ও লিয়েন বিভাগ', 'Scheduled Commercial Bank Collateral'),
+                icon: <Building2 className="w-6 h-6 text-[#006A4E]" />,
+                iconBg: 'bg-emerald-50',
+                desc: t('জামানত যাচাই, দ্বৈত বন্ধক প্রতিরোধে প্লট লক এবং ডিজিটাল NOC সনদ ইস্যু।', 'Collateral check, double-mortgage plot lock & digital NOC release.'),
+              },
+              {
+                r: 'citizen' as UserRole,
+                title: t('নাগরিক ভূমি পোর্টাল', 'Citizen Land Portal'),
+                dept: t('নাগরিক সেবা ও ভূমি সুরক্ষা ভল্ট', 'Public Consumer Property Vault'),
+                icon: <ShieldCheck className="w-6 h-6 text-[#006A4E]" />,
+                iconBg: 'bg-emerald-50',
+                desc: t('মালিকানা যাচাই, বায়োমেট্রিক বিক্রয় লক ও নাগরিক আপত্তি দাখিল।', 'Property vault, biometric sale locks & objection filings.'),
+              },
+            ].map((card) => (
+              <div key={card.r} className="p-5 rounded-xl border border-[#006A4E]/15 bg-white flex flex-col justify-between shadow-xs hover:shadow-md transition">
+                <div>
+                  <div className={`w-12 h-12 rounded-xl ${card.iconBg} flex items-center justify-center mb-3`}>
+                    {card.icon}
+                  </div>
+                  <h3 className="font-bold text-sm text-slate-900">{card.title}</h3>
+                  <div className="text-[11px] font-medium text-emerald-800 mt-0.5">{card.dept}</div>
+                  <p className="text-xs text-slate-600 mt-2 leading-relaxed">{card.desc}</p>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-slate-100">
+                  <button
+                    onClick={() => switchToAdminRole(card.r)}
+                    className="w-full py-2 px-3 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs"
+                  >
+                    <span>{t('সরাসরি লগইন করুন →', 'Direct Login →')}</span>
+                  </button>
+                </div>
               </div>
             ))}
           </div>

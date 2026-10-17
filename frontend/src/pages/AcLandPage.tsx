@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAppUI } from '../i18n';
 import { BhumiApi } from '../api/client';
 import { toBanglaDigits } from '../theme/tokens';
-import { VelzonOverviewSection } from '../components/VelzonOverviewSection';
+import { OfficerKhatianExplorer } from '../components/OfficerKhatianExplorer';
+import { OfficerDeedVerifier } from '../components/OfficerDeedVerifier';
 import {
   Landmark,
   CheckCircle2,
@@ -18,12 +19,20 @@ import {
   Scale,
   ArrowRight,
   Eye,
-  X
+  X,
+  QrCode
 } from 'lucide-react';
 
+export type AcLandTab = 'mutations' | 'khatians' | 'disputes' | 'explorer' | 'verifier';
+
 export const AcLandPage: React.FC = () => {
-  const { lang, role, setRole, setUser, setToken, t } = useAppUI();
-  const [subTab, setSubTab] = useState<'mutations' | 'khatians' | 'disputes'>('mutations');
+  const { lang, role, setRole, setUser, setToken, activeSubTab, setActiveSubTab, t } = useAppUI();
+  const [subTab, setSubTab] = useState<AcLandTab>(() => {
+    if (activeSubTab && ['mutations', 'khatians', 'disputes', 'explorer', 'verifier'].includes(activeSubTab)) {
+      return activeSubTab as AcLandTab;
+    }
+    return 'mutations';
+  });
 
   const [mutations, setMutations] = useState<any[]>([]);
   const [flaggedKhatians, setFlaggedKhatians] = useState<any[]>([]);
@@ -59,6 +68,17 @@ export const AcLandPage: React.FC = () => {
   useEffect(() => {
     loadAcLandData();
   }, []);
+
+  useEffect(() => {
+    if (activeSubTab && ['mutations', 'khatians', 'disputes', 'explorer', 'verifier'].includes(activeSubTab)) {
+      setSubTab(activeSubTab as AcLandTab);
+    }
+  }, [activeSubTab]);
+
+  const handleTabChange = (target: AcLandTab) => {
+    setSubTab(target);
+    setActiveSubTab(target);
+  };
 
   const switchToAcLandRole = async () => {
     const res = await BhumiApi.switchDemoRole('ac_land');
@@ -149,26 +169,102 @@ export const AcLandPage: React.FC = () => {
           </div>
           <button
             onClick={switchToAcLandRole}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#062823] hover:bg-[#041A1C] text-white font-bold text-xs cursor-pointer min-h-[36px] transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#074f38] hover:bg-[#053b2a] text-white font-bold text-xs cursor-pointer min-h-[36px] transition-colors"
           >
             {t('এসি ল্যান্ড প্যানেলে প্রবেশ করুন →', 'Activate AC Land Session →')}
           </button>
         </div>
       )}
 
-      {/* Registry overview */}
-      <VelzonOverviewSection
-        role="ac_land"
-        stats={stats}
-        onQuickAction={() => setSubTab('khatians')}
-      />
+      {/* AC Land Operational KPI Strip (Role-Specific) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-rise">
+        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+              {t('অপেক্ষমাণ ই-নামজারি', 'Pending e-Mutations')}
+            </div>
+            <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
+              {toBanglaDigits(mutations.filter((m) => m.status === 'PENDING').length, lang)}
+            </div>
+            <button
+              onClick={() => handleTabChange('mutations')}
+              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+            >
+              {t('মিউটেশন কিউ দেখুন →', 'Review Mutation Queue →')}
+            </button>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+            <Clock className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+              {t('খতিয়ান ও ওয়ারিশ সমন্বয়', 'Khatian Discrepancies')}
+            </div>
+            <div className="text-2xl font-extrabold text-[#C4891A] mt-1">
+              {toBanglaDigits(flaggedKhatians.length, lang)}
+            </div>
+            <button
+              onClick={() => handleTabChange('khatians')}
+              className="text-xs text-[#C4891A] font-semibold hover:underline mt-1 block cursor-pointer"
+            >
+              {t('সমন্বয় শুনানি কিউ →', 'Resolve Discrepancies →')}
+            </button>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-amber-50 text-[#C4891A] flex items-center justify-center">
+            <GitCompareArrows className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+              {t('নাগরিক বিরোধ ও আপত্তি', 'Dispute Tribunal')}
+            </div>
+            <div className="text-2xl font-extrabold text-rose-600 mt-1">
+              {toBanglaDigits(disputes.length, lang)}
+            </div>
+            <button
+              onClick={() => handleTabChange('disputes')}
+              className="text-xs text-rose-600 font-semibold hover:underline mt-1 block cursor-pointer"
+            >
+              {t('ট্রাইব্যুনাল শুনানি দেখুন →', 'Review Disputes →')}
+            </button>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+            <Scale className="w-6 h-6" />
+          </div>
+        </div>
+
+        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+          <div>
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+              {t('খতিয়ান ও দলিল সত্যতা', 'Khatian & Deed Trust')}
+            </div>
+            <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
+              {toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}%
+            </div>
+            <button
+              onClick={() => handleTabChange('verifier')}
+              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+            >
+              {t('দলিল ও লেজার যাচাই →', 'Verify Deed & Ledger →')}
+            </button>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
 
       {/* Operational Controlling Section */}
       <div className="panel p-6 space-y-6 animate-rise-delay">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#0D6B5C]/10 pb-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
           <div>
-            <h2 className="font-display text-lg md:text-xl text-[#062823] flex items-center gap-2">
-              <Landmark className="w-5 h-5 text-[#0D6B5C]" />
+            <h2 className="font-bold text-lg md:text-xl text-[#074f38] flex items-center gap-2">
+              <Landmark className="w-5 h-5 text-[#006A4E]" />
               <span>
                 {t(
                   'ই-মিউটেশন কিউ, খতিয়ান চেইন সমন্বয় ও বিরোধ নিষ্পত্তি ট্রাইব্যুনাল',
@@ -186,11 +282,11 @@ export const AcLandPage: React.FC = () => {
 
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setSubTab('mutations')}
-              className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[38px] transition-colors ${
+              onClick={() => handleTabChange('mutations')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
                 subTab === 'mutations'
-                  ? 'bg-[#0D6B5C] text-white shadow-xs'
-                  : 'bg-[#EDF4F1] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+                  ? 'bg-[#006A4E] text-white shadow-xs'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
               }`}
             >
               <Clock className="w-4 h-4" />
@@ -199,38 +295,60 @@ export const AcLandPage: React.FC = () => {
               </span>
             </button>
             <button
-              onClick={() => setSubTab('khatians')}
-              className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[38px] transition-colors ${
+              onClick={() => handleTabChange('khatians')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
                 subTab === 'khatians'
-                  ? 'bg-[#0D6B5C] text-white shadow-xs'
-                  : 'bg-[#EDF4F1] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+                  ? 'bg-[#006A4E] text-white shadow-xs'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
               }`}
             >
               <GitCompareArrows className="w-4 h-4" />
               <span>
-                {t('খতিয়ান ও ওয়ারিশ সমন্বয়', 'Khatian & Heirs Reconcile')} (
+                {t('খতিয়ান ও ওয়ারিশ সমন্বয়', 'Khatian & Heirs')} (
                 {toBanglaDigits(flaggedKhatians.length, lang)})
               </span>
             </button>
             <button
-              onClick={() => setSubTab('disputes')}
-              className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[38px] transition-colors ${
+              onClick={() => handleTabChange('disputes')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
                 subTab === 'disputes'
-                  ? 'bg-[#0D6B5C] text-white shadow-xs'
-                  : 'bg-[#EDF4F1] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+                  ? 'bg-[#006A4E] text-white shadow-xs'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
               }`}
             >
-              <AlertOctagon className="w-4 h-4" />
+              <Scale className="w-4 h-4" />
               <span>
-                {t('নাগরিক বিরোধ ট্রাইব্যুনাল', 'Citizen Disputes')} (
+                {t('বিরোধ ট্রাইব্যুনাল', 'Dispute Tribunal')} (
                 {toBanglaDigits(disputes.length, lang)})
               </span>
+            </button>
+            <button
+              onClick={() => handleTabChange('explorer')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+                subTab === 'explorer'
+                  ? 'bg-[#006A4E] text-white shadow-xs'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+              }`}
+            >
+              <Search className="w-4 h-4" />
+              <span>{t('খতিয়ান ও দাগ অনুসন্ধান', 'Khatian Explorer')}</span>
+            </button>
+            <button
+              onClick={() => handleTabChange('verifier')}
+              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+                subTab === 'verifier'
+                  ? 'bg-[#006A4E] text-white shadow-xs'
+                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+              }`}
+            >
+              <QrCode className="w-4 h-4" />
+              <span>{t('দলিল সত্যতা যাচাই', 'Verify Deed')}</span>
             </button>
           </div>
         </div>
 
         {actionMsg && (
-          <div className="p-4 rounded-xl bg-[#E8F5F1] border-l-4 border-[#0D6B5C] text-[#0D6B5C] font-bold text-xs flex items-center gap-2">
+          <div className="p-4 rounded-xl bg-[#EDF7F4] border-l-4 border-[#006A4E] text-[#006A4E] font-bold text-xs flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span>{actionMsg}</span>
           </div>
@@ -240,15 +358,15 @@ export const AcLandPage: React.FC = () => {
         {subTab === 'mutations' && (
           <div className="space-y-4">
             {/* Search and Status Filters */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#EDF4F1]/80 p-3 rounded-xl border border-[#0D6B5C]/12">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#EDF7F4]/80 p-3 rounded-xl border border-[#006A4E]/12">
               <div className="relative flex-1 max-w-sm">
-                <Search className="w-4 h-4 text-[#5F7A74]/80 absolute left-3 top-3" />
+                <Search className="w-4 h-4 text-[#5F7A74]/80 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
                   value={mutationSearch}
                   onChange={(e) => setMutationSearch(e.target.value)}
                   placeholder={t('কেস নং, দলিল নং বা নাম খুঁজুন...', 'Search case, deed or party...')}
-                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#0D6B5C]/20 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#0D6B5C]/30"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#006A4E]/20 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
                 />
               </div>
 
@@ -259,8 +377,8 @@ export const AcLandPage: React.FC = () => {
                     onClick={() => setMutationFilter(st)}
                     className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-colors cursor-pointer min-h-[32px] ${
                       mutationFilter === st
-                        ? 'bg-[#0D6B5C] text-white shadow-xs'
-                        : 'bg-white text-[#5F7A74] border border-[#0D6B5C]/12 hover:bg-[#EDF4F1]'
+                        ? 'bg-[#006A4E] text-white shadow-xs'
+                        : 'bg-white text-[#5F7A74] border border-[#006A4E]/12 hover:bg-[#EDF7F4]'
                     }`}
                   >
                     {st === 'ALL'
@@ -276,7 +394,7 @@ export const AcLandPage: React.FC = () => {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto rounded-xl border border-[#0D6B5C]/12">
+            <div className="overflow-x-auto rounded-xl border border-[#006A4E]/12">
               <table className="table-modern text-xs">
                 <thead>
                   <tr className="">
@@ -290,7 +408,7 @@ export const AcLandPage: React.FC = () => {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#0D6B5C]/10 bg-white">
+                <tbody className="divide-y divide-[#006A4E]/10 bg-white">
                   {filteredMutations.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-8 text-center text-[#5F7A74]">
@@ -301,12 +419,12 @@ export const AcLandPage: React.FC = () => {
                     </tr>
                   ) : (
                     filteredMutations.map((m) => (
-                      <tr key={m.id} className="hover:bg-[#EDF4F1]/80 transition-colors">
-                        <td className="py-3 px-3 font-mono font-bold text-[#062823]">
+                      <tr key={m.id} className="hover:bg-[#EDF7F4]/80 transition-colors">
+                        <td className="py-3 px-3 font-mono font-bold text-[#074f38]">
                           <div className="flex items-center gap-1.5">
                             <span>{m.case_no || `MUT-#${m.id}`}</span>
                           </div>
-                          <div className="text-[10px] text-[#0D6B5C] font-sans">
+                          <div className="text-[10px] text-[#006A4E] font-sans">
                             {t('দলিল:', 'Deed:')} {m.deed_no}
                           </div>
                         </td>
@@ -344,7 +462,7 @@ export const AcLandPage: React.FC = () => {
                           <div className="inline-flex items-center gap-1.5">
                             <button
                               onClick={() => setSelectedMutation(m)}
-                              className="px-2 py-1 rounded bg-[#EDF4F1] hover:bg-[#E4EFEA] text-[#0A1F1C]/90 font-bold text-[11px] flex items-center gap-1 cursor-pointer min-h-[30px]"
+                              className="px-2 py-1 rounded bg-[#EDF7F4] hover:bg-[#E4EFEA] text-[#0A1F1C]/90 font-bold text-[11px] flex items-center gap-1 cursor-pointer min-h-[30px]"
                             >
                               <Eye className="w-3.5 h-3.5" />
                               <span>{t('শুনানি', 'Details')}</span>
@@ -354,7 +472,7 @@ export const AcLandPage: React.FC = () => {
                               <>
                                 <button
                                   onClick={() => handleDecision(m.id, 'APPROVED')}
-                                  className="px-2.5 py-1 rounded bg-[#0D6B5C] hover:bg-[#0A5549] text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer min-h-[30px] transition-colors"
+                                  className="px-2.5 py-1 rounded bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer min-h-[30px] transition-colors"
                                 >
                                   <CheckCircle2 className="w-3.5 h-3.5" />
                                   <span>{t('অনুমোদন', 'Approve')}</span>
@@ -382,8 +500,8 @@ export const AcLandPage: React.FC = () => {
         {/* TAB 2: Khatian Chain & Heirs Reconciliation Control */}
         {subTab === 'khatians' && (
           <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-[#E8F5F1]/60 border border-[#0D6B5C]/20 text-xs text-[#062823] flex items-start gap-3">
-              <GitCompareArrows className="w-5 h-5 text-[#0D6B5C] shrink-0 mt-0.5" />
+            <div className="p-4 rounded-xl bg-[#EDF7F4]/60 border border-[#006A4E]/20 text-xs text-[#074f38] flex items-start gap-3">
+              <GitCompareArrows className="w-5 h-5 text-[#006A4E] shrink-0 mt-0.5" />
               <div>
                 <strong>{t('খতিয়ান চেইন অডিট প্রটোকল:', 'Khatian Lineage Audit Protocol:')}</strong>{' '}
                 {t(
@@ -394,7 +512,7 @@ export const AcLandPage: React.FC = () => {
             </div>
 
             {flaggedKhatians.length === 0 ? (
-              <div className="p-6 rounded-xl bg-[#E8F5F1] text-[#0D6B5C] font-bold text-xs flex items-center gap-2">
+              <div className="p-6 rounded-xl bg-[#EDF7F4] text-[#006A4E] font-bold text-xs flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5" />
                 <span>{t('সকল ত্রুটিপূর্ণ খতিয়ান সমন্বয় সম্পন্ন হয়েছে!', 'All flagged khatians have been reconciled!')}</span>
               </div>
@@ -428,7 +546,7 @@ export const AcLandPage: React.FC = () => {
 
                     <button
                       onClick={() => handleReconcileKhatian(fk.plot_id, Number(fk.total_area_decimal))}
-                      className="px-4 py-2.5 rounded-lg bg-[#0D6B5C] hover:bg-[#0A5549] text-white font-extrabold text-xs shrink-0 cursor-pointer min-h-[38px] flex items-center gap-1.5 shadow-sm transition-colors"
+                      className="px-4 py-2.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-extrabold text-xs shrink-0 cursor-pointer min-h-[38px] flex items-center gap-1.5 shadow-sm transition-colors"
                     >
                       <CheckCircle2 className="w-4 h-4" />
                       <span>{t('শুনানি ও জরিপের মাধ্যমে সমন্বয় করুন', 'Reconcile Khatian Lineage')}</span>
@@ -443,8 +561,8 @@ export const AcLandPage: React.FC = () => {
         {/* TAB 3: Citizen Dispute Resolution Control */}
         {subTab === 'disputes' && (
           <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-[#EDF4F1]/80 border border-[#0D6B5C]/12 text-xs text-[#0A1F1C]/90 flex items-start gap-3">
-              <Scale className="w-5 h-5 text-[#0D6B5C] shrink-0 mt-0.5" />
+            <div className="p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12 text-xs text-[#0A1F1C]/90 flex items-start gap-3">
+              <Scale className="w-5 h-5 text-[#006A4E] shrink-0 mt-0.5" />
               <div>
                 <strong>{t('এসি ল্যান্ড ট্রাইব্যুনাল এক্তিয়ার:', 'AC Land Dispute Tribunal Jurisdiction:')}</strong>{' '}
                 {t(
@@ -456,7 +574,7 @@ export const AcLandPage: React.FC = () => {
 
             <div className="grid grid-cols-1 gap-3">
               {disputes.length === 0 ? (
-                <div className="p-6 rounded-xl bg-[#EDF4F1]/80 text-[#5F7A74] text-xs text-center border border-[#0D6B5C]/12">
+                <div className="p-6 rounded-xl bg-[#EDF7F4]/80 text-[#5F7A74] text-xs text-center border border-[#006A4E]/12">
                   {t('কোনো অমীমাংসিত অভিযোগ নেই।', 'No pending citizen disputes.')}
                 </div>
               ) : (
@@ -466,7 +584,7 @@ export const AcLandPage: React.FC = () => {
                     className={`p-5 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs ${
                       dsp.status === 'OPEN'
                         ? 'bg-amber-50/60 border-amber-300'
-                        : 'bg-white border-[#0D6B5C]/12'
+                        : 'bg-white border-[#006A4E]/12'
                     }`}
                   >
                     <div className="space-y-1">
@@ -474,7 +592,7 @@ export const AcLandPage: React.FC = () => {
                         <span className="font-extrabold text-sm text-[#0A1F1C]">
                           {lang === 'bn' ? dsp.mouza_bn : dsp.mouza_en} — {t('দাগ নং', 'Dag')} {dsp.dag_no}
                         </span>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#062823] text-white font-mono font-bold">
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#074f38] text-white font-mono font-bold">
                           {dsp.dispute_type}
                         </span>
                         <span
@@ -509,7 +627,7 @@ export const AcLandPage: React.FC = () => {
                           </button>
                           <button
                             onClick={() => handleResolveDispute(dsp.id, 'RESOLVED_DISMISSED')}
-                            className="px-3.5 py-2 rounded-lg bg-[#0D6B5C] hover:bg-[#0A5549] text-white font-bold text-xs cursor-pointer min-h-[36px] flex items-center gap-1.5 transition-colors shadow-xs"
+                            className="px-3.5 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs cursor-pointer min-h-[36px] flex items-center gap-1.5 transition-colors shadow-xs"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             <span>{t('নিষ্পত্তি ও খারিজ (Dismiss)', 'Resolve & Dismiss')}</span>
@@ -523,15 +641,29 @@ export const AcLandPage: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* TAB 4: In-Panel Officer Khatian Explorer */}
+        {subTab === 'explorer' && (
+          <OfficerKhatianExplorer
+            onSelectPlotForAction={(plotId) => {
+              handleTabChange('khatians');
+            }}
+            actionLabel={t('খতিয়ান রেকর্ড সমন্বয়', 'Reconcile Khatian')}
+            actionType="reconcile"
+          />
+        )}
+
+        {/* TAB 5: In-Panel Officer Deed Verifier */}
+        {subTab === 'verifier' && <OfficerDeedVerifier />}
       </div>
 
       {/* Hearing / Case Details Modal */}
       {selectedMutation && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative border border-[#0D6B5C]/12 space-y-5">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative border border-[#006A4E]/12 space-y-5">
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
-                <Landmark className="w-5 h-5 text-[#0D6B5C]" />
+                <Landmark className="w-5 h-5 text-[#006A4E]" />
                 <h3 className="font-extrabold text-[#0A1F1C] text-sm">
                   {t('ই-মিউটেশন কেস শুনানি বিবরণী', 'e-Mutation Hearing Record')}
                 </h3>
@@ -545,24 +677,24 @@ export const AcLandPage: React.FC = () => {
             </div>
 
             <div className="space-y-3 text-xs text-[#0A1F1C]/90">
-              <div className="p-3 bg-[#EDF4F1]/80 rounded-lg space-y-1 font-mono">
+              <div className="p-3 bg-[#EDF7F4]/80 rounded-lg space-y-1 font-mono">
                 <div><strong>CASE NO:</strong> {selectedMutation.case_no || `MUT-#${selectedMutation.id}`}</div>
                 <div><strong>REGISTERED DEED NO:</strong> {selectedMutation.deed_no}</div>
                 <div><strong>MOUZA & DAG:</strong> {selectedMutation.mouza_bn} — দাগ নং {selectedMutation.dag_no}</div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-[#EDF4F1]/80 rounded-lg">
+                <div className="p-3 bg-[#EDF7F4]/80 rounded-lg">
                   <span className="text-[10px] text-[#5F7A74] block">{t('মূল মালিক (Seller):', 'Seller:')}</span>
                   <strong>{selectedMutation.seller_name_bn}</strong>
                 </div>
-                <div className="p-3 bg-[#EDF4F1]/80 rounded-lg">
+                <div className="p-3 bg-[#EDF7F4]/80 rounded-lg">
                   <span className="text-[10px] text-[#5F7A74] block">{t('নতুন খতিয়ান গ্রহীতা (Buyer):', 'Buyer:')}</span>
                   <strong>{selectedMutation.buyer_name_bn}</strong>
                 </div>
               </div>
 
-              <div className="p-3 bg-[#E8F5F1] border border-[#0D6B5C]/30 rounded-lg text-[#0D6B5C]">
+              <div className="p-3 bg-[#EDF7F4] border border-[#006A4E]/30 rounded-lg text-[#006A4E]">
                 <span className="text-[10px] font-bold block">{t('হস্তান্তরিত জমির পরিমাণ:', 'Mutation Area:')}</span>
                 <span className="text-base font-extrabold">
                   {toBanglaDigits(selectedMutation.area_decimal, lang)} {t('শতাংশ', 'Decimal')}
@@ -587,7 +719,7 @@ export const AcLandPage: React.FC = () => {
                   </button>
                   <button
                     onClick={() => handleDecision(selectedMutation.id, 'APPROVED')}
-                    className="px-4 py-2 rounded-lg bg-[#0D6B5C] text-white text-xs font-bold cursor-pointer"
+                    className="px-4 py-2 rounded-lg bg-[#006A4E] text-white text-xs font-bold cursor-pointer"
                   >
                     {t('শুনানি মঞ্জুর ও খতিয়ান হালনাগাদ', 'Approve & Mutate')}
                   </button>
