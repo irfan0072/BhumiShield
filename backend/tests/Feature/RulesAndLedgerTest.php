@@ -420,5 +420,65 @@ final class RulesAndLedgerTest
             self::assertTrue($res['status'] === 'APPROVED', 'AC Land must successfully approve mutation and update ownership');
         }
     }
+
+    public static function test_20_public_codes_transfers_and_vault_documents_state_machine(): void
+    {
+        // 1. Resolve plot by code, dag_no, and integer ID
+        $plotByCode = \App\Services\LookupService::resolvePlot('PLT-DHK-SAV-0001');
+        self::assertTrue($plotByCode !== null && (int) $plotByCode['id'] === 1);
+
+        $plotByDag = \App\Services\LookupService::resolvePlot('101');
+        self::assertTrue($plotByDag !== null && (int) $plotByDag['id'] === 1);
+
+        // 2. Resolve deed by code and deed_no
+        $deed = DB::selectOne("SELECT * FROM deeds WHERE deed_no = 'DL-2026-1001'");
+        self::assertTrue($deed !== null && !empty($deed['deed_code']));
+        $deedByCode = \App\Services\LookupService::resolveDeed($deed['deed_code']);
+        self::assertTrue($deedByCode !== null && $deedByCode['deed_no'] === 'DL-2026-1001');
+
+        // 3. Citizen Document Vault (L0-L3)
+        $vault = \App\Http\Controllers\Api\V1\CitizenVaultAndTicketController::listPlotDocuments('PLT-DHK-SAV-0001');
+        self::assertTrue($vault['total'] >= 6, 'Must list all standard document templates');
+        self::assertTrue($vault['verified_count'] >= 4, 'Plot 1 must have seeded L2/L3 documents');
+        
+        // 4. 2-Tap Missing Document Ticket Creation
+        $ticketRes = \App\Http\Controllers\Api\V1\CitizenVaultAndTicketController::createMissingDocTicket(
+            'PLT-DHK-SAV-0001',
+            ['document_type' => 'WARISH_CERTIFICATE', 'priority' => 'HIGH'],
+            ['username' => 'citizen', 'role' => 'citizen', 'nid' => '9900001001']
+        );
+        self::assertTrue(str_starts_with($ticketRes['ticket_code'], 'TKT-2026-'));
+        self::assertTrue((int) $ticketRes['sla_target_hours'] > 0);
+
+        // 5. 13-Step Transfer State Machine
+        $trRes = \App\Services\TransferStateMachine::createTransfer([
+            'plot_code' => 'PLT-DHK-SAV-0001',
+            'transfer_area_decimal' => 5.0,
+            'proposed_price_bdt' => 1200000,
+            'deed_type' => 'SALE',
+        ], ['username' => 'citizen', 'role' => 'citizen', 'nid' => '9900001001']);
+        self::assertTrue(str_starts_with($trRes['transfer_code'], 'TR-2026-'));
+        self::assertTrue((int) $trRes['current_step'] === 1);
+        self::assertTrue($trRes['public_stage'] === 'START');
+
+        // Advance to step 8 (triggers biometric verification)
+        $advRes = \App\Services\TransferStateMachine::advanceStep($trRes['transfer_code'], [
+            'target_step' => 8,
+            'notes_bn' => 'বায়োমেট্রিক যাচাই সম্পাদন।',
+        ], ['username' => 'registrar', 'role' => 'sub_registrar']);
+        self::assertTrue((int) $advRes['current_step'] === 8);
+        self::assertTrue($advRes['public_stage'] === 'REGISTER');
+        self::assertTrue(count($advRes['biometrics']) > 0, 'Biometric verification audit record must be generated');
+        self::assertTrue($advRes['biometrics'][0]['match_status'] === 'MATCH');
+
+        // 6. Router test via HTTP request dispatcher
+        $router = require __DIR__ . '/../../routes/api.php';
+        $apiPlot = $router('GET', '/api/v1/plots/PLT-DHK-SAV-0001', [], []);
+        self::assertTrue(!empty($apiPlot['plot']['plot_code']));
+
+        $apiTransfers = $router('GET', '/api/v1/transfers', [], []);
+        self::assertTrue($apiTransfers['total'] >= 3);
+    }
 }
+
 

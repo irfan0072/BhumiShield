@@ -143,9 +143,9 @@ return static function (string $method, string $uri, array $query, array $body):
         RoleMiddleware::authorize(['citizen', 'admin']);
         return SystemAdminController::getCitizenLinkedProperties($query['nid'] ?? null);
     }
-    if ($method === 'POST' && preg_match('#^/citizen/plots/(\d+)/toggle-lock$#', $sub, $m)) {
+    if ($method === 'POST' && preg_match('#^/citizen/plots/([^/]+)/toggle-lock$#', $sub, $m)) {
         RoleMiddleware::authorize(['citizen', 'admin']);
-        return RoleControlController::togglePlotSaleLock((int) $m[1], $body);
+        return RoleControlController::togglePlotSaleLock(urldecode($m[1]), $body);
     }
     if ($method === 'GET' && $sub === '/citizen/disputes') {
         return RoleControlController::listDisputes(isset($query['plot_id']) ? (int) $query['plot_id'] : null);
@@ -154,10 +154,65 @@ return static function (string $method, string $uri, array $query, array $body):
         RoleMiddleware::authorize(['citizen', 'admin']);
         return RoleControlController::createDispute($body);
     }
-    if ($method === 'GET' && preg_match('#^/plots/(\d+)/check-before-you-buy$#', $sub, $m)) {
+    if ($method === 'GET' && (preg_match('#^/plots/([^/]+)/check-before-you-buy$#', $sub, $m) || preg_match('#^/check/([^/]+)$#', $sub, $m))) {
         $area = isset($query['requested_area_decimal']) ? (float) $query['requested_area_decimal'] : null;
         $sellerId = isset($query['seller_id']) ? (int) $query['seller_id'] : null;
-        return WorkflowController::citizenCheckBeforeYouBuy((int) $m[1], $area, $sellerId);
+        return WorkflowController::citizenCheckBeforeYouBuy(urldecode($m[1]), $area, $sellerId);
+    }
+    if ($method === 'GET' && preg_match('#^/plots/([^/]+)/documents$#', $sub, $m)) {
+        return \App\Http\Controllers\Api\V1\CitizenVaultAndTicketController::listPlotDocuments(urldecode($m[1]));
+    }
+    if ($method === 'POST' && preg_match('#^/plots/([^/]+)/documents$#', $sub, $m)) {
+        return \App\Http\Controllers\Api\V1\CitizenVaultAndTicketController::uploadPlotDocument(urldecode($m[1]), $body);
+    }
+    if ($method === 'POST' && preg_match('#^/plots/([^/]+)/request-missing-document$#', $sub, $m)) {
+        return \App\Http\Controllers\Api\V1\CitizenVaultAndTicketController::createMissingDocTicket(urldecode($m[1]), $body);
+    }
+    if ($method === 'GET' && preg_match('#^/plots/([^/]+)$#', $sub, $m)) {
+        return WorkflowController::getPlotDetails(urldecode($m[1]));
+    }
+
+    // 3b. 13-Step Transfer State Machine Routes (Section 5)
+    if ($method === 'GET' && $sub === '/transfers') {
+        return \App\Services\TransferStateMachine::listTransfers($query);
+    }
+    if ($method === 'POST' && $sub === '/transfers') {
+        return \App\Services\TransferStateMachine::createTransfer($body);
+    }
+    if ($method === 'GET' && preg_match('#^/transfers/([^/]+)$#', $sub, $m)) {
+        return \App\Services\TransferStateMachine::getTransfer(urldecode($m[1]));
+    }
+    if ($method === 'POST' && preg_match('#^/transfers/([^/]+)/advance$#', $sub, $m)) {
+        return \App\Services\TransferStateMachine::advanceStep(urldecode($m[1]), $body);
+    }
+
+    // 3c. SLA Support Tickets (Section 8.2)
+    if ($method === 'GET' && $sub === '/tickets') {
+        return \App\Http\Controllers\Api\V1\CitizenVaultAndTicketController::listTickets($query);
+    }
+    if ($method === 'GET' && preg_match('#^/tickets/([^/]+)$#', $sub, $m)) {
+        return \App\Http\Controllers\Api\V1\CitizenVaultAndTicketController::getTicket(urldecode($m[1]));
+    }
+
+    // 3d. Offices, Public Notices and Educational Blog (Sections 6, 8.5, 8.6)
+    if ($method === 'GET' && $sub === '/offices') {
+        $rows = DB::select('SELECT * FROM offices ORDER BY id ASC');
+        return ['items' => $rows, 'total' => count($rows)];
+    }
+    if ($method === 'GET' && $sub === '/notices') {
+        $rows = DB::select('SELECT * FROM notices WHERE is_active = 1 ORDER BY is_pinned DESC, published_at DESC');
+        return ['items' => $rows, 'total' => count($rows)];
+    }
+    if ($method === 'GET' && $sub === '/blog') {
+        $sql = 'SELECT p.*, c.name_bn AS category_name_bn, c.name_en AS category_name_en FROM blog_posts p JOIN blog_categories c ON c.slug = p.category_slug WHERE p.is_published = 1';
+        $params = [];
+        if (!empty($query['category'])) {
+            $sql .= ' AND p.category_slug = ?';
+            $params[] = $query['category'];
+        }
+        $sql .= ' ORDER BY p.id DESC';
+        $rows = DB::select($sql, $params);
+        return ['items' => $rows, 'total' => count($rows)];
     }
 
     // 4. Sub-Registrar Controlling Routes (Protected by RoleMiddleware)

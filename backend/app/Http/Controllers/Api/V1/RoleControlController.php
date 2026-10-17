@@ -75,10 +75,10 @@ final class RoleControlController
     // CITIZEN CONTROLLING SYSTEM (Plot Sale Lock & Dispute Filing)
     // -------------------------------------------------------------------------
 
-    public static function togglePlotSaleLock(int $plotId, array $body = [], ?array $user = null): array
+    public static function togglePlotSaleLock(int|string $plotId, array $body = [], ?array $user = null): array
     {
         $actor = RoleMiddleware::authorize(['citizen', 'admin'], $user);
-        $plot = DB::selectOne('SELECT * FROM plots WHERE id = ?', [$plotId]);
+        $plot = \App\Services\LookupService::resolvePlot($plotId);
         if (!$plot) {
             throw new \RuntimeException(json_encode([
                 'status' => 404,
@@ -87,6 +87,7 @@ final class RoleControlController
                 'message_en' => 'Plot not found.',
             ], JSON_UNESCAPED_UNICODE));
         }
+        $plotId = (int) $plot['id'];
 
         $isCurrentlyLocked = ((int) ($plot['owner_sale_locked'] ?? 0)) === 1;
         $targetLocked = isset($body['lock_state'])

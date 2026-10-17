@@ -236,7 +236,31 @@ final class WorkflowController
         return ['items' => $rows, 'total' => count($rows)];
     }
 
-    public static function citizenCheckBeforeYouBuy(int $plotId, ?float $requestedAreaDecimal = null, ?int $sellerId = null): array
+    public static function getPlotDetails(int|string $plotCodeOrId): array
+    {
+        $plot = \App\Services\LookupService::resolvePlot($plotCodeOrId);
+        if (!$plot) {
+            throw new \RuntimeException(json_encode([
+                'status' => 404,
+                'code' => 'PLOT_NOT_FOUND',
+                'message_bn' => 'জমির প্লট বা দাগ নম্বরটি পাওয়া যায়নি।',
+                'message_en' => 'Plot not found.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+        $bundle = self::loadPlotBundle((int) $plot['id']);
+        return \App\Services\PublicRecordService::forViewer([
+            'plot' => $bundle['plot'],
+            'location' => $bundle['location'],
+            'current_owners' => $bundle['latest_ownerships'],
+            'khatian_chain' => $bundle['khatians'],
+            'ownership_history' => $bundle['ownerships'],
+            'deeds' => $bundle['deeds'],
+            'mortgages' => $bundle['mortgages'],
+            'disputes' => $bundle['disputes'],
+        ]);
+    }
+
+    public static function citizenCheckBeforeYouBuy(int|string $plotId, ?float $requestedAreaDecimal = null, ?int $sellerId = null): array
     {
         if ($requestedAreaDecimal !== null && ($requestedAreaDecimal <= 0.0 || !is_finite($requestedAreaDecimal))) {
             throw new \RuntimeException(json_encode([
@@ -247,7 +271,18 @@ final class WorkflowController
             ], JSON_UNESCAPED_UNICODE));
         }
 
-        $bundle = self::loadPlotBundle($plotId);
+        $plot = \App\Services\LookupService::resolvePlot($plotId);
+        if (!$plot) {
+            throw new \RuntimeException(json_encode([
+                'status' => 404,
+                'code' => 'PLOT_NOT_FOUND',
+                'message_bn' => 'জমির প্লট বা দাগ নম্বরটি পাওয়া যায়নি।',
+                'message_en' => 'Plot not found.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+        $resolvedPlotId = (int) $plot['id'];
+
+        $bundle = self::loadPlotBundle($resolvedPlotId);
         $sellerPerson = null;
         if ($sellerId !== null) {
             $sellerPerson = DB::selectOne('SELECT * FROM persons WHERE id = ?', [$sellerId]);

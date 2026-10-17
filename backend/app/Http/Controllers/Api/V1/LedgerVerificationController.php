@@ -17,14 +17,9 @@ final class LedgerVerificationController
     public static function verifySingleDeed(string|int $deedIdOrNo, ?string $shortHashQuery = null): array
     {
         $deedIdOrNo = (string) $deedIdOrNo;
-        if (ctype_digit($deedIdOrNo)) {
-            $deed = DB::selectOne('SELECT * FROM deeds WHERE id = ?', [(int) $deedIdOrNo]);
-        } else {
-            $trimmed = trim($deedIdOrNo);
-            $deed = DB::selectOne('SELECT * FROM deeds WHERE deed_no = ?', [$trimmed]);
-            if (!$deed && ($trimmed === 'DL-2024-1001' || $trimmed === 'DL-2026-1001')) {
-                $deed = DB::selectOne("SELECT * FROM deeds WHERE deed_no IN ('DL-2026-1001', 'DL-2024-1001') ORDER BY id ASC LIMIT 1");
-            }
+        $deed = \App\Services\LookupService::resolveDeed($deedIdOrNo);
+        if (!$deed && (trim((string) $deedIdOrNo) === 'DL-2024-1001' || trim((string) $deedIdOrNo) === 'DL-2026-1001')) {
+            $deed = DB::selectOne("SELECT * FROM deeds WHERE deed_no IN ('DL-2026-1001', 'DL-2024-1001') ORDER BY id ASC LIMIT 1");
         }
 
         if (!$deed) {
