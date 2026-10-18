@@ -791,8 +791,8 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
       </div>
 
       {/* Sub-Tabs Switcher */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
-        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 pb-2">
+        <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-white border border-slate-200/90 rounded-2xl shadow-2xs">
           {(() => {
             const roleAllowedTabs: AcLandTab[] = (
               role === 'settlement_records_officer'
@@ -814,13 +814,15 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
                   <button
                     type="button"
                     onClick={() => handleTabChange('mutations')}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                      subTab === 'mutations' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 select-none ${
+                      subTab === 'mutations' ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span>{t('ই-নামজারি বেঞ্চ', 'e-Mutation Workbench')}</span>
-                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-800 font-bold">
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                      subTab === 'mutations' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'
+                    }`}>
                       {toBanglaDigits(pendingMutationsCount, lang)}
                     </span>
                   </button>
@@ -830,13 +832,15 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
                   <button
                     type="button"
                     onClick={() => handleTabChange('khatians')}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                      subTab === 'khatians' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 select-none ${
+                      subTab === 'khatians' ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
                     <ShieldAlert className="w-3.5 h-3.5" />
                     <span>{t('রেকর্ডের অমিল ও শুদ্ধিপত্র', 'Record Discrepancies')}</span>
-                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-100 text-rose-800 font-bold">
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                      subTab === 'khatians' ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-800'
+                    }`}>
                       {toBanglaDigits(flaggedKhatiansCount, lang)}
                     </span>
                   </button>
@@ -846,13 +850,15 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
                   <button
                     type="button"
                     onClick={() => handleTabChange('disputes')}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                      subTab === 'disputes' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 select-none ${
+                      subTab === 'disputes' ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
                     <Scale className="w-3.5 h-3.5" />
                     <span>{t('আপত্তি ও মিস-কেস আদালত', 'Objections & Court')}</span>
-                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-blue-100 text-blue-800 font-bold">
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                      subTab === 'disputes' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-800'
+                    }`}>
                       {toBanglaDigits(activeDisputesCount, lang)}
                     </span>
                   </button>
@@ -862,13 +868,15 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
                   <button
                     type="button"
                     onClick={() => handleTabChange('field_reports')}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                      subTab === 'field_reports' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 select-none ${
+                      subTab === 'field_reports' ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
                     <Compass className="w-3.5 h-3.5" />
                     <span>{t('মাঠ তদন্ত প্রতিবেদন', 'Field Reports')}</span>
-                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700">
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                      subTab === 'field_reports' ? 'bg-white/20 text-white font-bold' : 'bg-slate-200 text-slate-700 font-bold'
+                    }`}>
                       {toBanglaDigits(fieldReportsList.length, lang)}
                     </span>
                   </button>
@@ -878,13 +886,15 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
                   <button
                     type="button"
                     onClick={() => handleTabChange('survey_batches')}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                      subTab === 'survey_batches' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 select-none ${
+                      subTab === 'survey_batches' ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
                     <FileSpreadsheet className="w-3.5 h-3.5" />
                     <span>{t('জরিপ রেকর্ড ও ব্যাচ দাখিল', 'Survey Records Staging')}</span>
-                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-800 font-bold">
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                      subTab === 'survey_batches' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800'
+                    }`}>
                       {toBanglaDigits(onboardingBatches.length, lang)}
                     </span>
                   </button>
@@ -894,13 +904,15 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
                   <button
                     type="button"
                     onClick={() => handleTabChange('onboarding')}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                      subTab === 'onboarding' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 select-none ${
+                      subTab === 'onboarding' ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>{t('জরিপ ব্যাচ নিরীক্ষা ও অনুমোদন', 'Survey Batches Inspection')}</span>
-                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-800 font-bold">
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                      subTab === 'onboarding' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'
+                    }`}>
                       {toBanglaDigits(onboardingBatches.filter((b) => b.status === 'SUBMITTED').length, lang)}
                     </span>
                   </button>
@@ -910,13 +922,15 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
                   <button
                     type="button"
                     onClick={() => handleTabChange('sla_overview')}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                      subTab === 'sla_overview' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 select-none ${
+                      subTab === 'sla_overview' ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
                     <Clock className="w-3.5 h-3.5" />
                     <span>{t('সময়সীমা ও তাগিদ (SLA)', 'SLA Escalations')}</span>
-                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700">
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                      subTab === 'sla_overview' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                    }`}>
                       {toBanglaDigits(slaEscalationsList.length, lang)}
                     </span>
                   </button>
@@ -926,8 +940,8 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
                   <button
                     type="button"
                     onClick={() => handleTabChange('appeals')}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                      subTab === 'appeals' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 select-none ${
+                      subTab === 'appeals' ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
                     <Gavel className="w-3.5 h-3.5" />
@@ -939,8 +953,8 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
                   <button
                     type="button"
                     onClick={() => handleTabChange('explorer')}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                      subTab === 'explorer' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 select-none ${
+                      subTab === 'explorer' ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
                     <FileSearch className="w-3.5 h-3.5" />
@@ -952,8 +966,8 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
                   <button
                     type="button"
                     onClick={() => handleTabChange('verifier')}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                      subTab === 'verifier' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 select-none ${
+                      subTab === 'verifier' ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
                     <ShieldCheck className="w-3.5 h-3.5" />

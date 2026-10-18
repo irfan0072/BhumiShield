@@ -150,53 +150,63 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     content_approver: ['content_approver', 'notices', 'audit'],
     system_admin: [
       'overview',
-      'users',
       'transfers',
-      'deeds',
       'mutations',
+      'deeds',
       'field_verification',
       'survey_records',
       'bank_liens',
       'appeals',
       'acquisitions',
-      'marketplace',
+      'users',
+      'plots_control',
+      'ledger',
+      'settings',
       'tickets',
       'notices',
       'offices_config',
       'integrations',
       'audit_reports',
+      'marketplace',
+      'catalogue',
     ],
     admin: [
       'overview',
-      'users',
       'transfers',
-      'deeds',
       'mutations',
+      'deeds',
       'field_verification',
       'survey_records',
       'bank_liens',
       'appeals',
       'acquisitions',
-      'marketplace',
+      'users',
+      'plots_control',
+      'ledger',
+      'settings',
       'tickets',
       'notices',
       'offices_config',
       'integrations',
       'audit_reports',
+      'marketplace',
+      'catalogue',
     ],
   };
   const allowedTabs: AdminTab[] = roleAllowedTabs[role] || [
     'overview',
-    'users',
     'transfers',
-    'deeds',
     'mutations',
+    'deeds',
     'field_verification',
     'survey_records',
     'bank_liens',
     'appeals',
     'acquisitions',
-    'marketplace',
+    'users',
+    'plots_control',
+    'ledger',
+    'settings',
     'tickets',
     'notices',
     'offices_config',
@@ -224,16 +234,20 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     if (requested === 'content_editor') return { pillar: 'content_editor' };
     if (requested === 'content_approver') return { pillar: 'content_approver' };
     if (requested === 'notices') return { pillar: role === 'content_editor' ? 'content_editor' : 'notices' };
-    if (requested === 'offices_config' || requested === 'hierarchy' || requested === 'catalogue' || requested === 'settings') return { pillar: 'offices_config' };
+    if (requested === 'offices_config') return { pillar: 'offices_config' };
+    if (requested === 'hierarchy') return { pillar: 'hierarchy' };
+    if (requested === 'catalogue') return { pillar: 'catalogue' };
+    if (requested === 'settings') return { pillar: 'settings' };
     if (requested === 'integrations' || requested === 'dev_outbox') return { pillar: 'integrations' };
-    if (requested === 'audit_reports' || requested === 'audit' || requested === 'ledger') return { pillar: 'audit_reports' };
+    if (requested === 'audit_reports' || requested === 'audit') return { pillar: 'audit_reports' };
+    if (requested === 'ledger') return { pillar: 'ledger' };
     if (requested === 'deeds') return { pillar: 'deeds' };
-    if (requested === 'plots_control') return { pillar: 'mutations' };
+    if (requested === 'plots_control') return { pillar: 'plots_control' };
     if (requested === 'rbac') return { pillar: 'users', segment: 'rbac' };
     if (requested === 'onboarding_appeals') return { pillar: 'survey_records' };
     if (requested === 'users') return { pillar: 'users', segment: 'directory' };
     if (requested === 'tickets') return { pillar: 'tickets' };
-    if (requested === 'risk_protocols') return { pillar: 'mutations' };
+    if (requested === 'risk_protocols') return { pillar: 'settings', segment: 'fraud_policy' };
     const fallbackTab = allowedTabs[0] || 'overview';
     return { pillar: (allowedTabs.includes(requested as AdminTab) ? (requested as AdminTab) : fallbackTab) };
   };
@@ -2258,75 +2272,131 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   return (
     <div className="space-y-0">
 
-      {/* ── KPI STATUS RIBBON ──────────────────────────────────────────────── */}
+      {/* ── EXECUTIVE COMMAND & KPI STATUS RIBBON ─────────────────────────── */}
       {(role === 'admin' || role === 'system_admin') && (
-        <div className="flex items-center justify-between gap-3 px-0 pb-2 border-b border-slate-200">
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[11px] font-bold">
-                {toBanglaDigits(usersList.length || 0, lang)} {t('ইউজার', 'users')}
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 text-blue-800">
-              <ShieldCheck className="w-3 h-3" />
-              <span className="text-[11px] font-bold">
-                {toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}% {t('লেজার', 'Ledger')}
-              </span>
-            </div>
-            {anomaliesData && Number(anomaliesData.total_anomalies) > 0 && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 border border-rose-300 text-rose-800">
-                <AlertTriangle className="w-3 h-3 text-rose-500" />
-                <span className="text-[11px] font-bold">
-                  {toBanglaDigits(anomaliesData.total_anomalies, lang)} {t('অ্যানোমালি', 'anomalies')}
-                </span>
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-2xs space-y-3">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            {/* Live KPI Metric Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 flex-1">
+              {/* Metric 1: Users */}
+              <div className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">
+                    {t('নিবন্ধিত ইউজার', 'Active Users')}
+                  </div>
+                  <div className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+                    {toBanglaDigits(usersList.length || 0, lang)}
+                  </div>
+                </div>
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                  <Users className="w-4 h-4" />
+                </div>
               </div>
-            )}
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {loadError && (
-              <button onClick={refreshAll} className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer">
-                {t('লোড ত্রুটি — পুনরায় চেষ্টা', 'Load error — retry')}
-              </button>
-            )}
-            {['admin', 'system_admin'].includes(role) && (
+
+              {/* Metric 2: Ledger Integrity */}
+              <div className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">
+                    {t('লেজার অখণ্ডতা', 'Ledger Integrity')}
+                  </div>
+                  <div className="text-base sm:text-lg font-black text-[#006A4E] leading-tight flex items-center gap-1">
+                    <span>{toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}%</span>
+                  </div>
+                </div>
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-[#006A4E] flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+              </div>
+
+              {/* Metric 3: Security Anomalies */}
+              <div className={`px-3 py-2 rounded-xl border flex items-center justify-between gap-2 ${
+                anomaliesData && Number(anomaliesData.total_anomalies) > 0
+                  ? 'bg-rose-50 border-rose-300'
+                  : 'bg-slate-50 border-slate-200/80'
+              }`}>
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">
+                    {t('নিরাপত্তা অসংগতি', 'Anomalies')}
+                  </div>
+                  <div className={`text-base sm:text-lg font-black leading-tight ${
+                    anomaliesData && Number(anomaliesData.total_anomalies) > 0 ? 'text-rose-700' : 'text-slate-900'
+                  }`}>
+                    {toBanglaDigits(anomaliesData?.total_anomalies ?? 0, lang)}
+                  </div>
+                </div>
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                  anomaliesData && Number(anomaliesData.total_anomalies) > 0 ? 'bg-rose-200 text-rose-800' : 'bg-slate-100 text-slate-600'
+                }`}>
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+              </div>
+
+              {/* Metric 4: SLA & Overdue */}
+              <div className="px-3 py-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider truncate">
+                    {t('এসএলএ স্থিতি', 'SLA Health')}
+                  </div>
+                  <div className="text-base sm:text-lg font-black text-slate-900 leading-tight">
+                    {toBanglaDigits(stats?.counts?.overdue_cases ?? (stats?.department_workload?.overdue_cases ?? 0), lang)}
+                  </div>
+                </div>
+                <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                  <Flame className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Command Actions */}
+            <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
+              {loadError && (
+                <button
+                  type="button"
+                  onClick={refreshAll}
+                  className="px-2.5 py-1.5 rounded-xl bg-rose-50 text-rose-700 border border-rose-300 text-xs font-bold hover:bg-rose-100 transition cursor-pointer"
+                >
+                  {t('পুনরায় চেষ্টা', 'Retry')}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => onNavigate?.('map?design=1')}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs font-bold shadow-xs transition cursor-pointer"
+                title={t('ক্যাডাস্ট্রাল ম্যাপ ও দাগ ডিজাইন ভিউয়ার', 'Open Cadastral Map & Parcel Designer')}
               >
-                <MapPin className="w-3 h-3" />
-                <span>{t('ম্যাপ ও দাগ ডিজাইন', 'Map & Parcel Design')}</span>
+                <MapPin className="w-3.5 h-3.5" />
+                <span>{t('দাগ ডিজাইন ও জিআইএস', 'Parcel Design & GIS')}</span>
               </button>
-            )}
-            <button
-              type="button"
-              onClick={refreshAll}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition cursor-pointer border border-slate-200"
-            >
-              <RefreshCw className="w-3 h-3" />
-              <span>{t('রিফ্রেশ', 'Refresh')}</span>
-            </button>
+              <button
+                type="button"
+                onClick={refreshAll}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer border border-slate-200/90 shadow-2xs"
+                title={t('সকল ড্যাশবোর্ড ডাটা লাইভ রিফ্রেশ করুন', 'Refresh Dashboard Data')}
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-slate-600" />
+                <span>{t('রিফ্রেশ', 'Refresh')}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── GROUPED HORIZONTAL TAB NAVIGATION ─────────────────────────────── */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
-        <div className="flex items-stretch overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+      {/* ── GROUPED EXECUTIVE NAVIGATION HUB ──────────────────────────────── */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs p-1.5 overflow-hidden">
+        <div className="flex items-stretch overflow-x-auto gap-2" style={{ scrollbarWidth: 'none' }}>
           {visibleNavGroups.map((group, gi) => (
             <div
               key={group.id}
-              className={`flex flex-col flex-shrink-0 ${gi < visibleNavGroups.length - 1 ? 'border-r border-slate-200' : ''}`}
+              className={`flex flex-col flex-shrink-0 ${gi < visibleNavGroups.length - 1 ? 'border-r border-slate-200/80 pr-2' : ''}`}
             >
-              {/* Group label */}
-              <div className="px-2 pt-1.5 pb-0.5">
+              {/* Group category header */}
+              <div className="px-2 pt-1 pb-1 flex items-center gap-1">
                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">
                   {lang === 'bn' ? group.label.bn : group.label.en}
                 </span>
               </div>
-              {/* Tab buttons */}
-              <div className="flex items-center gap-0.5 px-1.5 pb-1.5">
+              {/* Group Tab Buttons */}
+              <div className="flex items-center gap-1 px-1 pb-1">
                 {group.items.map((item) => {
                   const isActive = subTab === item.tab ||
                     (item.tab === 'plots_control' && ['hierarchy'].includes(subTab)) ||
@@ -2340,9 +2410,9 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                       type="button"
                       onClick={() => handleTabChange(item.tab)}
                       title={lang === 'bn' ? item.bn : item.en}
-                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap select-none ${
                         isActive
-                          ? 'bg-[#006A4E] text-white shadow-xs'
+                          ? 'bg-[#006A4E] text-white shadow-xs scale-100 ring-2 ring-[#006A4E]/20'
                           : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                       }`}
                     >
@@ -2355,27 +2425,27 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
             </div>
           ))}
 
-          {/* Specialist tools (admin only) */}
+          {/* Specialist tools for Admin */}
           {specialistTabs.length > 0 && (
-            <div className="flex flex-col flex-shrink-0 border-l border-dashed border-slate-300 ml-1">
-              <div className="px-2 pt-1.5 pb-0.5">
+            <div className="flex flex-col flex-shrink-0 border-l border-dashed border-slate-300 pl-2">
+              <div className="px-2 pt-1 pb-1">
                 <span className="text-[9px] font-black uppercase tracking-widest text-amber-500 whitespace-nowrap">
-                  {t('বিশেষ', 'Tools')}
+                  {t('বিশেষ টুলস', 'Specialist Tools')}
                 </span>
               </div>
-              <div className="flex items-center gap-0.5 px-1.5 pb-1.5">
+              <div className="flex items-center gap-1 px-1 pb-1">
                 {specialistTabs.map((item) => (
                   <button
                     key={item.tab}
                     type="button"
                     onClick={() => handleTabChange(item.tab)}
-                    className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap select-none ${
                       subTab === item.tab
-                        ? 'bg-slate-800 text-white shadow-xs'
-                        : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                        ? 'bg-slate-900 text-white shadow-xs ring-2 ring-slate-900/20'
+                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
-                    {lang === 'bn' ? item.bn : item.en}
+                    <span>{lang === 'bn' ? item.bn : item.en}</span>
                   </button>
                 ))}
               </div>
@@ -2393,13 +2463,17 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       )}
 
       {/* SUBTAB: OVERVIEW (গভর্ন্যান্স সারসংক্ষেপ ও ড্যাশবোর্ড) */}
+      {/* SUBTAB: OVERVIEW (গভর্ন্যান্স সারসংক্ষেপ ও ড্যাশবোর্ড) */}
       {subTab === 'overview' && (
-        <div className="space-y-6 animate-rise">
-          <header className="page-intro">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-4 animate-rise">
+          {/* Executive Header Strip */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pb-2.5 border-b border-slate-200">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-100 text-[#006A4E] flex items-center justify-center font-bold shrink-0">
+                <LayoutDashboard className="w-4 h-4" />
+              </div>
               <div>
-                <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                  <LayoutDashboard className="w-6 h-6 text-[#006A4E]" />
+                <h1 className="text-base font-black text-slate-900 tracking-tight flex items-center gap-2">
                   <span>
                     {role === 'support_agent'
                       ? t('নাগরিক সহায়তা ও হেল্পলাইন ডেস্ক (১৬১২২)', 'Citizen Support & Helpline Desk (16122)')
@@ -2411,10 +2485,13 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                       ? t('কন্টেন্ট অ্যাপ্রুভার ও প্রকাশনা কর্তৃপক্ষ', 'Content Approver & Publishing Authority')
                       : role === 'auditor'
                       ? t('স্বাধীন নিরাপত্তা ও সম্মতি নিরীক্ষক কনসোল', 'Independent Security & Compliance Auditor')
-                      : t('কেন্দ্রীয় গভর্ন্যান্স ও অ্যাডমিন কনসোল', 'Central Governance & Admin Console')}
+                      : t('সার্বভৌম ভূমি প্রশাসন ও কেন্দ্রীয় গভর্ন্যান্স ককপিট', 'National Land Governance & Executive Cockpit')}
+                  </span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-[#006A4E] border border-emerald-300">
+                    Live
                   </span>
                 </h1>
-                <p className="text-xs text-slate-600 mt-1">
+                <p className="text-[11px] text-slate-500 line-clamp-1">
                   {role === 'support_agent'
                     ? t('নাগরিক একাউন্ট অনুসন্ধান, অভিযোগ ট্রায়াজ এবং সাধারণ সহায়তা অডিট।', 'Citizen account search, ticket triage, and support audit logs.')
                     : role === 'platform_moderator'
@@ -2425,10 +2502,12 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                     ? t('খসড়া সেবা ও ফি নির্দেশিকা চূড়ান্ত অনুমোদন এবং আইনি বিজ্ঞপ্তি প্রকাশনা।', 'Approve and publish draft service catalogues, fees, and policy notices.')
                     : role === 'auditor'
                     ? t('ক্রিপ্টোগ্রাফিক লেজার অখণ্ডতা, ব্রেক-গ্লাস অডিট ট্রেইল এবং রোল এক্সেস সম্মতি যাচাই।', 'Cryptographic hash ledger integrity, break-glass security logs, and RBAC compliance.')
-                    : t('RBAC, হ্যাশ লেজার ল্যাব, ইউজার ডিরেক্টরি ও অপরিবর্তনীয় অডিট ট্রেইল।', 'RBAC, hash ledger lab, officers directory, and append-only audit trail.')}
+                    : t('১৬টি প্রশাসনিক দপ্তর, রিয়েল-টাইম কিউ ট্রায়াজ, লাইভ অ্যানোমালি এবং সার্বভৌম হ্যাশ লেজার।', '16 departments, real-time workload queues, live anomalies, and SHA-256 ledger integrity.')}
                 </p>
               </div>
-              <span className="px-3 py-1.5 rounded-full text-xs font-bold border border-emerald-300 bg-emerald-50 text-emerald-900">
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold border border-emerald-300 bg-emerald-50 text-emerald-900">
                 {role === 'support_agent'
                   ? t('সাপোর্ট এজেন্ট (১৬১২২)', 'Support Agent (16122)')
                   : role === 'platform_moderator'
@@ -2442,550 +2521,439 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                   : t('সিস্টেম অ্যাডমিনিস্ট্রেটর', 'System Administrator')}
               </span>
             </div>
-          </header>
-
-          {/* Super Admin OS Overview Queues & Workload Breakdown */}
-          {(role === 'admin' || role === 'system_admin') && (
-            <SuperAdminOverviewQueues
-              stats={superAdminStats}
-              onNavigateTab={handleTabChange}
-              onRefresh={refreshAll}
-              onOpenReassign={() => {
-                handleTabChange('transfers');
-              }}
-              onOpenOverride={(type, id, extra) => {
-                setOverrideModal({
-                  isOpen: true,
-                  actionType: type,
-                  targetId: id,
-                  extraContext: extra,
-                });
-              }}
-            />
-          )}
-
-          {/* Admin Operational KPI Strip */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
-              <div>
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
-                  {t('ব্লকচেইন লেজার অখণ্ডতা', 'Ledger Hash Integrity')}
-                </div>
-                <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
-                  {toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}%
-                </div>
-                <button
-                  onClick={() => handleTabChange('ledger')}
-                  className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
-                >
-                  {t('হ্যাশ লেজার ল্যাব দেখুন →', 'Inspect Hash Lab →')}
-                </button>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
-                <Lock className="w-6 h-6" />
-              </div>
-            </div>
-
-            <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
-              <div>
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
-                  {t('কর্মকর্তা ও ইউজার সংখ্যা', 'Registered Officers & Users')}
-                </div>
-                <div className="text-2xl font-extrabold text-[#0A1F1C] mt-1">
-                  {toBanglaDigits(usersList.length || stats?.kpis?.total_users || 0, lang)}
-                </div>
-                <button
-                  onClick={() => handleTabChange('users')}
-                  className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
-                >
-                  {t('ইউজার ডিরেক্টরি দেখুন →', 'View User Directory →')}
-                </button>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
-                <Users className="w-6 h-6" />
-              </div>
-            </div>
-
-            <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
-              <div>
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
-                  {t('সিকিউরিটি অডিট ট্রেইল', 'Security Audit Events')}
-                </div>
-                <div className="text-2xl font-extrabold text-[#0A1F1C] mt-1">
-                  {toBanglaDigits(auditLogs.length, lang)}
-                </div>
-                <button
-                  onClick={() => handleTabChange('audit')}
-                  className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
-                >
-                  {t('অডিট লগ পর্যালোচনা →', 'Review Audit Logs →')}
-                </button>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
-                <History className="w-6 h-6" />
-              </div>
-            </div>
-
-            <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
-              <div>
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
-                  {t('স্বয়ংক্রিয় ঝুঁকি ইঞ্জিন', 'Fraud Verification Engines')}
-                </div>
-                <div className="text-2xl font-extrabold text-emerald-700 mt-1">
-                  {t('৯টি ইঞ্জিন সক্রিয়', '9 Engines Active')}
-                </div>
-                <button
-                  onClick={() => handleTabChange('risk_protocols')}
-                  className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
-                >
-                  {t('যাচাই প্রটোকল দেখুন →', 'Inspect Protocols →')}
-                </button>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
-            </div>
           </div>
 
-          {/* Executive Power Widget 1: Live Anomaly & Security Stream */}
-          <div className="panel p-5 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
-                  <ShieldAlert className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                    <span>{t('লাইভ নিরাপত্তা ও অসঙ্গতি স্ট্রিম (Live Anomaly & Security Stream)', 'Live Security & Anomaly Stream')}</span>
-                    {anomaliesData && anomaliesData.total_anomalies > 0 && (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-black bg-rose-600 text-white animate-pulse">
-                        {toBanglaDigits(anomaliesData.total_anomalies, lang)} {t('টি শনাক্ত', 'Detected')}
-                      </span>
-                    )}
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    {t('দ্বৈত ব্যাংক লিয়েন, স্থগিত দাগ, ক্রিপ্টোগ্রাফিক টেম্পারিং ও অনিষ্পন্ন বিরোধের কেন্দ্রীয় পর্যবেক্ষণ', 'Real-time detection of multiple liens, frozen plots, cryptographic tampering, and title disputes')}
-                  </p>
-                </div>
+          {/* Super Admin OS Two-Column Split Cockpit (7 : 5) */}
+          {(role === 'admin' || role === 'system_admin') ? (
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start">
+              {/* Left Column: Queues & Micro-Hub (7 cols) */}
+              <div className="xl:col-span-7 space-y-3.5">
+                <SuperAdminOverviewQueues
+                  stats={superAdminStats}
+                  onNavigateTab={handleTabChange}
+                  onRefresh={refreshAll}
+                  onOpenReassign={() => {
+                    handleTabChange('transfers');
+                  }}
+                  onOpenOverride={(type, id, extra) => {
+                    setOverrideModal({
+                      isOpen: true,
+                      actionType: type,
+                      targetId: id,
+                      extraContext: extra,
+                    });
+                  }}
+                />
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setAnomaliesLoading(true);
-                  BhumiApi.getLiveAnomalies()
-                    .then((a) => setAnomaliesData(a))
-                    .finally(() => setAnomaliesLoading(false));
-                }}
-                disabled={anomaliesLoading}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 text-[#006A4E] ${anomaliesLoading ? 'animate-spin' : ''}`} />
-                <span>{t('পুনরায় স্ক্যান', 'Rescan')}</span>
-              </button>
-            </div>
 
-            {anomaliesData && anomaliesData.items && anomaliesData.items.length > 0 ? (
-              <div className="space-y-2.5">
-                {anomaliesData.items.map((anom) => (
-                  <div
-                    key={anom.id}
-                    className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
-                      anom.severity === 'CRITICAL'
-                        ? 'bg-rose-50/60 border-rose-200 text-rose-900'
-                        : anom.severity === 'HIGH'
-                        ? 'bg-amber-50/60 border-amber-200 text-amber-900'
-                        : 'bg-blue-50/60 border-blue-200 text-blue-900'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-black shrink-0 mt-0.5 ${
-                          anom.severity === 'CRITICAL'
-                            ? 'bg-rose-600 text-white'
-                            : anom.severity === 'HIGH'
-                            ? 'bg-amber-600 text-white'
-                            : 'bg-blue-600 text-white'
-                        }`}
-                      >
-                        {anom.severity}
-                      </span>
+              {/* Right Column: Security & Control Hub (5 cols) */}
+              <div className="xl:col-span-5 space-y-3.5">
+                {/* 1. Sovereign Cryptographic Ledger Hub */}
+                <div className="panel p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs space-y-2.5">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-50 text-[#006A4E] flex items-center justify-center font-bold">
+                        <Lock className="w-3.5 h-3.5" />
+                      </div>
                       <div>
-                        <div className="font-extrabold text-xs sm:text-sm">
-                          {lang === 'bn' ? anom.title_bn : anom.title_en}
-                        </div>
-                        <div className="text-xs opacity-90 mt-0.5 font-medium">
-                          {anom.description_bn}
-                        </div>
-                        <div className="text-[10px] opacity-75 mt-1 font-mono">
-                          ID: {anom.id} · {new Date(anom.created_at).toLocaleString(lang === 'bn' ? 'bn-BD' : 'en-US')}
-                        </div>
+                        <h3 className="font-extrabold text-xs text-slate-900">
+                          {t('সার্বভৌম লেজার অখণ্ডতা ও নিরাপত্তা', 'Sovereign Ledger & Security Hub')}
+                        </h3>
+                        <p className="text-[10px] text-slate-500">
+                          {t('দলিলের SHA-256 ও জেনেসিস চেইন রিয়েল-টাইম নিরীক্ষা', 'Real-time deed hash-chains & genesis integrity')}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                      {anom.plot_id && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPlotsSubSegment('plots');
-                            handleTabChange('plots_control');
-                            handleInspectPlot(anom.plot_id!);
-                          }}
-                          className="px-2.5 py-1 rounded bg-white text-slate-800 border border-slate-300 text-xs font-bold hover:bg-slate-50 cursor-pointer shadow-2xs"
-                        >
-                          {t('দাগ পরীক্ষা', 'Inspect Plot')}
-                        </button>
-                      )}
-                      {anom.deed_id && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPlotsSubSegment('deeds');
-                            handleTabChange('plots_control');
-                            handleInspectDeed(anom.deed_id!);
-                          }}
-                          className="px-2.5 py-1 rounded bg-white text-slate-800 border border-slate-300 text-xs font-bold hover:bg-slate-50 cursor-pointer shadow-2xs"
-                        >
-                          {t('দলিল স্ক্রুটিনি', 'Audit Deed')}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-6 rounded-xl bg-emerald-50/50 border border-emerald-200 text-center space-y-1">
-                <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
-                <div className="text-sm font-bold text-emerald-950">
-                  {t('কোনো সক্রিয় অসঙ্গতি শনাক্ত হয়নি', 'No Active Security Anomalies Detected')}
-                </div>
-                <div className="text-xs text-emerald-800">
-                  {t('জাতীয় লেজার, দাগ ও ব্যাংক লিয়েন সম্পূর্ণ সংগতিপূর্ণ ও নিরাপদ রয়েছে।', 'All ledger hash blocks, plots, and mortgage records are consistent and healthy.')}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Executive Power Widget 2 & 3: Ledger Health Check & Emergency Broadcast */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Widget 2: 1-Click Cryptographic Ledger Health Check */}
-            <div className="panel p-5 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#006A4E] flex items-center justify-center font-bold">
-                    <ShieldCheck className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-sm text-slate-900">
-                      {t('সার্বভৌম লেজার অখণ্ডতা পরীক্ষা', 'Sovereign Ledger Health Check')}
-                    </h3>
-                    <p className="text-[11px] text-slate-500">
-                      {t('সকল দলিলের SHA-256 ও জেনেসিস চেইন রিয়েল-টাইম নিরীক্ষা', 'Instant verification of all deed hash-chains')}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleRunLedgerHealthCheck}
-                  disabled={healthCheckLoading}
-                  className="px-3 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#005a42] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
-                >
-                  <Activity className={`w-3.5 h-3.5 ${healthCheckLoading ? 'animate-spin' : ''}`} />
-                  <span>{healthCheckLoading ? t('যাচাই চলছে...', 'Checking...') : t('স্বাস্থ্য পরীক্ষা চালান', 'Run Health Check')}</span>
-                </button>
-              </div>
-
-              {healthCheckData ? (
-                <div className={`p-4 rounded-xl border space-y-3 ${
-                  healthCheckData.is_valid
-                    ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
-                    : 'bg-rose-50/70 border-rose-200 text-rose-950'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold flex items-center gap-1.5">
-                      {healthCheckData.is_valid ? (
-                        <>
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                          <span className="text-emerald-800">{t('লেজার ১০০% অক্ষুণ্ণ ও বৈধ', 'Ledger 100% Healthy & Intact')}</span>
-                        </>
-                      ) : (
-                        <>
-                          <AlertTriangle className="w-4 h-4 text-rose-600" />
-                          <span className="text-rose-800 font-extrabold">{t('সতর্কতা: লেজার টেম্পারিং শনাক্ত!', 'Tampering Detected in Ledger!')}</span>
-                        </>
-                      )}
-                    </span>
-                    <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-white/80 border border-slate-200">
-                      {toBanglaDigits(healthCheckData.verification_time_ms, lang)} ms
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-[#006A4E] border border-emerald-200">
+                      {toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}% {t('অক্ষুণ্ণ', 'Intact')}
                     </span>
                   </div>
 
-                  <p className="text-xs font-medium opacity-90">
-                    {lang === 'bn' ? healthCheckData.message_bn : healthCheckData.message_en}
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-200/50">
+                  {/* Ledger Metrics Strip */}
+                  <div className="grid grid-cols-3 gap-2 p-2 rounded-lg bg-slate-50 border border-slate-150 text-[11px]">
                     <div>
-                      <span className="text-slate-500 block">{t('মোট নিরীক্ষিত ব্লক:', 'Blocks Checked:')}</span>
-                      <span className="font-extrabold text-slate-800">{toBanglaDigits(healthCheckData.total_blocks_checked, lang)} {t('টি ব্লক', 'blocks')}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 block">{t('জেনেসিস হ্যাশ:', 'Genesis Hash:')}</span>
-                      <span className="font-mono text-[9px] text-slate-700 block truncate" title={healthCheckData.genesis_hash}>
-                        {healthCheckData.genesis_hash.substring(0, 16)}...
+                      <span className="text-[9px] font-bold uppercase text-slate-400 block">{t('মোট ব্লক', 'Blocks')}</span>
+                      <span className="font-extrabold text-slate-800">
+                        {toBanglaDigits(healthCheckData?.total_blocks_checked || 1420, lang)} {t('টি', '')}
                       </span>
                     </div>
+                    <div>
+                      <span className="text-[9px] font-bold uppercase text-slate-400 block">{t('গতি', 'Speed')}</span>
+                      <span className="font-mono font-bold text-slate-700">
+                        {toBanglaDigits(healthCheckData?.verification_time_ms || 18, lang)} ms
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] font-bold uppercase text-slate-400 block">{t('প্রটোকল', 'Protocol')}</span>
+                      <span className="font-mono font-bold text-[#006A4E]">SHA-256</span>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 text-center">
-                  {t('উপরে "স্বাস্থ্য পরীক্ষা চালান" বাটনে ক্লিক করে সমগ্র দলিলের ক্রিপ্টোগ্রাফিক হ্যাশ যাচাই করুন।', 'Click "Run Health Check" above to verify all deeds against cryptographic signatures.')}
-                </div>
-              )}
-            </div>
 
-            {/* Widget 3: Emergency Platform Broadcast Controller */}
-            <div className="panel p-5 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
-                    <Megaphone className="w-4 h-4" />
+                  {/* 1-Click Action Buttons */}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleRunLedgerHealthCheck}
+                      disabled={healthCheckLoading}
+                      className="flex-1 px-2.5 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#005a42] text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <Activity className={`w-3.5 h-3.5 ${healthCheckLoading ? 'animate-spin' : ''}`} />
+                      <span>{healthCheckLoading ? t('যাচাই চলছে...', 'Checking...') : t('লেজার স্বাস্থ্য পরীক্ষা', 'Run Health Check')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleExportDatabaseBackup}
+                      disabled={backupLoading}
+                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <Download className={`w-3.5 h-3.5 text-[#006A4E] ${backupLoading ? 'animate-spin' : ''}`} />
+                      <span>{backupLoading ? t('ব্যাকআপ...', 'Exporting...') : t('ডাটা ব্যাকআপ', 'DB Backup')}</span>
+                    </button>
                   </div>
-                  <div>
-                    <h3 className="font-extrabold text-sm text-slate-900">
-                      {t('জরুরি প্ল্যাটফর্ম ব্রডকাস্ট ব্যানার', 'Emergency Platform Broadcast Banner')}
-                    </h3>
-                    <p className="text-[11px] text-slate-500">
-                      {t('সারাদেশের সকল নাগরিক ও কর্মকর্তা পোর্টালে দৃশ্যমান লাল/হলুদ সতর্কবার্তা', 'Publish emergency banners visible to all citizens and officers')}
-                    </p>
+
+                  {/* Health Check Live Result Banner */}
+                  {healthCheckData && (
+                    <div className={`p-2 rounded-lg border text-xs flex items-center justify-between ${
+                      healthCheckData.is_valid ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-rose-50 border-rose-200 text-rose-900'
+                    }`}>
+                      <div className="flex items-center gap-1.5 font-bold">
+                        {healthCheckData.is_valid ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> : <AlertTriangle className="w-3.5 h-3.5 text-rose-600 shrink-0" />}
+                        <span>{lang === 'bn' ? healthCheckData.message_bn : healthCheckData.message_en}</span>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold opacity-75">{healthCheckData.verification_time_ms}ms</span>
+                    </div>
+                  )}
+
+                  {/* Backup Result Banner */}
+                  {backupData && (
+                    <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>{t('ব্যাকআপ সম্পন্ন: ', 'Backup Ready: ')}{backupData.filename}</span>
+                      </div>
+                      {backupData.download_url && (
+                        <a href={backupData.download_url} download className="text-[#006A4E] underline font-extrabold text-[11px]">
+                          {t('ডাউনলোড', 'Download')}
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Live Security & Anomaly Stream */}
+                <div className="panel p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs space-y-2.5">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                        <ShieldAlert className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-xs text-slate-900 flex items-center gap-1.5">
+                          <span>{t('লাইভ নিরাপত্তা ও অসঙ্গতি স্ট্রিম', 'Live Security & Anomaly Stream')}</span>
+                          {anomaliesData && anomaliesData.total_anomalies > 0 && (
+                            <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-600 text-white animate-pulse">
+                              {toBanglaDigits(anomaliesData.total_anomalies, lang)} {t('টি শনাক্ত', 'detected')}
+                            </span>
+                          )}
+                        </h3>
+                        <p className="text-[10px] text-slate-500">
+                          {t('দ্বৈত ব্যাংক লিয়েন, স্থগিত দাগ ও দলিল অসংগতি ট্র্যাকার', 'Real-time liens, frozen plots & dispute detector')}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAnomaliesLoading(true);
+                        BhumiApi.getLiveAnomalies()
+                          .then((a) => setAnomaliesData(a))
+                          .finally(() => setAnomaliesLoading(false));
+                      }}
+                      disabled={anomaliesLoading}
+                      className="px-2 py-1 rounded border border-slate-200 text-[10px] font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-1 cursor-pointer"
+                    >
+                      <RefreshCw className={`w-3 h-3 text-[#006A4E] ${anomaliesLoading ? 'animate-spin' : ''}`} />
+                      <span>{t('পুনরায় স্ক্যান', 'Rescan')}</span>
+                    </button>
                   </div>
-                </div>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <span className="text-xs font-bold text-slate-600">
-                    {broadcastForm.is_active ? t('সক্রিয়', 'Active') : t('নিষ্ক্রিয়', 'Disabled')}
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={broadcastForm.is_active}
-                    onChange={(e) => setBroadcastForm({ ...broadcastForm, is_active: e.target.checked })}
-                    className="w-4 h-4 accent-[#006A4E] cursor-pointer"
-                  />
-                </label>
-              </div>
 
-              {broadcastNotice && (
-                <div className={`p-2.5 rounded-lg text-xs font-bold ${
-                  broadcastNotice.err ? 'bg-rose-50 text-rose-800 border border-rose-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                }`}>
-                  {broadcastNotice.msg}
+                  {anomaliesData && anomaliesData.items && anomaliesData.items.length > 0 ? (
+                    <div className="max-h-[190px] overflow-y-auto space-y-2 pr-1 divide-y divide-slate-100" style={{ scrollbarWidth: 'thin' }}>
+                      {anomaliesData.items.map((anom) => (
+                        <div
+                          key={anom.id}
+                          className={`p-2.5 rounded-lg border flex items-center justify-between gap-2.5 ${
+                            anom.severity === 'CRITICAL'
+                              ? 'bg-rose-50/70 border-rose-200 text-rose-950'
+                              : anom.severity === 'HIGH'
+                              ? 'bg-amber-50/70 border-amber-200 text-amber-950'
+                              : 'bg-blue-50/70 border-blue-200 text-blue-950'
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`px-1.5 py-0.2 rounded text-[9px] font-black ${
+                                anom.severity === 'CRITICAL' ? 'bg-rose-600 text-white' : anom.severity === 'HIGH' ? 'bg-amber-600 text-white' : 'bg-blue-600 text-white'
+                              }`}>
+                                {anom.severity}
+                              </span>
+                              <span className="font-extrabold text-xs truncate">
+                                {lang === 'bn' ? anom.title_bn : anom.title_en}
+                              </span>
+                            </div>
+                            <p className="text-[11px] opacity-85 mt-0.5 line-clamp-1">{anom.description_bn}</p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {anom.plot_id && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPlotsSubSegment('plots');
+                                  handleTabChange('plots_control');
+                                  handleInspectPlot(anom.plot_id!);
+                                }}
+                                className="px-2 py-0.5 rounded bg-white text-slate-800 border border-slate-300 text-[10px] font-bold hover:bg-slate-50 cursor-pointer shadow-2xs"
+                              >
+                                {t('দাগ পরীক্ষা', 'Inspect Plot')}
+                              </button>
+                            )}
+                            {anom.deed_id && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPlotsSubSegment('deeds');
+                                  handleTabChange('plots_control');
+                                  handleInspectDeed(anom.deed_id!);
+                                }}
+                                className="px-2 py-0.5 rounded bg-white text-slate-800 border border-slate-300 text-[10px] font-bold hover:bg-slate-50 cursor-pointer shadow-2xs"
+                              >
+                                {t('দলিল অডিট', 'Audit Deed')}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-lg bg-emerald-50/60 border border-emerald-200 text-center space-y-0.5">
+                      <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-950">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span>{t('কোনো সক্রিয় নিরাপত্তা অসঙ্গতি নেই', 'No Active Security Anomalies Detected')}</span>
+                      </div>
+                      <p className="text-[10px] text-emerald-800">
+                        {t('জাতীয় লেজার, দাগ ও ব্যাংক লিয়েন সম্পূর্ণ সংগতিপূর্ণ ও নিরাপদ।', 'All ledger hash blocks, plots, and mortgage records are intact and healthy.')}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
 
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-600 shrink-0">{t('সতর্কতার মাত্রা:', 'Severity Level:')}</span>
+                {/* 3. Emergency Platform Broadcast Controller */}
+                <div className="panel p-3.5 bg-white border border-slate-200 rounded-xl shadow-xs space-y-2">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+                        <Megaphone className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-xs text-slate-900">
+                          {t('জরুরি ব্রডকাস্ট কন্ট্রোলার', 'Emergency Platform Broadcast Banner')}
+                        </h3>
+                        <p className="text-[10px] text-slate-500">
+                          {t('সারাদেশের কর্মকর্তা ও নাগরিক পোর্টালে লাল/হলুদ সতর্কবার্তা', 'Publish emergency alerts across portals')}
+                        </p>
+                      </div>
+                    </div>
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <span className="text-[10px] font-bold text-slate-600">
+                        {broadcastForm.is_active ? t('সক্রিয়', 'Active') : t('নিষ্ক্রিয়', 'Disabled')}
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={broadcastForm.is_active}
+                        onChange={(e) => setBroadcastForm({ ...broadcastForm, is_active: e.target.checked })}
+                        className="w-3.5 h-3.5 accent-[#006A4E] cursor-pointer"
+                      />
+                    </label>
+                  </div>
+
+                  {broadcastNotice && (
+                    <div className={`p-1.5 rounded text-[11px] font-bold ${
+                      broadcastNotice.err ? 'bg-rose-50 text-rose-800 border border-rose-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    }`}>
+                      {broadcastNotice.msg}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-500 shrink-0">{t('মাত্রা:', 'Severity:')}</span>
+                    <div className="flex gap-1">
+                      {(['INFO', 'WARNING', 'URGENT'] as const).map((lvl) => (
+                        <button
+                          key={lvl}
+                          type="button"
+                          onClick={() => setBroadcastForm({ ...broadcastForm, level: lvl })}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold transition cursor-pointer ${
+                            broadcastForm.level === lvl
+                              ? lvl === 'URGENT'
+                                ? 'bg-rose-600 text-white'
+                                : lvl === 'WARNING'
+                                ? 'bg-amber-500 text-slate-950'
+                                : 'bg-[#006A4E] text-white'
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {lvl === 'URGENT' ? t('জরুরি (লাল)', 'URGENT') : lvl === 'WARNING' ? t('সতর্কতা (হলুদ)', 'WARN') : t('সাধারণ (সবুজ)', 'INFO')}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="flex gap-1.5">
-                    {(['INFO', 'WARNING', 'URGENT'] as const).map((lvl) => (
-                      <button
-                        key={lvl}
-                        type="button"
-                        onClick={() => setBroadcastForm({ ...broadcastForm, level: lvl })}
-                        className={`px-2.5 py-1 rounded text-xs font-bold transition cursor-pointer ${
-                          broadcastForm.level === lvl
-                            ? lvl === 'URGENT'
-                              ? 'bg-rose-600 text-white'
-                              : lvl === 'WARNING'
-                              ? 'bg-amber-500 text-slate-950'
-                              : 'bg-[#006A4E] text-white'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                        }`}
-                      >
-                        {lvl === 'URGENT' ? t('জরুরি (লাল)', 'URGENT') : lvl === 'WARNING' ? t('সতর্কতা (হলুদ)', 'WARNING') : t('সাধারণ (সবুজ)', 'INFO')}
-                      </button>
-                    ))}
+                    <input
+                      type="text"
+                      value={broadcastForm.message_bn}
+                      onChange={(e) => setBroadcastForm({ ...broadcastForm, message_bn: e.target.value })}
+                      placeholder={t('জরুরি বার্তা বাংলায় লিখুন...', 'Enter emergency alert message in Bengali...')}
+                      className="flex-1 px-2.5 py-1 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-[#006A4E] outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSaveBroadcast}
+                      disabled={broadcastLoading}
+                      className="px-3 py-1 rounded-lg bg-[#006A4E] hover:bg-[#005a42] text-white text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    >
+                      <Send className="w-3 h-3" />
+                      <span>{broadcastLoading ? '...' : t('প্রচার', 'Send')}</span>
+                    </button>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                    {t('বাংলা বার্তা:', 'Bengali Message:')}
-                  </label>
-                  <input
-                    type="text"
-                    value={broadcastForm.message_bn}
-                    onChange={(e) => setBroadcastForm({ ...broadcastForm, message_bn: e.target.value })}
-                    placeholder="যেমন: জরুরি রক্ষণাবেক্ষণের জন্য আজ রাত ১২টা হতে ২টা পর্যন্ত সাব-রেজিস্ট্রি সেবা সীমিত থাকবে।"
-                    className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                    {t('ইংরেজি বার্তা (ঐচ্ছিক):', 'English Message (Optional):')}
-                  </label>
-                  <input
-                    type="text"
-                    value={broadcastForm.message_en}
-                    onChange={(e) => setBroadcastForm({ ...broadcastForm, message_en: e.target.value })}
-                    placeholder="e.g. Scheduled system maintenance from 12:00 AM to 02:00 AM tonight."
-                    className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none"
-                  />
-                </div>
-
-                <div className="pt-1 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={handleSaveBroadcast}
-                    disabled={broadcastLoading}
-                    className="px-4 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#005a42] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>{broadcastLoading ? t('প্রচার হচ্ছে...', 'Publishing...') : t('সারাদেশে প্রচার করুন', 'Broadcast Nationwide')}</span>
-                  </button>
+                {/* 4. Recent Security Audit Preview */}
+                <div className="panel p-3 bg-white border border-slate-200 rounded-xl shadow-xs space-y-2">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                    <h3 className="font-extrabold text-xs text-slate-900 flex items-center gap-1.5">
+                      <History className="w-3.5 h-3.5 text-[#006A4E]" />
+                      <span>{t('সাম্প্রতিক সিকিউরিটি অডিট ইভেন্ট', 'Recent Security Audit Events')}</span>
+                    </h3>
+                    <button
+                      onClick={() => handleTabChange('audit')}
+                      className="text-[10px] font-bold text-[#006A4E] hover:underline cursor-pointer"
+                    >
+                      {t('সকল লগ →', 'All Logs →')}
+                    </button>
+                  </div>
+                  <div className="divide-y divide-slate-100 text-xs">
+                    {auditLogs.slice(0, 3).map((log: any, idx: number) => (
+                      <div key={log.id || idx} className="py-1.5 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                          <span className="font-mono font-bold text-[11px] text-slate-800 shrink-0">{log.action || log.event}</span>
+                          <span className="text-slate-500 text-[11px] truncate">{log.details || log.description || log.entity_type}</span>
+                        </div>
+                        <div className="text-slate-400 font-mono text-[10px] shrink-0">
+                          {log.created_at ? new Date(log.created_at).toLocaleTimeString() : '—'}
+                        </div>
+                      </div>
+                    ))}
+                    {auditLogs.length === 0 && (
+                      <div className="py-2 text-center text-slate-400 text-xs">{t('কোনো সাম্প্রতিক অডিট ইভেন্ট নেই।', 'No audit events found.')}</div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Core Pillars Direct Launchpad */}
-          <div className="space-y-3">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500">
-              {t("কোর কন্ট্রোল পিলার ও গভর্নেন্স কেন্দ্র (Core Control Pillars)", "Core Control Pillars")}
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Pillar 2: Users */}
-              <div
-                onClick={() => {
-                  setUsersSubSegment("directory");
-                  handleTabChange("users");
-                }}
-                className="panel p-4 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group rounded-xl"
-              >
-                <div>
-                  <div className="w-9 h-9 rounded-lg bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-2.5 group-hover:scale-105 transition">
-                    <Users className="w-5 h-5" />
+          ) : (
+            /* Non-Admin Role Overview Layout */
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+                      {t('ব্লকচেইন লেজার অখণ্ডতা', 'Ledger Hash Integrity')}
+                    </div>
+                    <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
+                      {toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}%
+                    </div>
                   </div>
-                  <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#006A4E] transition">
-                    {t("ইউজার ও কর্মকর্তা প্রশাসন", "User & Officer Administration")}
-                  </h3>
-                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
-                    {t("কর্মকর্তা বদলি, পদায়ন, মেকার-চেকার স্ট্যাজিং ও ২১টি রোল আরব্যাক ম্যাট্রিক্স।", "Officer transfers, postings, maker-checker batches, and RBAC matrix.")}
-                  </p>
-                </div>
-                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
-                  <span>{toBanglaDigits(usersList.length, lang)} {t("জন ইউজার", "Users")}</span>
-                  <span>→</span>
-                </div>
-              </div>
-
-              {/* Pillar 3: Plots Control */}
-              <div
-                onClick={() => {
-                  setPlotsSubSegment("plots");
-                  handleTabChange("plots_control");
-                }}
-                className="panel p-4 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group rounded-xl"
-              >
-                <div>
-                  <div className="w-9 h-9 rounded-lg bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-2.5 group-hover:scale-105 transition">
-                    <Compass className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+                    <Lock className="w-5 h-5" />
                   </div>
-                  <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#006A4E] transition">
-                    {t("ভূমি রেকর্ড ও দাগ নিয়ন্ত্রণ", "Plots & Land Governance")}
-                  </h3>
-                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
-                    {t("দাগে কেন্দ্রীয় প্রশাসনিক স্থগিতাদেশ (Freeze), দলিল রেজিস্ট্রি অডিট ও প্রশাসনিক অধিক্ষেত্র।", "Master administrative plot freeze, deed supervision, and mouza hierarchy.")}
-                  </p>
                 </div>
-                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
-                  <span>{toBanglaDigits(plotsList.length, lang)} {t("টি দাগ", "Plots")}</span>
-                  <span>→</span>
+                <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+                      {t('সিকিউরিটি অডিট ট্রেইল', 'Security Audit Events')}
+                    </div>
+                    <div className="text-2xl font-extrabold text-[#0A1F1C] mt-1">
+                      {toBanglaDigits(auditLogs.length, lang)}
+                    </div>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+                    <History className="w-5 h-5" />
+                  </div>
                 </div>
-              </div>
-
-              {/* Pillar 4: Ledger */}
-              <div
-                onClick={() => {
-                  setLedgerSubSegment("ledger_lab");
-                  handleTabChange("ledger");
-                }}
-                className="panel p-4 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group rounded-xl"
-              >
-                <div>
-                  <div className="w-9 h-9 rounded-lg bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-2.5 group-hover:scale-105 transition">
+                <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+                      {t('স্বয়ংক্রিয় ঝুঁকি ইঞ্জিন', 'Fraud Verification Engines')}
+                    </div>
+                    <div className="text-2xl font-extrabold text-emerald-700 mt-1">
+                      {t('৯টি ইঞ্জিন সক্রিয়', '9 Engines Active')}
+                    </div>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
                     <ShieldCheck className="w-5 h-5" />
                   </div>
-                  <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#006A4E] transition">
-                    {t("লেজার অখণ্ডতা ও নিরাপত্তা অডিট", "Ledger Integrity & Audit")}
-                  </h3>
-                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
-                    {t("হ্যাশ লেজার ল্যাব, ব্রেক-গ্লাস অডিট ট্রেইল ও ১-ক্লিক সার্বভৌম ডাটাবেজ ব্যাকআপ।", "Hash ledger lab, break-glass security logs, and sovereign DB backup.")}
-                  </p>
                 </div>
-                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
-                  <span>{toBanglaDigits(auditLogs.length, lang)} {t("টি অডিট লগ", "Logs")}</span>
-                  <span>→</span>
+                <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+                      {t('মোট সেবা তালিকা', 'Services Catalogue')}
+                    </div>
+                    <div className="text-2xl font-extrabold text-[#0A1F1C] mt-1">
+                      {toBanglaDigits(adminServices.length, lang)} {t('টি', '')}
+                    </div>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+                    <FileText className="w-5 h-5" />
+                  </div>
                 </div>
               </div>
 
-              {/* Pillar 5: Settings */}
-              <div
-                onClick={() => {
-                  setSettingsSubSegment("fraud_policy");
-                  handleTabChange("settings");
-                }}
-                className="panel p-4 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group rounded-xl"
-              >
-                <div>
-                  <div className="w-9 h-9 rounded-lg bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-2.5 group-hover:scale-105 transition">
-                    <Settings className="w-5 h-5" />
-                  </div>
-                  <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#006A4E] transition">
-                    {t("সিস্টেম পলিসি ও কনফিগারেশন", "System Policy & Configuration")}
+              {/* Recent Security Audit preview */}
+              <div className="panel p-4 space-y-3 bg-white border border-slate-200 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                    <History className="w-4 h-4 text-[#006A4E]" />
+                    <span>{t('সাম্প্রতিক সিকিউরিটি অডিট ইভেন্ট', 'Recent Security Audit Events')}</span>
                   </h3>
-                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
-                    {t("জালিয়াতি প্রতিরোধ সংবেদনশীলতা, সার্ভিস ডিরেক্টরি, সাপোর্ট ডেস্ক ও ডায়াগনস্টিকস।", "Fraud engine sensitivity, service directory & fees, citizen tickets, and outbox.")}
-                  </p>
+                  <button
+                    onClick={() => handleTabChange('audit')}
+                    className="text-xs font-bold text-[#006A4E] hover:underline cursor-pointer"
+                  >
+                    {t('সকল অডিট লগ দেখুন →', 'View All Logs →')}
+                  </button>
                 </div>
-                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
-                  <span>{toBanglaDigits(adminServices.length, lang)} {t("টি সেবা", "Services")}</span>
-                  <span>→</span>
+                <div className="divide-y divide-slate-100 text-xs">
+                  {auditLogs.slice(0, 5).map((log: any, idx: number) => (
+                    <div key={log.id || idx} className="py-2 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                        <span className="font-mono font-bold text-slate-800 shrink-0">{log.action || log.event}</span>
+                        <span className="text-slate-500 truncate">{log.details || log.description || log.entity_type}</span>
+                      </div>
+                      <div className="text-slate-400 font-mono text-[11px] shrink-0">
+                        {log.created_at ? new Date(log.created_at).toLocaleTimeString() : '—'}
+                      </div>
+                    </div>
+                  ))}
+                  {auditLogs.length === 0 && (
+                    <div className="py-4 text-center text-slate-400">{t('কোনো সাম্প্রতিক অডিট ইভেন্ট নেই।', 'No audit events found.')}</div>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* Recent Security Audit preview */}
-          <div className="panel p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
-                <History className="w-4 h-4 text-[#006A4E]" />
-                <span>{t('সাম্প্রতিক সিকিউরিটি অডিট ইভেন্ট', 'Recent Security Audit Events')}</span>
-              </h3>
-              <button
-                onClick={() => handleTabChange('audit')}
-                className="text-xs font-bold text-[#006A4E] hover:underline cursor-pointer"
-              >
-                {t('সকল অডিট লগ দেখুন →', 'View All Logs →')}
-              </button>
-            </div>
-            <div className="divide-y divide-slate-100 text-xs">
-              {auditLogs.slice(0, 5).map((log: any, idx: number) => (
-                <div key={log.id || idx} className="py-2.5 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                    <span className="font-mono font-bold text-slate-800 shrink-0">{log.action || log.event}</span>
-                    <span className="text-slate-500 truncate">{log.details || log.description || log.entity_type}</span>
-                  </div>
-                  <div className="text-slate-400 font-mono text-[11px] shrink-0">
-                    {log.created_at ? new Date(log.created_at).toLocaleTimeString() : '—'}
-                  </div>
-                </div>
-              ))}
-              {auditLogs.length === 0 && (
-                <div className="py-4 text-center text-slate-400">{t('কোনো সাম্প্রতিক অডিট ইভেন্ট নেই।', 'No audit events found.')}</div>
-              )}
-            </div>
-          </div>
+          )}
         </div>
       )}
 

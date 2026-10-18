@@ -50,6 +50,12 @@ import {
   FileCheck,
   Megaphone,
   Newspaper,
+  RefreshCw,
+  ArrowRight,
+  MapPin,
+  MessageSquare,
+  Zap,
+  Check,
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -721,6 +727,8 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
   const [usersMenuExpanded, setUsersMenuExpanded] = useState(true);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
+  const [sidebarSearch, setSidebarSearch] = useState('');
+  const [quickActionOpen, setQuickActionOpen] = useState(false);
   const [faraizModalOpen, setFaraizModalOpen] = useState(false);
   const [faraizPlotId, setFaraizPlotId] = useState<number | undefined>(undefined);
   const [faraizArea, setFaraizArea] = useState<number | undefined>(undefined);
@@ -731,6 +739,23 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
     message_en: string;
     level: 'URGENT' | 'WARNING' | 'INFO';
   } | null>(null);
+
+  // Global Keyboard Shortcuts (Ctrl+K for Search, Ctrl+B for Sidebar)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        const searchInput = document.getElementById('global-header-search') as HTMLInputElement | null;
+        searchInput?.focus();
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        e.preventDefault();
+        setSidebarOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   useEffect(() => {
     BhumiApi.getEmergencyBroadcast()
@@ -1106,12 +1131,23 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         { id: 'deed_verify', label: t('দলিল ডিজিটাল সিল যাচাই', 'Verify Deed Authenticity'), icon: <QrCode className="w-4 h-4" /> },
       ];
     }
-    // 21. System Admin / Admin (5 Core Control Pillars)
+    // 21. System Admin / Admin (Unified Administrative Modules)
     return [
-      { id: 'overview', label: t('কমান্ড সেন্টার ও লাইভ নজরদারি', 'Command Center & Live Pulse'), icon: <LayoutDashboard className="w-4 h-4" /> },
+      { id: 'overview', label: t('কমান্ড সেন্টার ও ড্যাশবোর্ড', 'Command Center & Queues'), icon: <LayoutDashboard className="w-4 h-4" /> },
+      { id: 'transfers', label: t('নাগরিক সেবা ও হস্তান্তর', 'Citizen Transfers'), icon: <ArrowRight className="w-4 h-4" /> },
+      { id: 'mutations', label: t('ই-নামজারি ও রেকর্ড', 'e-Mutations & Records'), icon: <RefreshCw className="w-4 h-4" /> },
+      { id: 'deeds', label: t('দলিল ও সাব-রেজিস্ট্রি', 'Deeds & Sub-Registry'), icon: <FileText className="w-4 h-4" /> },
+      { id: 'field_verification', label: t('মাঠ তদন্ত ও এসএলএ', 'Field Verification SLA'), icon: <Compass className="w-4 h-4" /> },
+      { id: 'bank_liens', label: t('ব্যাংক লিয়েন ও মর্টগেজ', 'Bank Liens & Collateral'), icon: <Landmark className="w-4 h-4" /> },
+      { id: 'appeals', label: t('আপিল ও বিরোধ ট্রাইব্যুনাল', 'Appeals & Court Dockets'), icon: <Scale className="w-4 h-4" /> },
+      { id: 'acquisitions', label: t('ভূমি অধিগ্রহণ (LA কেস)', 'Land Acquisition (LA)'), icon: <Building2 className="w-4 h-4" /> },
+      { id: 'survey_records', label: t('জরিপ ও মেকার-চেকার', 'Survey & Maker-Checker'), icon: <Layers className="w-4 h-4" /> },
       { id: 'users', label: t('ইউজার ও কর্মকর্তা প্রশাসন', 'User & Officer Administration'), icon: <Users className="w-4 h-4" /> },
-      { id: 'plots_control', label: t('ভূমি রেকর্ড ও দাগ নিয়ন্ত্রণ', 'Plots & Land Governance'), icon: <Compass className="w-4 h-4" /> },
-      { id: 'ledger', label: t('লেজার অখণ্ডতা ও নিরাপত্তা অডিট', 'Ledger Integrity & Audit'), icon: <ShieldCheck className="w-4 h-4" /> },
+      { id: 'plots_control', label: t('দাগ নিয়ন্ত্রণ ও স্থগিতাদেশ', 'Plots & Admin Freeze'), icon: <MapPin className="w-4 h-4" /> },
+      { id: 'tickets', label: t('হেল্পলাইন ডেস্ক (১৬১২২)', 'Helpdesk & Support'), icon: <MessageSquare className="w-4 h-4" /> },
+      { id: 'notices', label: t('বিজ্ঞপ্তি ও প্রকাশনা', 'Notices & Publications'), icon: <Megaphone className="w-4 h-4" /> },
+      { id: 'offices_config', label: t('অফিস ও অধিক্ষেত্র কনফিগ', 'Offices & Jurisdiction'), icon: <Building2 className="w-4 h-4" /> },
+      { id: 'ledger', label: t('লেজার অখণ্ডতা ও অডিট লগ', 'Ledger Integrity & Audit Logs'), icon: <ShieldCheck className="w-4 h-4" /> },
       { id: 'settings', label: t('সিস্টেম পলিসি ও কনফিগারেশন', 'System Policy & Configuration'), icon: <Settings className="w-4 h-4" /> },
     ];
   };
@@ -1694,150 +1730,304 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
     );
   }
 
-  // Authenticated Role Portal Layout with Sidebar
-  const renderSidebarNav = (onNavigate?: () => void) => (
-    <>
-      <div>
-        {sidebarOpen && (
-          <div className="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-white/40">
-            {t('মেনু', 'Menu')}
+  // Authenticated Role Portal Layout with Modernized OS Sidebar
+  const renderSidebarNav = (onNavigate?: () => void) => {
+    // If user is searching within sidebar
+    const query = sidebarSearch.trim().toLowerCase();
+    const isFiltered = query.length > 0;
+
+    // Helper to get badge info for items
+    const getItemBadge = (id: string) => {
+      if (id === 'overview') return { text: t('লাইভ', 'LIVE'), cls: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' };
+      if (id === 'ledger') return { text: 'Ed25519', cls: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' };
+      if (id === 'mutations') return { text: t('কেস', 'Cases'), cls: 'bg-amber-500/20 text-amber-300 border-amber-500/30' };
+      if (id === 'tickets') return { text: '16122', cls: 'bg-rose-500/20 text-rose-300 border-rose-500/30' };
+      if (id === 'plots_control') return { text: 'GIS', cls: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' };
+      if (id === 'deeds') return { text: t('নিবন্ধিত', 'Deeds'), cls: 'bg-teal-500/20 text-teal-300 border-teal-500/30' };
+      if (id === 'users') return { text: 'RBAC', cls: 'bg-blue-500/20 text-blue-300 border-blue-500/30' };
+      if (id === 'held') return { text: t('স্থগিত', 'HELD'), cls: 'bg-rose-500/20 text-rose-300 border-rose-500/30' };
+      if (id === 'wizard') return { text: t('গেটকিপার', 'Gatekeeper'), cls: 'bg-amber-500/20 text-amber-300 border-amber-500/30' };
+      if (id === 'noc') return { text: t('রিলিজ', 'NOC'), cls: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' };
+      if (id === 'la_cases') return { text: t('গেজেট', 'Gazette'), cls: 'bg-purple-500/20 text-purple-300 border-purple-500/30' };
+      return null;
+    };
+
+    // Render single sidebar item button
+    const renderItemButton = (item: any, isSubItem = false) => {
+      const isOfficerRole = role !== 'citizen';
+      const isActive = isOfficerRole
+        ? (activeSubTab ? activeSubTab === item.id : false)
+        : role === 'citizen'
+        ? (item.id === 'profile'
+            ? activeTab === 'profile'
+            : activeTab === 'home' && (activeSubTab ? (activeSubTab === item.id || (activeSubTab === 'vault' && item.id === 'plots')) : item.id === 'overview'))
+        : activeTab === item.id;
+      const badge = getItemBadge(item.id);
+
+      return (
+        <button
+          key={item.id}
+          type="button"
+          onClick={() => {
+            onNavigate?.();
+            if (role === 'citizen') {
+              if (item.id === 'profile') {
+                setActiveTab('profile');
+              } else {
+                setActiveSubTab(item.id);
+                if (activeTab !== 'home') setActiveTab('home');
+              }
+            } else if (isOfficerRole) {
+              setActiveSubTab(item.id);
+              const expectedTab = ROLE_DASHBOARD_MAP[role] || 'home';
+              if (activeTab !== expectedTab) {
+                setActiveTab(expectedTab);
+              }
+            } else {
+              setActiveTab(item.id);
+            }
+          }}
+          className={`group w-full px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-all duration-150 cursor-pointer select-none ${
+            isActive
+              ? 'bg-gradient-to-r from-emerald-600/30 via-emerald-600/20 to-transparent text-white font-bold border-l-3 border-emerald-400 shadow-xs ring-1 ring-emerald-500/20'
+              : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+          } ${isSubItem ? 'pl-7 text-[11px]' : ''}`}
+          title={!sidebarOpen ? item.label : undefined}
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className={`shrink-0 transition-transform duration-150 ${isActive ? 'text-emerald-400 scale-105' : 'text-slate-400 group-hover:text-slate-200'}`}>
+              {item.icon}
+            </span>
+            {sidebarOpen && <span className="truncate leading-snug">{item.label}</span>}
           </div>
-        )}
+          {sidebarOpen && badge && (
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-mono font-bold border shrink-0 ${badge.cls}`}>
+              {badge.text}
+            </span>
+          )}
+        </button>
+      );
+    };
+
+    // If searching within sidebar
+    if (isFiltered) {
+      const matchedItems = sidebarItems.filter((i) =>
+        (i.label || '').toLowerCase().includes(query) || (i.id || '').toLowerCase().includes(query)
+      );
+
+      return (
         <div className="space-y-1">
-          {['admin','system_admin','ac_land','land_office_assistant','field_verification_officer','settlement_records_officer','settlement_checker'].includes(role)&&<button type="button" onClick={()=>{setActiveTab('map?design=1');onNavigate?.();}} className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold flex items-center gap-2.5 text-emerald-100 bg-white/10 hover:bg-white/20"><Layers className="w-4 h-4"/>{sidebarOpen&&<span>{t('দাগ ডিজাইন ও মালিকানা বরাদ্দ','Parcel design & owner allocation')}</span>}</button>}
-          {sidebarItems.map((item, idx) => {
-            const isOfficerRole = role !== 'citizen';
-            const isUsersItem = item.id === 'users' && (role === 'admin' || role === 'system_admin');
-            const isActive = isOfficerRole
-              ? (activeSubTab ? activeSubTab === item.id : idx === 0)
-              : role === 'citizen'
-              ? (item.id === 'profile'
-                  ? activeTab === 'profile'
-                  : activeTab === 'home' && (activeSubTab ? (activeSubTab === item.id || (activeSubTab === 'vault' && item.id === 'plots')) : item.id === 'overview'))
-              : activeTab === item.id;
+          <div className="px-3 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400">
+            {t('অনুসন্ধান ফলাফল', 'Search Results')} ({toBanglaDigits(matchedItems.length, lang)})
+          </div>
+          {matchedItems.length === 0 ? (
+            <div className="p-3 text-center text-xs text-slate-500">
+              {t('কোনো মিল পাওয়া যায়নি', 'No matching module found')}
+            </div>
+          ) : (
+            matchedItems.map((item) => renderItemButton(item))
+          )}
+        </div>
+      );
+    }
 
-            if (isUsersItem) {
-              const isUsersActive = activeSubTab === 'users';
-              return (
-                <div key={item.id} className="space-y-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onNavigate?.();
-                      setActiveSubTab('users');
-                      if (activeTab !== 'admin') setActiveTab('admin');
-                      setUsersMenuExpanded((prev) => (isUsersActive ? !prev : true));
-                    }}
-                    className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer min-h-[40px] ${
-                      isUsersActive
-                        ? 'bg-[#006A4E] text-white shadow-xs'
-                        : 'text-white/70 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2.5 min-w-0">
-                      {item.icon}
-                      {sidebarOpen && <span className="truncate">{item.label}</span>}
-                    </span>
-                    {sidebarOpen && (
-                      <ChevronDown
-                        className={`w-3.5 h-3.5 transition-transform duration-200 shrink-0 ${
-                          usersMenuExpanded ? 'rotate-180' : ''
-                        }`}
-                      />
-                    )}
-                  </button>
+    // Admin / System Admin Categorized Layout
+    if (role === 'admin' || role === 'system_admin') {
+      const adminGroups = [
+        {
+          id: 'cmd',
+          titleBn: 'কমান্ড ও নিরাপত্তা অডিট',
+          titleEn: 'Command & Audit',
+          icon: <LayoutDashboard className="w-3.5 h-3.5 text-emerald-400" />,
+          ids: ['overview', 'ledger', 'audit_reports'],
+        },
+        {
+          id: 'ops',
+          titleBn: 'ভূমি ও রেকর্ড কার্যক্রম',
+          titleEn: 'Land & Registry Ops',
+          icon: <Building2 className="w-3.5 h-3.5 text-blue-400" />,
+          ids: ['transfers', 'mutations', 'deeds', 'plots_control', 'survey_records'],
+        },
+        {
+          id: 'legal',
+          titleBn: 'আইনি ও আর্থিক নিয়ন্ত্রণ',
+          titleEn: 'Legal & Finance',
+          icon: <Scale className="w-3.5 h-3.5 text-purple-400" />,
+          ids: ['bank_liens', 'appeals', 'acquisitions'],
+        },
+        {
+          id: 'gov',
+          titleBn: 'সিস্টেম গভর্ন্যান্স ও হেল্পডেস্ক',
+          titleEn: 'Governance & System',
+          icon: <Settings className="w-3.5 h-3.5 text-amber-400" />,
+          ids: ['users', 'offices_config', 'catalogue', 'settings', 'integrations', 'tickets', 'notices', 'marketplace'],
+        },
+      ];
 
-                  {/* Expandable Role Submenu under Users Menu */}
-                  {sidebarOpen && usersMenuExpanded && (
-                    <div className="pl-3 pr-1 py-1 space-y-0.5 border-l-2 border-emerald-500/30 ml-4 animate-fadeIn">
-                      {[
-                        { id: 'all', labelBn: 'সকল ইউজার ও কর্মকর্তা', labelEn: 'All Users & Officers' },
-                        { id: 'citizen', labelBn: 'সাধারণ নাগরিকবৃন্দ', labelEn: 'Citizens' },
-                        { id: 'sub_registrar', labelBn: 'সাব-রেজিস্ট্রারগণ', labelEn: 'Sub-Registrars' },
-                        { id: 'ac_land', labelBn: 'সহকারী কমিশনার (ভূমি)', labelEn: 'AC Land Officers' },
-                        { id: 'bank_officer', labelBn: 'ব্যাংক কর্মকর্তাবৃন্দ', labelEn: 'Bank Officers' },
-                        { id: 'field_verification_officer', labelBn: 'ফিল্ড অফিসার (সার্ভেয়ার)', labelEn: 'Field Officers' },
-                        { id: 'registry_data_officer', labelBn: 'রেজিস্ট্রি ডাটা মেকার', labelEn: 'Registry Data Officers' },
-                        { id: 'settlement_records_officer', labelBn: 'সেটেলমেন্ট রেকর্ডস অফিসার', labelEn: 'Settlement Records' },
-                        { id: 'uno_supervisor', labelBn: 'ইউএনও তদারককারী', labelEn: 'UNO Supervisors' },
-                        { id: 'service_point_operator', labelBn: 'সার্ভিস পয়েন্ট অপারেটর (UDC)', labelEn: 'UDC Operators' },
-                        { id: 'admin', labelBn: 'সিস্টেম অ্যাডমিনিস্ট্রেটর', labelEn: 'System Admins' },
-                      ].map((subItem) => {
-                        const isSubActive = isUsersActive && (adminUserRoleFilter === subItem.id || (!adminUserRoleFilter && subItem.id === 'all'));
-                        return (
+      return (
+        <div className="space-y-4">
+          {/* Parcel Design Quick Action */}
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('map?design=1');
+              onNavigate?.();
+            }}
+            className="w-full px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between text-emerald-200 bg-gradient-to-r from-emerald-900/60 to-emerald-800/30 hover:from-emerald-900/90 hover:to-emerald-800/60 border border-emerald-600/40 shadow-xs transition cursor-pointer"
+            title={!sidebarOpen ? t('দাগ ডিজাইন ও বরাদ্দ', 'Parcel Design') : undefined}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Layers className="w-4 h-4 text-emerald-400 shrink-0" />
+              {sidebarOpen && <span className="truncate">{t('দাগ ডিজাইন ও বরাদ্দ', 'Parcel Design & GIS')}</span>}
+            </div>
+            {sidebarOpen && (
+              <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[9px] font-mono font-bold">
+                GIS
+              </span>
+            )}
+          </button>
+
+          {/* Categorized Suites */}
+          {adminGroups.map((group) => {
+            const groupItems = sidebarItems.filter((i) => group.ids.includes(i.id));
+            if (groupItems.length === 0) return null;
+
+            return (
+              <div key={group.id} className="space-y-1">
+                {sidebarOpen && (
+                  <div className="px-3 pt-1 pb-1 text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    {group.icon}
+                    <span>{lang === 'bn' ? group.titleBn : group.titleEn}</span>
+                  </div>
+                )}
+                <div className="space-y-0.5">
+                  {groupItems.map((item) => {
+                    if (item.id === 'users') {
+                      const isUsersActive = activeSubTab === 'users';
+                      return (
+                        <div key={item.id} className="space-y-0.5">
                           <button
-                            key={subItem.id}
                             type="button"
                             onClick={() => {
                               onNavigate?.();
-                              setAdminUserRoleFilter(subItem.id);
                               setActiveSubTab('users');
                               if (activeTab !== 'admin') setActiveTab('admin');
+                              setUsersMenuExpanded((prev) => (isUsersActive ? !prev : true));
                             }}
-                            className={`w-full px-2.5 py-1.5 rounded-md text-[11px] font-medium flex items-center justify-between text-left transition cursor-pointer ${
-                              isSubActive
-                                ? 'bg-emerald-600 text-white font-bold shadow-2xs'
-                                : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
+                            className={`group w-full px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                              isUsersActive
+                                ? 'bg-gradient-to-r from-emerald-600/30 via-emerald-600/20 to-transparent text-white font-bold border-l-3 border-emerald-400 shadow-xs ring-1 ring-emerald-500/20'
+                                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                             }`}
+                            title={!sidebarOpen ? item.label : undefined}
                           >
-                            <span className="flex items-center gap-1.5 truncate">
-                              <span
-                                className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                  isSubActive ? 'bg-white' : 'bg-slate-500'
+                            <span className="flex items-center gap-2.5 min-w-0">
+                              <span className={isUsersActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-slate-200'}>
+                                {item.icon}
+                              </span>
+                              {sidebarOpen && <span className="truncate">{item.label}</span>}
+                            </span>
+                            {sidebarOpen && (
+                              <ChevronDown
+                                className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${
+                                  usersMenuExpanded ? 'rotate-180' : ''
                                 }`}
                               />
-                              <span className="truncate">
-                                {lang === 'bn' ? subItem.labelBn : subItem.labelEn}
-                              </span>
-                            </span>
+                            )}
                           </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            }
 
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  onNavigate?.();
-                  if (role === 'citizen') {
-                    if (item.id === 'profile') {
-                      setActiveTab('profile');
-                    } else {
-                      setActiveSubTab(item.id);
-                      if (activeTab !== 'home') {
-                        setActiveTab('home');
-                      }
+                          {/* Submenu for users */}
+                          {sidebarOpen && usersMenuExpanded && (
+                            <div className="pl-3 pr-1 py-1 space-y-0.5 border-l-2 border-emerald-500/30 ml-4 animate-fadeIn">
+                              {[
+                                { id: 'all', labelBn: 'সকল ইউজার ও কর্মকর্তা', labelEn: 'All Users & Officers' },
+                                { id: 'citizen', labelBn: 'সাধারণ নাগরিকবৃন্দ', labelEn: 'Citizens' },
+                                { id: 'sub_registrar', labelBn: 'সাব-রেজিস্ট্রারগণ', labelEn: 'Sub-Registrars' },
+                                { id: 'ac_land', labelBn: 'সহকারী কমিশনার (ভূমি)', labelEn: 'AC Land Officers' },
+                                { id: 'bank_officer', labelBn: 'ব্যাংক কর্মকর্তাবৃন্দ', labelEn: 'Bank Officers' },
+                                { id: 'field_verification_officer', labelBn: 'ফিল্ড অফিসার (সার্ভেয়ার)', labelEn: 'Field Officers' },
+                                { id: 'registry_data_officer', labelBn: 'রেজিস্ট্রি ডাটা মেকার', labelEn: 'Registry Data Officers' },
+                                { id: 'settlement_records_officer', labelBn: 'সেটেলমেন্ট রেকর্ডস অফিসার', labelEn: 'Settlement Records' },
+                                { id: 'uno_supervisor', labelBn: 'ইউএনও তদারককারী', labelEn: 'UNO Supervisors' },
+                                { id: 'service_point_operator', labelBn: 'সার্ভিস পয়েন্ট অপারেটর (UDC)', labelEn: 'UDC Operators' },
+                                { id: 'admin', labelBn: 'সিস্টেম অ্যাডমিনিস্ট্রেটর', labelEn: 'System Admins' },
+                              ].map((subItem) => {
+                                const isSubActive = isUsersActive && (adminUserRoleFilter === subItem.id || (!adminUserRoleFilter && subItem.id === 'all'));
+                                return (
+                                  <button
+                                    key={subItem.id}
+                                    type="button"
+                                    onClick={() => {
+                                      onNavigate?.();
+                                      setAdminUserRoleFilter(subItem.id);
+                                      setActiveSubTab('users');
+                                      if (activeTab !== 'admin') setActiveTab('admin');
+                                    }}
+                                    className={`w-full px-2.5 py-1.5 rounded-lg text-[11px] font-medium flex items-center justify-between text-left transition cursor-pointer ${
+                                      isSubActive
+                                        ? 'bg-emerald-600 text-white font-bold shadow-2xs'
+                                        : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
+                                    }`}
+                                  >
+                                    <span className="flex items-center gap-1.5 truncate">
+                                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSubActive ? 'bg-white' : 'bg-slate-500'}`} />
+                                      <span className="truncate">{lang === 'bn' ? subItem.labelBn : subItem.labelEn}</span>
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
                     }
-                  } else if (isOfficerRole) {
-                    setActiveSubTab(item.id);
-                    const expectedTab = ROLE_DASHBOARD_MAP[role] || 'home';
-                    if (activeTab !== expectedTab) {
-                      setActiveTab(expectedTab);
-                    }
-                  } else {
-                    setActiveTab(item.id);
-                  }
-                }}
-                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold flex items-center gap-2.5 transition-colors cursor-pointer min-h-[40px] ${
-                  isActive
-                    ? 'bg-[#006A4E] text-white shadow-xs'
-                    : 'text-white/70 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                {item.icon}
-                {sidebarOpen && <span className="truncate">{item.label}</span>}
-              </button>
+                    return renderItemButton(item);
+                  })}
+                </div>
+              </div>
             );
           })}
         </div>
+      );
+    }
+
+    // Other Officer Roles
+    return (
+      <div className="space-y-3">
+        {['ac_land','land_office_assistant','field_verification_officer','settlement_records_officer','settlement_checker'].includes(role) && (
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('map?design=1');
+              onNavigate?.();
+            }}
+            className="w-full px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between text-emerald-200 bg-emerald-900/40 hover:bg-emerald-900/70 border border-emerald-600/30 transition cursor-pointer"
+            title={!sidebarOpen ? t('দাগ ডিজাইন ও বরাদ্দ', 'Parcel Design') : undefined}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <Layers className="w-4 h-4 text-emerald-400 shrink-0" />
+              {sidebarOpen && <span className="truncate">{t('দাগ ডিজাইন ও বরাদ্দ', 'Parcel Design & GIS')}</span>}
+            </div>
+            {sidebarOpen && (
+              <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[9px] font-mono font-bold">
+                GIS
+              </span>
+            )}
+          </button>
+        )}
+
+        {sidebarOpen && (
+          <div className="px-3 text-[10px] font-black uppercase tracking-wider text-slate-400">
+            {t('দাপ্তরিক কর্মপ্রবাহ', 'Official Workflows')}
+          </div>
+        )}
+
+        <div className="space-y-0.5">
+          {sidebarItems.map((item) => renderItemButton(item))}
+        </div>
       </div>
-    </>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen flex bg-slate-50 text-slate-800 pb-28 lg:pb-0">
@@ -1848,56 +2038,116 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
       <aside
         className={`${
           sidebarOpen ? 'w-64 xl:w-72' : 'w-20'
-        } hidden md:flex flex-col bg-slate-900 text-white transition-all duration-200 shrink-0 z-30 border-r border-slate-800 sticky top-0 h-screen max-h-screen`}
+        } hidden md:flex flex-col bg-slate-950 text-white transition-all duration-300 shrink-0 z-30 border-r border-slate-800/80 sticky top-0 h-screen max-h-screen shadow-xl`}
       >
-        <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800 shrink-0">
+        {/* Brand Bar */}
+        <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800/80 shrink-0 bg-slate-950/80 backdrop-blur">
           <button
             onClick={() => setActiveTab('landing')}
-            className="flex items-center gap-2.5 min-w-0 text-left cursor-pointer min-h-0 bg-transparent border-0 p-0"
+            className="flex items-center gap-2.5 min-w-0 text-left cursor-pointer min-h-0 bg-transparent border-0 p-0 group"
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[#006A4E] to-emerald-600 text-xs font-black text-white shadow-md ring-2 ring-emerald-500/30">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-[#006A4E] to-emerald-600 text-xs font-black text-white shadow-md ring-2 ring-emerald-500/30 group-hover:scale-105 transition-transform">
               ভূ
             </span>
             {sidebarOpen && (
               <div className="min-w-0">
                 <div className="font-extrabold text-sm text-white truncate tracking-tight">ভূমি সুরক্ষা</div>
-                <div className="text-[10px] text-emerald-400 font-mono font-semibold">Central Admin OS</div>
+                <div className="text-[10px] text-emerald-400 font-mono font-semibold flex items-center gap-1">
+                  <span>GovTech OS v2.0</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                </div>
               </div>
             )}
           </button>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer transition"
-            title="Toggle Sidebar"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer transition"
+            title={sidebarOpen ? t('সাইডবার সঙ্কুচিত করুন (Ctrl+B)', 'Collapse Sidebar (Ctrl+B)') : t('সাইডবার প্রসারিত করুন (Ctrl+B)', 'Expand Sidebar (Ctrl+B)')}
           >
             <Menu className="w-4 h-4" />
           </button>
         </div>
 
+        {/* Staff Identity & Jurisdiction Card (when expanded) */}
         {sidebarOpen && (
-          <div className="px-4 py-2.5 bg-slate-800/60 border-b border-slate-800 text-[11px] shrink-0">
-            <div className="font-bold text-emerald-400 truncate">
-              {lang === 'bn' ? currentRoleMeta.titleBn : currentRoleMeta.titleEn}
+          <div className="p-3 mx-3 my-2.5 bg-gradient-to-br from-slate-900 to-slate-800/80 rounded-2xl border border-slate-800/90 shadow-inner shrink-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#006A4E] to-emerald-600 text-white font-black text-xs flex items-center justify-center shadow-xs ring-2 ring-emerald-500/30">
+                  {user?.full_name_bn?.trim().charAt(0) || user?.username?.charAt(0).toUpperCase() || 'ক'}
+                </div>
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-900 animate-pulse" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-bold text-white truncate flex items-center gap-1">
+                  <span>{user?.full_name_bn || user?.username}</span>
+                  <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
+                </div>
+                <div className="text-[10px] text-emerald-400 font-semibold truncate">
+                  {lang === 'bn' ? currentRoleMeta.titleBn : currentRoleMeta.titleEn}
+                </div>
+                <div className="text-[9px] text-slate-400 truncate">
+                  {user?.office_bn || (lang === 'bn' ? currentRoleMeta.deptBn : currentRoleMeta.deptEn)}
+                </div>
+              </div>
             </div>
-            <div className="text-[10px] text-slate-400 truncate">
-              {lang === 'bn' ? currentRoleMeta.deptBn : currentRoleMeta.deptEn}
+
+            {/* Supervisor Oversight Mode Notification */}
+            {isSuperAdminMode && (
+              <div className="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between gap-1 text-[10px]">
+                <span className="text-amber-400 font-bold truncate">⚠️ {t('তত্ত্বাবধান মোড', 'Supervisor Mode')}</span>
+                <button
+                  type="button"
+                  onClick={handleReturnToSuperAdmin}
+                  className="px-2 py-0.5 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-[10px] cursor-pointer transition border border-amber-500/40"
+                >
+                  {t('অ্যাডমিনে ফেরত', 'Exit')}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Quick Module Filter in Sidebar (when expanded) */}
+        {sidebarOpen && (
+          <div className="px-3 mb-2 shrink-0">
+            <div className="relative">
+              <input
+                type="text"
+                value={sidebarSearch}
+                onChange={(e) => setSidebarSearch(e.target.value)}
+                placeholder={t('মডিউল খুঁজুন...', 'Filter modules...')}
+                className="w-full pl-7 pr-6 py-1 rounded-xl bg-slate-900/90 border border-slate-800 text-[11px] text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/40 transition"
+              />
+              <Search className="w-3 h-3 text-slate-500 absolute left-2.5 top-2" />
+              {sidebarSearch && (
+                <button
+                  type="button"
+                  onClick={() => setSidebarSearch('')}
+                  className="absolute right-2 top-1.5 text-slate-500 hover:text-slate-300 text-[10px]"
+                >
+                  ✕
+                </button>
+              )}
             </div>
           </div>
         )}
 
-        <nav aria-label="Sidebar Navigation" className="flex-1 py-3 px-3 space-y-1 overflow-y-auto custom-scrollbar select-none">
+        {/* Navigation list */}
+        <nav aria-label="Sidebar Navigation" className="flex-1 py-1 px-3 space-y-1 overflow-y-auto custom-scrollbar select-none">
           {renderSidebarNav()}
         </nav>
 
         {/* Footer in sidebar */}
-        <div className="p-3 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between shrink-0 bg-slate-900">
+        <div className="p-3 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between shrink-0 bg-slate-950">
           {sidebarOpen ? (
             <>
               <button
                 onClick={() => setActiveTab('landing')}
-                className="hover:text-white flex items-center gap-1 cursor-pointer font-bold"
+                className="hover:text-white flex items-center gap-1.5 cursor-pointer font-bold transition"
+                title={t('নাগরিক পাবলিক পোর্টাল', 'Public Portal')}
               >
-                <Home className="w-3.5 h-3.5" />
+                <Home className="w-3.5 h-3.5 text-emerald-400" />
                 <span>{t('পাবলিক পোর্টাল', 'Public Portal')}</span>
               </button>
               {user && token ? (
@@ -1906,7 +2156,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                     logout();
                     setActiveTab('landing');
                   }}
-                  className="hover:text-red-400 text-red-300 flex items-center gap-1 cursor-pointer font-bold"
+                  className="hover:text-red-400 text-red-300 flex items-center gap-1 cursor-pointer font-bold transition"
                   title={t('লগআউট', 'Sign Out')}
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -1915,7 +2165,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
               ) : (
                 <button
                   onClick={() => setActiveTab('auth')}
-                  className="hover:text-emerald-300 text-emerald-400 flex items-center gap-1 cursor-pointer font-bold"
+                  className="hover:text-emerald-300 text-emerald-400 flex items-center gap-1 cursor-pointer font-bold transition"
                 >
                   <LogIn className="w-3.5 h-3.5" />
                   <span>{t('লগইন', 'Sign In')}</span>
@@ -1925,10 +2175,10 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
           ) : (
             <button
               onClick={() => setActiveTab('landing')}
-              className="mx-auto hover:text-white cursor-pointer"
-              title="Home"
+              className="mx-auto hover:text-white cursor-pointer p-1"
+              title={t('পাবলিক পোর্টাল', 'Public Portal')}
             >
-              <Home className="w-4 h-4" />
+              <Home className="w-4 h-4 text-emerald-400" />
             </button>
           )}
         </div>
@@ -1952,55 +2202,171 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
           </div>
         )}
 
-        {/* Top Navbar */}
-        <header className="sticky top-1 z-20 h-16 bg-white/95 backdrop-blur border-b border-slate-200 px-4 lg:px-6 flex items-center justify-between gap-2">
+        {/* Top Executive OS Navbar */}
+        <header className="sticky top-1 z-20 h-16 bg-white/95 backdrop-blur border-b border-slate-200/90 px-3 sm:px-4 lg:px-6 flex items-center justify-between gap-3 shadow-2xs">
+          {/* Left: Mobile Drawer Trigger + Breadcrumb */}
           <div className="flex items-center gap-2 min-w-0 flex-1">
             <button
               onClick={() => setMobileDrawerOpen(true)}
-              className="p-1.5 rounded-lg border border-slate-200 md:hidden cursor-pointer"
+              className="p-1.5 rounded-xl border border-slate-200 md:hidden cursor-pointer hover:bg-slate-50 transition"
+              aria-label="Open mobile menu"
             >
               <Menu className="w-5 h-5 text-slate-700" />
             </button>
-            <button
-              onClick={() => setActiveTab('landing')}
-              className="text-xs font-bold text-[#006A4E] hover:underline flex items-center gap-1"
-            >
-              <Home className="w-3.5 h-3.5" />
-              <span>{t('হোম', 'Home')}</span>
-            </button>
-            <span className="text-slate-300">/</span>
-            <span className="text-xs font-extrabold text-slate-800 truncate min-w-0">
-              {lang === 'bn' ? currentRoleMeta.titleBn : currentRoleMeta.titleEn}
-            </span>
+
+            <nav className="flex items-center gap-1.5 min-w-0 text-xs overflow-hidden" aria-label="Breadcrumb">
+              <button
+                onClick={() => setActiveTab('landing')}
+                className="text-slate-500 hover:text-[#006A4E] transition flex items-center gap-1 font-semibold shrink-0 cursor-pointer"
+                title={t('পাবলিক পোর্টাল', 'Public Portal')}
+              >
+                <Home className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{t('ভূমি সুরক্ষা', 'BhumiShield')}</span>
+              </button>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[11px] truncate shrink-0 max-w-[180px] sm:max-w-[260px]">
+                <Landmark className="w-3 h-3 text-[#006A4E] shrink-0" />
+                <span className="truncate">{user?.office_bn || (lang === 'bn' ? currentRoleMeta.deptBn : currentRoleMeta.deptEn)}</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0 hidden md:inline" />
+              <span className="text-xs font-black text-slate-900 truncate hidden md:inline">
+                {lang === 'bn' ? currentRoleMeta.titleBn : currentRoleMeta.titleEn}
+              </span>
+            </nav>
           </div>
 
+          {/* Center: Live Ed25519 Cryptographic Status Badge (lg+) */}
+          <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50/90 border border-emerald-200/80 text-emerald-900 text-[11px] font-bold shadow-2xs">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
+            </span>
+            <span>{t('Ed25519 ক্রিপ্টোগ্রাফিক লেজার সক্রিয়', 'Ed25519 Ledger Secured')}</span>
+            <span className="text-[10px] text-emerald-700 font-mono font-medium">| {t('অনলাইন', 'Online')}</span>
+          </div>
+
+          {/* Right: Search, Quick Actions, Notifications, Language, Contrast, Profile */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Global Search */}
             <form onSubmit={handleGlobalSearchSubmit} className="hidden sm:block relative">
               <input
+                id="global-header-search"
                 type="text"
                 value={globalSearch}
                 onChange={(e) => setGlobalSearch(e.target.value)}
-                placeholder={t('দাগ নং বা দলিল খুঁজুন...', 'Search plot or deed...')}
-                className="w-48 lg:w-64 pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
+                placeholder={t('দাগ নং, দলিল বা কেস খুঁজুন...', 'Search plot, deed, case...')}
+                className="w-44 md:w-56 lg:w-64 pl-8 pr-8 py-1.5 rounded-xl border border-slate-200 text-xs bg-slate-50/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30 focus:border-[#006A4E] transition"
               />
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+              <kbd className="hidden lg:inline-block absolute right-2.5 top-2 px-1.5 py-0.5 text-[9px] font-mono text-slate-400 bg-slate-100 rounded border border-slate-200">
+                ⌘K
+              </kbd>
             </form>
 
+            {/* Quick Action Shortcut Button */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setQuickActionOpen((prev) => !prev)}
+                className="h-8.5 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                title={t('দ্রুত অ্যাকশন মেনু', 'Quick Actions')}
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span className="hidden xl:inline">{t('অ্যাকশন', 'Actions')}</span>
+                <ChevronDown className={`w-3 h-3 transition-transform ${quickActionOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {quickActionOpen && (
+                <div
+                  className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 text-slate-800 animate-in fade-in zoom-in-95"
+                  onClick={() => setQuickActionOpen(false)}
+                >
+                  <div className="px-2 py-1 text-[10px] font-black uppercase tracking-wider text-slate-400">
+                    {t('দ্রুত অ্যাকশন শর্টকাট', 'Quick Action Shortcuts')}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('qr')}
+                    className="w-full p-2 rounded-xl text-left flex items-center gap-2.5 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-700"
+                  >
+                    <div className="p-1.5 rounded-lg bg-cyan-100 text-cyan-800"><QrCode className="w-3.5 h-3.5" /></div>
+                    <div>
+                      <div>{t('দলিল QR সিল যাচাই', 'Verify Deed QR Seal')}</div>
+                      <div className="text-[10px] font-normal text-slate-400">{t('ডিজিটাল সিল ও সত্যতা', 'Check seal authenticity')}</div>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('check')}
+                    className="w-full p-2 rounded-xl text-left flex items-center gap-2.5 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-700"
+                  >
+                    <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-800"><Search className="w-3.5 h-3.5" /></div>
+                    <div>
+                      <div>{t('দাগ ঝুঁকি বিশ্লেষণ', 'Check Plot Risk')}</div>
+                      <div className="text-[10px] font-normal text-slate-400">{t('মালিকানা ও লিয়েন সার্চ', 'Ownership & lien report')}</div>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFaraizModalOpen(true)}
+                    className="w-full p-2 rounded-xl text-left flex items-center gap-2.5 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-700"
+                  >
+                    <div className="p-1.5 rounded-lg bg-purple-100 text-purple-800"><Scale className="w-3.5 h-3.5" /></div>
+                    <div>
+                      <div>{t('ফারায়েজ ক্যালকুলেটর', 'Faraiz Calculator')}</div>
+                      <div className="text-[10px] font-normal text-slate-400">{t('উত্তরাধিকার বণ্টন হিসাব', 'Inheritance share split')}</div>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPorchaModalOpen(true)}
+                    className="w-full p-2 rounded-xl text-left flex items-center gap-2.5 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-700"
+                  >
+                    <div className="p-1.5 rounded-lg bg-amber-100 text-amber-800"><FileSearch className="w-3.5 h-3.5" /></div>
+                    <div>
+                      <div>{t('পর্চা এআই স্ক্যানার', 'Porcha AI OCR Scanner')}</div>
+                      <div className="text-[10px] font-normal text-slate-400">{t('সিএস/আরএস ডকুমেন্ট স্ক্যান', 'Scan physical porcha')}</div>
+                    </div>
+                  </button>
+                  {['admin', 'system_admin'].includes(role) && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('map?design=1')}
+                      className="w-full p-2 rounded-xl text-left flex items-center gap-2.5 hover:bg-slate-50 cursor-pointer text-xs font-bold text-slate-700"
+                    >
+                      <div className="p-1.5 rounded-lg bg-indigo-100 text-indigo-800"><MapPin className="w-3.5 h-3.5" /></div>
+                      <div>
+                        <div>{t('দাগ ডিজাইন ও জিআইএস', 'Parcel Design & GIS')}</div>
+                        <div className="text-[10px] font-normal text-slate-400">{t('মৌজা ম্যাপ ও মালিকানা', 'Mouza map allocation')}</div>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Notification Center */}
+            <NotificationCenter onNavigate={(tab) => setActiveTab(tab)} />
+
+            {/* Language Toggle */}
             <button
               onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
-              className="h-8 px-2.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+              className="h-8.5 px-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+              title="Language Switcher"
             >
               {lang === 'bn' ? 'EN' : 'বাং'}
             </button>
 
+            {/* High Contrast */}
             <button
               onClick={toggleHighContrast}
-              className="h-8 px-2 rounded-lg border border-slate-300 text-xs text-slate-700 hover:bg-slate-50 cursor-pointer"
-              title="Contrast"
+              className="h-8.5 px-2.5 rounded-xl border border-slate-200 text-xs text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+              title="Toggle Contrast"
             >
               <Contrast className="w-3.5 h-3.5" />
             </button>
 
+            {/* Officer Profile Menu */}
             {user && token ? (
               <UserProfileMenu
                 user={user}
@@ -2015,7 +2381,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
             ) : (
               <button
                 onClick={() => setActiveTab('auth')}
-                className="h-8 px-3 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1 cursor-pointer shadow-xs transition"
+                className="h-8.5 px-3.5 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs transition"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>{t('লগইন', 'Sign In')}</span>

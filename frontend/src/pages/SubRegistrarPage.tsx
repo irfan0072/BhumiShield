@@ -460,92 +460,98 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200/90 shadow-2xs">
             <button
               onClick={() => handleTabChange('wizard')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+              className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-all select-none ${
                 subTab === 'wizard'
-                  ? 'bg-[#006A4E] text-white shadow-xs'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+                  ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
               }`}
             >
-              <FileSpreadsheet className="w-4 h-4" />
+              <FileSpreadsheet className="w-3.5 h-3.5" />
               <span>{t('নতুন দলিল ও প্রাক-যাচাই', 'Pre-Reg Gatekeeper')}</span>
             </button>
             <button
               onClick={() => handleTabChange('held')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+              className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-all select-none ${
                 subTab === 'held'
-                  ? 'bg-[#C4891A] text-white shadow-xs'
-                  : 'bg-[#FBF3E0] text-[#7A540E] hover:bg-[#F5E6BE]'
+                  ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-600/20'
+                  : 'text-amber-800 hover:bg-amber-100/60'
               }`}
             >
-              <ShieldAlert className="w-4 h-4" />
-              <span>
-                {t('স্থগিত (HELD) কিউ', 'Held Queue')} (
-                {toBanglaDigits(deedsList.filter((d) => d.status === 'HELD').length, lang)})
+              <ShieldAlert className="w-3.5 h-3.5" />
+              <span>{t('স্থগিত (HELD) কিউ', 'Held Queue')}</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                subTab === 'held' ? 'bg-white/20 text-white' : 'bg-amber-200 text-amber-900'
+              }`}>
+                {toBanglaDigits(deedsList.filter((d) => d.status === 'HELD').length, lang)}
               </span>
             </button>
             <button
               onClick={() => handleTabChange('deeds')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+              className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-all select-none ${
                 subTab === 'deeds'
-                  ? 'bg-[#006A4E] text-white shadow-xs'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+                  ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
               }`}
             >
-              <ListChecks className="w-4 h-4" />
-              <span>
-                {t('দলিল রেজিস্টার', 'Deed Registry')} (
-                {toBanglaDigits(deedsList.length, lang)})
+              <ListChecks className="w-3.5 h-3.5" />
+              <span>{t('দলিল রেজিস্টার', 'Deed Registry')}</span>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                subTab === 'deeds' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+              }`}>
+                {toBanglaDigits(deedsList.length, lang)}
               </span>
             </button>
             <button
               onClick={() => handleTabChange('khatian')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+              className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-all select-none ${
                 subTab === 'khatian'
-                  ? 'bg-[#006A4E] text-white shadow-xs'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+                  ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
               }`}
             >
-              <Search className="w-4 h-4" />
+              <Search className="w-3.5 h-3.5" />
               <span>{t('খতিয়ান পরম্পরা', 'Khatian Lineage')}</span>
             </button>
             <button
               onClick={() => handleTabChange('verifier')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+              className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-all select-none ${
                 subTab === 'verifier'
-                  ? 'bg-[#006A4E] text-white shadow-xs'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+                  ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
               }`}
             >
-              <QrCode className="w-4 h-4" />
+              <QrCode className="w-3.5 h-3.5" />
               <span>{t('দলিল লেজার যাচাই', 'Deed Verifier')}</span>
             </button>
             <button
               onClick={() => handleTabChange('fees')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+              className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-all select-none ${
                 subTab === 'fees'
-                  ? 'bg-[#006A4E] text-white shadow-xs'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+                  ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
               }`}
             >
-              <Calculator className="w-4 h-4" />
+              <Calculator className="w-3.5 h-3.5" />
               <span>{t('সরকারি ফি ও চালান', 'Stamp & Challan')}</span>
             </button>
             {role !== 'registry_data_officer' && (
               <button
                 onClick={() => handleTabChange('onboarding')}
-                className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
+                className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-all select-none ${
                   subTab === 'onboarding'
-                    ? 'bg-[#006A4E] text-white shadow-xs'
-                    : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E2EFE9]'
+                    ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
                 }`}
               >
-                <Layers className="w-4 h-4" />
-                <span>
-                  {t('অনবোর্ডিং ব্যাচ অনুমোদন (চেকার)', 'Approve Staging Batches')} (
-                  {toBanglaDigits(onboardingBatches.length, lang)})
+                <Layers className="w-3.5 h-3.5" />
+                <span>{t('অনবোর্ডিং ব্যাচ অনুমোদন', 'Approve Staging')}</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                  subTab === 'onboarding' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                }`}>
+                  {toBanglaDigits(onboardingBatches.length, lang)}
                 </span>
               </button>
             )}
