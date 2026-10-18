@@ -2,10 +2,10 @@ import React,{useEffect,useState} from 'react';
 import {useAppUI} from '../../i18n';
 import {sourceApi,SourceItem,Kind,sourceError,kindNames} from './sourceApi';
 import './Sources.css';
-export function SourceCards({kind,locationId=0,serviceCode='',title}:{kind?:Kind;locationId?:number;serviceCode?:string;title?:string}){
+export function SourceCards({kind,locationId=0,officeId=0,serviceCode='',title}:{kind?:Kind;locationId?:number;officeId?:number;serviceCode?:string;title?:string}){
  const{t,lang,user}=useAppUI();const[items,setItems]=useState<SourceItem[]>([]);const[error,setError]=useState('');const[loading,setLoading]=useState(true);const[retry,setRetry]=useState(0);
  const[watched,setWatched]=useState<number[]>([]);const[onlyMine,setOnlyMine]=useState(false);const[q,setQ]=useState('');const[includeExpired,setIncludeExpired]=useState(false);const[busy,setBusy]=useState(false);
- useEffect(()=>{let live=true;setLoading(true);setError('');sourceApi.public({kind,location_id:locationId||undefined,service_code:serviceCode||undefined}).then(r=>{if(live)setItems(r);}).catch(e=>{if(live)setError(sourceError(e));}).finally(()=>{if(live)setLoading(false);});return()=>{live=false;};},[kind,locationId,serviceCode,retry]);
+ useEffect(()=>{let live=true;setLoading(true);setError('');sourceApi.public({kind,location_id:locationId||undefined,service_code:serviceCode||undefined,office_id:officeId||undefined,scope:serviceCode&&!locationId?'GENERAL':undefined}).then(r=>{if(live)setItems(r);}).catch(e=>{if(live)setError(sourceError(e));}).finally(()=>{if(live)setLoading(false);});return()=>{live=false;};},[kind,locationId,officeId,serviceCode,retry]);
  useEffect(()=>{let live=true;setWatched([]);if(user)sourceApi.subscriptions().then(r=>{if(live)setWatched(r);}).catch(()=>{});return()=>{live=false;};},[user?.id]);
  const visible=items.filter(i=>(includeExpired||!i.expired)&&(!onlyMine||!i.details.location_id||watched.includes(Number(i.details.location_id)))&&(!q||(i.title+' '+i.details.summary).toLocaleLowerCase().includes(q.toLocaleLowerCase())));
  const follow=async()=>{setBusy(true);try{setWatched(await sourceApi.subscribe(locationId,!watched.includes(locationId)));}catch(e){setError(sourceError(e));}finally{setBusy(false);}};

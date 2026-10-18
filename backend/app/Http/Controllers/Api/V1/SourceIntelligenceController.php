@@ -168,6 +168,11 @@ final class SourceIntelligenceController
         $rows=DB::select('SELECT r.id,r.monitor_id,r.identity_hash,r.source_url,r.title,r.details_json,r.reviewed_at,r.created_at,m.kind,m.last_success,m.last_error,m.interval_hours FROM source_reviews r JOIN source_monitors m ON m.id=r.monitor_id'.$where.' ORDER BY r.id DESC LIMIT 250',$args);$out=[];
         foreach($rows as $r){$d=json_decode($r['details_json'],true)?:[];
             if(!empty($q['location_id'])&&!empty($d['location_id'])&&(int)$d['location_id']!==(int)$q['location_id'])continue;
+            if(($q['scope']??'')==='GENERAL'&&!empty($d['location_id']))continue;
+            if(!empty($q['office_id'])){
+                if(!empty($d['office_id'])&&(int)$d['office_id']!==(int)$q['office_id'])continue;
+                if(empty($d['office_id'])&&!empty($d['location_id']))continue;
+            }
             if(!empty($q['service_code'])&&($d['service_code']??'')!==$q['service_code'])continue;
             if(!empty($q['q'])&&!str_contains(mb_strtolower($r['title'].' '.($d['summary']??'')),mb_strtolower(mb_substr((string)$q['q'],0,100))))continue;
             $latest=DB::selectOne('SELECT payload_json FROM source_observations WHERE monitor_id=? ORDER BY id DESC LIMIT 1',[$r['monitor_id']]);

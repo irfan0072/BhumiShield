@@ -2178,106 +2178,282 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     </div>
   );
 
-  return (
-    <div className="space-y-6">
-      {['admin','system_admin'].includes(role) && (
-        <button type="button" onClick={() => onNavigate?.('map?design=1')} className="px-4 py-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900 font-bold text-sm">
-          {t('দাগ ডিজাইন, অফিস ও মালিকানা বরাদ্দ →', 'Parcel design, mouza & office allocation →')}
-        </button>
-      )}
-      {loadError && (
-        <div role="alert" className="panel p-4 text-red-700 flex items-center justify-between">
-          <span>{loadError}</span>
-          <button onClick={refreshAll} className="ml-3 underline font-bold cursor-pointer">
-            {t('আবার চেষ্টা', 'Retry')}
-          </button>
-        </div>
-      )}
+  // =========================================================================
+  // ADMIN COCKPIT: GROUPED SIDEBAR NAV DEFINITIONS
+  // =========================================================================
+  const sidebarGroups = [
+    {
+      groupId: 'command',
+      groupLabel: { bn: 'কমান্ড সেন্টার', en: 'Command Center' },
+      icon: <LayoutDashboard className="w-3 h-3" />,
+      items: [
+        { tab: 'overview' as AdminTab, icon: <LayoutDashboard className="w-3.5 h-3.5" />, bn: 'ড্যাশবোর্ড', en: 'Dashboard' },
+      ],
+    },
+    {
+      groupId: 'land_workflows',
+      groupLabel: { bn: 'ভূমি কার্যক্রম', en: 'Land Workflows' },
+      icon: <Compass className="w-3 h-3" />,
+      items: [
+        { tab: 'transfers' as AdminTab, icon: <ArrowRight className="w-3.5 h-3.5" />, bn: 'হস্তান্তর', en: 'Transfers' },
+        { tab: 'mutations' as AdminTab, icon: <RefreshCw className="w-3.5 h-3.5" />, bn: 'নামজারি', en: 'Mutations' },
+        { tab: 'field_verification' as AdminTab, icon: <MapPin className="w-3.5 h-3.5" />, bn: 'মাঠ তদন্ত', en: 'Field Verify' },
+        { tab: 'acquisitions' as AdminTab, icon: <Landmark className="w-3.5 h-3.5" />, bn: 'অধিগ্রহণ (LA)', en: 'Acquisitions' },
+        { tab: 'survey_records' as AdminTab, icon: <FileSpreadsheet className="w-3.5 h-3.5" />, bn: 'জরিপ রেকর্ড', en: 'Survey Records' },
+      ],
+    },
+    {
+      groupId: 'legal',
+      groupLabel: { bn: 'আইনি ও বিচার', en: 'Legal & Judicial' },
+      icon: <Scale className="w-3 h-3" />,
+      items: [
+        { tab: 'bank_liens' as AdminTab, icon: <Coins className="w-3.5 h-3.5" />, bn: 'ব্যাংক লিয়েন', en: 'Bank Liens' },
+        { tab: 'appeals' as AdminTab, icon: <Gavel className="w-3.5 h-3.5" />, bn: 'আপিল ও আদালত', en: 'Appeals' },
+      ],
+    },
+    {
+      groupId: 'registry',
+      groupLabel: { bn: 'রেজিস্ট্রি ও দলিল', en: 'Registry & Deeds' },
+      icon: <FileText className="w-3 h-3" />,
+      items: [
+        { tab: 'plots_control' as AdminTab, icon: <Compass className="w-3.5 h-3.5" />, bn: 'দাগ ও ভূমি', en: 'Plots & Land' },
+        { tab: 'deeds' as AdminTab, icon: <FileText className="w-3.5 h-3.5" />, bn: 'দলিল তদারকি', en: 'Deeds' },
+        { tab: 'ledger' as AdminTab, icon: <ShieldCheck className="w-3.5 h-3.5" />, bn: 'লেজার ও অডিট', en: 'Ledger & Audit' },
+      ],
+    },
+    {
+      groupId: 'system',
+      groupLabel: { bn: 'সিস্টেম প্রশাসন', en: 'System Admin' },
+      icon: <Settings className="w-3 h-3" />,
+      items: [
+        { tab: 'users' as AdminTab, icon: <Users className="w-3.5 h-3.5" />, bn: 'ইউজার ও পদায়ন', en: 'Users & Roles' },
+        { tab: 'offices_config' as AdminTab, icon: <Building2 className="w-3.5 h-3.5" />, bn: 'অফিস ও কনফিগ', en: 'Offices & Config' },
+        { tab: 'catalogue' as AdminTab, icon: <BookOpen className="w-3.5 h-3.5" />, bn: 'সেবা ক্যাটালগ', en: 'Catalogue & Fees' },
+        { tab: 'settings' as AdminTab, icon: <Settings className="w-3.5 h-3.5" />, bn: 'সিস্টেম পলিসি', en: 'System Policy' },
+        { tab: 'integrations' as AdminTab, icon: <Globe className="w-3.5 h-3.5" />, bn: 'ইন্টিগ্রেশন', en: 'Integrations' },
+        { tab: 'audit_reports' as AdminTab, icon: <FileSearch className="w-3.5 h-3.5" />, bn: 'অডিট রিপোর্ট', en: 'Audit Reports' },
+      ],
+    },
+    {
+      groupId: 'citizen',
+      groupLabel: { bn: 'নাগরিক সেবা', en: 'Citizen Services' },
+      icon: <HelpCircle className="w-3 h-3" />,
+      items: [
+        { tab: 'tickets' as AdminTab, icon: <MessageSquare className="w-3.5 h-3.5" />, bn: 'সাপোর্ট টিকেট', en: 'Support Desk' },
+        { tab: 'notices' as AdminTab, icon: <Newspaper className="w-3.5 h-3.5" />, bn: 'বিজ্ঞপ্তি', en: 'Notices' },
+        { tab: 'marketplace' as AdminTab, icon: <Globe className="w-3.5 h-3.5" />, bn: 'মার্কেটপ্লেস', en: 'Marketplace' },
+      ],
+    },
+    {
+      groupId: 'tools',
+      groupLabel: { bn: 'বিশেষ টুলস', en: 'Specialist Tools' },
+      icon: <Layers className="w-3 h-3" />,
+      items: [
+        { tab: 'content_editor' as AdminTab, icon: <Edit2 className="w-3.5 h-3.5" />, bn: 'কন্টেন্ট এডিটর', en: 'Content Editor' },
+        { tab: 'content_approver' as AdminTab, icon: <CheckCheck className="w-3.5 h-3.5" />, bn: 'প্রকাশনা অনুমোদন', en: 'Content Approver' },
+        { tab: 'marketplace_moderation' as AdminTab, icon: <ShieldAlert className="w-3.5 h-3.5" />, bn: 'লিস্টিং মডারেশন', en: 'Listing Moderation' },
+      ],
+    },
+  ];
 
-      {/* Role-Allowed Sub-Tab Navigation Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#006A4E]/15 pb-3">
-        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl">
-          {allowedTabs.map((tab) => {
-            const labels: Record<AdminTab, { bn: string; en: string }> = {
-              overview: { bn: 'কমান্ড সেন্টার ও ওভারভিউ', en: 'Command Center & Queues' },
-              users: { bn: 'ইউজার ও পদায়ন', en: 'Users & Roles' },
-              transfers: { bn: 'নাগরিক সেবা ও হস্তান্তর', en: 'Citizen Transfers' },
-              deeds: { bn: 'দলিল ও সাব-রেজিস্ট্রি', en: 'Deeds Registry' },
-              mutations: { bn: 'নামজারি ও খতিয়ান', en: 'e-Mutations & Records' },
-              field_verification: { bn: 'মাঠ তদন্ত ও পরিদর্শন', en: 'Field Verification' },
-              survey_records: { bn: 'জরিপ ও মেকার-চেকার', en: 'Survey Records' },
-              bank_liens: { bn: 'ব্যাংক লিয়েন ও এনওসি', en: 'Bank Liens & NOC' },
-              appeals: { bn: 'আপিল ও আদালত নথি', en: 'Appeals & Court' },
-              acquisitions: { bn: 'ভূমি অধিগ্রহণ (LA)', en: 'Acquisitions (LA)' },
-              marketplace: { bn: 'মার্কেটপ্লেস মডারেশন', en: 'Marketplace Moderation' },
-              tickets: { bn: 'সাপোর্ট ও ১৬১২২', en: 'Support Desk' },
-              notices: { bn: 'বিজ্ঞপ্তি ও প্রকাশনা', en: 'Notices & Publications' },
-              offices_config: { bn: 'অফিস ও সেবা কনফিগ', en: 'Offices & Config' },
-              integrations: { bn: 'ইন্টিগ্রেশন ও আউটবক্স', en: 'Integrations & Outbox' },
-              audit_reports: { bn: 'অডিট লগ ও রিপোর্ট', en: 'Audit Logs & Reports' },
-              // Legacy keys fallback:
-              plots_control: { bn: 'ভূমি রেকর্ড ও দাগ নিয়ন্ত্রণ', en: 'Land Records & Plots' },
-              ledger: { bn: 'লেজার অখণ্ডতা ও নিরাপত্তা অডিট', en: 'Ledger Integrity & Audit' },
-              settings: { bn: 'সিস্টেম পলিসি ও কনফিগারেশন', en: 'Policy & Configuration' },
-              content_editor: { bn: 'কন্টেন্ট এডিটর', en: 'Content Editor' },
-              content_approver: { bn: 'প্রকাশনা কর্তৃপক্ষ', en: 'Content Approver' },
-              marketplace_moderation: { bn: 'মার্কেটপ্লেস মডারেশন', en: 'Listing Moderation' },
-              hierarchy: { bn: 'প্রশাসনিক অধিক্ষেত্র', en: 'Hierarchy' },
-              catalogue: { bn: 'সেবা ও ফি ক্যাটালগ', en: 'Service Catalogue' },
-              onboarding_appeals: { bn: 'স্ট্যাজিং ও আপিল', en: 'Staging & Appeals' },
-              risk_protocols: { bn: 'ঝুঁকি প্রটোকল ও OCR', en: 'Risk Protocols' },
-              audit: { bn: 'সিকিউরিটি অডিট', en: 'Security Audit' },
-              dev_outbox: { bn: 'এসএমএস আউটবক্স', en: 'SMS Outbox' },
-              rbac: { bn: 'আরব্যাক রোল ও পারমিশন', en: 'RBAC Matrix' },
-            };
-            const label = labels[tab] || { bn: tab, en: tab };
-            const isActive = subTab === tab;
-            return (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => handleTabChange(tab)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                  isActive
-                    ? 'bg-[#006A4E] text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
-                }`}
-              >
-                <span>{lang === 'bn' ? label.bn : label.en}</span>
-              </button>
-            );
-          })}
-          {(role === 'admin' || role === 'system_admin') && (
-            <div className="flex items-center gap-1 pl-2 border-l border-slate-300">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">টুলস:</span>
-              {(['content_editor', 'content_approver', 'marketplace_moderation'] as AdminTab[]).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => handleTabChange(tab)}
-                  className={`px-2 py-1 rounded text-[11px] font-semibold transition cursor-pointer ${
-                    subTab === tab
-                      ? 'bg-slate-800 text-white font-bold'
-                      : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/60'
-                  }`}
-                >
-                  {tab === 'content_editor' ? t('এডিটর', 'Editor') : tab === 'content_approver' ? t('অ্যাপ্রুভার', 'Approver') : t('মডারেশন', 'Moderation')}
-                </button>
-              ))}
-            </div>
-          )}
+  // Filter sidebar groups to only show tabs the role is allowed to access
+  const visibleSidebarGroups = sidebarGroups.map((group) => ({
+    ...group,
+    items: group.items.filter((item) =>
+      allowedTabs.includes(item.tab) ||
+      // Always show tools group for admin/system_admin
+      (['admin', 'system_admin'].includes(role) && group.groupId === 'tools')
+    ),
+  })).filter((group) => group.items.length > 0);
+
+  // Determine active tab label for the command ribbon
+  const activeTabLabel = (() => {
+    for (const g of sidebarGroups) {
+      const found = g.items.find((i) => i.tab === subTab);
+      if (found) return lang === 'bn' ? found.bn : found.en;
+    }
+    return subTab;
+  })();
+
+  return (
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 52px)' }}>
+
+      {/* ── COMMAND RIBBON (48px) ─────────────────────────────────────────── */}
+      <div className="flex-none h-12 bg-slate-900 border-b border-slate-700 flex items-center justify-between px-4 gap-3 z-10">
+        {/* Left: breadcrumb */}
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-1.5 text-slate-400 text-xs font-semibold truncate">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+            <span className="text-slate-300 font-bold hidden sm:inline">
+              {role === 'support_agent'
+                ? t('সাপোর্ট ডেস্ক', 'Support Desk')
+                : role === 'auditor'
+                ? t('অডিটর কনসোল', 'Auditor Console')
+                : role === 'content_editor'
+                ? t('কন্টেন্ট এডিটর', 'Content Editor')
+                : role === 'content_approver'
+                ? t('প্রকাশনা কর্তৃপক্ষ', 'Content Approver')
+                : role === 'platform_moderator'
+                ? t('প্ল্যাটফর্ম মডারেটর', 'Platform Moderator')
+                : t('সুপার অ্যাডমিন কনসোল', 'Super Admin Console')}
+            </span>
+            <span className="text-slate-600">/</span>
+            <span className="text-emerald-400 font-bold truncate">{activeTabLabel}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+
+        {/* Center: live KPI pills */}
+        {(role === 'admin' || role === 'system_admin') && (
+          <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 border border-slate-700">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[10px] font-bold text-slate-300">
+                {toBanglaDigits(usersList.length || 0, lang)} {t('ইউজার', 'users')}
+              </span>
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 border border-slate-700">
+              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+              <span className="text-[10px] font-bold text-slate-300">
+                {toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}% {t('লেজার', 'ledger')}
+              </span>
+            </div>
+            {anomaliesData && Number(anomaliesData.total_anomalies) > 0 && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded bg-rose-900/60 border border-rose-700">
+                <AlertTriangle className="w-3 h-3 text-rose-400" />
+                <span className="text-[10px] font-bold text-rose-300">
+                  {toBanglaDigits(anomaliesData.total_anomalies, lang)} {t('অ্যানোমালি', 'anomalies')}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Right: actions */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {loadError && (
+            <span className="text-[10px] font-bold text-rose-400 hidden sm:inline">{t('লোড ত্রুটি', 'Load error')}</span>
+          )}
+          {['admin', 'system_admin'].includes(role) && (
+            <button
+              type="button"
+              onClick={() => onNavigate?.('map?design=1')}
+              className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-700 hover:bg-emerald-600 text-white text-[10px] font-bold transition cursor-pointer"
+            >
+              <MapPin className="w-3 h-3" />
+              <span>{t('ম্যাপ', 'Map')}</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={refreshAll}
-            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 cursor-pointer transition shadow-2xs"
+            className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] font-bold transition cursor-pointer"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-[#006A4E]" />
-            <span>{t('রিফ্রেশ', 'Refresh')}</span>
+            <RefreshCw className="w-3 h-3" />
+            <span className="hidden sm:inline">{t('রিফ্রেশ', 'Refresh')}</span>
           </button>
         </div>
       </div>
+
+      {/* ── BODY: SIDEBAR + MAIN CONTENT ─────────────────────────────────── */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+
+        {/* LEFT SIDEBAR (220px fixed) */}
+        <nav
+          className="flex-none w-[220px] bg-slate-900 border-r border-slate-700 flex flex-col overflow-y-auto"
+          style={{ scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}
+        >
+          <div className="flex-1 py-2 space-y-0.5">
+            {visibleSidebarGroups.map((group) => (
+              <div key={group.groupId} className="px-2">
+                {/* Group Header */}
+                <div className="flex items-center gap-1.5 px-2 pt-3 pb-1">
+                  <span className="text-slate-500">{group.icon}</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">
+                    {lang === 'bn' ? group.groupLabel.bn : group.groupLabel.en}
+                  </span>
+                </div>
+                {/* Group Items */}
+                <div className="space-y-0.5">
+                  {group.items.map((item) => {
+                    const isActive = subTab === item.tab ||
+                      // Keep sidebar highlight in sync with sub-segment navigation
+                      (item.tab === 'plots_control' && ['deeds', 'hierarchy', 'survey_records'].includes(subTab) && subTab !== 'deeds') ||
+                      (item.tab === 'deeds' && subTab === 'deeds') ||
+                      (item.tab === 'ledger' && subTab === 'ledger') ||
+                      (item.tab === 'settings' && subTab === 'settings') ||
+                      (item.tab === 'catalogue' && subTab === 'catalogue') ||
+                      (item.tab === 'offices_config' && subTab === 'offices_config');
+                    return (
+                      <button
+                        key={item.tab}
+                        type="button"
+                        onClick={() => handleTabChange(item.tab)}
+                        className={`w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-left transition cursor-pointer ${
+                          isActive
+                            ? 'bg-emerald-700/80 text-white font-bold shadow-sm'
+                            : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 font-medium'
+                        }`}
+                      >
+                        <span className={`flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-500'}`}>
+                          {item.icon}
+                        </span>
+                        <span className="text-[11px] leading-snug truncate">
+                          {lang === 'bn' ? item.bn : item.en}
+                        </span>
+                        {isActive && (
+                          <span className="ml-auto w-1 h-1 rounded-full bg-emerald-300 flex-shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Sidebar Footer: role badge */}
+          <div className="flex-none px-3 py-3 border-t border-slate-700 bg-slate-900">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-emerald-700 flex items-center justify-center flex-shrink-0">
+                <Shield className="w-3.5 h-3.5 text-white" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] font-black text-slate-300 uppercase tracking-wider truncate">
+                  {role === 'admin' || role === 'system_admin'
+                    ? t('সুপার অ্যাডমিন', 'Super Admin')
+                    : role === 'auditor'
+                    ? t('নিরীক্ষক', 'Auditor')
+                    : role === 'support_agent'
+                    ? t('সাপোর্ট এজেন্ট', 'Support Agent')
+                    : role === 'content_editor'
+                    ? t('কন্টেন্ট এডিটর', 'Content Editor')
+                    : role === 'content_approver'
+                    ? t('অনুমোদনকারী', 'Approver')
+                    : role === 'platform_moderator'
+                    ? t('মডারেটর', 'Moderator')
+                    : role}
+                </div>
+                <div className="text-[9px] text-slate-500 truncate">{user?.username || '—'}</div>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        {/* MAIN CONTENT AREA (scrolls internally) */}
+        <main
+          className="flex-1 min-w-0 overflow-y-auto bg-slate-50"
+          style={{ scrollbarWidth: 'thin', scrollbarColor: '#CBD5E1 transparent' }}
+        >
+          {/* Load error banner inside main area */}
+          {loadError && (
+            <div role="alert" className="mx-4 mt-3 p-3 rounded-lg bg-rose-50 border border-rose-300 text-rose-700 text-xs font-bold flex items-center justify-between">
+              <span>{loadError}</span>
+              <button onClick={refreshAll} className="ml-3 underline font-bold cursor-pointer">{t('আবার চেষ্টা', 'Retry')}</button>
+            </div>
+          )}
+
+          {/* Inner content padding wrapper */}
+          <div className="p-4 space-y-4">
 
       {/* SUBTAB: OVERVIEW (গভর্ন্যান্স সারসংক্ষেপ ও ড্যাশবোর্ড) */}
       {subTab === 'overview' && (
@@ -9381,6 +9557,9 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
           refreshAll();
         }}
       />
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

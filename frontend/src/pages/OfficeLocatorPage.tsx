@@ -196,7 +196,7 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
         {linkedOfficeId > 0 && <div className="source-panel"><p>{t('সংযুক্ত অফিসটি দেখানো হচ্ছে।','Showing the linked office.')}</p><button onClick={() => setLinkedOfficeId(0)}>{t('সব অফিস দেখুন','Show all offices')}</button></div>}
-        <SourceCards kind="OFFICE" title={t('অফিস ও সিটিজেন চার্টারের হালনাগাদ','Reviewed official updates')} />
+        <SourceCards kind="OFFICE" officeId={linkedOfficeId} title={t('অফিস ও সিটিজেন চার্টারের হালনাগাদ','Reviewed official updates')} />
         {/* Banner */}
         <div className="bg-[#006A4E] text-white rounded-2xl p-6 sm:p-8 shadow-sm space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-800/60 border border-emerald-600/40 text-emerald-100 text-xs font-semibold">

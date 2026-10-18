@@ -22,6 +22,8 @@ PASS Reject INVALID_SERVICE
 PASS Reviewed guidance publishes with freshness
 PASS Raw extraction and reviewer identifiers stay private
 PASS Service filter isolates guidance
+PASS Unselected mouza never receives local-only guidance
+PASS Exact office page excludes unrelated mouza guidance
 PASS Mouza filter isolates local guidance
 PASS Reject REVIEW_CONFLICT
 PASS Changed source flags old publication for review
@@ -53,4 +55,4 @@ PASS Public fee list exposes explicit service relationship
 PASS Existing service links become monitors
 PASS Service link synchronization is idempotent
 PASS Reject FORBIDDEN_ROLE
-SOURCE INTELLIGENCE CHECKS: 55 passed
+SOURCE INTELLIGENCE CHECKS: 57 passed
