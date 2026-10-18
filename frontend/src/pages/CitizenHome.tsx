@@ -496,17 +496,17 @@ export const CitizenHome: React.FC<{ onNavigate: (target: string) => void }> = (
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-3 sm:space-y-3.5 max-w-7xl mx-auto pb-8">
       {/* Toast Notice */}
       {notice && (
         <div
-          className={`p-4 rounded-2xl border flex items-center justify-between text-xs font-bold transition shadow-xs ${
+          className={`p-3 rounded-xl border flex items-center justify-between text-xs font-bold transition shadow-xs ${
             notice.err ? 'bg-rose-50 border-rose-300 text-rose-800' : 'bg-emerald-50 border-emerald-300 text-emerald-900'
           }`}
         >
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             {notice.err ? <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" /> : <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />}
-            <span className="leading-relaxed">{notice.msg}</span>
+            <span className="leading-snug">{notice.msg}</span>
           </div>
           <button
             type="button"
@@ -518,196 +518,142 @@ export const CitizenHome: React.FC<{ onNavigate: (target: string) => void }> = (
         </div>
       )}
 
-      {/* Hero Welcome & Identity Verification Banner (E-Commerce Style Customer Welcome) */}
-      <div className="bg-gradient-to-br from-[#004d38] via-[#006A4E] to-[#003829] rounded-3xl p-6 md:p-8 text-white shadow-lg border border-emerald-700/60 relative overflow-hidden">
-        {/* Subtle decorative background circle */}
-        <div className="absolute -right-12 -top-12 w-64 h-64 rounded-full bg-white/5 pointer-events-none blur-2xl" />
-        <div className="absolute right-32 -bottom-20 w-80 h-80 rounded-full bg-emerald-400/10 pointer-events-none blur-3xl" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          {/* Left: Avatar & Citizen Greeting */}
-          <div className="flex items-start sm:items-center gap-4">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/15 border-2 border-white/30 backdrop-blur-md flex items-center justify-center text-white shrink-0 shadow-inner">
-              <UserCheck className="w-8 h-8 md:w-10 md:h-10 text-emerald-200" />
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-white/20 text-white backdrop-blur-xs flex items-center gap-1.5 border border-white/25">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-                  {t('নাগরিক ভূমি সেবা ও সুরক্ষা ভল্ট', 'Citizen Land Service Desk')}
-                </span>
-                {user?.is_identity_verified ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-400/25 text-emerald-100 border border-emerald-400/40 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
-                    {t('এনআইডি যাচাইকৃত', 'NID Verified')}
-                  </span>
-                ) : (
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-400 text-slate-900 flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />
-                    {t('যাচাই অমীমাংসিত', 'Verification Pending')}
-                  </span>
-                )}
-              </div>
-
-              <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-                {lang === 'bn' ? (user?.full_name_bn || 'সম্মানিত নাগরিক') : (user?.full_name_en || 'Dear Citizen')}
-              </h1>
-
-              <div className="flex flex-wrap items-center gap-3 text-xs text-emerald-100/90 font-mono">
-                <span>
-                  {t('এনআইডি', 'NID')}:{' '}
-                  {user?.nid ? (
-                    toBanglaDigits(user.nid, lang)
-                  ) : (
-                    <span className="text-amber-200 font-sans font-semibold">
-                      {t('এনআইডি যুক্ত নেই (যাচাই প্রয়োজন)', 'NID Not Linked (Verification Required)')}
-                    </span>
-                  )}
-                </span>
-                <span>•</span>
-                <span>
-                  {t('মোবাইল', 'Mobile')}:{' '}
-                  {user?.phone || user?.phone_dummy ? (
-                    toBanglaDigits((user.phone || user.phone_dummy)!, lang)
-                  ) : (
-                    <span className="text-amber-200 font-sans font-semibold">
-                      {t('মোবাইল নম্বর যুক্ত নেই', 'No Phone Number')}
-                    </span>
-                  )}
-                </span>
-                <span>•</span>
-                <span className="text-amber-200 flex items-center gap-1 font-sans font-bold">
-                  <PhoneCall className="w-3 h-3" />
-                  {t('জরুরি কল: ১৬১২২', 'Helpline: 16122')}
-                </span>
-              </div>
-            </div>
+      {/* Sleek Single-Screen Citizen Command Ribbon (উচ্চ ঘনত্বের এক-নজরে নাগরিক কমান্ড রিবন) */}
+      <div className="bg-gradient-to-r from-[#004d38] via-[#006A4E] to-[#014734] rounded-2xl p-3 sm:p-3.5 text-white shadow-sm border border-emerald-700/60 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        {/* Left: Avatar & Citizen Identity Pill */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-white/15 border border-white/30 backdrop-blur-md flex items-center justify-center text-white shrink-0 shadow-inner">
+            <UserCheck className="w-5 h-5 text-emerald-200" />
           </div>
 
-          {/* Right: Quick Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => setIsTriageModalOpen(true)}
-              className="px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition flex items-center gap-2 cursor-pointer border border-white/25 backdrop-blur-xs shadow-xs"
-            >
-              <HelpCircle className="w-4 h-4 text-emerald-200" />
-              <span>{t('আপনার কী সাহায্য দরকার?', 'Need Help? Guide')}</span>
-            </button>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-sm sm:text-base font-black text-white tracking-tight truncate">
+                {lang === 'bn' ? (user?.full_name_bn || 'সম্মানিত নাগরিক') : (user?.full_name_en || 'Dear Citizen')}
+              </h1>
+              {user?.is_identity_verified ? (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-400/25 text-emerald-100 border border-emerald-400/40 flex items-center gap-1 shrink-0">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-300" />
+                  {t('এনআইডি যাচাইকৃত', 'NID Verified')}
+                </span>
+              ) : (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-900 flex items-center gap-1 shrink-0">
+                  <Clock className="w-3 h-3" />
+                  {t('যাচাই অমীমাংসিত', 'Pending')}
+                </span>
+              )}
+            </div>
 
-            <button
-              type="button"
-              onClick={loadVault}
-              disabled={loading}
-              className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition flex items-center gap-2 cursor-pointer border border-white/20 backdrop-blur-xs shadow-xs"
-            >
-              <RotateCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              <span>{t('রিফ্রেশ', 'Refresh')}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('applications?new=1')}
-              className="px-5 py-2.5 rounded-xl bg-[#F42A41] hover:bg-rose-700 text-white text-xs font-black transition shadow-md flex items-center gap-2 cursor-pointer"
-            >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              <span>{t('জমি হস্তান্তরের নতুন আবেদন', 'Apply for Land Transfer')}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2 text-[11px] text-emerald-100/80 font-mono truncate mt-0.5">
+              <span>{t('এনআইডি', 'NID')}: {user?.nid ? toBanglaDigits(user.nid, lang) : '---'}</span>
+              <span>•</span>
+              <span className="text-amber-200 font-sans font-bold flex items-center gap-1">
+                <PhoneCall className="w-2.5 h-2.5" />
+                ১৬১২২
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* 4 Key Metric Cards (বড় ও স্পষ্ট পরিসংখ্যান) */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mt-6 pt-6 border-t border-white/15">
-          {/* Metric 1: Total Land Area */}
-          <div
+        {/* Center: 4 Micro-KPI Metric Badges (১-ক্লিকে জাম্প) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 flex-1 max-w-2xl px-0 lg:px-2">
+          {/* Metric 1: Total Land */}
+          <button
+            type="button"
             onClick={() => handleTabChange('plots')}
-            className="bg-white/10 hover:bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/15 transition cursor-pointer group"
+            className="p-1.5 sm:p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-left transition cursor-pointer flex flex-col justify-center"
           >
-            <div className="text-[11px] font-bold text-emerald-200 flex items-center justify-between">
-              <span>{t('মোট মালিকানাধীন জমি', 'Total Land Area')}</span>
-              <ChevronRight className="w-3.5 h-3.5 text-white/40 group-hover:text-white transition" />
+            <div className="text-[10px] font-medium text-emerald-200 truncate">{t('মোট জমি', 'Total Land')}</div>
+            <div className="text-xs sm:text-sm font-black text-white truncate">
+              {toBanglaDigits(totalLandDecimal.toFixed(1), lang)} <span className="text-[10px] font-normal text-emerald-200">{t('শতক', 'dec')}</span>
             </div>
-            <div className="text-2xl md:text-3xl font-black text-white mt-1">
-              {toBanglaDigits(totalLandDecimal.toFixed(2), lang)}{' '}
-              <span className="text-xs font-normal text-emerald-200">{t('শতক', 'dec')}</span>
-            </div>
-            <div className="text-[11px] text-emerald-100/80 mt-1">
-              {toBanglaDigits(plots.length, lang)} {t('টি দালিলিক দাগে বিস্তৃত', 'plots in total')}
-            </div>
-          </div>
+          </button>
 
-          {/* Metric 2: Sale Lock Status */}
-          <div
+          {/* Metric 2: Sale Lock */}
+          <button
+            type="button"
             onClick={() => handleTabChange('plots')}
-            className="bg-white/10 hover:bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/15 transition cursor-pointer group"
+            className="p-1.5 sm:p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-left transition cursor-pointer flex flex-col justify-center"
           >
-            <div className="text-[11px] font-bold text-emerald-200 flex items-center justify-between">
-              <span>{t('মালিকানা বিক্রয় লক', 'Sale Lock Status')}</span>
-              <ChevronRight className="w-3.5 h-3.5 text-white/40 group-hover:text-white transition" />
-            </div>
-            <div className="text-2xl md:text-3xl font-black text-white mt-1 flex items-center gap-2">
-              <span>{toBanglaDigits(lockedPlotsCount, lang)}</span>
-              <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold ${
-                lockedPlotsCount > 0 ? 'bg-emerald-400/30 text-emerald-100 border border-emerald-300/40' : 'bg-rose-500/30 text-rose-200 border border-rose-400/40'
+            <div className="text-[10px] font-medium text-emerald-200 truncate">{t('বিক্রয় লক', 'Sale Lock')}</div>
+            <div className="text-xs sm:text-sm font-black text-white flex items-center gap-1 truncate">
+              <span>{toBanglaDigits(lockedPlotsCount, lang)}/{toBanglaDigits(plots.length, lang)}</span>
+              <span className={`text-[9px] px-1 py-0.2 rounded font-bold ${
+                lockedPlotsCount > 0 ? 'bg-emerald-400/30 text-emerald-100' : 'bg-rose-500/30 text-rose-200'
               }`}>
-                {lockedPlotsCount > 0 ? t('সুরক্ষিত', 'Protected') : t('লক নেই', 'Unlocked')}
+                {lockedPlotsCount > 0 ? t('সুরক্ষিত', 'Locked') : t('উন্মুক্ত', 'Unlocked')}
               </span>
             </div>
-            <div className="text-[11px] text-emerald-100/80 mt-1">
-              {lockedPlotsCount === plots.length && plots.length > 0
-                ? t('সকল জমি বিক্রয়ের বিরুদ্ধে লককৃত', 'All plots locked')
-                : t('অননুমোদিত বিক্রি বন্ধ রাখুন', 'Prevent unauthorized deed')}
-            </div>
-          </div>
+          </button>
 
           {/* Metric 3: Digital Deeds */}
-          <div
+          <button
+            type="button"
             onClick={() => handleTabChange('deeds')}
-            className="bg-white/10 hover:bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/15 transition cursor-pointer group"
+            className="p-1.5 sm:p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-left transition cursor-pointer flex flex-col justify-center"
           >
-            <div className="text-[11px] font-bold text-emerald-200 flex items-center justify-between">
-              <span>{t('রেজিস্ট্রিকৃত ডিজিটাল দলিল', 'Digital Registered Deeds')}</span>
-              <ChevronRight className="w-3.5 h-3.5 text-white/40 group-hover:text-white transition" />
+            <div className="text-[10px] font-medium text-emerald-200 truncate">{t('মূল দলিল', 'Deeds')}</div>
+            <div className="text-xs sm:text-sm font-black text-white truncate">
+              {toBanglaDigits(deeds.length, lang)} <span className="text-[10px] font-normal text-emerald-200">{t('টি', 'deeds')}</span>
             </div>
-            <div className="text-2xl md:text-3xl font-black text-white mt-1">
-              {toBanglaDigits(deeds.length, lang)} {t('টি দলিল', 'deeds')}
-            </div>
-            <div className="text-[11px] text-emerald-100/80 mt-1">
-              {t('কিউআর ও ক্রিপ্টোগ্রাফিক সিলযুক্ত', 'Cryptographic & QR sealed')}
-            </div>
-          </div>
+          </button>
 
           {/* Metric 4: Active Transfers */}
-          <div
+          <button
+            type="button"
             onClick={() => handleTabChange('transfers')}
-            className="bg-white/10 hover:bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/15 transition cursor-pointer group"
+            className="p-1.5 sm:p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-left transition cursor-pointer flex flex-col justify-center"
           >
-            <div className="text-[11px] font-bold text-emerald-200 flex items-center justify-between">
-              <span>{t('চলমান হস্তান্তর ও আবেদন', 'Active Transfer Apps')}</span>
-              <ChevronRight className="w-3.5 h-3.5 text-white/40 group-hover:text-white transition" />
+            <div className="text-[10px] font-medium text-emerald-200 truncate">{t('চলমান আবেদন', 'Active Apps')}</div>
+            <div className="text-xs sm:text-sm font-black text-white truncate">
+              {toBanglaDigits(activeTransfersCount, lang)} <span className="text-[10px] font-normal text-emerald-200">{t('টি', 'active')}</span>
             </div>
-            <div className="text-2xl md:text-3xl font-black text-white mt-1">
-              {toBanglaDigits(activeTransfersCount, lang)} {t('টি চলমান', 'active')}
-            </div>
-            <div className="text-[11px] text-emerald-100/80 mt-1">
-              {activeTransfersCount > 0 ? t('১৩-ধাপের অগ্রগতি ট্র্যাক করুন', 'Track 13-step pipeline') : t('কোনো চলমান আবেদন নেই', 'No pending applications')}
-            </div>
-          </div>
+          </button>
+        </div>
+
+        {/* Right: Quick Action Buttons */}
+        <div className="flex items-center gap-1.5 shrink-0 self-end lg:self-auto">
+          <button
+            type="button"
+            onClick={() => setIsTriageModalOpen(true)}
+            className="px-2.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-[11px] font-bold transition flex items-center gap-1 cursor-pointer border border-white/20"
+            title={t('আপনার কী সাহায্য দরকার?', 'Need Help? Guide')}
+          >
+            <HelpCircle className="w-3.5 h-3.5 text-emerald-200" />
+            <span className="hidden sm:inline">{t('সহায়তা গাইড', 'Guide')}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={loadVault}
+            disabled={loading}
+            className="p-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-[11px] font-bold transition flex items-center justify-center cursor-pointer border border-white/20"
+            title={t('রিফ্রেশ', 'Refresh')}
+          >
+            <RotateCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onNavigate('applications?new=1')}
+            className="px-3 py-1.5 rounded-lg bg-[#F42A41] hover:bg-rose-700 text-white text-xs font-black transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[3]" />
+            <span>{t('হস্তান্তর আবেদন', 'Apply')}</span>
+          </button>
         </div>
       </div>
 
       {/* Horizontal Service Category Tabs (সহজ মেনু বার — গ্রাহকের জন্য স্পষ্ট ও ব্যবহারবান্ধব) */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-2 shadow-xs flex items-center gap-1.5 overflow-x-auto">
+      <div className="bg-white rounded-xl border border-slate-200/80 p-1 shadow-2xs flex items-center gap-1 overflow-x-auto scrollbar-thin">
         {[
-          { id: 'overview' as CitizenSection, label: t('সারসংক্ষেপ ও সেবা', 'Overview & Hub'), icon: <LayoutDashboard className="w-4 h-4" /> },
-          { id: 'plots' as CitizenSection, label: t('আমার জমি ও বিক্রয় লক', 'My Land & Locks'), icon: <ShieldCheck className="w-4 h-4" />, count: plots.length },
-          { id: 'docs' as CitizenSection, label: t('ডিজিটাল কাগজপত্র ভল্ট', 'Digital Document Vault'), icon: <FolderOpen className="w-4 h-4" /> },
-          { id: 'deeds' as CitizenSection, label: t('রেজিস্ট্রিকৃত মূল দলিল', 'Registered Deeds'), icon: <FileCheck className="w-4 h-4" />, count: deeds.length },
-          { id: 'transfers' as CitizenSection, label: t('হস্তান্তর ট্র্যাকার', 'Transfer Tracker'), icon: <Sparkles className="w-4 h-4" />, count: activeTransfersCount > 0 ? activeTransfersCount : undefined },
-          { id: 'disputes' as CitizenSection, label: t('আপত্তি ও বিরোধ', 'Disputes & Objections'), icon: <AlertOctagon className="w-4 h-4" />, count: activeDisputesCount > 0 ? activeDisputesCount : undefined },
-          { id: 'tickets' as CitizenSection, label: t('সহায়তা ও সাপোর্ট', 'Help & Support'), icon: <FileText className="w-4 h-4" />, count: tickets.length > 0 ? tickets.length : undefined },
+          { id: 'overview' as CitizenSection, label: t('সারসংক্ষেপ ও সেবা', 'Overview & Hub'), icon: <LayoutDashboard className="w-3.5 h-3.5" /> },
+          { id: 'plots' as CitizenSection, label: t('আমার জমি ও বিক্রয় লক', 'My Land & Locks'), icon: <ShieldCheck className="w-3.5 h-3.5" />, count: plots.length },
+          { id: 'docs' as CitizenSection, label: t('ডিজিটাল কাগজপত্র ভল্ট', 'Document Vault'), icon: <FolderOpen className="w-3.5 h-3.5" /> },
+          { id: 'deeds' as CitizenSection, label: t('রেজিস্ট্রিকৃত মূল দলিল', 'Registered Deeds'), icon: <FileCheck className="w-3.5 h-3.5" />, count: deeds.length },
+          { id: 'transfers' as CitizenSection, label: t('হস্তান্তর ট্র্যাকার', 'Transfer Tracker'), icon: <Sparkles className="w-3.5 h-3.5" />, count: activeTransfersCount > 0 ? activeTransfersCount : undefined },
+          { id: 'disputes' as CitizenSection, label: t('আপত্তি ও বিরোধ', 'Disputes'), icon: <AlertOctagon className="w-3.5 h-3.5" />, count: activeDisputesCount > 0 ? activeDisputesCount : undefined },
+          { id: 'tickets' as CitizenSection, label: t('সহায়তা ও সাপোর্ট', 'Help & Support'), icon: <FileText className="w-3.5 h-3.5" />, count: tickets.length > 0 ? tickets.length : undefined },
         ].map((tab) => {
           const isActive = section === tab.id;
           return (
@@ -715,10 +661,10 @@ export const CitizenHome: React.FC<{ onNavigate: (target: string) => void }> = (
               key={tab.id}
               type="button"
               onClick={() => handleTabChange(tab.id)}
-              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer select-none ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer select-none ${
                 isActive
-                  ? 'bg-[#006A4E] text-white shadow-xs'
-                  : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                  ? 'bg-[#006A4E] text-white shadow-2xs'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
               {tab.icon}
@@ -739,146 +685,128 @@ export const CitizenHome: React.FC<{ onNavigate: (target: string) => void }> = (
 
       {/* Universal Address Cascader Toolbar (Used on plots, deeds, disputes) */}
       {(section === 'plots' || section === 'deeds' || section === 'disputes') && (
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 md:p-5 space-y-3 shadow-xs">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
-            <div className="text-xs font-bold text-slate-800 flex items-center gap-2">
-              <SlidersHorizontal className="w-4 h-4 text-[#006A4E]" />
-              <span>{t('অধিক্ষেত্র নির্বাচন করুন (বিভাগ ➔ জেলা ➔ উপজেলা ➔ মৌজা)', 'Filter by Location (Division ➔ District ➔ Upazila ➔ Mouza)')}</span>
-            </div>
-            <button
-              type="button"
-              onClick={resetFilters}
-              className="text-xs font-bold text-slate-500 hover:text-rose-600 transition cursor-pointer self-start md:self-auto"
-            >
-              {t('সব ফিল্টার মুছুন', 'Reset Filters')}
-            </button>
+        <div className="bg-white border border-slate-200/80 rounded-xl p-2.5 sm:p-3 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+          <div className="flex-1 min-w-0">
+            <AddressCascader
+              lang={lang}
+              selectedDivision={selectedDivision}
+              selectedDistrict={selectedDistrict}
+              selectedUpazila={selectedUpazila}
+              selectedMouzaId={selectedMouzaId}
+              onChange={(sel: AddressSelection) => {
+                setSelectedDivision(sel.division_bn);
+                setSelectedDistrict(sel.district_bn);
+                setSelectedUpazila(sel.upazila_bn);
+                setSelectedMouzaId(sel.mouza_id ? String(sel.mouza_id) : '');
+              }}
+            />
           </div>
 
-          <AddressCascader
-            lang={lang}
-            selectedDivision={selectedDivision}
-            selectedDistrict={selectedDistrict}
-            selectedUpazila={selectedUpazila}
-            selectedMouzaId={selectedMouzaId}
-            onChange={(sel: AddressSelection) => {
-              setSelectedDivision(sel.division_bn);
-              setSelectedDistrict(sel.district_bn);
-              setSelectedUpazila(sel.upazila_bn);
-              setSelectedMouzaId(sel.mouza_id ? String(sel.mouza_id) : '');
-            }}
-          />
+          <div className="flex items-center gap-2">
+            <div className="relative w-full md:w-64">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t(
+                  'দাগ, খতিয়ান বা দলিল নং খুঁজুন...',
+                  'Search plot, khatian, deed no...'
+                )}
+                className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
+              />
+            </div>
 
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t(
-                'দাগ নম্বর, খতিয়ান নম্বর, বায়া দলিল নম্বর অথবা মৌজার নাম লিখে খুঁজুন...',
-                'Search by plot no, khatian no, deed no, or mouza...'
-              )}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
-            />
+            {(selectedDivision || selectedDistrict || selectedUpazila || selectedMouzaId || searchQuery) && (
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="text-[11px] font-bold text-slate-500 hover:text-rose-600 transition cursor-pointer px-2 py-1.5 rounded-lg hover:bg-slate-100 whitespace-nowrap"
+              >
+                {t('রিসেট', 'Reset')}
+              </button>
+            )}
           </div>
         </div>
       )}
 
       {/* SECTION 1: OVERVIEW & SERVICE HUB (সারসংক্ষেপ ও সেবা হাব) */}
       {section === 'overview' && (
-        <div className="space-y-6">
-          {/* Quick Action Hub (১-ক্লিকে সেবা গ্রহণ করুন — ৬টি বড় ও স্পষ্ট কার্ড) */}
+        <div className="space-y-3.5">
+          {/* Quick Action Hub (১-ক্লিকে সেবা গ্রহণ করুন — ৬টি কমপ্যাক্ট টাইল) */}
           <div>
-            <div className="flex items-center justify-between mb-3 px-1">
-              <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#006A4E]" />
+            <div className="flex items-center justify-between mb-2 px-1">
+              <h2 className="text-xs sm:text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#006A4E]" />
                 <span>{t('১-ক্লিকে প্রয়োজনীয় নাগরিক সেবা', 'Quick Citizen Services')}</span>
               </h2>
-              <span className="text-xs text-slate-500 font-medium">
-                {t('যেকোনো সেবায় সরাসরি প্রবেশ করুন', 'Direct 1-click access')}
+              <span className="text-[11px] text-slate-500 font-medium">
+                {t('দ্রুত অ্যাক্সেস', '1-Click Shortcuts')}
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-2.5">
               {/* Service 1: Sale Lock */}
               <div
                 onClick={() => handleTabChange('plots')}
-                className="bg-white p-5 rounded-2xl border border-slate-200/90 hover:border-emerald-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+                className="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200/90 hover:border-emerald-500 hover:shadow-2xs transition cursor-pointer flex items-center justify-between group"
               >
-                <div className="space-y-3">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#006A4E] group-hover:bg-[#006A4E] group-hover:text-white transition">
-                    <Lock className="w-6 h-6" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#006A4E] group-hover:bg-[#006A4E] group-hover:text-white transition shrink-0">
+                    <Lock className="w-4 h-4" />
                   </div>
-                  <div>
-                    <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#006A4E] transition">
+                  <div className="min-w-0">
+                    <h3 className="font-extrabold text-xs text-slate-900 group-hover:text-[#006A4E] transition truncate">
                       {t('মালিকানা বিক্রয় লক', 'Owner Sale Lock')}
                     </h3>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                      {t(
-                        'অননুমোদিত বা জাল হস্তান্তর ঠেকাতে যেকোনো জমির বিক্রয়ে নিজের ডিজিটাল লক সক্রিয় রাখুন।',
-                        'Lock your plots to prevent unauthorized deed registration at the Sub-Registry Office.'
-                      )}
+                    <p className="text-[10px] text-slate-500 truncate">
+                      {t('অননুমোদিত বিক্রি বা জাল হস্তান্তর বন্ধ রাখুন', 'Block unauthorized registration')}
                     </p>
                   </div>
                 </div>
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
-                  <span>{t('জমি লক ও নিয়ন্ত্রণ দেখুন', 'Manage Sale Locks')}</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#006A4E] group-hover:translate-x-0.5 transition shrink-0" />
               </div>
 
               {/* Service 2: Documents Vault */}
               <div
                 onClick={() => handleTabChange('docs')}
-                className="bg-white p-5 rounded-2xl border border-slate-200/90 hover:border-emerald-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+                className="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200/90 hover:border-blue-500 hover:shadow-2xs transition cursor-pointer flex items-center justify-between group"
               >
-                <div className="space-y-3">
-                  <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 group-hover:bg-blue-600 group-hover:text-white transition">
-                    <FolderOpen className="w-6 h-6" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 group-hover:bg-blue-600 group-hover:text-white transition shrink-0">
+                    <FolderOpen className="w-4 h-4" />
                   </div>
-                  <div>
-                    <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-blue-700 transition">
-                      {t('ডিজিটাল কাগজপত্র ও পর্চা ভল্ট', 'Digital Document Vault')}
+                  <div className="min-w-0">
+                    <h3 className="font-extrabold text-xs text-slate-900 group-hover:text-blue-700 transition truncate">
+                      {t('কাগজপত্র ও পর্চা ভল্ট', 'Document Vault')}
                     </h3>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                      {t(
-                        'খতিয়ান, বায়া দলিল, দাখিলা ও নকশার ৭টি অপরিহার্য ডিজিটাল কপি দেখুন ও সরাসরি ডাউনলোড করুন।',
-                        'View and download authentic digital copies of your 7 essential land records.'
-                      )}
+                    <p className="text-[10px] text-slate-500 truncate">
+                      {t('খতিয়ান, বায়া দলিল ও দাখিলা ডাউনলোড', 'Khatian, deeds, dakhila')}
                     </p>
                   </div>
                 </div>
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-blue-700">
-                  <span>{t('কাগজপত্র ডাউনলোড করুন', 'Open Document Vault')}</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition shrink-0" />
               </div>
 
               {/* Service 3: Transfer Application */}
               <div
                 onClick={() => onNavigate('applications?new=1')}
-                className="bg-white p-5 rounded-2xl border border-slate-200/90 hover:border-rose-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+                className="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200/90 hover:border-rose-500 hover:shadow-2xs transition cursor-pointer flex items-center justify-between group"
               >
-                <div className="space-y-3">
-                  <div className="w-12 h-12 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition">
-                    <FileText className="w-6 h-6" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition shrink-0">
+                    <FileText className="w-4 h-4" />
                   </div>
-                  <div>
-                    <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-rose-600 transition">
-                      {t('জমি হস্তান্তরের নতুন আবেদন', 'Apply for Transfer')}
+                  <div className="min-w-0">
+                    <h3 className="font-extrabold text-xs text-slate-900 group-hover:text-rose-600 transition truncate">
+                      {t('জমি হস্তান্তর আবেদন', 'Transfer Application')}
                     </h3>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                      {t(
-                        'জমি ক্রয়-বিক্রয়, হেবা বা এওয়াজ দলিলের সরকারি ফি নির্ধারণ ও সাব-রেজিস্ট্রেশন আবেদন শুরু করুন।',
-                        'Calculate registration fees, stamp duty, and schedule Sub-Registry appointments.'
-                      )}
+                    <p className="text-[10px] text-slate-500 truncate">
+                      {t('সরকারি ফি হিসাব ও সাব-রেজিস্ট্রেশন', 'Govt fees and registration')}
                     </p>
                   </div>
                 </div>
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-rose-600">
-                  <span>{t('নতুন আবেদন শুরু করুন', 'Start Application')}</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-rose-600 group-hover:translate-x-0.5 transition shrink-0" />
               </div>
 
               {/* Service 4: Faraiz Calculator */}
@@ -886,37 +814,26 @@ export const CitizenHome: React.FC<{ onNavigate: (target: string) => void }> = (
                 onClick={() => {
                   window.dispatchEvent(new CustomEvent('open-faraiz-calculator', { detail: {} }));
                 }}
-                className="bg-white p-5 rounded-2xl border border-slate-200/90 hover:border-purple-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+                className="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200/90 hover:border-purple-500 hover:shadow-2xs transition cursor-pointer flex items-center justify-between group"
               >
-                <div className="space-y-3">
-                  <div className="w-12 h-12 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700 group-hover:bg-purple-700 group-hover:text-white transition">
-                    <Scale className="w-6 h-6" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700 group-hover:bg-purple-700 group-hover:text-white transition shrink-0">
+                    <Scale className="w-4 h-4" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-purple-700 transition">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1">
+                      <h3 className="font-extrabold text-xs text-slate-900 group-hover:text-purple-700 transition truncate">
                         <JargonTooltip term="FARAIZ">
-                          {t('উত্তরাধিকার ফারায়েজ বণ্টন', 'Faraiz Succession Engine')}
+                          {t('উত্তরাধিকার ফারায়েজ', 'Faraiz Engine')}
                         </JargonTooltip>
                       </h3>
-                      <span className="px-1.5 py-0.2 rounded bg-purple-100 text-purple-800 text-[10px] font-bold">
-                        {t('১-ক্লিক', '1-Click')}
-                      </span>
                     </div>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                      {t(
-                        'শরিয়াহ আইন অনুযায়ী সকল ওয়ারিশের সঠিক হিস্যা হিসাব করুন এবং ১-ক্লিকে নামজারি আবেদন প্রস্তুত করুন।',
-                        'Calculate fractional inheritance shares according to Shariah and prepare e-mutation.'
-                      )}
+                    <p className="text-[10px] text-slate-500 truncate">
+                      {t('শরিয়াহ ওয়ারিশ হিস্যা ও নামজারি', 'Shariah shares calculation')}
                     </p>
                   </div>
                 </div>
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-purple-700">
-                  <JargonTooltip term="FARAIZ">
-                    <span>{t('ফারায়েজ হিসাব করুন', 'Calculate Shares')}</span>
-                  </JargonTooltip>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-purple-700 group-hover:translate-x-0.5 transition shrink-0" />
               </div>
 
               {/* Service 5: Land Health Passport */}
@@ -928,230 +845,155 @@ export const CitizenHome: React.FC<{ onNavigate: (target: string) => void }> = (
                     handleTabChange('plots');
                   }
                 }}
-                className="bg-white p-5 rounded-2xl border border-slate-200/90 hover:border-amber-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+                className="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200/90 hover:border-amber-500 hover:shadow-2xs transition cursor-pointer flex items-center justify-between group"
               >
-                <div className="space-y-3">
-                  <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 group-hover:bg-amber-600 group-hover:text-white transition">
-                    <ShieldCheck className="w-6 h-6" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 group-hover:bg-amber-600 group-hover:text-white transition shrink-0">
+                    <ShieldCheck className="w-4 h-4" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-amber-700 transition">
-                        {t('জমির স্বাস্থ্য পাসপোর্ট প্রিন্ট', 'Land Health Passport')}
-                      </h3>
-                      <span className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 text-[10px] font-bold">
-                        {t('অফিসিয়াল', 'Official')}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                      {t(
-                        '৫-স্তরের আইনি ও প্রশাসনিক স্বাস্থ্য নিরীক্ষা সনদ, কিউআর সিল এবং ১-পাতার অফিসিয়াল পাসপোর্ট।',
-                        '5-point live audit certificate, QR verification seal, and 1-page printable official passport.'
-                      )}
+                  <div className="min-w-0">
+                    <h3 className="font-extrabold text-xs text-slate-900 group-hover:text-amber-700 transition truncate">
+                      {t('জমির স্বাস্থ্য পাসপোর্ট', 'Health Passport')}
+                    </h3>
+                    <p className="text-[10px] text-slate-500 truncate">
+                      {t('৫-স্তরের নিরীক্ষা ও কিউআর সনদ', '5-point audit certificate')}
                     </p>
                   </div>
                 </div>
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-amber-700">
-                  <span>{t('পাসপোর্ট প্রিন্ট করুন', 'Open & Print Passport')}</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-700 group-hover:translate-x-0.5 transition shrink-0" />
               </div>
 
               {/* Service 6: Support Tickets */}
               <div
                 onClick={() => handleTabChange('tickets')}
-                className="bg-white p-5 rounded-2xl border border-slate-200/90 hover:border-emerald-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+                className="bg-white p-2.5 sm:p-3 rounded-xl border border-slate-200/90 hover:border-teal-500 hover:shadow-2xs transition cursor-pointer flex items-center justify-between group"
               >
-                <div className="space-y-3">
-                  <div className="w-12 h-12 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700 group-hover:bg-teal-700 group-hover:text-white transition">
-                    <HelpCircle className="w-6 h-6" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700 group-hover:bg-teal-700 group-hover:text-white transition shrink-0">
+                    <HelpCircle className="w-4 h-4" />
                   </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-teal-700 transition">
-                        {t('সাহায্য ও সাপোর্ট টিকিট (১৬১২২)', 'Helpdesk & Support (16122)')}
-                      </h3>
-                    </div>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                      {t(
-                        'ভূমি সেবা, দলিল অনুসন্ধান, বা রেকর্ড যাচাই সংক্রান্ত যেকোনো জটিলতায় সরাসরি সহায়তা পান।',
-                        'Submit support tickets regarding land records, deed lookups, or profile verification.'
-                      )}
+                  <div className="min-w-0">
+                    <h3 className="font-extrabold text-xs text-slate-900 group-hover:text-teal-700 transition truncate">
+                      {t('সহায়তা ও সাপোর্ট (১৬১২২)', 'Helpdesk (16122)')}
+                    </h3>
+                    <p className="text-[10px] text-slate-500 truncate">
+                      {t('রেকর্ড যাচাই ও প্রোফাইল সমাধান', 'Record verification desk')}
                     </p>
                   </div>
                 </div>
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-teal-700">
-                  <span>{t('সাপোর্ট টিকিট খুলুন', 'Open Support Desk')}</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
-                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-teal-700 group-hover:translate-x-0.5 transition shrink-0" />
               </div>
             </div>
           </div>
 
-          {/* Smart Land Portfolio Highlight (আমার জমির দ্রুত ভিউ) */}
-          <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#006A4E] border border-emerald-100 flex items-center justify-center">
-                  <MapPin className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-base text-slate-900">
-                    {t('আমার মালিকানাধীন জমির সংক্ষিপ্ত তালিকা', 'My Land Portfolio Spotlight')}
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    {t('বিক্রয় লক নিয়ন্ত্রণের মাধ্যমে জমি সম্পূর্ণ নিরাপদ রাখুন', 'Ensure sale lock is enabled to protect ownership')}
-                  </p>
-                </div>
+          {/* Smart Land Portfolio Spotlight (আমার জমির দ্রুত ভিউ - কমপ্যাক্ট টেবিল/গ্রিড) */}
+          <div className="bg-white rounded-xl border border-slate-200/90 p-3.5 sm:p-4 shadow-2xs space-y-2.5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-[#006A4E]" />
+                <h3 className="font-extrabold text-xs sm:text-sm text-slate-900">
+                  {t('আমার মালিকানাধীন জমির সংক্ষিপ্ত তালিকা', 'My Land Portfolio Spotlight')}
+                </h3>
               </div>
 
               <button
                 type="button"
                 onClick={() => handleTabChange('plots')}
-                className="text-xs font-bold text-[#006A4E] hover:underline flex items-center gap-1 self-start sm:self-auto cursor-pointer"
+                className="text-xs font-bold text-[#006A4E] hover:underline flex items-center gap-1 cursor-pointer"
               >
-                <span>{t('সকল জমি দেখুন', 'View All Land Plots')}</span>
-                <ChevronRight className="w-4 h-4" />
+                <span>{t('সব জমি দেখুন', 'View All Land Plots')}</span>
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
             {plots.length === 0 ? (
-              <div className="py-12 text-center text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                <MapPin className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                <p className="font-bold text-sm text-slate-700">{t('আপনার নামে কোনো জমির রেকর্ড যুক্ত নেই।', 'No land records linked.')}</p>
-                <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                  {t(
-                    'আপনার যদি সাভার, গাজীপুর বা কুমিল্লা জেলায় জমি থাকে কিন্তু প্রোফাইলে দেখতে না পান, তবে সহজ বাংলা সমস্যা গাইডের মাধ্যমে আপনার জমি লিঙ্ক বা মালিকানা দাবি দাখিল করুন।',
-                    'If you own land in Savar, Gazipur, or Cumilla that is not visible, use the Plain-Bangla Guide to link your property directly to the competent AC Land office.'
-                  )}
-                </p>
-                <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+              <div className="py-8 text-center text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                <MapPin className="w-6 h-6 text-slate-400 mx-auto mb-1.5" />
+                <p className="font-bold text-xs text-slate-700">{t('আপনার নামে কোনো জমির রেকর্ড যুক্ত নেই।', 'No land records linked.')}</p>
+                <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
                   <button
                     type="button"
                     onClick={() => setIsTriageModalOpen(true)}
-                    className="px-5 py-2.5 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold transition shadow-xs flex items-center gap-2 cursor-pointer"
+                    className="px-3.5 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                   >
-                    <HelpCircle className="w-4 h-4 text-emerald-200" />
-                    <span>{t('আপনার কী সাহায্য দরকার? (জমি দাবি ও গাইড)', 'Need Help? (Claim Land & Guide)')}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleTabChange('tickets')}
-                    className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    {t('সহায়তা টিকিট ডেস্কে যান', 'View Support Tickets')}
+                    <HelpCircle className="w-3.5 h-3.5 text-emerald-200" />
+                    <span>{t('জমি দাবি ও গাইড', 'Claim Land & Guide')}</span>
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
                 {plots.slice(0, 3).map((plot) => (
                   <div
                     key={plot.plot_id}
-                    className="p-5 rounded-2xl border border-slate-200/90 bg-white hover:border-[#006A4E]/60 transition flex flex-col justify-between space-y-4 shadow-xs"
+                    className="p-3 rounded-xl border border-slate-200/90 bg-white hover:border-[#006A4E]/60 transition flex flex-col justify-between space-y-2 shadow-2xs"
                   >
                     <div>
-                      {/* Plot Top Header Badges */}
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 font-mono">
-                          {plot.survey_type || 'BS'} {t('খতিয়ান', 'Khatian')}: {toBanglaDigits(plot.khatian_no_bn || plot.khatian_no, lang)}
+                      <div className="flex items-center justify-between gap-1.5">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 font-mono">
+                          {plot.survey_type || 'BS'}-{toBanglaDigits(plot.khatian_no_bn || plot.khatian_no, lang)}
                         </span>
                         <span
-                          className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 ${
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${
                             plot.owner_sale_locked
-                              ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                              : 'bg-emerald-100 text-[#006A4E] border border-emerald-300'
+                              ? 'bg-rose-100 text-rose-800'
+                              : 'bg-emerald-100 text-[#006A4E]'
                           }`}
                         >
-                          {plot.owner_sale_locked ? <Lock className="w-3 h-3 text-rose-700" /> : <Unlock className="w-3 h-3 text-emerald-700" />}
-                          {plot.owner_sale_locked ? t('বিক্রয় লকড (নিরাপদ)', 'Sale Locked') : t('বিক্রয় লক নেই', 'Unlocked')}
+                          {plot.owner_sale_locked ? <Lock className="w-2.5 h-2.5 text-rose-700" /> : <Unlock className="w-2.5 h-2.5 text-emerald-700" />}
+                          {plot.owner_sale_locked ? t('লকড', 'Locked') : t('উন্মুক্ত', 'Unlocked')}
                         </span>
                       </div>
 
-                      {/* Dag & Location */}
-                      <div className="mt-3">
-                        <h4 className="font-black text-slate-900 text-lg">
+                      <div className="mt-1.5">
+                        <h4 className="font-black text-slate-900 text-sm">
                           {t('দাগ নং', 'Plot')} {toBanglaDigits(plot.dag_no_bn || plot.dag_no, lang)}
                         </h4>
-                        <p className="text-xs text-slate-600 mt-0.5">
-                          {plot.mouza_bn}, {plot.upazila_bn}, {plot.district_bn}
+                        <p className="text-[11px] text-slate-500 truncate">
+                          {plot.mouza_bn}, {plot.upazila_bn}
                         </p>
                       </div>
 
-                      {/* Area & Class */}
-                      <div className="mt-3 p-3 bg-slate-50 rounded-xl space-y-1.5 text-xs">
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">{t('জমির শ্রেণি', 'Land Class')}:</span>
-                          <span className="font-bold text-slate-800">{plot.land_type_bn || t('ভিটা (আবাসিক)', 'Residential')}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">{t('মালিকানাধীন অংশ', 'Area')}:</span>
-                          <span className="font-black text-[#006A4E] text-sm">
-                            {toBanglaDigits(plot.area_decimal ?? plot.share_area_decimal, lang)} {t('শতক', 'dec')}
-                          </span>
-                        </div>
+                      <div className="mt-1.5 flex items-center justify-between text-xs bg-slate-50 p-2 rounded-lg">
+                        <span className="text-slate-500 text-[11px]">{plot.land_type_bn || t('ভিটা (আবাসিক)', 'Residential')}</span>
+                        <span className="font-black text-[#006A4E] text-xs">
+                          {toBanglaDigits(plot.area_decimal ?? plot.share_area_decimal, lang)} {t('শতক', 'dec')}
+                        </span>
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="pt-2 border-t border-slate-100 space-y-2">
+                    <div className="pt-1.5 border-t border-slate-100 flex items-center gap-1.5">
                       <button
                         type="button"
                         disabled={lockTogglingPlotId === plot.plot_id}
                         onClick={() => handleToggleSaleLock(plot)}
-                        className={`w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs ${
+                        className={`flex-1 py-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition cursor-pointer ${
                           plot.owner_sale_locked
                             ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
                             : 'bg-emerald-600 text-white hover:bg-emerald-700'
                         }`}
                       >
                         {lockTogglingPlotId === plot.plot_id ? (
-                          <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                          <RotateCw className="w-3 h-3 animate-spin" />
                         ) : plot.owner_sale_locked ? (
-                          <Unlock className="w-3.5 h-3.5" />
+                          <Unlock className="w-3 h-3" />
                         ) : (
-                          <Lock className="w-3.5 h-3.5" />
+                          <Lock className="w-3 h-3" />
                         )}
-                        <span>
-                          {plot.owner_sale_locked ? t('লক প্রত্যাহার করুন (আনলক)', 'Unlock Sale') : t('বিক্রয় লক চালু করুন (সুরক্ষিত)', 'Enable Sale Lock')}
-                        </span>
+                        <span>{plot.owner_sale_locked ? t('আনলক', 'Unlock') : t('বিক্রয় লক', 'Lock')}</span>
                       </button>
 
-                      <div className="grid grid-cols-3 gap-1.5 text-[11px]">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedPlotId(String(plot.plot_id));
-                            handleTabChange('docs');
-                          }}
-                          className="py-1.5 px-2 text-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold cursor-pointer"
-                        >
-                          {t('কাগজপত্র', 'Docs')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            window.dispatchEvent(
-                              new CustomEvent('open-faraiz-calculator', {
-                                detail: {
-                                  plotId: plot.plot_id,
-                                  area: plot.area_decimal ?? plot.share_area_decimal,
-                                },
-                              })
-                            );
-                          }}
-                          className="py-1.5 px-2 text-center rounded-lg border border-purple-200 text-purple-700 hover:bg-purple-50 font-bold cursor-pointer"
-                        >
-                          {t('ফারায়েজ', 'Faraiz')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPassportPlot(plot)}
-                          className="py-1.5 px-2 text-center rounded-lg border border-amber-300 text-amber-800 hover:bg-amber-50 font-bold cursor-pointer"
-                        >
-                          {t('পাসপোর্ট', 'Passport')}
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedPlotId(String(plot.plot_id));
+                          handleTabChange('plots');
+                        }}
+                        className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 cursor-pointer"
+                        title={t('ককপিটে বিস্তারিত দেখুন', 'View in Cockpit')}
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -1161,25 +1003,22 @@ export const CitizenHome: React.FC<{ onNavigate: (target: string) => void }> = (
 
           {/* Active Transfer Banner (চলমান হস্তান্তর আবেদন থাকলে প্রদর্শিত হবে) */}
           {activeTransfersCount > 0 && (
-            <div className="bg-amber-50/70 border border-amber-200 rounded-3xl p-5 md:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-start gap-3.5">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 border border-amber-200 flex items-center justify-center shrink-0 mt-0.5">
-                  <Sparkles className="w-5 h-5" />
+            <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-3 shadow-2xs flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 border border-amber-200 flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4 h-4" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900">
-                      {t('চলমান প্রক্রিয়া', 'In Progress')}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.2 rounded font-bold text-[9px] bg-amber-200 text-amber-900">
+                      {t('চলমান', 'In Progress')}
                     </span>
-                    <h4 className="font-extrabold text-sm text-slate-900">
-                      {t('আপনার একটি জমি হস্তান্তর আবেদন প্রক্রিয়াধীন রয়েছে', 'You have an active land transfer in progress')}
+                    <h4 className="font-extrabold text-xs text-slate-900 truncate">
+                      {t('আপনার জমি হস্তান্তর আবেদন প্রক্রিয়াধীন রয়েছে', 'Land transfer in progress')}
                     </h4>
                   </div>
-                  <p className="text-xs text-slate-600 mt-1">
-                    {t(
-                      'আবেদনের বর্তমান ধাপ, ফি পরিশোধ ও সাব-রেজিস্ট্রেশন অগ্রগতির সার্বিক বিবরণ দেখতে ট্র্যাকার খুলুন।',
-                      'Track progress across verification, stamp fees, and AC Land e-mutation.'
-                    )}
+                  <p className="text-[11px] text-slate-600 truncate mt-0.5">
+                    {t('অগ্রগতি ও সাব-রেজিস্ট্রেশন তারিখ দেখতে ট্র্যাকার খুলুন', 'Track verification, stamp fee & registration')}
                   </p>
                 </div>
               </div>
@@ -1187,186 +1026,289 @@ export const CitizenHome: React.FC<{ onNavigate: (target: string) => void }> = (
               <button
                 type="button"
                 onClick={() => handleTabChange('transfers')}
-                className="px-4 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
+                className="px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold transition flex items-center gap-1 cursor-pointer shrink-0"
               >
-                <span>{t('ট্র্যাকার দেখুন', 'Open Tracker')}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span>{t('ট্র্যাকার', 'Tracker')}</span>
+                <ArrowRight className="w-3 h-3" />
               </button>
             </div>
           )}
         </div>
       )}
 
-      {/* SECTION 2: PLOTS & SALE LOCK (আমার জমি ও বিক্রয় লক) */}
+      {/* SECTION 2: PLOTS & SALE LOCK (আমার জমি ও বিক্রয় লক - মাস্টার-ডিটেইল ককপিট) */}
       {section === 'plots' && (
-        <div className="space-y-5">
-          {/* Consumer Explanation Banner */}
-          <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-4 md:p-5 text-emerald-950 flex items-start gap-3.5 shadow-xs">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-[#006A4E] border border-emerald-200 flex items-center justify-center shrink-0 mt-0.5">
-              <Lock className="w-5 h-5" />
-            </div>
-            <div className="space-y-1 text-xs">
-              <h3 className="font-black text-sm text-[#006A4E]">
-                {t('মালিকানা বিক্রয় লক কী এবং কেন ব্যবহার করবেন?', 'What is Sale Lock and why use it?')}
-              </h3>
-              <p className="text-slate-700 leading-relaxed">
-                {t(
-                  'বিক্রয় লক চালু থাকলে আপনার অনুমতি ছাড়া সাব-রেজিস্ট্রি অফিসে কোনো দলিলের রেজিস্ট্রেশন সম্পন্ন হতে পারবে না। কোনো প্রতারক চক্র যেন জাল কাগজপত্র তৈরি করে আপনার জমি বিক্রি করতে না পারে, সেজন্য জমি সর্বদা লক রাখা সম্পূর্ণ নিরাপদ। বিক্রয়ের ইচ্ছা হলে কেবল ১-ক্লিকে আনলক করুন।',
-                  'When enabled, BhumiShield blocks deed registration for this plot until the recorded owner turns off the sale lock. It protects you against fraudulent sales.'
-                )}
+        <div className="space-y-3">
+          {filteredPlots.length === 0 ? (
+            <div className="bg-white p-10 text-center text-slate-500 rounded-2xl border border-slate-200">
+              <MapPin className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+              <p className="font-bold text-sm text-slate-700">
+                {t('ফিল্টারের শর্তানুযায়ী কোনো জমি পাওয়া যায়নি।', 'No land matched the selected filters.')}
               </p>
+              <button
+                type="button"
+                onClick={resetFilters}
+                className="mt-2 text-xs text-[#006A4E] font-bold hover:underline cursor-pointer"
+              >
+                {t('ফিল্টার রিসেট করুন', 'Reset Filters')}
+              </button>
             </div>
-          </div>
-
-          {/* Plots Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredPlots.length === 0 ? (
-              <div className="col-span-3 bg-white p-12 text-center text-slate-500 rounded-2xl border border-slate-200">
-                <MapPin className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                <p className="font-bold text-sm text-slate-700">
-                  {t('ফিল্টারের শর্তানুযায়ী কোনো জমি পাওয়া যায়নি।', 'No land matched the selected filters.')}
-                </p>
-                <button
-                  type="button"
-                  onClick={resetFilters}
-                  className="mt-3 text-xs text-[#006A4E] font-bold hover:underline cursor-pointer"
-                >
-                  {t('ফিল্টার রিসেট করুন', 'Reset Filters')}
-                </button>
-              </div>
-            ) : (
-              filteredPlots.map((plot) => (
-                <div
-                  key={plot.plot_id}
-                  className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:border-[#006A4E]/60 transition flex flex-col justify-between space-y-4"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 font-mono">
-                        {plot.survey_type || 'BS'} {t('খতিয়ান', 'Khatian')}: {toBanglaDigits(plot.khatian_no_bn || plot.khatian_no, lang)}
-                      </span>
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 ${
-                          plot.owner_sale_locked
-                            ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                            : 'bg-emerald-100 text-[#006A4E] border border-emerald-300'
-                        }`}
-                      >
-                        {plot.owner_sale_locked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
-                        {plot.owner_sale_locked ? t('বিক্রয় লক সক্রিয়', 'Sale Locked') : t('বিক্রয় লক নেই', 'Unlocked')}
+          ) : (
+            (() => {
+              const activePlot = filteredPlots.find((p) => String(p.plot_id) === String(selectedPlotId)) || filteredPlots[0];
+              return (
+                <div className="flex flex-col lg:flex-row gap-3 items-start">
+                  {/* Master List Pane (Left Column: 340px) */}
+                  <div className="w-full lg:w-80 xl:w-96 shrink-0 space-y-2 lg:max-h-[calc(100vh-210px)] lg:overflow-y-auto pr-0 lg:pr-1">
+                    <div className="flex items-center justify-between px-1 text-xs text-slate-500 font-bold">
+                      <span>{t('জমির তালিকা', 'Land Asset List')} ({toBanglaDigits(filteredPlots.length, lang)})</span>
+                      <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        {toBanglaDigits(lockedPlotsCount, lang)} {t('লককৃত', 'locked')}
                       </span>
                     </div>
 
-                    <div>
-                      <h3 className="font-black text-slate-900 text-lg">
-                        {t('দাগ নং', 'Plot')} {toBanglaDigits(plot.dag_no_bn || plot.dag_no, lang)}
-                      </h3>
-                      <p className="text-xs text-slate-600 mt-0.5">
-                        {plot.mouza_bn}, {plot.upazila_bn}, {plot.district_bn}
-                      </p>
-                    </div>
+                    <div className="space-y-2">
+                      {filteredPlots.map((plot) => {
+                        const isSelected = String(activePlot?.plot_id) === String(plot.plot_id);
+                        return (
+                          <div
+                            key={plot.plot_id}
+                            onClick={() => setSelectedPlotId(String(plot.plot_id))}
+                            className={`p-3 rounded-xl border text-left transition cursor-pointer relative flex flex-col justify-between ${
+                              isSelected
+                                ? 'bg-emerald-50/90 border-[#006A4E] ring-2 ring-emerald-500/20 shadow-xs'
+                                : 'bg-white border-slate-200/90 hover:border-emerald-300 hover:bg-slate-50'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-black text-sm text-slate-900 truncate">
+                                    {t('দাগ', 'Plot')} #{toBanglaDigits(plot.dag_no_bn || plot.dag_no, lang)}
+                                  </span>
+                                  <span className="text-[10px] px-1.5 py-0.2 rounded font-mono font-bold bg-slate-100 text-slate-600">
+                                    {plot.survey_type || 'BS'}-{toBanglaDigits(plot.khatian_no_bn || plot.khatian_no, lang)}
+                                  </span>
+                                </div>
+                                <div className="text-[11px] text-slate-500 truncate mt-0.5">
+                                  {plot.mouza_bn}, {plot.upazila_bn}
+                                </div>
+                              </div>
 
-                    <div className="bg-slate-50 p-3 rounded-xl space-y-1.5 text-xs">
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-500">{t('জমির শ্রেণি', 'Land Class')}:</span>
-                        <strong className="text-slate-800">{plot.land_type_bn || t('ভিটা (আবাসিক)', 'Residential')}</strong>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-500">{t('রেকর্ডকৃত আয়তন', 'Area')}:</span>
-                        <strong className="text-[#006A4E] text-sm font-black">
-                          {toBanglaDigits(plot.area_decimal ?? plot.share_area_decimal, lang)} {t('শতক', 'dec')}
-                        </strong>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-500">{t('মালিকানার অংশ', 'Share')}:</span>
-                        <strong className="text-slate-700">{plot.share_fraction || '১/১'}</strong>
-                      </div>
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 flex items-center gap-1 ${
+                                  plot.owner_sale_locked
+                                    ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                                    : 'bg-emerald-100 text-[#006A4E] border border-emerald-200'
+                                }`}
+                              >
+                                {plot.owner_sale_locked ? <Lock className="w-2.5 h-2.5" /> : <Unlock className="w-2.5 h-2.5" />}
+                                {plot.owner_sale_locked ? t('লকড', 'Locked') : t('উন্মুক্ত', 'Unlocked')}
+                              </span>
+                            </div>
+
+                            <div className="mt-2 pt-2 border-t border-slate-100/80 flex items-center justify-between text-xs">
+                              <span className="text-slate-500 text-[11px]">{plot.land_type_bn || t('ভিটা (আবাসিক)', 'Residential')}</span>
+                              <span className="font-black text-[#006A4E] text-xs">
+                                {toBanglaDigits(plot.area_decimal ?? plot.share_area_decimal, lang)} {t('শতক', 'dec')}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-100 space-y-2">
-                    <div className="flex items-center gap-2">
+                  {/* Detail Dossier Pane (Right Column: Cockpit 360°) */}
+                  <div className="flex-1 min-w-0 w-full bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-xs space-y-3.5 lg:max-h-[calc(100vh-210px)] lg:overflow-y-auto">
+                    {/* Header: Selected Plot Overview & Primary Sale Lock Switch */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h2 className="font-black text-slate-900 text-lg sm:text-xl">
+                            {t('দাগ নং', 'Plot')} {toBanglaDigits(activePlot.dag_no_bn || activePlot.dag_no, lang)}
+                          </h2>
+                          <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 font-mono">
+                            {activePlot.survey_type || 'BS'} {t('খতিয়ান', 'Khatian')}: {toBanglaDigits(activePlot.khatian_no_bn || activePlot.khatian_no, lang)}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 mt-0.5">
+                          {activePlot.mouza_bn}, {activePlot.upazila_bn}, {activePlot.district_bn}
+                        </p>
+                      </div>
+
+                      {/* Prominent 1-Click Sale Lock Action */}
                       <button
                         type="button"
-                        disabled={lockTogglingPlotId === plot.plot_id}
-                        onClick={() => handleToggleSaleLock(plot)}
-                        className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-xs ${
-                          plot.owner_sale_locked
-                            ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                        disabled={lockTogglingPlotId === activePlot.plot_id}
+                        onClick={() => handleToggleSaleLock(activePlot)}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-xs shrink-0 ${
+                          activePlot.owner_sale_locked
+                            ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-300'
                             : 'bg-[#006A4E] hover:bg-emerald-800 text-white'
                         }`}
                       >
-                        {lockTogglingPlotId === plot.plot_id ? (
+                        {lockTogglingPlotId === activePlot.plot_id ? (
                           <RotateCw className="w-3.5 h-3.5 animate-spin" />
-                        ) : plot.owner_sale_locked ? (
-                          <Unlock className="w-3.5 h-3.5" />
+                        ) : activePlot.owner_sale_locked ? (
+                          <Unlock className="w-3.5 h-3.5 text-rose-700" />
                         ) : (
                           <Lock className="w-3.5 h-3.5" />
                         )}
                         <span>
-                          {plot.owner_sale_locked ? t('লক প্রত্যাহার করুন (আনলক)', 'Unlock Plot') : t('বিক্রয় লক চালু করুন', 'Enable Sale Lock')}
+                          {activePlot.owner_sale_locked
+                            ? t('লক প্রত্যাহার করুন (আনলক)', 'Unlock Plot Sale')
+                            : t('বিক্রয় লক চালু করুন (সুরক্ষিত)', 'Activate Sale Lock')}
                         </span>
                       </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setSelectedPlotForModal(plot)}
-                        className="p-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 cursor-pointer"
-                        title={t('সম্পূর্ণ বিবরণ', 'Details')}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-1.5 pt-1 text-[11px]">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedPlotId(String(plot.plot_id));
-                          handleTabChange('docs');
-                        }}
-                        className="p-1.5 text-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold cursor-pointer"
-                      >
-                        {t('কাগজপত্র', 'Docs')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          window.dispatchEvent(
-                            new CustomEvent('open-faraiz-calculator', {
-                              detail: {
-                                plotId: plot.plot_id,
-                                area: plot.area_decimal ?? plot.share_area_decimal,
-                              },
-                            })
-                          );
-                        }}
-                        className="p-1.5 text-center rounded-lg border border-purple-200 bg-purple-50/40 text-purple-700 hover:bg-purple-100 font-bold flex items-center justify-center gap-1 cursor-pointer"
-                      >
-                        <Scale className="w-3 h-3 text-purple-700" />
-                        <span>{t('ফারায়েজ', 'Faraiz')}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPassportPlot(plot)}
-                        className="p-1.5 text-center rounded-lg border border-amber-300 bg-amber-50/50 text-amber-800 hover:bg-amber-100 font-bold flex items-center justify-center gap-1 cursor-pointer"
-                      >
-                        <ShieldCheck className="w-3 h-3 text-amber-600" />
-                        <span>{t('পাসপোর্ট', 'Passport')}</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onNavigate('applications?new=1')}
-                        className="p-1.5 text-center rounded-lg border border-slate-200 text-[#006A4E] hover:bg-emerald-50 font-bold cursor-pointer"
-                      >
-                        {t('হস্তান্তর', 'Transfer')}
-                      </button>
+                    {/* Key Metrics Ribbon (4 Micro-KPIs) */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                      <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/70">
+                        <span className="text-[10px] text-slate-500 font-medium block">{t('জমির শ্রেণি', 'Land Class')}</span>
+                        <strong className="text-slate-800 text-xs block mt-0.5 truncate">{activePlot.land_type_bn || t('ভিটা (আবাসিক)', 'Residential')}</strong>
+                      </div>
+                      <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/70">
+                        <span className="text-[10px] text-slate-500 font-medium block">{t('রেকর্ডকৃত আয়তন', 'Area')}</span>
+                        <strong className="text-[#006A4E] text-xs font-black block mt-0.5 truncate">
+                          {toBanglaDigits(activePlot.area_decimal ?? activePlot.share_area_decimal, lang)} {t('শতক', 'dec')}
+                        </strong>
+                      </div>
+                      <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/70">
+                        <span className="text-[10px] text-slate-500 font-medium block">{t('মালিকানার অংশ', 'Share')}</span>
+                        <strong className="text-slate-700 text-xs block mt-0.5 truncate">{activePlot.share_fraction || '১/১'}</strong>
+                      </div>
+                      <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/70">
+                        <span className="text-[10px] text-slate-500 font-medium block">{t('ডিজিটাল স্থিতি', 'Status')}</span>
+                        <strong className="text-emerald-700 text-xs font-bold block mt-0.5 truncate flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                          {t('পরিমাপ নিশ্চিত', 'Verified')}
+                        </strong>
+                      </div>
                     </div>
+
+                    {/* Sale Lock Anti-Fraud Intelligence Box */}
+                    <div className={`p-3 rounded-xl border text-xs flex items-start gap-2.5 ${
+                      activePlot.owner_sale_locked
+                        ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
+                        : 'bg-amber-50/80 border-amber-200 text-amber-950'
+                    }`}>
+                      {activePlot.owner_sale_locked ? (
+                        <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      ) : (
+                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                      )}
+                      <div className="leading-relaxed">
+                        <strong>{activePlot.owner_sale_locked ? t('মালিকানা সুরক্ষিত:', 'Plot Protected:') : t('সতর্কতা:', 'Notice:')}</strong>{' '}
+                        {activePlot.owner_sale_locked
+                          ? t(
+                              'বিক্রয় লক চালু রয়েছে। সাব-রেজিস্ট্রি অফিসে কোনো দলিলের অননুমোদিত রেজিস্ট্রেশন হতে পারবে না।',
+                              'Sale Lock is active. No unauthorized deed registration can proceed at the Sub-Registry Office.'
+                            )
+                          : t(
+                              'বিক্রয় লক নিষ্ক্রিয় রয়েছে। অননুমোদিত বিক্রি বা প্রতারণা এড়াতে এখনই বিক্রয় লক সক্রিয় রাখুন।',
+                              'Sale lock is OFF. Turn ON sale lock to block fraudulent deed transfers.'
+                            )}
+                      </div>
+                    </div>
+
+                    {/* Quick Action Ribbon (Early Access Narrow Widgets) */}
+                    <div>
+                      <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                        {t('দ্রুত সেবা ও অ্যাকশন', 'Quick Actions & Services')}
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPlotId(String(activePlot.plot_id));
+                            handleTabChange('docs');
+                          }}
+                          className="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-400 bg-white hover:bg-emerald-50/40 text-slate-800 font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <FolderOpen className="w-3.5 h-3.5 text-[#006A4E]" />
+                          <span>{t('কাগজপত্র ভল্ট', 'Documents')}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            window.dispatchEvent(
+                              new CustomEvent('open-faraiz-calculator', {
+                                detail: {
+                                  plotId: activePlot.plot_id,
+                                  area: activePlot.area_decimal ?? activePlot.share_area_decimal,
+                                },
+                              })
+                            );
+                          }}
+                          className="p-2.5 rounded-xl border border-purple-200 hover:border-purple-400 bg-purple-50/40 hover:bg-purple-100/50 text-purple-800 font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <Scale className="w-3.5 h-3.5 text-purple-700" />
+                          <span>{t('ফারায়েজ বণ্টন', 'Faraiz')}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setPassportPlot(activePlot)}
+                          className="p-2.5 rounded-xl border border-amber-300 hover:border-amber-400 bg-amber-50/50 hover:bg-amber-100/60 text-amber-800 font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                          <span>{t('স্বাস্থ্য পাসপোর্ট', 'Passport')}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => onNavigate('applications?new=1')}
+                          className="p-2.5 rounded-xl border border-rose-200 hover:border-rose-400 bg-rose-50/40 hover:bg-rose-100/50 text-rose-800 font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5 text-rose-600" />
+                          <span>{t('হস্তান্তর আবেদন', 'Transfer')}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Quick Vault Document Inspection inline */}
+                    {docs && docs.length > 0 && (
+                      <div className="pt-2 border-t border-slate-100">
+                        <div className="flex items-center justify-between text-xs mb-2">
+                          <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                            <FileCheck className="w-3.5 h-3.5 text-[#006A4E]" />
+                            {t('এই দাগের সংযুক্ত ডিজিটাল রেকর্ডস', 'Linked Documents')}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleTabChange('docs')}
+                            className="text-[11px] font-bold text-[#006A4E] hover:underline cursor-pointer"
+                          >
+                            {t('সব দেখুন', 'View All')} ➔
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+                          {docs.slice(0, 4).map((d: any) => (
+                            <div
+                              key={d.document_type || d.id}
+                              className="p-2 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-1.5 text-[11px]"
+                            >
+                              <div className="truncate font-medium text-slate-800">
+                                {d.title_bn || d.document_type}
+                              </div>
+                              <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold shrink-0 ${
+                                d.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
+                              }`}>
+                                {d.status === 'VERIFIED' ? t('যাচাইকৃত', 'Verified') : t('সংরক্ষিত', 'Stored')}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              );
+            })()
+          )}
         </div>
       )}
 

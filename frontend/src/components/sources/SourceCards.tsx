@@ -1,0 +1,27 @@
+import React,{useEffect,useState} from 'react';
+import {useAppUI} from '../../i18n';
+import {sourceApi,SourceItem,Kind,sourceError,kindNames} from './sourceApi';
+import './Sources.css';
+export function SourceCards({kind,locationId=0,serviceCode='',title}:{kind?:Kind;locationId?:number;serviceCode?:string;title?:string}){
+ const{t,lang,user}=useAppUI();const[items,setItems]=useState<SourceItem[]>([]);const[error,setError]=useState('');const[loading,setLoading]=useState(true);const[retry,setRetry]=useState(0);
+ const[watched,setWatched]=useState<number[]>([]);const[onlyMine,setOnlyMine]=useState(false);const[q,setQ]=useState('');const[includeExpired,setIncludeExpired]=useState(false);const[busy,setBusy]=useState(false);
+ useEffect(()=>{let live=true;setLoading(true);setError('');sourceApi.public({kind,location_id:locationId||undefined,service_code:serviceCode||undefined}).then(r=>{if(live)setItems(r);}).catch(e=>{if(live)setError(sourceError(e));}).finally(()=>{if(live)setLoading(false);});return()=>{live=false;};},[kind,locationId,serviceCode,retry]);
+ useEffect(()=>{let live=true;setWatched([]);if(user)sourceApi.subscriptions().then(r=>{if(live)setWatched(r);}).catch(()=>{});return()=>{live=false;};},[user?.id]);
+ const visible=items.filter(i=>(includeExpired||!i.expired)&&(!onlyMine||!i.details.location_id||watched.includes(Number(i.details.location_id)))&&(!q||(i.title+' '+i.details.summary).toLocaleLowerCase().includes(q.toLocaleLowerCase())));
+ const follow=async()=>{setBusy(true);try{setWatched(await sourceApi.subscribe(locationId,!watched.includes(locationId)));}catch(e){setError(sourceError(e));}finally{setBusy(false);}};
+ return <section className="source-panel" aria-label={title||t('যাচাইকৃত সরকারি উৎস','Reviewed official sources')}>
+  <div className="source-heading"><div><h2>{title||t('যাচাইকৃত সরকারি উৎস','Reviewed official sources')}</h2><p>{t('সরকারি প্রকাশনার যাচাইকৃত সারাংশ; মূল নথির লিংক সঙ্গে দেওয়া আছে।','Reviewed summaries of public government publications with original links.')}</p></div>{user&&locationId>0&&<button disabled={busy} onClick={follow}>{watched.includes(locationId)?t('অনুসরণ বন্ধ করুন','Unfollow mouza'):t('এই মৌজা অনুসরণ করুন','Follow this mouza')}</button>}</div>
+  <div className="source-controls"><input aria-label={t('উৎসের তথ্য খুঁজুন','Search source guidance')} placeholder={t('শিরোনাম বা বিষয় খুঁজুন','Search title or topic')} value={q} onChange={e=>setQ(e.target.value)}/>{kind==='NOTICE'&&<><label><input type="checkbox" checked={includeExpired} onChange={e=>setIncludeExpired(e.target.checked)}/>{t('মেয়াদ শেষ হওয়া নোটিশও দেখুন','Include expired notices')}</label>{user&&<label><input type="checkbox" checked={onlyMine} onChange={e=>setOnlyMine(e.target.checked)}/>{t('আমার অনুসরণ করা মৌজা ও সাধারণ নোটিশ','Followed mouzas & general notices')}</label>}</>}</div>
+  {loading&&<p role="status">{t('তথ্য আনা হচ্ছে…','Loading…')}</p>}{error&&<div role="alert" className="source-error">{error} <button onClick={()=>setRetry(x=>x+1)}>{t('আবার চেষ্টা','Retry')}</button></div>}
+  {!loading&&!error&&visible.length===0&&<p className="source-muted">{t('এই নির্বাচনে এখনো কোনো যাচাইকৃত তথ্য প্রকাশিত হয়নি। প্রয়োজন হলে সংশ্লিষ্ট অফিসে যোগাযোগ করুন।','No reviewed information has been published for this selection. Contact the relevant office if needed.')}</p>}
+  <div className="source-grid">{visible.map(i=><article key={i.id} className="source-card"><span className="source-tag">{t(...kindNames[i.kind])}</span><h3>{i.title}</h3><p>{i.details.summary}</p>
+   {(i.freshness!=='CHECKED'||i.expired)&&<p className="source-warning">{i.expired?t('নোটিশের সময়সীমা শেষ হয়েছে।','Notice deadline has passed.'):i.freshness==='SOURCE_MISSING'?t('সর্বশেষ সংগ্রহে উৎসের তথ্যটি পাওয়া যায়নি; মূল পেজ যাচাই করুন।','This item was absent from the latest source collection; check the original page.'):i.freshness==='UPDATE_PENDING'?t('উৎসে পরিবর্তন এসেছে; পুনরায় পর্যালোচনা চলছে।','Source changed; a new review is pending.'):t('উৎস পুনরায় যাচাই প্রয়োজন। যাত্রা বা অর্থ প্রদানের আগে নিশ্চিত করুন।','Source needs rechecking. Confirm before travelling or paying.')}</p>}
+   {i.details.reference&&<p>{t('স্মারক: ','Reference: ')}{i.details.reference}</p>}{i.details.effective_date&&<p>{t('কার্যকর: ','Effective: ')}{i.details.effective_date}</p>}{i.details.deadline&&<p>{t('শেষ তারিখ: ','Deadline: ')}{i.details.deadline}</p>}
+   {!!i.details.documents?.length&&<div><strong>{t('কাগজপত্র','Documents')}</strong><ul>{i.details.documents.map((d,n)=><li key={n}>{d}</li>)}</ul></div>}
+   {!!i.details.steps?.length&&<div><strong>{t('করণীয় ধাপ','Steps')}</strong><ol>{i.details.steps.map((d,n)=><li key={n}>{d}</li>)}</ol></div>}
+   {i.details.attendance&&<p><strong>{t('অফিসে উপস্থিতি: ','Office attendance: ')}</strong>{i.details.attendance}</p>}
+   <div className="source-links"><a href={i.source_url} target="_blank" rel="noopener noreferrer">{t('মূল সরকারি উৎস পড়ুন ↗','Read official source ↗')}</a>{!!i.details.location_id&&<a href={`/${lang}/map?mouza=${i.details.location_id}`}>{t('মৌজার ম্যাপ','Mouza map')}</a>}{!!i.details.office_id&&<a href={`/${lang}/offices?office_id=${i.details.office_id}`}>{t('সংশ্লিষ্ট অফিস','Related office')}</a>}</div>
+   <small>{t('উৎস সর্বশেষ পরীক্ষা: ','Source last checked: ')}{i.last_success?new Date(i.last_success).toLocaleString(lang==='bn'?'bn-BD':'en-GB'):t('অজানা','Unknown')}. {t('সারাংশ পর্যালোচনা: ','Summary reviewed: ')}{i.reviewed_at?.slice(0,10)}</small>
+  </article>)}</div>
+ </section>;
+}

@@ -1,0 +1,13 @@
+{
+  "monitors": 12,
+  "successful_sources": 11,
+  "pending": 59,
+  "published": 0,
+  "observations": 11,
+  "errors": [
+    [
+      "maps",
+      "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1028)"
+    ]
+  ]
+}

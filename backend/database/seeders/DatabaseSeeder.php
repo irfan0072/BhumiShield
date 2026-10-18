@@ -620,7 +620,7 @@ final class DatabaseSeeder
         $now = gmdate('c');
         foreach ($authorizedLawyers as $lawyer) {
             DB::insert(
-                'INSERT INTO authorized_lawyers (bar_council_no, lawyer_name_bn, lawyer_name_en, district_bar, nid, phone, email, chamber_address_bn, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                'INSERT OR IGNORE INTO authorized_lawyers (bar_council_no, lawyer_name_bn, lawyer_name_en, district_bar, nid, phone, email, chamber_address_bn, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [...$lawyer, $now, $now]
             );
         }

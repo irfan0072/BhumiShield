@@ -1,3 +1,4 @@
+import {NextStepsGuide} from '../components/sources/NextStepsGuide';
 import React, { useState, useEffect } from 'react';
 import { useAppUI } from '../i18n';
 import { BhumiApi, ServiceFeeItem } from '../api/client';
@@ -128,6 +129,7 @@ export const HelpPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNa
 
   return (
     <div className="space-y-6">
+      <NextStepsGuide />
       {/* Top Banner */}
       <div className="bg-white rounded-xl p-6 md:p-8 border border-slate-200/90 shadow-2xs space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">

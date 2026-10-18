@@ -1,0 +1,9 @@
+{"source":"circulars","result":{"observation_id":1,"changed":true,"new_candidates":28}}
+{"source":"fees","result":{"observation_id":2,"changed":true,"new_candidates":3}}
+{"source":"charters","result":{"observation_id":3,"changed":true,"new_candidates":9}}
+{"source":"requirements","result":{"observation_id":4,"changed":true,"new_candidates":1}}
+{"source":"maps","error":"উৎস যাচাই সম্পন্ন হয়নি: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1028); সর্বশেষ অনুমোদিত তথ্য অপরিবর্তিত আছে।"}
+{"source":"notices","error":"উৎস যাচাই সম্পন্ন হয়নি: {\"code\":\"INVALID_COLLECTION\",\"status\":422,\"message_bn\":\"সংগ্রহের ফল নিরাপদ নয়।\",\"message_en\":\"সংগ্রহের ফল নিরাপদ নয়।\"}; সর্বশেষ অনুমোদিত তথ্য অপরিবর্তিত আছে।"}
+{"source":"links","result":{"observation_id":5,"changed":true,"new_candidates":3}}
+{"source":"map-catalogue","result":{"observation_id":6,"changed":true,"new_candidates":1}}
+Checked 8 due sources; nothing is published automatically.

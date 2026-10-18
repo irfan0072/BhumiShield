@@ -79,6 +79,7 @@ export interface FeeHistoryEntry {
 }
 
 export interface ServiceFeeItem {
+  related_service_code?: string;
   id: number;
   service_code: string;
   title_bn: string;

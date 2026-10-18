@@ -1,3 +1,4 @@
+import {SourceCards} from '../components/sources/SourceCards';
 import React, { useState, useEffect } from 'react';
 import { useAppUI } from '../i18n';
 import { BhumiApi } from '../api/client';
@@ -42,6 +43,7 @@ interface OfficeLocatorPageProps {
 export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate }) => {
   const { t, lang } = useAppUI();
   const [offices, setOffices] = useState<OfficeItem[]>([]);
+  const [linkedOfficeId, setLinkedOfficeId] = useState(() => Number(new URLSearchParams(window.location.search).get('office_id')) || 0);
   const [loading, setLoading] = useState(true);
   const [districtFilter, setDistrictFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -65,6 +67,7 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
   const fetchOffices = () => {
     setLoading(true);
     const params: any = {};
+    if (linkedOfficeId > 0) params.office_id = linkedOfficeId;
     if (typeFilter) params.type = typeFilter;
     if (districtFilter) params.district = districtFilter;
     if (upazilaFilter) params.upazila = upazilaFilter;
@@ -82,7 +85,7 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
 
   useEffect(() => {
     fetchOffices();
-  }, [typeFilter, districtFilter, upazilaFilter]);
+  }, [typeFilter, districtFilter, upazilaFilter, linkedOfficeId]);
 
   const getOfficeTypeBadge = (type: string) => {
     switch (type) {
@@ -192,6 +195,8 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
+        {linkedOfficeId > 0 && <div className="source-panel"><p>{t('সংযুক্ত অফিসটি দেখানো হচ্ছে।','Showing the linked office.')}</p><button onClick={() => setLinkedOfficeId(0)}>{t('সব অফিস দেখুন','Show all offices')}</button></div>}
+        <SourceCards kind="OFFICE" title={t('অফিস ও সিটিজেন চার্টারের হালনাগাদ','Reviewed official updates')} />
         {/* Banner */}
         <div className="bg-[#006A4E] text-white rounded-2xl p-6 sm:p-8 shadow-sm space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-800/60 border border-emerald-600/40 text-emerald-100 text-xs font-semibold">

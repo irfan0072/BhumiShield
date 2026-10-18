@@ -9,3 +9,5 @@ Small integration edits only: map endpoints in `backend/routes/api.php`; map man
 Source/database backup before this slice: `.backups/map-upgrade-2026-10-18/`. Validation uses isolated database copies. The main DB is never reseeded. Imported geographic evidence is a separate table; publication does not change legal ownership.
 
 Visual integration follow-up: ApplicationsPage now maps private vault area_decimal/share_area_decimal into owner_area_decimal, never the whole plot area. A 13-decimal share in a 23-decimal plot was visually verified after repair. Preserve the ownership-share normalisation, input maximum and over-share error.
+
+Owner-allocation extension: preserve ParcelDesignController/ParcelGeometry, ParcelDesigner/ParcelAllocationPanel, map-editor routes, role-sidebar shortcut; linked map/co-owner/source-document changes in OpeningRecordController and CitizenVaultAndTicketController. Detailed handoff: PARCEL_DESIGN_AND_OWNER_ALLOCATION_2026-10-18.md. No QA records were added to the usable DB.

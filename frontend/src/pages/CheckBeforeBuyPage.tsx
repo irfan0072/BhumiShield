@@ -435,576 +435,542 @@ export const CheckBeforeBuyPage: React.FC = () => {
       {/* ======================================================== */}
       {/* STEP 1: Select Mouza & Plot (True Guided Step-by-Step)   */}
       {/* ======================================================== */}
+      {/* ======================================================== */}
+      {/* STEP 1: Select Mouza & Plot (Cockpit Split View)        */}
+      {/* ======================================================== */}
       {step === 1 && (
-        <div className="space-y-6 animate-rise-delay">
-          {/* Sub-Step 1.1: Administrative Jurisdiction / Mouza Selection */}
-          <div className="panel p-5 sm:p-6 bg-white border border-slate-200/80 rounded-2xl shadow-xs space-y-4">
-            <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#006A4E] text-white text-xs font-bold shadow-xs">
-                ১.১
-              </span>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  {t('প্রশাসনিক এলাকা ও মৌজা নির্বাচন করুন', 'Select Administrative Area & Mouza')}
-                </h3>
-                <p className="text-xs text-slate-500">
-                  {t('যে মৌজায় জমিটি অবস্থিত, সেটি দ্রুত নির্বাচন করতে নিচের যেকোনো বাটনে চাপ দিন:', 'Choose the jurisdiction or mouza where the land is situated:')}
-                </p>
-              </div>
-            </div>
-
-            {/* Quick Mouza Pills for 1-Click Fast Selection */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {locations.map((loc) => {
-                const isSelected = Number(loc.id) === Number(selectedMouzaId);
-                return (
-                  <button
-                    key={loc.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedMouzaId(Number(loc.id));
-                      const firstPlot = plots.find((p) => Number(p.mouza_id) === Number(loc.id));
-                      if (firstPlot) setSelectedPlotId(firstPlot.id);
-                    }}
-                    className={`p-3.5 rounded-xl text-left border transition-all cursor-pointer relative ${
-                      isSelected
-                        ? 'bg-emerald-50/80 border-[#006A4E] text-slate-900 ring-2 ring-emerald-500/20 shadow-xs'
-                        : 'bg-white border-slate-200 text-slate-700 hover:border-emerald-300 hover:bg-slate-50/80'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-2">
-                        <MapPin className={`w-4 h-4 ${isSelected ? 'text-[#006A4E]' : 'text-slate-400'}`} />
-                        <span className="font-bold text-sm">
-                          {lang === 'bn' ? loc.mouza_bn : loc.mouza_en}
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
-                        JL {loc.jl_no}
-                      </span>
-                    </div>
-                    <div className="mt-1 text-xs text-slate-500 truncate">
-                      {lang === 'bn'
-                        ? `${loc.upazila_bn}, ${loc.district_bn}`
-                        : `${loc.upazila_en}, ${loc.district_en}`}
-                    </div>
-                    {isSelected && (
-                      <div className="absolute top-2 right-2 flex items-center justify-center w-4 h-4 rounded-full bg-[#006A4E] text-white">
-                        <Check className="w-2.5 h-2.5 stroke-[3]" />
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Standard Cascading Dropdown Fallback */}
-            <div>
-              <label className="text-[11px] font-semibold text-slate-500 block mb-1">
-                {t('অথবা ড্রপডাউন তালিকা থেকে বেছে নিন:', 'Or pick from full jurisdiction dropdown:')}
-              </label>
-              <select
-                value={selectedMouzaId}
-                onChange={(e) => {
-                  const mId = Number(e.target.value);
-                  setSelectedMouzaId(mId);
-                  const firstPlot = plots.find((p) => Number(p.mouza_id) === mId);
-                  if (firstPlot) setSelectedPlotId(firstPlot.id);
-                }}
-                className="field font-semibold text-xs sm:text-sm bg-slate-50"
-              >
-                {locations.map((loc) => (
-                  <option key={loc.id} value={loc.id}>
-                    {lang === 'bn'
-                      ? `${loc.division_bn} → ${loc.district_bn} → ${loc.upazila_bn} → মৌজা: ${loc.mouza_bn} (JL ${loc.jl_no})`
-                      : `${loc.division_en} → ${loc.district_en} → ${loc.upazila_en} → Mouza: ${loc.mouza_en} (JL ${loc.jl_no})`}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Sub-Step 1.2: Plot / Dag Selection Grid with Instant Search */}
-          <div className="panel p-5 sm:p-6 bg-white border border-slate-200/80 rounded-2xl shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2.5">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#006A4E] text-white text-xs font-bold shadow-xs">
-                  ১.২
-                </span>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    {t('দাগ নম্বর (Plot / Dag No.) নির্বাচন ও অনুসন্ধান', 'Select or Search Plot / Dag Number')}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start animate-rise-delay">
+          {/* Left Pane: Mouza Selection & Plot Search List */}
+          <div className="lg:col-span-7 space-y-3">
+            {/* Sub-Step 1.1: Administrative Jurisdiction / Mouza Selection */}
+            <div className="panel p-3.5 sm:p-4 bg-white border border-slate-200/80 rounded-xl shadow-2xs space-y-2.5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006A4E] text-white text-[11px] font-bold shadow-xs">
+                    ১.১
+                  </span>
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                    {t('প্রশাসনিক এলাকা ও মৌজা', 'Administrative Area & Mouza')}
                   </h3>
-                  <p className="text-xs text-slate-500">
-                    {t(
-                      `নির্বাচিত মৌজায় মোট ${toBanglaDigits(mouzaPlots.length, lang)}টি দাগ রেকর্ড রয়েছে:`,
-                      `Total ${mouzaPlots.length} plots recorded in selected mouza:`
-                    )}
-                  </p>
                 </div>
+                <span className="text-[10px] text-slate-500 font-medium">
+                  {t('১-ক্লিকে নির্বাচন', '1-Click Selection')}
+                </span>
               </div>
 
-              {/* Filter Tabs */}
-              <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold">
-                <button
-                  type="button"
-                  onClick={() => setPlotFilterType('ALL')}
-                  className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
-                    plotFilterType === 'ALL'
-                      ? 'bg-white text-slate-900 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  {t('সকল দাগ', 'All')} ({toBanglaDigits(mouzaPlots.length, lang)})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPlotFilterType('UNLOCKED')}
-                  className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
-                    plotFilterType === 'UNLOCKED'
-                      ? 'bg-white text-emerald-800 shadow-2xs'
-                      : 'text-slate-600 hover:text-emerald-800'
-                  }`}
-                >
-                  {t('🔓 উন্মুক্ত', 'Unlocked')} ({toBanglaDigits(unlockedCount, lang)})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPlotFilterType('LOCKED')}
-                  className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
-                    plotFilterType === 'LOCKED'
-                      ? 'bg-white text-red-700 shadow-2xs'
-                      : 'text-slate-600 hover:text-red-700'
-                  }`}
-                >
-                  {t('🔒 লককৃত', 'Locked')} ({toBanglaDigits(lockedCount, lang)})
-                </button>
-              </div>
-            </div>
-
-            {/* Quick Live Search Bar for Dag No */}
-            <div className="relative">
-              <input
-                type="text"
-                value={plotSearchQuery}
-                onChange={(e) => setPlotSearchQuery(e.target.value)}
-                placeholder={t(
-                  'দাগ নম্বর লিখে ফিল্টার করুন (যেমন: ১০১, ১০২, ২০৫)...',
-                  'Type plot/dag number to search (e.g. 101, 102)...'
-                )}
-                className="field pl-9 font-semibold text-xs sm:text-sm bg-[#F5FAF8]"
-              />
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-              {plotSearchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setPlotSearchQuery('')}
-                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 text-xs"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Interactive Grid of Plot Cards */}
-            {displayedPlots.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-h-80 overflow-y-auto pr-1">
-                {displayedPlots.map((p) => {
-                  const isSelected = Number(p.id) === Number(selectedPlotId);
-                  const isLocked = Number(p.owner_sale_locked) === 1;
-
+              {/* Quick Mouza Pills */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {locations.map((loc) => {
+                  const isSelected = Number(loc.id) === Number(selectedMouzaId);
                   return (
                     <button
-                      key={p.id}
+                      key={loc.id}
                       type="button"
-                      onClick={() => setSelectedPlotId(Number(p.id))}
-                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer relative flex flex-col justify-between min-h-[90px] ${
+                      onClick={() => {
+                        setSelectedMouzaId(Number(loc.id));
+                        const firstPlot = plots.find((p) => Number(p.mouza_id) === Number(loc.id));
+                        if (firstPlot) setSelectedPlotId(firstPlot.id);
+                      }}
+                      className={`p-2.5 rounded-lg text-left border transition cursor-pointer relative ${
                         isSelected
-                          ? 'bg-emerald-50 border-[#006A4E] text-[#074f38] ring-2 ring-emerald-500/20 shadow-xs'
-                          : 'bg-white border-slate-200 hover:border-emerald-300 hover:bg-slate-50'
+                          ? 'bg-emerald-50/80 border-[#006A4E] text-slate-900 ring-2 ring-emerald-500/20 shadow-2xs'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-emerald-300 hover:bg-slate-50'
                       }`}
                     >
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-extrabold text-sm text-slate-900">
-                            {t('দাগ', 'Plot')} #{toBanglaDigits(p.dag_no, lang)}
-                          </span>
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">
-                            {p.land_type}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <MapPin className={`w-3.5 h-3.5 shrink-0 ${isSelected ? 'text-[#006A4E]' : 'text-slate-400'}`} />
+                          <span className="font-bold text-xs truncate">
+                            {lang === 'bn' ? loc.mouza_bn : loc.mouza_en}
                           </span>
                         </div>
-                        <div className="mt-1 font-bold text-xs text-[#006A4E]">
-                          {toBanglaDigits(p.total_area_decimal, lang)} {t('শতাংশ', 'Dec')}
-                        </div>
+                        <span className="text-[9px] font-mono font-bold px-1 py-0.2 rounded bg-slate-100 text-slate-600 shrink-0">
+                          JL {loc.jl_no}
+                        </span>
                       </div>
-
-                      <div className="mt-2 flex items-center justify-between text-[10px]">
-                        {isLocked ? (
-                          <span className="inline-flex items-center gap-1 font-bold text-red-600">
-                            <Lock className="w-3 h-3" />
-                            <span>{t('বিক্রয় লক', 'Locked')}</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 font-bold text-emerald-700">
-                            <Unlock className="w-3 h-3" />
-                            <span>{t('উন্মুক্ত', 'Unlocked')}</span>
-                          </span>
-                        )}
-                        {isSelected && (
-                          <span className="w-4 h-4 rounded-full bg-[#006A4E] text-white flex items-center justify-center shrink-0">
-                            <Check className="w-2.5 h-2.5 stroke-[3]" />
-                          </span>
-                        )}
+                      <div className="text-[10px] text-slate-500 truncate mt-0.5">
+                        {lang === 'bn' ? `${loc.upazila_bn}, ${loc.district_bn}` : `${loc.upazila_en}, ${loc.district_en}`}
                       </div>
                     </button>
                   );
                 })}
               </div>
-            ) : (
-              <div className="p-6 text-center text-slate-500 text-xs bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                <p>{t('কোনো দাগ নম্বর খুঁজে পাওয়া যায়নি। অনুসন্ধান ফিল্টার পরিবর্তন করুন।', 'No plots matched your search query. Try clearing filters.')}</p>
-              </div>
-            )}
-          </div>
 
-          {/* Sub-Step 1.3: Selected Plot Live Profile & Security Insights */}
-          {currentSelectedPlot && (
-            <div className="panel p-5 sm:p-6 bg-gradient-to-br from-emerald-50/90 via-slate-50 to-white border border-emerald-200/80 rounded-2xl shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-emerald-200/60 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#006A4E] text-white text-xs font-bold shadow-xs">
-                    ১.৩
+              {/* Cascading Dropdown */}
+              <div>
+                <select
+                  value={selectedMouzaId}
+                  onChange={(e) => {
+                    const mId = Number(e.target.value);
+                    setSelectedMouzaId(mId);
+                    const firstPlot = plots.find((p) => Number(p.mouza_id) === mId);
+                    if (firstPlot) setSelectedPlotId(firstPlot.id);
+                  }}
+                  className="field font-semibold text-xs bg-slate-50 py-1.5"
+                >
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>
+                      {lang === 'bn'
+                        ? `${loc.division_bn} → ${loc.district_bn} → ${loc.upazila_bn} → মৌজা: ${loc.mouza_bn} (JL ${loc.jl_no})`
+                        : `${loc.division_en} → ${loc.district_en} → ${loc.upazila_en} → Mouza: ${loc.mouza_en} (JL ${loc.jl_no})`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Sub-Step 1.2: Plot Selection & Instant Search */}
+            <div className="panel p-3.5 sm:p-4 bg-white border border-slate-200/80 rounded-xl shadow-2xs space-y-2.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006A4E] text-white text-[11px] font-bold shadow-xs">
+                    ১.২
                   </span>
-                  <div>
-                    <h4 className="text-sm font-bold text-slate-900">
-                      {t('নির্বাচিত দাগের সংক্ষিপ্ত বিবরণ ও ডিজিটাল স্থিতি', 'Selected Plot Profile & Digital Status')}
-                    </h4>
-                    <span className="text-xs text-slate-500">
-                      {lang === 'bn' ? currentSelectedMouza?.mouza_bn : currentSelectedMouza?.mouza_en} মৌজা • দাগ নং {toBanglaDigits(currentSelectedPlot.dag_no, lang)}
-                    </span>
-                  </div>
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                    {t('দাগ নম্বর নির্বাচন ও অনুসন্ধান', 'Select or Search Plot No.')}
+                  </h3>
                 </div>
-                <div className="text-right">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-emerald-300 text-xs font-extrabold text-[#006A4E] shadow-2xs">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>{t('দাগ নির্বাচিত', 'Plot Selected')}</span>
-                  </span>
+
+                {/* Filter Tabs */}
+                <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-[11px] font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setPlotFilterType('ALL')}
+                    className={`px-2 py-0.5 rounded transition cursor-pointer ${
+                      plotFilterType === 'ALL'
+                        ? 'bg-white text-slate-900 shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {t('সকল', 'All')} ({toBanglaDigits(mouzaPlots.length, lang)})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPlotFilterType('UNLOCKED')}
+                    className={`px-2 py-0.5 rounded transition cursor-pointer ${
+                      plotFilterType === 'UNLOCKED'
+                        ? 'bg-white text-emerald-800 shadow-2xs'
+                        : 'text-slate-600 hover:text-emerald-800'
+                    }`}
+                  >
+                    {t('🔓 উন্মুক্ত', 'Unlocked')} ({toBanglaDigits(unlockedCount, lang)})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPlotFilterType('LOCKED')}
+                    className={`px-2 py-0.5 rounded transition cursor-pointer ${
+                      plotFilterType === 'LOCKED'
+                        ? 'bg-white text-red-700 shadow-2xs'
+                        : 'text-slate-600 hover:text-red-700'
+                    }`}
+                  >
+                    {t('🔒 লকড', 'Locked')} ({toBanglaDigits(lockedCount, lang)})
+                  </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-                <div className="p-3 bg-white/90 rounded-xl border border-slate-200/70">
-                  <span className="text-slate-500 font-medium">{t('প্রশাসনিক এলাকা:', 'Jurisdiction:')}</span>
-                  <div className="font-bold text-slate-900 mt-0.5 truncate">
-                    {lang === 'bn' ? currentSelectedMouza?.mouza_bn : currentSelectedMouza?.mouza_en} (JL {currentSelectedMouza?.jl_no})
-                  </div>
-                  <div className="text-[10px] text-slate-500">
-                    {lang === 'bn' ? `${currentSelectedMouza?.upazila_bn}, ${currentSelectedMouza?.district_bn}` : `${currentSelectedMouza?.upazila_en}, ${currentSelectedMouza?.district_en}`}
-                  </div>
-                </div>
-
-                <div className="p-3 bg-white/90 rounded-xl border border-slate-200/70">
-                  <span className="text-slate-500 font-medium">{t('জমির শ্রেণী:', 'Land Class:')}</span>
-                  <div className="font-bold text-slate-900 mt-0.5">{currentSelectedPlot.land_type}</div>
-                  <div className="text-[10px] text-slate-500">{t('খতিয়ানে রেকর্ডকৃত', 'Recorded in Khatian')}</div>
-                </div>
-
-                <div className="p-3 bg-white/90 rounded-xl border border-slate-200/70">
-                  <span className="text-slate-500 font-medium">{t('দাগের মোট আয়তন:', 'Total Area:')}</span>
-                  <div className="font-extrabold text-[#006A4E] text-sm mt-0.5">
-                    {toBanglaDigits(currentSelectedPlot.total_area_decimal, lang)} {t('শতাংশ', 'Decimal')}
-                  </div>
-                  <div className="text-[10px] text-slate-500 font-mono">
-                    ~{toBanglaDigits((Number(currentSelectedPlot.total_area_decimal) * 0.605).toFixed(1), lang)} {t('কাঠা', 'Katha')}
-                  </div>
-                </div>
-
-                <div className="p-3 bg-white/90 rounded-xl border border-slate-200/70">
-                  <span className="text-slate-500 font-medium">{t('বিক্রয় লক অবস্থা:', 'Sale Lock Status:')}</span>
-                  <div className="mt-0.5">
-                    {Number(currentSelectedPlot.owner_sale_locked) === 1 ? (
-                      <span className="inline-flex items-center gap-1 font-bold text-xs text-red-600">
-                        <Lock className="w-3.5 h-3.5" />
-                        <span>{t('বিক্রয় লক সক্রিয়', 'SALE LOCKED')}</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 font-bold text-xs text-emerald-700">
-                        <Unlock className="w-3.5 h-3.5" />
-                        <span>{t('লেনদেন উন্মুক্ত', 'UNLOCKED')}</span>
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-[10px] text-slate-500">
-                    {Number(currentSelectedPlot.owner_sale_locked) === 1
-                      ? t('মালিক কর্তৃক লককৃত', 'Locked by owner')
-                      : t('যাচাইযোগ্য জমি', 'Available to verify')}
-                  </div>
-                </div>
+              {/* Quick Live Search Bar */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={plotSearchQuery}
+                  onChange={(e) => setPlotSearchQuery(e.target.value)}
+                  placeholder={t(
+                    'দাগ নম্বর লিখুন (যেমন: ১০১, ১০২, ২০৫)...',
+                    'Search plot number (e.g. 101, 102)...'
+                  )}
+                  className="field pl-8 font-semibold text-xs bg-[#F5FAF8] py-1.5"
+                />
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                {plotSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setPlotSearchQuery('')}
+                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
-              {/* Informative Guidance Box */}
-              {Number(currentSelectedPlot.owner_sale_locked) === 1 ? (
-                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-800 flex items-start gap-2">
-                  <ShieldAlert className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                  <div>
-                    <strong>{t('সতর্কবার্তা:', 'Warning:')}</strong>{' '}
-                    {t(
-                      'এই দাগটিতে মূল মালিক কর্তৃক ডিজিটাল বিক্রয় লক সক্রিয় করা রয়েছে। লক খোলা না হলে সাব-রেজিস্ট্রি অফিসে কোনো বায়না বা হস্তান্তর দলিল নিবন্ধিত হবে না।',
-                      'Digital sale lock is active on this plot. Deed registration cannot proceed without biometric unlocking by the registered owner.'
-                    )}
-                  </div>
+              {/* Interactive Grid of Plot Cards */}
+              {displayedPlots.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-72 overflow-y-auto pr-1">
+                  {displayedPlots.map((p) => {
+                    const isSelected = Number(p.id) === Number(selectedPlotId);
+                    const isLocked = Number(p.owner_sale_locked) === 1;
+
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setSelectedPlotId(Number(p.id))}
+                        className={`p-2.5 rounded-xl border text-left transition cursor-pointer relative flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-emerald-50 border-[#006A4E] text-[#074f38] ring-2 ring-emerald-500/20 shadow-2xs'
+                            : 'bg-white border-slate-200 hover:border-emerald-300 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="font-extrabold text-xs text-slate-900">
+                              #{toBanglaDigits(p.dag_no, lang)}
+                            </span>
+                            <span className="text-[9px] font-bold px-1 py-0.2 rounded bg-slate-100 text-slate-600">
+                              {p.land_type}
+                            </span>
+                          </div>
+                          <div className="mt-1 font-bold text-xs text-[#006A4E]">
+                            {toBanglaDigits(p.total_area_decimal, lang)} {t('শতক', 'Dec')}
+                          </div>
+                        </div>
+
+                        <div className="mt-1.5 flex items-center justify-between text-[10px]">
+                          {isLocked ? (
+                            <span className="inline-flex items-center gap-0.5 font-bold text-red-600 text-[10px]">
+                              <Lock className="w-2.5 h-2.5" />
+                              <span>{t('লকড', 'Locked')}</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-0.5 font-bold text-emerald-700 text-[10px]">
+                              <Unlock className="w-2.5 h-2.5" />
+                              <span>{t('উন্মুক্ত', 'Open')}</span>
+                            </span>
+                          )}
+                          {isSelected && (
+                            <span className="w-3.5 h-3.5 rounded-full bg-[#006A4E] text-white flex items-center justify-center shrink-0">
+                              <Check className="w-2 h-2 stroke-[3]" />
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               ) : (
-                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 flex items-start gap-2">
-                  <Sparkles className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <div>
-                    <strong>{t('পরামর্শ:', 'Guidance:')}</strong>{' '}
-                    {t(
-                      'দাগটি উন্মুক্ত রয়েছে। পরবর্তী ধাপে যিনি জমি বিক্রি করছেন তাঁর পরিচিতি এবং আপনি কত শতাংশ জমি কিনতে চান তা নির্দিষ্ট করুন।',
-                      'Plot is open for transfer. Proceed to Step 2 to enter seller identity and proposed purchase amount.'
-                    )}
-                  </div>
+                <div className="p-4 text-center text-slate-500 text-xs bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                  <p>{t('কোনো দাগ নম্বর খুঁজে পাওয়া যায়নি।', 'No plots matched search query.')}</p>
                 </div>
               )}
+            </div>
+          </div>
 
-              {/* Step 1 Advance Button */}
-              <div className="flex justify-end pt-2">
+          {/* Right Pane: Selected Plot Profile & Instant Advance Button */}
+          <div className="lg:col-span-5 space-y-3 lg:sticky lg:top-16">
+            {currentSelectedPlot && (
+              <div className="panel p-3.5 sm:p-4 bg-gradient-to-br from-emerald-50/90 via-slate-50 to-white border border-emerald-200/80 rounded-xl shadow-2xs space-y-3">
+                <div className="flex items-center justify-between border-b border-emerald-200/60 pb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006A4E] text-white text-[11px] font-bold shadow-xs">
+                      ১.৩
+                    </span>
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-900">
+                        {t('নির্বাচিত দাগের ডিজিটাল স্থিতি', 'Selected Plot Status')}
+                      </h4>
+                      <span className="text-[10px] text-slate-500">
+                        {lang === 'bn' ? currentSelectedMouza?.mouza_bn : currentSelectedMouza?.mouza_en} • দাগ #{toBanglaDigits(currentSelectedPlot.dag_no, lang)}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-emerald-300 text-[10px] font-extrabold text-[#006A4E]">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    <span>{t('নির্বাচিত', 'Selected')}</span>
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="p-2 bg-white rounded-lg border border-slate-200/70">
+                    <span className="text-[10px] text-slate-500 block">{t('জমির শ্রেণী', 'Land Class')}</span>
+                    <div className="font-bold text-slate-900 mt-0.5 truncate">{currentSelectedPlot.land_type}</div>
+                  </div>
+
+                  <div className="p-2 bg-white rounded-lg border border-slate-200/70">
+                    <span className="text-[10px] text-slate-500 block">{t('মোট আয়তন', 'Total Area')}</span>
+                    <div className="font-extrabold text-[#006A4E] mt-0.5 truncate">
+                      {toBanglaDigits(currentSelectedPlot.total_area_decimal, lang)} {t('শতক', 'Dec')}
+                    </div>
+                  </div>
+
+                  <div className="p-2 bg-white rounded-lg border border-slate-200/70">
+                    <span className="text-[10px] text-slate-500 block">{t('কাঠা সমতুল্য', 'Katha Approx')}</span>
+                    <div className="font-bold text-slate-700 mt-0.5 font-mono truncate">
+                      ~{toBanglaDigits((Number(currentSelectedPlot.total_area_decimal) * 0.605).toFixed(1), lang)} {t('কাঠা', 'Katha')}
+                    </div>
+                  </div>
+
+                  <div className="p-2 bg-white rounded-lg border border-slate-200/70">
+                    <span className="text-[10px] text-slate-500 block">{t('বিক্রয় লক', 'Sale Lock')}</span>
+                    <div className="mt-0.5">
+                      {Number(currentSelectedPlot.owner_sale_locked) === 1 ? (
+                        <span className="inline-flex items-center gap-1 font-bold text-[11px] text-red-600">
+                          <Lock className="w-3 h-3" />
+                          <span>{t('লক সক্রিয়', 'LOCKED')}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 font-bold text-[11px] text-emerald-700">
+                          <Unlock className="w-3 h-3" />
+                          <span>{t('উন্মুক্ত', 'OPEN')}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Informative Guidance Box */}
+                {Number(currentSelectedPlot.owner_sale_locked) === 1 ? (
+                  <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-[11px] text-red-800 flex items-start gap-2">
+                    <ShieldAlert className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                    <div className="leading-snug">
+                      <strong>{t('সতর্কবার্তা:', 'Warning:')}</strong>{' '}
+                      {t(
+                        'এই দাগে বিক্রয় লক চালু রয়েছে। লক না খুললে সাব-রেজিস্ট্রি অফিসে কোনো দলিল রেজিস্ট্রেশন হবে না।',
+                        'Sale lock is active. Deed registration cannot proceed without biometric unlocking by owner.'
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-900 flex items-start gap-2">
+                    <Sparkles className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <div className="leading-snug">
+                      <strong>{t('পরামর্শ:', 'Guidance:')}</strong>{' '}
+                      {t(
+                        'দাগটি লেনদেনের জন্য প্রস্তুত। বিক্রেতা ও ক্রয়ের পরিমাণ নির্দিষ্ট করতে পরবর্তী ধাপে যান।',
+                        'Plot is open for transfer. Proceed to enter seller identity and proposed area.'
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 1 Advance Button */}
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="btn-primary text-sm flex items-center gap-2 shadow-xs cursor-pointer px-5 py-2.5 rounded-xl"
+                  className="w-full btn-primary text-xs flex items-center justify-center gap-2 shadow-xs cursor-pointer py-2.5 rounded-xl font-bold"
                 >
                   <span>{t('পরবর্তী ধাপ (বিক্রেতা ও ক্রয়ের পরিমাণ) ➔', 'Next Step (Seller & Area) ➔')}</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
       {/* ======================================================== */}
-      {/* STEP 2: Enter Seller & Proposed Area (Step-by-Step UX)  */}
+      {/* STEP 2: Enter Seller & Proposed Area (Cockpit Split View) */}
       {/* ======================================================== */}
       {step === 2 && (
-        <div className="space-y-6 animate-rise-delay">
-          {/* Selected Land Reminder Breadcrumb */}
-          {currentSelectedPlot && (
-            <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 flex flex-wrap items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-emerald-700 shrink-0" />
-                <div>
-                  <span className="font-bold text-emerald-900">
-                    {t('নির্বাচিত জমি:', 'Selected Land:')}{' '}
-                  </span>
-                  <span>
-                    {lang === 'bn' ? currentSelectedMouza?.mouza_bn : currentSelectedMouza?.mouza_en} মৌজা, দাগ নং {toBanglaDigits(currentSelectedPlot.dag_no, lang)} • {toBanglaDigits(currentSelectedPlot.total_area_decimal, lang)} {t('শতাংশ', 'Decimal')} ({currentSelectedPlot.land_type})
-                  </span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start animate-rise-delay">
+          {/* Left Pane: Seller Selection & Proposed Area Input */}
+          <div className="lg:col-span-7 space-y-3">
+            {/* Selected Land Reminder Breadcrumb */}
+            {currentSelectedPlot && (
+              <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                  <div className="truncate">
+                    <span className="font-bold text-emerald-900">
+                      {t('নির্বাচিত:', 'Selected:')}{' '}
+                    </span>
+                    <span>
+                      {lang === 'bn' ? currentSelectedMouza?.mouza_bn : currentSelectedMouza?.mouza_en} • দাগ #{toBanglaDigits(currentSelectedPlot.dag_no, lang)} ({toBanglaDigits(currentSelectedPlot.total_area_decimal, lang)} {t('শতক', 'Dec')})
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="text-emerald-800 hover:text-emerald-950 font-bold underline cursor-pointer text-xs"
-              >
-                {t('দাগ পরিবর্তন করুন', 'Change Plot')}
-              </button>
-            </div>
-          )}
-
-          {/* Sub-Step 2.1: Seller Identity Selection */}
-          <div className="panel p-5 sm:p-6 bg-white border border-slate-200/80 rounded-2xl shadow-xs space-y-4">
-            <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#006A4E] text-white text-xs font-bold shadow-xs">
-                ২.১
-              </span>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  {t('বিক্রেতা (Seller) ও জাতীয় পরিচয়পত্র (NID) নির্বাচন করুন', 'Select Seller (with Verified NID)')}
-                </h3>
-                <p className="text-xs text-slate-500">
-                  {t('যাঁর কাছ থেকে জমি কেনার প্রস্তাব পেয়েছেন, তাঁর নাম বা NID নির্বাচন করুন:', 'Select the person proposing to sell the land to verify their ownership records:')}
-                </p>
-              </div>
-            </div>
-
-            {/* Seller Live Search Input */}
-            <div className="relative">
-              <input
-                type="text"
-                value={sellerSearchQuery}
-                onChange={(e) => setSellerSearchQuery(e.target.value)}
-                placeholder={t(
-                  'বিক্রেতার নাম বা এনআইডি (NID) নম্বর লিখে খুঁজুন...',
-                  'Search seller by name or NID number...'
-                )}
-                className="field pl-9 font-semibold text-xs sm:text-sm bg-[#F5FAF8]"
-              />
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
-              {sellerSearchQuery && (
                 <button
                   type="button"
-                  onClick={() => setSellerSearchQuery('')}
-                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 text-xs"
+                  onClick={() => setStep(1)}
+                  className="text-emerald-800 hover:text-emerald-950 font-bold underline cursor-pointer text-[11px] shrink-0"
                 >
-                  <X className="w-4 h-4" />
+                  {t('দাগ পরিবর্তন', 'Change')}
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* Seller Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-72 overflow-y-auto pr-1">
-              {filteredPersons.map((per) => {
-                const isSelected = Number(per.id) === Number(sellerId);
-                const isPrimaryOwner = per.id === 1;
+            {/* Sub-Step 2.1: Seller Identity Selection */}
+            <div className="panel p-3.5 sm:p-4 bg-white border border-slate-200/80 rounded-xl shadow-2xs space-y-2.5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006A4E] text-white text-[11px] font-bold shadow-xs">
+                    ২.১
+                  </span>
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                    {t('বিক্রেতা ও জাতীয় পরিচয়পত্র (NID)', 'Select Seller (with Verified NID)')}
+                  </h3>
+                </div>
+              </div>
 
-                return (
+              {/* Seller Live Search Input */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={sellerSearchQuery}
+                  onChange={(e) => setSellerSearchQuery(e.target.value)}
+                  placeholder={t(
+                    'বিক্রেতার নাম বা NID নম্বর লিখে খুঁজুন...',
+                    'Search seller by name or NID...'
+                  )}
+                  className="field pl-8 font-semibold text-xs bg-[#F5FAF8] py-1.5"
+                />
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                {sellerSearchQuery && (
                   <button
-                    key={per.id}
                     type="button"
-                    onClick={() => setSellerId(Number(per.id))}
-                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer relative flex items-start gap-3 ${
-                      isSelected
-                        ? 'bg-emerald-50 border-[#006A4E] text-slate-900 ring-2 ring-emerald-500/20 shadow-xs'
-                        : 'bg-white border-slate-200 hover:border-emerald-300 hover:bg-slate-50'
-                    }`}
+                    onClick={() => setSellerSearchQuery('')}
+                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs"
                   >
-                    <div className="w-9 h-9 rounded-full bg-emerald-100 text-[#006A4E] font-bold text-sm flex items-center justify-center shrink-0">
-                      {per.name_bn ? per.name_bn.trim().charAt(0) : 'ব'}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs sm:text-sm text-slate-900 truncate">
-                          {lang === 'bn' ? per.name_bn : per.name_en}
-                        </span>
-                        {isPrimaryOwner && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                            {t('মূল মালিক', 'Owner')}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[11px] font-mono text-slate-500 truncate mt-0.5">
-                        NID: {per.nid_mock}
-                      </div>
-                      {per.father_name_bn && (
-                        <div className="text-[10px] text-slate-400 truncate">
-                          পিতা: {per.father_name_bn}
-                        </div>
-                      )}
-                    </div>
-                    {isSelected && (
-                      <span className="w-4 h-4 rounded-full bg-[#006A4E] text-white flex items-center justify-center shrink-0">
-                        <Check className="w-2.5 h-2.5 stroke-[3]" />
-                      </span>
-                    )}
+                    <X className="w-3.5 h-3.5" />
                   </button>
-                );
-              })}
+                )}
+              </div>
+
+              {/* Seller Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-1">
+                {filteredPersons.map((per) => {
+                  const isSelected = Number(per.id) === Number(sellerId);
+                  const isPrimaryOwner = per.id === 1;
+
+                  return (
+                    <button
+                      key={per.id}
+                      type="button"
+                      onClick={() => setSellerId(Number(per.id))}
+                      className={`p-2.5 rounded-xl border text-left transition cursor-pointer relative flex items-start gap-2.5 ${
+                        isSelected
+                          ? 'bg-emerald-50 border-[#006A4E] text-slate-900 ring-2 ring-emerald-500/20 shadow-2xs'
+                          : 'bg-white border-slate-200 hover:border-emerald-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="w-7 h-7 rounded-full bg-emerald-100 text-[#006A4E] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                        {per.name_bn ? per.name_bn.trim().charAt(0) : 'ব'}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs text-slate-900 truncate">
+                            {lang === 'bn' ? per.name_bn : per.name_en}
+                          </span>
+                          {isPrimaryOwner && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800">
+                              {t('মালিক', 'Owner')}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] font-mono text-slate-500 truncate mt-0.5">
+                          NID: {per.nid_mock}
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <span className="w-3.5 h-3.5 rounded-full bg-[#006A4E] text-white flex items-center justify-center shrink-0">
+                          <Check className="w-2 h-2 stroke-[3]" />
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Standard Dropdown Fallback */}
+              <div>
+                <select
+                  value={sellerId}
+                  onChange={(e) => setSellerId(Number(e.target.value))}
+                  className="field font-semibold text-xs bg-slate-50 py-1.5"
+                >
+                  {persons.map((per) => (
+                    <option key={per.id} value={per.id}>
+                      {lang === 'bn' ? per.name_bn : per.name_en} — NID: {per.nid_mock}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
-            {/* Standard Dropdown Fallback */}
-            <div>
-              <label className="text-[11px] font-semibold text-slate-500 block mb-1">
-                {t('অথবা তালিকা থেকে সরাসরি নির্বাচন করুন:', 'Or select from full person list:')}
-              </label>
-              <select
-                value={sellerId}
-                onChange={(e) => setSellerId(Number(e.target.value))}
-                className="field font-semibold text-xs sm:text-sm bg-slate-50"
-              >
-                {persons.map((per) => (
-                  <option key={per.id} value={per.id}>
-                    {lang === 'bn' ? per.name_bn : per.name_en} — NID: {per.nid_mock}
-                  </option>
-                ))}
-              </select>
+            {/* Sub-Step 2.2: Proposed Purchase Area */}
+            <div className="panel p-3.5 sm:p-4 bg-white border border-slate-200/80 rounded-xl shadow-2xs space-y-2.5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006A4E] text-white text-[11px] font-bold shadow-xs">
+                    ২.২
+                  </span>
+                  <h3 className="text-xs sm:text-sm font-bold text-slate-900">
+                    {t('প্রস্তাবিত ক্রয়ের পরিমাণ', 'Proposed Purchase Area')}
+                  </h3>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    {t('ক্রয়ের পরিমাণ (শতক / Decimal):', 'Purchase Area (Decimal):')}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0.1"
+                      value={proposedArea}
+                      onChange={(e) => setProposedArea(e.target.value)}
+                      className="field font-extrabold text-sm pr-14 py-1.5"
+                    />
+                    <span className="absolute right-2.5 top-2 text-xs font-bold text-slate-500">
+                      {t('শতক', 'Dec')}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Quick Preset Buttons */}
+                <div>
+                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                    {t('দ্রুত প্রিসেট:', 'Presets:')}
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {['5', '10', '15'].map((amt) => (
+                      <button
+                        key={amt}
+                        type="button"
+                        onClick={() => setProposedArea(amt)}
+                        className={`px-2.5 py-1 rounded-lg border text-xs font-bold transition cursor-pointer ${
+                          proposedArea === amt
+                            ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                            : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
+                        }`}
+                      >
+                        {toBanglaDigits(amt, lang)} {t('শতক', 'Dec')}
+                      </button>
+                    ))}
+                    {totalPlotArea > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setProposedArea(String(totalPlotArea))}
+                        className={`px-2.5 py-1 rounded-lg border text-xs font-bold transition cursor-pointer ${
+                          proposedArea === String(totalPlotArea)
+                            ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                            : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
+                        }`}
+                      >
+                        {t('সব', 'All')} ({toBanglaDigits(totalPlotArea, lang)})
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Sub-Step 2.2: Proposed Purchase Area & Live Area Math Gauge */}
-          <div className="panel p-5 sm:p-6 bg-white border border-slate-200/80 rounded-2xl shadow-xs space-y-4">
-            <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#006A4E] text-white text-xs font-bold shadow-xs">
-                ২.২
-              </span>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  {t('প্রস্তাবিত ক্রয়ের পরিমাণ (শতাংশ / Decimal)', 'Proposed Purchase Area (in Decimal)')}
-                </h3>
-                <p className="text-xs text-slate-500">
-                  {t('আপনি কত শতাংশ জমি কেনার চুক্তি বা বায়না করতে চান তা নির্দিষ্ট করুন:', 'Specify how many decimals of land you intend to purchase:')}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  {t('ক্রয়ের পরিমাণ (শতাংশ):', 'Purchase Area (Decimal):')}
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.1"
-                    value={proposedArea}
-                    onChange={(e) => setProposedArea(e.target.value)}
-                    className="field font-extrabold text-base pr-16"
-                  />
-                  <span className="absolute right-3 top-2.5 text-xs font-bold text-slate-500">
-                    {t('শতাংশ', 'Decimal')}
-                  </span>
-                </div>
-              </div>
-
-              {/* Quick Preset Buttons */}
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  {t('দ্রুত পরিমাণ নির্বাচন:', 'Quick Presets:')}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {['5', '10', '15'].map((amt) => (
-                    <button
-                      key={amt}
-                      type="button"
-                      onClick={() => setProposedArea(amt)}
-                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition cursor-pointer ${
-                        proposedArea === amt
-                          ? 'bg-[#006A4E] text-white border-[#006A4E]'
-                          : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-                      }`}
-                    >
-                      {toBanglaDigits(amt, lang)} {t('শতাংশ', 'Dec')}
-                    </button>
-                  ))}
-                  {totalPlotArea > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setProposedArea(String(totalPlotArea))}
-                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition cursor-pointer ${
-                        proposedArea === String(totalPlotArea)
-                          ? 'bg-[#006A4E] text-white border-[#006A4E]'
-                          : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
-                      }`}
-                    >
-                      {t('সম্পূর্ণ', 'All')} ({toBanglaDigits(totalPlotArea, lang)} {t('শতাংশ', 'Dec')})
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
+          {/* Right Pane: Area Math Gauge & Verification Summary */}
+          <div className="lg:col-span-5 space-y-3 lg:sticky lg:top-16">
             {/* Real-Time Land Area Math Visualizer */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
               <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                <span>{t('দাগের মোট জমি:', 'Total Plot Area:')} {toBanglaDigits(totalPlotArea, lang)} {t('শতাংশ', 'Dec')}</span>
+                <span>{t('মোট জমি:', 'Total Area:')} {toBanglaDigits(totalPlotArea, lang)} {t('শতক', 'Dec')}</span>
                 <span className={isAreaExceeded ? 'text-red-600' : 'text-[#006A4E]'}>
-                  {t('প্রস্তাবিত ক্রয়:', 'Requested:')} {toBanglaDigits(parsedProposedArea, lang)} {t('শতাংশ', 'Dec')} ({toBanglaDigits(areaPercentage.toFixed(0), lang)}%)
+                  {t('ক্রয়:', 'Buy:')} {toBanglaDigits(parsedProposedArea, lang)} ({toBanglaDigits(areaPercentage.toFixed(0), lang)}%)
                 </span>
               </div>
 
               {/* Visual Proportion Bar */}
-              <div className="w-full h-3 rounded-full bg-slate-200 overflow-hidden flex">
+              <div className="w-full h-2.5 rounded-full bg-slate-200 overflow-hidden flex">
                 <div
                   className={`h-full transition-all duration-300 ${
                     isAreaExceeded ? 'bg-red-500' : 'bg-[#006A4E]'
@@ -1015,9 +981,9 @@ export const CheckBeforeBuyPage: React.FC = () => {
 
               <div className="flex items-center justify-between text-[11px] text-slate-500">
                 <span>
-                  {t('হস্তান্তরের পর দাগে অবশিষ্ট থাকবে:', 'Remaining in Plot:')}{' '}
+                  {t('অবশিষ্ট থাকবে:', 'Remaining:')}{' '}
                   <strong>
-                    {toBanglaDigits(Math.max(0, totalPlotArea - parsedProposedArea).toFixed(2), lang)} {t('শতাংশ', 'Decimal')}
+                    {toBanglaDigits(Math.max(0, totalPlotArea - parsedProposedArea).toFixed(2), lang)} {t('শতক', 'Dec')}
                   </strong>
                 </span>
                 <span>
@@ -1026,90 +992,72 @@ export const CheckBeforeBuyPage: React.FC = () => {
               </div>
 
               {isAreaExceeded && (
-                <div className="p-2.5 rounded-lg bg-red-100 text-red-800 text-xs font-bold flex items-center gap-2 mt-2">
-                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                  <span>
-                    {t(
-                      'সতর্কতা: প্রস্তাবিত ক্রয়ের পরিমাণ দাগের মোট আয়তনকে অতিক্রম করেছে!',
-                      'Warning: Proposed area exceeds the total area of this plot!'
-                    )}
-                  </span>
+                <div className="p-2 rounded-lg bg-red-100 text-red-800 text-xs font-bold flex items-center gap-1.5 mt-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                  <span>{t('সতর্কতা: ক্রয়ের পরিমাণ দাগের মোট আয়তনের বেশি!', 'Exceeds total plot area!')}</span>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Sub-Step 2.3: Pre-Verification Summary & Action */}
-          <div className="panel p-5 sm:p-6 bg-gradient-to-br from-emerald-50/90 via-slate-50 to-white border border-emerald-200/80 rounded-2xl shadow-xs space-y-4">
-            <div className="flex items-center gap-2.5 border-b border-emerald-200/60 pb-3">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#006A4E] text-white text-xs font-bold shadow-xs">
-                ২.৩
-              </span>
-              <div>
-                <h4 className="text-sm font-bold text-slate-900">
-                  {t('যাচাইয়ের পূর্ববর্তী সারাংশ', 'Pre-Verification Summary')}
-                </h4>
-                <p className="text-xs text-slate-500">
-                  {t('তথ্যসমূহ নিশ্চিত করে স্বয়ংক্রিয় ব্লকচেইন লেজার অডিট শুরু করুন:', 'Confirm parameters to run automated blockchain ledger audit:')}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              <div className="p-3 bg-white rounded-xl border border-slate-200">
-                <span className="text-slate-500 font-medium">{t('নির্বাচিত দাগ:', 'Selected Plot:')}</span>
-                <div className="font-bold text-slate-900 mt-0.5">
-                  {lang === 'bn' ? currentSelectedMouza?.mouza_bn : currentSelectedMouza?.mouza_en} • দাগ #{toBanglaDigits(currentSelectedPlot?.dag_no, lang)}
-                </div>
-                <div className="text-[10px] text-slate-500">
-                  {toBanglaDigits(totalPlotArea, lang)} {t('শতাংশ', 'Dec')} ({currentSelectedPlot?.land_type})
+            {/* Sub-Step 2.3: Pre-Verification Summary & Action */}
+            <div className="panel p-3.5 sm:p-4 bg-gradient-to-br from-emerald-50/90 via-slate-50 to-white border border-emerald-200/80 rounded-xl shadow-2xs space-y-3">
+              <div className="flex items-center justify-between border-b border-emerald-200/60 pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center justify-center w-5 h-5 rounded-full bg-[#006A4E] text-white text-[11px] font-bold shadow-xs">
+                    ২.৩
+                  </span>
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900">
+                    {t('যাচাইয়ের পূর্ববর্তী সারাংশ', 'Pre-Verification Summary')}
+                  </h4>
                 </div>
               </div>
 
-              <div className="p-3 bg-white rounded-xl border border-slate-200">
-                <span className="text-slate-500 font-medium">{t('প্রস্তাবিত বিক্রেতা:', 'Proposed Seller:')}</span>
-                <div className="font-bold text-slate-900 mt-0.5 truncate">
-                  {lang === 'bn' ? currentSeller?.name_bn : currentSeller?.name_en}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2 bg-white rounded-lg border border-slate-200">
+                  <span className="text-[10px] text-slate-500 block">{t('দাগ ও এলাকা', 'Plot & Mouza')}</span>
+                  <div className="font-bold text-slate-900 mt-0.5 truncate">
+                    দাগ #{toBanglaDigits(currentSelectedPlot?.dag_no, lang)}
+                  </div>
+                  <div className="text-[10px] text-slate-500 truncate">
+                    {lang === 'bn' ? currentSelectedMouza?.mouza_bn : currentSelectedMouza?.mouza_en}
+                  </div>
                 </div>
-                <div className="text-[10px] font-mono text-slate-500">
-                  NID: {currentSeller?.nid_mock}
+
+                <div className="p-2 bg-white rounded-lg border border-slate-200">
+                  <span className="text-[10px] text-slate-500 block">{t('বিক্রেতা', 'Seller')}</span>
+                  <div className="font-bold text-slate-900 mt-0.5 truncate">
+                    {lang === 'bn' ? currentSeller?.name_bn : currentSeller?.name_en}
+                  </div>
+                  <div className="text-[10px] font-mono text-slate-500 truncate">
+                    NID: {currentSeller?.nid_mock}
+                  </div>
                 </div>
               </div>
 
-              <div className="p-3 bg-white rounded-xl border border-slate-200">
-                <span className="text-slate-500 font-medium">{t('প্রস্তাবিত জমি:', 'Proposed Area:')}</span>
-                <div className="font-extrabold text-[#006A4E] text-sm mt-0.5">
-                  {toBanglaDigits(proposedArea, lang)} {t('শতাংশ', 'Decimal')}
-                </div>
-                <div className="text-[10px] text-slate-500 font-mono">
-                  ~{toBanglaDigits((parsedProposedArea * 0.605).toFixed(1), lang)} {t('কাঠা', 'Katha')}
-                </div>
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="btn-ghost text-xs flex items-center gap-1 px-3 py-2 rounded-xl"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>{t('পিছনে', 'Back')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => runVerification()}
+                  disabled={loading || isAreaExceeded}
+                  className="flex-1 btn-primary text-xs flex items-center justify-center gap-2 shadow-xs cursor-pointer py-2.5 rounded-xl font-bold"
+                >
+                  <Search className="w-3.5 h-3.5" />
+                  <span>
+                    {loading
+                      ? t('যাচাই করা হচ্ছে...', 'Verifying...')
+                      : t('যাচাই শুরু করুন ➔', 'Run Verification ➔')}
+                  </span>
+                </button>
               </div>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="btn-ghost text-xs flex items-center gap-1.5 px-3 py-2 rounded-xl"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>{t('পিছনে যান (দাগ পরিবর্তন)', 'Back (Change Plot)')}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => runVerification()}
-                disabled={loading}
-                className="btn-primary text-sm flex items-center gap-2 shadow-sm cursor-pointer px-6 py-2.5 rounded-xl font-bold"
-              >
-                <Search className="w-4 h-4" />
-                <span>
-                  {loading
-                    ? t('লেজার ও খতিয়ান চেইন যাচাই করা হচ্ছে...', 'Verifying Cryptographic Lineage...')
-                    : t('জমি ও খতিয়ান যাচাই শুরু করুন ➔', 'Run Pre-Purchase Verification ➔')}
-                </span>
-              </button>
             </div>
           </div>
         </div>

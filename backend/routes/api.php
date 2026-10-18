@@ -63,6 +63,16 @@ return static function (string $method, string $uri, array $query, array $body):
         return \App\Services\ReadinessService::getIdentityAndBiometricReadiness();
     }
 
+    // Reviewed official-source guidance; no ownership/fee/office mutations.
+    if ($method === 'GET' && $sub === '/sources/public') return \App\Http\Controllers\Api\V1\SourceIntelligenceController::publicItems($query);
+    if ($method === 'GET' && $sub === '/sources/context') return \App\Http\Controllers\Api\V1\SourceIntelligenceController::context();
+    if ($sub === '/sources/subscriptions' && in_array($method,['GET','POST'],true)) return \App\Http\Controllers\Api\V1\SourceIntelligenceController::subscriptions($body,$method==='POST');
+    if ($method === 'POST' && $sub === '/admin/sources/sync-links') return \App\Http\Controllers\Api\V1\SourceIntelligenceController::syncLinks();
+    if ($method === 'GET' && $sub === '/admin/sources') return \App\Http\Controllers\Api\V1\SourceIntelligenceController::admin();
+    if ($method === 'POST' && $sub === '/admin/sources') return \App\Http\Controllers\Api\V1\SourceIntelligenceController::configure($body);
+    if ($method === 'POST' && preg_match('#^/admin/sources/(\d+)/collect$#',$sub,$match)) return \App\Http\Controllers\Api\V1\SourceIntelligenceController::collect((int)$match[1]);
+    if ($method === 'POST' && preg_match('#^/admin/source-reviews/(\d+)/decision$#',$sub,$match)) return \App\Http\Controllers\Api\V1\SourceIntelligenceController::decide((int)$match[1],$body);
+
     // 1. Public & Admin Ledger Verification Routes
     if ($method === 'GET' && preg_match('#^/verify/noc/([^/]+)$#', $sub, $m)) {
         $qrSetting = DB::selectOne("SELECT setting_value_json FROM site_settings WHERE setting_key = 'public_qr_verification_enabled'");

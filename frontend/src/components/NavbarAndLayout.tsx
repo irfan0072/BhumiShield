@@ -1256,7 +1256,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         {/* Emergency Platform Broadcast Banner */}
         {broadcast && (Boolean(broadcast.is_active) || Number(broadcast.is_active) === 1) && (
           <div
-            className={`w-full py-2.5 px-4 text-center font-bold text-xs sm:text-sm flex items-center justify-center gap-2 tracking-wide shadow-xs ${
+            className={`w-full py-1.5 px-4 text-center font-bold text-xs flex items-center justify-center gap-2 tracking-wide shadow-2xs ${
               broadcast.level === 'URGENT'
                 ? 'bg-red-600 text-white animate-pulse'
                 : broadcast.level === 'WARNING'
@@ -1264,30 +1264,30 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                 : 'bg-[#006A4E] text-white'
             }`}
           >
-            <Megaphone className="w-4 h-4 shrink-0" />
+            <Megaphone className="w-3.5 h-3.5 shrink-0" />
             <span>{lang === 'bn' ? broadcast.message_bn : (broadcast.message_en || broadcast.message_bn)}</span>
           </div>
         )}
 
         {/* Clean Header Bar */}
         <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur">
-          <div className="mx-auto flex h-16 max-w-7xl xl:max-w-[1400px] items-center justify-between gap-2 px-4 sm:gap-4">
+          <div className="mx-auto flex h-13 sm:h-14 max-w-7xl xl:max-w-[1400px] items-center justify-between gap-2 px-3 sm:px-4">
             {/* Logo and Brand Title (bcc.zohirrayhan.com style) */}
             <button
               onClick={() => setActiveTab('landing')}
-              className="flex min-w-0 items-center gap-2.5 text-left cursor-pointer min-h-0 bg-transparent border-0 p-0"
+              className="flex min-w-0 items-center gap-2 text-left cursor-pointer min-h-0 bg-transparent border-0 p-0"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#006A4E] text-sm font-bold text-white ring-4 ring-emerald-100">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#006A4E] text-xs font-bold text-white ring-3 ring-emerald-100">
                 <span className="relative">
                   ভূ
-                  <span className="absolute -right-1 -top-0.5 h-2 w-2 rounded-full bg-amber-400" />
+                  <span className="absolute -right-1 -top-0.5 h-1.5 w-1.5 rounded-full bg-amber-400" />
                 </span>
               </span>
               <span className="min-w-0 leading-tight">
-                <span className="block truncate text-sm sm:text-base font-bold text-slate-900">
+                <span className="block truncate text-sm font-bold text-slate-900">
                   {t('ভূমি সুরক্ষা', 'BhumiShield')}
                 </span>
-                <span className="hidden truncate text-xs text-slate-500 xl:block">
+                <span className="hidden truncate text-[11px] text-slate-500 xl:block">
                   {t('জাতীয় জমি ও দলিল নিরাপত্তা প্ল্যাটফর্ম', 'National Land & Deed Trust Platform')}
                 </span>
               </span>
@@ -1299,7 +1299,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('landing')}
-                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer min-h-[38px] select-none ${
+                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer min-h-[32px] select-none ${
                   activeTab === 'landing'
                     ? 'text-[#006A4E] bg-emerald-50 font-bold border border-emerald-200/80 shadow-2xs'
                     : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100/80'
@@ -1355,7 +1355,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('check')}
-                className="hidden xl:inline-flex items-center gap-1.5 ml-1 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#006A4E] text-xs font-bold border border-emerald-200/90 transition-all cursor-pointer shadow-2xs"
+                className="hidden xl:inline-flex items-center gap-1.5 ml-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#006A4E] text-xs font-bold border border-emerald-200/90 transition-all cursor-pointer shadow-2xs"
                 title={t('জমি কেনার আগে তাৎক্ষণিক যাচাই', 'Instant Plot Verification')}
               >
                 <Search className="w-3.5 h-3.5 text-emerald-700" />
@@ -1368,7 +1368,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
               <button
                 type="button"
                 onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
-                className="h-9 rounded-lg border border-gray-300 px-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                className="h-8 rounded-lg border border-gray-300 px-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                 aria-label="Switch Language"
               >
                 {lang === 'bn' ? 'EN' : 'বাং'}
@@ -1376,11 +1376,11 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
 
               <button
                 onClick={toggleHighContrast}
-                className="flex h-9 items-center justify-center rounded-lg border border-gray-300 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+                className="flex h-8 items-center justify-center rounded-lg border border-gray-300 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
                 title={t('উচ্চ কনট্রাস্ট', 'High Contrast')}
                 aria-label={t('উচ্চ কনট্রাস্ট', 'High Contrast')}
               >
-                <Contrast className="w-4 h-4" />
+                <Contrast className="w-3.5 h-3.5" />
               </button>
 
               {/* Real-time Notification Center Bell & Dropdown */}
@@ -1400,7 +1400,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
               ) : (
                 <button
                   onClick={() => setActiveTab('auth')}
-                  className="h-9 px-3.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                  className="h-8 px-3 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
                 >
                   <LogIn className="w-3.5 h-3.5" />
                   <span>{t('লগইন করুন', 'Sign In')}</span>
@@ -1411,17 +1411,17 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
               <button
                 type="button"
                 onClick={() => setMobileDrawerOpen(true)}
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 hover:bg-slate-100 lg:hidden cursor-pointer"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 hover:bg-slate-100 lg:hidden cursor-pointer"
                 aria-label="Menu"
               >
-                <Menu className="h-5 w-5 text-slate-700" />
+                <Menu className="h-4 w-4 text-slate-700" />
               </button>
             </div>
           </div>
         </header>
 
         {/* Main Content */}
-        <main className={`flex-1 w-full ${activeTab === 'landing' || activeTab === 'map' || activeTab === 'home' || activeTab === 'lawyer_case' ? '' : 'py-8 px-4 max-w-7xl mx-auto'}`}>{children}</main>
+        <main className={`flex-1 w-full ${activeTab === 'landing' || activeTab === 'map' || activeTab === 'home' || activeTab === 'lawyer_case' ? '' : 'py-4 sm:py-5 px-3 sm:px-4 max-w-7xl mx-auto'}`}>{children}</main>
 
         {/* Clean Footer (suppressed on map and admin control panel) */}
         {activeTab !== 'map' && activeTab !== 'admin' && <InstitutionalFooter t={t} onNavigate={setActiveTab} />}

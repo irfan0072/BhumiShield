@@ -462,6 +462,7 @@ final class PublicMarketplaceAndPortalController
     {
         $sql = "SELECT * FROM offices WHERE is_active = 1";
         $params = [];
+        if (!empty($query['office_id'])) { $sql .= ' AND id = ?'; $params[] = (int)$query['office_id']; }
 
         if (!empty($query['type'])) {
             $t = strtolower(trim((string)$query['type']));

@@ -1,3 +1,4 @@
+import {SourceReviewPanel} from '../components/sources/SourceReviewPanel';
 import React, { useState, useEffect } from 'react';
 import { useAppUI, UserRole } from '../i18n';
 import {
@@ -8010,6 +8011,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       {(subTab === 'integrations' || subTab === 'dev_outbox' || (subTab === 'settings' && settingsSubSegment === 'diagnostics')) && (
         <div className="space-y-6 animate-fadeIn">
           {renderPillar5Nav()}
+          {user && ['admin','system_admin'].includes(user.role) && <SourceReviewPanel />}
           <div className="panel p-6 space-y-5 animate-rise">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
             <div>

@@ -1,0 +1,10 @@
+[
+ {"key":"circulars","kind":"CIRCULAR","title_bn":"পরিপত্র ও নীতিমালা","url":"https://minland.gov.bd/pages/static-pages/694032df35ce18e1c0563b8d","interval_hours":24},
+ {"key":"fees","kind":"FEE","title_bn":"প্রকাশিত ভূমিসেবা ফি","url":"https://lsg-portal.land.gov.bd/vumisheba-fee","interval_hours":24},
+ {"key":"charters","kind":"OFFICE","title_bn":"অফিস ও সিটিজেন চার্টার","url":"https://minland.gov.bd/pages/static-pages/694032df35ce18e1c0563bde","interval_hours":168},
+ {"key":"requirements","kind":"GUIDE","title_bn":"ভূমিসেবা কেন্দ্র নির্দেশিকা","url":"https://bhumipedia.land.gov.bd/ebook/view/747","interval_hours":168},
+ {"key":"maps","kind":"MAP","title_bn":"মৌজা ম্যাপ প্রাপ্তির তথ্য","url":"https://dlrs.gov.bd/pages/static-pages/6922dcc6933eb65569e11fd2","interval_hours":168},
+ {"key":"notices","kind":"NOTICE","title_bn":"ভূমি মন্ত্রণালয়ের প্রকাশ্য নোটিশ","url":"https://minland.gov.bd/pages/notices","interval_hours":24},
+ {"key":"links","kind":"LINK","title_bn":"সরকারি ভূমিসেবার লিংক","url":"https://minland.gov.bd/pages/static-pages/694032b235ce18e1c0560c12","interval_hours":168},
+ {"key":"map-catalogue","kind":"MAP","title_bn":"সরকারি ম্যাপের প্রকাশ্য তালিকা","url":"https://map.land.gov.bd/","interval_hours":168}
+]

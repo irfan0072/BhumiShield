@@ -13,6 +13,16 @@ use Database\Seeders\DatabaseSeeder;
  */
 final class ServiceCatalogueController
 {
+    /** Preserve the legacy fee registry identifiers while relating them to catalogue services. */
+    public static function relatedServiceCode(string $feeCode): string
+    {
+        return [
+            'FEE_EMUTATION_ACLAND'=>'MUTATION_ACLAND',
+            'FEE_KHATIAN_CERTIFIED_CIRCULAR_2026'=>'KHATIAN_ONLINE_COPY',
+            'FEE_MOUZA_MAP_CIRCULAR_2026'=>'MOUZA_MAP_SHEET',
+        ][$feeCode] ?? $feeCode;
+    }
+
     private static function validateHttpsUrl(?string $url, string $fieldName): void
     {
         if ($url === null || trim($url) === '') {
@@ -89,6 +99,9 @@ final class ServiceCatalogueController
 
         // Attach related fee if exists
         $fee = DB::selectOne('SELECT * FROM service_fees_registry WHERE service_code = ? AND is_published = 1', [$service['service_code']]);
+        if (!$fee) foreach (DB::select('SELECT * FROM service_fees_registry WHERE is_published = 1') as $candidate) {
+            if (self::relatedServiceCode($candidate['service_code']) === $service['service_code']) { $fee = $candidate; break; }
+        }
         if ($fee) {
             $fee['components'] = json_decode((string) $fee['components_json'], true) ?: [];
             $service['associated_fee'] = $fee;
@@ -102,6 +115,7 @@ final class ServiceCatalogueController
         $rows = DB::select('SELECT * FROM service_fees_registry WHERE is_published = 1 ORDER BY id ASC');
         foreach ($rows as &$r) {
             $r['components'] = json_decode((string) ($r['components_json'] ?? '[]'), true) ?: [];
+            $r['related_service_code'] = self::relatedServiceCode((string)$r['service_code']);
             unset($r['history_json']); // do not expose internal edit history to public
         }
         unset($r);
