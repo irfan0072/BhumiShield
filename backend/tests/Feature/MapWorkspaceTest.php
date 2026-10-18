@@ -25,6 +25,9 @@ $bad=$body;$bad['geojson']['features'][0]['geometry']['coordinates'][0][0]=[0,0]
 $bad=$body;$bad['geojson']['features'][0]['properties']['plot_id']=999999;denied(fn()=>M::import($bad,$admin),'PLOT_LOCATION_MISMATCH');
 $bad=$body;$bad['geojson']['features'][0]['properties']['dag_no']='wrong';denied(fn()=>M::import($bad,$admin),'DAG_MISMATCH');
 $bad=$body;$bad['geojson']['crs']=['type'=>'name','properties'=>['name'=>'EPSG:3857']];denied(fn()=>M::import($bad,$admin),'INVALID_GEOJSON');
+$bad=$body;$bad['observed_at']='2026-02-30';denied(fn()=>M::import($bad,$admin),'INVALID_DATE');
+$bad=$body;$bad['geojson']['features'][0]['properties']='invalid';denied(fn()=>M::import($bad,$admin),'INVALID_PROPERTIES');
+$bad=$body;$bad['geojson']['features'][0]['geometry']=['type'=>'Point','coordinates'=>['90','24']];denied(fn()=>M::import($bad,$admin),'INVALID_COORDINATES');
 $w=M::workspace(['location_id'=>$location['id'],'q'=>$plot['dag_no_bn']]);ok(count($w['plots'])===1&&(int)$w['plots'][0]['id']===(int)$plot['id'],'Bangla dag search preserves identity');ok(!isset($w['plots'][0]['locked_by_nid']),'Public records exclude owner identifiers');ok(count($w['plots'])<=60,'Bounded record response');
 ok((int)(DB::selectOne("SELECT COUNT(*) AS c FROM audit_log WHERE entity_type='map_dataset' AND entity_id=?",[(string)$id])['c']??0)>=3,'Import, publish and withdrawal audited');
 echo "MAP CHECKS: {$tests} passed\n";

@@ -2244,11 +2244,39 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
               </div>
             </div>
 
-            {/* Hearing Notes & Order Textarea */}
+            {/* Hearing Notes & Order Textarea with Quick Remark Chips */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                {t('সহকারী কমিশনার (ভূমি) এর রায় ও আদেশের বিবরণ:*', 'Order Sheet & Decision Rationale:*')}
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-700">
+                  {t('সহকারী কমিশনার (ভূমি) এর রায় ও আদেশের বিবরণ:*', 'Order Sheet & Decision Rationale:*')}
+                </label>
+                <span className="text-[10px] text-slate-400 font-medium">
+                  {t('ক্লিক করে দ্রুত মন্তব্য যুক্ত করুন:', 'Quick remarks:')}
+                </span>
+              </div>
+
+              {/* Predefined Ergonomic Remark Chips */}
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {[
+                  { text: 'বায়া দলিল, আরএস/বিএস নকশা ও সরেজমিন সীমানা সঠিক পাওয়া গেছে।', label: '✓ কাগজপত্র ও সীমানা সঠিক' },
+                  { text: 'সরেজমিন তদন্তে আবেদনকারীর বৈধ দখল ও সীমানা নিশ্চিত হয়েছে।', label: '✓ দখল আবেদনকারীর অনুকূলে' },
+                  { text: 'বায়া দলিলে উল্লেখিত হিস্যার সাথে সাবেক রেকর্ডের গরমিল ও ঘাটতি পরিলক্ষিত হয়েছে।', label: '⚠ হিস্যা ও রেকর্ডে গড়মিল' },
+                  { text: 'হাল সনের ভূমি উন্নয়ন কর (LDT) বকেয়া থাকায় কর পরিশোধের নির্দেশ দেওয়া হলো।', label: '⚠ উন্নয়ন কর বকেয়া' },
+                  { text: 'বিজ্ঞ আদালতের দেওয়ানি মোকদ্দমায় নিষেধাজ্ঞা থাকায় আবেদন স্থগিত করা হলো।', label: '⚠ দেওয়ানি নিষেধাজ্ঞা' },
+                ].map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setMutationDecisionNotes((prev) => (prev ? `${prev} ${chip.text}` : chip.text));
+                    }}
+                    className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 border border-slate-200 text-[11px] font-semibold text-slate-700 transition cursor-pointer"
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+
               <textarea
                 rows={3}
                 value={mutationDecisionNotes}
@@ -2397,9 +2425,36 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
-                {t('আদালতের সিদ্ধান্ত ও আদেশ:*', 'Tribunal Order Notes:*')}
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-700">
+                  {t('আদালতের সিদ্ধান্ত ও আদেশ:*', 'Tribunal Order Notes:*')}
+                </label>
+                <span className="text-[10px] text-slate-400 font-medium">
+                  {t('দ্রুত আদেশ নির্বাচন:', 'Quick orders:')}
+                </span>
+              </div>
+
+              {/* Predefined Dispute Remark Chips */}
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {[
+                  { text: 'উভয় পক্ষের শুনানি ও নথিপত্র পর্যালোচনায় আপত্তিকারীর দাবি ভিত্তিহীন প্রমাণিত হওয়ায় আপত্তি খারিজ করা হলো।', label: '✓ আপত্তি খারিজ ও নিষ্পত্তি' },
+                  { text: 'বিজ্ঞ সিনিয়র সহকারী জজ আদালতে স্বত্ব মোকদ্দমা চলমান থাকায় বিক্রয় ও নামজারি সাময়িক স্থগিতাদেশ বহাল রাখা হলো।', label: '⚠ দেওয়ানি মোকদ্দমায় স্থগিতাদেশ' },
+                  { text: 'আপত্তিকারী স্বত্ব প্রমাণের পর্যাপ্ত বায়া দলিল দাখিল করতে ব্যর্থ হয়েছেন।', label: '⚠ প্রমাণকের ঘাটতি' },
+                  { text: 'সরেজমিন সীমানা পরিদর্শনে আবেদনকারী ও প্রতিপক্ষের শান্তিপূর্ণ সহাবস্থান প্রমাণিত হয়েছে।', label: '✓ শান্তিপূর্ণ সহাবস্থান' },
+                ].map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setDisputeNotes((prev) => (prev ? `${prev} ${chip.text}` : chip.text));
+                    }}
+                    className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-blue-50 hover:text-blue-800 hover:border-blue-300 border border-slate-200 text-[11px] font-semibold text-slate-700 transition cursor-pointer"
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+
               <textarea
                 rows={3}
                 value={disputeNotes}

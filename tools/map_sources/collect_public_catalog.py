@@ -45,8 +45,12 @@ def collect(output, cache):
     raw=get(ORIGIN+'/'); page=raw.decode('utf-8','replace'); parser=CatalogueParser();parser.feed(page)
     stamp=datetime.datetime.now(datetime.timezone.utc).isoformat(); digest=hashlib.sha256(raw).hexdigest()
     previous=json.loads(output.read_text()) if output.exists() else {}
+    semantic={'title':parser.title.strip(),'visible_selectors':parser.select_ids,'official_service_links':sorted(set(parser.links)),
+        'capabilities':[x for x in ['ভূমি ব্যবহারের সারাংশ','ভূমি জোনিং সারাংশ'] if x in page]}
+    semantic_digest=hashlib.sha256(json.dumps(semantic,ensure_ascii=False,sort_keys=True).encode()).hexdigest()
     result={'schema_version':1,'source_url':ORIGIN+'/','title':parser.title.strip(),'collected_at':stamp,'sha256':digest,
-        'changed_since_previous':bool(previous and previous.get('sha256')!=digest),'previous_sha256':previous.get('sha256'),
+        'semantic_sha256':semantic_digest,'comparison_available':bool(previous.get('semantic_sha256')),
+        'changed_since_previous':bool(previous.get('semantic_sha256') and previous['semantic_sha256']!=semantic_digest),'previous_sha256':previous.get('sha256'),
         'robots_allowed':True,'robots_sha256':hashlib.sha256(robots.encode()).hexdigest(),
         'visible_selectors':parser.select_ids,'official_service_links':sorted(set(parser.links)),
         'capabilities':[x for x in ['ভূমি ব্যবহারের সারাংশ','ভূমি জোনিং সারাংশ'] if x in page],

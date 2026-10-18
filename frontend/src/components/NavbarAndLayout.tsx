@@ -2024,7 +2024,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         </header>
 
         {/* Content Body */}
-        <main className={`flex-1 w-full mx-auto space-y-6 ${activeTab === 'admin' ? 'p-4 lg:p-6 max-w-[1600px]' : 'p-4 lg:p-6 max-w-7xl'}`}>
+        <main className={`flex-1 w-full mx-auto space-y-6 pb-24 lg:pb-8 ${activeTab === 'admin' ? 'p-4 lg:p-6 max-w-[1600px]' : 'p-4 lg:p-6 max-w-7xl'}`}>
           {children}
         </main>
 

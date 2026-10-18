@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { AddressCascader, AddressSelection } from '../components/AddressCascader';
 import { triggerAppNotification } from '../components/NotificationCenter';
+import { JargonTooltip } from '../components/JargonTooltip';
 
 export type BankTab = 'mortgages' | 'new_lien' | 'noc' | 'khatian';
 
@@ -325,7 +326,9 @@ export const BankOfficerPage: React.FC = () => {
         <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
           <div>
             <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
-              {t('সক্রিয় ব্যাংক লিয়েন', 'Active Mortgages')}
+              <JargonTooltip term="LIEN">
+                {t('সক্রিয় ব্যাংক লিয়েন', 'Active Mortgages')}
+              </JargonTooltip>
             </div>
             <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
               {toBanglaDigits(mortgages.filter((m) => m.status === 'ACTIVE').length, lang)}

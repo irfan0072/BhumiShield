@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { AddressCascader, AddressSelection } from '../components/AddressCascader';
 import { triggerAppNotification } from '../components/NotificationCenter';
+import { JargonTooltip } from '../components/JargonTooltip';
 
 export type SubRegistrarTab = 'wizard' | 'held' | 'deeds' | 'khatian' | 'verifier' | 'fees' | 'onboarding';
 
@@ -1412,9 +1413,37 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
             {/* Hearing Notes & Action Buttons */}
             <div className="space-y-3 pt-1">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t('সাব-রেজিস্ট্রারের বিচারিক মন্তব্য ও শুনানি রায়:*', 'Officer Hearing Notes & Judicial Findings:*')}
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700">
+                    {t('সাব-রেজিস্ট্রারের বিচারিক মন্তব্য ও শুনানি রায়:*', 'Officer Hearing Notes & Judicial Findings:*')}
+                  </label>
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    {t('ক্লিক করে মন্তব্য যুক্ত করুন:', 'Quick remarks:')}
+                  </span>
+                </div>
+
+                {/* Predefined Ergonomic Remark Chips */}
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {[
+                    { text: 'সশরীরে উপস্থিতিতে পক্ষগণের এনআইডি ও বায়োমেট্রিক আঙ্গুলের ছাপের শতভাগ মিল পাওয়া গেছে।', label: '✓ বায়োমেট্রিক ও পরিচয় সঠিক' },
+                    { text: 'ট্রেজারি চালানে স্ট্যাম্প শুল্ক ও রেজিস্ট্রেশন ফি সরকারি কোডে যথারীতি পরিশোধিত হয়েছে।', label: '✓ চালান ও ফি পরিশোধিত' },
+                    { text: 'সরেজমিন শুনানিতে বিক্রেতার এনআইডি ডাটাবেজের সাথে গরমিল পরিলক্ষিত হওয়ায় স্থগিত রাখা হলো।', label: '⚠ এনআইডি/পরিচয়ে অমিল' },
+                    { text: 'মালিক কর্তৃক নাগরিক বিক্রয় লক (Citizen Sale Lock) সক্রিয় থাকায় রেজিস্ট্রেশন অবরুদ্ধ রাখা হলো।', label: '⚠ বিক্রয় লক সক্রিয়' },
+                    { text: 'সহ-মালিক বা ওয়ারিশান আপত্তি থাকায় উভয় পক্ষের শুনানির জন্য মুলতবি ঘোষণা করা হলো।', label: '⚠ ওয়ারিশ আপত্তি / মুলতবি' },
+                  ].map((chip, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setOfficerNote((prev) => (prev ? `${prev} ${chip.text}` : chip.text));
+                      }}
+                      className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 border border-slate-200 text-[11px] font-semibold text-slate-700 transition cursor-pointer"
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+
                 <textarea
                   rows={2}
                   value={officerNote}

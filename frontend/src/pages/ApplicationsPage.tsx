@@ -24,12 +24,16 @@ import {
   Download,
   FileCheck2,
   Printer,
+  Copy,
+  Check,
+  Sparkles,
 } from 'lucide-react';
 import { BhumiApi } from '../api/client';
 import { useAppUI } from '../i18n';
 import { toBanglaDigits } from '../theme/tokens';
 import { triggerAppNotification } from '../components/NotificationCenter';
 import { CitizenDcrPorchaModal } from '../components/CitizenDcrPorchaModal';
+import { JargonTooltip } from '../components/JargonTooltip';
 
 interface ApplicationsPageProps {
   onNavigate?: (tab: string) => void;
@@ -56,6 +60,74 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
   const [dcrPorchaModalOpen, setDcrPorchaModalOpen] = useState(false);
   const [dcrPorchaDefaultDoc, setDcrPorchaDefaultDoc] = useState<'DCR' | 'PORCHA'>('DCR');
   const [dcrPorchaTransfer, setDcrPorchaTransfer] = useState<any | null>(null);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const handleCopyTracking = (code: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2500);
+  };
+
+  const getActionableGuidance = (item: any) => {
+    const step = Number(item.current_step || 1);
+    const status = item.status || 'PROCESSING';
+    const isCompleted = status === 'COMPLETED' || step >= 12;
+
+    if (isCompleted) {
+      return {
+        tier: 'DONE',
+        badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+        dotClass: 'bg-emerald-500',
+        labelBn: '🟢 কার্যক্রম সম্পূর্ণ সম্পন্ন',
+        labelEn: '🟢 Fully Completed',
+        descBn: 'খতিয়ান ও ডিসিআর ডাউনলোড প্রস্তুত',
+        descEn: 'Khatian & DCR ready for download',
+      };
+    }
+
+    if (step === 8) {
+      return {
+        tier: 'ATTENDANCE_REQUIRED',
+        badgeClass: 'bg-rose-100 text-rose-800 border-rose-300 animate-pulse',
+        dotClass: 'bg-rose-500',
+        labelBn: '🔴 স্বশরীরে হাজিরা আবশ্যক',
+        labelEn: '🔴 In-Person Attendance Required',
+        descBn: 'সাব-রেজিস্ট্রি কাউন্টারে বায়োমেট্রিক ও সশরীরে উপস্থিতি',
+        descEn: 'Biometric verification required at Sub-Registry Office',
+      };
+    }
+
+    if (step === 1 || step === 3 || step === 7) {
+      return {
+        tier: 'ACTION_NEEDED',
+        badgeClass: 'bg-amber-100 text-amber-900 border-amber-300',
+        dotClass: 'bg-amber-500',
+        labelBn: '🟡 আপনার পদক্ষেপ প্রয়োজন',
+        labelEn: '🟡 Action Needed from You',
+        descBn: step === 3
+          ? 'ক্রেতার সম্মতি ও মূল্য অনুমোদন প্রয়োজন'
+          : step === 7
+          ? 'সাব-রেজিস্ট্রি অ্যাপয়েন্টমেন্ট তারিখ নির্বাচন করুন'
+          : 'বিক্রেতা সম্মতি প্রয়োজন',
+        descEn: step === 3
+          ? 'Buyer confirmation required'
+          : step === 7
+          ? 'Select registry appointment date'
+          : 'Seller confirmation required',
+      };
+    }
+
+    return {
+      tier: 'OFFICIAL_REVIEW',
+      badgeClass: 'bg-blue-100 text-blue-800 border-blue-300',
+      dotClass: 'bg-blue-500',
+      labelBn: '🟢 দাপ্তরিক পর্যালোচনায়',
+      labelEn: '🟢 In Official Review',
+      descBn: 'কর্তৃপক্ষ কর্তৃক স্বয়ংক্রিয় ও মাঠ পর্যায়ের যাচাই চলছে',
+      descEn: 'Under administrative review by competent authority',
+    };
+  };
 
   // Create form state
   const [ownedPlots, setOwnedPlots] = useState<any[]>([]);
@@ -118,7 +190,7 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
   const loadOwnedPlots = async () => {
     try {
       const res = await BhumiApi.getMyVault();
-      const plots = res?.owned_plots || [];
+      const plots = (res?.owned_plots || []).map((p: any) => ({ ...p, owner_area_decimal: p.owner_area_decimal ?? p.area_decimal ?? p.share_area_decimal ?? 0 }));
       setOwnedPlots(plots);
       if (plots.length > 0 && selectedPlotId === '') {
         const fromMap = Number(new URLSearchParams(window.location.search).get('map_plot_id'));
@@ -181,6 +253,10 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
     const areaNum = parseFloat(transferArea);
     if (isNaN(areaNum) || areaNum <= 0) {
       setFormError(t('হস্তান্তরকৃত জমির পরিমাণ শূন্যের বেশি হতে হবে।', 'Transfer area must be greater than zero.'));
+      return;
+    }
+    if (!selectedPlotObj || areaNum > Number(selectedPlotObj.owner_area_decimal ?? 0)) {
+      setFormError(t('হস্তান্তরের পরিমাণ আপনার রেকর্ডভুক্ত মালিকানার অংশের বেশি হতে পারে না।', 'Transfer area cannot exceed your recorded ownership share.'));
       return;
     }
     const priceNum = parseInt(proposedPrice, 10);
@@ -474,7 +550,7 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
                     const dag = p.dag_no_bn || p.dag_no;
                     const khatian = p.khatian_no_bn || p.khatian_no || 'রেকর্ড';
                     const mouza = p.mouza_bn || p.mouza_en || 'মৌজা';
-                    const area = p.owner_area_decimal || p.total_area_decimal || '০';
+                    const area = p.owner_area_decimal ?? 0;
                     return (
                       <option key={id} value={id}>
                         {t(`দাগ নং: ${toBanglaDigits(dag, lang)} | খতিয়ান: ${toBanglaDigits(khatian, lang)} | মৌজা: ${mouza} (আপনার অংশ: ${toBanglaDigits(area, lang)} শতক)`, `Dag: ${dag} | Khatian: ${khatian} | Mouza: ${mouza} (Share: ${area} dec)`)}
@@ -494,7 +570,7 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
                   <div>
                     <span className="text-slate-500 block text-[11px]">{t('মালিকানার হিস্যা', 'Owner Share')}</span>
                     <span className="font-bold text-emerald-700">
-                      {toBanglaDigits(selectedPlotObj.owner_area_decimal || selectedPlotObj.total_area_decimal || '০', lang)} {t('শতক', 'dec')}
+                      {toBanglaDigits(selectedPlotObj.owner_area_decimal ?? 0, lang)} {t('শতক', 'dec')}
                     </span>
                   </div>
                   <div>
@@ -540,6 +616,7 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
                   type="number"
                   step="0.01"
                   min="0.01"
+                  max={selectedPlotObj?.owner_area_decimal ?? 0}
                   value={transferArea}
                   onChange={(e) => setTransferArea(e.target.value)}
                   placeholder="e.g. 10.5"
@@ -665,28 +742,96 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
       {/* VIEW 2: TRANSFER DETAIL & TRACKER */}
       {activeView === 'detail' && selectedTransfer && (
         <div className="space-y-6">
+          {/* Post-Completion Celebration Card */}
+          {(selectedTransfer.status === 'COMPLETED' || selectedTransfer.current_step >= 12) && (
+            <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-emerald-700 via-teal-700 to-[#006A4E] text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fadeIn border border-emerald-500/40">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-amber-400 text-slate-900 flex items-center justify-center font-bold">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black tracking-tight">
+                    {t('অভিনন্দন! আপনার জমি হস্তান্তর ও ই-নামজারি সম্পূর্ণ সম্পন্ন হয়েছে', 'Congratulations! Land Transfer & e-Mutation Completed')}
+                  </h3>
+                </div>
+                <p className="text-xs text-emerald-100/90 leading-relaxed max-w-2xl">
+                  {t(
+                    'সাব-রেজিস্ট্রি দলিলের ক্রিপ্টোগ্রাফিক সুরক্ষা সিল এবং সহকারী কমিশনার (ভূমি) কর্তৃক অনুমোদিত নবায়নকৃত বিএস খতিয়ান ও সরকারি ডিসিআর রসিদ প্রস্তুত রয়েছে। নিচের বোতাম থেকে সরাসরি ডাউনলোড করুন।',
+                    'Cryptographic deed seal, updated BS Khatian Porcha, and official DCR receipt are verified and ready for 1-click download.'
+                  )}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDcrPorchaTransfer(selectedTransfer);
+                    setDcrPorchaDefaultDoc('DCR');
+                    setDcrPorchaModalOpen(true);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-white text-[#006A4E] hover:bg-emerald-50 text-xs font-black shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <Download className="w-4 h-4 text-[#006A4E]" />
+                  <span>{t('ডিজিটাল ডিসিআর (DCR)', 'Digital DCR')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDcrPorchaTransfer(selectedTransfer);
+                    setDcrPorchaDefaultDoc('PORCHA');
+                    setDcrPorchaModalOpen(true);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black shadow-sm flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <Download className="w-4 h-4 text-slate-950" />
+                  <span>{t('বিএস খতিয়ান পর্চা', 'BS Porcha')}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Detail Header Banner */}
           <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
               <div>
-                <div className="flex items-center gap-2.5">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-[#006A4E] text-xs font-black font-mono">
                     {selectedTransfer.tracking_number || `TR-${selectedTransfer.id}`}
                   </span>
+
+                  {/* 1-Click Copy Tracking Code Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleCopyTracking(selectedTransfer.tracking_number || `TR-${selectedTransfer.id}`, e)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer border border-slate-200/70"
+                    title={t('ট্র্যাকিং কোড কপি করুন', 'Copy Tracking Code')}
+                  >
+                    {copiedCode === (selectedTransfer.tracking_number || `TR-${selectedTransfer.id}`) ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-700 text-[11px] font-bold">{t('কপি হয়েছে!', 'Copied!')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-slate-500" />
+                        <span className="text-[11px] font-bold">{t('কপি', 'Copy')}</span>
+                      </>
+                    )}
+                  </button>
+
                   <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold uppercase">
                     {selectedTransfer.deed_type || 'SALE'}
                   </span>
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                      selectedTransfer.status === 'COMPLETED'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : selectedTransfer.status === 'REGISTERED'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}
-                  >
-                    {selectedTransfer.status || 'PROCESSING'}
-                  </span>
+
+                  {/* 3-Tier Actionable Guidance Chip */}
+                  {(() => {
+                    const guidance = getActionableGuidance(selectedTransfer);
+                    return (
+                      <span className={`px-3 py-1 rounded-full text-xs font-extrabold border shadow-2xs ${guidance.badgeClass}`}>
+                        {lang === 'bn' ? guidance.labelBn : guidance.labelEn}
+                      </span>
+                    );
+                  })()}
                 </div>
                 <h2 className="text-lg font-black text-slate-900 mt-2">
                   {t(
@@ -1222,22 +1367,43 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
                 <tbody className="divide-y divide-slate-100">
                   {transfers.map((item: any) => {
                     const tracking = item.tracking_number || `TR-${item.id}`;
+                    const guidance = getActionableGuidance(item);
                     return (
                       <tr key={item.id} className="hover:bg-slate-50/80 transition">
-                        <td className="py-3.5 px-3 font-mono font-bold text-slate-900">
-                          {tracking}
+                        <td className="py-3.5 px-3">
+                          <div className="flex items-center gap-1.5 font-mono font-bold text-slate-900">
+                            <span>{tracking}</span>
+                            <button
+                              type="button"
+                              onClick={(e) => handleCopyTracking(tracking, e)}
+                              className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-700 transition cursor-pointer"
+                              title={t('ট্র্যাকিং কোড কপি করুন', 'Copy Tracking Code')}
+                            >
+                              {copiedCode === tracking ? (
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
                         </td>
                         <td className="py-3.5 px-3">
                           <div className="font-semibold text-slate-800">
-                            {t(`দাগ নং ${toBanglaDigits(item.plot?.dag_no || item.plot_id, lang)}`, `Dag ${item.plot?.dag_no || item.plot_id}`)}
+                            <JargonTooltip term="DAG_NO">
+                              {t(`দাগ নং ${toBanglaDigits(item.plot?.dag_no || item.plot_id, lang)}`, `Dag ${item.plot?.dag_no || item.plot_id}`)}
+                            </JargonTooltip>
                           </div>
                           <div className="text-[11px] text-slate-500">
-                            {item.plot?.mouza_bn || item.plot?.mouza_en || t('বীরুলিয়া', 'Birulia')}
+                            <JargonTooltip term="MOUZA">
+                              {item.plot?.mouza_bn || item.plot?.mouza_en || t('বীরুলিয়া', 'Birulia')}
+                            </JargonTooltip>
                           </div>
                         </td>
                         <td className="py-3.5 px-3">
                           <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-bold">
-                            {item.deed_type || 'SALE'}
+                            <JargonTooltip term="DEED">
+                              {item.deed_type || 'SALE'}
+                            </JargonTooltip>
                           </span>
                         </td>
                         <td className="py-3.5 px-3 font-bold text-emerald-800">
@@ -1249,17 +1415,16 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
                           </span>
                         </td>
                         <td className="py-3.5 px-3">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              item.status === 'COMPLETED'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : item.status === 'REGISTERED'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-amber-100 text-amber-800'
-                            }`}
-                          >
-                            {item.status || 'PROCESSING'}
-                          </span>
+                          <div className="space-y-1">
+                            <span
+                              className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border shadow-2xs ${guidance.badgeClass}`}
+                            >
+                              {lang === 'bn' ? guidance.labelBn : guidance.labelEn}
+                            </span>
+                            <span className="block text-[10px] text-slate-500 truncate max-w-[150px]">
+                              {lang === 'bn' ? guidance.descBn : guidance.descEn}
+                            </span>
+                          </div>
                         </td>
                         <td className="py-3.5 px-3 text-right">
                           <div className="flex items-center justify-end gap-1.5">

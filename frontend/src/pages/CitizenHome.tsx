@@ -40,6 +40,7 @@ import { AddressCascader, AddressSelection } from '../components/AddressCascader
 import { triggerAppNotification } from '../components/NotificationCenter';
 import { LandHealthPassportModal } from '../components/LandHealthPassportModal';
 import { CitizenProblemTriageModal } from '../components/CitizenProblemTriageModal';
+import { JargonTooltip } from '../components/JargonTooltip';
 
 export type CitizenSection = 'overview' | 'plots' | 'docs' | 'deeds' | 'transfers' | 'disputes' | 'tickets';
 
@@ -173,13 +174,9 @@ export const CitizenHome: React.FC<{ onNavigate: (target: string) => void }> = (
       loadVault();
       loadTransfers();
       loadTickets();
-      const timer = setInterval(() => {
-        loadVault();
-      }, 10000);
       const onFocus = () => loadVault();
       window.addEventListener('focus', onFocus);
       return () => {
-        clearInterval(timer);
         window.removeEventListener('focus', onFocus);
       };
     } else {
@@ -898,7 +895,9 @@ export const CitizenHome: React.FC<{ onNavigate: (target: string) => void }> = (
                   <div>
                     <div className="flex items-center gap-1.5">
                       <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-purple-700 transition">
-                        {t('উত্তরাধিকার ফারায়েজ বণ্টন', 'Faraiz Succession Engine')}
+                        <JargonTooltip term="FARAIZ">
+                          {t('উত্তরাধিকার ফারায়েজ বণ্টন', 'Faraiz Succession Engine')}
+                        </JargonTooltip>
                       </h3>
                       <span className="px-1.5 py-0.2 rounded bg-purple-100 text-purple-800 text-[10px] font-bold">
                         {t('১-ক্লিক', '1-Click')}
@@ -913,7 +912,9 @@ export const CitizenHome: React.FC<{ onNavigate: (target: string) => void }> = (
                   </div>
                 </div>
                 <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-purple-700">
-                  <span>{t('ফারায়েজ হিসাব করুন', 'Calculate Shares')}</span>
+                  <JargonTooltip term="FARAIZ">
+                    <span>{t('ফারায়েজ হিসাব করুন', 'Calculate Shares')}</span>
+                  </JargonTooltip>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
                 </div>
               </div>

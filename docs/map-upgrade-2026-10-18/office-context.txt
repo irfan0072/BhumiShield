@@ -1,0 +1,3 @@
+Browser tab: 4, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5190/bn/offices?area=%E0%A6%B8%E0%A6%BE%E0%A6%AD%E0%A6%BE%E0%A6%B0".
+There has been no change in the accessibility tree.
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5190/bn/offices?area=%E0%A6%B8%E0%A6%BE%E0%A6%AD%E0%A6%BE%E0%A6%B0

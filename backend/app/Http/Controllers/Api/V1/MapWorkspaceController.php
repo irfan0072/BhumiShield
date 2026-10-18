@@ -81,7 +81,7 @@ final class MapWorkspaceController
         $loc=(int)($body['location_id']??0);$kind=(string)($body['layer_kind']??'cadastre');$date=(string)($body['observed_at']??'');
         if ($title===''||mb_strlen($title)>160||strlen($rights)<12||strlen($rights)>1500) self::fail('SOURCE_REQUIRED','নাম ও ব্যবহারের অধিকার/উৎস সম্পর্কে বিস্তারিত দিন।');
         if (!filter_var($url,FILTER_VALIDATE_URL)||parse_url($url,PHP_URL_SCHEME)!=='https'||strlen($url)>1000) self::fail('INVALID_SOURCE','HTTPS উৎসের ঠিকানা দিন।');
-        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/',$date)||strtotime($date)===false||$date>gmdate('Y-m-d')) self::fail('INVALID_DATE','উৎসের সঠিক তারিখ দিন।');
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/',$date)||!checkdate((int)substr($date,5,2),(int)substr($date,8,2),(int)substr($date,0,4))||$date>gmdate('Y-m-d')) self::fail('INVALID_DATE','উৎসের সঠিক তারিখ দিন।');
         if (!in_array($kind,['cadastre','land_use','zoning'],true)) self::fail('INVALID_LAYER','নকশার ধরন নির্বাচন করুন।');
         if (!DB::selectOne('SELECT id FROM locations WHERE id=?',[$loc])) self::fail('INVALID_LOCATION','নিবন্ধিত মৌজা নির্বাচন করুন।');
         $g=$body['geojson']??null;
@@ -93,6 +93,7 @@ final class MapWorkspaceController
             if (($f['type']??'')!=='Feature'||!in_array($type,['Point','LineString','Polygon','MultiPolygon'],true)||!is_array($coords)) self::fail('INVALID_GEOMETRY','Point, LineString, Polygon অথবা MultiPolygon দিন।');
             self::validateGeometry($type,$coords,$vertices);
             $properties=[]; $input=$f['properties']??[];
+            if(!is_array($input)) self::fail('INVALID_PROPERTIES','Feature properties অবজেক্ট দিন।');
             foreach(['dag_no','sheet_no','survey','land_use','zone','label'] as $key) if(isset($input[$key])&&is_scalar($input[$key])) $properties[$key]=mb_substr(strip_tags((string)$input[$key]),0,160);
             if(isset($input['plot_id'])) {
                 $plot=DB::selectOne('SELECT id,dag_no FROM plots WHERE id=? AND location_id=?',[(int)$input['plot_id'],$loc]);
@@ -114,7 +115,7 @@ final class MapWorkspaceController
     private static function validateGeometry(string $type,array $c,int &$vertices): void
     {
         $point=static function($p)use(&$vertices){
-            if(!is_array($p)||count($p)!==2||!is_numeric($p[0])||!is_numeric($p[1])||!is_finite((float)$p[0])||!is_finite((float)$p[1])||$p[0]<88||$p[0]>93||$p[1]<20||$p[1]>27||++$vertices>50000) self::fail('INVALID_COORDINATES','বাংলাদেশ অঞ্চলের WGS84 longitude,latitude দিন; সর্বোচ্চ ৫০,০০০ vertex।');
+            if(!is_array($p)||count($p)!==2||!(is_int($p[0])||is_float($p[0]))||!(is_int($p[1])||is_float($p[1]))||!is_finite((float)$p[0])||!is_finite((float)$p[1])||$p[0]<88||$p[0]>93||$p[1]<20||$p[1]>27||++$vertices>50000) self::fail('INVALID_COORDINATES','বাংলাদেশ অঞ্চলের WGS84 longitude,latitude দিন; সর্বোচ্চ ৫০,০০০ vertex।');
         };
         $ring=static function($r)use($point){if(!is_array($r)||count($r)<4||$r[0]!==$r[count($r)-1]) self::fail('OPEN_RING','Polygon-এর ring বন্ধ এবং অন্তত ৪টি point হতে হবে।');foreach($r as $p)$point($p);};
         if($type==='Point'){$point($c);return;}
