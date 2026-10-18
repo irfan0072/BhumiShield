@@ -2192,85 +2192,8 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     </div>
   );
 
-  // =========================================================================
-  // ADMIN NAV: compact grouped tab definitions
-  // =========================================================================
-  const NAV_GROUPS = [
-    {
-      id: 'core',
-      label: { bn: 'ওভারভিউ', en: 'Overview' },
-      items: [
-        { tab: 'overview' as AdminTab, icon: <LayoutDashboard className="w-3.5 h-3.5" />, bn: 'ড্যাশবোর্ড', en: 'Dashboard' },
-      ],
-    },
-    {
-      id: 'land',
-      label: { bn: 'ভূমি কার্যক্রম', en: 'Land' },
-      items: [
-        { tab: 'transfers' as AdminTab, icon: <ArrowRight className="w-3.5 h-3.5" />, bn: 'হস্তান্তর', en: 'Transfers' },
-        { tab: 'mutations' as AdminTab, icon: <RefreshCw className="w-3.5 h-3.5" />, bn: 'নামজারি', en: 'Mutations' },
-        { tab: 'field_verification' as AdminTab, icon: <MapPin className="w-3.5 h-3.5" />, bn: 'মাঠ তদন্ত', en: 'Field Verify' },
-        { tab: 'acquisitions' as AdminTab, icon: <Landmark className="w-3.5 h-3.5" />, bn: 'অধিগ্রহণ', en: 'Acquisitions' },
-        { tab: 'survey_records' as AdminTab, icon: <FileSpreadsheet className="w-3.5 h-3.5" />, bn: 'জরিপ', en: 'Survey' },
-      ],
-    },
-    {
-      id: 'legal',
-      label: { bn: 'আইনি', en: 'Legal' },
-      items: [
-        { tab: 'bank_liens' as AdminTab, icon: <Coins className="w-3.5 h-3.5" />, bn: 'ব্যাংক লিয়েন', en: 'Bank Liens' },
-        { tab: 'appeals' as AdminTab, icon: <Gavel className="w-3.5 h-3.5" />, bn: 'আপিল', en: 'Appeals' },
-      ],
-    },
-    {
-      id: 'registry',
-      label: { bn: 'রেজিস্ট্রি', en: 'Registry' },
-      items: [
-        { tab: 'plots_control' as AdminTab, icon: <Compass className="w-3.5 h-3.5" />, bn: 'দাগ ও ভূমি', en: 'Plots' },
-        { tab: 'deeds' as AdminTab, icon: <FileText className="w-3.5 h-3.5" />, bn: 'দলিল', en: 'Deeds' },
-        { tab: 'ledger' as AdminTab, icon: <ShieldCheck className="w-3.5 h-3.5" />, bn: 'লেজার', en: 'Ledger' },
-      ],
-    },
-    {
-      id: 'system',
-      label: { bn: 'সিস্টেম', en: 'System' },
-      items: [
-        { tab: 'users' as AdminTab, icon: <Users className="w-3.5 h-3.5" />, bn: 'ইউজার', en: 'Users' },
-        { tab: 'offices_config' as AdminTab, icon: <Building2 className="w-3.5 h-3.5" />, bn: 'অফিস', en: 'Offices' },
-        { tab: 'catalogue' as AdminTab, icon: <BookOpen className="w-3.5 h-3.5" />, bn: 'ক্যাটালগ', en: 'Catalogue' },
-        { tab: 'settings' as AdminTab, icon: <Settings className="w-3.5 h-3.5" />, bn: 'পলিসি', en: 'Policy' },
-        { tab: 'integrations' as AdminTab, icon: <Globe className="w-3.5 h-3.5" />, bn: 'ইন্টিগ্রেশন', en: 'Integrations' },
-        { tab: 'audit_reports' as AdminTab, icon: <FileSearch className="w-3.5 h-3.5" />, bn: 'অডিট', en: 'Audit' },
-      ],
-    },
-    {
-      id: 'citizen',
-      label: { bn: 'নাগরিক', en: 'Citizen' },
-      items: [
-        { tab: 'tickets' as AdminTab, icon: <MessageSquare className="w-3.5 h-3.5" />, bn: 'টিকেট', en: 'Tickets' },
-        { tab: 'notices' as AdminTab, icon: <Newspaper className="w-3.5 h-3.5" />, bn: 'বিজ্ঞপ্তি', en: 'Notices' },
-        { tab: 'marketplace' as AdminTab, icon: <Globe className="w-3.5 h-3.5" />, bn: 'মার্কেট', en: 'Market' },
-      ],
-    },
-  ];
-
-  // Filter to only tabs allowed for this role
-  const visibleNavGroups = NAV_GROUPS.map((g) => ({
-    ...g,
-    items: g.items.filter((i) => allowedTabs.includes(i.tab)),
-  })).filter((g) => g.items.length > 0);
-
-  // Extra specialist tabs for admin/system_admin
-  const specialistTabs: { tab: AdminTab; bn: string; en: string }[] = ['admin', 'system_admin'].includes(role)
-    ? [
-        { tab: 'content_editor', bn: 'এডিটর', en: 'Editor' },
-        { tab: 'content_approver', bn: 'অনুমোদন', en: 'Approver' },
-        { tab: 'marketplace_moderation', bn: 'মডারেশন', en: 'Moderation' },
-      ]
-    : [];
-
   return (
-    <div className="space-y-0">
+    <div className="space-y-4">
 
       {/* ── EXECUTIVE COMMAND & KPI STATUS RIBBON ─────────────────────────── */}
       {(role === 'admin' || role === 'system_admin') && (
@@ -2381,78 +2304,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
         </div>
       )}
 
-      {/* ── GROUPED EXECUTIVE NAVIGATION HUB ──────────────────────────────── */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs p-1.5 overflow-hidden">
-        <div className="flex items-stretch overflow-x-auto gap-2" style={{ scrollbarWidth: 'none' }}>
-          {visibleNavGroups.map((group, gi) => (
-            <div
-              key={group.id}
-              className={`flex flex-col flex-shrink-0 ${gi < visibleNavGroups.length - 1 ? 'border-r border-slate-200/80 pr-2' : ''}`}
-            >
-              {/* Group category header */}
-              <div className="px-2 pt-1 pb-1 flex items-center gap-1">
-                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">
-                  {lang === 'bn' ? group.label.bn : group.label.en}
-                </span>
-              </div>
-              {/* Group Tab Buttons */}
-              <div className="flex items-center gap-1 px-1 pb-1">
-                {group.items.map((item) => {
-                  const isActive = subTab === item.tab ||
-                    (item.tab === 'plots_control' && ['hierarchy'].includes(subTab)) ||
-                    (item.tab === 'ledger' && subTab === 'ledger') ||
-                    (item.tab === 'settings' && subTab === 'settings') ||
-                    (item.tab === 'catalogue' && subTab === 'catalogue') ||
-                    (item.tab === 'offices_config' && subTab === 'offices_config');
-                  return (
-                    <button
-                      key={item.tab}
-                      type="button"
-                      onClick={() => handleTabChange(item.tab)}
-                      title={lang === 'bn' ? item.bn : item.en}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-150 cursor-pointer whitespace-nowrap select-none ${
-                        isActive
-                          ? 'bg-[#006A4E] text-white shadow-xs scale-100 ring-2 ring-[#006A4E]/20'
-                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                      }`}
-                    >
-                      <span className={isActive ? 'text-white' : 'text-slate-400'}>{item.icon}</span>
-                      <span className="leading-snug">{lang === 'bn' ? item.bn : item.en}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
 
-          {/* Specialist tools for Admin */}
-          {specialistTabs.length > 0 && (
-            <div className="flex flex-col flex-shrink-0 border-l border-dashed border-slate-300 pl-2">
-              <div className="px-2 pt-1 pb-1">
-                <span className="text-[9px] font-black uppercase tracking-widest text-amber-500 whitespace-nowrap">
-                  {t('বিশেষ টুলস', 'Specialist Tools')}
-                </span>
-              </div>
-              <div className="flex items-center gap-1 px-1 pb-1">
-                {specialistTabs.map((item) => (
-                  <button
-                    key={item.tab}
-                    type="button"
-                    onClick={() => handleTabChange(item.tab)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer whitespace-nowrap select-none ${
-                      subTab === item.tab
-                        ? 'bg-slate-900 text-white shadow-xs ring-2 ring-slate-900/20'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                    }`}
-                  >
-                    <span>{lang === 'bn' ? item.bn : item.en}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* ── CONTENT AREA ───────────────────────────────────────────────────── */}
       {loadError && !['admin', 'system_admin'].includes(role) && (
