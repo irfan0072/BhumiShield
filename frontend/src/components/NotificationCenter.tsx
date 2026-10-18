@@ -14,7 +14,7 @@ import {
   Trash2,
   CheckCheck,
 } from 'lucide-react';
-import { useAppUI } from '../i18n';
+import { useAppUI, UserRole } from '../i18n';
 import { toBanglaDigits } from '../theme/tokens';
 
 export interface AppNotification {
@@ -42,15 +42,106 @@ export const triggerAppNotification = (notif: Omit<AppNotification, 'id' | 'time
     read: false,
   };
 
-  // Save to localStorage
+  // Save to user-namespaced storage
   try {
-    const existing = JSON.parse(localStorage.getItem('bs_notifications') || '[]');
-    const updated = [fullNotif, ...existing].slice(0, 30);
-    localStorage.setItem('bs_notifications', JSON.stringify(updated));
+    const rawUser = localStorage.getItem('bs_user');
+    const u = rawUser ? JSON.parse(rawUser) : null;
+    const userKey = u?.username || (u?.id ? `uid_${u.id}` : null);
+    if (userKey) {
+      const storageKey = `bs_notifications_${userKey}`;
+      const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
+      const updated = [fullNotif, ...existing].slice(0, 30);
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+    }
   } catch {}
 
   // Trigger all active toast listeners
   toastListeners.forEach((cb) => cb(fullNotif));
+};
+
+const getInitialRoleNotifications = (role?: UserRole): AppNotification[] => {
+  if (!role) return [];
+  if (['admin', 'system_admin'].includes(role)) {
+    return [
+      {
+        id: 'init_sys_1',
+        title_bn: 'সিস্টেম লেজার অখণ্ডতা ১০০% সুরক্ষিত',
+        title_en: 'Cryptographic Ledger Integrity Verified',
+        message_bn: 'Ed25519 ক্রিপ্টোগ্রাফিক হ্যাশ চেইন সম্পূর্ণ অখণ্ড রয়েছে।',
+        message_en: 'Ed25519 cryptographic hash chains verified 100% integral.',
+        timestamp: new Date().toISOString(),
+        type: 'SUCCESS',
+        targetTab: 'admin',
+        targetSection: 'ledger',
+        read: false,
+      },
+    ];
+  }
+  if (['ac_land', 'land_office_assistant'].includes(role)) {
+    return [
+      {
+        id: 'init_ac_1',
+        title_bn: 'ই-নামজারি এলটি নোটিশ অপেক্ষমাণ',
+        title_en: 'e-Mutation LT Notice Ready',
+        message_bn: 'সাব-রেজিস্ট্রি অফিস হতে স্বয়ংক্রিয় এলটি নোটিশে নতুন নামজারি কেস ডকেটে জমা হয়েছে।',
+        message_en: 'Automated LT Notice generated from Sub-Registry deed is ready in tribunal bench.',
+        timestamp: new Date().toISOString(),
+        type: 'INFO',
+        targetTab: 'acland',
+        targetSection: 'mutations',
+        read: false,
+      },
+    ];
+  }
+  if (['sub_registrar', 'registry_data_officer'].includes(role)) {
+    return [
+      {
+        id: 'init_sr_1',
+        title_bn: 'দলিল প্রি-রেজিস্ট্রেশন গেটকিপার কিউ',
+        title_en: 'Pre-Registration Gatekeeper Queue',
+        message_bn: 'নতুন দলিলের ই-চালান ও স্ট্যাম্প সত্যতা যাচাই সম্পন্ন হয়েছে।',
+        message_en: 'New deed e-challan and stamp authenticity verification completed.',
+        timestamp: new Date().toISOString(),
+        type: 'INFO',
+        targetTab: 'registrar',
+        targetSection: 'deeds',
+        read: false,
+      },
+    ];
+  }
+  if (['bank_officer', 'bank_manager'].includes(role)) {
+    return [
+      {
+        id: 'init_bank_1',
+        title_bn: 'দ্বৈত বন্ধক সুরক্ষা কার্যকর',
+        title_en: 'Double Mortgage Protection Active',
+        message_bn: 'কেন্দ্রীয় ডিজিটাল লিয়েন রেজিস্টারে জামানত যাচাই সেবা সক্রিয়।',
+        message_en: 'Collateral verification active on central lien register.',
+        timestamp: new Date().toISOString(),
+        type: 'INFO',
+        targetTab: 'bank',
+        targetSection: 'mortgages',
+        read: false,
+      },
+    ];
+  }
+  if (role === 'citizen') {
+    return [
+      {
+        id: 'init_cit_1',
+        title_bn: 'নাগরিক ভূমি সুরক্ষা ভল্ট সক্রিয়',
+        title_en: 'Citizen Land Vault Active',
+        message_bn: 'আপনার খতিয়ান ও দাগে ডিজিটাল বিক্রয় লক সুরক্ষা সক্ষম রয়েছে।',
+        message_en: 'Digital sale lock protection enabled for your registered plots.',
+        timestamp: new Date().toISOString(),
+        type: 'SUCCESS',
+        targetTab: 'home',
+        targetSection: 'plots',
+        read: false,
+      },
+    ];
+  }
+  return [];
 };
 
 interface NotificationCenterProps {
@@ -58,67 +149,60 @@ interface NotificationCenterProps {
 }
 
 export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNavigate }) => {
-  const { lang, t, role, user } = useAppUI();
+  const { lang, t, role, user, token } = useAppUI();
   const [isOpen, setIsOpen] = useState(false);
   const [activeToast, setActiveToast] = useState<AppNotification | null>(null);
   const [filterType, setFilterType] = useState<'ALL' | 'ALERT' | 'SUCCESS'>('ALL');
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
 
-  // Load notifications from localStorage or generate role-tailored initial set
-  const [notifications, setNotifications] = useState<AppNotification[]>(() => {
+  const userKey = user ? (user.username || `uid_${user.id}`) : null;
+  const storageKey = userKey ? `bs_notifications_${userKey}` : null;
+
+  // Clean legacy global unnamespaced key
+  useEffect(() => {
     try {
-      const stored = localStorage.getItem('bs_notifications');
+      localStorage.removeItem('bs_notifications');
+    } catch {}
+  }, []);
+
+  const [notifications, setNotifications] = useState<AppNotification[]>(() => {
+    if (!userKey || !storageKey) return [];
+    try {
+      const stored = localStorage.getItem(storageKey);
       if (stored) {
         return JSON.parse(stored);
       }
     } catch {}
-
-    // Default dynamic notifications tailored to role
-    return [
-      {
-        id: 'init_1',
-        title_bn: 'মালিকানা বিক্রয় লক সক্রিয়',
-        title_en: 'Owner Sale Lock Active',
-        message_bn: 'দাগ নং ১০১-এ নাগরিক বিক্রয় লক সক্রিয় রয়েছে। কোনো জাল দলিল নিবন্ধন হতে পারবে না।',
-        message_en: 'Owner sale lock is active on Dag 101. Unauthorized deed registrations are strictly blocked.',
-        timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-        type: 'SUCCESS',
-        targetTab: 'home',
-        targetSection: 'plots',
-        read: false,
-      },
-      {
-        id: 'init_2',
-        title_bn: 'ই-নামজারি এলটি নোটিশ',
-        title_en: 'e-Mutation LT Notice',
-        message_bn: 'সাব-রেজিস্ট্রি অফিস হতে স্বয়ংক্রিয় এলটি নোটিশে নতুন নামজারি কেস এসিল্যান্ডের ডকেটে জমা হয়েছে।',
-        message_en: 'Automated LT Notice generated from Sub-Registry deed is ready in AC Land tribunal bench.',
-        timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-        type: 'INFO',
-        targetTab: 'acland',
-        targetSection: 'mutations',
-        read: false,
-      },
-      {
-        id: 'init_3',
-        title_bn: 'দ্বৈত বন্ধক সুরক্ষা সতর্কীকরণ',
-        title_en: 'Double Mortgage Protection Warning',
-        message_bn: 'সোনালী ব্যাংক পিএলসি কর্তৃক দাগ নং ১০৬-এর বিরুদ্ধে ২য় ব্যাংক লিয়েন আবেদন প্রতিহত হয়েছে।',
-        message_en: 'Second mortgage attempt on Dag 106 was automatically repelled by cryptographic lien lock.',
-        timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-        type: 'WARNING',
-        targetTab: 'bank',
-        targetSection: 'mortgages',
-        read: false,
-      },
-    ];
+    return getInitialRoleNotifications(role);
   });
 
-  // Save changes to localStorage
+  // Sync notifications when user session or storageKey updates
   useEffect(() => {
+    if (!storageKey) {
+      setNotifications([]);
+      return;
+    }
     try {
-      localStorage.setItem('bs_notifications', JSON.stringify(notifications));
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        setNotifications(JSON.parse(stored));
+      } else {
+        const initial = getInitialRoleNotifications(role);
+        setNotifications(initial);
+        localStorage.setItem(storageKey, JSON.stringify(initial));
+      }
+    } catch {
+      setNotifications([]);
+    }
+  }, [storageKey, role]);
+
+  // Save changes to user storage
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(notifications));
     } catch {}
-  }, [notifications]);
+  }, [notifications, storageKey]);
 
   // Subscribe to live toast notifications
   useEffect(() => {
@@ -141,6 +225,18 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
     }, 6000);
     return () => clearTimeout(timer);
   }, [activeToast]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
 
   const unreadCount = useMemo(() => {
     return notifications.filter((n) => !n.read).length;
@@ -185,10 +281,15 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
     }
   };
 
+  // Guard: NEVER render notification center bell for unauthenticated public visitors
+  if (!user || !token) {
+    return null;
+  }
+
   return (
     <>
       {/* 1. Header Bell Icon with Animated Unread Badge */}
-      <div className="relative">
+      <div className="relative" ref={dropdownRef}>
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}

@@ -2345,8 +2345,10 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
               )}
             </div>
 
-            {/* Notification Center */}
-            <NotificationCenter onNavigate={(tab) => setActiveTab(tab)} />
+            {/* Notification Center (Only for authenticated sessions) */}
+            {user && token && (
+              <NotificationCenter onNavigate={(tab) => setActiveTab(tab)} />
+            )}
 
             {/* Language Toggle */}
             <button
