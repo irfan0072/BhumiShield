@@ -41,7 +41,10 @@ foreach(['CIRCULAR','FEE','OFFICE','MAP','NOTICE','LINK'] as $kind){$s=C::config
 }
 check(C::subscriptions(['location_id'=>$location['id'],'enabled'=>true],true,$citizen)['location_ids']===[(int)$location['id']],'Citizen follows mouza');check(C::subscriptions(['location_id'=>$location['id'],'enabled'=>false],true,$citizen)['location_ids']===[],'Citizen unfollows mouza');
 deny(fn()=>C::subscriptions(['location_id'=>-3,'enabled'=>true],true,$citizen),'INVALID_LOCATION');
-C::configure([...$cfg,'id'=>$sid,'version'=>1,'enabled'=>0],$admin);deny(fn()=>C::collect($sid,$admin),'SOURCE_DISABLED');
+C::configure([...$cfg,'id'=>$sid,'version'=>1,'enabled'=>0],$admin);deny(fn()=>C::collect($sid,$admin),'COLLECTION_GLOBALLY_DISABLED');
+$control=C::collectionSettings();C::configureCollection(['enabled'=>true,'version'=>$control['version'],'reason'=>'Synthetic test of per-source control'],$admin);
+deny(fn()=>C::collect($sid,$admin),'SOURCE_DISABLED');
+$control=C::collectionSettings();C::configureCollection(['enabled'=>false,'version'=>$control['version'],'reason'=>'Return isolated test collection to off'],$admin);
 check(DB::select('SELECT * FROM service_fees_registry ORDER BY id')===$feesBefore,'Review never changes transaction fees');check(DB::select('SELECT * FROM ownerships ORDER BY id')===$ownersBefore,'Review never changes ownership');check(DB::select('SELECT * FROM offices ORDER BY id')===$officesBefore,'Review never changes office scope or contacts');check(count(C::admin($admin)['history'])>=8,'Publication decisions preserve audit history');
 $linked=\App\Http\Controllers\Api\V1\ServiceCatalogueController::getPublicService('MUTATION_ACLAND')['service'];
 check(($linked['associated_fee']['service_code']??'')==='FEE_EMUTATION_ACLAND','Legacy fee codes resolve to the correct catalogue service');

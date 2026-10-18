@@ -1,0 +1,76 @@
+Browser tab: 9, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5193/bn/admin".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/admin
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা GovTech OS v2.0
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text GovTech OS v2.0
+			8 button সাইডবার সঙ্কুচিত করুন (Ctrl+B)
+				9 image
+			10 text ত তানজিলা হক (কনটেন্ট এডিটর)
+			11 image
+			12 text কনটেন্ট এডিটর ভূমি প্রকাশনা ও জনসচেতনতা শাখা
+			13 text field (settable)
+			14 image
+			15 container Sidebar Navigation
+				16 text দাপ্তরিক কর্মপ্রবাহ
+				17 button কন্টেন্ট এডিটর ও নির্দেশিকা
+					18 image
+					19 text কন্টেন্ট এডিটর ও নির্দেশিকা
+				20 button পাবলিশিং অডিট লগ
+					21 image
+					22 text পাবলিশিং অডিট লগ
+			23 button পাবলিক পোর্টাল, Help: নাগরিক পাবলিক পোর্টাল
+				24 image
+				25 text পাবলিক পোর্টাল
+			26 button লগআউট
+				27 image
+				28 text লগআউট
+		29 container
+			30 container Breadcrumb
+				31 button ভূমি সুরক্ষা, Help: পাবলিক পোর্টাল
+					32 image
+					33 text ভূমি সুরক্ষা
+				34 image
+				35 image
+				36 text ভূমি প্রকাশনা ও জনসচেতনতা শাখা
+				37 image
+				38 text কনটেন্ট এডিটর
+			39 text Ed25519 ক্রিপ্টোগ্রাফিক লেজার সক্রিয় |  অনলাইন
+			40 text field (settable) global-header-search
+			41 image
+			42 text ⌘K
+			43 button অ্যাকশন, Help: দ্রুত অ্যাকশন মেনু
+				44 image
+				45 text অ্যাকশন
+				46 image
+			47 button বিজ্ঞপ্তি ও নোটিফিকেশন
+				48 image
+			49 button EN, Help: Language Switcher
+			50 button Toggle Contrast
+				51 image
+			52 pop up button (collapsed) Description: ব্যবহারকারী প্রোফাইল ও সেটিংস মেনু, Secondary Actions: Expand
+				53 text ত
+				54 text তানজিলা হক (কনটেন্ট এডিটর)
+				55 text কনটেন্ট এডিটর
+				56 image
+		57 container
+			58 heading কন্টেন্ট এডিটর ও সচেতনতামূলক নির্দেশিকা ওয়ার্কবেঞ্চ, Value: 1
+				59 image
+				60 text কন্টেন্ট এডিটর ও সচেতনতামূলক নির্দেশিকা ওয়ার্কবেঞ্চ
+			61 text নাগরিক সচেতনতা নির্দেশিকা, আইনি ব্যাখ্যা ও অফিস নোটিশের খসড়া তৈরি এবং পর্যালোচনার জন্য দাখিল।
+			62 button নতুন খসড়া লিখুন
+				63 image
+				64 text নতুন খসড়া লিখুন
+			65 text কন্টেন্ট ধরন:
+			66 button সচেতনতামূলক ব্লগ ও নির্দেশিকা
+			67 button অফিসিয়াল নোটিশ ও আদেশ
+			68 button সকল
+			69 button খসড়া
+			70 button বিচারাধীন
+			71 button প্রকাশিত
+			72 button প্রত্যাখ্যাত
+			73 text কোনো কন্টেন্ট খসড়া পাওয়া যায়নি। নতুন খসড়া লিখতে উপরের বোতামে ক্লিক করুন।
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/admin

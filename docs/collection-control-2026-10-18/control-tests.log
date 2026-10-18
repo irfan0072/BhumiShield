@@ -1,0 +1,18 @@
+PASS Existing installation defaults collection OFF
+PASS Reject AUTH_REQUIRED
+PASS Reject FORBIDDEN_ROLE
+PASS Reject ACCOUNT_SUSPENDED
+PASS Reject INVALID_COLLECTION_SETTING
+PASS Reject INVALID_COLLECTION_SETTING
+PASS Reject COLLECTION_GLOBALLY_DISABLED
+PASS Blocked collect does not lease or attempt a source
+PASS Blocked collect preserves prior observations
+PASS Super admin can enable with reason
+PASS Migration preserves explicit configuration
+PASS Reject COLLECTION_SETTING_CONFLICT
+PASS Reject SOURCE_DISABLED
+PASS Admin can deactivate after enabling
+PASS Reject COLLECTION_GLOBALLY_DISABLED
+PASS Toggle changes retain actor, reason and ordered history
+PASS Fresh installation defaults OFF
+COLLECTION CONTROL CHECKS: 17 passed; no external requests

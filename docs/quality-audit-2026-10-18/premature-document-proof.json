@@ -1,0 +1,12 @@
+{
+    "fixture_database_only": true,
+    "transfer_id": 3,
+    "current_step": 12,
+    "actual_status": "PROCESSING",
+    "deed_id": null,
+    "mutation_id": null,
+    "returns_dcr": true,
+    "claims_payment_status": "PAID",
+    "generates_transaction_id": true,
+    "returns_owner_porcha": true
+}

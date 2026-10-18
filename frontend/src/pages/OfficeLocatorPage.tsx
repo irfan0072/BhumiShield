@@ -195,7 +195,21 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
-        {linkedOfficeId > 0 && <div className="source-panel"><p>{t('সংযুক্ত অফিসটি দেখানো হচ্ছে।','Showing the linked office.')}</p><button onClick={() => setLinkedOfficeId(0)}>{t('সব অফিস দেখুন','Show all offices')}</button></div>}
+        {linkedOfficeId > 0 && (
+          <div className="source-panel">
+            <p>{t('সংযুক্ত অফিসটি দেখানো হচ্ছে।', 'Showing the linked office.')}</p>
+            <button
+              onClick={() => {
+                setLinkedOfficeId(0);
+                const url = new URL(window.location.href);
+                url.searchParams.delete('office_id');
+                window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+              }}
+            >
+              {t('সব অফিস দেখুন', 'Show all offices')}
+            </button>
+          </div>
+        )}
         <SourceCards kind="OFFICE" officeId={linkedOfficeId} title={t('অফিস ও সিটিজেন চার্টারের হালনাগাদ','Reviewed official updates')} />
         {/* Banner */}
         <div className="bg-[#006A4E] text-white rounded-2xl p-6 sm:p-8 shadow-sm space-y-3">

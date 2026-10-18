@@ -502,8 +502,13 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     extraContext: null,
   });
 
+  const isRefreshingRef = useRef(false);
+
   const refreshAll = async () => {
-    let hadCriticalError = false;
+    if (isRefreshingRef.current) return;
+    isRefreshingRef.current = true;
+    try {
+      let hadCriticalError = false;
     const results = await Promise.allSettled([
       BhumiApi.getLedgerState().catch((err) => {
         console.error('Ledger state fetch failed:', err);
@@ -567,6 +572,9 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     results.forEach((result, i) => { if (result.status === 'fulfilled') setters[i](result.value); });
     setLoadError(hadCriticalError
       ? t('কিছু তথ্য লোড হয়নি। আবার চেষ্টা করুন।', 'Some records could not be loaded. Please retry.') : '');
+    } finally {
+      isRefreshingRef.current = false;
+    }
   };
 
   const handleAdminToggleSaleLock = async (plot: any) => {
@@ -882,9 +890,14 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   useEffect(() => {
     refreshAll();
     const timer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
       refreshAll();
-    }, 8000);
-    const onFocus = () => refreshAll();
+    }, 20000);
+    const onFocus = () => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        refreshAll();
+      }
+    };
     window.addEventListener('focus', onFocus);
     return () => {
       clearInterval(timer);
@@ -2481,7 +2494,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                     <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center justify-between">
                       <div className="flex items-center gap-1.5 font-bold">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>{t('ব্যাকআপ সম্পন্ন: ', 'Backup Ready: ')}{backupData.filename}</span>
+                        <span>{t('ব্যাকআপ সম্পন্ন: ', 'Backup Ready: ')}{backupData.backup_filename || backupData.filename}</span>
                       </div>
                       {backupData.download_url && (
                         <a href={backupData.download_url} download className="text-[#006A4E] underline font-extrabold text-[11px]">

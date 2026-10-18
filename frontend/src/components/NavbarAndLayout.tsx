@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppUI, UserRole, AuthUser } from '../i18n';
 import { BhumiApi } from '../api/client';
+import { toBanglaDigits } from '../theme/tokens';
 import { NotificationCenter } from './NotificationCenter';
 import { FaraizCalculatorModal } from './FaraizCalculatorModal';
 import { BengaliPorchaOcrModal } from './BengaliPorchaOcrModal';

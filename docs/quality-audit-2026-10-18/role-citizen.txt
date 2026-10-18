@@ -1,0 +1,202 @@
+Browser tab: 9, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5193/bn/home".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/home
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা জাতীয় জমি ও দলিল নিরাপত্তা প্ল্যাটফর্ম
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text জাতীয় জমি ও দলিল নিরাপত্তা প্ল্যাটফর্ম
+			8 container প্রধান মেনু
+				9 button সেবাসমূহ
+					10 image
+					11 text সেবাসমূহ
+				12 pop up button (collapsed) ভূমি সেবা, Secondary Actions: Expand
+					13 image
+					14 text ভূমি সেবা
+					15 image
+				16 pop up button (collapsed) নোটিশ, Secondary Actions: Expand
+					17 image
+					18 text নোটিশ
+					19 image
+				20 pop up button (collapsed) হেল্পলাইন, Secondary Actions: Expand
+					21 image
+					22 text হেল্পলাইন
+					23 image
+				24 button জমি যাচাই, Help: জমি কেনার আগে তাৎক্ষণিক যাচাই
+					25 image
+					26 text জমি যাচাই
+			27 button Switch Language
+			28 button উচ্চ কনট্রাস্ট
+				29 image
+			30 button বিজ্ঞপ্তি ও নোটিফিকেশন
+				31 image
+				32 text ১
+			33 pop up button (collapsed) Description: ব্যবহারকারী প্রোফাইল ও সেটিংস মেনু, Secondary Actions: Expand
+				34 text ম
+				35 text মো. রফিকুল ইসলাম (নাগরিক)
+				36 text নাগরিক ভূমি পোর্টাল
+				37 image
+		38 container
+			39 image
+			40 heading মো. রফিকুল ইসলাম (নাগরিক), Value: 1
+				41 text মো. রফিকুল ইসলাম (নাগরিক)
+			42 image
+			43 text এনআইডি যাচাইকৃত এনআইডি :  ৯৯০০০০১০০১ •
+			44 image
+			45 text ১৬১২২
+			46 button মোট জমি ৩০.০ শতক
+				47 text মোট জমি
+				48 container
+					49 text ৩০.০ শতক
+			50 button বিক্রয় লক ০/২ উন্মুক্ত
+				51 text বিক্রয় লক
+				52 container
+					53 text ০ / ২ উন্মুক্ত
+			54 button মূল দলিল ১৪ টি
+				55 text মূল দলিল
+				56 container
+					57 text ১৪ টি
+			58 button চলমান আবেদন ২ টি
+				59 text চলমান আবেদন
+				60 container
+					61 text ২ টি
+			62 button সহায়তা গাইড, Help: আপনার কী সাহায্য দরকার?
+				63 image
+				64 text সহায়তা গাইড
+			65 button রিফ্রেশ
+				66 image
+			67 button হস্তান্তর আবেদন
+				68 image
+				69 text হস্তান্তর আবেদন
+			70 button সারসংক্ষেপ ও সেবা
+				71 image
+				72 text সারসংক্ষেপ ও সেবা
+			73 button আমার জমি ও বিক্রয় লক ২
+				74 image
+				75 text আমার জমি ও বিক্রয় লক
+				76 text ২
+			77 button ডিজিটাল কাগজপত্র ভল্ট
+				78 image
+				79 text ডিজিটাল কাগজপত্র ভল্ট
+			80 button রেজিস্ট্রিকৃত মূল দলিল ১৪
+				81 image
+				82 text রেজিস্ট্রিকৃত মূল দলিল
+				83 text ১৪
+			84 button হস্তান্তর ট্র্যাকার ২
+				85 image
+				86 text হস্তান্তর ট্র্যাকার
+				87 text ২
+			88 button আপত্তি ও বিরোধ ২
+				89 image
+				90 text আপত্তি ও বিরোধ
+				91 text ২
+			92 button সহায়তা ও সাপোর্ট ৭
+				93 image
+				94 text সহায়তা ও সাপোর্ট
+				95 text ৭
+			96 heading ১-ক্লিকে প্রয়োজনীয় নাগরিক সেবা, Value: 2
+				97 image
+				98 text ১-ক্লিকে প্রয়োজনীয় নাগরিক সেবা
+			99 text দ্রুত অ্যাক্সেস
+			100 image
+			101 heading মালিকানা বিক্রয় লক, Value: 3
+				102 text মালিকানা বিক্রয় লক
+			103 text অননুমোদিত বিক্রি বা জাল হস্তান্তর বন্ধ রাখুন
+			104 image
+			105 image
+			106 heading কাগজপত্র ও পর্চা ভল্ট, Value: 3
+				107 text কাগজপত্র ও পর্চা ভল্ট
+			108 text খতিয়ান, বায়া দলিল ও দাখিলা ডাউনলোড
+			109 image
+			110 image
+			111 heading জমি হস্তান্তর আবেদন, Value: 3
+				112 text জমি হস্তান্তর আবেদন
+			113 text সরকারি ফি হিসাব ও সাব-রেজিস্ট্রেশন
+			114 image
+			115 image
+			116 heading উত্তরাধিকার ফারায়েজ, Value: 3
+				117 container ওয়ারিশদের মাঝে শরিয়তসম্মত অংশের গাণিতিক হিসাব।
+					118 text উত্তরাধিকার ফারায়েজ
+					119 image
+			120 text শরিয়াহ ওয়ারিশ হিস্যা ও নামজারি
+			121 image
+			122 image
+			123 heading জমির স্বাস্থ্য পাসপোর্ট, Value: 3
+				124 text জমির স্বাস্থ্য পাসপোর্ট
+			125 text ৫-স্তরের নিরীক্ষা ও কিউআর সনদ
+			126 image
+			127 image
+			128 heading সহায়তা ও সাপোর্ট (১৬১২২), Value: 3
+				129 text সহায়তা ও সাপোর্ট (১৬১২২)
+			130 text রেকর্ড যাচাই ও প্রোফাইল সমাধান
+			131 image
+			132 image
+			133 heading আমার মালিকানাধীন জমির সংক্ষিপ্ত তালিকা, Value: 3
+				134 text আমার মালিকানাধীন জমির সংক্ষিপ্ত তালিকা
+			135 button সব জমি দেখুন
+				136 text সব জমি দেখুন
+				137 image
+			138 text BS - ৪১১৩
+			139 image
+			140 text উন্মুক্ত
+			141 heading দাগ নং ১১৩, Value: 4
+				142 text দাগ নং ১১৩
+			143 text বিরুলিয়া ,  সাভার ভিটা (আবাসিক) ১৩ শতক
+			144 button বিক্রয় লক
+				145 image
+				146 text বিক্রয় লক
+			147 button ককপিটে বিস্তারিত দেখুন
+				148 image
+			149 text BS - ৪১৩৯
+			150 image
+			151 text উন্মুক্ত
+			152 heading দাগ নং ২১৯, Value: 4
+				153 text দাগ নং ২১৯
+			154 text বাসন ,  গাজীপুর সদর চালা (উঁচু জমি) ১৭ শতক
+			155 button বিক্রয় লক
+				156 image
+				157 text বিক্রয় লক
+			158 button ককপিটে বিস্তারিত দেখুন
+				159 image
+			160 image
+			161 text চলমান
+			162 heading আপনার জমি হস্তান্তর আবেদন প্রক্রিয়াধীন রয়েছে, Value: 4
+				163 text আপনার জমি হস্তান্তর আবেদন প্রক্রিয়াধীন রয়েছে
+			164 text অগ্রগতি ও সাব-রেজিস্ট্রেশন তারিখ দেখতে ট্র্যাকার খুলুন
+			165 button ট্র্যাকার
+				166 text ট্র্যাকার
+				167 image
+		168 container
+			169 text ভূ ভূমি সুরক্ষা ভূমি নিরাপত্তা ও ট্রাস্ট প্রোটোটাইপ ভূমি সুরক্ষা একটি স্বাধীন উদ্ভাবনী প্রোটোটাইপ (LandTech Hackathon 2026)। সরকারি সেবাসমূহ সংশ্লিষ্ট ভূমি অফিস ও নিবন্ধন অধিদপ্তরের অফিসিয়াল পোর্টালের আওতাধীন। Ed25519 • SHA-256 Hash Chain নাগরিক সেবাসমূহ
+			170 content list
+				171 button জমি কেনার আগে যাচাই
+				172 button জমির হাট (নিরাপদ বিক্রয়)
+				173 button ক্যাডাস্ট্রাল মৌজা ম্যাপ
+				174 button দলিল QR কোড যাচাই
+				175 button অফিসিয়াল নোটিশবোর্ড
+				176 button ভূমি সাক্ষরতা ও আইন ব্লগ
+				177 button দপ্তর ও সেবা কেন্দ্রসমূহ
+				178 button নাগরিক ভল্ট ও বিক্রয় লক
+				179 button ⚖️ আইনজীবী কেস দাখিল পোর্টাল NEW
+					180 text ⚖️
+					181 text আইনজীবী কেস দাখিল পোর্টাল
+					182 text NEW
+			183 text দাপ্তরিক প্যানেল
+			184 content list
+				185 button সাব-রেজিস্ট্রার কনসোল
+				186 button এসি ল্যান্ড ট্রাইব্যুনাল
+				187 button ব্যাংক জামানত ও ডিজিটাল NOC
+				188 button জাতীয় লেজার ও RBAC অডিট
+				189 button ⚖️ আইনজীবী মামলা দাখিল (বিকল্প পথ)
+					190 text ⚖️
+					191 text আইনজীবী মামলা দাখিল (বিকল্প পথ)
+			192 text সহায়তা ও যোগাযোগ
+			193 content list
+				194 text ভূমি সেবা কল সেন্টার: ১৬১২২
+				195 text ভূমি মন্ত্রণালয় (সরকারি সময়সূচী অনুযায়ী)
+				196 text অফিসিয়াল সেবার সময়সূচি দেখুন
+				197 button সাধারণ জিজ্ঞাসাসমূহ (FAQ)
+				198 button ভূমি ও জরিপ পরিভাষা কোষ
+			199 text © ২০২৬ ভূমি সুরক্ষা (BhumiShield) · LandTech Hackathon Innovation. সর্বস্বত্ব সংরক্ষিত। সিনথেটিক ডেটা পরিবেশ / Synthetic data environment
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/home

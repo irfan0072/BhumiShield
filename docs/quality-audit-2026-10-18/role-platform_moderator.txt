@@ -1,0 +1,22 @@
+Browser tab: 9, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5193/bn/admin".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 67-89
+~			10 text ম মো. ফাহিম চৌধুরী (প্ল্যাটফর্ম মডারেটর)
+~			12 text প্ল্যাটফর্ম মডারেটর ভূমি সুরক্ষা মার্কেটপ্লেস ও লিস্টিং সেল
+~				17 button মার্কেটপ্লেস ও লিস্টিং মডারেশন
+~					19 text মার্কেটপ্লেস ও লিস্টিং মডারেশন
+~				20 button মডারেশন অডিট লগ
+~					22 text মডারেশন অডিট লগ
+~				36 text ভূমি সুরক্ষা মার্কেটপ্লেস ও লিস্টিং সেল
+~				38 text প্ল্যাটফর্ম মডারেটর
+~				54 text মো. ফাহিম চৌধুরী (প্ল্যাটফর্ম মডারেটর)
+~				55 text প্ল্যাটফর্ম মডারেটর
+~			58 heading জমি বিক্রয় মার্কেটপ্লেস ও লিস্টিং মডারেশন, Value: 1
+~				60 text জমি বিক্রয় মার্কেটপ্লেস ও লিস্টিং মডারেশন
+~			61 text নাগরিকদের প্রস্তাবিত জমি বিক্রয় তালিকার সত্যতা নিরীক্ষা, প্রতারণামূলক বিজ্ঞাপন আনলিস্ট ও মার্কেটপ্লেস সুরক্ষা।
+~			62 text ০ টি তালিকাভুক্ত বিজ্ঞাপন স্ট্যাটাস ফিল্টার:
+~			63 button সকল
+~			64 button সক্রিয় (Active)
+~			65 button স্থগিত (Suspended)
+~			66 text কোনো বিজ্ঞাপন পাওয়া যায়নি।
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/admin

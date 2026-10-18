@@ -1,0 +1,566 @@
+Browser tab: 9, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5193/bn/map?lat=23.534&lng=90.717&office_id=9".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/map?lat=23.534&lng=90.717&office_id=9
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা জাতীয় জমি ও দলিল নিরাপত্তা প্ল্যাটফর্ম
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text জাতীয় জমি ও দলিল নিরাপত্তা প্ল্যাটফর্ম
+			8 container প্রধান মেনু
+				9 button সেবাসমূহ
+					10 image
+					11 text সেবাসমূহ
+				12 pop up button (collapsed) ভূমি সেবা, Secondary Actions: Expand
+					13 image
+					14 text ভূমি সেবা
+					15 image
+				16 pop up button (collapsed) নোটিশ, Secondary Actions: Expand
+					17 image
+					18 text নোটিশ
+					19 image
+				20 pop up button (collapsed) হেল্পলাইন, Secondary Actions: Expand
+					21 image
+					22 text হেল্পলাইন
+					23 image
+				24 button জমি যাচাই, Help: জমি কেনার আগে তাৎক্ষণিক যাচাই
+					25 image
+					26 text জমি যাচাই
+			27 button Switch Language
+			28 button উচ্চ কনট্রাস্ট
+				29 image
+			30 button বিজ্ঞপ্তি ও নোটিফিকেশন
+				31 image
+				32 text ১
+			33 pop up button (collapsed) Description: ব্যবহারকারী প্রোফাইল ও সেটিংস মেনু, Secondary Actions: Expand
+				34 text ম
+				35 text মো. রফিকুল ইসলাম (নাগরিক)
+				36 text নাগরিক ভূমি পোর্টাল
+				37 image
+		38 container
+			39 image
+			95 container
+				96 text BHUMISHIELD /  ভূমি অনুসন্ধান
+			40 heading নকশা থেকে নাগরিক সেবা, Value: 1
+				97 text নকশা থেকে নাগরিক সেবা
+			98 text একই জায়গায় মৌজা, ভূমি রেকর্ড ও প্রয়োজনীয় সেবার পথ।
+			41 link Description: সরকারি নকশা, Value: map.land.gov.bd/
+			42 image
+			43 heading আপনার জমি খুঁজুন, Value: 2
+				99 text আপনার জমি খুঁজুন
+			44 container
+				100 text বিভাগ
+				45 pop up button (collapsed, settable) Description: বিভাগ, Value: সকল বিভাগ, Secondary Actions: Expand
+					46 menu
+						47 (selected) সকল বিভাগ
+						101 চট্টগ্রাম
+						102 ঢাকা
+			48 container
+				103 text জেলা
+				49 pop up button (collapsed, settable) Description: জেলা, Value: সকল জেলা, Secondary Actions: Expand
+					50 menu
+						51 (selected) সকল জেলা
+						104 কুমিল্লা
+						105 গাজীপুর
+						106 ঢাকা
+						107 নারায়ণগঞ্জ
+			52 container
+				108 text উপজেলা
+				53 pop up button (collapsed, settable) Description: উপজেলা, Value: সকল উপজেলা, Secondary Actions: Expand
+					54 menu
+						55 (selected) সকল উপজেলা
+						109 দাউদকান্দি
+						110 গাজীপুর সদর
+						111 সাভার
+						112 সোনারগাঁও
+			56 container
+				113 text মৌজা / JL
+				57 pop up button (collapsed, settable) Description: মৌজা / JL, Value: মৌজা নির্বাচন করুন, Secondary Actions: Expand
+					58 menu
+						59 (selected) মৌজা নির্বাচন করুন
+						114 সুন্দরপুর · 42
+						115 বাসন · 08
+						116 বিরুলিয়া · 12
+						117 পানাম · 15
+			60 container
+				118 text দাগ নম্বর বা প্লট কোড
+				61 text field (settable) দাগ নম্বর বা প্লট কোড, ID: parcel-search
+				62 button দাগ খুঁজুন
+					63 image
+			119 text 61 টি রেকর্ড সীমানার প্রমাণ নয়
+			120 container
+				121 button দাগ ১০১ PLT-DHK-SAV-0001 20 শতক
+					122 container
+						123 text দাগ ১০১
+					124 text PLT-DHK-SAV-0001
+					125 text 20
+					126 text শতক
+					127 image
+				128 button দাগ ১০২ PLT-DHK-SAV-0002 15 শতক
+					129 container
+						130 text দাগ ১০২
+					131 text PLT-DHK-SAV-0002
+					132 text 15
+					133 text শতক
+					134 image
+				135 button দাগ ১০৩ PLT-DHK-SAV-0003 24 শতক
+					136 container
+						137 text দাগ ১০৩
+					138 text PLT-DHK-SAV-0003
+					139 text 24
+					140 text শতক
+					141 image
+				142 button দাগ ১০৪ PLT-DHK-SAV-0004 16 শতক
+					143 container
+						144 text দাগ ১০৪
+					145 text PLT-DHK-SAV-0004
+					146 text 16
+					147 text শতক
+					148 image
+				149 button দাগ ১০৫ PLT-DHK-SAV-0005 20 শতক
+					150 container
+						151 text দাগ ১০৫
+					152 text PLT-DHK-SAV-0005
+					153 text 20
+					154 text শতক
+					155 image
+				156 button দাগ ১০৬ PLT-DHK-SAV-0006 30 শতক
+					157 container
+						158 text দাগ ১০৬
+					159 text PLT-DHK-SAV-0006
+					160 text 30
+					161 text শতক
+					162 image
+				163 button দাগ ১০৭ PLT-DHK-SAV-0007 18 শতক
+					164 container
+						165 text দাগ ১০৭
+					166 text PLT-DHK-SAV-0007
+					167 text 18
+					168 text শতক
+					169 image
+				170 button দাগ ১০৮ PLT-DHK-SAV-0008 22 শতক
+					171 container
+						172 text দাগ ১০৮
+					173 text PLT-DHK-SAV-0008
+					174 text 22
+					175 text শতক
+					176 image
+				177 button দাগ ১০৯ PLT-DHK-SAV-0009 16 শতক
+					178 container
+						179 text দাগ ১০৯
+					180 text PLT-DHK-SAV-0009
+					181 text 16
+					182 text শতক
+					183 image
+				184 button দাগ ১১০ PLT-DHK-SAV-0010 25 শতক
+					185 container
+						186 text দাগ ১১০
+					187 text PLT-DHK-SAV-0010
+					188 text 25
+					189 text শতক
+					190 image
+				191 button দাগ ১১১ PLT-DHK-SAV-0011 17 শতক
+					192 container
+						193 text দাগ ১১১
+					194 text PLT-DHK-SAV-0011
+					195 text 17
+					196 text শতক
+					197 image
+				198 button দাগ ১১২ PLT-DHK-SAV-0012 20 শতক
+					199 container
+						200 text দাগ ১১২
+					201 text PLT-DHK-SAV-0012
+					202 text 20
+					203 text শতক
+					204 image
+				205 button দাগ ১১৩ PLT-DHK-SAV-0013 23 শতক
+					206 container
+						207 text দাগ ১১৩
+					208 text PLT-DHK-SAV-0013
+					209 text 23
+					210 text শতক
+					211 image
+				212 button দাগ ১১৪ PLT-DHK-SAV-0014 26 শতক
+					213 container
+						214 text দাগ ১১৪
+					215 text PLT-DHK-SAV-0014
+					216 text 26
+					217 text শতক
+					218 image
+				219 button দাগ ১১৫ PLT-DHK-SAV-0015 29 শতক
+					220 container
+						221 text দাগ ১১৫
+					222 text PLT-DHK-SAV-0015
+					223 text 29
+					224 text শতক
+					225 image
+				226 button দাগ ১১৬ PLT-DHK-SAV-0016 32 শতক
+					227 container
+						228 text দাগ ১১৬
+					229 text PLT-DHK-SAV-0016
+					230 text 32
+					231 text শতক
+					232 image
+				233 button দাগ ১১৭ PLT-DHK-SAV-0017 35 শতক
+					234 container
+						235 text দাগ ১১৭
+					236 text PLT-DHK-SAV-0017
+					237 text 35
+					238 text শতক
+					239 image
+				240 button দাগ ১১৮ PLT-DHK-SAV-0018 38 শতক
+					241 container
+						242 text দাগ ১১৮
+					243 text PLT-DHK-SAV-0018
+					244 text 38
+					245 text শতক
+					246 image
+				247 button দাগ ১১৯ PLT-DHK-SAV-0019 13 শতক
+					248 container
+						249 text দাগ ১১৯
+					250 text PLT-DHK-SAV-0019
+					251 text 13
+					252 text শতক
+					253 image
+				254 button দাগ ১২০ PLT-DHK-SAV-0020 16 শতক
+					255 container
+						256 text দাগ ১২০
+					257 text PLT-DHK-SAV-0020
+					258 text 16
+					259 text শতক
+					260 image
+				261 button দাগ ২০১ PLT-DHK-SAV-0021 19 শতক
+					262 container
+						263 text দাগ ২০১
+					264 text PLT-DHK-SAV-0021
+					265 text 19
+					266 text শতক
+					267 image
+				268 button দাগ ২০২ PLT-DHK-SAV-0022 22 শতক
+					269 container
+						270 text দাগ ২০২
+					271 text PLT-DHK-SAV-0022
+					272 text 22
+					273 text শতক
+					274 image
+				275 button দাগ ২০৩ PLT-DHK-SAV-0023 25 শতক
+					276 container
+						277 text দাগ ২০৩
+					278 text PLT-DHK-SAV-0023
+					279 text 25
+					280 text শতক
+					281 image
+				282 button দাগ ২০৪ PLT-DHK-SAV-0024 28 শতক
+					283 container
+						284 text দাগ ২০৪
+					285 text PLT-DHK-SAV-0024
+					286 text 28
+					287 text শতক
+					288 image
+				289 button দাগ ২০৫ PLT-DHK-SAV-0025 31 শতক
+					290 container
+						291 text দাগ ২০৫
+					292 text PLT-DHK-SAV-0025
+					293 text 31
+					294 text শতক
+					295 image
+				296 button দাগ ২০৬ PLT-DHK-SAV-0026 34 শতক
+					297 container
+						298 text দাগ ২০৬
+					299 text PLT-DHK-SAV-0026
+					300 text 34
+					301 text শতক
+					302 image
+				303 button দাগ ২০৭ PLT-DHK-SAV-0027 37 শতক
+					304 container
+						305 text দাগ ২০৭
+					306 text PLT-DHK-SAV-0027
+					307 text 37
+					308 text শতক
+					309 image
+				310 button দাগ ২০৮ PLT-DHK-SAV-0028 12 শতক
+					311 container
+						312 text দাগ ২০৮
+					313 text PLT-DHK-SAV-0028
+					314 text 12
+					315 text শতক
+					316 image
+				317 button দাগ ২০৯ PLT-DHK-SAV-0029 15 শতক
+					318 container
+						319 text দাগ ২০৯
+					320 text PLT-DHK-SAV-0029
+					321 text 15
+					322 text শতক
+					323 image
+				324 button দাগ ২১০ PLT-DHK-SAV-0030 18 শতক
+					325 container
+						326 text দাগ ২১০
+					327 text PLT-DHK-SAV-0030
+					328 text 18
+					329 text শতক
+					330 image
+				331 button দাগ ২১১ PLT-DHK-SAV-0031 21 শতক
+					332 container
+						333 text দাগ ২১১
+					334 text PLT-DHK-SAV-0031
+					335 text 21
+					336 text শতক
+					337 image
+				338 button দাগ ২১২ PLT-DHK-SAV-0032 24 শতক
+					339 container
+						340 text দাগ ২১২
+					341 text PLT-DHK-SAV-0032
+					342 text 24
+					343 text শতক
+					344 image
+				345 button দাগ ২১৩ PLT-DHK-SAV-0033 27 শতক
+					346 container
+						347 text দাগ ২১৩
+					348 text PLT-DHK-SAV-0033
+					349 text 27
+					350 text শতক
+					351 image
+				352 button দাগ ২১৪ PLT-DHK-SAV-0034 30 শতক
+					353 container
+						354 text দাগ ২১৪
+					355 text PLT-DHK-SAV-0034
+					356 text 30
+					357 text শতক
+					358 image
+				359 button দাগ ২১৫ PLT-DHK-SAV-0035 33 শতক
+					360 container
+						361 text দাগ ২১৫
+					362 text PLT-DHK-SAV-0035
+					363 text 33
+					364 text শতক
+					365 image
+				366 button দাগ ২১৬ PLT-DHK-SAV-0036 36 শতক
+					367 container
+						368 text দাগ ২১৬
+					369 text PLT-DHK-SAV-0036
+					370 text 36
+					371 text শতক
+					372 image
+				373 button দাগ ২১৭ PLT-DHK-SAV-0037 39 শতক
+					374 container
+						375 text দাগ ২১৭
+					376 text PLT-DHK-SAV-0037
+					377 text 39
+					378 text শতক
+					379 image
+				380 button দাগ ২১৮ PLT-DHK-SAV-0038 14 শতক
+					381 container
+						382 text দাগ ২১৮
+					383 text PLT-DHK-SAV-0038
+					384 text 14
+					385 text শতক
+					386 image
+				387 button দাগ ২১৯ PLT-DHK-SAV-0039 17 শতক
+					388 container
+						389 text দাগ ২১৯
+					390 text PLT-DHK-SAV-0039
+					391 text 17
+					392 text শতক
+					393 image
+				394 button দাগ ২২০ PLT-DHK-SAV-0040 20 শতক
+					395 container
+						396 text দাগ ২২০
+					397 text PLT-DHK-SAV-0040
+					398 text 20
+					399 text শতক
+					400 image
+				401 button দাগ ৩০১ PLT-DHK-SAV-0041 23 শতক
+					402 container
+						403 text দাগ ৩০১
+					404 text PLT-DHK-SAV-0041
+					405 text 23
+					406 text শতক
+					407 image
+				408 button দাগ ৩০২ PLT-DHK-SAV-0042 26 শতক
+					409 container
+						410 text দাগ ৩০২
+					411 text PLT-DHK-SAV-0042
+					412 text 26
+					413 text শতক
+					414 image
+				415 button দাগ ৩০৩ PLT-DHK-SAV-0043 29 শতক
+					416 container
+						417 text দাগ ৩০৩
+					418 text PLT-DHK-SAV-0043
+					419 text 29
+					420 text শতক
+					421 image
+				422 button দাগ ৩০৪ PLT-DHK-SAV-0044 32 শতক
+					423 container
+						424 text দাগ ৩০৪
+					425 text PLT-DHK-SAV-0044
+					426 text 32
+					427 text শতক
+					428 image
+				429 button দাগ ৩০৫ PLT-DHK-SAV-0045 35 শতক
+					430 container
+						431 text দাগ ৩০৫
+					432 text PLT-DHK-SAV-0045
+					433 text 35
+					434 text শতক
+					435 image
+				436 button দাগ ৩০৬ PLT-DHK-SAV-0046 38 শতক
+					437 container
+						438 text দাগ ৩০৬
+					439 text PLT-DHK-SAV-0046
+					440 text 38
+					441 text শতক
+					442 image
+				443 button দাগ ৩০৭ PLT-DHK-SAV-0047 13 শতক
+					444 container
+						445 text দাগ ৩০৭
+					446 text PLT-DHK-SAV-0047
+					447 text 13
+					448 text শতক
+					449 image
+				450 button দাগ ৩০৮ PLT-DHK-SAV-0048 16 শতক
+					451 container
+						452 text দাগ ৩০৮
+					453 text PLT-DHK-SAV-0048
+					454 text 16
+					455 text শতক
+					456 image
+				457 button দাগ ৩০৯ PLT-DHK-SAV-0049 19 শতক
+					458 container
+						459 text দাগ ৩০৯
+					460 text PLT-DHK-SAV-0049
+					461 text 19
+					462 text শতক
+					463 image
+				464 button দাগ ৩১০ PLT-DHK-SAV-0050 22 শতক
+					465 container
+						466 text দাগ ৩১০
+					467 text PLT-DHK-SAV-0050
+					468 text 22
+					469 text শতক
+					470 image
+				471 button দাগ ৩১১ PLT-DHK-SAV-0051 25 শতক
+					472 container
+						473 text দাগ ৩১১
+					474 text PLT-DHK-SAV-0051
+					475 text 25
+					476 text শতক
+					477 image
+				478 button দাগ ৩১২ PLT-DHK-SAV-0052 28 শতক
+					479 container
+						480 text দাগ ৩১২
+					481 text PLT-DHK-SAV-0052
+					482 text 28
+					483 text শতক
+					484 image
+				485 button দাগ ৩১৩ PLT-DHK-SAV-0053 31 শতক
+					486 container
+						487 text দাগ ৩১৩
+					488 text PLT-DHK-SAV-0053
+					489 text 31
+					490 text শতক
+					491 image
+				492 button দাগ ৩১৪ PLT-DHK-SAV-0054 34 শতক
+					493 container
+						494 text দাগ ৩১৪
+					495 text PLT-DHK-SAV-0054
+					496 text 34
+					497 text শতক
+					498 image
+				499 button দাগ ৩১৫ PLT-DHK-SAV-0055 37 শতক
+					500 container
+						501 text দাগ ৩১৫
+					502 text PLT-DHK-SAV-0055
+					503 text 37
+					504 text শতক
+					505 image
+				506 button দাগ ৩১৬ PLT-DHK-SAV-0056 12 শতক
+					507 container
+						508 text দাগ ৩১৬
+					509 text PLT-DHK-SAV-0056
+					510 text 12
+					511 text শতক
+					512 image
+				513 button দাগ ৩১৭ PLT-DHK-SAV-0057 15 শতক
+					514 container
+						515 text দাগ ৩১৭
+					516 text PLT-DHK-SAV-0057
+					517 text 15
+					518 text শতক
+					519 image
+				520 button দাগ ৩১৮ PLT-DHK-SAV-0058 18 শতক
+					521 container
+						522 text দাগ ৩১৮
+					523 text PLT-DHK-SAV-0058
+					524 text 18
+					525 text শতক
+					526 image
+				527 button দাগ ৩১৯ PLT-DHK-SAV-0059 21 শতক
+					528 container
+						529 text দাগ ৩১৯
+					530 text PLT-DHK-SAV-0059
+					531 text 21
+					532 text শতক
+					533 image
+				534 button দাগ ৩২০ PLT-DHK-SAV-0060 24 শতক
+					535 container
+						536 text দাগ ৩২০
+					537 text PLT-DHK-SAV-0060
+					538 text 24
+					539 text শতক
+					540 image
+			541 button (disabled) Previous page
+				542 image
+			543 text 1  /  2
+			544 button Next page
+				545 image
+			64 image
+			546 text 4 টি মৌজার স্থানীয় রেকর্ড। দেশব্যাপী পূর্ণ coverage দাবি করা হচ্ছে না।
+			65 container ইন্টারঅ্যাকটিভ মানচিত্র
+				66 container
+					547 text 10 km
+					67 container
+						68 button Zoom in
+						69 button Zoom out
+						70 link Description:  Leaflet, Help: A JavaScript library for interactive maps, Value: leafletjs.com/
+						548 text  © 
+						71 link Description: OpenStreetMap, Value: openstreetmap.org/copyright
+						549 text  contributors
+				550 container
+					551 text বাংলাদেশ · মৌজা অনুসন্ধান সবুজ বিন্দুতে ক্লিক করে মৌজা বাছুন
+				72 container
+					73 button নির্বাচিত এলাকায় ফিরুন
+						74 image
+					75 button আনুমানিক দূরত্ব মাপুন
+						76 image
+					77 button লিংক কপি করুন
+						78 image
+					79 button সারাংশ প্রিন্ট
+						80 image
+				81 container
+					82 button রাস্তার মানচিত্র
+					83 button শুধু নকশা
+				552 container
+					553 text সীমানা অনুপলব্ধ বিন্দু = মৌজার আনুমানিক কেন্দ্র; দাগের অবস্থান বা সীমানা নয়।
+			84 image
+			85 heading তথ্য ও পরবর্তী সেবা, Value: 2
+				554 text তথ্য ও পরবর্তী সেবা
+			86 image
+			87 heading বাম দিক থেকে দাগ বাছুন, Value: 3
+				555 text বাম দিক থেকে দাগ বাছুন
+			556 text দাগের তথ্য, উৎস ও সেবার পথ এখানে পাবেন। ব্যক্তিগত মালিকের তথ্য প্রকাশ করা হয় না।
+			88 heading প্রকাশিত নকশা ও উৎস, Value: 3
+				557 text প্রকাশিত নকশা ও উৎস
+			558 text এই মৌজায় বাইরের উৎস থেকে আলাদা নকশা আমদানি হয়নি। সরকারি পোর্টালে খুঁজুন অথবা অনুমোদিত নকশা আমদানি করুন।
+			89 heading এই এলাকার সেবা দপ্তর, Value: 3
+				90 image
+				559 text এই এলাকার সেবা দপ্তর
+			560 text এলাকার মিল অনুযায়ী; চূড়ান্ত সেবা-অধিক্ষেত্র ও উপস্থিতি সংশ্লিষ্ট অফিস নিশ্চিত করবে।
+			91 button অফিসের তথ্য ও সাক্ষাতের অনুরোধ
+				561 text অফিসের তথ্য ও সাক্ষাতের অনুরোধ
+				92 image
+			93 button (collapsed) সরকারি ম্যাপ প্রাপ্তি ও জরিপের তথ্য, Secondary Actions: Expand
+				562 text সরকারি ম্যাপ প্রাপ্তি ও জরিপের তথ্য
+			94 image
+			563 text BhumiShield স্বাধীন প্রোটোটাইপ। নকশা দেখা মালিকানার সনদ নয়। উৎস দৃশ্যমান · গোপনীয়তা সংরক্ষিত · সেবা সংযুক্ত
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/map?lat=23.534&lng=90.717&office_id=9

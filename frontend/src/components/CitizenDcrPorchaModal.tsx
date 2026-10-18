@@ -10,6 +10,8 @@ import {
   Building,
   Copy,
   ExternalLink,
+  Clock,
+  AlertCircle,
 } from 'lucide-react';
 import { BhumiApi } from '../api/client';
 import { toBanglaDigits } from '../theme/tokens';
@@ -59,39 +61,11 @@ export const CitizenDcrPorchaModal: React.FC<CitizenDcrPorchaModalProps> = ({
 
   if (!isOpen || !transfer) return null;
 
-  const dcr = transfer.dcr || {
-    dcr_number: `DCR-2026-${String(transfer.id || 1).padStart(6, '0')}`,
-    mutation_case_no: `MUT-SAV-2026-${String(transfer.id || 1).padStart(4, '0')}`,
-    applicant_name_bn: transfer.parties?.find((p: any) => p.party_role === 'BUYER')?.name_bn || 'আবেদনকারী / ক্রেতা',
-    applicant_nid: transfer.buyer_nid || transfer.parties?.find((p: any) => p.party_role === 'BUYER')?.nid || '19852691234567890',
-    seller_name_bn: transfer.parties?.find((p: any) => p.party_role === 'SELLER')?.name_bn || 'বিক্রেতা / সাবেক মালিক',
-    court_fee_bdt: 20,
-    notice_fee_bdt: 50,
-    record_correction_dcr_fee_bdt: 1100,
-    total_fee_bdt: 1170,
-    payment_status: 'PAID',
-    payment_trx_id: `TXN-DCR-${(transfer.transfer_code || 'TR101').slice(-6)}`,
-    issuing_office_bn: `${transfer.plot?.upazila_bn || 'সাভার'} উপজেলা ভূমি অফিস`,
-    issued_at: transfer.updated_at || new Date().toISOString(),
-  };
-
-  const porcha = transfer.khatian_porcha || {
-    porcha_number: `BS-${transfer.plot?.khatian_no_bn || transfer.plot?.khatian_no || '৭৮৬'}`,
-    survey_type: 'BS (বাংলাদেশ সার্ভে)',
-    district_bn: transfer.plot?.district_bn || 'ঢাকা',
-    upazila_bn: transfer.plot?.upazila_bn || 'সাভার',
-    mouza_bn: transfer.plot?.mouza_bn || 'বীরুলিয়া',
-    jl_no: transfer.plot?.jl_no || '৮৯',
-    dag_no: transfer.plot?.dag_no_bn || transfer.plot?.dag_no || '১০১',
-    khatian_no: transfer.plot?.khatian_no_bn || transfer.plot?.khatian_no || '৭৮৬',
-    land_class_bn: transfer.plot?.land_class_bn || 'নাল',
-    transferred_area_decimal: transfer.transfer_area_decimal || 12.5,
-    owner_name_bn: transfer.parties?.find((p: any) => p.party_role === 'BUYER')?.name_bn || 'ক্রেতা / নামজারি স্বত্বাধিকারী',
-    owner_nid: transfer.buyer_nid || '19852691234567890',
-    former_owner_name_bn: transfer.parties?.find((p: any) => p.party_role === 'SELLER')?.name_bn || 'সাবেক মালিক',
-    qr_verification_hash: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`,
-    issued_at: transfer.updated_at || new Date().toISOString(),
-  };
+  // A06: Strictly use persisted real documents. No mock fallbacks claiming "PAID" or fake NIDs!
+  const isCompleted = transfer.status === 'COMPLETED';
+  const dcr = transfer.dcr || null;
+  const porcha = transfer.khatian_porcha || null;
+  const isDocAvailable = docType === 'DCR' ? (isCompleted && Boolean(dcr)) : (isCompleted && Boolean(porcha));
 
   const watermarkText = lang === 'bn' ? (secConfig?.watermark_text_bn || 'গণপ্রজাতন্ত্রী বাংলাদেশ সরকার - ভূমি মন্ত্রণালয় - শুধুমাত্র নাগরিক ব্যবহারের জন্য সংরক্ষিত') : (secConfig?.watermark_text_en || 'GOVERNMENT OF BANGLADESH - OFFICIAL CITIZEN COPY');
   const watermarkOpacity = secConfig?.watermark_opacity ?? 0.14;
@@ -102,11 +76,13 @@ export const CitizenDcrPorchaModal: React.FC<CitizenDcrPorchaModalProps> = ({
   const qrPos = secConfig?.qr_position || 'HEADER_RIGHT';
 
   const handlePrint = () => {
+    if (!isDocAvailable) return;
     window.print();
   };
 
   const handleCopyHash = () => {
-    const textToCopy = porcha.qr_verification_hash || dcr.payment_trx_id;
+    const textToCopy = porcha?.qr_verification_hash || dcr?.payment_trx_id || '';
+    if (!textToCopy) return;
     navigator.clipboard?.writeText(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -172,16 +148,26 @@ export const CitizenDcrPorchaModal: React.FC<CitizenDcrPorchaModalProps> = ({
           <div className="flex items-center gap-2">
             <button
               type="button"
+              disabled={!isDocAvailable}
               onClick={handlePrint}
-              className="px-3.5 py-1.5 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+              className={`px-3.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition shadow-2xs ${
+                isDocAvailable
+                  ? 'bg-white border-slate-300 hover:bg-slate-100 text-slate-700 cursor-pointer'
+                  : 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed opacity-60'
+              }`}
             >
               <Printer className="w-3.5 h-3.5 text-[#006A4E]" />
               <span>{t('প্রিন্ট করুন', 'Print')}</span>
             </button>
             <button
               type="button"
+              disabled={!isDocAvailable}
               onClick={handlePrint}
-              className="px-4 py-1.5 rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+              className={`px-4 py-1.5 rounded-xl text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs ${
+                isDocAvailable
+                  ? 'bg-[#006A4E] hover:bg-emerald-800 cursor-pointer'
+                  : 'bg-slate-300 cursor-not-allowed opacity-60'
+              }`}
             >
               <Download className="w-3.5 h-3.5" />
               <span>{t('পিডিএফ ডাউনলোড', 'Download PDF')}</span>
@@ -189,8 +175,34 @@ export const CitizenDcrPorchaModal: React.FC<CitizenDcrPorchaModalProps> = ({
           </div>
         </div>
 
-        {/* Modal Scrollable Body: Official Rendered Certificate */}
+        {/* Modal Scrollable Body: Official Rendered Certificate or Truthful Pending Notice */}
         <div className="p-6 overflow-y-auto flex-1 bg-slate-100/60">
+          {!isDocAvailable ? (
+            <div className="bg-white rounded-2xl border border-amber-200 p-8 shadow-sm flex flex-col items-center justify-center text-center space-y-4 min-h-[360px]">
+              <div className="w-14 h-14 rounded-full bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center">
+                <Clock className="w-7 h-7" />
+              </div>
+              <h4 className="text-base font-bold text-slate-900">
+                {docType === 'DCR'
+                  ? t('অফিসিয়াল ডিসিআর এখনও ইস্যু হয়নি', 'Official DCR Not Yet Issued')
+                  : t('চূড়ান্ত বিএস খতিয়ান পর্চা এখনও প্রস্তুত নয়', 'BS Khatian Porcha Not Yet Ready')}
+              </h4>
+              <p className="text-xs text-slate-600 max-w-md leading-relaxed">
+                {t(
+                  'নামজারি আবেদন প্রক্রিয়াধীন রয়েছে। সহকারী কমিশনার (ভূমি) কর্তৃক আবেদন চূড়ান্ত অনুমোদন ও সরকারি ফি পরিশোধের পর ডিজিটাল স্বাক্ষরিত অফিসিয়াল ডিসিআর ও খতিয়ান পর্চা এখানে প্রদর্শিত ও ডাউনলোডযোগ্য হবে। ভুয়া বা কাল্পনিক কোনো সরকারি সনদ প্রদর্শন করা হয় না।',
+                  'The mutation application is currently in process. Official digitally verified DCR and Khatian Porcha documents will be available for download only after competent AC Land approval and verified fee payment. Simulated or fabricated official documents are never displayed.'
+                )}
+              </p>
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-2 text-xs">
+                <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-medium border border-slate-200">
+                  {t('আবেদনের অবস্থা:', 'Application Status:')} <strong className="text-amber-800">{transfer.status}</strong>
+                </span>
+                <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-medium border border-slate-200">
+                  {t('বর্তমান ধাপ:', 'Current Step:')} <strong>{transfer.current_step || 1} / 13</strong>
+                </span>
+              </div>
+            </div>
+          ) : (
           <div className="bg-white rounded-2xl border-4 border-emerald-900/80 p-6 shadow-md relative overflow-hidden font-serif min-h-[540px]">
             {/* Dynamic Watermark Layer from Super Admin Settings */}
             {enableWatermark && (
@@ -228,7 +240,7 @@ export const CitizenDcrPorchaModal: React.FC<CitizenDcrPorchaModalProps> = ({
                         : 'স্বত্বলিপি ও চূড়ান্ত বিএস খতিয়ান পর্চা (BS Porcha)'}
                     </div>
                     <div className="text-xs text-slate-600 font-sans mt-0.5">
-                      {dcr.issuing_office_bn}
+                      {dcr?.issuing_office_bn || (transfer.plot?.upazila_bn ? `${transfer.plot.upazila_bn} উপজেলা ভূমি অফিস` : 'উপজেলা ভূমি অফিস')}
                     </div>
                   </div>
                 </div>
@@ -395,7 +407,7 @@ export const CitizenDcrPorchaModal: React.FC<CitizenDcrPorchaModalProps> = ({
 
                 <div className="flex items-end justify-between pt-2">
                   <div className="text-[10px] text-slate-500">
-                    {t('ইস্যুর তারিখ:', 'Issue Date:')} {new Date(dcr.issued_at).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US')}
+                    {t('ইস্যুর তারিখ:', 'Issue Date:')} {new Date(dcr?.issued_at || porcha?.issued_at || transfer.updated_at || new Date().toISOString()).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US')}
                   </div>
                   {secConfig?.show_issuing_authority_signature && (
                     <div className="text-center">
@@ -410,6 +422,7 @@ export const CitizenDcrPorchaModal: React.FC<CitizenDcrPorchaModalProps> = ({
               </div>
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>

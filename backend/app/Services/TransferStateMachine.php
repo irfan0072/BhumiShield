@@ -309,6 +309,8 @@ final class TransferStateMachine
         $result = [
             'id' => (int) $t['id'],
             'transfer_code' => $t['transfer_code'],
+            'tracking_number' => $t['transfer_code'],
+            'tracking_code' => $t['transfer_code'],
             'created_by_nid' => (string) ($t['created_by_nid'] ?? ($sellerParty['nid'] ?? '')),
             'seller_nid' => (string) ($sellerParty['nid'] ?? ($t['created_by_nid'] ?? '')),
             'seller_name_bn' => (string) ($sellerParty['name_bn'] ?? 'বিক্রেতা'),
@@ -340,16 +342,20 @@ final class TransferStateMachine
             'updated_at' => $t['updated_at'],
         ];
 
-        if ($step >= 12 || $t['status'] === 'COMPLETED') {
+        // A06: Gate DCR and Porcha strictly on verified completion and approved mutation
+        if ($t['status'] === 'COMPLETED' && !empty($t['mutation_id'])) {
+            $mutation = DB::selectOne('SELECT * FROM mutations WHERE id = ?', [$t['mutation_id']]);
             $buyerParty = array_values(array_filter($parties, static fn($p) => ($p['party_role'] ?? '') === 'BUYER'))[0] ?? null;
             $sellerParty = array_values(array_filter($parties, static fn($p) => ($p['party_role'] ?? '') === 'SELLER'))[0] ?? null;
             $buyerNameBn = $buyerParty['name_bn'] ?? ($buyerParty['name_en'] ?? 'আবেদনকারী / ক্রেতা');
             $buyerNid = $buyerParty['nid'] ?? '';
             $sellerNameBn = $sellerParty['name_bn'] ?? ($sellerParty['name_en'] ?? 'সাবেক মালিক / বিক্রেতা');
 
+            $mutCaseNo = $mutation['case_number'] ?? ('MUT-' . (!empty($plot['upazila_en']) ? strtoupper(substr($plot['upazila_en'], 0, 3)) : 'SAV') . '-' . date('Y') . '-' . str_pad((string) $t['id'], 4, '0', STR_PAD_LEFT));
+
             $result['dcr'] = [
                 'dcr_number' => 'DCR-' . date('Y') . '-' . str_pad((string) $t['id'], 6, '0', STR_PAD_LEFT),
-                'mutation_case_no' => 'MUT-' . (!empty($plot['upazila_en']) ? strtoupper(substr($plot['upazila_en'], 0, 3)) : 'SAV') . '-' . date('Y') . '-' . str_pad((string) $t['id'], 4, '0', STR_PAD_LEFT),
+                'mutation_case_no' => $mutCaseNo,
                 'applicant_name_bn' => $buyerNameBn,
                 'applicant_nid' => $buyerNid,
                 'seller_name_bn' => $sellerNameBn,
@@ -360,7 +366,7 @@ final class TransferStateMachine
                 'payment_status' => 'PAID',
                 'payment_trx_id' => 'TXN-DCR-' . strtoupper(substr(md5($t['transfer_code'] . '|' . $t['id']), 0, 10)),
                 'issuing_office_bn' => ($plot['upazila_bn'] ?? 'সাভার') . ' উপজেলা ভূমি অফিস',
-                'issued_at' => $t['updated_at'] ?? gmdate('c'),
+                'issued_at' => $mutation['approved_at'] ?? ($t['updated_at'] ?? gmdate('c')),
             ];
 
             $result['khatian_porcha'] = [
@@ -378,7 +384,7 @@ final class TransferStateMachine
                 'owner_nid' => $buyerNid,
                 'former_owner_name_bn' => $sellerNameBn,
                 'qr_verification_hash' => hash('sha256', ($t['transfer_code'] ?? 'TR') . '|' . $t['id'] . '|BS_PORCHA'),
-                'issued_at' => $t['updated_at'] ?? gmdate('c'),
+                'issued_at' => $mutation['approved_at'] ?? ($t['updated_at'] ?? gmdate('c')),
             ];
         }
 
@@ -427,6 +433,9 @@ final class TransferStateMachine
             $stInfo = self::STAGES[$step] ?? ['stage' => 'START', 'name_bn' => 'ধাপ ' . $step, 'name_en' => 'Step ' . $step];
             $r['step_name_bn'] = $stInfo['name_bn'];
             $r['step_name_en'] = $stInfo['name_en'];
+            $r['transfer_code'] = (string) ($r['transfer_code'] ?? '');
+            $r['tracking_number'] = $r['transfer_code'];
+            $r['tracking_code'] = $r['transfer_code'];
             return PublicRecordService::forViewer($r);
         }, $rows);
 
@@ -486,19 +495,24 @@ final class TransferStateMachine
         self::requireScope($t, $user);
         $userRole = (string) ($user['role'] ?? '');
         if ($targetStep === 4) {
-            $buyer = DB::selectOne('SELECT p.nid FROM transfer_parties tp JOIN persons p ON p.id=tp.person_id WHERE tp.transfer_id=? AND tp.party_role=?',[$t['id'],'BUYER']);
-            if ($buyer && !empty($buyer['nid']) && ($user['nid'] ?? '') !== $buyer['nid']) {
-                if ($userRole === 'citizen' && ($user['nid'] ?? '') !== ($t['created_by_nid'] ?? '')) {
-                    self::fail(403,'BUYER_CONFIRMATION_REQUIRED','ক্রেতাকে নিজের অ্যাকাউন্ট থেকে পরিমাণ ও শর্ত নিশ্চিত করতে হবে।','The buyer must confirm the area and terms from their own account.');
+            $buyer = DB::selectOne(
+                'SELECT p.nid, p.name_bn, p.name_en FROM transfer_parties tp JOIN persons p ON p.id = tp.person_id WHERE tp.transfer_id = ? AND tp.party_role = ?',
+                [$t['id'], 'BUYER']
+            );
+            if (!$buyer || empty($buyer['nid'])) {
+                self::fail(422, 'BUYER_PARTY_NOT_FOUND', 'স্থানান্তর কেসে কোনো নিবন্ধিত ক্রেতা পাওয়া যায়নি।', 'Registered buyer party not found for this transfer.');
+            }
+            if ($userRole === 'citizen') {
+                if (($user['nid'] ?? '') !== $buyer['nid']) {
+                    self::fail(403, 'BUYER_CONFIRMATION_REQUIRED', 'ক্রেতাকে নিজের অ্যাকাউন্ট থেকে পরিমাণ ও শর্ত নিশ্চিত করতে হবে। বিক্রেতা বা অন্য নাগরিক ক্রেতার হয়ে নিশ্চিত করতে পারবেন না।', 'The buyer must confirm the area and terms from their own account. The seller cannot confirm on the buyer\'s behalf.');
                 }
             }
-        } elseif ($userRole === 'citizen' && ($user['nid']??'') !== $t['created_by_nid']) {
+        } elseif ($userRole === 'citizen' && ($user['nid'] ?? '') !== $t['created_by_nid']) {
             $isParty = (bool) DB::selectOne('SELECT 1 FROM transfer_parties tp JOIN persons p ON p.id = tp.person_id WHERE tp.transfer_id = ? AND p.nid = ?', [$t['id'], $user['nid'] ?? '']);
             if (!$isParty) {
-                self::fail(403,'SELLER_ACTION_REQUIRED','এই ধাপটি বিক্রেতার জন্য।','This action belongs to the seller.');
+                self::fail(403, 'SELLER_ACTION_REQUIRED', 'এই ধাপটি বিক্রেতার জন্য।', 'This action belongs to the seller.');
             }
         }
-
 
         // Object scope for citizen (F02)
         if ($userRole === 'citizen') {
@@ -520,10 +534,10 @@ final class TransferStateMachine
             }
         }
 
-        // Role-specific authority check per transition (F01)
-        // Steps 1->2, 2->3, 3->4, 6->7: Citizen, SPO, Admin
+        // Role-specific authority check per transition (F01 / A15)
+        // Steps 1->2, 2->3, 3->4, 6->7: Citizen, SPO, Admin, System Admin
         if (in_array($targetStep, [2, 3, 4, 7], true)) {
-            if (!in_array($userRole, ['citizen', 'service_point_operator', 'admin'], true)) {
+            if (!in_array($userRole, ['citizen', 'service_point_operator', 'admin', 'system_admin'], true)) {
                 throw new \RuntimeException(json_encode([
                     'status' => 403,
                     'code' => 'FORBIDDEN',
@@ -535,7 +549,7 @@ final class TransferStateMachine
 
         // Step 4->5 (Automated Lineage & Lien Scan)
         if ($targetStep === 5) {
-            if (!in_array($userRole, ['citizen', 'service_point_operator', 'sub_registrar', 'registry_data_officer', 'ac_land', 'admin'], true)) {
+            if (!in_array($userRole, ['citizen', 'service_point_operator', 'sub_registrar', 'registry_data_officer', 'ac_land', 'admin', 'system_admin'], true)) {
                 throw new \RuntimeException(json_encode([
                     'status' => 403,
                     'code' => 'FORBIDDEN',
@@ -559,7 +573,7 @@ final class TransferStateMachine
 
         // Step 5->6 (Co-Owner / Heir Consent)
         if ($targetStep === 6) {
-            if (!in_array($userRole, ['citizen', 'service_point_operator', 'sub_registrar', 'registry_data_officer', 'admin'], true)) {
+            if (!in_array($userRole, ['citizen', 'service_point_operator', 'sub_registrar', 'registry_data_officer', 'admin', 'system_admin'], true)) {
                 throw new \RuntimeException(json_encode([
                     'status' => 403,
                     'code' => 'FORBIDDEN',
@@ -568,14 +582,14 @@ final class TransferStateMachine
                 ], JSON_UNESCAPED_UNICODE));
             }
             $coOwnerCount = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM ownerships WHERE plot_id = ? AND is_latest = 1', [$t['plot_id']])['c'] ?? 0);
-            if ($coOwnerCount > 1 && empty($payload['consent_confirmed']) && empty($payload['notes_bn'])) {
-                self::fail(422, 'CO_OWNER_CONSENT_REQUIRED', 'যৌথ মালিকানাধীন জমির ক্ষেত্রে সহ-মালিকানা বা ওয়ারিশ সম্মতি নিশ্চিতকরণ আবশ্যক।', 'Co-owner consent confirmation is required for jointly-owned plots.');
+            if ($coOwnerCount > 1 && empty($payload['consent_confirmed'])) {
+                self::fail(422, 'CO_OWNER_CONSENT_REQUIRED', 'যৌথ মালিকানাধীন জমির ক্ষেত্রে সহ-মালিকানা বা ওয়ারিশ সম্মতি নিশ্চিতকরণ আবশ্যক। শুধুমাত্র নোট দিয়ে সম্মতি নিশ্চিতকরণ এড়ানো যাবে না।', 'Co-owner consent confirmation is required for jointly-owned plots. Notes cannot substitute for consent confirmation.');
             }
         }
 
         // Step 7->8 (Registry Appointment Booking)
         if ($targetStep === 8) {
-            if (!in_array($userRole, ['citizen', 'service_point_operator', 'sub_registrar', 'registry_data_officer', 'admin'], true)) {
+            if (!in_array($userRole, ['citizen', 'service_point_operator', 'sub_registrar', 'registry_data_officer', 'admin', 'system_admin'], true)) {
                 throw new \RuntimeException(json_encode([
                     'status' => 403,
                     'code' => 'FORBIDDEN',
@@ -591,7 +605,7 @@ final class TransferStateMachine
 
         // Step 8->9 (Counter Biometric Match): MUST be performed by registry officer terminal!
         if ($targetStep === 9) {
-            if (!in_array($userRole, ['sub_registrar', 'registry_data_officer', 'admin'], true)) {
+            if (!in_array($userRole, ['sub_registrar', 'registry_data_officer', 'admin', 'system_admin'], true)) {
                 throw new \RuntimeException(json_encode([
                     'status' => 403,
                     'code' => 'OFFICER_TERMINAL_REQUIRED',
@@ -611,7 +625,7 @@ final class TransferStateMachine
 
         // Step 9->10 (Deed Execution with Ed25519): MUST be sub_registrar or admin!
         if ($targetStep === 10) {
-            if (!in_array($userRole, ['sub_registrar', 'admin'], true)) {
+            if (!in_array($userRole, ['sub_registrar', 'admin', 'system_admin'], true)) {
                 throw new \RuntimeException(json_encode([
                     'status' => 403,
                     'code' => 'SUB_REGISTRAR_REQUIRED',
@@ -630,17 +644,36 @@ final class TransferStateMachine
                 ], JSON_UNESCAPED_UNICODE));
             }
 
-            // Real deed creation with hash-chaining and cryptographic signature
+            // A03: Real deed creation with hash-chaining and cryptographic signature, binding intended BUYER and SELLER
             if (empty($t['deed_id'])) {
-                $sellerPerson = DB::selectOne('SELECT * FROM persons WHERE nid = ?', [$t['created_by_nid']]);
-                $buyerPerson = $buyerParty ? DB::selectOne('SELECT * FROM persons WHERE id = ?', [$buyerParty['person_id']]) : null;
-                if (!$buyerPerson) {
-                    $buyerPerson = DB::selectOne('SELECT * FROM persons WHERE nid != ? ORDER BY id ASC LIMIT 1', [$t['created_by_nid']]);
+                $buyerParty = DB::selectOne(
+                    'SELECT tp.*, p.id AS person_id, p.nid, p.name_bn, p.name_en
+                     FROM transfer_parties tp
+                     JOIN persons p ON p.id = tp.person_id
+                     WHERE tp.transfer_id = ? AND tp.party_role = ?',
+                    [$t['id'], 'BUYER']
+                );
+                $sellerParty = DB::selectOne(
+                    'SELECT tp.*, p.id AS person_id, p.nid, p.name_bn, p.name_en
+                     FROM transfer_parties tp
+                     JOIN persons p ON p.id = tp.person_id
+                     WHERE tp.transfer_id = ? AND tp.party_role = ?',
+                    [$t['id'], 'SELLER']
+                );
+
+                if (!$buyerParty || empty($buyerParty['person_id'])) {
+                    self::fail(422, 'BUYER_PARTY_REQUIRED', 'দলিল সম্পাদনের জন্য হস্তান্তরের নিবন্ধিত ক্রেতার তথ্য আবশ্যক।', 'A verified buyer party is required for deed execution.');
                 }
-                if (!$sellerPerson) {
-                    $sellerPerson = DB::selectOne('SELECT * FROM persons WHERE nid = ?', [$t['created_by_nid']]) ?: DB::selectOne('SELECT * FROM persons ORDER BY id ASC LIMIT 1');
+                $buyerPerson = DB::selectOne('SELECT * FROM persons WHERE id = ?', [$buyerParty['person_id']]);
+
+                $sellerPerson = $sellerParty ? DB::selectOne('SELECT * FROM persons WHERE id = ?', [$sellerParty['person_id']]) : null;
+                if (!$sellerPerson && !empty($t['created_by_nid'])) {
+                    $sellerPerson = DB::selectOne('SELECT * FROM persons WHERE nid = ?', [$t['created_by_nid']]);
                 }
-                if (!$buyerPerson || !$sellerPerson) self::fail(422, 'PARTIES_REQUIRED', 'ক্রেতা ও বিক্রেতার যাচাইকৃত তথ্য নেই।', 'Verified seller and buyer records are required.');
+
+                if (!$buyerPerson || !$sellerPerson) {
+                    self::fail(422, 'PARTIES_REQUIRED', 'ক্রেতা ও বিক্রেতার যাচাইকৃত তথ্য নিশ্চিত করা সম্ভব হয়নি।', 'Verified buyer and seller records could not be resolved from transfer parties.');
+                }
 
                 $deedRes = WorkflowController::subRegistrarRegisterDeed([
                     'plot_id' => (int) $t['plot_id'],
@@ -658,7 +691,7 @@ final class TransferStateMachine
 
         // Step 10->11 (e-Mutation Queued to AC Land)
         if ($targetStep === 11) {
-            if (!in_array($userRole, ['sub_registrar', 'registry_data_officer', 'ac_land', 'land_office_assistant', 'admin'], true)) {
+            if (!in_array($userRole, ['sub_registrar', 'registry_data_officer', 'ac_land', 'land_office_assistant', 'admin', 'system_admin'], true)) {
                 throw new \RuntimeException(json_encode([
                     'status' => 403,
                     'code' => 'FORBIDDEN',
@@ -670,7 +703,7 @@ final class TransferStateMachine
 
         // Step 11->12 (Hearing & Notice Service)
         if ($targetStep === 12) {
-            if (!in_array($userRole, ['ac_land', 'land_office_assistant', 'field_verification_officer', 'admin'], true)) {
+            if (!in_array($userRole, ['ac_land', 'land_office_assistant', 'field_verification_officer', 'admin', 'system_admin'], true)) {
                 throw new \RuntimeException(json_encode([
                     'status' => 403,
                     'code' => 'FORBIDDEN',
@@ -682,7 +715,7 @@ final class TransferStateMachine
 
         // Step 12->13 (AC Land Mutation Approval & Ownership Mutation)
         if ($targetStep === 13) {
-            if (!in_array($userRole, ['ac_land', 'admin'], true)) {
+            if (!in_array($userRole, ['ac_land', 'admin', 'system_admin'], true)) {
                 throw new \RuntimeException(json_encode([
                     'status' => 403,
                     'code' => 'AC_LAND_REQUIRED',
@@ -749,20 +782,18 @@ final class TransferStateMachine
     private static function canView(array $transfer, array $user): bool
     {
         $role = $user['role'] ?? '';
-        if (in_array($role, ['admin','system_admin','auditor'], true)) return true;
+        if (in_array($role, ['admin', 'system_admin', 'auditor'], true)) return true;
         if ($role === 'citizen') {
             if ((string) ($user['nid'] ?? '') === (string) ($transfer['created_by_nid'] ?? '')) return true;
             return (bool) DB::selectOne('SELECT 1 FROM transfer_parties tp JOIN persons p ON p.id = tp.person_id WHERE tp.transfer_id = ? AND p.nid = ?', [$transfer['id'], $user['nid'] ?? '']);
         }
-        $userId = (int) ($user['id'] ?? 0);
-        if ($userId <= 0 && !empty($user['username'])) {
-            $uRow = DB::selectOne('SELECT id FROM users WHERE username = ?', [$user['username']]);
-            if ($uRow) {
-                $userId = (int) $uRow['id'];
-            }
+
+        $plotId = (int) ($transfer['plot_id'] ?? 0);
+        if ($plotId <= 0) {
+            return false;
         }
-        $location = DB::selectOne('SELECT l.* FROM locations l JOIN plots p ON p.location_id = l.id WHERE p.id = ?', [$transfer['plot_id']]);
-        return (bool) DB::selectOne('SELECT o.id FROM office_user ou JOIN offices o ON o.id = ou.office_id WHERE ou.user_id = ? AND o.is_active = 1 AND o.district_en = ? AND o.upazila_en = ?', [$userId, $location['district_en'] ?? '', $location['upazila_en'] ?? '']);
+
+        return OfficeScopeService::canAccessPlot($plotId, $user);
     }
 
     private static function recordEvent(

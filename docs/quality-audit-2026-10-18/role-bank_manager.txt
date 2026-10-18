@@ -1,0 +1,262 @@
+Browser tab: 9, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5193/bn/bank".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/bank
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা GovTech OS v2.0
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text GovTech OS v2.0
+			8 button সাইডবার সঙ্কুচিত করুন (Ctrl+B)
+				9 image
+			10 text স সৈয়দা খালেদা পারভীন (শাখা ব্যবস্থাপক - ব্যাংক)
+			11 image
+			12 text ব্যাংক শাখা ব্যবস্থাপক সোনালী ব্যাংক পিএলসি, সাভার শাখা
+			13 text field (settable)
+			14 image
+			15 container Sidebar Navigation
+				16 text দাপ্তরিক কর্মপ্রবাহ
+				17 button লিয়েন অনুমোদন কিউ (চেকার)
+					18 image
+					19 text লিয়েন অনুমোদন কিউ (চেকার)
+				20 button এনওসি (NOC) সনদপত্র জারি রিলিজ
+					21 image
+					22 text এনওসি (NOC) সনদপত্র জারি
+					23 text রিলিজ
+				24 button নতুন লিয়েন অন্তর্ভুক্তি
+					25 image
+					26 text নতুন লিয়েন অন্তর্ভুক্তি
+				27 button জামানত খতিয়ান যাচাই
+					28 image
+					29 text জামানত খতিয়ান যাচাই
+			30 button পাবলিক পোর্টাল, Help: নাগরিক পাবলিক পোর্টাল
+				31 image
+				32 text পাবলিক পোর্টাল
+			33 button লগআউট
+				34 image
+				35 text লগআউট
+		36 container
+			37 container Breadcrumb
+				38 button ভূমি সুরক্ষা, Help: পাবলিক পোর্টাল
+					39 image
+					40 text ভূমি সুরক্ষা
+				41 image
+				42 image
+				43 text সোনালী ব্যাংক পিএলসি, সাভার শাখা
+				44 image
+				45 text ব্যাংক শাখা ব্যবস্থাপক
+			46 text Ed25519 ক্রিপ্টোগ্রাফিক লেজার সক্রিয় |  অনলাইন
+			47 text field (settable) global-header-search
+			48 image
+			49 text ⌘K
+			50 button অ্যাকশন, Help: দ্রুত অ্যাকশন মেনু
+				51 image
+				52 text অ্যাকশন
+				53 image
+			54 button বিজ্ঞপ্তি ও নোটিফিকেশন
+				55 image
+				56 text ১
+			57 button EN, Help: Language Switcher
+			58 button Toggle Contrast
+				59 image
+			60 pop up button (collapsed) Description: ব্যবহারকারী প্রোফাইল ও সেটিংস মেনু, Secondary Actions: Expand
+				61 text স
+				62 text সৈয়দা খালেদা পারভীন (শাখা ব্যবস্থাপক - ব্যাংক)
+				63 text ব্যাংক শাখা ব্যবস্থাপক
+				64 image
+		65 container
+			66 image
+			67 heading ব্যাংক শাখা ব্যবস্থাপক কনসোল (চেকার ও এনওসি কর্তৃপক্ষ), Value: 1
+				68 text ব্যাংক শাখা ব্যবস্থাপক কনসোল (চেকার ও এনওসি কর্তৃপক্ষ)
+			69 text চেকার ও এনওসি কর্তৃপক্ষ মর্টগেজ লিয়েন অনুমোদন, ঋণ পরিশোধ পরবর্তী ডিজিটাল NOC ক্লিয়ারেন্স এবং ঋণ পোর্টফোলিও তদারকি। Ed25519 ক্রিপ্টোগ্রাফিক লিয়েন লেজার
+			70 button নতুন লিয়েন আবেদন
+				71 image
+				72 text নতুন লিয়েন আবেদন
+			73 container ব্যাংক ঋণের বিপরীতে জমিতে কার্যকর আইনি দায়বদ্ধতা।
+				74 text সক্রিয় ব্যাংক লিয়েন
+				75 image
+			76 text ১
+			77 button লিয়েন রেজিস্টার দেখুন →
+				78 text লিয়েন রেজিস্টার দেখুন
+				79 text →
+			80 image
+			81 text মোট ঋণকৃত জামানত ৳ ০.২৫ Cr
+			82 button নতুন লিয়েন অন্তর্ভুক্তি →
+				83 text নতুন লিয়েন অন্তর্ভুক্তি
+				84 text →
+			85 image
+			86 text ইস্যুকৃত ডিজিটাল NOC ৩
+			87 button ছাড়পত্র সনদপত্র দেখুন →
+				88 text ছাড়পত্র সনদপত্র দেখুন
+				89 text →
+			90 image
+			91 text দ্বৈত বন্ধক প্রতিরোধ ১০০%  সুরক্ষিত
+			92 button জামানত খতিয়ান যাচাই →
+				93 text জামানত খতিয়ান যাচাই
+				94 text →
+			95 image
+			96 button নতুন লিয়েন অন্তর্ভুক্তি
+				97 image
+				98 text নতুন লিয়েন অন্তর্ভুক্তি
+			99 button লিয়েন অনুমোদন কিউ (চেকার) ৪
+				100 image
+				101 text লিয়েন অনুমোদন কিউ (চেকার)
+				102 text ৪
+			103 button ডিজিটাল ছাড়পত্র (NOC) ৩
+				104 image
+				105 text ডিজিটাল ছাড়পত্র (NOC)
+				106 text ৩
+			107 button জামানত খতিয়ান যাচাই
+				108 image
+				109 text জামানত খতিয়ান যাচাই
+			110 image
+			111 text অধিক্ষেত্র অনুযায়ী মর্টগেজ ফিল্টারিং (বিভাগ ➔ জেলা ➔ উপজেলা ➔ মৌজা)
+			112 image
+			113 text বিভাগ
+			114 pop up button (collapsed, settable) Value: -- বিভাগ নির্বাচন করুন --, Secondary Actions: Expand
+				115 menu
+					116 (selected) -- বিভাগ নির্বাচন করুন --
+					117 চট্টগ্রাম
+					118 ঢাকা
+			119 text জেলা
+			120 pop up button (disabled, collapsed, settable) Value: -- জেলা নির্বাচন করুন --, Secondary Actions: Expand
+				121 menu
+					122 (disabled) -- জেলা নির্বাচন করুন --
+			123 text উপজেলা / থানা
+			124 pop up button (disabled, collapsed, settable) Value: -- উপজেলা নির্বাচন করুন --, Secondary Actions: Expand
+				125 menu
+					126 (disabled) -- উপজেলা নির্বাচন করুন --
+			127 text মৌজা ও জে.এল. নং
+			128 pop up button (disabled, collapsed, settable) Value: -- মৌজা নির্বাচন করুন --, Secondary Actions: Expand
+				129 menu
+					130 (disabled) -- মৌজা নির্বাচন করুন --
+			131 heading নিবন্ধিত ব্যাংক মর্টগেজ রেজিস্টার ও ডিজিটাল ছাড়পত্র (NOC) কন্ট্রোল, Value: 2
+				132 text নিবন্ধিত ব্যাংক মর্টগেজ রেজিস্টার ও ডিজিটাল ছাড়পত্র (NOC) কন্ট্রোল
+			133 text সক্রিয় লিয়েন লক ও ঋণ পরিশোধের পর ইস্যুকৃত ডিজিটাল NOC সমূহ:
+			134 button সকল
+			135 button সক্রিয় (ACTIVE)
+			136 button অবমুক্ত (RELEASED)
+			137 image
+			138 text field (settable)
+			139 table
+				140 row
+					141 cell
+						142 text ব্যাংক ও শাখা
+					143 cell
+						144 text মৌজা ও দাগ
+					145 cell
+						146 text ঋণগ্রহীতা
+					147 cell
+						148 text ঋণের পরিমাণ
+					149 cell
+						150 text স্ট্যাটাস
+					151 cell
+						152 text অ্যাকশন ও সনদ
+				153 row
+					154 cell
+						155 text সোনালী ব্যাংক পিএলসি
+						156 text সাভার শাখা, ঢাকা
+					157 cell
+						158 text দাগ নং ১০৬
+					159 cell
+						160 text মো. মাহবুবুর রহমান
+					161 cell
+						162 text ৳ ২,৫০০,০০০
+					163 cell
+						164 text 🔒 ACTIVE LIEN
+					165 cell
+						166 button মর্টগেজ ডকেট ও জামানতের বিবরণ দেখুন
+							167 image
+						168 button অবমুক্ত ও NOC প্রস্তুত
+							169 image
+							170 text অবমুক্ত ও NOC প্রস্তুত
+						171 container লিয়েন সক্রিয় থাকায় দায়মুক্তি সনদ (NOC) ইস্যু করা নিষিদ্ধ। ঋণ পরিশোধ করে অবমুক্ত করুন।
+							172 image
+							173 text NOC অনুপলব্ধ (লিয়েন সক্রিয়)
+				174 row
+					175 cell
+						176 text সোনালী ব্যাংক পিএলসি
+						177 text সাভার শাখা, ঢাকা
+					178 cell
+						179 text দাগ নং ১০৪
+					180 cell
+						181 text ফাতেমা বেগম
+					182 cell
+						183 text ৳ ২,৫০০,০০০
+					184 cell
+						185 text ✔ RELEASED
+					186 cell
+						187 button মর্টগেজ ডকেট ও জামানতের বিবরণ দেখুন
+							188 image
+						189 button ডিজিটাল NOC
+							190 image
+							191 text ডিজিটাল NOC
+				192 row
+					193 cell
+						194 text সোনালী ব্যাংক পিএলসি
+						195 text সাভার শাখা, ঢাকা
+					196 cell
+						197 text দাগ নং ১০৪
+					198 cell
+						199 text ফাতেমা বেগম
+					200 cell
+						201 text ৳ ২,৫০০,০০০
+					202 cell
+						203 text ✔ RELEASED
+					204 cell
+						205 button মর্টগেজ ডকেট ও জামানতের বিবরণ দেখুন
+							206 image
+						207 button ডিজিটাল NOC
+							208 image
+							209 text ডিজিটাল NOC
+				210 row
+					211 cell
+						212 text সোনালী ব্যাংক পিএলসি
+						213 text সাভার শাখা, ঢাকা
+					214 cell
+						215 text দাগ নং ১০৪
+					216 cell
+						217 text ফাতেমা বেগম
+					218 cell
+						219 text ৳ ২,৫০০,০০০
+					220 cell
+						221 text ✔ RELEASED
+					222 cell
+						223 button মর্টগেজ ডকেট ও জামানতের বিবরণ দেখুন
+							224 image
+						225 button ডিজিটাল NOC
+							226 image
+							227 text ডিজিটাল NOC
+		228 container
+			229 text ভূ ভূমি সুরক্ষা ভূমি নিরাপত্তা ও ট্রাস্ট প্রোটোটাইপ ভূমি সুরক্ষা একটি স্বাধীন উদ্ভাবনী প্রোটোটাইপ (LandTech Hackathon 2026)। সরকারি সেবাসমূহ সংশ্লিষ্ট ভূমি অফিস ও নিবন্ধন অধিদপ্তরের অফিসিয়াল পোর্টালের আওতাধীন। Ed25519 • SHA-256 Hash Chain নাগরিক সেবাসমূহ
+			230 content list
+				231 button জমি কেনার আগে যাচাই
+				232 button জমির হাট (নিরাপদ বিক্রয়)
+				233 button ক্যাডাস্ট্রাল মৌজা ম্যাপ
+				234 button দলিল QR কোড যাচাই
+				235 button অফিসিয়াল নোটিশবোর্ড
+				236 button ভূমি সাক্ষরতা ও আইন ব্লগ
+				237 button দপ্তর ও সেবা কেন্দ্রসমূহ
+				238 button নাগরিক ভল্ট ও বিক্রয় লক
+				239 button ⚖️ আইনজীবী কেস দাখিল পোর্টাল NEW
+					240 text ⚖️
+					241 text আইনজীবী কেস দাখিল পোর্টাল
+					242 text NEW
+			243 text দাপ্তরিক প্যানেল
+			244 content list
+				245 button সাব-রেজিস্ট্রার কনসোল
+				246 button এসি ল্যান্ড ট্রাইব্যুনাল
+				247 button ব্যাংক জামানত ও ডিজিটাল NOC
+				248 button জাতীয় লেজার ও RBAC অডিট
+				249 button ⚖️ আইনজীবী মামলা দাখিল (বিকল্প পথ)
+					250 text ⚖️
+					251 text আইনজীবী মামলা দাখিল (বিকল্প পথ)
+			252 text সহায়তা ও যোগাযোগ
+			253 content list
+				254 text ভূমি সেবা কল সেন্টার: ১৬১২২
+				255 text ভূমি মন্ত্রণালয় (সরকারি সময়সূচী অনুযায়ী)
+				256 text অফিসিয়াল সেবার সময়সূচি দেখুন
+				257 button সাধারণ জিজ্ঞাসাসমূহ (FAQ)
+				258 button ভূমি ও জরিপ পরিভাষা কোষ
+			259 text © ২০২৬ ভূমি সুরক্ষা (BhumiShield) · LandTech Hackathon Innovation. সর্বস্বত্ব সংরক্ষিত। সিনথেটিক ডেটা পরিবেশ / Synthetic data environment
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/bank

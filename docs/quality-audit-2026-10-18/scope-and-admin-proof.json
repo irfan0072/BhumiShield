@@ -1,0 +1,15 @@
+{
+    "same_district_upazila": true,
+    "office_type": "ac_land",
+    "configured_allowed_location_id": 1,
+    "excluded_location_id": 5,
+    "included_plot_access": true,
+    "excluded_mouza_plot_access": true,
+    "early_step_admin": {
+        "http": 200
+    },
+    "early_step_system_admin": {
+        "http": 403,
+        "code": "FORBIDDEN"
+    }
+}

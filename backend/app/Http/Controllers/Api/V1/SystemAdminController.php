@@ -119,7 +119,16 @@ final class SystemAdminController
         }
 
         $email = $rawEmail !== '' ? strtolower($rawEmail) : null;
-        $phone = $rawPhone;
+        $normalizedPhone = preg_replace('/[\s\-]/', '', $rawPhone);
+        if ($rawPhone !== '' && !preg_match('/^(?:\+?8801[3-9]\d{8}|01[3-9]\d{8})$/', $normalizedPhone)) {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'INVALID_PHONE',
+                'message_bn' => 'সঠিক বাংলাদেশি মোবাইল নম্বর প্রদান করুন (যেমন: 017xxxxxxxx)।',
+                'message_en' => 'Provide a valid Bangladeshi mobile phone number.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+        $phone = $rawPhone !== '' ? $normalizedPhone : null;
 
         $nameBn = trim((string) ($req['full_name_bn'] ?? $uname));
         $nameEn = trim((string) ($req['full_name_en'] ?? $nameBn));

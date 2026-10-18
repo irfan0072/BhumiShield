@@ -1,0 +1,412 @@
+Browser tab: 9, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5193/bn/admin".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/admin
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা GovTech OS v2.0
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text GovTech OS v2.0
+			8 button সাইডবার সঙ্কুচিত করুন (Ctrl+B)
+				9 image
+			10 text ম মো. শামসুল হক (জাতীয় ক্রিপ্টোগ্রাফিক অডিটর)
+			11 image
+			12 text জাতীয় অডিট ও লেজার নিরীক্ষক জাতীয় ভূমি লেজার অডিট অধিদপ্তর
+			13 text field (settable)
+			14 image
+			15 container Sidebar Navigation
+				16 text দাপ্তরিক কর্মপ্রবাহ
+				17 button ক্রিপ্টোগ্রাফিক লেজার অখণ্ডতা Ed25519
+					18 image
+					19 text ক্রিপ্টোগ্রাফিক লেজার অখণ্ডতা
+					20 text Ed25519
+				21 button ব্রেক-গ্লাস ও পিআইআই অডিট লগ
+					22 image
+					23 text ব্রেক-গ্লাস ও পিআইআই অডিট লগ
+				24 button দলিল ও লেজার নিরীক্ষা নিবন্ধিত
+					25 image
+					26 text দলিল ও লেজার নিরীক্ষা
+					27 text নিবন্ধিত
+			28 button পাবলিক পোর্টাল, Help: নাগরিক পাবলিক পোর্টাল
+				29 image
+				30 text পাবলিক পোর্টাল
+			31 button লগআউট
+				32 image
+				33 text লগআউট
+		34 container
+			35 container Breadcrumb
+				36 button ভূমি সুরক্ষা, Help: পাবলিক পোর্টাল
+					37 image
+					38 text ভূমি সুরক্ষা
+				39 image
+				40 image
+				41 text জাতীয় ভূমি লেজার অডিট অধিদপ্তর
+				42 image
+				43 text জাতীয় অডিট ও লেজার নিরীক্ষক
+			44 text Ed25519 ক্রিপ্টোগ্রাফিক লেজার সক্রিয় |  অনলাইন
+			45 text field (settable) global-header-search
+			46 image
+			47 text ⌘K
+			48 button অ্যাকশন, Help: দ্রুত অ্যাকশন মেনু
+				49 image
+				50 text অ্যাকশন
+				51 image
+			52 button বিজ্ঞপ্তি ও নোটিফিকেশন
+				53 image
+			54 button EN, Help: Language Switcher
+			55 button Toggle Contrast
+				56 image
+			57 pop up button (collapsed) Description: ব্যবহারকারী প্রোফাইল ও সেটিংস মেনু, Secondary Actions: Expand
+				58 text ম
+				59 text মো. শামসুল হক (জাতীয় ক্রিপ্টোগ্রাফিক অডিটর)
+				60 text জাতীয় অডিট ও লেজার নিরীক্ষক
+				61 image
+		62 container
+			63 button কন্ট্রোল প্যানেল
+			64 text / পিলার ৪: লেজার ও সার্বভৌম অডিট
+			65 heading ক্রিপ্টোগ্রাফিক লেজার ও নিরাপত্তা নিরীক্ষা, Value: 2
+				66 image
+				67 text ক্রিপ্টোগ্রাফিক লেজার ও নিরাপত্তা নিরীক্ষা
+			68 button হ্যাশ-চেইন ও ইন্টিগ্রিটি ল্যাব
+				69 image
+				70 text হ্যাশ-চেইন ও ইন্টিগ্রিটি ল্যাব
+			71 button সার্বভৌম অডিট ট্রেইল
+				72 image
+				73 text সার্বভৌম অডিট ট্রেইল
+			74 button ডাটাবেজ ব্যাকআপ ও হ্যাশ এক্সপোর্টার POWER
+				75 image
+				76 text ডাটাবেজ ব্যাকআপ ও হ্যাশ এক্সপোর্টার
+				77 text POWER
+			78 button কন্ট্রোল প্যানেল
+			79 text / সিকিউরিটি অডিট ট্রেইল ও রিপোর্ট
+			80 image
+			81 heading অপরিবর্তনীয় হ্যাশ-চেইন অডিট লগ (Append-Only Cryptographic Audit Trail), Value: 2
+				82 text অপরিবর্তনীয় হ্যাশ-চেইন অডিট লগ (Append-Only Cryptographic Audit Trail)
+			83 button প্রশাসনিক ওভাররাইড কনসোল
+				84 image
+				85 text প্রশাসনিক ওভাররাইড কনসোল
+			86 container
+				87 text [ PARCEL_DRAFT_SAVED ] admin (admin)  —  parcel_design#1  ( {"dag_no":"1","location_id":4} )
+			88 container
+				89 text HASH:  394c6222edaf9de69462f4885f379b4c80f92d056eb3b9cdeaa190f805ac3cb6
+			90 container
+				91 text [ MAP_MOUZA_ASSIGNED ] admin (admin)  —  parcel_design#4  ( {"office_id":9,"old_office_id":null,"reason":"bkjbhjvbjhvjhvhjvjvjvvj"} )
+			92 container
+				93 text HASH:  968f75a5edb9cd45a2e566fc79025cf0a686f685b4fd45d8878bd1032dc51cf2
+			94 container
+				95 text [ LAWYER_CASE_DOCKET_FILED ] advocate_bc_dh_14285 (lawyer_court_user)  —  dispute#3  ( {"advocate_name":"ব্যারিস্টার মো. নাজমুল হুদা","bar_council_no":"BC-DH-14285","case_no":"LAW-CASE-2026-0103","court_name":"বিজ্ঞ সিনিয়র সহকারী জজ আদালত, সাভার, ঢাকা","dag_no":"101","hash":"8e58f7cdf800344c1a13f1ee2255f7ceec54db3a02d47abcef116ca51f7279b9","plot_id":1,"suit_no":"দেওয়ানি মোকদ্দমা নং ৪৫/২০২৬"} )
+			96 container
+				97 text HASH:  b87aefc7eb2183a27fbcdbc8391faa73a0729ae45f1e47fd51ede7ec4d0a7eb0
+			98 container
+				99 text [ LAWYER_CASE_DOCKET_FILED ] advocate_bc_dh_14285 (lawyer_court_user)  —  dispute#2  ( {"advocate_name":"ব্যারিস্টার মো. নাজমুল হুদা","bar_council_no":"BC-DH-14285","case_no":"LAW-CASE-2026-0102","court_name":"বিজ্ঞ সিনিয়র সহকারী জজ আদালত, সাভার, ঢাকা","dag_no":"101","hash":"e8accc1e7da7a6212f7ef058c590c1e5d962ed1a003f34422c0752e9983a6fb8","plot_id":1,"suit_no":"দেওয়ানি মোকদ্দমা নং ৪৫/২০২৬"} )
+			100 container
+				101 text HASH:  17d5a267e82efadb3b232f549eac5a4ccd7ada1325d56c334a7e256145e99671
+			102 container
+				103 text [ DOCUMENT_SECURITY_CONFIG_UPDATED ] system_admin (system_admin)  —  site_settings#dcr_porcha_watermark_config  ( {"actor":"system_admin","custom_watermark_enabled":true,"qr_layout_style":"GOV_SEAL_BORDERED","watermark_text":"গণপ্রজাতন্ত্রী বাংলাদেশ সরকার - ভূমি মন্ত্রণালয় - শুধুমাত্র নাগরিক ব্যবহারের জন্য সংরক্ষিত"} )
+			104 container
+				105 text HASH:  caaf4477e19cbf126bea02a0b7332db3d73f9da815a875a99038827b5607b980
+			106 container
+				107 text [ ADMINISTRATIVE_OVERRIDE ] system_admin (system_admin)  —  TRANSFER_STAGE_ADVANCE#1  ( {"actor_role":"system_admin","actor_username":"system_admin","after_state":{"current_step":13,"id":1,"public_stage":"DONE","transfer_code":"TR-2026-000101"},"before_state":{"current_step":13,"id":1,"public_stage":"DONE","transfer_code":"TR-2026-000101"},"evidence_reference":"MIN-LAND-ORDER-2026-992/A","reason_bn":"মন্ত্রণালয়ের বিশেষ নির্বাহী আদেশ ও অডিট সমন্বয় কমিটির অনুমোদনক্রমে ধাপ অগ্রগতি।","target_id":"1","target_type":"TRANSFER_STAGE_ADVANCE","timestamp":"2026-10-18T04:32:16+00:00"} )
+			108 container
+				109 text HASH:  81d021e9fcbcc426a86f59e29894371956ac7c3ec2f65e76aa71c2491f358dd5
+			110 container
+				111 text [ INTEGRATION_DELIVERIES_RETRIED ] admin (admin)  —  sim_sms_outbox#0  ( {"actor":"admin","retried_count":0} )
+			112 container
+				113 text HASH:  2e85d70dd938ca3b36f9e33aa333085a1aaae43dc146285d8d65580348e8f629
+			114 container
+				115 text [ ACQUISITION_CASE_CREATED ] admin (admin)  —  acquisition_cases#8  ( {"case_no":"LA-SAVAR-2026-6551","project_name_bn":"ঢাকা-আরিচা মহাসড়ক প্রশস্তকরণ ও ইন্টারচেঞ্জ নির্মাণ প্রকল্প"} )
+			116 container
+				117 text HASH:  9d3fc90bd360f79f12e20cf493b763c9b0913adf562bfc295e24dde308445f71
+			118 container
+				119 text [ TRANSFER_CORRECTION_REQUESTED ] admin (admin)  —  transfer_requests#1  ( {"correction_notes_bn":"ওয়ারিশান সনদের স্ক্যান কপি অস্পষ্ট হওয়ায় পুনরায় আপলোড করার নির্দেশ দেওয়া হলো।","transfer_code":"TR-2026-000101"} )
+			120 container
+				121 text HASH:  cea8456175676cf3d21b191355a979c0b8e18f0afc2d85637b020d0d7f6144f0
+			122 container
+				123 text [ TRANSFER_REASSIGNED ] admin (admin)  —  transfer_requests#1  ( {"new_assignee":"মো. রফিকুল ইসলাম (সাব-রেজিস্ট্রার)","new_office":"সাভার সদর সাব-রেজিস্ট্রি অফিস","old_assignee":"মো. রফিকুল ইসলাম (সাব-রেজিস্ট্রার)","old_office":"সাভার সদর সাব-রেজিস্ট্রি অফিস","reason_bn":"প্রশাসনিক প্রয়োজনে দায়িত্ব পুনর্বণ্টন","transfer_code":"TR-2026-000101"} )
+			124 container
+				125 text HASH:  8bb95aede44b4515523390cc3caa80f599b612c326867ffa8b65a81cf207246e
+			126 container
+				127 text [ ADMINISTRATIVE_OVERRIDE ] system_admin (system_admin)  —  TRANSFER_STAGE_ADVANCE#1  ( {"actor_role":"system_admin","actor_username":"system_admin","after_state":{"current_step":13,"id":1,"public_stage":"DONE","transfer_code":"TR-2026-000101"},"before_state":{"current_step":12,"id":1,"public_stage":"DONE","transfer_code":"TR-2026-000101"},"evidence_reference":"MIN-LAND-ORDER-2026-992/A","reason_bn":"মন্ত্রণালয়ের বিশেষ নির্বাহী আদেশ ও অডিট সমন্বয় কমিটির অনুমোদনক্রমে ধাপ অগ্রগতি।","target_id":"1","target_type":"TRANSFER_STAGE_ADVANCE","timestamp":"2026-10-18T04:31:22+00:00"} )
+			128 container
+				129 text HASH:  fcd5b6588cd180b9677f1281ea94df64cd0750ca936f0eed2e3a465fae80f5bd
+			130 container
+				131 text [ INTEGRATION_DELIVERIES_RETRIED ] admin (admin)  —  sim_sms_outbox#0  ( {"actor":"admin","retried_count":0} )
+			132 container
+				133 text HASH:  2a1e6a60ebdde06136372ccee239095852e0d3f742a0f9c3541f04b5c0a44aa8
+			134 container
+				135 text [ ACQUISITION_CASE_CREATED ] admin (admin)  —  acquisition_cases#7  ( {"case_no":"LA-SAVAR-2026-2908","project_name_bn":"ঢাকা-আরিচা মহাসড়ক প্রশস্তকরণ ও ইন্টারচেঞ্জ নির্মাণ প্রকল্প"} )
+			136 container
+				137 text HASH:  b2325d2e3a3aa229795b4796f78da41c1afb3ba95778bc84a9353a31c644a3fa
+			138 container
+				139 text [ TRANSFER_CORRECTION_REQUESTED ] admin (admin)  —  transfer_requests#1  ( {"correction_notes_bn":"ওয়ারিশান সনদের স্ক্যান কপি অস্পষ্ট হওয়ায় পুনরায় আপলোড করার নির্দেশ দেওয়া হলো।","transfer_code":"TR-2026-000101"} )
+			140 container
+				141 text HASH:  568610810ce04fc4ffe299ee94c0cbf6e5d856895debb1f38f727b851f6e742b
+			142 container
+				143 text [ TRANSFER_REASSIGNED ] admin (admin)  —  transfer_requests#1  ( {"new_assignee":"মো. রফিকুল ইসলাম (সাব-রেজিস্ট্রার)","new_office":"সাভার সদর সাব-রেজিস্ট্রি অফিস","old_assignee":"মো. রফিকুল ইসলাম (সাব-রেজিস্ট্রার)","old_office":"সাভার সদর সাব-রেজিস্ট্রি অফিস","reason_bn":"প্রশাসনিক প্রয়োজনে দায়িত্ব পুনর্বণ্টন","transfer_code":"TR-2026-000101"} )
+			144 container
+				145 text HASH:  a65dd1cb6ccb83785411f89700b90bc4f8786f276b242f188b9fdef190de65fb
+			146 container
+				147 text [ INTEGRATION_DELIVERIES_RETRIED ] admin (admin)  —  sim_sms_outbox#0  ( {"actor":"admin","retried_count":0} )
+			148 container
+				149 text HASH:  0d58d0f235b1cb7bd63467e74626da494bf2f84fc094e96f25622a8fa4625c1a
+			150 container
+				151 text [ ACQUISITION_CASE_CREATED ] admin (admin)  —  acquisition_cases#6  ( {"case_no":"LA-SAVAR-2026-3151","project_name_bn":"ঢাকা-আরিচা মহাসড়ক প্রশস্তকরণ ও ইন্টারচেঞ্জ নির্মাণ প্রকল্প"} )
+			152 container
+				153 text HASH:  2e60463af94001ca1fc761f4364bb62bf2023ffceaa59666e13e52e973e856ab
+			154 container
+				155 text [ TRANSFER_CORRECTION_REQUESTED ] admin (admin)  —  transfer_requests#1  ( {"correction_notes_bn":"ওয়ারিশান সনদের স্ক্যান কপি অস্পষ্ট হওয়ায় পুনরায় আপলোড করার নির্দেশ দেওয়া হলো।","transfer_code":"TR-2026-000101"} )
+			156 container
+				157 text HASH:  b82c06a017c248cb5f117a9054379528cf0f85e69aa3944cf1d4ce6502a63c98
+			158 container
+				159 text [ TRANSFER_REASSIGNED ] admin (admin)  —  transfer_requests#1  ( {"new_assignee":"মো. রফিকুল ইসলাম (সাব-রেজিস্ট্রার)","new_office":"সাভার সদর সাব-রেজিস্ট্রি অফিস","old_assignee":"মো. রফিকুল ইসলাম (সাব-রেজিস্ট্রার)","old_office":"সাভার সদর সাব-রেজিস্ট্রি অফিস","reason_bn":"প্রশাসনিক প্রয়োজনে দায়িত্ব পুনর্বণ্টন","transfer_code":"TR-2026-000101"} )
+			160 container
+				161 text HASH:  bcd57c0ff110f22508e5b4876ae661636c1078e0e1553e99011141dc2ed0555c
+			162 container
+				163 text [ INTEGRATION_DELIVERIES_RETRIED ] admin (admin)  —  sim_sms_outbox#0  ( {"actor":"admin","retried_count":0} )
+			164 container
+				165 text HASH:  2ebc3090c9e76284406cf469e895e7526d2a4ca81866d14dd0f36e3141cedcf5
+			166 container
+				167 text [ ACQUISITION_CASE_CREATED ] admin (admin)  —  acquisition_cases#5  ( {"case_no":"LA-SAVAR-2026-2505","project_name_bn":"ঢাকা-আরিচা মহাসড়ক প্রশস্তকরণ ও ইন্টারচেঞ্জ নির্মাণ প্রকল্প"} )
+			168 container
+				169 text HASH:  e5a548a7044e293c74af263eebfb2f08a501ba01193ddc6d294183411f1f5022
+			170 container
+				171 text [ TRANSFER_REASSIGNED ] admin (admin)  —  transfer_requests#1  ( {"new_assignee":"মো. রফিকুল ইসলাম (সাব-রেজিস্ট্রার)","new_office":"সাভার সদর সাব-রেজিস্ট্রি অফিস","old_assignee":null,"old_office":null,"reason_bn":"প্রশাসনিক প্রয়োজনে দায়িত্ব পুনর্বণ্টন","transfer_code":"TR-2026-000101"} )
+			172 container
+				173 text HASH:  355dd228fcd49e9ed782b64781f5f86894ae20c9c38002edd10c7e74064750f9
+			174 container
+				175 text [ ADMINISTRATIVE_OVERRIDE ] system_admin (system_admin)  —  TICKET_ESCALATE#1  ( {"actor_role":"system_admin","actor_username":"system_admin","after_state":{"id":1,"priority":"CRITICAL","status":"IN_PROGRESS","ticket_code":"TKT-2026-000045"},"before_state":{"id":1,"priority":"HIGH","status":"IN_PROGRESS","ticket_code":"TKT-2026-000045"},"evidence_reference":"ডিসি অফিস নোটিশ স্মারক নং ৪৪.০২","reason_bn":"জরুরি নাগরিক অভিযোগ বিবেচনায় অগ্রাধিকারে এসকেলেশন","target_id":"1","target_type":"TICKET_ESCALATE","timestamp":"2026-10-18T03:55:20+00:00"} )
+			176 container
+				177 text HASH:  28c3b379032594805bd4c92ee508b969de41c2b1e40d7538ee7e5bddf6c2b032
+			178 container
+				179 text [ TRANSFER_CORRECTION_REQUESTED ] admin (admin)  —  transfer_requests#3  ( {"correction_notes_bn":"খতিয়ানের দ্বিতীয় পাতার স্পষ্ট স্ক্যান কপি দাখিল প্রয়োজন।","transfer_code":"TR-2026-000103"} )
+			180 container
+				181 text HASH:  94b6c40e73b7ea67b12f36c9a1328d8469422ffcd60a0ba24c5c9d9c05f6c6a5
+			182 container
+				183 text [ TRANSFER_REASSIGNED ] admin (admin)  —  transfer_requests#3  ( {"new_assignee":"মীর আহমেদ (ইউএলএও)","new_office":"সাভার উপজেলা ভূমি কার্যালয়","old_assignee":"মীর আহমেদ (ইউএলএও)","old_office":"সাভার উপজেলা ভূমি কার্যালয়","reason_bn":"কাজের চাপ সুষম বণ্টনের লক্ষ্যে অ্যাসাইনমেন্ট","transfer_code":"TR-2026-000103"} )
+			184 container
+				185 text HASH:  a781bd9744672e94d09a0d8f5dd57eeb0a09939101669b7267e502b499c14ef3
+			186 container
+				187 text [ TRANSFER_CORRECTION_REQUESTED ] admin (admin)  —  transfer_requests#3  ( {"correction_notes_bn":"খতিয়ানের দ্বিতীয় পাতার স্পষ্ট স্ক্যান কপি দাখিল প্রয়োজন।","transfer_code":"TR-2026-000103"} )
+			188 container
+				189 text HASH:  ec214f44e5f0ea60c1f0ebe00ab83520af6e8b7ad3c0cf8f1787eba56e0a7e50
+			190 container
+				191 text [ TRANSFER_REASSIGNED ] admin (admin)  —  transfer_requests#3  ( {"new_assignee":"মীর আহমেদ (ইউএলএও)","new_office":"সাভার উপজেলা ভূমি কার্যালয়","old_assignee":"মীর আহমেদ (ইউএলএও)","old_office":"সাভার উপজেলা ভূমি কার্যালয়","reason_bn":"কাজের চাপ সুষম বণ্টনের লক্ষ্যে অ্যাসাইনমেন্ট","transfer_code":"TR-2026-000103"} )
+			192 container
+				193 text HASH:  f20b95910484ee404328bc81ad1475cd7adae63e2cf43bb3d11cb847c1923f0f
+			194 container
+				195 text [ MUTATION_APPROVED ] acland (ac_land)  —  mutation#11  ( {"buyer_id":2,"case_no":"MUT-LT-2026-588","decision":"APPROVED","deed_id":88,"plot_id":13,"reason_bn":"সকল নথিপত্র ও সরেজমিন তদন্ত সন্তোষজনক হওয়ায় নামজারি অনুমোদন এবং বিএস খতিয়ানে ক্রেতার নাম অন্তর্ভুক্ত।","transferred_area":2} )
+			196 container
+				197 text HASH:  5c932b03afe13b4614ce7df6439a32e754a95b868c96948d0079cbe47d3495d4
+			198 container
+				199 text [ DEED_REGISTERED ] registrar (sub_registrar)  —  deed#88  ( দলিল নং DL-2026-1088 সফলভাবে নিবন্ধিত ও ডিজিটাল স্বাক্ষরিত হয়েছে। )
+			200 container
+				201 text HASH:  0f800fa6250c88ea9faa63361442e9adb96cca9d03ac78dae1993bd261dc3ebc
+			202 container
+				203 text [ CONTENT_PUBLISHED ] content_approver (content_approver)  —  notice#9  ( [] )
+			204 container
+				205 text HASH:  071dceb53719eebc17f3363456a9881e51eab1036e2aae2c299f2a8f0fdc2b69
+			206 container
+				207 text [ CONTENT_SUBMITTED ] content_editor (content_editor)  —  notice#9  ( [] )
+			208 container
+				209 text HASH:  763840302c727595300963b848d6468320a2892e6a512491e27464a3ea29dbfc
+			210 container
+				211 text [ CONTENT_DRAFT_SAVED ] content_editor (content_editor)  —  notice#9  ( [] )
+			212 container
+				213 text HASH:  9ba40566f43cefa5da213eb569fe326d7d0073e130ccd8df4d27a8eb0847164d
+			214 container
+				215 text [ SUPPORT_REQUEST_CREATED ] citizen (citizen)  —  ticket#8  ( {"code":"HELP-2026-F3DFFEE041"} )
+			216 container
+				217 text HASH:  13dcacf46331235688160d5c7db2d0333f32ef32ae3e7886fc26c00ea859ba33
+			218 container
+				219 text [ MORTGAGE_LIEN_RELEASED ] bank_manager (bank_manager)  —  mortgage#6  ( {"bank_name_en":"Sonali Bank PLC","plot_id":4} )
+			220 container
+				221 text HASH:  12646b94770aa02d558adfdba000a0f47f2eec46d9e292d0b41adf924f70de47
+			222 container
+				223 text [ MORTGAGE_LIEN_CREATED ] bank (bank_officer)  —  mortgage#6  ( {"amount_bdt":2500000,"area_mortgaged_decimal":5,"bank_name_en":"Sonali Bank PLC","plot_id":4} )
+			224 container
+				225 text HASH:  eadf0cd1004edad716594f151c526af959fb12d9c722b21c5e21955df74ddc82
+			226 container
+				227 text [ ONBOARDING_BATCH_APPROVED ] aso_dhaka (settlement_checker)  —  onboarding_batch#7  ( {"batch_no":"ONB-2026-0007","checker_user_id":11,"decision":"APPROVED","maker_user_id":10,"notes_bn":"সহকারী সেটেলমেন্ট অফিসার কর্তৃক খতিয়ান ডাটা ও সীমানা নকশা নিরীক্ষান্তে গেজেট প্রকাশ অনুমোদন।","record_type":"SURVEY_RECORD"} )
+			228 container
+				229 text HASH:  3b9395ac3bc3868b516f5862bce775596bd1b08635de665413bd3388b30d24da
+			230 container
+				231 text [ MUTATION_APPROVED ] acland (ac_land)  —  mutation#10  ( {"buyer_id":2,"case_no":"MUT-LT-2026-587","decision":"APPROVED","deed_id":87,"plot_id":13,"reason_bn":"সকল নথিপত্র ও সরেজমিন তদন্ত সন্তোষজনক হওয়ায় নামজারি অনুমোদন এবং বিএস খতিয়ানে ক্রেতার নাম অন্তর্ভুক্ত।","transferred_area":3} )
+			232 container
+				233 text HASH:  8c0da9116514b8ec22b659193c5698190a7d66386984960138af59392069373a
+			234 container
+				235 text [ DEED_REGISTERED ] registrar (sub_registrar)  —  deed#87  ( দলিল নং DL-2026-1087 সফলভাবে নিবন্ধিত ও ডিজিটাল স্বাক্ষরিত হয়েছে। )
+			236 container
+				237 text HASH:  c049d9b18b29ac4ea6ddf593f22280bf46a938c655f7df00fbc82524469d3e27
+			238 container
+				239 text [ CONTENT_PUBLISHED ] content_approver (content_approver)  —  notice#8  ( [] )
+			240 container
+				241 text HASH:  f3e2c085e823f26199c33a07371e59988b5e193d89969e6f5e82fd985314fca1
+			242 container
+				243 text [ CONTENT_SUBMITTED ] content_editor (content_editor)  —  notice#8  ( [] )
+			244 container
+				245 text HASH:  7125a5d879f9cac7f494409a9f2a17ac78fc73c0a4fc22ad3e2c8de095ed5e82
+			246 container
+				247 text [ CONTENT_DRAFT_SAVED ] content_editor (content_editor)  —  notice#8  ( [] )
+			248 container
+				249 text HASH:  5ceee45881f5f1d2390a8e26caed6447f4156d640a4268a194d2e3b9d5876f45
+			250 container
+				251 text [ SUPPORT_REQUEST_CREATED ] citizen (citizen)  —  ticket#7  ( {"code":"HELP-2026-247A5CD455"} )
+			252 container
+				253 text HASH:  52b97c79000b3af2aba4a7f7f02437fb3d842075d9ea7f8f54bb400cdfb97d67
+			254 container
+				255 text [ MORTGAGE_LIEN_RELEASED ] bank_manager (bank_manager)  —  mortgage#5  ( {"bank_name_en":"Sonali Bank PLC","plot_id":4} )
+			256 container
+				257 text HASH:  136c8f6b97b3d603020700d771194d4ca50ddd13802ae6f41509581394a9b3db
+			258 container
+				259 text [ MORTGAGE_LIEN_CREATED ] bank (bank_officer)  —  mortgage#5  ( {"amount_bdt":2500000,"area_mortgaged_decimal":5,"bank_name_en":"Sonali Bank PLC","plot_id":4} )
+			260 container
+				261 text HASH:  a8dd688dee9b5a62a1e656a111a74adbde0d5791cb1e67f71baab552d070324b
+			262 container
+				263 text [ ONBOARDING_BATCH_APPROVED ] aso_dhaka (settlement_checker)  —  onboarding_batch#6  ( {"batch_no":"ONB-2026-0006","checker_user_id":11,"decision":"APPROVED","maker_user_id":10,"notes_bn":"সহকারী সেটেলমেন্ট অফিসার কর্তৃক খতিয়ান ডাটা ও সীমানা নকশা নিরীক্ষান্তে গেজেট প্রকাশ অনুমোদন।","record_type":"SURVEY_RECORD"} )
+			264 container
+				265 text HASH:  7bd3aef35ab5b48b72a4cf5c91d5f2af57cc0be0180f8c3903fe598076ce4a0a
+			266 container
+				267 text [ MUTATION_APPROVED ] acland (ac_land)  —  mutation#9  ( {"buyer_id":2,"case_no":"MUT-LT-2026-586","decision":"APPROVED","deed_id":86,"plot_id":13,"reason_bn":"সকল নথিপত্র ও সরেজমিন তদন্ত সন্তোষজনক হওয়ায় নামজারি অনুমোদন এবং বিএস খতিয়ানে ক্রেতার নাম অন্তর্ভুক্ত।","transferred_area":5} )
+			268 container
+				269 text HASH:  db3da307a15d9f03792c9874d2af0159f66face8d440e6596e69a053b1f96186
+			270 container
+				271 text [ DEED_REGISTERED ] registrar (sub_registrar)  —  deed#86  ( দলিল নং DL-2026-1086 সফলভাবে নিবন্ধিত ও ডিজিটাল স্বাক্ষরিত হয়েছে। )
+			272 container
+				273 text HASH:  ae603414d7bf42b7cb84040c87f47bb8ee338761a608e6211188173498d2c898
+			274 container
+				275 text [ CONTENT_PUBLISHED ] content_approver (content_approver)  —  notice#7  ( [] )
+			276 container
+				277 text HASH:  a77106a07678452eac6933053902153c53b190b917b8727bc6159efa2ef02bff
+			278 container
+				279 text [ CONTENT_SUBMITTED ] content_editor (content_editor)  —  notice#7  ( [] )
+			280 container
+				281 text HASH:  44cd2dbf13fa552b58ab57aaaef1e9d64eedb2dcb22c8482ade5d5eeaf35bbe9
+			282 container
+				283 text [ CONTENT_DRAFT_SAVED ] content_editor (content_editor)  —  notice#7  ( [] )
+			284 container
+				285 text HASH:  c551f5391bfa39dea56da151d0ebbab5180454d5fe8931c04ae16c2369cd35f9
+			286 container
+				287 text [ SUPPORT_REQUEST_CREATED ] citizen (citizen)  —  ticket#6  ( {"code":"HELP-2026-B6E46C85A2"} )
+			288 container
+				289 text HASH:  12c601ae2ec78d684d77928f8df5bda33f5e299d169e2e844b90c97fc4f08860
+			290 container
+				291 text [ ONBOARDING_BATCH_APPROVED ] aso_dhaka (settlement_checker)  —  onboarding_batch#5  ( {"batch_no":"ONB-2026-0005","checker_user_id":11,"decision":"APPROVED","maker_user_id":10,"notes_bn":"সহকারী সেটেলমেন্ট অফিসার কর্তৃক খতিয়ান ডাটা ও সীমানা নকশা নিরীক্ষান্তে গেজেট প্রকাশ অনুমোদন।","record_type":"SURVEY_RECORD"} )
+			292 container
+				293 text HASH:  601a750ed552467a5018d823c7c7b412cb254183f51443ba09731363ba08fc5a
+			294 container
+				295 text [ MORTGAGE_LIEN_RELEASED ] bank_manager (bank_manager)  —  mortgage#4  ( {"bank_name_en":"Sonali Bank PLC","plot_id":4} )
+			296 container
+				297 text HASH:  f053b108935224a697c217669c4edbfb439c2300f699afdb475ed176cb75a824
+			298 container
+				299 text [ MORTGAGE_LIEN_CREATED ] bank (bank_officer)  —  mortgage#4  ( {"amount_bdt":2500000,"area_mortgaged_decimal":5,"bank_name_en":"Sonali Bank PLC","plot_id":4} )
+			300 container
+				301 text HASH:  11f9b95229d1ebd1816ae612f9b5a938fcf1fd9b1aa77c99303cb0e2e9253d32
+			302 container
+				303 text [ DISPUTE_RESOLVED ] acland (ac_land)  —  dispute#1  ( অভিযোগ নং DISP-2026-301 এসি ল্যান্ড কর্তৃক নিষ্পত্তি (RESOLVED) করা হয়েছে: শুনানি ও সরেজমিন তদন্তান্তে অভিযোগ নিষ্পত্তি ও রেকর্ড অপরিবর্তিত রাখা হলো। )
+			304 container
+				305 text HASH:  7270055985e3a48dac4831caa8d54ff5c23889818f1cf99721db53e5612fdefa
+			306 container
+				307 text [ PLOT_SALE_UNLOCKED_BY_OWNER ] citizen (citizen)  —  plot#13  ( নাগরিক মালিক (9900001001) কর্তৃক দাগ নং ১১৩-এর বিক্রয় লক নিষ্ক্রিয় করা হয়েছে )
+			308 container
+				309 text HASH:  2a45ec1fca48184792506d86a08b06422d31a6e34acdba18c61cb3f93ce35600
+			310 container
+				311 text [ CONTENT_PUBLISHED ] content_approver (content_approver)  —  notice#6  ( [] )
+			312 container
+				313 text HASH:  e8e264974505ea03471a8873c2ac314d4b92dc7e4d4e136ad0f66b879ee5cde2
+			314 container
+				315 text [ CONTENT_SUBMITTED ] content_editor (content_editor)  —  notice#6  ( [] )
+			316 container
+				317 text HASH:  92dda1a9a63b961a239653d30cbfa6335fb9aab936eec0c8f8a2d9e126074ef3
+			318 container
+				319 text [ CONTENT_DRAFT_SAVED ] content_editor (content_editor)  —  notice#6  ( [] )
+			320 container
+				321 text HASH:  cfe2c84c927e1c2029413ed8b2847e3d5840115dfa86fda23ece9ef94d97daf8
+			322 container
+				323 text [ SUPPORT_REQUEST_CREATED ] citizen (citizen)  —  ticket#5  ( {"code":"HELP-2026-D9621099B3"} )
+			324 container
+				325 text HASH:  52d5a539201c3dc664112e4b97f767c34421efcb4c8abb5ed87653c2a1de6bc0
+			326 container
+				327 text [ ONBOARDING_BATCH_APPROVED ] aso_dhaka (settlement_checker)  —  onboarding_batch#4  ( {"batch_no":"ONB-2026-0004","checker_user_id":11,"decision":"APPROVED","maker_user_id":10,"notes_bn":"সহকারী সেটেলমেন্ট অফিসার কর্তৃক খতিয়ান ডাটা ও সীমানা নকশা নিরীক্ষান্তে গেজেট প্রকাশ অনুমোদন।","record_type":"SURVEY_RECORD"} )
+			328 container
+				329 text HASH:  1ccb7f48369f6ef194133bc3ed35e411f5d6d390901059d4c5958785e1572c05
+			330 container
+				331 text [ CITIZEN_DISPUTE_FILED ] citizen (citizen)  —  dispute#1  ( দাগ নং ১১৩-এ নাগরিক আপত্তি/অভিযোগ (DISP-2026-301) দাখিল করা হয়েছে )
+			332 container
+				333 text HASH:  d2436d56423824f85e38ab9bfd0b3f5b25041874ae7bf275ec694bfdd010de8b
+			334 container
+				335 text [ PLOT_SALE_LOCKED_BY_OWNER ] citizen (citizen)  —  plot#13  ( নাগরিক মালিক (9900001001) কর্তৃক দাগ নং ১১৩-এ বিক্রয় লক (Sale Protection Lock) সক্রিয় করা হয়েছে )
+			336 container
+				337 text HASH:  c59ac0a4fd9378f2028ee2f8237e94b85401098083a33b8f80f089234700fb55
+			338 container
+				339 text [ USER_REGISTERED ] admin (admin)  —  user#24  ( নতুন ব্যবহারকারী নিবন্ধন: সহকারী কমিশনার (ভূমি) সাভার (ac_land) [ভেরিফাইড: 1] [চ্যানেল: phone] )
+			340 container
+				341 text HASH:  6cba846d3ffccc66ffab652b6f2241d020114846cfbf26a9efc318790442acef
+			342 container
+				343 text [ KHATIAN_RECONCILED_BY_AC_LAND ] acland (ac_land)  —  plot#8  ( দাগ নং ১০৮-এর বিএস খতিয়ান সমন্বয় ও মোট জমির পরিমাণ 22 শতাংশ হিসেবে রেকর্ড হালনাগাদ করা হয়েছে )
+			344 container
+				345 text HASH:  614300d0c9aeec80539433d79a71228c2a81f5de3e1bc48aea895547445ea567
+			346 container
+				347 text [ MUTATION_APPLICATION_FILED ] citizen (citizen)  —  mutation#8  ( {"area_decimal":20,"case_no":"MUT-WARISH-2026-885","deed_no":"DL-WARISH-2026-2085","heirs_count":5,"mutation_type":"SUCCESSION","plot_id":1} )
+			348 container
+				349 text HASH:  5e8b7161513db325f46f0e2d4ddeaa4a4d4ab29fcc5cdbb39e4a9bcbcb437e14
+			350 container
+				351 text [ MUTATION_APPLICATION_FILED ] citizen (citizen)  —  mutation#7  ( {"area_decimal":20,"case_no":"MUT-WARISH-2026-884","deed_no":"DL-WARISH-2026-2084","heirs_count":5,"mutation_type":"SUCCESSION","plot_id":1} )
+			352 container
+				353 text HASH:  70a52ad1e8a8360d9bd9e7e8c45d4d960e62b68a845dfe63d9ec190006c2fa37
+			354 container
+				355 text [ MUTATION_APPROVED ] acland (ac_land)  —  mutation#6  ( {"buyer_id":1,"case_no":"MUT-WARISH-2026-883","decision":"APPROVED","deed_id":83,"plot_id":1,"reason_bn":"ফারায়েজ বণ্টননামা ও ওয়ারিশান সনদপত্র যাচাইয়ান্তে নামজারি আদেশ মঞ্জুর এবং ওয়ারিশগণের অনুকূলে নতুন বিএস খতিয়ান জারি।","transferred_area":20} )
+			356 container
+				357 text HASH:  efb769925b835b0d85cec9c93e01c21fdaae52af3cc8ff5651cf8c6ce4c98865
+			358 container
+				359 text [ MUTATION_APPLICATION_FILED ] citizen (citizen)  —  mutation#6  ( {"area_decimal":20,"case_no":"MUT-WARISH-2026-883","deed_no":"DL-WARISH-2026-2083","heirs_count":4,"mutation_type":"SUCCESSION","plot_id":1} )
+			360 container
+				361 text HASH:  6769a78a2492b86032a2889f2f5190ddc3cafdfab03a5674f52e56aec557bc68
+			362 container
+				363 text [ MUTATION_APPLICATION_FILED ] citizen (citizen)  —  mutation#5  ( {"area_decimal":33,"case_no":"MUT-WARISH-2026-882","deed_no":"DL-WARISH-2026-2082","heirs_count":4,"mutation_type":"SUCCESSION","plot_id":1} )
+			364 container
+				365 text HASH:  6ee69f34bcb76df885f1fed94689751867664b93f657879576a98871f18cbb26
+			366 container
+				367 text [ MUTATION_APPLICATION_FILED ] citizen (citizen)  —  mutation#4  ( {"area_decimal":33,"case_no":"MUT-WARISH-2026-881","deed_no":"DL-WARISH-2026-2081","heirs_count":4,"mutation_type":"SUCCESSION","plot_id":1} )
+			368 container
+				369 text HASH:  eaccc77b374b610e612d976774e5db8aa6e88a8297fd780b73b504be1645cb77
+			370 container
+				371 text [ PLOT_SALE_UNLOCKED_BY_OWNER ] citizen (citizen)  —  plot#1  ( নাগরিক মালিক (9900001001) কর্তৃক দাগ নং ১০১-এর বিক্রয় লক নিষ্ক্রিয় করা হয়েছে )
+			372 container
+				373 text HASH:  72dd40de58975301d1754fc7ec27a4b49330fb290288a8d52a39350d8c27d474
+			374 container
+				375 text [ PLOT_SALE_LOCKED_BY_OWNER ] citizen (citizen)  —  plot#1  ( নাগরিক মালিক (9900001001) কর্তৃক দাগ নং ১০১-এ বিক্রয় লক (Sale Protection Lock) সক্রিয় করা হয়েছে )
+			376 container
+				377 text HASH:  19a0c6091aa97868cdd330b6d01efb6f368c1cc29bb631167d21f5f04e957493
+			378 container
+				379 text [ SLA_DISPATCH_SENT ] acland (ac_land)  —  sla_dispatch#SLA-2026-0103  ( {"case_reference":"MUT-2026-0001","priority":"NORMAL","target_role":"service_point_operator"} )
+			380 container
+				381 text HASH:  1eb4a834540b7c9a9d70c44aa31f6cbc574de23455f9bf0328789b31b278cbf7
+			382 container
+				383 text [ SLA_DISPATCH_SENT ] uno_savar (uno_supervisor)  —  sla_dispatch#SLA-2026-0102  ( {"case_reference":"MUT-2026-0003","priority":"HIGH","target_role":"field_verification_officer"} )
+			384 container
+				385 text HASH:  81c6071dce2bc3be55880126720aa15b9687fbe2d2bfff7318597db9d6269cd4
+			386 container
+				387 text [ SLA_DISPATCH_SENT ] uno_savar (uno_supervisor)  —  sla_dispatch#SLA-2026-0101  ( {"case_reference":"MUT-2026-0002","priority":"URGENT","target_role":"land_office_assistant"} )
+			388 container
+				389 text HASH:  4d10355fcb9d91e74fb03c319120c0634d00245e5a03cb9af07ddd7c0a0aa35c
+			390 container
+				391 text [ FIELD_REPORT_FILED ] fvo_savar (field_verification_officer)  —  field_report#FR-2026-0102  ( {"dag_no":"106","plot_id":6} )
+			392 container
+				393 text HASH:  98e2c0d604c941294b53ec2c3249e3d01df874bdb8bebb4a6c4c69fe15a0343c
+			394 container
+				395 text [ FIELD_REPORT_FILED ] fvo_savar (field_verification_officer)  —  field_report#FR-2026-0101  ( {"dag_no":"101","plot_id":1} )
+			396 container
+				397 text HASH:  f5240d8ed3fbee173db5af15af6fb9bf2b637abbd2214c8e1bfb0162d55c6566
+			398 container
+				399 text [ MORTGAGE_LIEN_CREATED ] bank (bank_officer)  —  plot#6  ( দাগ নং ১০৬-এ সোনালী ব্যাংকের ২৫ লক্ষ টাকার বন্ধক এন্ট্রি )
+			400 container
+				401 text HASH:  b13affad15ca71417737f1fcd465d1364471fd32b64241d439a4ed51c251f980
+			402 container
+				403 text [ DEED_REGISTERED ] registrar (sub_registrar)  —  deed#2  ( দলিল নিবন্ধিত ও ই-নামজারির জন্য এসি ল্যান্ড অফিসে প্রেরিত )
+			404 container
+				405 text HASH:  ac4850d7e106497281da5fe16fb3a74eb7d69a5a063e5fadd2ecd948f32b34f9
+			406 container
+				407 text [ LEDGER_GENESIS_SEED ] admin (admin)  —  ledger#GENESIS  ( ভূমি সুরক্ষা লারাভেল লেজার ও ৬০টি দাগের খতিয়ান চেইন ইনিশিয়ালাইজড )
+			408 container
+				409 text HASH:  4c2ffee9c97cd63819ccbe002a94a7644d1aa6d6d8108b5ab8dc238790e2ad86
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/admin

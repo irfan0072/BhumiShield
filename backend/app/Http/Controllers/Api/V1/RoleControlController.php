@@ -631,7 +631,7 @@ final class RoleControlController
         }
 
         $status = strtoupper(trim((string) ($req['status'] ?? 'RESOLVED')));
-        $validStatuses = ['OPEN', 'RESOLVED', 'REJECTED', 'UPHELD_FROZEN'];
+        $validStatuses = ['OPEN', 'PENDING_REVIEW', 'RESOLVED', 'REJECTED', 'UPHELD_FROZEN'];
         if (!in_array($status, $validStatuses, true)) {
             throw new \RuntimeException(json_encode([
                 'status' => 422,

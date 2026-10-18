@@ -5,6 +5,10 @@ No login, CSRF token replay, private API, CAPTCHA bypass, recursive crawl or bul
 import argparse, datetime, hashlib, html.parser, json, pathlib, re, time
 import urllib.request, urllib.parse, urllib.robotparser
 
+import sys
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / 'service_sources'))
+from collection_policy import require_collection_enabled
+
 ORIGIN = 'https://map.land.gov.bd'
 AGENT = 'BhumiShieldSourceCatalog/1.0'
 MAX_BYTES = 2_000_000
@@ -15,6 +19,7 @@ class SameOriginRedirect(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 def get(url):
+    require_collection_enabled()
     if urllib.parse.urlparse(url).netloc != 'map.land.gov.bd' or not url.startswith('https://'):
         raise ValueError('Only this public HTTPS source is allowed')
     with urllib.request.build_opener(SameOriginRedirect()).open(urllib.request.Request(url, headers={'User-Agent': AGENT}), timeout=25) as response:

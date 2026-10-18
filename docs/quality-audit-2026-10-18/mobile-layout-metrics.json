@@ -1,0 +1,42 @@
+[
+  {
+    "page": "home",
+    "documentWidth": 384,
+    "font": "\"Hind Siliguri\", \"Noto Sans Bengali\", sans-serif",
+    "headings": [
+      "মো. রফিকুল ইসলাম (নাগরিক)",
+      "১-ক্লিকে প্রয়োজনীয় নাগরিক সেবা"
+    ],
+    "viewport": 384
+  },
+  {
+    "page": "applications?id=3",
+    "documentWidth": 384,
+    "font": "\"Hind Siliguri\", \"Noto Sans Bengali\", sans-serif",
+    "headings": [
+      "১৩-ধাপের নিরাপদ জমি হস্তান্তর সেবা",
+      "অভিনন্দন! আপনার জমি হস্তান্তর ও ই-নামজারি সম্পূর্ণ সম্পন্ন হয়েছে"
+    ],
+    "viewport": 384
+  },
+  {
+    "page": "map",
+    "documentWidth": 384,
+    "font": "\"Hind Siliguri\", \"Noto Sans Bengali\", sans-serif",
+    "headings": [
+      "নকশা থেকে নাগরিক সেবা",
+      "আপনার জমি খুঁজুন"
+    ],
+    "viewport": 384
+  },
+  {
+    "page": "offices?office_id=9",
+    "documentWidth": 384,
+    "font": "\"Hind Siliguri\", \"Noto Sans Bengali\", sans-serif",
+    "headings": [
+      "অফিস ও সিটিজেন চার্টারের হালনাগাদ",
+      "নিকটস্থ ভূমি, সাব-রেজিস্ট্রি ও ইউনিয়ন সেবা কেন্দ্র"
+    ],
+    "viewport": 384
+  }
+]

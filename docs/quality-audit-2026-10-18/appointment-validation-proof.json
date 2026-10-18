@@ -1,0 +1,14 @@
+{
+    "invalid_date_time": {
+        "http": 200,
+        "stored_status": "BOOKED"
+    },
+    "guest_one": {
+        "http": 200,
+        "stored_status": "BOOKED"
+    },
+    "guest_two": {
+        "http": 409,
+        "code": "APPOINTMENT_CONFLICT"
+    }
+}

@@ -789,6 +789,17 @@ final class PublicMarketplaceAndPortalController
             ], JSON_UNESCAPED_UNICODE));
         }
 
+        $normalizedPhone = preg_replace('/[\s\-]/', '', $citizenPhone);
+        if (!preg_match('/^(?:\+?8801[3-9]\d{8}|01[3-9]\d{8})$/', $normalizedPhone)) {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'INVALID_PHONE',
+                'message_bn' => 'সঠিক বাংলাদেশি মোবাইল নম্বর দিন (যেমন: 017xxxxxxxx)।',
+                'message_en' => 'Provide a valid Bangladeshi mobile number.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+        $citizenPhone = $normalizedPhone;
+
         $slotDate = trim((string) ($payload['slot_date'] ?? ''));
         if ($slotDate === '') {
             throw new \RuntimeException(json_encode([
@@ -799,13 +810,82 @@ final class PublicMarketplaceAndPortalController
             ], JSON_UNESCAPED_UNICODE));
         }
 
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $slotDate)) {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'INVALID_DATE',
+                'message_bn' => 'সাক্ষাতের তারিখ YYYY-MM-DD ফরম্যাটে দিন।',
+                'message_en' => 'Appointment date must be in YYYY-MM-DD format.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+        [$y, $m, $d] = array_map('intval', explode('-', $slotDate));
+        if (!checkdate($m, $d, $y)) {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'INVALID_CALENDAR_DATE',
+                'message_bn' => 'প্রদত্ত তারিখটি সঠিক ক্যালেন্ডার তারিখ নয়।',
+                'message_en' => 'The provided appointment date is not a valid calendar date.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+        $today = gmdate('Y-m-d');
+        if ($slotDate < $today) {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'PAST_DATE_FORBIDDEN',
+                'message_bn' => 'অতীতের কোনো তারিখে অ্যাপয়েন্টমেন্ট বুকিং করা যাবে না।',
+                'message_en' => 'Appointment date cannot be in the past.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
         $slotTime = trim((string) ($payload['slot_time'] ?? '10:30 AM'));
+        $allowedSlots = [
+            '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+            '12:00 PM', '12:30 PM', '02:00 PM', '02:30 PM', '03:00 PM', '03:30 PM', '04:00 PM'
+        ];
+        if (!in_array($slotTime, $allowedSlots, true)) {
+            if (!preg_match('/^(0[9]|1[0-7]):[0-5][0-9]\s*(AM|PM)?$/i', $slotTime)) {
+                throw new \RuntimeException(json_encode([
+                    'status' => 422,
+                    'code' => 'INVALID_SLOT_TIME',
+                    'message_bn' => 'সঠিক অফিস কর্মঘণ্টার সময় নির্বাচন করুন।',
+                    'message_en' => 'Select a valid office hours slot time.',
+                ], JSON_UNESCAPED_UNICODE));
+            }
+        }
+
         $serviceType = trim((string) ($payload['service_type'] ?? 'GENERAL_INQUIRY'));
-        $citizenNid = trim((string) ($payload['citizen_nid'] ?? ($actor['nid'] ?? '9900001001')));
+        $allowedServices = [
+            'GENERAL_INQUIRY',
+            'DEED_REGISTRATION_COUNTER',
+            'MUTATION_HEARING',
+            'RECORD_CORRECTION_HEARING',
+            'MAP_CADASTRAL_CONSULTATION',
+            'LAND_DEVELOPMENT_TAX',
+        ];
+        if (!in_array($serviceType, $allowedServices, true)) {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'INVALID_SERVICE_TYPE',
+                'message_bn' => 'অনুমোদিত সেবা ধরন নির্বাচন করুন।',
+                'message_en' => 'Select a supported appointment service type.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        // A10: Never invent or substitute default NID 9900001001 for unauthenticated guests
+        $citizenNid = trim((string) ($payload['citizen_nid'] ?? ($actor['nid'] ?? '')));
+        if ($citizenNid !== '' && !preg_match('/^(?:[0-9]{10}|[0-9]{13}|[0-9]{17})$/', $citizenNid)) {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'INVALID_NID',
+                'message_bn' => 'সঠিক ১০, ১৩ বা ১৭ সংখ্যার এনআইডি নম্বর দিন।',
+                'message_en' => 'Provide a valid 10, 13, or 17 digit National ID number.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
         $caseRef = trim((string) ($payload['case_reference'] ?? ''));
         $notes = trim((string) ($payload['notes_bn'] ?? 'ভূমি সংক্রান্ত সেবা গ্রহণের জন্য অ্যাপয়েন্টমেন্ট।'));
 
-        // F10 double-booking guard: same office + same citizen + same date = conflict
+        // F10 double-booking guard: same office + same citizen (or phone if guest) + same date = conflict
         $conflict = null;
         if ($citizenNid !== '') {
             $conflict = DB::selectOne(

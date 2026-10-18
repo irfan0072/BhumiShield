@@ -1,0 +1,67 @@
+Browser tab: 9, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5193/bn/applications?id=3".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
++			191 image
++			192 heading ডিজিটাল ডিসিআর ও খতিয়ান পর্চা ভিউয়ার, Value: 3
++				193 text ডিজিটাল ডিসিআর ও খতিয়ান পর্চা ভিউয়ার
++			194 container
++				195 text হস্তান্তর ট্র্যাকিং কোড: TR-2026-000103
++			196 button
++				197 image
++			198 button ডিজিটাল ডিসিআর (DCR)
++			199 button বিএস খতিয়ান পর্চা
++			200 button প্রিন্ট করুন
++				201 image
++				202 text প্রিন্ট করুন
++			203 button পিডিএফ ডাউনলোড
++				204 image
++				205 text পিডিএফ ডাউনলোড
++			206 container
++				207 text গণপ্রজাতন্ত্রী বাংলাদেশ সরকার - ভূমি মন্ত্রণালয় - শুধুমাত্র নাগরিক ব্যবহারের জন্য সংরক্ষিত
++				208 text BHUMISHIELD VERIFIED · SOVEREIGN GOVERNMENT RECORD
++				209 text বাংলাদেশ
++				210 text গণপ্রজাতন্ত্রী বাংলাদেশ সরকার · ভূমি মন্ত্রণালয়
++				211 text ভূমি রাজস্ব আদায়ের দাখিলা ও ডিসিআর (DCR রসিদ)
++				212 text সাভার উপজেলা ভূমি অফিস
++				213 image
++				214 text যাচাইকৃত সিল
++				215 text ডিসিআর রসিদ নং: DCR-2026-000003 ই-নামজারি কেস নং: MUT-SAV-2026-0003 আবেদনকারী / ক্রেতার নাম: আবেদনকারী / ক্রেতা এনআইডি নম্বর: **** সাবেক মালিক / বিক্রেতা: সাবেক মালিক / বিক্রেতা পেমেন্ট ট্রানজ্যাকশন আইডি: TXN-DCR-385A1C19A4
++				216 table
++					217 row
++						218 cell
++							219 text সরকারি ফি বিবরণী
++						220 cell
++							221 text পরিমাণ (টাকা)
++					222 row
++						223 cell
++							224 text আবেদন ও কোর্ট ফি
++						225 cell
++							226 text ২০ .০০
++					227 row
++						228 cell
++							229 text নোটিশ জারি ফি
++						230 cell
++							231 text ৫০ .০০
++					232 row
++						233 cell
++							234 text রেকর্ড সংশোধন ও ডিসিআর ফি
++						235 cell
++							236 text ১১০০ .০০
++					237 row
++						238 cell
++							239 text সর্বমোট পরিশোধিত সরকারি ফি
++						240 cell
++							241 text ১১৭০ .০০
++				242 container
++					243 text আইনি সতর্কবার্তা:  এই ডিজিটাল নথিটি ভূমিশিল্ডের ক্রিপ্টোগ্রাফিক সুরক্ষা চেইনের অধীনে অনুমোদিত। কিউআর কোড স্ক্যান করে অনলাইন ডাটাবেসের সাথে অখণ্ডতা যাচাই করুন। অননুমোদিত রদবদল ফৌজদারি অপরাধ হিসেবে গণ্য হবে।
++				244 container
++					245 text SHA-256 HASH:  17384c847b98168dc4800a250f87957a5e36f04092e4296c5fdb6c2d70b862bc
++				246 button কপি
++					247 image
++					248 text কপি
++				249 container
++					250 text ইস্যুর তারিখ: ১৮/১০/২০২৬
++				251 text AC_LAND_OFFICE_SEAL
++				252 text সহকারী কমিশনার (ভূমি)
++				253 container
++					254 text সাভার , ঢাকা
+The focused UI element is 127 button ডিজিটাল ডিসিআর (DCR)

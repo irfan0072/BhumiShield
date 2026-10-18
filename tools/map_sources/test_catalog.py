@@ -23,4 +23,10 @@ class PublicCatalogueTests(unittest.TestCase):
             with self.assertRaises(ValueError):c.collect(pathlib.Path(d)/'out.json',pathlib.Path(d)/'cache')
             self.assertEqual(get.call_count,1)
 
+class CollectionControlTests(unittest.TestCase):
+    def test_off_stops_map_collector_before_http(self):
+        with patch.object(c,'require_collection_enabled',side_effect=ValueError('OFF')),patch.object(c.urllib.request,'build_opener') as opener:
+            with self.assertRaises(ValueError): c.get(c.ORIGIN+'/')
+            opener.assert_not_called()
+
 if __name__=='__main__':unittest.main()

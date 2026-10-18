@@ -1,0 +1,59 @@
+Browser tab: 9, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5193/bn/map?lat=23.534&lng=90.717&office_id=9".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 40-51, 55-83, 87-88, 91-92, 94-299
+~1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/map?lat=23.534&lng=90.717&office_id=9
+~			39 image
++			40 heading 1
++			41 link map.land.gov.bd/
++			42 image
++			43 heading 2
++			44 container
++				45 pop up button (collapsed) Secondary Actions: Expand
++					46 menu
++						47 (selected)
++			48 container
++				49 pop up button (collapsed) Secondary Actions: Expand
++					50 menu
++						51 (selected)
+~			52 container
+~				53 pop up button (collapsed) Secondary Actions: Expand
+~					54 menu
++						55 (selected)
++			56 container
++				57 pop up button (collapsed) Secondary Actions: Expand
++					58 menu
++						59 (selected)
++			60 container
++				61 text field (settable)
++				62 button
++					63 image
++			64 image
++			65 container ইন্টারঅ্যাকটিভ মানচিত্র
++				66 container
++					67 container
++						68 button
++						69 button
++						70 link leafletjs.com/
++						71 link openstreetmap.org/copyright
++				72 container
++					73 button
++						74 image
++					75 button
++						76 image
++					77 button
++						78 image
++					79 button
++						80 image
++				81 container
++					82 button
++					83 button
+~			85 heading 2
+~			86 image
++			87 heading 3
++			88 heading 3
+~			89 heading 3
++			91 button
++				92 image
+~			93 button (collapsed) Secondary Actions: Expand
++			94 image
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/map?lat=23.534&lng=90.717&office_id=9

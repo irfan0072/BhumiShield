@@ -6,6 +6,7 @@ Each source is a single page; linked documents are references, not bulk download
 import argparse, datetime as dt, hashlib, html.parser, http.client, ipaddress, json
 import re, socket, ssl, sys, time, urllib.parse, urllib.robotparser
 from pathlib import Path
+from collection_policy import require_collection_enabled
 
 AGENT = 'BhumiShieldSourceReview/1.0'
 MAX_BYTES = 2_000_000
@@ -39,6 +40,7 @@ class Fetcher:
     def __init__(self, deadline=32):
         self.deadline=time.monotonic()+deadline;self.count=0;self.last={};self.policies={}
     def raw(self,url,redirects=0):
+        require_collection_enabled()
         p=official_url(url)
         if self.count>=10 or time.monotonic()>self.deadline:raise ValueError('Collection budget exhausted')
         wait=max(0,self.last.get(p.hostname,0)+2-time.monotonic())

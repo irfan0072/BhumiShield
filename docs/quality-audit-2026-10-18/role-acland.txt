@@ -1,0 +1,473 @@
+Browser tab: 9, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5193/bn/acland".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/acland
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা GovTech OS v2.0
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text GovTech OS v2.0
+			8 button সাইডবার সঙ্কুচিত করুন (Ctrl+B)
+				9 image
+			10 text ত তানভীর আহমেদ (সহকারী কমিশনার - ভূমি)
+			11 image
+			12 text সহকারী কমিশনার (ভূমি) প্যানেল উপজেলা ভূমি অফিস, সাভার, ঢাকা
+			13 text field (settable)
+			14 image
+			15 container Sidebar Navigation
+				16 button দাগ ডিজাইন ও বরাদ্দ GIS
+					17 image
+					18 text দাগ ডিজাইন ও বরাদ্দ
+					19 text GIS
+				20 text দাপ্তরিক কর্মপ্রবাহ
+				21 button ই-মিউটেশন কিউ (অনুমোদন) কেস
+					22 image
+					23 text ই-মিউটেশন কিউ (অনুমোদন)
+					24 text কেস
+				25 button খতিয়ান ও ওয়ারিশ সমন্বয়
+					26 image
+					27 text খতিয়ান ও ওয়ারিশ সমন্বয়
+				28 button বিরোধ ট্রাইব্যুনাল
+					29 image
+					30 text বিরোধ ট্রাইব্যুনাল
+				31 button অনবোর্ডিং ব্যাচ অনুমোদন (চেকার)
+					32 image
+					33 text অনবোর্ডিং ব্যাচ অনুমোদন (চেকার)
+				34 button খতিয়ান ও দাগ অনুসন্ধান
+					35 image
+					36 text খতিয়ান ও দাগ অনুসন্ধান
+				37 button দলিল সত্যতা যাচাই
+					38 image
+					39 text দলিল সত্যতা যাচাই
+			40 button পাবলিক পোর্টাল, Help: নাগরিক পাবলিক পোর্টাল
+				41 image
+				42 text পাবলিক পোর্টাল
+			43 button লগআউট
+				44 image
+				45 text লগআউট
+		46 container
+			47 container Breadcrumb
+				48 button ভূমি সুরক্ষা, Help: পাবলিক পোর্টাল
+					49 image
+					50 text ভূমি সুরক্ষা
+				51 image
+				52 image
+				53 text উপজেলা ভূমি অফিস, সাভার, ঢাকা
+				54 image
+				55 text সহকারী কমিশনার (ভূমি) প্যানেল
+			56 text Ed25519 ক্রিপ্টোগ্রাফিক লেজার সক্রিয় |  অনলাইন
+			57 text field (settable) global-header-search
+			58 image
+			59 text ⌘K
+			60 button অ্যাকশন, Help: দ্রুত অ্যাকশন মেনু
+				61 image
+				62 text অ্যাকশন
+				63 image
+			64 button বিজ্ঞপ্তি ও নোটিফিকেশন
+				65 image
+				66 text ১
+			67 button EN, Help: Language Switcher
+			68 button Toggle Contrast
+				69 image
+			70 pop up button (collapsed) Description: ব্যবহারকারী প্রোফাইল ও সেটিংস মেনু, Secondary Actions: Expand
+				71 text ত
+				72 text তানভীর আহমেদ (সহকারী কমিশনার - ভূমি)
+				73 text সহকারী কমিশনার (ভূমি) প্যানেল
+				74 image
+		75 container
+			76 text উপজেলা ভূমি অফিস / সহকারী কমিশনার (ভূমি) ট্রাইব্যুনাল
+			77 heading সহকারী কমিশনার (ভূমি) ট্রাইব্যুনাল ও নামজারি বেঞ্চ, Value: 1
+				78 image
+				79 text সহকারী কমিশনার (ভূমি) ট্রাইব্যুনাল ও নামজারি বেঞ্চ
+			80 text ই-নামজারি (e-Mutation) শুনানি ও খতিয়ান অনুমোদন, স্বত্বলিপির রেকর্ডের অমিল নিরসন, দেওয়ানি আপত্তি ট্রাইব্যুনাল এবং মাঠ পরিদর্শন তদারকি।
+			81 button রিফ্রেশ
+				82 image
+				83 text রিফ্রেশ
+			84 image
+			85 text সহকারী কমিশনার (ভূমি) বিচারাধীন নামজারি কেস
+			86 image
+			87 text ৬ শুনানি ও অনুমোদনের অপেক্ষায় অনুমোদিত নামজারি
+			88 image
+			89 text ৫ সৃজিত নতুন খতিয়ান রেকর্ডের অমিল / ফ্ল্যাগ
+			90 image
+			91 text ১ শুদ্ধিপত্র প্রয়োজন নাগরিক আপত্তি ও বিরোধ
+			92 image
+			93 text ২ মিস-কেস ও ট্রাইব্যুনাল
+			94 button ই-নামজারি বেঞ্চ ৬
+				95 image
+				96 text ই-নামজারি বেঞ্চ
+				97 text ৬
+			98 button রেকর্ডের অমিল ও শুদ্ধিপত্র ১
+				99 image
+				100 text রেকর্ডের অমিল ও শুদ্ধিপত্র
+				101 text ১
+			102 button আপত্তি ও মিস-কেস আদালত ২
+				103 image
+				104 text আপত্তি ও মিস-কেস আদালত
+				105 text ২
+			106 button মাঠ তদন্ত প্রতিবেদন ২
+				107 image
+				108 text মাঠ তদন্ত প্রতিবেদন
+				109 text ২
+			110 button জরিপ রেকর্ড ও ব্যাচ দাখিল ১
+				111 image
+				112 text জরিপ রেকর্ড ও ব্যাচ দাখিল
+				113 text ১
+			114 button জরিপ ব্যাচ নিরীক্ষা ও অনুমোদন ০
+				115 image
+				116 text জরিপ ব্যাচ নিরীক্ষা ও অনুমোদন
+				117 text ০
+			118 button সময়সীমা ও তাগিদ (SLA) ৩
+				119 image
+				120 text সময়সীমা ও তাগিদ (SLA)
+				121 text ৩
+			122 button রাজস্ব আপিল ট্রাইব্যুনাল
+				123 image
+				124 text রাজস্ব আপিল ট্রাইব্যুনাল
+			125 button খতিয়ান এক্সপ্লোরার
+				126 image
+				127 text খতিয়ান এক্সপ্লোরার
+			128 button দলিল ভেরিফায়ার
+				129 image
+				130 text দলিল ভেরিফায়ার
+			131 image
+			132 text সার্বজনীন অধিক্ষেত্র ফিল্টারিং (বিভাগ ➔ জেলা ➔ উপজেলা ➔ মৌজা)
+			133 image
+			134 text বিভাগ
+			135 pop up button (collapsed, settable) Value: সকল বিভাগ, Secondary Actions: Expand
+				136 menu
+					137 (selected) সকল বিভাগ
+					138 চট্টগ্রাম
+					139 ঢাকা
+			140 text জেলা
+			141 pop up button (collapsed, settable) Value: সকল জেলা, Secondary Actions: Expand
+				142 menu
+					143 (selected) সকল জেলা
+					144 কুমিল্লা
+					145 গাজীপুর
+					146 ঢাকা
+					147 নারায়ণগঞ্জ
+			148 text উপজেলা / থানা
+			149 pop up button (collapsed, settable) Value: সকল উপজেলা, Secondary Actions: Expand
+				150 menu
+					151 (selected) সকল উপজেলা
+			152 text মৌজা ও জে.এল. নং
+			153 pop up button (disabled, collapsed, settable) Value: সকল মৌজা, Secondary Actions: Expand
+				154 menu
+					155 (disabled) সকল মৌজা
+			156 text অনুসন্ধান (কেস নং, দাগ নং, আবেদনকারী বা বায়া দলিল নং)
+			157 image
+			158 text field (settable)
+			159 text আবেদনের বর্তমান স্থিতি
+			160 pop up button (collapsed, settable) Value: সকল আবেদন (All Status), Secondary Actions: Expand
+				161 menu
+					162 (selected) সকল আবেদন (All Status)
+					163 বিচারাধীন / শুনানির অপেক্ষায় (Pending)
+					164 অনুমোদিত ও খতিয়ান সৃজিত (Approved)
+					165 নামঞ্জুরকৃত (Rejected)
+			166 image
+			167 text ই-নামজারি কেস ও রেজিস্ট্রি তালিকা ১১ টি কেস আই-আইকন (👁) ক্লিক করে বিস্তারিত দেখুন ও রায় প্রদান করুন
+			168 table
+				169 row
+					170 cell
+						171 text #
+					172 cell
+						173 text কেস নম্বর ও তারিখ
+					174 cell
+						175 text আবেদনকারী ও গ্রহীতা
+					176 cell
+						177 text মৌজা ও দাগ নং
+					178 cell
+						179 text হস্তান্তরিত অংশ ও আয়তন
+					180 cell
+						181 text বায়া দলিল নং
+					182 cell
+						183 text স্থিতি
+					184 cell
+						185 text অ্যাকশন (শুনানি)
+				186 row
+					187 cell
+						188 text ১
+					189 cell
+						190 text MUT-WARISH-2026-885 ⚖️ ফারায়েজ
+						191 text 10/18/2026
+					192 cell
+						193 text মো. রফিকুল ইসলাম
+						194 container
+							195 text NID:  9900001001
+					196 cell
+						197 container
+							198 text দাগ নং:  ১০১
+						199 text বিরুলিয়া
+					200 cell
+						201 text ২০ শতক ( 20/20 )
+					202 cell
+						203 text DL-WARISH-2026-2085
+					204 cell
+						205 text শুনানি অপেক্ষমাণ
+					206 cell
+						207 button নামজারি শুনানি ও বিস্তারিত দেখুন
+							208 image
+				209 row
+					210 cell
+						211 text ২
+					212 cell
+						213 text MUT-WARISH-2026-884 ⚖️ ফারায়েজ
+						214 text 10/18/2026
+					215 cell
+						216 text মো. রফিকুল ইসলাম
+						217 container
+							218 text NID:  9900001001
+					219 cell
+						220 container
+							221 text দাগ নং:  ১০১
+						222 text বিরুলিয়া
+					223 cell
+						224 text ২০ শতক ( 20/20 )
+					225 cell
+						226 text DL-WARISH-2026-2084
+					227 cell
+						228 text শুনানি অপেক্ষমাণ
+					229 cell
+						230 button নামজারি শুনানি ও বিস্তারিত দেখুন
+							231 image
+				232 row
+					233 cell
+						234 text ৩
+					235 cell
+						236 text MUT-WARISH-2026-882 ⚖️ ফারায়েজ
+						237 text 10/18/2026
+					238 cell
+						239 text মো. রফিকুল ইসলাম
+						240 container
+							241 text NID:  9900001001
+					242 cell
+						243 container
+							244 text দাগ নং:  ১০১
+						245 text বিরুলিয়া
+					246 cell
+						247 text ৩৩ শতক ( 33/20 )
+					248 cell
+						249 text DL-WARISH-2026-2082
+					250 cell
+						251 text শুনানি অপেক্ষমাণ
+					252 cell
+						253 button নামজারি শুনানি ও বিস্তারিত দেখুন
+							254 image
+				255 row
+					256 cell
+						257 text ৪
+					258 cell
+						259 text MUT-WARISH-2026-881 ⚖️ ফারায়েজ
+						260 text 10/18/2026
+					261 cell
+						262 text মো. রফিকুল ইসলাম
+						263 container
+							264 text NID:  9900001001
+					265 cell
+						266 container
+							267 text দাগ নং:  ১০১
+						268 text বিরুলিয়া
+					269 cell
+						270 text ৩৩ শতক ( 33/20 )
+					271 cell
+						272 text DL-WARISH-2026-2081
+					273 cell
+						274 text শুনানি অপেক্ষমাণ
+					275 cell
+						276 button নামজারি শুনানি ও বিস্তারিত দেখুন
+							277 image
+				278 row
+					279 cell
+						280 text ৫
+					281 cell
+						282 text MUT-2026-502
+						283 text 9/29/2026
+					284 cell
+						285 text সালমা আক্তার
+						286 container
+							287 text NID:  9900001012
+					288 cell
+						289 container
+							290 text দাগ নং:  ১০৫
+						291 text বিরুলিয়া
+					292 cell
+						293 text ২৫ শতক ( 1/2 )
+					294 cell
+						295 text DL-2026-1005
+					296 cell
+						297 text শুনানি অপেক্ষমাণ
+					298 cell
+						299 button নামজারি শুনানি ও বিস্তারিত দেখুন
+							300 image
+				301 row
+					302 cell
+						303 text ৬
+					304 cell
+						305 text MUT-2026-501
+						306 text 10/3/2026
+					307 cell
+						308 text মো. জাহাঙ্গীর আলম
+						309 container
+							310 text NID:  9900001004
+					311 cell
+						312 container
+							313 text দাগ নং:  ১০২
+						314 text বিরুলিয়া
+					315 cell
+						316 text ১৫ শতক ( 1/1 )
+					317 cell
+						318 text DL-2026-1002
+					319 cell
+						320 text শুনানি অপেক্ষমাণ
+					321 cell
+						322 button নামজারি শুনানি ও বিস্তারিত দেখুন
+							323 image
+				324 row
+					325 cell
+						326 text ৭
+					327 cell
+						328 text MUT-LT-2026-588 ⚡ অটো এলটি নোটিশ
+						329 text 10/18/2026
+					330 cell
+						331 text মোসা. রাবেয়া খাতুন
+						332 container
+							333 text NID:  9900001002
+					334 cell
+						335 container
+							336 text দাগ নং:  ১১৩
+						337 text বিরুলিয়া
+					338 cell
+						339 text ২ শতক ( 2/23 )
+					340 cell
+						341 text DL-2026-1088
+					342 cell
+						343 text অনুমোদিত
+					344 cell
+						345 button নামজারি শুনানি ও বিস্তারিত দেখুন
+							346 image
+				347 row
+					348 cell
+						349 text ৮
+					350 cell
+						351 text MUT-LT-2026-587 ⚡ অটো এলটি নোটিশ
+						352 text 10/18/2026
+					353 cell
+						354 text মোসা. রাবেয়া খাতুন
+						355 container
+							356 text NID:  9900001002
+					357 cell
+						358 container
+							359 text দাগ নং:  ১১৩
+						360 text বিরুলিয়া
+					361 cell
+						362 text ৩ শতক ( 3/23 )
+					363 cell
+						364 text DL-2026-1087
+					365 cell
+						366 text অনুমোদিত
+					367 cell
+						368 button নামজারি শুনানি ও বিস্তারিত দেখুন
+							369 image
+				370 row
+					371 cell
+						372 text ৯
+					373 cell
+						374 text MUT-LT-2026-586 ⚡ অটো এলটি নোটিশ
+						375 text 10/18/2026
+					376 cell
+						377 text মোসা. রাবেয়া খাতুন
+						378 container
+							379 text NID:  9900001002
+					380 cell
+						381 container
+							382 text দাগ নং:  ১১৩
+						383 text বিরুলিয়া
+					384 cell
+						385 text ৫ শতক ( 5/23 )
+					386 cell
+						387 text DL-2026-1086
+					388 cell
+						389 text অনুমোদিত
+					390 cell
+						391 button নামজারি শুনানি ও বিস্তারিত দেখুন
+							392 image
+				393 row
+					394 cell
+						395 text ১০
+					396 cell
+						397 text MUT-WARISH-2026-883 ⚖️ ফারায়েজ
+						398 text 10/18/2026
+					399 cell
+						400 text মো. রফিকুল ইসলাম
+						401 container
+							402 text NID:  9900001001
+					403 cell
+						404 container
+							405 text দাগ নং:  ১০১
+						406 text বিরুলিয়া
+					407 cell
+						408 text ২০ শতক ( 20/20 )
+					409 cell
+						410 text DL-WARISH-2026-2083
+					411 cell
+						412 text অনুমোদিত
+					413 cell
+						414 button নামজারি শুনানি ও বিস্তারিত দেখুন
+							415 image
+				416 row
+					417 cell
+						418 text ১১
+					419 cell
+						420 text MUT-2024-101
+						421 text 3/16/2024
+					422 cell
+						423 text মো. রফিকুল ইসলাম
+						424 container
+							425 text NID:  9900001001
+					426 cell
+						427 container
+							428 text দাগ নং:  ১০১
+						429 text বিরুলিয়া
+					430 cell
+						431 text ২০ শতক ( 1/1 )
+					432 cell
+						433 text DL-2026-1001
+					434 cell
+						435 text অনুমোদিত
+					436 cell
+						437 button নামজারি শুনানি ও বিস্তারিত দেখুন
+							438 image
+		439 container
+			440 text ভূ ভূমি সুরক্ষা ভূমি নিরাপত্তা ও ট্রাস্ট প্রোটোটাইপ ভূমি সুরক্ষা একটি স্বাধীন উদ্ভাবনী প্রোটোটাইপ (LandTech Hackathon 2026)। সরকারি সেবাসমূহ সংশ্লিষ্ট ভূমি অফিস ও নিবন্ধন অধিদপ্তরের অফিসিয়াল পোর্টালের আওতাধীন। Ed25519 • SHA-256 Hash Chain নাগরিক সেবাসমূহ
+			441 content list
+				442 button জমি কেনার আগে যাচাই
+				443 button জমির হাট (নিরাপদ বিক্রয়)
+				444 button ক্যাডাস্ট্রাল মৌজা ম্যাপ
+				445 button দলিল QR কোড যাচাই
+				446 button অফিসিয়াল নোটিশবোর্ড
+				447 button ভূমি সাক্ষরতা ও আইন ব্লগ
+				448 button দপ্তর ও সেবা কেন্দ্রসমূহ
+				449 button নাগরিক ভল্ট ও বিক্রয় লক
+				450 button ⚖️ আইনজীবী কেস দাখিল পোর্টাল NEW
+					451 text ⚖️
+					452 text আইনজীবী কেস দাখিল পোর্টাল
+					453 text NEW
+			454 text দাপ্তরিক প্যানেল
+			455 content list
+				456 button সাব-রেজিস্ট্রার কনসোল
+				457 button এসি ল্যান্ড ট্রাইব্যুনাল
+				458 button ব্যাংক জামানত ও ডিজিটাল NOC
+				459 button জাতীয় লেজার ও RBAC অডিট
+				460 button ⚖️ আইনজীবী মামলা দাখিল (বিকল্প পথ)
+					461 text ⚖️
+					462 text আইনজীবী মামলা দাখিল (বিকল্প পথ)
+			463 text সহায়তা ও যোগাযোগ
+			464 content list
+				465 text ভূমি সেবা কল সেন্টার: ১৬১২২
+				466 text ভূমি মন্ত্রণালয় (সরকারি সময়সূচী অনুযায়ী)
+				467 text অফিসিয়াল সেবার সময়সূচি দেখুন
+				468 button সাধারণ জিজ্ঞাসাসমূহ (FAQ)
+				469 button ভূমি ও জরিপ পরিভাষা কোষ
+			470 text © ২০২৬ ভূমি সুরক্ষা (BhumiShield) · LandTech Hackathon Innovation. সর্বস্বত্ব সংরক্ষিত। সিনথেটিক ডেটা পরিবেশ / Synthetic data environment
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/acland

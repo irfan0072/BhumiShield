@@ -21,4 +21,7 @@ backend/database/*.sqlite-wal
 backend/database/*.sqlite-shm
 backend/database/backups/
 backend/database/*.recheck_backup*
+backend/database/*.backup*
 scratch/
+output/
+tmp/

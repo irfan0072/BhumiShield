@@ -14,6 +14,11 @@ $actor=['id'=>0,'username'=>'source-collector-cli','role'=>'admin','is_active'=>
 $watch=in_array('--watch',$argv,true);
 do { $count=0;
 if(in_array('--sync-links',$argv,true)){echo json_encode(C::syncLinks($actor))."\n";exit;}
+if(!C::collectionSettings()['enabled']){
+ echo "Collection is globally OFF. No government pages requested.\n";
+ if(!$watch)exit;
+ sleep(15);continue;
+}
 foreach(DB::select('SELECT * FROM source_monitors WHERE enabled=1 ORDER BY COALESCE(last_attempt,\'\'),id') as $s){
  if($count>=$max)break;
  if($only!==null&&$only!==$s['source_key'])continue;

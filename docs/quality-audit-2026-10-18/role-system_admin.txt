@@ -1,0 +1,9 @@
+Browser tab: 9, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5193/bn/admin".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~			10 text স সিস্টেম অ্যাডমিন (প্ল্যাটফর্ম প্রধান)
+~			12 text সিস্টেম অ্যাডমিন প্যানেল ভূমি মন্ত্রণালয় (কেন্দ্রীয় ডাটা সেন্টার)
+~				104 text ভূমি মন্ত্রণালয় (কেন্দ্রীয় ডাটা সেন্টার)
+~				106 text সিস্টেম অ্যাডমিন প্যানেল
+~				123 text সিস্টেম অ্যাডমিন (প্ল্যাটফর্ম প্রধান)
+~				124 text সিস্টেম অ্যাডমিন প্যানেল
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/admin

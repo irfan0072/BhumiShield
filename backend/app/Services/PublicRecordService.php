@@ -19,7 +19,7 @@ final class PublicRecordService
     public static function minimize(array $data): array
     {
         foreach ($data as $key => &$value) {
-            if (is_string($key) && preg_match('/^(father_name|mother_name|address|phone|mobile|email)(_|$)/i', $key)) { unset($data[$key]); continue; }
+            if (is_string($key) && preg_match('/^(father_name|mother_name|address|phone|mobile|email|locked_by_nid|admin_freeze_reason|admin_notes)(_|$)/i', $key)) { unset($data[$key]); continue; }
             if (in_array($key, ['content_json','original_content_json','canonical_payload','canonical_json'], true)) { unset($data[$key]); continue; }
             if (is_string($key) && preg_match('/^(?:[a-z_]+_)?nid(?:_mock)?$/i', $key)) {
                 $raw = (string) $value;

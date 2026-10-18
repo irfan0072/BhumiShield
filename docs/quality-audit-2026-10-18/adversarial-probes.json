@@ -1,0 +1,41 @@
+{
+    "anonymous_lawyer_identity_lookup": {
+        "http": 200,
+        "verified": true,
+        "returns_unmasked_nid": true,
+        "returns_phone": true,
+        "returns_email": true
+    },
+    "anonymous_case_filing": {
+        "http": 200,
+        "count_delta": 1,
+        "persisted_status": "OPEN",
+        "authentication_or_evidence_supplied": false
+    },
+    "seller_can_confirm_buyer": {
+        "http": 200,
+        "code": null,
+        "before_step": 3,
+        "after_step": 4,
+        "response_status": "PROCESSING"
+    },
+    "coowner_consent_notes_only": {
+        "http": 200,
+        "code": null,
+        "before_step": 5,
+        "after_step": 6,
+        "response_status": "PROCESSING"
+    },
+    "appointment_step_without_booking": {
+        "http": 200,
+        "code": null,
+        "before_step": 7,
+        "after_step": 8,
+        "response_status": "PROCESSING"
+    },
+    "invalid_phone_registration": {
+        "http": 200,
+        "code": null
+    },
+    "passkey_readiness": "READY"
+}

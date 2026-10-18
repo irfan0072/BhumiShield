@@ -1,0 +1,26 @@
+PASS Reject FORBIDDEN_ROLE
+PASS Reject FORBIDDEN_ROLE
+PASS Assigned office sees mouza
+PASS Unassigned officer sees no mouza
+PASS Positive drawn area
+PASS Shared edge is allowed
+PASS Identical boundaries overlap
+PASS Contained parcel overlaps
+PASS Reject SELF_INTERSECTION
+PASS Reject SINGLE_POLYGON_REQUIRED
+PASS Reject MAP_OFFICE_SCOPE
+PASS Draft hidden from public
+PASS Reject DUPLICATE_DAG
+PASS Reject DESIGN_CONFLICT
+PASS Reject REVIEW_ROLE_REQUIRED
+PASS Reject INDEPENDENT_REVIEW_REQUIRED
+PASS Return for correction works
+PASS Reject MAP_REVIEW_REQUIRED
+PASS Only published geometry is public
+PASS Reject PARCEL_OVERLAP
+PASS Adjacent parcel saved
+PASS Revision replaces old public version
+PASS Withdrawal removes public boundary
+PASS Drawing and allocation do not alter ownership
+PASS Design decisions audited
+PARCEL DESIGN CHECKS: 25 passed

@@ -189,24 +189,64 @@ final class WorkflowController
 
     public static function listLocations(): array
     {
-        $locs = DB::select('SELECT * FROM locations ORDER BY id ASC');
-        $plots = DB::select(
+        $locs = DB::select('SELECT id, division_bn, division_en, district_bn, district_en, upazila_bn, upazila_en, mouza_bn, mouza_en, jl_no, latitude, longitude FROM locations ORDER BY id ASC');
+        $rawPlots = DB::select(
             'SELECT p.*, l.mouza_bn, l.mouza_en, l.upazila_bn, l.upazila_en, l.district_bn, l.district_en
              FROM plots p
              JOIN locations l ON l.id = p.location_id
              ORDER BY p.id ASC'
         );
+
+        $caller = JwtAuthService::getAuthenticatedUser();
+        $isAdmin = $caller && in_array($caller['role'] ?? '', ['admin', 'system_admin'], true);
+
+        // A19: Explicit minimal public projection for plots, stripping locked_by_nid, internal notes and actor metadata
+        $plots = array_map(static function (array $p) use ($isAdmin): array {
+            $dto = [
+                'id' => (int) $p['id'],
+                'plot_code' => (string) ($p['plot_code'] ?? ''),
+                'location_id' => (int) $p['location_id'],
+                'mouza_id' => (int) $p['location_id'],
+                'dag_no' => (string) $p['dag_no'],
+                'dag_no_bn' => (string) ($p['dag_no_bn'] ?? $p['dag_no']),
+                'land_type_bn' => (string) ($p['land_type_bn'] ?? ''),
+                'land_type_en' => (string) ($p['land_type_en'] ?? ''),
+                'total_area_decimal' => (float) $p['total_area_decimal'],
+                'owner_sale_locked' => (int) ($p['owner_sale_locked'] ?? 0),
+                'is_admin_frozen' => (int) ($p['is_admin_frozen'] ?? 0),
+                'mouza_bn' => (string) ($p['mouza_bn'] ?? ''),
+                'mouza_en' => (string) ($p['mouza_en'] ?? ''),
+                'upazila_bn' => (string) ($p['upazila_bn'] ?? ''),
+                'upazila_en' => (string) ($p['upazila_en'] ?? ''),
+                'district_bn' => (string) ($p['district_bn'] ?? ''),
+                'district_en' => (string) ($p['district_en'] ?? ''),
+            ];
+
+            if ($isAdmin) {
+                $dto['admin_freeze_reason'] = $p['admin_freeze_reason'] ?? null;
+                $dto['admin_frozen_at'] = $p['admin_frozen_at'] ?? null;
+                $dto['admin_frozen_by'] = $p['admin_frozen_by'] ?? null;
+            }
+
+            return $dto;
+        }, $rawPlots);
+
         return ['locations' => $locs, 'plots' => $plots];
     }
 
     public static function listPersons(?array $query = null): array
     {
         $user = JwtAuthService::getAuthenticatedUser();
-        $isOfficial = $user && in_array($user['role'] ?? '', ['sub_registrar', 'ac_land', 'bank_officer', 'admin'], true);
+        $role = $user['role'] ?? '';
+        
+        // A20: Replace broad isOfficial permission. Bank officers cannot dump national person directory.
+        $isFullDirectoryOfficial = $user && in_array($role, ['sub_registrar', 'ac_land', 'admin', 'system_admin'], true);
 
         $plotId = !empty($query['plot_id']) ? (int) $query['plot_id'] : null;
+        $nidQuery = !empty($query['nid']) ? trim((string) $query['nid']) : null;
 
         if ($plotId !== null) {
+            // Plot-scoped query: authorized for land officers, bank officers verifying collateral, or public pre-check
             $rows = DB::select(
                 'SELECT DISTINCT p.* FROM persons p
                  JOIN ownerships o ON o.person_id = p.id
@@ -214,17 +254,25 @@ final class WorkflowController
                  ORDER BY p.id ASC',
                 [$plotId]
             );
-        } elseif ($isOfficial) {
+            $canUnmask = $isFullDirectoryOfficial || ($role === 'bank_officer');
+        } elseif ($nidQuery !== null) {
+            // Exact NID query: authorized for officers
+            $rows = DB::select('SELECT * FROM persons WHERE nid = ? LIMIT 1', [$nidQuery]);
+            $canUnmask = $isFullDirectoryOfficial || ($role === 'bank_officer');
+        } elseif ($isFullDirectoryOfficial) {
+            // Full directory permitted only for competent registrar/AC Land/admin roles
             $rows = DB::select('SELECT * FROM persons ORDER BY id ASC');
+            $canUnmask = true;
         } else {
-            // Minimal public directory to support demo pre-check, strictly masked (I04)
+            // Bank officers without plot/NID scope and general callers receive strictly masked projection (I04 / A20)
             $rows = DB::select('SELECT id, name_bn, name_en, nid, is_deceased FROM persons ORDER BY id ASC LIMIT 25');
+            $canUnmask = false;
         }
 
-        // Apply privacy masking for non-officials (I04)
+        // Apply privacy masking when unmasking is not authorized
         foreach ($rows as &$p) {
             $raw = (string) ($p['nid'] ?? '');
-            if (!$isOfficial) {
+            if (!$canUnmask) {
                 $masked = strlen($raw) >= 6 ? (substr($raw, 0, 4) . '****' . substr($raw, -2)) : '****';
                 $p['nid'] = $masked;
                 $p['nid_mock'] = $masked;

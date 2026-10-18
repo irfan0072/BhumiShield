@@ -247,6 +247,8 @@ export interface EmergencyBroadcastState {
 export interface DatabaseBackupResponse {
   status: string;
   backup_filename: string;
+  filename?: string;
+  download_url?: string;
   file_size_bytes: number;
   file_size_kb: number;
   sha256_checksum: string;

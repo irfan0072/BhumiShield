@@ -1,0 +1,5 @@
+{
+    "layout": "backend-only API image, with no sibling tools directory",
+    "result": "exception",
+    "error": "file_get_contents(\/private\/tmp\/bhumishield-quality-audit-20261018\/deployment-layout\/backend\/..\/tools\/service_sources\/sources.json): Failed to open stream: No such file or directory"
+}

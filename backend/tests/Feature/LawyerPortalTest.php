@@ -57,11 +57,14 @@ final class LawyerPortalTest
 
         $passed = 0;
 
-        // 1. Verify Lawyer Active
+        // 1. Verify Lawyer Active (A02: ensure no private PII leak to public caller)
         $res = self::callRoute('POST', '/api/v1/lawyers/verify', ['bar_council_no' => 'BC-DH-14285']);
         self::assertEqual(200, $res['status'], 'Verify active lawyer status');
         self::assertTrue($res['body']['verified'] === true, 'Lawyer should be verified');
         self::assertEqual('ব্যারিস্টার মো. নাজমুল হুদা', $res['body']['lawyer']['lawyer_name_bn']);
+        self::assertTrue(!isset($res['body']['lawyer']['nid']), 'Anonymous verification must NOT leak NID');
+        self::assertTrue(!isset($res['body']['lawyer']['phone']), 'Anonymous verification must NOT leak phone');
+        self::assertTrue(!isset($res['body']['lawyer']['email']), 'Anonymous verification must NOT leak email');
         $passed++;
 
         // 2. Verify Lawyer Suspended
@@ -75,7 +78,36 @@ final class LawyerPortalTest
         self::assertEqual(404, $res404['status'], 'Nonexistent lawyer should fail with 404');
         $passed++;
 
-        // 4. File Case via Alternative Lawyer Portal
+        // 4. File Case Authorization (A01: Anonymous rejected with 401, citizen rejected with 403)
+        $anonRes = self::callRoute('POST', '/api/v1/lawyers/file-case', [
+            'bar_council_no' => 'BC-DH-14285',
+            'plot_id' => 1,
+        ]);
+        self::assertEqual(401, $anonRes['status'], 'Anonymous filing must return 401');
+
+        $citizenUser = DB::selectOne("SELECT * FROM users WHERE role = 'citizen' LIMIT 1");
+        $citJwt = JwtAuthService::createToken([
+            'sub' => $citizenUser['username'],
+            'role' => 'citizen',
+            'nid' => $citizenUser['nid'] ?? '19852694123456789',
+            'exp' => time() + 3600,
+            'ver' => 1,
+        ]);
+        $citRes = self::callRoute('POST', '/api/v1/lawyers/file-case', [
+            'bar_council_no' => 'BC-DH-14285',
+            'plot_id' => 1,
+        ], $citJwt);
+        self::assertEqual(403, $citRes['status'], 'Citizen filing must return 403');
+
+        // Authorized Advocate Filing
+        $advUser = DB::selectOne("SELECT * FROM users WHERE role = 'admin' LIMIT 1");
+        $advJwt = JwtAuthService::createToken([
+            'sub' => $advUser['username'],
+            'role' => $advUser['role'],
+            'exp' => time() + 3600,
+            'ver' => (int) ($advUser['token_version'] ?? 1),
+        ]);
+
         $fileRes = self::callRoute('POST', '/api/v1/lawyers/file-case', [
             'bar_council_no' => 'BC-DH-14285',
             'plot_id' => 1,
@@ -92,15 +124,16 @@ final class LawyerPortalTest
             'boundary_south' => 'রহিম জমি',
             'boundary_east' => 'দাগ ১০২',
             'boundary_west' => 'খাল',
-        ]);
-        self::assertEqual(200, $fileRes['status'], 'File case should succeed');
+        ], $advJwt);
+        self::assertEqual(200, $fileRes['status'], 'Authorized lawyer filing should succeed');
         self::assertTrue(str_starts_with($fileRes['body']['case_no'], 'LAW-CASE-'), 'Case no format');
         self::assertTrue(!empty($fileRes['body']['verification']['content_hash']), 'Content hash should be generated');
 
-        // Check dispute inserted with source = LAWYER_PORTAL
+        // Check dispute inserted with source = LAWYER_PORTAL and status = PENDING_REVIEW
         $dispute = DB::selectOne('SELECT * FROM disputes WHERE id = ?', [$fileRes['body']['dispute_id']]);
         self::assertTrue($dispute !== null, 'Dispute row must exist');
         self::assertEqual('LAWYER_PORTAL', $dispute['source'], 'Source must be LAWYER_PORTAL');
+        self::assertEqual('PENDING_REVIEW', $dispute['status'], 'Initial dispute status must be PENDING_REVIEW');
         self::assertEqual('BC-DH-14285', $dispute['lawyer_bar_council_no'], 'Advocate license tracked');
         $passed++;
 

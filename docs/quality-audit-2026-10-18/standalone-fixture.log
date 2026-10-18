@@ -1,0 +1,2 @@
+INFO  Dropped all tables, ran migrations, and seeded BhumiShield demo database:
+      {"users":23,"mouzas":4,"persons":42,"plots":60,"khatian_records":240,"deeds":80}

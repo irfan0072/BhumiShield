@@ -67,6 +67,7 @@ return static function (string $method, string $uri, array $query, array $body):
     if ($method === 'GET' && $sub === '/sources/public') return \App\Http\Controllers\Api\V1\SourceIntelligenceController::publicItems($query);
     if ($method === 'GET' && $sub === '/sources/context') return \App\Http\Controllers\Api\V1\SourceIntelligenceController::context();
     if ($sub === '/sources/subscriptions' && in_array($method,['GET','POST'],true)) return \App\Http\Controllers\Api\V1\SourceIntelligenceController::subscriptions($body,$method==='POST');
+    if ($method === 'POST' && $sub === '/admin/sources/collection-settings') return \App\Http\Controllers\Api\V1\SourceIntelligenceController::configureCollection($body);
     if ($method === 'POST' && $sub === '/admin/sources/sync-links') return \App\Http\Controllers\Api\V1\SourceIntelligenceController::syncLinks();
     if ($method === 'GET' && $sub === '/admin/sources') return \App\Http\Controllers\Api\V1\SourceIntelligenceController::admin();
     if ($method === 'POST' && $sub === '/admin/sources') return \App\Http\Controllers\Api\V1\SourceIntelligenceController::configure($body);

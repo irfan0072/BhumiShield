@@ -1,337 +1,355 @@
-# 🛡️ BhumiShield (ভূমি সুরক্ষা)
-### Sovereign Land Records Trust Layer & Autonomous Fraud Prevention Engine
-**স্মার্ট ই-গভর্ন্যান্সের জন্য সার্বভৌম ভূমি রেকর্ড, ক্রিপ্টোগ্রাফিক যাচাইকরণ ও ডিজিটাইজেশন প্ল্যাটফর্ম**
+<div align="center">
+
+# 🛡️ BhumiShield · ভূমি সুরক্ষা
+
+### জমি কেনার আগে বুঝুন ঝুঁকি। হস্তান্তরের প্রতিটি ধাপ রাখুন অনুসরণযোগ্য।
+
+**Explainable fraud checks across land registration and mutation**
+
+[![Track](https://img.shields.io/badge/LandTech_2026-Digital_Land_Records-006A4E?style=flat-square)](#-competition-focus)
+[![Stage](https://img.shields.io/badge/Stage-Working_Prototype-475569?style=flat-square)](#-scope--honest-limitations)
+[![Language](https://img.shields.io/badge/Experience-Bangla_First-006A4E?style=flat-square)](#-the-user-journey)
+[![Collection default](https://img.shields.io/badge/Collection_Default-OFF-b7791f?style=flat-square)](#-government-source-collection-control)
+
+[**Open frontend ↗**](https://bhumishield-web.onrender.com) · [**Backend ↗**](https://bhumishield-api.onrender.com) · [**Run locally**](#-run-locally) · [**Documentation**](#-documentation)
+
+*An independent student prototype for LandTech Innovation Hackathon 2026. It is not a government portal, an official title certificate, or a substitute for an authorized land-office decision.*
+
+</div>
 
 ---
 
-[![Tests Status](https://img.shields.io/badge/Automated%20Tests-128%20Passed%20%7C%200%20Failed-2ea44f?style=for-the-badge&logo=githubactions&logoColor=white)](backend/tests/)
-[![Frontend Build](https://img.shields.io/badge/Frontend-React%2018%20%7C%20TypeScript%20%7C%20Vite%206-61DAFB?style=for-the-badge&logo=react&logoColor=black)](frontend/)
-[![Backend Engine](https://img.shields.io/badge/Backend-PHP%208.4%20%7C%20Custom%20Microframework-777BB4?style=for-the-badge&logo=php&logoColor=white)](backend/)
-[![Cryptographic Security](https://img.shields.io/badge/Security-SHA--256%20%7C%20Ed25519%20Detached-red?style=for-the-badge&logo=securityscorecard&logoColor=white)](backend/app/Services/LedgerService.php)
-[![Data Integrity](https://img.shields.io/badge/Data%20Policy-100%25%20Synthetic%20Dummy%20Data-blue?style=for-the-badge&logo=databricks&logoColor=white)](#-ডাটা-পলিসি--এআই-ডিসক্লোজার-mandatory-disclosures)
-[![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AA%20%7C%20Bangla%20First-gold?style=for-the-badge)](frontend/src/i18n/)
+## 🎯 Competition focus
 
----
+| | |
+|---|---|
+| **Track** | Digital Land Records, Verification & Digitization |
+| **Primary technical focus** | **P3 — Catch Fraud & Double-Selling** |
+| **Core question** | Can we explain transaction risks before a proposed sale, and keep registration and mutation records connected? |
+| **Primary users** | Citizens and buyers, sub-registry staff, AC Land staff |
+| **Supporting users** | Bank officers, survey/review staff, lawyers, administrators and auditors |
+| **Submission stage** | Working prototype; validation and security hardening continue |
 
-## 📌 প্রকল্পের সারসংক্ষেপ (Executive Summary)
+The concept note should name **one** problem. Deed integrity (P2), registration–mutation tracking (P4) and the citizen checker (P5) support the P3 story. The team must confirm that this focus matches its registered selection.
 
-**BhumiShield (ভূমি সুরক্ষা)** হলো বাংলাদেশের ভূমি প্রশাসন ব্যবস্থার জন্য নির্মিত একটি সার্বভৌম ক্রিপ্টোগ্রাফিক ট্রাস্ট লেয়ার এবং সমন্বিত ডিজিটাল ভূমি সেবা প্ল্যাটফর্ম। 
+### The problem
 
-বাংলাদেশে যুগ যুগ ধরে প্রচলিত ভূমির বিরোধ, জাল দলিল তৈরি, একই জমি একাধিক ক্রেতার নিকট প্রতারণামূলক বিক্রয় এবং খতিয়ানের ধারাবাহিকতা বিকৃত করার প্রধান কারণ হলো—**সাব-রেজিস্ট্রি অফিস (নিবন্ধন অধিদপ্তর)** এবং **উপজেলা ভূমি অফিস (এসি ল্যান্ড ট্রাইব্যুনাল)**-এর ডেটাবেজ পরস্পর সংযুক্ত না থাকা। BhumiShield একটি অপরিবর্তনীয় ব্লকচেইন-অনুপ্রাণিত হ্যাশ লেজার, ৯টি গাণিতিক ফ্রড ডিটেকশন ইঞ্জিন এবং সাংবিধানিক মালিকানা নিরাপত্তা গার্ডের মাধ্যমে এই শূন্যতা দূর করে সম্পূর্ণ ডিজিটাল ও নিষ্কণ্টক ভূমি সেবা নিশ্চিত করে।
+A buyer may see a deed without understanding whether the recorded seller has enough remaining share, a prior sale is awaiting mutation, or the parcel has a recorded lien or dispute. Meanwhile, registration and mutation history can be difficult to follow across separate workflows.
+
+**BhumiShield brings those checks into one explainable prototype:** a citizen starts with a parcel, sees recorded risks and next steps, and follows an application through the responsible roles. Officers see review queues and traceable decisions instead of treating a document upload as proof of ownership.
+
+> **Illustrative scenario — synthetic data only:** A recorded owner proposes a second sale while a prior sale remains pending. The checker identifies the recorded conflict and explains why an officer must review it. A green result means no configured risk was found in the available prototype records; it does not guarantee legally clear title.
+
+## 🔗 Hosted prototype
+
+| Component | Link | Purpose |
+|---|---|---|
+| Frontend | [bhumishield-web.onrender.com](https://bhumishield-web.onrender.com) | Citizen and role workspaces |
+| Backend | [bhumishield-api.onrender.com](https://bhumishield-api.onrender.com) | Application API |
+| Health endpoint | [API health](https://bhumishield-api.onrender.com/api/v1/health) | Basic service/database readiness response |
+
+These deployment addresses were supplied by the team. Their inclusion is not a claim that this repository revision has been deployed, every endpoint is available, or all workflows have passed remote testing. Browser access to the API root is not itself an end-user interface.
+
+## ✨ What the prototype brings together
+
+| Capability | What users can do | Boundary |
+|---|---|---|
+| **Check before you buy** | Review explainable findings from ownership/share, pending-sale, lien, dispute and record-history checks | Results depend on recorded data; no legal title guarantee |
+| **Document integrity** | Verify application records using SHA-256 hashes, Ed25519 signatures and QR verification | Detects certain changes relative to recorded proofs; does not prove original input was true |
+| **Connected transfer workflow** | Follow registration and mutation tasks, reviews and application status | Sensitive transitions require further regression hardening |
+| **Citizen property vault** | View linked documents, application context and sale-lock controls | Prototype records and permissions; no direct government-record lookup |
+| **Office workspaces** | Work through role-specific queues, review stages and administrative controls | National office isolation and every role/action combination are not certified |
+| **Parcel workspace** | Explore the map, draw proposed parcels, submit/review designs and propose owner allocation | OSM/reference points are not authoritative cadastral boundaries or legal subdivision approval |
+| **Bank and review modules** | Demonstrate recorded lien/NOC and supporting review workflows | No operational bank, court or government integration is claimed |
+| **Service guidance** | Link service context, offices and reviewed guidance to a citizen's need | Guidance is informational; public-source collection is off by default |
+
+### A look inside
+
+| Citizen workspace | Parcel design workspace |
+|---|---|
+| ![Citizen workspace from a local audit](docs/audit-evidence-2026-10-18/citizen.png) | ![Parcel drawing workspace from local QA](docs/parcel-designer-2026-10-18/drawing-editor-qa.png) |
+
+*Screenshots document earlier local prototype states; they do not certify the current hosted build or government approval.*
+
+## 🧭 The user journey
 
 ```mermaid
-graph TD
-    subgraph "Core Data & Security Layer"
-        DB[(48 SQLite/MySQL Tables)]
-        Ledger[SHA-256 & Ed25519 Cryptographic Block Chain]
-        Guard[Inviolable Ownership Guard - AC Land Only]
-        FraudEngine[9 Deterministic Mathematical Fraud Engines]
-    end
-
-    subgraph "Administrative & Specialized Workspaces"
-        SuperAdmin[Super Admin Single-Screen Cockpit]
-        ACLand[AC Land Mutation Tribunal]
-        SubReg[Sub-Registrar E-Deed Engine]
-        Bank[Commercial Bank Lien & NOC]
-        Lawyer[Advocate Litigation & Injunction Hub]
-        DC[DC Land Acquisition Branch]
-        Appeals[ADC Revenue Appellate Reviewer]
-        Surveyor[Field Surveyor & Kanungo GIS]
-    end
-
-    subgraph "Citizen & Public Portals"
-        Citizen[Citizen Vault & Plot Sale Lock]
-        Check[Check-Before-Buy 9-Engine Auditor]
-        Map[Interactive Cadastral GIS & Parcel Designer]
-        QR[Public QR Verification & Ledger Stamp]
-    end
-
-    DB --> Guard
-    Guard --> Ledger
-    Ledger --> FraudEngine
-    FraudEngine --> SuperAdmin & ACLand & SubReg & Bank & Lawyer & DC & Appeals & Surveyor
-    SuperAdmin & ACLand & SubReg & Bank & Lawyer & DC & Appeals & Surveyor --> Citizen & Check & Map & QR
+flowchart LR
+    A[Find a parcel] --> B[Read recorded risks]
+    B --> C[Prepare proposed transfer]
+    C --> D[Registration review]
+    D --> E[Mutation review]
+    E --> F[Authorized record update]
+    C --> G[Citizen tracks progress]
+    D --> G
+    E --> G
 ```
 
----
+The diagram describes the intended workflow. Party consent, office scope, verified payment state and authorized final approval must be enforced at the relevant transitions; the diagram is not evidence that every transition is defect-free.
 
-## 🎯 সমস্যা সমাধান ম্যাপিং (Problem Coverage & Solutions)
+| User | Main responsibility | Starting point |
+|---|---|---|
+| Citizen / buyer | Check a parcel, review own records, prepare and track applications | `/bn/home`, `/bn/check` |
+| Sub-registrar | Review the proposed deed and registration-stage requirements | `/bn/registrar` |
+| AC Land | Review mutation and the configured final ownership-approval step | `/bn/acland` |
+| Bank officer | Review recorded collateral, liens and NOC workflows | `/bn/bank` |
+| Survey / record staff | Prepare field and parcel evidence within assigned scope | Assigned workspace; `/bn/map` |
+| Lawyer / court user | Handle authorized case-related records and review context | `/bn/lawyer_case` |
+| Super Admin | Manage users, offices, configuration, source controls and oversight | `/bn/admin` |
+| Auditor / reviewer | Inspect evidence and decisions within assigned permissions | Assigned role workspace |
 
-BhumiShield ভূমি ব্যবস্থার ৫টি মৌলিক চ্যালেঞ্জকে একটি একক সমন্বিত আর্কিটেকচারে সমাধান করে:
+Platform administration must remain separate from a party's consent and legally authorized land decisions. A prototype role name does not confer real governmental authority.
 
-| সমস্যা ক্ষেত্র | বাস্তব জীবনের সমস্যা | BhumiShield-এর প্রযুক্তিগত সমাধান |
-|:---|:---|:---|
-| **P1: পুরাতন রেকর্ড ডিজিটাইজেশন** | শতবর্ষী CS, SA, RS, BS খতিয়ান বিচ্ছিন্ন ও হাতে লেখা হওয়ায় সহজে রেকর্ড টেম্পারিং হয়। | **মেকার-চেকার স্ট্যাজিং অনবোর্ডিং** ও শতবর্ষী খতিয়ান চেইনের ডিজিটাল বংশলতিকা ম্যাপিং। |
-| **P2: দলিল ও মালিকানা যাচাই** | নকল সই ও ভুয়া বালাম দলিলের মাধ্যমে জমি হস্তান্তরের চেষ্টা। | **Ed25519 ডিজিটাল সিল**, ক্যানোনিকাল **SHA-256 হ্যাশ-চেইন** ও অফলাইন-যাচাইযোগ্য কিউআর কোড। |
-| **P3: জালিয়াতি ও দ্বৈত বিক্রি রোধ** | একই জমি একাধিক ব্যক্তির কাছে গোপনে বিক্রি বা বন্ধকী জমি বিক্রি। | **৯টি রিয়েল-টাইম ডিটারমিনিস্টিক ফ্রড ইঞ্জিন**—অননুমোদিত বা দ্বৈত লেনদেন তাৎক্ষণিক গাণিতিকভাবে ব্লক। |
-| **P4: স্মার্ট ই-নামজারি ও সাব-রেজিস্ট্রি** | দলিল রেজিস্ট্রির পর মাসের পর মাস নামজারি আটকে থাকা বা দালাল নির্ভরতা। | **স্বয়ংক্রিয় নামজারি লিংকেজ**, এসি ল্যান্ড শুনানি আদালত, ডিজিটাল DCR ও নতুন খতিয়ান সৃজন। |
-| **P5: কেনার আগে যাচাই** | ক্রেতা বায়না বা টাকা পরিশোধ করার আগে জমির প্রকৃত আইনি অবস্থা জানতে পারেন না। | **"কেনার আগে যাচাই" পোর্টাল**—দাগ নং দিয়ে ১-ক্লিকে মালিকানা, বায়া দলিল, মামলা ও বন্ধক স্ট্যাটাস চেক। |
+## 🏗️ Architecture
 
----
-
-## 🏢 ব্যবহারকারী ও প্রয়োগক্ষেত্র (Sector-by-Sector Application)
-
-BhumiShield প্রতিটি অংশীদারের জন্য সুনির্দিষ্ট ও ব্যবহারবান্ধব কার্যপ্রবাহ প্রদান করে:
-
-| খাত / প্রতিষ্ঠান | ব্যবহারকারীর ভূমিকা | তাদের জন্য প্ল্যাটফর্মের সুবিধা | সংশ্লিষ্ট রাউট |
-|:---|:---|:---|:---:|
-| **সাব-রেজিস্ট্রি অফিস** | সাব-রেজিস্ট্রার ও মেকার | বিক্রয়ের পূর্বে খতিয়ানের বৈধতা, বিক্রেতার অবশিষ্ট অংশ ও বায়োমেট্রিক কনসেন্ট নিশ্চিতকরণ। | `/bn/registrar` |
-| **এসি ল্যান্ড অফিস** | সহকারী কমিশনার (ভূমি) | ই-নামজারি প্রস্তাব স্ক্রুটিনি, সার্ভেয়ার রিপোর্ট যাচাই, শুনানি গ্রহণ ও ডিজিটাল DCR প্রদান। | `/bn/acland` |
-| **ব্যাংক ও আর্থিক প্রতিষ্ঠান** | ব্যাংক ক্রেডিট অফিসার ও ম্যানেজার | ঋণের বিপরীতে দাগে ডিজিটাল লিয়েন (Mortgage) স্থাপন ও ঋণমুক্তিতে ডিজিটাল NOC প্রদান। | `/bn/bank` |
-| **ভূমি অধিগ্রহণ (ডিসি অফিস)** | এলএ শাখা কর্মকর্তা | ধারা ৪ ও ধারা ৭ অনুযায়ী অধিগ্রহণ নোটিশ জারি, ক্ষতিপূরণ ট্র্যাকিং ও দাগ স্বয়ংক্রিয় লক। | `/bn/admin?tab=acquisitions` |
-| **জরিপ ও রেকর্ড (DLRS)** | কানুনগো ও সার্ভেয়ার | ক্যাডাস্ট্রাল মৌজা ম্যাপে দাগ বিভাজন (Subdivision), মার্জ ও ভেক্টর বাউন্ডারি জিআইএস ডিজাইন। | `/bn/map?design=1` |
-| **আদালত ও আইনজীবী** | সুপ্রিম কোর্ট / জজ কোর্ট আইনজীবী | দেওয়ানি মামলা ও নিষেধাজ্ঞার আরজি দাখিল, মামলার ডকেট তৈরি এবং দাগে আদালতের ইনজাংকশন লক। | `/bn/lawyer_case` |
-| **নাগরিক ও জমি ক্রেতা** | সাধারণ নাগরিক ও জমির মালিক | "কেনার আগে যাচাই", প্রপার্টি ভল্ট, শতবর্ষী খতিয়ান বংশলতিকা এবং **জমির বিক্রয় লক (🔒)**। | `/bn/check` & `/bn/home` |
-| **রিয়েল এস্টেট ডেভেলপার** | কর্পোরেট ভূমি ক্রেতা | একাধিক দাগের সমন্বিত মালিকানা যাচাই, বায়া দলিল চেইন অখণ্ডতা এবং নিষ্কণ্টক টাইটেল সার্চ। | `/bn/check` |
-
----
-
-## 📸 লাইভ ইন্টারফেস ও ভিজ্যুয়াল ট্যুর (Visual Tour)
-
-### ১. নাগরিকের জন্য "কেনার আগে যাচাই" — ৯-স্তরের ফ্রড স্ক্যানার
-> সাধারণ ক্রেতা টাকা পরিশোধ করার পূর্বেই দাগের মালিকানা, আদালতের মামলা, ব্যাংক লিয়েন ও খতিয়ান চেইনের নিখুঁত ঝুঁকি স্কোরিং দেখতে পান।
-
-![Check Before Buy](docs/audit-evidence-2026-10-17/01_check_before_buy.png)
-
----
-
-### ২. আইনজীবী কেস দাখিল ও আদালত নিষেধাজ্ঞা পোর্টাল (Advocate Hub)
-> বাংলাদেশ বার কাউন্সিল আইডি যাচাইপূর্বক দেওয়ানি মোকদ্দমার আরজি দাখিল, তাৎক্ষণিক লিগ্যাল ডকেট জেনারেশন এবং সংশ্লিষ্ট দাগে স্বয়ংক্রিয় ইনজাংকশন লক।
-
-![Lawyer Case Hub](docs/audit-evidence-2026-10-18/lawyer.png)
-
----
-
-### ৩. সাব-রেজিস্ট্রার কনসোল ও প্রি-রেজিস্ট্রেশন গেটকিপার
-> বিক্রেতা আসলেই খতিয়ানের বৈধ মালিক কিনা, ব্যাংক বন্ধক বা নিষেধাজ্ঞা আছে কিনা তা রিয়েল-টাইমে স্ক্যান করে Ed25519 ডিজিটাল সিল প্রদান।
-
-![Sub-Registrar Console](docs/audit-evidence-2026-10-18/registrar.png)
-
----
-
-### ৪. সহকারী কমিশনার (ভূমি) ট্রাইব্যুনাল ও ই-নামজারি
-> ইনভায়োলেবল ওনারশিপ গার্ড দ্বারা সুরক্ষিত শুনানি আদালত, কানুনগো প্রতিবেদন যাচাই এবং স্বয়ংক্রিয় DCR ও নামজারি খতিয়ান সৃজন।
-
-![AC Land Tribunal](docs/audit-evidence-2026-10-18/acland.png)
-
----
-
-### ৫. বাণিজ্যিক ব্যাংক জামানত লিয়েন ও ডিজিটাল দায়মুক্তি সনদ (NOC)
-> দ্বৈত ঋণ বন্ধক প্রতিরোধে সোনালী ব্যাংক ও অন্যান্য ব্যাংকের রিয়েল-টাইম লিয়েন স্থাপন এবং কিউআর ভেরিফায়েবল NOC সার্টিফিকেট জেনারেশন।
-
-![Bank Officer Console](docs/audit-evidence-2026-10-18/bank.png)
-
----
-
-### ৬. নাগরিক প্রপার্টি ভল্ট ও জমি বিক্রয় লক (🔒)
-> নাগরিকের নিজস্ব জমির তালিকা, খতিয়ান, ডিজিটাল বালাম দলিল, DCR ডাউনলোড এবং অননুমোদিত হস্তান্তর রোধে ১-ক্লিকে জমি বিক্রয় লক।
-
-![Citizen Vault](docs/audit-evidence-2026-10-18/citizen.png)
-
----
-
-### ৭. ক্যাডাস্ট্রাল মৌজা নকশা ও দাগ পার্সেল ডিজাইনার (GIS Workspace)
-> ইন্টারেক্টিভ ভেক্টর ম্যাপে দাগ বিভাজন (Subdivision), মার্জিং এবং একাধিক মালিকের মধ্যে জমির সীমানা ও অংশ বণ্টন টুল।
-
-![Cadastral Map Designer](docs/parcel-designer-2026-10-18/drawing-editor-qa.png)
-
----
-
-### ৮. জেলা প্রশাসন ভূমি হুকুমদখল ও অধিগ্রহণ শাখা (DC Office LA Branch)
-> সরকারি মেগা প্রজেক্টের জন্য ভূমি অধিগ্রহণ নোটিশ জারি, ক্ষতিপূরণ প্রাক্কলন এবং স্বয়ংক্রিয় গ্যাজেট প্রকাশনা ট্র্যাকিং।
-
-![DC Land Acquisition](docs/audit-evidence-2026-10-18/dc_la.png)
-
----
-
-### ৯. একক স্ক্রিন এক্সিকিউটিভ ককপিট — সুপার অ্যাডমিন প্যানেল
-> স্ক্রলিংমুক্ত হাই-ডেনসিটি ৭:৫ স্প্লিট ককপিট; ১৬টি দপ্তর, ওয়ার্কলোড কিউ, লাইভ অ্যানোমালি এবং ১-ক্লিক লেজার স্বাস্থ্য পরীক্ষা।
-
-![Admin Governance Cockpit](docs/audit-evidence-2026-10-18/admin.png)
-
----
-
-### ১০. অফলাইন-যাচাইযোগ্য ডিজিটাল কিউআর কোড ও লেজার সিল
-> স্মার্টফোন ক্যামেরা দিয়ে দলিলের কিউআর স্ক্যান করে মুহূর্তেই কেন্দ্রীয় লেজার ব্লকের সত্যতা ও অপরিবর্তনীয় ক্রিপ্টোগ্রাফিক প্রুফ যাচাই।
-
-![QR Deed Verification](docs/audit-evidence-2026-10-17/07_qr_deed_and_noc_verify.png)
-
----
-
-## ⚡ ৯টি গাণিতিক ফ্রড ডিটেকশন ইঞ্জিন (Fraud Prevention Rules)
-
-BhumiShield-এর ফ্রড ইঞ্জিন কোনো হার্ডকোডেড ফ্ল্যাগ বা স্ট্যাটিক কন্ডিশনের ওপর নির্ভর করে না; ডাটাবেজের লাইভ স্টেট থেকে সরাসরি ৯টি গাণিতিক সূত্র প্রতিটি ট্রানজ্যাকশনে মূল্যায়িত হয়:
-
-```
-┌─────────────────────────┬────────────────────────────────────────────────────────────────────────────────────────┐
-│ রুল কোড                  │ গাণিতিক শর্ত ও আইনি কার্যকারিতা                                                        │
-├─────────────────────────┼────────────────────────────────────────────────────────────────────────────────────────┤
-│ 1. SELLER_NOT_OWNER     │ বিক্রেতার NID বিএস রেকর্ডীয় খতিয়ানের বৈধ মালিকদের তালিকায় অনুপস্থিত হলে লেনদেন বাতিল।│
-│ 2. AREA_EXCEEDS_OWNED   │ প্রস্তাবিত বিক্রিত জমি > বিক্রেতার খতিয়ানীয় অবশিষ্ট অংশের বেশি হলে গাণিতিকভাবে বাতিল।  │
-│ 3. DOUBLE_SALE          │ একই দাগে পূর্বের কোনো বিক্রিত দলিল রেজিস্ট্রেশন প্রক্রিয়ায় থাকলে নতুন দলিল ব্লক।       │
-│ 4. KHATIAN_CHAIN_BREAK  │ CS → SA → RS → BS খতিয়ান লিংকেজের বায়া দলিলে কোনো অননুমোদিত ব্যত্যয় থাকলে সতর্কতা।   │
-│ 5. DEED_TAMPERED        │ সংরক্ষিত দলিলের SHA-256 হ্যাশ বা Ed25519 ডিজিটাল স্বাক্ষরে ১ বিট গরমিল পেলেও ফ্ল্যাগড।   │
-│ 6. PLOT_MORTGAGED       │ সংশ্লিষ্ট দাগে কোনো ব্যাংকের সক্রিয় ঋণ বন্ধক (Lien) বিদ্যমান থাকলে দলিল রেজিস্ট্রি লক।│
-│ 7. RAPID_RESALE         │ বিগত ৯০ দিনে জমি হস্তান্তরের পর পুনরায় বিক্রির চেষ্টা হলে মানি লন্ডারিং সতর্কতা।        │
-│ 8. INHERITANCE_UNRESOLVED│ মৃত ব্যক্তির জমি ফারায়েজ নামজারি ব্যতিরেকে এককভাবে বিক্রির চেষ্টা প্রতিহত।            │
-│ 9. NID_MISMATCH         │ জাতীয় পরিচয়পত্র ও বায়োমেট্রিক ম্যাচিং ফেইলিউরে লেনদেন স্বয়ংক্রিয় প্রত্যাখ্যান।      │
-└─────────────────────────┴────────────────────────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    UI[React + TypeScript · Citizen and officer workspaces]
+    API[PHP API · authentication and authorization]
+    FLOW[Workflow and review services]
+    RULES[Deterministic risk checks]
+    DATA[(SQLite prototype records)]
+    PROOF[SHA-256 + Ed25519 integrity evidence]
+    ADAPTERS[Provider interfaces · simulated or unavailable]
+    COLLECT[Optional source collectors · default OFF]
+    UI --> API
+    API --> FLOW
+    API --> RULES
+    FLOW --> DATA
+    RULES --> DATA
+    FLOW --> PROOF
+    API -.-> ADAPTERS
+    API -. admin switch .-> COLLECT
 ```
 
----
+| Layer | Current implementation |
+|---|---|
+| Frontend | React 19.3.1, TypeScript, Vite 6.4.4, Tailwind CSS 4.3.3 |
+| Maps / icons | Leaflet 1.9.4, OpenStreetMap basemap, Lucide React |
+| API | PHP with custom routing, services and PDO; Composer autoloading |
+| Local database | SQLite; PostgreSQL support exists in code but requires separate integration/load verification |
+| Integrity | SHA-256, PHP libsodium / Ed25519 |
+| Optional collection | Python standard-library collectors plus a PHP worker, controlled by a shared default-off setting |
+| Fonts | Manrope, Hind Siliguri and Noto Sans Bengali |
 
-## 🔐 সার্বভৌম নিরাপত্তা ও ক্রিপ্টোগ্রাফিক লেজার স্পেসিফিকেশন
+The runtime uses custom API routing; it is not a standard Laravel application deployment despite Laravel-related metadata in `backend/composer.json`. MySQL support is not claimed. A hash-linked log is not a consensus blockchain, and privileged database/key access remains part of the threat model.
 
-1. **ক্যানোনিকাল JSON ও SHA-256 হ্যাশ চেইন:**
-   প্রতিটি দলিল ও মালিকানা পরিবর্তনের ডেটা ফিল্ড বর্ণানুক্রমিকভাবে সাজিয়ে ক্যানোনিকাল স্ট্রিং তৈরি করা হয় এবং পূর্ববর্তী ব্লকের হ্যাশের সাথে চেইনিং করা হয় (`previous_hash` → `current_hash`)।
-2. **Ed25519 ডিজিটাল সিল মোহর:**
-   ন্যাটিভ PHP `libsodium` (`sodium_crypto_sign_detached`) ব্যবহার করে সাব-রেজিস্ট্রার ও এসি ল্যান্ডের ডিজিটাল ক্রিপ্টোগ্রাফিক প্রাইভেট কি দ্বারা দলিলে ডিজিটাল সিল যুক্ত করা হয়।
-3. **M3 ইনভায়োলেবল ওনারশিপ গার্ড (Inviolable Ownership Guard):**
-   ডাটাবেজ লেভেলের কঠোর ট্রিগার নীতি (`trg_guard_ownership_*`)—সহকারী কমিশনার (ভূমি)-এর অনুমোদিত ই-নামজারি আদেশ ব্যতীত ডাটাবেজে সরাসরি কোনো SQL কমান্ড দিয়েও মালিকানা পরিবর্তন করা অসম্ভব (`VIOLATION_M3_OWNERSHIP_GUARD`)।
-4. **কনসোল সিকিউরিটি ড্রিল:**
-   ডাটাবেজে টেম্পারিং পরীক্ষার জন্য প্রোডাকশন-নিরাপদ সিএলআই কমান্ড:
-   ```bash
-   # টেম্পারিং টেস্ট ড্রিল (ডাটাবেজে ১ বাইট বিকৃত করে যাচাইকরণ)
-   php artisan bhumi:drill:tamper {deed_code} --confirm
-   # স্বাভাবিক খাঁটি অবস্থায় ফিরিয়ে আনা
-   php artisan bhumi:drill:restore {deed_code} --confirm
-   ```
+## 🚀 Run locally
 
----
+### Requirements
 
-## 🚀 দ্রুত ইনস্টলেশন ও রান নির্দেশিকা (How to Run the Project)
+- PHP 8.2+ with PDO, `pdo_sqlite`, sodium, JSON and mbstring. PostgreSQL requires `pdo_pgsql`.
+- Composer for regenerating the project's autoloader.
+- Node.js 20.x and npm for the tested frontend workflow.
+- Python 3 only for offline collector tests or future permitted collection; it is not required to use the citizen interface.
 
-### ১. প্রয়োজনীয় সফটওয়্যার (Prerequisites)
-- **PHP:** `8.2+` বা `8.3` / `8.4` (সাথে `ext-pdo`, `ext-sodium`, `ext-sqlite3` অথবা `ext-pdo_mysql` সক্রিয়)
-- **Node.js:** `v18.0.0+` বা `v20.x` / `v22.x` এবং `npm`
-- **ডাটাবেজ:** SQLite (ডিফল্ট, জিরো কনফিগ) অথবা MySQL/PostgreSQL
+### 1. Prepare an isolated local demo database
 
----
+From a fresh working copy, open a terminal in the repository root:
 
-### ২. ব্যাকএন্ড সেটআপ ও চালু করণ
-```bash
-# ১. ব্যাকএন্ড ডিরেক্টরিতে প্রবেশ করুন
+```sh
 cd backend
+composer dump-autoload --no-scripts
+cp -n .env.example .env
+```
 
-# ২. ডামি ডাটাবেজ মাইগ্রেশন ও সিন্থেটিক ওয়ার্ল্ড সিডিং
-php artisan migrate:fresh --seed
+In `backend/.env`, set:
 
-# ৩. এপিআই সার্ভার পোর্ট ৮০০৮-এ চালু করুন
+```dotenv
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://127.0.0.1:8008
+DB_CONNECTION=sqlite
+DB_DATABASE=database/hackathon-demo.sqlite
+ENABLE_SIMULATED_PROVIDERS=true
+PUBLIC_VERIFY_BASE_URL=http://localhost:5175
+CORS_ALLOWED_ORIGINS=http://localhost:5175,http://127.0.0.1:5175
+```
+
+Use unique local-only values for application/JWT signing secrets; example-file values are demo defaults. Keep `.env` private. Simulated providers are for synthetic local demonstrations, never evidence of successful identity checks or payment settlement.
+
+```sh
+php artisan migrate --seed
 php artisan serve --port=8008
 ```
-> ✅ ব্যাকএন্ড সফলভাবে চালু হলে এপিআই রেসপন্স পাবেন: `http://127.0.0.1:8008/api/v1/health`
 
----
+This creates/additively prepares the selected local database and seeds demo fixtures. **Use a separate, disposable database. Do not point this setup at an existing service database.** No `migrate:fresh` or destructive reset is needed for this guide.
 
-### ৩. ফ্রন্টএন্ড সেটআপ ও চালু করণ
-```bash
-# ১. ফ্রন্টএন্ড ডিরেক্টরিতে প্রবেশ করুন (নতুন টার্মিনালে)
+The source control tables initialize with collection **OFF** when the module is first opened or the worker checks policy. No government-page collection is required for setup.
+
+### 2. Start the frontend
+
+In a second terminal, from the repository root:
+
+```sh
 cd frontend
+npm ci
+```
 
-# ২. ডিপেন্ডেন্সি ইনস্টল করুন
-npm install
+Create `frontend/.env.local`:
 
-# ৩. ডেভেলপমেন্ট সার্ভার চালু করুন
+```dotenv
+VITE_API_URL=http://127.0.0.1:8008/api/v1
+```
+
+```sh
 npm run dev
 ```
-> ✅ ব্রাউজারে প্রবেশ করুন: **`http://localhost:5175`** (স্বয়ংক্রিয়ভাবে বাংলা ইন্টারফেস `/bn`-এ যাবে)
 
----
+Open [localhost:5175](http://localhost:5175). For a hosted frontend, `VITE_API_URL` must point to the intended backend **at build time**; changing the local file does not update an already deployed bundle.
 
-### ৪. স্বয়ংক্রিয় টেস্ট সুইট ভেরিফিকেশন (Automated Tests)
-```bash
-cd backend
-php artisan test
+### 3. Use synthetic demo accounts
+
+Only a deliberately seeded local demo database is expected to contain these accounts:
+
+| Role | Username |
+|---|---|
+| Citizen / seller | `citizen` |
+| Citizen / buyer | `rabeya` |
+| Sub-registrar | `registrar` |
+| AC Land | `acland` |
+| Bank officer | `bank` |
+| Super Admin | `admin` |
+
+Local fixture password: **`demo123`**. This is not a promise that hosted accounts exist or accept that password. Do not seed public service accounts or deploy shared demo passwords into a real service environment.
+
+## ⏸️ Government-source collection control
+
+**Default: OFF.** The collection code is retained for future use; it is not required for the competition demonstration.
+
+**Super Admin → Integrations → Official sources & information updates → Master collection control**
+
+1. The panel shows whether collection is active or off.
+2. An active administrator supplies a reason to change the setting.
+3. Manual **Check now**, the scheduled PHP worker, and the service/map Python collection entry points consult the shared application setting before new requests.
+4. Changing the global setting does not override a source's individual disabled status. Turning it on does not install or start a scheduler.
+5. Actor, reason and time are retained in the control history. Conflicting updates require reloading the latest setting.
+
+Off means **no new collection starts through these paths**. Existing observations, publications and history are retained; an already running request may finish. The worker and API must use the same database for the same policy to apply. Direct Python tools require access to the PHP policy runtime; if the policy cannot be verified, collection is refused. Set `SOURCE_COLLECTION_PHP` to the PHP executable when it is not available on the worker’s PATH.
+
+> **Competition disclosure:** LandTech Rule Book v1.2 prohibits scraping or bulk downloading government websites. Earlier development did collect limited public government-page content; this occurred before the supplied rulebook was checked. The known chat-started worker was stopped, and this revision adds a default-off master control. This does not undo prior collection or establish eligibility. The team must disclose the earlier activity to organizers and obtain their assessment. Keep collection off for judging; any future activation must follow applicable permissions and conditions. No history should be deleted or falsified to conceal prior activity.
+
+## 🧪 Verification
+
+```sh
+# Frontend checks
+cd frontend
+npm run typecheck
+npm run build
 ```
-> **ফলাফল:** **128 passed, 0 failed (100% Pass Rate across 13 test suites)**
-> - `RoleAuditRegressionTest`: ২৯টি টেস্ট পাস
-> - `SecurityWorkflowRegressionTest`: ১৫টি টেস্ট পাস
-> - `FieldOperationsAndSlaTest`: ১০টি টেস্ট পাস
-> - `SignedNoticePdfTest`: ৯টি টেস্ট পাস
-> - `AppointmentBookingTest`: ৭টি টেস্ট পাস
-> - `LawyerPortalTest` ও অন্যান্য: ৫৮টি টেস্ট পাস
+
+From `backend`, use a **disposable test database**:
+
+```sh
+APP_ENV=testing BHUMISHIELD_TEST_DB=/tmp/bhumishield-review.sqlite php artisan test
+```
+
+Specialized scripts are separate from the standard runner. For a newly created disposable database, seed synthetic fixtures first, then run the focused collection checks:
+
+```sh
+APP_ENV=testing BHUMISHIELD_TEST_DB=/tmp/bhumishield-source-review.sqlite php artisan migrate --seed
+APP_ENV=testing BHUMISHIELD_TEST_DB=/tmp/bhumishield-source-review.sqlite php tests/Feature/SourceCollectionControlTest.php
+APP_ENV=testing BHUMISHIELD_TEST_DB=/tmp/bhumishield-source-review.sqlite php tests/Feature/SourceIntelligenceTest.php
+```
+
+From the repository root, offline parser/security-boundary tests use mocks, not government-page downloads:
+
+```sh
+python3 -m unittest discover -s tools/service_sources -p 'test_*.py'
+python3 -m unittest discover -s tools/map_sources -p 'test_*.py'
+```
+
+**Current verification (18 October):** the focused collection/source checks pass, but the broader backend run reports **125 passed / 3 failed**, and full frontend checking is blocked by syntax errors in `OfficeLocatorPage.tsx`. The changed source panel passes its focused TypeScript check. See the verification note for exact failures; do not treat this revision as a clean release.
+
+The earlier [software-quality audit](docs/SOFTWARE_QUALITY_AUDIT_2026-10-18.md) recorded 128 standard-runner checks and 280 checks across separately invoked suites. Those are dated historical results; later source changes mean they are not a fresh certificate for the current revision. Green tests do not establish complete security or legal correctness. See the [collection-control verification note](docs/COLLECTION_CONTROL_VERIFICATION_2026-10-18.md) for this change's focused results.
+
+## 📋 Data, AI and open-source disclosure
+
+### Data used
+
+- The business-data seeder generates **made-up people, identifiers and land-transaction records** for local demonstrations.
+- Later accounts, uploads, screenshots and fixtures must be reviewed separately; a synthetic seeder does not certify every file or database row as synthetic.
+- Earlier public government-page observations are a separate data category and are disclosed above. Collection-off does not automatically remove or anonymize them.
+- Do not submit real citizens' names, NIDs, phone numbers or real land records. Fully anonymized real documents require organizer approval under the rulebook.
+- Required team and mentor identity details belong in the competition submission, not in fabricated business examples.
+- Map basemap: **© [OpenStreetMap contributors](https://www.openstreetmap.org/copyright)**. Display attribution is retained. Basemap geography is not an official parcel survey or authoritative land-ownership record.
+
+### AI assistance
+
+| Tool | Use in the project |
+|---|---|
+| Antigravity | Assisted development, workflow implementation, refactoring and tests |
+| OpenAI ChatGPT / Codex | Assisted implementation, local audits, tests, research synthesis and documentation |
+| Anthropic Claude | Team-reported assistance with research/writing; a separate concept-note prompt is provided |
+
+AI suggestions are not authoritative legal verification. The two student members remain responsible for original work, design decisions, validating output and explaining the submitted code. The team should reconcile this disclosure with the tools it actually used before submission.
+
+### Credits
+
+React, TypeScript, Vite, Tailwind CSS, Axios, Leaflet, Lucide React, PHP, PDO, libsodium, SQLite, Python and Composer underpin the prototype; dependencies retain their respective licenses. Google Fonts supplies Manrope, Hind Siliguri and Noto Sans Bengali. PostgreSQL is an optional database target requiring verification. Credit public references without implying government endorsement or reuse rights over official records.
+
+## 🔎 Scope & honest limitations
+
+- This is a **working prototype**, not an operational national government platform.
+- Real EC/NID verification, face liveness, fingerprint hardware, bank settlement and government gateway agreements have not been demonstrated. Simulated results must be identified as such.
+- Critical transfer correctness, consent, document/payment-state, privacy and office-scope findings require remediation and regression testing. See the audit for the exact evidence; some subsequent patches have not been independently reverified.
+- Application-generated signatures/receipts do not establish government issuance, payment or legal ownership. Unverified examples must be visibly treated as samples.
+- Nationwide office/parcel coverage, production recovery, accessibility conformance and national-scale load capacity are not certified.
+- Rule-based risk reports support review; they do not decide disputes or replace due diligence by a competent authority.
+
+### A realistic path to wider use
+
+**Synthetic single-office demonstration → authorized usability/security evaluation → controlled multi-office pilot → staged expansion.**
+
+Before a pilot: resolve competition data compliance; prove actor/office isolation and correct party consent; validate payment/order states; test backup recovery; review accessibility; and obtain separate agreements for any government/provider integration. Measure seeded-scenario detection, false alerts, correct buyer/share persistence and unassisted task completion rather than inventing national impact figures.
+
+## 🎬 Round 1: three-minute demonstration
+
+| Time | Demonstration |
+|---|---|
+| 0:00–0:30 | Show one citizen problem and the selected P3 focus |
+| 0:30–1:15 | Compare a clean synthetic case with a seeded pending-sale/lien conflict; explain the finding |
+| 1:15–2:00 | Show linked registration/mutation tasks and citizen tracking; identify simulated or incomplete steps |
+| 2:00–2:35 | Demonstrate application-record integrity and supporting parcel/office context |
+| 2:35–3:00 | Show collection OFF, name key limitations and close with the next validation milestone |
+
+Use pre-arranged synthetic records. Do not perform live scraping, real identity checks, actual payments or government submissions. **Round 1 video: at most three minutes.** The final round's five-minute pitch/live demo and three-minute Q&A are separate.
+
+## 📚 Documentation
+
+| Document | What it covers |
+|---|---|
+| [Architecture](docs/ARCHITECTURE.md) | System design and workflow background |
+| [Rule engine](docs/RULES.md) | Risk checks and configured ownership guard |
+| [Integration boundaries](docs/INTEGRATION.md) | Proposed provider contracts and external dependencies |
+| [Map workspace](docs/MAP_WORKSPACE_IMPLEMENTATION_2026-10-18.md) | Map layers, sources and workspace boundaries |
+| [Parcel design & allocation](docs/PARCEL_DESIGN_AND_OWNER_ALLOCATION_2026-10-18.md) | Proposed parcels, review and owner-allocation workflow |
+| [Software-quality audit](docs/SOFTWARE_QUALITY_AUDIT_2026-10-18.md) | Dated findings, test evidence and remaining risks |
+| [Rulebook / README review](docs/RULEBOOK_COMPLIANCE_REVIEW_2026-10-18.md) | Review of the previous README against the supplied v1.2 rulebook |
+| [Collection-control verification](docs/COLLECTION_CONTROL_VERIFICATION_2026-10-18.md) | Default-off control and focused checks |
+| [Claude concept-note prompt](docs/CLAUDE_CONCEPT_NOTE_PROMPT_2026-10-18.md) | Four-page concept-note writing brief |
+
+Older technical documents may describe intended behavior or earlier implementations. Where claims conflict, verify against the current source and dated audit; do not treat historical prose as evidence of production readiness.
+
+### Submission checklist
+
+- [ ] Confirm the registered primary problem and two eligible students + faculty/industry mentor roster.
+- [ ] Resolve earlier collection activity with the organizers; keep collection off and review all submitted data/assets.
+- [ ] Share the GitHub/GitLab repository with organizers and preserve genuine commit history.
+- [ ] Include a PDF concept note of **up to four pages**, with team/mentors and all required subject areas.
+- [ ] Supply the actual **up-to-three-minute** demo video; live link is optional.
+- [ ] Check the platform's exact submission cutoff and any rule updates. The supplied rulebook lists **18 October 2026** for Round 1.
+
+### Change record · 18 October 2026
+
+Added the shared default-off collection control, Super Admin activation/deactivation with reasons and history, backend/worker/Python enforcement and focused regression checks. Reworked this README around one primary technical focus, actual stack, hosted links, reproducible local instructions, disclosures and explicit prototype limits. This is a development change record, not a claim of post-Round-1 submission or deployment.
 
 ---
 
-## 👥 ডেমো অ্যাকাউন্ট ও ক্রেডেনশিয়াল (Demo Credentials Matrix)
+<div align="center">
 
-লগইন পেজে (`/bn/auth`) ১-ক্লিক কপি বাটন সহ সকল অ্যাকাউন্টের ডিফল্ট পাসওয়ার্ড: **`demo123`**
+**ভূমি সুরক্ষা — স্পষ্ট তথ্য, অনুসরণযোগ্য সিদ্ধান্ত, সচেতন নাগরিক।**
 
-| রোল / দায়িত্ব (Role) | ইউজারনেম | নাম ও পদবি | সিন্থেটিক NID | পরীক্ষার ক্ষেত্র |
-|:---|:---|:---|:---:|:---|
-| **Citizen (বিক্রেতা)** | `citizen` | মো. রফিকুল ইসলাম | `9900001001` | প্রপার্টি ভল্ট, বিক্রয় লক |
-| **Citizen (ক্রেতা/ওয়ারিশ)**| `rabeya` | মোসা. রাবেয়া খাতুন | `9900001002` | কেনার আগে যাচাই, ওয়ারিশান |
-| **Advocate (আইনজীবী)** | `lawyer` | অ্যাডভোকেট রফিকুল হাসান | `9900004010` | দেওয়ানি মোকদ্দমা, ইনজাংকশন |
-| **Sub-Registrar** | `registrar` | ফারহানা ইয়াসমিন | `9900002001` | দলিল সম্পাদন, বায়োমেট্রিক |
-| **AC Land** | `acland` | তানভীর আহমেদ | `9900003001` | নামজারি শুনানি, DCR অনুমোদন |
-| **Bank Officer** | `bank` | নাজমুল হাসান (সোনালী ব্যাংক) | `9900004001` | বন্ধক লিয়েন, ডিজিটাল NOC |
-| **DC Acquisition Officer** | `dc_la` | কে এম কামরুল হাসান | `9900005010` | অধিগ্রহণ নোটিশ, ক্ষতিপূরণ |
-| **Field Surveyor (আমিন)**| `fvo_savar` | মো. জাহাঙ্গীর আলম | `9900003003` | সরজমিন তদন্ত প্রতিবেদন |
-| **Appellate Reviewer** | `appellate_reviewer`| মো. সাইদুর রহমান (ADC Rev)| `9900003007` | নামজারি আপিল ট্রাইব্যুনাল |
-| **Support Desk (১৬১২২)** | `support_agent` | মোসা. ফারহানা আফরোজ | `9900004003` | নাগরিক অভিযোগ ও টিকেট |
-| **Super Admin** | `admin` | সিস্টেম অ্যাডমিনিস্ট্রেটর | `9900005001` | জাতীয় লেজার, অ্যানোমালি |
+*Built for a practical LandTech prototype; evaluated honestly, improved incrementally.*
 
----
-
-## 📊 সাম্প্রতিক প্রযুক্তিগত উৎকর্ষ ও আপগ্রেডসমূহ (Changelog & Upgrades)
-
-প্রকল্পটিকে আরও শক্তিশালী ও বাস্তবায়নযোগ্য করতে সাম্প্রতিক আপগ্রেডসমূহ:
-
-1. **আইনজীবী কেস দাখিল পোর্টাল (Advocate Litigation Hub):**
-   - বাংলাদেশ বার কাউন্সিল সনদ যাচাইপূর্বক বিচারিক আদালতের ইনজাংকশন আরজি দাখিল ব্যবস্থা।
-   - আরজি দাখিলের সাথে সাথে সংশ্লিষ্ট দাগে অটোমেটিক লিগ্যাল ফ্ল্যাগ এবং সাব-রেজিস্ট্রি ও নামজারি সাময়িক স্থগিত।
-2. **একক স্ক্রিন এক্সিকিউটিভ ড্যাশবোর্ড (Single-Screen Cockpit):**
-   - পূর্বের দীর্ঘ ১,৬০০ পিক্সেল ভার্টিক্যাল স্ক্রলিং বাদ দিয়ে dense ৭:৫ স্প্লিট ককপিট আর্কিটেকচার।
-   - স্ক্রিনেই ১৬টি দপ্তর অ্যাক্সেস, ১০টি ডিপার্টমেন্টের রিয়েল-টাইম ওয়ার্কলোড মাইক্রো-হাব এবং লাইভ অ্যানোমালি স্ট্রিম।
-3. **২১টি পৃথক প্রশাসনিক ভূমিকার পূর্ণাঙ্গ ওয়ার্কস্পেস:**
-   - ভূমি সহকারী কর্মকর্তা (তহশিলদার), কানুনগো/সার্ভেয়ার, সেটেলমেন্ট অফিসার, ইউএনও, এবং এডিসি (রাজস্ব)-এর সম্পূর্ণ এন্ড-টু-এন্ড ওয়ার্কফ্লো।
-4. **ডিজিটাল DCR ও খতিয়ান ডাইনামিক ওয়াটারমার্ক ভিউয়ার:**
-   - গণপ্রজাতন্ত্রী বাংলাদেশ সরকার মনোগ্রাম, অফিশিয়াল সিকিউরিটি সিল এবং ডাইনামিক কিউআর কোড সহ এ৪ প্রিন্ট ও পিডিএফ ভিউয়ার।
-5. **লগইন পেজে ১-ক্লিক ক্রেডেনশিয়াল সুইচার:**
-   - যেকোনো রোলের তথ্যে ১-ক্লিকেই স্বয়ংক্রিয় ইনপুট ও অ্যাথেনটিকেশন সুবিধা।
-
----
-
-## 📜 ডাটা পলিসি ও এআই ডিসক্লোজার (Mandatory Disclosures)
-
-### ১. ব্যবহৃত ডেটা পলিসি (Data Usage Disclosure)
-- **১০০% সিন্থেটিক ও ডামি ডেটা:** কোনো বাস্তব ব্যক্তির নাম, আসল জাতীয় পরিচয়পত্র (NID), ফোন নম্বর বা প্রকৃত সরকারি ভূমি রেকর্ড ব্যবহার করা হয়নি।
-- **ডিটারমিনিস্টিক সিন্থেটিক ফ্যাক্টরি:** `php artisan bhumi:seed-world` কমান্ডের মাধ্যমে সাভার, বিরুলিয়া, ধানমন্ডি ও মিরপুর অঞ্চলের জন্য সম্পূর্ণ কৃত্রিম কিন্তু কাঠামোগতভাবে নিখুঁত পাইলট রেকর্ড জেনারেট করা হয়েছে।
-- **জিরো সার্ভার স্ক্র্যাপিং:** কোনো সরকারি লাইভ ওয়েবসাইটে অননুমোদিত অ্যাক্সেস বা স্ক্র্যাপিং করা হয়নি।
-
-### ২. ব্যবহৃত এআই টুলস বিবরণী (AI Tools Disclosure)
-- **Antigravity (Google DeepMind):** পেয়ার প্রোগ্রামিং, ৯টি ফ্রড ইঞ্জিনের অ্যালগরিদম ডিজাইন, ইউনিট ও ফিচার টেস্ট সুইট জেনারেশন এবং কোডবেস রিফ্যাক্টরিংয়ে ব্যবহৃত হয়েছে।
-- **ChatGPT / Claude (Anthropic):** বাংলাদেশ ভূমি আইন (স্টেট একুইজিশন অ্যান্ড টেন্যান্সি অ্যাক্ট ১৯৫০, রেজিস্ট্রেশন আইন ১৯০৮) ও ফারায়েজ উত্তরাধিকার সূত্রের আইনি অনুচ্ছেদ যাচাইয়ে ব্যবহৃত হয়েছে।
-
-### ৩. ব্যবহৃত ওপেন-সোর্স লাইব্রেরি ও ক্রেডিট (Open-Source Attribution)
-- **ব্যাকএন্ড:** PHP 8.4 Core Engine, `libsodium` (Ed25519 Detached Digital Signatures), SQLite PDO Engine, Composer।
-- **ফ্রন্টএন্ড:** React 18, Vite, TypeScript, Tailwind CSS, Lucide React (Icons), MapLibre GL JS, Canvas Confetti।
-- **ফন্টস:** Hind Siliguri (Google Fonts), Kalpurush, SolaimanLipi।
-
----
-
-## 🧭 ৫ মিনিটের ডেমো উপস্থাপন নির্দেশিকা (5-Minute Live Demo Pitch Guide)
-
-- **মিনিট ১ — নাগরিক ভিউ (`/bn/check`):**
-  দাগ নং ১০১ সিলেক্ট করে "যাচাই করুন" চাপুন। স্ক্রিনে দেখুন কীভাবে ৯টি ইঞ্জিন মুহূর্তে খতিয়ান চেইন, লিয়েন ও আদালতের মামলা স্ক্যান করে গ্রিন/রেড রিপোর্ট দেয়।
-- **মিনিট ২ — আইনজীবী পোর্টাল (`/bn/lawyer_case`):**
-  বার কাউন্সিল আইডি `BC-DH-14285` দিয়ে একটি অন্তর্বর্তীকালীন স্থগিতাদেশ আরজি দাখিল করুন এবং ডাউনলোডযোগ্য কোর্ট ডকেট দেখুন।
-- **মিনিট ৩ — সাব-রেজিস্ট্রার ও ফ্রড ব্লকিং (`/bn/registrar`):**
-  সাব-রেজিস্ট্রার কনসোলে দাগ ১০১-এর দলিল রেজিস্ট্রি করতে যান; দেখুন কীভাবে আদালতের ইনজাংকশনের কারণে সিস্টেম সাথে সাথে রেজিস্ট্রি আটকে দেয়।
-- **মিনিট ৪ — ব্যাংক লিয়েন ও এসি ল্যান্ড (`/bn/bank` & `/bn/acland`):**
-  সোনালী ব্যাংকের ডিজিটাল NOC রিলিজ এবং এসি ল্যান্ড ট্রাইব্যুনালে নামজারি শুনানির পর স্বয়ংক্রিয় DCR ও খতিয়ান সৃজন পর্যবেক্ষণ করুন।
-- **মিনিট ৫ — সার্বভৌম লেজার ও অ্যানোমালি ককপিট (`/bn/admin`):**
-  সুপার অ্যাডমিন ককপিটে প্রবেশ করুন, ১-ক্লিকে "লেজার স্বাস্থ্য পরীক্ষা" চালিয়ে ১৪২০টি ব্লকের SHA-256 চেইন ও জেনেসিস অখণ্ডতা যাচাই করুন।
-
----
-
-## 📖 গুরুত্বপূর্ণ কারিগরি ডকুমেন্টেশন লিংকসমূহ
-
-- 📐 **[সিস্টেম আর্কিটেকচার ও ডায়াগ্রাম](docs/ARCHITECTURE.md)** — সম্পূর্ণ সিস্টেম আর্কিটেকচার ও সিকোয়েন্স ফ্লো
-- 🔌 **[সরকারি গেটওয়ে ইন্টিগ্রেশন স্পেসিফিকেশন](docs/INTEGRATION.md)** — EC Porichoy NID ও Land Service Gateway (LSG)
-- ⚖️ **[রুল ইঞ্জিন ও এম৩ গার্ড স্পেসিফিকেশন](docs/RULES.md)** — ৯টি ফ্রড রুল ও ডাটাবেজ ট্রিগারের টেকনিক্যাল কোড বিবরণ
-- ⏱️ **[৩ মিনিটের ডেমো ভিডিও স্ক্রিপ্ট](docs/DEMO_SCRIPT.md)** — হ্যাকাথন মূল্যায়নের জন্য সময়ভিত্তিক উপস্থাপনা স্ক্রিপ্ট
-- 🗺️ **[ক্যাডাস্ট্রাল ম্যাপ ও পার্সেল ডিজাইন বিবরণ](docs/MAP_WORKSPACE_IMPLEMENTATION_2026-10-18.md)** — ভেক্টর ম্যাপ ও জিআইএস ইঞ্জিন
-
----
-*স্মার্ট ভূমি ব্যবস্থাপনা ও প্রতারণামুক্ত বাংলাদেশের প্রত্যয়ে — **BhumiShield (ভূমি সুরক্ষা)**.*
+</div>

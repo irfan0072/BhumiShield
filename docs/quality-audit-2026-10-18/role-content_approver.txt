@@ -1,0 +1,45 @@
+Browser tab: 9, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5193/bn/admin".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 63-64, 70-73
+~			10 text ম মো. আতিকুল ইসলাম (কনটেন্ট অ্যাপ্রুভার)
+~			12 text কনটেন্ট অ্যাপ্রুভার ভূমি মন্ত্রণালয় জনসংযোগ উইং
+~				17 button প্রকাশনা অনুমোদন কর্তৃপক্ষ (সিল)
+~					19 text প্রকাশনা অনুমোদন কর্তৃপক্ষ (সিল)
+~				20 button অনুমোদন অডিট লগ
+~					22 text অনুমোদন অডিট লগ
+~				36 text ভূমি মন্ত্রণালয় জনসংযোগ উইং
+~				38 text কনটেন্ট অ্যাপ্রুভার
+~				53 text ম
+~				54 text মো. আতিকুল ইসলাম (কনটেন্ট অ্যাপ্রুভার)
+~				55 text কনটেন্ট অ্যাপ্রুভার
+~			58 heading কন্টেন্ট ও নোটিশ প্রকাশনা কর্তৃপক্ষ (চেকার), Value: 1
+~				60 text কন্টেন্ট ও নোটিশ প্রকাশনা কর্তৃপক্ষ (চেকার)
+~			61 text কন্টেন্ট এডিটর কর্তৃক প্রস্তুতকৃত খসড়া পর্যালোচনা, নিরপেক্ষ নিরীক্ষা এবং ডিজিটাল কিউআর সিলসহ গেজেট প্রকাশ।
+~			62 text নিরপেক্ষ নিরীক্ষা সক্রিয় (Maker != Checker) কন্টেন্ট ধরন:
++			63 button সচেতনতামূলক ব্লগ ও নির্দেশিকা
++			64 button অফিসিয়াল নোটিশ ও আদেশ
+~			65 button বিচারাধীন (Awaiting)
+~			66 button প্রকাশিত
+~			67 button প্রত্যাখ্যাত
+~			69 table
++				70 row
++					71 cell
++						72 button
++							73 image
++				74 row
++					75 cell
++						76 button
++							77 image
++				78 row
++					79 cell
++						80 button
++							81 image
++				82 row
++					83 cell
++						84 button
++							85 image
++				86 row
++					87 cell
++						88 button
++							89 image
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5193/bn/admin

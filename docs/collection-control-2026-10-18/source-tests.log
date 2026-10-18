@@ -1,0 +1,59 @@
+PASS Eight official sources configured
+PASS Reject FORBIDDEN_ROLE
+PASS Reject FORBIDDEN_ROLE
+PASS Reject ACCOUNT_SUSPENDED
+PASS Reject unsafe URL http://land.gov.bd/
+PASS Reject unsafe URL https://evil.test/
+PASS Reject unsafe URL https://land.gov.bd.evil.test/
+PASS Reject unsafe URL https://land.gov.bd/api/test
+PASS Reject unsafe URL https://land.gov.bd/?nid=123
+PASS Reject unsafe URL https://x@land.gov.bd/
+PASS Reject DUPLICATE_SOURCE
+PASS Reject SOURCE_CONFLICT
+PASS Reject SOURCE_IDENTITY_IMMUTABLE
+PASS New observation enters review queue
+PASS Unreviewed text hidden from public
+PASS Unchanged source is deduplicated
+PASS Reject FORBIDDEN_ROLE
+PASS Reject SOURCE_REVIEW_REQUIRED
+PASS Reject GUIDANCE_INCOMPLETE
+PASS Reject INVALID_DATE
+PASS Reject INVALID_SERVICE
+PASS Reviewed guidance publishes with freshness
+PASS Raw extraction and reviewer identifiers stay private
+PASS Service filter isolates guidance
+PASS Unselected mouza never receives local-only guidance
+PASS Exact office page excludes unrelated mouza guidance
+PASS Mouza filter isolates local guidance
+PASS Reject REVIEW_CONFLICT
+PASS Changed source flags old publication for review
+PASS Replacement preserves one published version
+PASS Old version retained as superseded
+PASS Explicit rollback restores prior reviewed version
+PASS Outage retains approved guidance with stale warning
+PASS Removed source item requires rechecking
+PASS Withdrawal hides summary without deletion
+PASS Reject CIRCULAR_METADATA_REQUIRED
+PASS Publish reviewed CIRCULAR
+PASS Reject CIRCULAR_METADATA_REQUIRED
+PASS Publish reviewed FEE
+PASS Publish reviewed OFFICE
+PASS Publish reviewed MAP
+PASS Publish reviewed NOTICE
+PASS Past notice deadline is marked expired
+PASS Reject LINK_UNVERIFIED
+PASS Citizen follows mouza
+PASS Citizen unfollows mouza
+PASS Reject INVALID_LOCATION
+PASS Reject COLLECTION_GLOBALLY_DISABLED
+PASS Reject SOURCE_DISABLED
+PASS Review never changes transaction fees
+PASS Review never changes ownership
+PASS Review never changes office scope or contacts
+PASS Publication decisions preserve audit history
+PASS Legacy fee codes resolve to the correct catalogue service
+PASS Public fee list exposes explicit service relationship
+PASS Existing service links become monitors
+PASS Service link synchronization is idempotent
+PASS Reject FORBIDDEN_ROLE
+SOURCE INTELLIGENCE CHECKS: 58 passed

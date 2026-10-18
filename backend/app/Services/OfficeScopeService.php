@@ -66,35 +66,64 @@ final class OfficeScopeService
             return false;
         }
 
+        $locIdStr = (string) $plotLoc['loc_id'];
+        $locMouzaEn = (string) $plotLoc['mouza_en'];
+        $locMouzaBn = (string) $plotLoc['mouza_bn'];
+        $locJlNo = (string) ($plotLoc['jl_no'] ?? '');
+
         foreach ($assignments as $a) {
-            // District and Upazila must match
+            // District match
             if (strcasecmp((string) $a['district_en'], (string) $plotLoc['district_en']) !== 0) {
                 continue;
             }
+            // Upazila match (settlement / admin_cell can cover whole district)
             if (strcasecmp((string) $a['upazila_en'], (string) $plotLoc['upazila_en']) !== 0) {
-                // If office is a regional settlement or central office covering whole district
                 if ($a['office_type'] !== 'settlement' && $a['office_type'] !== 'admin_cell') {
                     continue;
                 }
             }
 
-            // Check mouza-level scope if configured
-            $mouzas = json_decode((string) ($a['mouzas_served_json'] ?? '[]'), true) ?: [];
-            if (!empty($mouzas) && !in_array('all', $mouzas, true)) {
-                $locIdStr = (string) $plotLoc['loc_id'];
-                $locMouzaEn = (string) $plotLoc['mouza_en'];
-                $locMouzaBn = (string) $plotLoc['mouza_bn'];
-                $locJlNo = (string) ($plotLoc['jl_no'] ?? '');
-
-                $matchedMouza = false;
-                foreach ($mouzas as $m) {
+            // 1. Check office-level mouzas_served_json: explicitly configured restrictions must apply!
+            $officeMouzas = json_decode((string) ($a['mouzas_served_json'] ?? '[]'), true) ?: [];
+            if (!empty($officeMouzas) && !in_array('all', $officeMouzas, true)) {
+                $matchedOfficeMouza = false;
+                foreach ($officeMouzas as $m) {
                     $mStr = (string) $m;
                     if ($mStr === $locIdStr || $mStr === $locJlNo || strcasecmp($mStr, $locMouzaEn) === 0 || $mStr === $locMouzaBn) {
-                        $matchedMouza = true;
+                        $matchedOfficeMouza = true;
                         break;
                     }
                 }
-                if (!$matchedMouza && !in_array($a['office_type'], ['ac_land', 'sub_registry', 'registry'], true)) {
+                if (!$matchedOfficeMouza) {
+                    continue; // Plot mouza is not served by this office
+                }
+            }
+
+            // 2. Check assignment-level jurisdiction_scope_json: officer-specific restrictions must apply!
+            $scopeJson = (string) ($a['jurisdiction_scope_json'] ?? '{}');
+            $userScope = json_decode($scopeJson, true) ?: [];
+            if (!empty($userScope) && empty($userScope['all'])) {
+                // If specific mouzas configured in assignment
+                $scopeMouzas = $userScope['mouzas'] ?? $userScope['mouzas_served'] ?? null;
+                if (is_array($scopeMouzas) && !empty($scopeMouzas) && !in_array('all', $scopeMouzas, true)) {
+                    $matchedUserMouza = false;
+                    foreach ($scopeMouzas as $sm) {
+                        $smStr = (string) $sm;
+                        if ($smStr === $locIdStr || $smStr === $locJlNo || strcasecmp($smStr, $locMouzaEn) === 0 || $smStr === $locMouzaBn) {
+                            $matchedUserMouza = true;
+                            break;
+                        }
+                    }
+                    if (!$matchedUserMouza) {
+                        continue; // Plot mouza is outside this officer's assigned jurisdiction scope
+                    }
+                }
+
+                // If specific upazila or district configured in assignment
+                if (!empty($userScope['upazila_en']) && strcasecmp((string)$userScope['upazila_en'], (string)$plotLoc['upazila_en']) !== 0) {
+                    continue;
+                }
+                if (!empty($userScope['district_en']) && strcasecmp((string)$userScope['district_en'], (string)$plotLoc['district_en']) !== 0) {
                     continue;
                 }
             }

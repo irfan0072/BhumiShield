@@ -158,9 +158,9 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
 
       // If an initialId was in URL, find and select it
       if (initialId) {
-        const found = list.find((item: any) => String(item.id) === initialId || item.tracking_number === initialId);
+        const found = list.find((item: any) => String(item.id) === initialId || item.transfer_code === initialId || item.tracking_number === initialId);
         if (found) {
-          loadTransferDetail(found.id || found.tracking_number);
+          loadTransferDetail(found.transfer_code || found.tracking_number || found.id);
         }
       }
     } catch (err: any) {
@@ -178,7 +178,7 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
       setActiveView('detail');
       // Update browser URL query without reload
       const currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.set('id', String(res.tracking_number || res.id));
+      currentUrl.searchParams.set('id', String(res.transfer_code || res.tracking_number || res.id));
       currentUrl.searchParams.delete('new');
       window.history.pushState({}, '', currentUrl.toString());
     } catch (err: any) {
@@ -284,7 +284,7 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
       };
 
       const res = await BhumiApi.createTransfer(payload);
-      const trackingCode = res.tracking_number || `TR-${res.id}`;
+      const trackingCode = res.transfer_code || res.tracking_number || (res.id ? `TR-${res.id}` : 'TR');
 
       setFormSuccess(t(`আবেদন সফলভাবে গৃহীত হয়েছে! ট্র্যাকিং নং: ${trackingCode}`, `Application submitted successfully! Tracking No: ${trackingCode}`));
 
@@ -299,8 +299,8 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
 
       // Reload list and switch to detail view
       await loadTransfers();
-      if (res.id || res.tracking_number) {
-        await loadTransferDetail(res.id || res.tracking_number);
+      if (res.id || res.transfer_code || res.tracking_number) {
+        await loadTransferDetail(res.transfer_code || res.tracking_number || res.id);
       } else {
         setActiveView('list');
       }
@@ -796,17 +796,17 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-[#006A4E] text-xs font-black font-mono">
-                    {selectedTransfer.tracking_number || `TR-${selectedTransfer.id}`}
+                    {selectedTransfer.transfer_code || selectedTransfer.tracking_number || `TR-${selectedTransfer.id}`}
                   </span>
 
                   {/* 1-Click Copy Tracking Code Button */}
                   <button
                     type="button"
-                    onClick={(e) => handleCopyTracking(selectedTransfer.tracking_number || `TR-${selectedTransfer.id}`, e)}
+                    onClick={(e) => handleCopyTracking(selectedTransfer.transfer_code || selectedTransfer.tracking_number || `TR-${selectedTransfer.id}`, e)}
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer border border-slate-200/70"
                     title={t('ট্র্যাকিং কোড কপি করুন', 'Copy Tracking Code')}
                   >
-                    {copiedCode === (selectedTransfer.tracking_number || `TR-${selectedTransfer.id}`) ? (
+                    {copiedCode === (selectedTransfer.transfer_code || selectedTransfer.tracking_number || `TR-${selectedTransfer.id}`) ? (
                       <>
                         <Check className="w-3.5 h-3.5 text-emerald-600" />
                         <span className="text-emerald-700 text-[11px] font-bold">{t('কপি হয়েছে!', 'Copied!')}</span>
@@ -1366,7 +1366,7 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {transfers.map((item: any) => {
-                    const tracking = item.tracking_number || `TR-${item.id}`;
+                    const tracking = item.transfer_code || item.tracking_number || (item.id ? `TR-${item.id}` : 'TR');
                     const guidance = getActionableGuidance(item);
                     return (
                       <tr key={item.id} className="hover:bg-slate-50/80 transition">
@@ -1428,7 +1428,7 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
                         </td>
                         <td className="py-3.5 px-3 text-right">
                           <div className="flex items-center justify-end gap-1.5">
-                            {(item.status === 'COMPLETED' || item.current_step >= 12) && (
+                            {item.status === 'COMPLETED' && Boolean(item.dcr || item.mutation_id) && (
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1445,7 +1445,7 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
                             )}
                             <button
                               type="button"
-                              onClick={() => loadTransferDetail(item.id || item.tracking_number)}
+                              onClick={() => loadTransferDetail(item.transfer_code || item.tracking_number || item.id)}
                               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#006A4E] font-bold text-xs transition cursor-pointer"
                             >
                               <span>{t('বিস্তারিত', 'View')}</span>

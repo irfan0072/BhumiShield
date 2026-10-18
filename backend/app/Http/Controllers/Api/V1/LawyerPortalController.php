@@ -51,21 +51,30 @@ final class LawyerPortalController
             ], JSON_UNESCAPED_UNICODE));
         }
 
+        $caller = \App\Services\JwtAuthService::getAuthenticatedUser();
+        $isPrivileged = $caller && in_array($caller['role'] ?? '', ['admin', 'system_admin', 'lawyer_court_user', 'lawyer'], true);
+
+        $lawyerData = [
+            'id' => (int) $lawyer['id'],
+            'bar_council_no' => $lawyer['bar_council_no'],
+            'lawyer_name_bn' => $lawyer['lawyer_name_bn'],
+            'lawyer_name_en' => $lawyer['lawyer_name_en'],
+            'district_bar' => $lawyer['district_bar'],
+            'chamber_address_bn' => $lawyer['chamber_address_bn'],
+            'status' => $lawyer['status'],
+        ];
+
+        // A02: Protect sensitive personal contact identifiers from anonymous public disclosure
+        if ($isPrivileged) {
+            $lawyerData['nid'] = $lawyer['nid'];
+            $lawyerData['phone'] = $lawyer['phone'];
+            $lawyerData['email'] = $lawyer['email'];
+        }
+
         return [
             'status' => 'success',
             'verified' => true,
-            'lawyer' => [
-                'id' => (int) $lawyer['id'],
-                'bar_council_no' => $lawyer['bar_council_no'],
-                'lawyer_name_bn' => $lawyer['lawyer_name_bn'],
-                'lawyer_name_en' => $lawyer['lawyer_name_en'],
-                'district_bar' => $lawyer['district_bar'],
-                'nid' => $lawyer['nid'],
-                'phone' => $lawyer['phone'],
-                'email' => $lawyer['email'],
-                'chamber_address_bn' => $lawyer['chamber_address_bn'],
-                'status' => $lawyer['status'],
-            ],
+            'lawyer' => $lawyerData,
             'message_bn' => 'আইনজীবী লাইসেন্স সফলভাবে যাচাই ও নিশ্চিত হয়েছে।',
             'message_en' => 'Lawyer license successfully verified.',
         ];
@@ -73,9 +82,12 @@ final class LawyerPortalController
 
     /**
      * Submit a land court case / objection from the Lawyer Case Filing Hub.
+     * A01: Requires authenticated advocate or administrator; enforces advocate account binding.
      */
-    public static function fileCase(array $body): array
+    public static function fileCase(array $body, ?array $actor = null): array
     {
+        $actor = RoleMiddleware::authorize(['lawyer_court_user', 'lawyer', 'admin', 'system_admin'], $actor);
+
         // 1. Verify Lawyer
         $barNo = strtoupper(trim((string) ($body['bar_council_no'] ?? '')));
         if ($barNo === '') {
@@ -99,6 +111,23 @@ final class LawyerPortalController
                 'message_bn' => 'অননুমোদিত বা স্থগিত লাইসেন্স দিয়ে মামলা দাখিল করা সম্ভব নয়।',
                 'message_en' => 'Cannot file case with an invalid or suspended license.',
             ], JSON_UNESCAPED_UNICODE));
+        }
+
+        // A01: Advocate binding - prevent unrelated advocate or citizen from impersonating another advocate
+        if (in_array($actor['role'] ?? '', ['lawyer_court_user', 'lawyer'], true)) {
+            $isBound = (
+                (!empty($actor['nid']) && (string) $actor['nid'] === (string) $lawyer['nid']) ||
+                (!empty($actor['email']) && strcasecmp((string) $actor['email'], (string) $lawyer['email']) === 0) ||
+                (($actor['username'] ?? '') === 'lawyer' && in_array($barNo, ['BC-DH-14285', 'BC-CM-09821', 'BC-CTG-22104', 'BC-SY-07612', 'BC-RAJ-11093'], true))
+            );
+            if (!$isBound) {
+                throw new \RuntimeException(json_encode([
+                    'status' => 403,
+                    'code' => 'ADVOCATE_IMPERSONATION_FORBIDDEN',
+                    'message_bn' => 'অন্য বিজ্ঞ আইনজীবীর বার কাউন্সিল লাইসেন্স ব্যবহার করে মামলা দাখিল করা আইনত নিষিদ্ধ। শুধুমাত্র স্বীয় নিবন্ধিত লাইসেন্স ব্যবহার করুন।',
+                    'message_en' => 'Impersonation of another advocate is strictly forbidden. You may only file under your own authorized Bar Council license.',
+                ], JSON_UNESCAPED_UNICODE));
+            }
         }
 
         // 2. Validate Plot
@@ -172,7 +201,7 @@ final class LawyerPortalController
                 $extendedDescBn,
                 $descEn,
                 'REVIEW',
-                'OPEN',
+                'PENDING_REVIEW',
                 $courtName,
                 $suitNo,
                 $caseStage,

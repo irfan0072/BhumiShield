@@ -1,0 +1,9 @@
+{
+    "intended_buyer_id": 42,
+    "fallback_buyer_id": 1,
+    "http": 200,
+    "persisted_deed_buyer_id": 1,
+    "warnings": [
+        "Undefined variable $buyerParty"
+    ]
+}

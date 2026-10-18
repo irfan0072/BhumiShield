@@ -13,7 +13,18 @@ final class SourceIntelligenceController
         throw new \RuntimeException(json_encode(['code'=>$code,'status'=>$status,'message_bn'=>$message,'message_en'=>$message],JSON_UNESCAPED_UNICODE));
     }
     private static function now(): string { return gmdate('Y-m-d\TH:i:s\Z'); }
-    public static function manifest(): array {return json_decode(file_get_contents(base_path('../tools/service_sources/sources.json')),true,512,JSON_THROW_ON_ERROR);}
+    public static function manifest(): array {
+        $packaged = base_path('resources/service_sources/sources.json');
+        $tools = base_path('../tools/service_sources/sources.json');
+        $path = file_exists($packaged) ? $packaged : (file_exists($tools) ? $tools : null);
+        if ($path && file_exists($path)) {
+            $content = file_get_contents($path);
+            if ($content !== false && $content !== '') {
+                return json_decode($content, true, 512, JSON_THROW_ON_ERROR) ?: [];
+            }
+        }
+        return [];
+    }
     public static function migrate(): void {
         $id=DB::isPostgres()?'BIGSERIAL PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT';
         DB::statement("CREATE TABLE IF NOT EXISTS source_monitors (id {$id}, source_key TEXT NOT NULL UNIQUE, kind TEXT NOT NULL, title_bn TEXT NOT NULL, url TEXT NOT NULL, enabled INTEGER NOT NULL DEFAULT 1, interval_hours INTEGER NOT NULL DEFAULT 168, last_attempt TEXT, last_success TEXT, last_error TEXT, semantic_sha256 TEXT, lease_until TEXT, version INTEGER NOT NULL DEFAULT 1)");
@@ -22,7 +33,33 @@ final class SourceIntelligenceController
         DB::statement('CREATE UNIQUE INDEX IF NOT EXISTS source_review_unique ON source_reviews(monitor_id,identity_hash,content_hash)');
         DB::statement("CREATE TABLE IF NOT EXISTS source_decisions (id {$id}, review_id INTEGER NOT NULL REFERENCES source_reviews(id), action TEXT NOT NULL, actor TEXT NOT NULL, reason TEXT NOT NULL, snapshot_json TEXT NOT NULL, created_at TEXT NOT NULL)");
         DB::statement("CREATE TABLE IF NOT EXISTS source_subscriptions (id {$id}, user_id INTEGER NOT NULL REFERENCES users(id), location_id INTEGER NOT NULL REFERENCES locations(id), UNIQUE(user_id,location_id))");
+        DB::statement("CREATE TABLE IF NOT EXISTS source_collection_settings (id INTEGER PRIMARY KEY, enabled INTEGER NOT NULL DEFAULT 0, version INTEGER NOT NULL DEFAULT 1, updated_by TEXT, updated_at TEXT)");
+        DB::statement("INSERT INTO source_collection_settings(id,enabled,version) VALUES(1,0,1) ON CONFLICT(id) DO NOTHING");
+        DB::statement("CREATE TABLE IF NOT EXISTS source_collection_events (id {$id}, enabled INTEGER NOT NULL, actor TEXT NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL)");
         foreach(self::manifest() as $s) DB::statement('INSERT INTO source_monitors(source_key,kind,title_bn,url,interval_hours) VALUES(?,?,?,?,?) ON CONFLICT(source_key) DO NOTHING',[$s['key'],$s['kind'],$s['title_bn'],$s['url'],$s['interval_hours']]);
+    }
+    /** Global switch defaults OFF for both existing and new installations. */
+    public static function collectionSettings(): array {
+        self::migrate();
+        $s=DB::selectOne('SELECT * FROM source_collection_settings WHERE id=1');
+        return ['enabled'=>(int)($s['enabled']??0)===1,'version'=>(int)($s['version']??1),
+            'updated_by'=>$s['updated_by']??null,'updated_at'=>$s['updated_at']??null];
+    }
+    public static function configureCollection(array $b,?array $actor=null): array {
+        $u=RoleMiddleware::authorize(['admin'],$actor);self::migrate();
+        $reason=trim(strip_tags((string)($b['reason']??'')));
+        if(!isset($b['enabled'])||!is_bool($b['enabled'])||mb_strlen($reason)<12||mb_strlen($reason)>1000)
+            self::fail('INVALID_COLLECTION_SETTING','চালু/বন্ধ নির্বাচন ও অন্তত ১২ অক্ষরে পরিবর্তনের কারণ দিন।');
+        DB::transaction(function()use($b,$u,$reason){
+            $n=DB::statement('UPDATE source_collection_settings SET enabled=?,version=version+1,updated_by=?,updated_at=? WHERE id=1 AND version=?',
+                [$b['enabled']?1:0,$u['username'],self::now(),(int)($b['version']??0)]);
+            if(!$n)self::fail('COLLECTION_SETTING_CONFLICT','সেটিংস বদলেছে। আবার তালিকা খুলুন।',409);
+            DB::insert('INSERT INTO source_collection_events(enabled,actor,reason,created_at) VALUES(?,?,?,?)',[$b['enabled']?1:0,$u['username'],$reason,self::now()]);
+        });
+        return self::collectionSettings();
+    }
+    private static function assertCollectionEnabled(): void {
+        if(!self::collectionSettings()['enabled']) self::fail('COLLECTION_GLOBALLY_DISABLED','সরকারি উৎস থেকে তথ্য সংগ্রহ বন্ধ আছে। সুপার অ্যাডমিন সেটিংস থেকে নিয়ন্ত্রণ করুন।',403);
     }
     public static function validUrl(string $url): bool {
         $p=parse_url($url);$host=strtolower($p['host']??'');
@@ -37,7 +74,7 @@ final class SourceIntelligenceController
             $prior=DB::selectOne('SELECT id,title,excerpt,details_json,status,reviewed_at FROM source_reviews WHERE monitor_id=? AND identity_hash=? AND id<? ORDER BY id DESC LIMIT 1',[$r['monitor_id'],$r['identity_hash'],$r['id']]);
             if($prior){$prior['details']=json_decode($prior['details_json'],true);unset($prior['details_json']);}$r['previous']=$prior;
         }unset($r);
-        return ['sources'=>$monitors,'items'=>$reviews,'limit'=>250,'fees'=>ServiceCatalogueController::listPublicFees()['items'],
+        return ['collection'=>self::collectionSettings(),'collection_history'=>DB::select('SELECT * FROM source_collection_events ORDER BY id DESC LIMIT 50'),'sources'=>$monitors,'items'=>$reviews,'limit'=>250,'fees'=>ServiceCatalogueController::listPublicFees()['items'],
             'history'=>DB::select('SELECT id,review_id,action,actor,reason,created_at FROM source_decisions ORDER BY id DESC LIMIT 100')];
     }
     public static function syncLinks(?array $actor=null): array {
@@ -70,7 +107,7 @@ final class SourceIntelligenceController
         return ['id'=>$id];
     }
     public static function collect(int $id,?array $actor=null): array {
-        RoleMiddleware::authorize(['admin'],$actor);self::migrate();
+        RoleMiddleware::authorize(['admin'],$actor);self::migrate();self::assertCollectionEnabled();
         $source=DB::transaction(function()use($id){
             $s=DB::selectOne('SELECT * FROM source_monitors WHERE id=?'.(DB::isPostgres()?' FOR UPDATE':''),[$id]);
             if(!$s||!(int)$s['enabled'])self::fail('SOURCE_DISABLED','উৎস বন্ধ আছে অথবা পাওয়া যায়নি।');
@@ -80,10 +117,17 @@ final class SourceIntelligenceController
             DB::statement('UPDATE source_monitors SET lease_until=?,last_attempt=? WHERE id=?',[gmdate('Y-m-d\TH:i:s\Z',time()+60),$now,$id]);return $s;
         });
         try{
+            self::assertCollectionEnabled();
             if(!function_exists('proc_open'))throw new \RuntimeException('Python collector unavailable: proc_open is disabled. Use the documented CLI worker.');
             $python=(string)env('SOURCE_COLLECTOR_PYTHON','/usr/bin/python3');
-            if(!str_starts_with($python,'/')||!is_executable($python))throw new \RuntimeException('Configure SOURCE_COLLECTOR_PYTHON to an installed Python 3 executable.');
-            $pipes=[];$process=proc_open([$python,base_path('../tools/service_sources/collector.py'),'--stdin'],[['pipe','r'],['pipe','w'],['pipe','w']],$pipes);
+            $collectorScript = base_path('resources/service_sources/collector.py');
+            if (!file_exists($collectorScript)) {
+                $collectorScript = base_path('../tools/service_sources/collector.py');
+            }
+            if (!file_exists($collectorScript)) {
+                throw new \RuntimeException('Source collector script is not packaged in this runtime image.');
+            }
+            $pipes=[];$process=proc_open([$python,$collectorScript,'--stdin'],[['pipe','r'],['pipe','w'],['pipe','w']],$pipes);
             if(!is_resource($process))throw new \RuntimeException('Could not start collector.');
             fwrite($pipes[0],json_encode(['key'=>$source['source_key'],'kind'=>$source['kind'],'title_bn'=>$source['title_bn'],'url'=>$source['url']],JSON_UNESCAPED_UNICODE));fclose($pipes[0]);
             stream_set_blocking($pipes[1],false);stream_set_blocking($pipes[2],false);$output='';$start=microtime(true);

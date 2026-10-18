@@ -1,0 +1,17 @@
+{
+  "README.md": "fd4b09a9cf2c48417b58450834a2150bf27f0c6a8a6e379c97e9df476e3c7865",
+  "backend/app/Http/Controllers/Api/V1/SourceIntelligenceController.php": "c1e1489db699cb5a3b50204d1dad47dcdfe53fa46d9bc3c3d1792fe4ee5885b0",
+  "backend/routes/api.php": "bb85c628eb84b4212edd0cc52dde8c16d065b86ba839c00701e74f21784feca6",
+  "tools/service_sources/worker.php": "addb968de2dd8ac2ced4d6a03bd23e16a4ef278fff9751e7d1de69f822873ba7",
+  "tools/service_sources/collector.py": "6ecacdbebb28a4139b38e295671f594b5ff91a19819be72ab5c043fe1829d326",
+  "tools/service_sources/collection_policy.py": "20a6726f6cca406d3e97d8fc67b02eddc8a482cba9be0ade3fa2f6fe3c01740c",
+  "backend/resources/service_sources/collector.py": "6ecacdbebb28a4139b38e295671f594b5ff91a19819be72ab5c043fe1829d326",
+  "backend/resources/service_sources/collection_policy.py": "20a6726f6cca406d3e97d8fc67b02eddc8a482cba9be0ade3fa2f6fe3c01740c",
+  "tools/map_sources/collect_public_catalog.py": "768195deb09d0e3f698f5f14a22a1da42abae046ce3a0bd583ad150100afabb0",
+  "frontend/src/components/sources/sourceApi.ts": "d4914a9bb011bde76c846ac62d8f5a3313ed5611a910fb3771fb5eda6c8ea6aa",
+  "frontend/src/components/sources/SourceReviewPanel.tsx": "41967f26a4b43985868c604a61bb272f86b5a7588bc37c79dd06f631180fdc32",
+  "backend/tests/Feature/SourceCollectionControlTest.php": "292a41f71ce90ebe83c04b410593161b260194a8d5d1c9240366ab61a1aa2923",
+  "backend/tests/Feature/SourceIntelligenceTest.php": "a9ad5816e8efa3b53ddbb6483c9dd48ab3c810be42dc1df2dbd50b84115e8f9d",
+  "tools/service_sources/test_collector.py": "cb50cc04c3985579afa4bd251d34c38bf139d2996c13a38a3a6e008abee2d458",
+  "tools/map_sources/test_catalog.py": "47a66467ce50a181fd85558e297e44ca65be08f1fa6d648bd77d5402b056fcae"
+}

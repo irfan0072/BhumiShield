@@ -51,4 +51,22 @@ class Tests(unittest.TestCase):
    def page(self,url):return b'<title>Official map</title>',url
   r=c.collect({'key':'maps','kind':'MAP','title_bn':'Maps','url':'https://dlrs.gov.bd/maps'},Fake())
   self.assertEqual(r['source_key'],'maps');self.assertEqual(len(r['raw_sha256']),64)
+class CollectionPolicyTests(unittest.TestCase):
+ def test_disabled_policy_stops_before_network(self):
+  with patch.object(c,'require_collection_enabled',side_effect=ValueError('OFF')),patch.object(c,'PublicHTTPS') as connection:
+   with self.assertRaises(ValueError):c.Fetcher().raw('https://land.gov.bd/')
+   connection.assert_not_called()
+ def test_policy_accepts_only_verified_true(self):
+  import collection_policy as policy
+  from types import SimpleNamespace
+  with patch.object(policy.shutil,'which',return_value='/synthetic/php'),patch.object(policy.subprocess,'run',return_value=SimpleNamespace(returncode=0,stdout='true')):
+   policy.require_collection_enabled()
+ def test_policy_fails_closed_on_false_invalid_and_process_failure(self):
+  import collection_policy as policy
+  from types import SimpleNamespace
+  for code,output in [(0,'false'),(0,'garbage'),(1,'true')]:
+   with self.subTest(code=code,output=output),patch.object(policy.shutil,'which',return_value='/synthetic/php'),patch.object(policy.subprocess,'run',return_value=SimpleNamespace(returncode=code,stdout=output)),self.assertRaises(ValueError):policy.require_collection_enabled()
+ def test_policy_fails_closed_on_timeout(self):
+  import collection_policy as policy
+  with patch.object(policy.shutil,'which',return_value='/synthetic/php'),patch.object(policy.subprocess,'run',side_effect=policy.subprocess.TimeoutExpired('php',10)),self.assertRaises(ValueError):policy.require_collection_enabled()
 if __name__=='__main__':unittest.main()

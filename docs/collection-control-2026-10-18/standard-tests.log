@@ -1,0 +1,193 @@
+
+   PASS  Tests\Feature\RulesAndLedgerTest (Laravel 11 / PHP 8.4.22)
+  ✓ test_01_seed_counts_and_dummy_data (0ms)
+  ✓ test_02_rule_seller_not_owner (0ms)
+  ✓ test_03_rule_area_exceeds_owned (0ms)
+  ✓ test_04_rule_double_sale (0ms)
+  ✓ test_05_rule_khatian_chain_break (0ms)
+  ✓ test_06_rule_deed_tampered_and_ed25519_ledger (0.2ms)
+  ✓ test_07_rule_plot_mortgaged (0ms)
+  ✓ test_08_rule_rapid_resale (2.6ms)
+  ✓ test_09_rule_inheritance_unresolved (0ms)
+  ✓ test_10_rule_nid_mismatch (0.7ms)
+  ✓ test_11_all_core_fraud_rules_produce_expected_verdicts_from_real_database_rows (4.8ms)
+  ✓ test_12_live_tamper_and_restore_workflow (94.3ms)
+  ✓ test_13_end_to_end_role_workflows (9.9ms)
+  ✓ test_14_user_registration_login_and_admin_management (388.7ms)
+  ✓ test_15_site_settings_and_analytics_summary (5.8ms)
+  ✓ test_16_rbac_role_middleware_enforces_role_guards (0.9ms)
+  ✓ test_17_citizen_plot_sale_lock_and_dispute_controls (1.5ms)
+  ✓ test_18_registrar_acland_and_bank_noc_controlling_systems (7.5ms)
+  ✓ test_19_inviolable_ownership_guard_strictly_enforces_ac_land_mutation_only (0.5ms)
+  ⨯ test_20_public_codes_transfers_and_vault_documents_state_machine: {"status":422,"code":"BUYER_PARTY_NOT_FOUND","message_bn":"স্থানান্তর কেসে কোনো নিবন্ধিত ক্রেতা পাওয়া যায়নি।","message_en":"Registered buyer party not found for this transfer."}
+
+  Tests:    19 passed, 1 failed (19 assertions)
+
+
+   PASS  Tests\Feature\RoleAuditRegressionTest (Findings F01-F18 Regression)
+  ✓ test_f01_citizen_sale_lock_enforces_latest_owner_authority (4521.7ms)
+  ✓ test_f01_f12_noc_forbidden_on_active_lien_and_requires_released_state (4409.2ms)
+  ✓ test_f02_f11_mutation_idempotency_prevents_duplicate_approval (4508.7ms)
+  ✓ test_f03_mutation_approval_blocks_tampered_deed (4599ms)
+  ✓ test_f04_upheld_frozen_dispute_blocks_all_plot_operations (4781.7ms)
+  ✓ test_f05_open_disputes_consistently_surface_as_review_across_roles (4596.8ms)
+  ✓ test_f06_khatian_reconciliation_conserves_joint_owner_total_area (4497.5ms)
+  ✓ test_f07_anonymous_role_middleware_fails_closed_with_401 (5487ms)
+  ✓ test_f08_negative_and_zero_areas_strictly_rejected (4905.5ms)
+  ✓ test_f09_mutation_conserves_share_fractions_and_debits_seller (4740.1ms)
+  ✓ test_f12_bank_officer_scoping_and_idempotent_release_timestamp (4659.4ms)
+  ✓ test_f13_honest_404_for_unknown_nid_and_registration_uniqueness (4487ms)
+  ✓ test_f16_urls_and_ports_point_to_5175 (4854ms)
+  ✓ test_f17_dynamic_rapid_resale_days_honored_from_settings (4888.5ms)
+  ✓ test_f18_profile_password_requires_current_pass_and_protects_last_admin (5391ms)
+  ✓ test_f19_persisted_noc_certificates_and_stable_signature (5112.7ms)
+  ✓ test_f20_public_verification_redacts_private_nid (5293.3ms)
+  ✓ test_f21_registrar_deeds_sql_search_and_filtering (4704.3ms)
+  ✓ test_f22_public_qr_verification_setting_gates_routes (4701ms)
+  ✓ test_i01_unverified_citizen_vault_access_fails_closed (5212.5ms)
+  ✓ test_i02_suspended_admin_register_blocks_provisioning (4481.2ms)
+  ✓ test_i03_password_change_increments_token_version_and_revokes_old_jwt (5025.4ms)
+  ✓ test_i04_anonymous_persons_directory_masks_nid_and_redacts_privacy_fields (4578.7ms)
+  ✓ test_i07_seller_fraction_conserved_and_buyer_consolidated (4409.3ms)
+  ✓ test_i08_mutation_and_mortgage_concurrency_conflict_409 (4421.4ms)
+  ✓ test_service_catalogue_and_fee_registry_crud_and_versioning (4385.2ms)
+  ✓ test_analytics_follow_persisted_records_and_readiness_requires_schema (4682.2ms)
+  ✓ test_bank_institution_assignment_and_public_privacy_boundaries (4318ms)
+  ✓ test_rapid_resale_defaults_to_current_time (4268.7ms)
+
+  Audit Regression Tests:    29 passed, 0 failed (29 total)
+
+
+   PASS  Tests\Feature\TierBPortalAndMarketplaceTest (Tier B Upgrades)
+  ✓ test_01_public_listings_marketplace_filtering_and_privacy_masking (1.7ms)
+  ✓ test_02_listing_enquiry_creation_without_phone_disclosure (0.1ms)
+  ✓ test_03_public_notices_listing_and_qr_attachment_verification (0.2ms)
+  ✓ test_04_educational_blog_retrieval_and_helpful_increment (0.1ms)
+  ✓ test_05_zoom_aware_cadastral_map_clusters_and_polygon_features (0.3ms)
+  ✓ test_06_office_directory_filtering_and_service_point_jurisdictions (0.1ms)
+
+  Tier B Tests:    6 passed, 0 failed (6 total)
+
+
+   PASS  Tests\Feature\TierCOnboardingAndAppealsTest (Tier C Upgrades)
+  ✓ test_01_maker_submits_onboarding_batch_with_hash_proof_package (2.9ms)
+  ✓ test_02_maker_cannot_approve_own_batch_due_to_separation_of_duties (0.1ms)
+  ✓ test_03_authorized_checker_approves_onboarding_batch (0.2ms)
+  ✓ test_04_citizen_files_appeal_with_masked_appellant_nid (0.2ms)
+  ✓ test_05_stay_order_granted_locks_plot_against_sale (0.2ms)
+  ✓ test_06_unauthorized_role_cannot_decide_appeals (0ms)
+
+  Tier C Tests:    6 passed, 0 failed (6 total)
+
+
+   PASS  Tests\Feature\SecurityWorkflowRegressionTest (Findings F01-F04 & F12)
+  ✓ test_01_anonymous_transfer_advance_fails_with_401 (2.1ms)
+  ✓ test_02_non_adjacent_transfer_transition_fails_with_422 (175.9ms)
+  ✓ test_03_wrong_citizen_cannot_view_or_advance_other_citizens_transfer_403 (177.8ms)
+  ⨯ test_04_citizen_cannot_self_verify_counter_biometrics_step_8_403: Step 4 advance must succeed for citizen Expected [200] but got [422]
+  ✓ test_05_transfer_creation_rejects_invalid_deed_enum_422 (179.8ms)
+  ✓ test_06_transfer_creation_rejects_negative_or_zero_area_and_price_422 (183.3ms)
+  ✓ test_07_transfer_creation_rejects_non_owned_or_mortgaged_plot_403_or_422 (182.3ms)
+  ✓ test_08_anonymous_access_to_workflow_records_returns_401 (2.1ms)
+  ✓ test_09_document_upload_rejects_missing_file_bytes_422 (183.9ms)
+  ✓ test_10_document_upload_with_bytes_persists_hash_and_size_and_serves_scoped_download (360.3ms)
+  ✓ test_11_registrar_deeds_scoped_by_office_and_masks_nids (177.1ms)
+  ✓ test_12_expanded_roles_authorized_on_appropriate_endpoints (535.1ms)
+  ⨯ test_13_appointments_creation_and_listing_scoped: Appointment creation must return 200 Expected [200] but got [422]
+  ✓ test_14_marketplace_listing_enquiries_flow (502.8ms)
+  ✓ test_15_noc_verification_includes_mortgaged_area_and_loan_amount (13.2ms)
+
+  Security & Workflow Tests:    13 passed, 2 failed (15 total)
+
+
+   PASS  Tests\Feature\UiEnvelopeAdapterTest (Finding F07)
+  ✓ test_01_acland_appeals_returns_items_envelope (182.6ms)
+  ✓ test_02_registrar_onboarding_batches_returns_items_envelope (181.7ms)
+  ✓ test_03_offices_returns_items_envelope (0.6ms)
+  ✓ test_04_notices_returns_items_envelope (0.6ms)
+  ✓ test_05_listings_returns_items_envelope (0.6ms)
+
+  UI Envelope Tests:    5 passed, 0 failed (5 total)
+
+
+   PASS  Tests\Feature\CheckBeforeBuyRouteTest (Finding F11)
+  ✓ test_01_check_before_buy_returns_full_report_for_seeded_plot (2ms)
+  ✓ test_02_check_before_buy_rejects_unknown_plot_404_or_422 (0.6ms)
+  ✓ test_03_plots_listing_includes_dag_for_deep_link_resolution (0.7ms)
+  ✓ test_04_check_alias_path_works (1.1ms)
+
+  Check-Before-Buy Route Tests:    4 passed, 0 failed (4 total)
+
+
+   PASS  Tests\Feature\AppointmentBookingTest (Finding F10)
+  ✓ test_01_valid_booking_returns_appointment_code_and_persists (1.4ms)
+  ✓ test_02_unknown_office_returns_404 (0.6ms)
+  ✓ test_03_missing_name_returns_422 (0.5ms)
+  ✓ test_04_missing_phone_returns_422 (0.5ms)
+  ✓ test_05_missing_date_returns_422 (0.6ms)
+  ✓ test_06_double_booking_same_office_and_date_returns_409 (1.3ms)
+  ✓ test_07_same_citizen_can_book_different_office_same_date (1.1ms)
+
+  Appointment Booking Tests:    7 passed, 0 failed (7 total)
+
+
+   PASS  Tests\Feature\FieldOperationsAndSlaTest (Finding F08)
+  ✓ test_01_anonymous_field_reports_list_401 (2.2ms)
+  ✓ test_02_anonymous_field_report_create_401 (0.6ms)
+  ✓ test_03_citizen_field_reports_list_403 (179.9ms)
+  ✓ test_04_fvo_field_report_create_200_and_persists (178.4ms)
+  ✓ test_05_fvo_field_report_missing_fields_422 (178.5ms)
+  ✓ test_06_ac_land_lists_all_field_reports_200 (183.7ms)
+  ✓ test_07_uno_supervisor_creates_sla_dispatch_200_and_persists (180.1ms)
+  ✓ test_08_uno_supervisor_sla_dispatch_invalid_target_role_422 (180.9ms)
+  ✓ test_09_audit_log_row_created_for_field_report (0ms)
+  ✓ test_10_fvo_list_scoped_to_own_reports (192.1ms)
+
+  Field Ops & SLA Tests:    10 passed, 0 failed (10 total)
+
+
+   PASS  Tests\Feature\RoleRoutingAndSubtabTest (Findings F05/F06/F13)
+  ✓ test_01_every_seeded_role_can_authenticate (4760.1ms)
+  ✓ test_02_dc_acquisition_officer_login_succeeds (229.1ms)
+  ✓ test_03_lawyer_court_user_login_succeeds (224.2ms)
+  ✓ test_04_fvo_can_file_field_report_after_login (211.7ms)
+  ✓ test_05_settlement_records_officer_can_create_onboarding_batch (314.6ms)
+  ✓ test_06_settlement_checker_can_view_onboarding_batches (276.1ms)
+  ✓ test_07_role_swap_does_not_corrupt_response_state (446.9ms)
+  ✓ test_08_support_agent_can_list_tickets (202.8ms)
+
+  Role Routing & Subtab Tests:    8 passed, 0 failed (8 total)
+
+
+   PASS  Tests\Feature\SignedNoticePdfTest (Finding F09)
+  ✓ test_01_anon_download_returns_binary_envelope (4.7ms)
+  ✓ test_02_pdf_magic_bytes_and_eof_marker (0.8ms)
+  ✓ test_03_pdf_body_mentions_sha256_and_ed25519 (0.8ms)
+  ✓ test_04_verify_envelope_endpoint (0.6ms)
+  ✓ test_05_tampered_envelope_fails_verification (0.7ms)
+  ✓ test_06_unknown_slug_returns_404 (1.7ms)
+  ✓ test_07_wrong_attachment_returns_404 (0.9ms)
+  ✓ test_08_unpublished_notice_returns_403 (0.9ms)
+  ✓ test_09_pdfs_seal_service_self_check (0.1ms)
+
+  Signed Notice PDF Tests:    9 passed, 0 failed (9 total)
+
+
+   PASS  Tests\Feature\ListingBadgeDerivationTest (Finding F16)
+  ✓ test_01_listing_on_unverified_plot_gets_needs_review (236.2ms)
+  ✓ test_02_listing_on_disputed_plot_is_flagged (224ms)
+  ✓ test_03_listing_on_clean_plot_is_verified_clear (215.7ms)
+
+  Listing Badge Derivation Tests:    3 passed, 0 failed (3 total)
+
+
+   PASS  Tests\Feature\ProviderBoundariesTest (Provider Boundaries & Contracts)
+  ✓ test_01_nid_provider_lookup_and_verification (2ms)
+  ✓ test_02_biometric_session_and_presentation_token_verification (1.7ms)
+  ✓ test_03_biometric_consecutive_failures_require_supervisor_override (0.5ms)
+  ✓ test_04_sms_outbox_driver_records_and_retrieves_otps (1ms)
+  ✓ test_05_payment_provider_lifecycle_and_fee_ledger (1ms)
+  ✓ test_06_land_service_gateway_tax_and_khatian (1ms)
+
+  Provider Tests:    6 passed, 0 failed (6 total)
+

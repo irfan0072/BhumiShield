@@ -1,0 +1,21 @@
+{
+    "anonymous\/locations": {
+        "http": 200,
+        "plot_rows": 62,
+        "unmasked_lock_owner_nid_rows": 1,
+        "internal_actor_fields_present": true
+    },
+    "anonymous\/plots": {
+        "http": 200,
+        "plot_rows": 62,
+        "unmasked_lock_owner_nid_rows": 1,
+        "internal_actor_fields_present": true
+    },
+    "bank_national_person_directory": {
+        "http": 200,
+        "person_rows": 47,
+        "unmasked_nid_rows": 47,
+        "unredacted_address_rows": 47,
+        "unredacted_parent_name_rows": 46
+    }
+}
