@@ -2179,281 +2179,218 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   );
 
   // =========================================================================
-  // ADMIN COCKPIT: GROUPED SIDEBAR NAV DEFINITIONS
+  // ADMIN NAV: compact grouped tab definitions
   // =========================================================================
-  const sidebarGroups = [
+  const NAV_GROUPS = [
     {
-      groupId: 'command',
-      groupLabel: { bn: 'কমান্ড সেন্টার', en: 'Command Center' },
-      icon: <LayoutDashboard className="w-3 h-3" />,
+      id: 'core',
+      label: { bn: 'ওভারভিউ', en: 'Overview' },
       items: [
         { tab: 'overview' as AdminTab, icon: <LayoutDashboard className="w-3.5 h-3.5" />, bn: 'ড্যাশবোর্ড', en: 'Dashboard' },
       ],
     },
     {
-      groupId: 'land_workflows',
-      groupLabel: { bn: 'ভূমি কার্যক্রম', en: 'Land Workflows' },
-      icon: <Compass className="w-3 h-3" />,
+      id: 'land',
+      label: { bn: 'ভূমি কার্যক্রম', en: 'Land' },
       items: [
         { tab: 'transfers' as AdminTab, icon: <ArrowRight className="w-3.5 h-3.5" />, bn: 'হস্তান্তর', en: 'Transfers' },
         { tab: 'mutations' as AdminTab, icon: <RefreshCw className="w-3.5 h-3.5" />, bn: 'নামজারি', en: 'Mutations' },
         { tab: 'field_verification' as AdminTab, icon: <MapPin className="w-3.5 h-3.5" />, bn: 'মাঠ তদন্ত', en: 'Field Verify' },
-        { tab: 'acquisitions' as AdminTab, icon: <Landmark className="w-3.5 h-3.5" />, bn: 'অধিগ্রহণ (LA)', en: 'Acquisitions' },
-        { tab: 'survey_records' as AdminTab, icon: <FileSpreadsheet className="w-3.5 h-3.5" />, bn: 'জরিপ রেকর্ড', en: 'Survey Records' },
+        { tab: 'acquisitions' as AdminTab, icon: <Landmark className="w-3.5 h-3.5" />, bn: 'অধিগ্রহণ', en: 'Acquisitions' },
+        { tab: 'survey_records' as AdminTab, icon: <FileSpreadsheet className="w-3.5 h-3.5" />, bn: 'জরিপ', en: 'Survey' },
       ],
     },
     {
-      groupId: 'legal',
-      groupLabel: { bn: 'আইনি ও বিচার', en: 'Legal & Judicial' },
-      icon: <Scale className="w-3 h-3" />,
+      id: 'legal',
+      label: { bn: 'আইনি', en: 'Legal' },
       items: [
         { tab: 'bank_liens' as AdminTab, icon: <Coins className="w-3.5 h-3.5" />, bn: 'ব্যাংক লিয়েন', en: 'Bank Liens' },
-        { tab: 'appeals' as AdminTab, icon: <Gavel className="w-3.5 h-3.5" />, bn: 'আপিল ও আদালত', en: 'Appeals' },
+        { tab: 'appeals' as AdminTab, icon: <Gavel className="w-3.5 h-3.5" />, bn: 'আপিল', en: 'Appeals' },
       ],
     },
     {
-      groupId: 'registry',
-      groupLabel: { bn: 'রেজিস্ট্রি ও দলিল', en: 'Registry & Deeds' },
-      icon: <FileText className="w-3 h-3" />,
+      id: 'registry',
+      label: { bn: 'রেজিস্ট্রি', en: 'Registry' },
       items: [
-        { tab: 'plots_control' as AdminTab, icon: <Compass className="w-3.5 h-3.5" />, bn: 'দাগ ও ভূমি', en: 'Plots & Land' },
-        { tab: 'deeds' as AdminTab, icon: <FileText className="w-3.5 h-3.5" />, bn: 'দলিল তদারকি', en: 'Deeds' },
-        { tab: 'ledger' as AdminTab, icon: <ShieldCheck className="w-3.5 h-3.5" />, bn: 'লেজার ও অডিট', en: 'Ledger & Audit' },
+        { tab: 'plots_control' as AdminTab, icon: <Compass className="w-3.5 h-3.5" />, bn: 'দাগ ও ভূমি', en: 'Plots' },
+        { tab: 'deeds' as AdminTab, icon: <FileText className="w-3.5 h-3.5" />, bn: 'দলিল', en: 'Deeds' },
+        { tab: 'ledger' as AdminTab, icon: <ShieldCheck className="w-3.5 h-3.5" />, bn: 'লেজার', en: 'Ledger' },
       ],
     },
     {
-      groupId: 'system',
-      groupLabel: { bn: 'সিস্টেম প্রশাসন', en: 'System Admin' },
-      icon: <Settings className="w-3 h-3" />,
+      id: 'system',
+      label: { bn: 'সিস্টেম', en: 'System' },
       items: [
-        { tab: 'users' as AdminTab, icon: <Users className="w-3.5 h-3.5" />, bn: 'ইউজার ও পদায়ন', en: 'Users & Roles' },
-        { tab: 'offices_config' as AdminTab, icon: <Building2 className="w-3.5 h-3.5" />, bn: 'অফিস ও কনফিগ', en: 'Offices & Config' },
-        { tab: 'catalogue' as AdminTab, icon: <BookOpen className="w-3.5 h-3.5" />, bn: 'সেবা ক্যাটালগ', en: 'Catalogue & Fees' },
-        { tab: 'settings' as AdminTab, icon: <Settings className="w-3.5 h-3.5" />, bn: 'সিস্টেম পলিসি', en: 'System Policy' },
+        { tab: 'users' as AdminTab, icon: <Users className="w-3.5 h-3.5" />, bn: 'ইউজার', en: 'Users' },
+        { tab: 'offices_config' as AdminTab, icon: <Building2 className="w-3.5 h-3.5" />, bn: 'অফিস', en: 'Offices' },
+        { tab: 'catalogue' as AdminTab, icon: <BookOpen className="w-3.5 h-3.5" />, bn: 'ক্যাটালগ', en: 'Catalogue' },
+        { tab: 'settings' as AdminTab, icon: <Settings className="w-3.5 h-3.5" />, bn: 'পলিসি', en: 'Policy' },
         { tab: 'integrations' as AdminTab, icon: <Globe className="w-3.5 h-3.5" />, bn: 'ইন্টিগ্রেশন', en: 'Integrations' },
-        { tab: 'audit_reports' as AdminTab, icon: <FileSearch className="w-3.5 h-3.5" />, bn: 'অডিট রিপোর্ট', en: 'Audit Reports' },
+        { tab: 'audit_reports' as AdminTab, icon: <FileSearch className="w-3.5 h-3.5" />, bn: 'অডিট', en: 'Audit' },
       ],
     },
     {
-      groupId: 'citizen',
-      groupLabel: { bn: 'নাগরিক সেবা', en: 'Citizen Services' },
-      icon: <HelpCircle className="w-3 h-3" />,
+      id: 'citizen',
+      label: { bn: 'নাগরিক', en: 'Citizen' },
       items: [
-        { tab: 'tickets' as AdminTab, icon: <MessageSquare className="w-3.5 h-3.5" />, bn: 'সাপোর্ট টিকেট', en: 'Support Desk' },
+        { tab: 'tickets' as AdminTab, icon: <MessageSquare className="w-3.5 h-3.5" />, bn: 'টিকেট', en: 'Tickets' },
         { tab: 'notices' as AdminTab, icon: <Newspaper className="w-3.5 h-3.5" />, bn: 'বিজ্ঞপ্তি', en: 'Notices' },
-        { tab: 'marketplace' as AdminTab, icon: <Globe className="w-3.5 h-3.5" />, bn: 'মার্কেটপ্লেস', en: 'Marketplace' },
-      ],
-    },
-    {
-      groupId: 'tools',
-      groupLabel: { bn: 'বিশেষ টুলস', en: 'Specialist Tools' },
-      icon: <Layers className="w-3 h-3" />,
-      items: [
-        { tab: 'content_editor' as AdminTab, icon: <Edit2 className="w-3.5 h-3.5" />, bn: 'কন্টেন্ট এডিটর', en: 'Content Editor' },
-        { tab: 'content_approver' as AdminTab, icon: <CheckCheck className="w-3.5 h-3.5" />, bn: 'প্রকাশনা অনুমোদন', en: 'Content Approver' },
-        { tab: 'marketplace_moderation' as AdminTab, icon: <ShieldAlert className="w-3.5 h-3.5" />, bn: 'লিস্টিং মডারেশন', en: 'Listing Moderation' },
+        { tab: 'marketplace' as AdminTab, icon: <Globe className="w-3.5 h-3.5" />, bn: 'মার্কেট', en: 'Market' },
       ],
     },
   ];
 
-  // Filter sidebar groups to only show tabs the role is allowed to access
-  const visibleSidebarGroups = sidebarGroups.map((group) => ({
-    ...group,
-    items: group.items.filter((item) =>
-      allowedTabs.includes(item.tab) ||
-      // Always show tools group for admin/system_admin
-      (['admin', 'system_admin'].includes(role) && group.groupId === 'tools')
-    ),
-  })).filter((group) => group.items.length > 0);
+  // Filter to only tabs allowed for this role
+  const visibleNavGroups = NAV_GROUPS.map((g) => ({
+    ...g,
+    items: g.items.filter((i) => allowedTabs.includes(i.tab)),
+  })).filter((g) => g.items.length > 0);
 
-  // Determine active tab label for the command ribbon
-  const activeTabLabel = (() => {
-    for (const g of sidebarGroups) {
-      const found = g.items.find((i) => i.tab === subTab);
-      if (found) return lang === 'bn' ? found.bn : found.en;
-    }
-    return subTab;
-  })();
+  // Extra specialist tabs for admin/system_admin
+  const specialistTabs: { tab: AdminTab; bn: string; en: string }[] = ['admin', 'system_admin'].includes(role)
+    ? [
+        { tab: 'content_editor', bn: 'এডিটর', en: 'Editor' },
+        { tab: 'content_approver', bn: 'অনুমোদন', en: 'Approver' },
+        { tab: 'marketplace_moderation', bn: 'মডারেশন', en: 'Moderation' },
+      ]
+    : [];
 
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100vh - 52px)' }}>
+    <div className="space-y-0">
 
-      {/* ── COMMAND RIBBON (48px) ─────────────────────────────────────────── */}
-      <div className="flex-none h-12 bg-slate-900 border-b border-slate-700 flex items-center justify-between px-4 gap-3 z-10">
-        {/* Left: breadcrumb */}
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="flex items-center gap-1.5 text-slate-400 text-xs font-semibold truncate">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-            <span className="text-slate-300 font-bold hidden sm:inline">
-              {role === 'support_agent'
-                ? t('সাপোর্ট ডেস্ক', 'Support Desk')
-                : role === 'auditor'
-                ? t('অডিটর কনসোল', 'Auditor Console')
-                : role === 'content_editor'
-                ? t('কন্টেন্ট এডিটর', 'Content Editor')
-                : role === 'content_approver'
-                ? t('প্রকাশনা কর্তৃপক্ষ', 'Content Approver')
-                : role === 'platform_moderator'
-                ? t('প্ল্যাটফর্ম মডারেটর', 'Platform Moderator')
-                : t('সুপার অ্যাডমিন কনসোল', 'Super Admin Console')}
-            </span>
-            <span className="text-slate-600">/</span>
-            <span className="text-emerald-400 font-bold truncate">{activeTabLabel}</span>
-          </div>
-        </div>
-
-        {/* Center: live KPI pills */}
-        {(role === 'admin' || role === 'system_admin') && (
-          <div className="hidden md:flex items-center gap-2 flex-shrink-0">
-            <div className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 border border-slate-700">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] font-bold text-slate-300">
+      {/* ── KPI STATUS RIBBON ──────────────────────────────────────────────── */}
+      {(role === 'admin' || role === 'system_admin') && (
+        <div className="flex items-center justify-between gap-3 px-0 pb-2 border-b border-slate-200">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[11px] font-bold">
                 {toBanglaDigits(usersList.length || 0, lang)} {t('ইউজার', 'users')}
               </span>
             </div>
-            <div className="flex items-center gap-1 px-2 py-1 rounded bg-slate-800 border border-slate-700">
-              <ShieldCheck className="w-3 h-3 text-emerald-400" />
-              <span className="text-[10px] font-bold text-slate-300">
-                {toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}% {t('লেজার', 'ledger')}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 text-blue-800">
+              <ShieldCheck className="w-3 h-3" />
+              <span className="text-[11px] font-bold">
+                {toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}% {t('লেজার', 'Ledger')}
               </span>
             </div>
             {anomaliesData && Number(anomaliesData.total_anomalies) > 0 && (
-              <div className="flex items-center gap-1 px-2 py-1 rounded bg-rose-900/60 border border-rose-700">
-                <AlertTriangle className="w-3 h-3 text-rose-400" />
-                <span className="text-[10px] font-bold text-rose-300">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 border border-rose-300 text-rose-800">
+                <AlertTriangle className="w-3 h-3 text-rose-500" />
+                <span className="text-[11px] font-bold">
                   {toBanglaDigits(anomaliesData.total_anomalies, lang)} {t('অ্যানোমালি', 'anomalies')}
                 </span>
               </div>
             )}
           </div>
-        )}
-
-        {/* Right: actions */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {loadError && (
-            <span className="text-[10px] font-bold text-rose-400 hidden sm:inline">{t('লোড ত্রুটি', 'Load error')}</span>
-          )}
-          {['admin', 'system_admin'].includes(role) && (
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {loadError && (
+              <button onClick={refreshAll} className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer">
+                {t('লোড ত্রুটি — পুনরায় চেষ্টা', 'Load error — retry')}
+              </button>
+            )}
+            {['admin', 'system_admin'].includes(role) && (
+              <button
+                type="button"
+                onClick={() => onNavigate?.('map?design=1')}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition cursor-pointer"
+              >
+                <MapPin className="w-3 h-3" />
+                <span>{t('ম্যাপ ও দাগ ডিজাইন', 'Map & Parcel Design')}</span>
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => onNavigate?.('map?design=1')}
-              className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-700 hover:bg-emerald-600 text-white text-[10px] font-bold transition cursor-pointer"
+              onClick={refreshAll}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition cursor-pointer border border-slate-200"
             >
-              <MapPin className="w-3 h-3" />
-              <span>{t('ম্যাপ', 'Map')}</span>
+              <RefreshCw className="w-3 h-3" />
+              <span>{t('রিফ্রেশ', 'Refresh')}</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── GROUPED HORIZONTAL TAB NAVIGATION ─────────────────────────────── */}
+      <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
+        <div className="flex items-stretch overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          {visibleNavGroups.map((group, gi) => (
+            <div
+              key={group.id}
+              className={`flex flex-col flex-shrink-0 ${gi < visibleNavGroups.length - 1 ? 'border-r border-slate-200' : ''}`}
+            >
+              {/* Group label */}
+              <div className="px-2 pt-1.5 pb-0.5">
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">
+                  {lang === 'bn' ? group.label.bn : group.label.en}
+                </span>
+              </div>
+              {/* Tab buttons */}
+              <div className="flex items-center gap-0.5 px-1.5 pb-1.5">
+                {group.items.map((item) => {
+                  const isActive = subTab === item.tab ||
+                    (item.tab === 'plots_control' && ['hierarchy'].includes(subTab)) ||
+                    (item.tab === 'ledger' && subTab === 'ledger') ||
+                    (item.tab === 'settings' && subTab === 'settings') ||
+                    (item.tab === 'catalogue' && subTab === 'catalogue') ||
+                    (item.tab === 'offices_config' && subTab === 'offices_config');
+                  return (
+                    <button
+                      key={item.tab}
+                      type="button"
+                      onClick={() => handleTabChange(item.tab)}
+                      title={lang === 'bn' ? item.bn : item.en}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${
+                        isActive
+                          ? 'bg-[#006A4E] text-white shadow-xs'
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                      }`}
+                    >
+                      <span className={isActive ? 'text-white' : 'text-slate-400'}>{item.icon}</span>
+                      <span className="leading-snug">{lang === 'bn' ? item.bn : item.en}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+
+          {/* Specialist tools (admin only) */}
+          {specialistTabs.length > 0 && (
+            <div className="flex flex-col flex-shrink-0 border-l border-dashed border-slate-300 ml-1">
+              <div className="px-2 pt-1.5 pb-0.5">
+                <span className="text-[9px] font-black uppercase tracking-widest text-amber-500 whitespace-nowrap">
+                  {t('বিশেষ', 'Tools')}
+                </span>
+              </div>
+              <div className="flex items-center gap-0.5 px-1.5 pb-1.5">
+                {specialistTabs.map((item) => (
+                  <button
+                    key={item.tab}
+                    type="button"
+                    onClick={() => handleTabChange(item.tab)}
+                    className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-bold transition cursor-pointer whitespace-nowrap ${
+                      subTab === item.tab
+                        ? 'bg-slate-800 text-white shadow-xs'
+                        : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                    }`}
+                  >
+                    {lang === 'bn' ? item.bn : item.en}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
-          <button
-            type="button"
-            onClick={refreshAll}
-            className="flex items-center gap-1 px-2.5 py-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] font-bold transition cursor-pointer"
-          >
-            <RefreshCw className="w-3 h-3" />
-            <span className="hidden sm:inline">{t('রিফ্রেশ', 'Refresh')}</span>
-          </button>
         </div>
       </div>
 
-      {/* ── BODY: SIDEBAR + MAIN CONTENT ─────────────────────────────────── */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-
-        {/* LEFT SIDEBAR (220px fixed) */}
-        <nav
-          className="flex-none w-[220px] bg-slate-900 border-r border-slate-700 flex flex-col overflow-y-auto"
-          style={{ scrollbarWidth: 'thin', scrollbarColor: '#334155 transparent' }}
-        >
-          <div className="flex-1 py-2 space-y-0.5">
-            {visibleSidebarGroups.map((group) => (
-              <div key={group.groupId} className="px-2">
-                {/* Group Header */}
-                <div className="flex items-center gap-1.5 px-2 pt-3 pb-1">
-                  <span className="text-slate-500">{group.icon}</span>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">
-                    {lang === 'bn' ? group.groupLabel.bn : group.groupLabel.en}
-                  </span>
-                </div>
-                {/* Group Items */}
-                <div className="space-y-0.5">
-                  {group.items.map((item) => {
-                    const isActive = subTab === item.tab ||
-                      // Keep sidebar highlight in sync with sub-segment navigation
-                      (item.tab === 'plots_control' && ['deeds', 'hierarchy', 'survey_records'].includes(subTab) && subTab !== 'deeds') ||
-                      (item.tab === 'deeds' && subTab === 'deeds') ||
-                      (item.tab === 'ledger' && subTab === 'ledger') ||
-                      (item.tab === 'settings' && subTab === 'settings') ||
-                      (item.tab === 'catalogue' && subTab === 'catalogue') ||
-                      (item.tab === 'offices_config' && subTab === 'offices_config');
-                    return (
-                      <button
-                        key={item.tab}
-                        type="button"
-                        onClick={() => handleTabChange(item.tab)}
-                        className={`w-full flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-left transition cursor-pointer ${
-                          isActive
-                            ? 'bg-emerald-700/80 text-white font-bold shadow-sm'
-                            : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200 font-medium'
-                        }`}
-                      >
-                        <span className={`flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-500'}`}>
-                          {item.icon}
-                        </span>
-                        <span className="text-[11px] leading-snug truncate">
-                          {lang === 'bn' ? item.bn : item.en}
-                        </span>
-                        {isActive && (
-                          <span className="ml-auto w-1 h-1 rounded-full bg-emerald-300 flex-shrink-0" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Sidebar Footer: role badge */}
-          <div className="flex-none px-3 py-3 border-t border-slate-700 bg-slate-900">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-emerald-700 flex items-center justify-center flex-shrink-0">
-                <Shield className="w-3.5 h-3.5 text-white" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-[10px] font-black text-slate-300 uppercase tracking-wider truncate">
-                  {role === 'admin' || role === 'system_admin'
-                    ? t('সুপার অ্যাডমিন', 'Super Admin')
-                    : role === 'auditor'
-                    ? t('নিরীক্ষক', 'Auditor')
-                    : role === 'support_agent'
-                    ? t('সাপোর্ট এজেন্ট', 'Support Agent')
-                    : role === 'content_editor'
-                    ? t('কন্টেন্ট এডিটর', 'Content Editor')
-                    : role === 'content_approver'
-                    ? t('অনুমোদনকারী', 'Approver')
-                    : role === 'platform_moderator'
-                    ? t('মডারেটর', 'Moderator')
-                    : role}
-                </div>
-                <div className="text-[9px] text-slate-500 truncate">{user?.username || '—'}</div>
-              </div>
-            </div>
-          </div>
-        </nav>
-
-        {/* MAIN CONTENT AREA (scrolls internally) */}
-        <main
-          className="flex-1 min-w-0 overflow-y-auto bg-slate-50"
-          style={{ scrollbarWidth: 'thin', scrollbarColor: '#CBD5E1 transparent' }}
-        >
-          {/* Load error banner inside main area */}
-          {loadError && (
-            <div role="alert" className="mx-4 mt-3 p-3 rounded-lg bg-rose-50 border border-rose-300 text-rose-700 text-xs font-bold flex items-center justify-between">
-              <span>{loadError}</span>
-              <button onClick={refreshAll} className="ml-3 underline font-bold cursor-pointer">{t('আবার চেষ্টা', 'Retry')}</button>
-            </div>
-          )}
-
-          {/* Inner content padding wrapper */}
-          <div className="p-4 space-y-4">
+      {/* ── CONTENT AREA ───────────────────────────────────────────────────── */}
+      {loadError && !['admin', 'system_admin'].includes(role) && (
+        <div role="alert" className="p-3 rounded-lg bg-rose-50 border border-rose-300 text-rose-700 text-xs font-bold flex items-center justify-between">
+          <span>{loadError}</span>
+          <button onClick={refreshAll} className="ml-3 underline font-bold cursor-pointer">{t('আবার চেষ্টা', 'Retry')}</button>
+        </div>
+      )}
 
       {/* SUBTAB: OVERVIEW (গভর্ন্যান্স সারসংক্ষেপ ও ড্যাশবোর্ড) */}
       {subTab === 'overview' && (
@@ -9557,9 +9494,6 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
           refreshAll();
         }}
       />
-          </div>
-        </main>
-      </div>
     </div>
   );
 };
