@@ -1,0 +1,250 @@
+Browser tab: 6, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5188/bn/admin?section=offices_config".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5188/bn/admin?section=offices_config
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা Central Admin OS
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text Central Admin OS
+			8 button Toggle Sidebar
+				9 image
+			10 text জাতীয় অ্যাডমিন ও গভর্ন্যান্স প্যানেল কেন্দ্রীয় ক্রিপ্টোগ্রাফিক লেজার ও সিস্টেম গভর্ন্যান্স
+			11 container Sidebar Navigation
+				12 text মেনু
+				13 button কমান্ড সেন্টার ও লাইভ নজরদারি
+					14 image
+					15 text কমান্ড সেন্টার ও লাইভ নজরদারি
+				16 button ইউজার ও কর্মকর্তা প্রশাসন
+					17 image
+					18 text ইউজার ও কর্মকর্তা প্রশাসন
+					19 image
+				20 button সকল ইউজার ও কর্মকর্তা
+				21 button সাধারণ নাগরিকবৃন্দ
+				22 button সাব-রেজিস্ট্রারগণ
+				23 button সহকারী কমিশনার (ভূমি)
+				24 button ব্যাংক কর্মকর্তাবৃন্দ
+				25 button ফিল্ড অফিসার (সার্ভেয়ার)
+				26 button রেজিস্ট্রি ডাটা মেকার
+				27 button সেটেলমেন্ট রেকর্ডস অফিসার
+				28 button ইউএনও তদারককারী
+				29 button সার্ভিস পয়েন্ট অপারেটর (UDC)
+				30 button সিস্টেম অ্যাডমিনিস্ট্রেটর
+				31 button ভূমি রেকর্ড ও দাগ নিয়ন্ত্রণ
+					32 image
+					33 text ভূমি রেকর্ড ও দাগ নিয়ন্ত্রণ
+				34 button লেজার অখণ্ডতা ও নিরাপত্তা অডিট
+					35 image
+					36 text লেজার অখণ্ডতা ও নিরাপত্তা অডিট
+				37 button সিস্টেম পলিসি ও কনফিগারেশন
+					38 image
+					39 text সিস্টেম পলিসি ও কনফিগারেশন
+			40 button পাবলিক পোর্টাল
+				41 image
+				42 text পাবলিক পোর্টাল
+			43 button লগআউট
+				44 image
+				45 text লগআউট
+		46 container
+			47 button হোম
+				48 image
+				49 text হোম
+			50 text / জাতীয় অ্যাডমিন ও গভর্ন্যান্স প্যানেল
+			51 text field (settable)
+			52 image
+			53 button EN
+			54 button Contrast
+				55 image
+			56 pop up button (collapsed) Description: ব্যবহারকারী প্রোফাইল ও সেটিংস মেনু, Secondary Actions: Expand
+				57 text স
+				58 text সিস্টেম অ্যাডমিন (ভূমি সুরক্ষা অ্যাডমিন)
+				59 text জাতীয় অ্যাডমিন ও গভর্ন্যান্স প্যানেল
+				60 image
+		61 container
+			62 button কমান্ড সেন্টার ও ওভারভিউ
+			63 button ইউজার ও পদায়ন
+			64 button নাগরিক সেবা ও হস্তান্তর
+			65 button দলিল ও সাব-রেজিস্ট্রি
+			66 button নামজারি ও খতিয়ান
+			67 button মাঠ তদন্ত ও পরিদর্শন
+			68 button জরিপ ও মেকার-চেকার
+			69 button ব্যাংক লিয়েন ও এনওসি
+			70 button আপিল ও আদালত নথি
+			71 button ভূমি অধিগ্রহণ (LA)
+			72 button মার্কেটপ্লেস মডারেশন
+			73 button সাপোর্ট ও ১৬১২২
+			74 button বিজ্ঞপ্তি ও প্রকাশনা
+			75 button অফিস ও সেবা কনফিগ
+			76 button ইন্টিগ্রেশন ও আউটবক্স
+			77 button অডিট লগ ও রিপোর্ট
+			78 text টুলস:
+			79 button এডিটর
+			80 button অ্যাপ্রুভার
+			81 button মডারেশন
+			82 button রিফ্রেশ
+				83 image
+				84 text রিফ্রেশ
+			85 button কন্ট্রোল প্যানেল
+			86 text / পিলার ৩: ভূমি ও খতিয়ান শাসন
+			87 heading ভূমি রেকর্ডস ও দাগ নিয়ন্ত্রণ কেন্দ্র, Value: 2
+				88 image
+				89 text ভূমি রেকর্ডস ও দাগ নিয়ন্ত্রণ কেন্দ্র
+			90 button দাগ ডিরেক্টরি ও স্থগিতাদেশ POWER
+				91 image
+				92 text দাগ ডিরেক্টরি ও স্থগিতাদেশ
+				93 text POWER
+			94 button দলিল রেজিস্ট্রি ও তদারকি
+				95 image
+				96 text দলিল রেজিস্ট্রি ও তদারকি
+			97 button ভৌগোলিক এলাকা কাঠামো
+				98 image
+				99 text ভৌগোলিক এলাকা কাঠামো
+			100 button প্রশাসনিক অধিক্ষেত্র ও মৌজা স্তর
+				101 image
+				102 text প্রশাসনিক অধিক্ষেত্র ও মৌজা স্তর
+			103 button ডিজিটাল ডিসিআর ও পর্চা ওয়াটারমার্ক ও কিউআর কনফিগ NEW
+				104 image
+				105 text ডিজিটাল ডিসিআর ও পর্চা ওয়াটারমার্ক ও কিউআর কনফিগ
+				106 text NEW
+			107 text ৪-স্তরীয় ভৌগোলিক ম্যাপিং ও জে.এল. নিয়ন্ত্রণ
+			108 button কন্ট্রোল প্যানেল
+			109 text / প্রশাসনিক অধিক্ষেত্র ও ঠিকানা
+			110 heading প্রশাসনিক অধিক্ষেত্র ও ভৌগোলিক স্তর বিন্যাস (Division -> District -> Upazila -> Mouza), Value: 2
+				111 image
+				112 text প্রশাসনিক অধিক্ষেত্র ও ভৌগোলিক স্তর বিন্যাস (Division -> District -> Upazila -> Mouza)
+			113 text সমগ্র ভূমি ব্যবস্থার প্রমিত ঠিকানা অনুক্রম (বিভাগ -> জেলা -> উপজেলা -> মৌজা / জে.এল. নং) নিয়ন্ত্রণ, নতুন মৌজা অন্তর্ভুক্তি ও প্লট সুরক্ষা বিধি।
+			114 button রিফ্রেশ
+				115 image
+				116 text রিফ্রেশ
+			117 button নতুন মৌজা নিবন্ধন
+				118 image
+				119 text নতুন মৌজা নিবন্ধন
+			120 text মোট প্রশাসনিক বিভাগ ১ মোট জেলা প্রশাসন ৩ মোট উপজেলা / থানা ৩ মোট নিবন্ধিত মৌজা (জে.এল.) ৩ সংযুক্ত খতিয়ান/প্লট ৬০
+			121 button মৌজা ও জে.এল. সূচি ৩
+				122 text মৌজা ও জে.এল. সূচি
+				123 text ৩
+			124 button উপজেলা / থানা ৩
+				125 text উপজেলা / থানা
+				126 text ৩
+			127 button জেলা প্রশাসন ৩
+				128 text জেলা প্রশাসন
+				129 text ৩
+			130 button বিভাগীয় স্তর ১
+				131 text বিভাগীয় স্তর
+				132 text ১
+			133 image
+			134 text প্রমিত ফিল্টারিং ও অনুসন্ধান (বিভাগ -> জেলা -> উপজেলা) বিভাগ (Division)
+			135 pop up button (collapsed, settable) Value: -- সকল বিভাগ --, Secondary Actions: Expand
+				136 menu
+					137 (selected) -- সকল বিভাগ --
+					169 ঢাকা (Dhaka)
+			138 text জেলা (District)
+			139 pop up button (collapsed, settable) Value: -- সকল জেলা --, Secondary Actions: Expand
+				140 menu
+					141 (selected) -- সকল জেলা --
+					170 গাজীপুর (Gazipur)
+					171 ঢাকা (Dhaka)
+					172 নারায়ণগঞ্জ (Narayanganj)
+			142 text উপজেলা / থানা (Upazila)
+			143 pop up button (collapsed, settable) Value: -- সকল উপজেলা --, Secondary Actions: Expand
+				144 menu
+					145 (selected) -- সকল উপজেলা --
+					173 গাজীপুর সদর (Gazipur Sadar)
+					174 সাভার (Savar)
+					175 সোনারগাঁও (Sonargaon)
+			146 text মৌজা নাম বা জে.এল. নম্বর খুঁজুন
+			147 image
+			148 text field (settable)
+			149 image
+			150 text নিবন্ধিত মৌজা ও জে.এল. সূচি তালিকা ৩ টি রেকর্ড প্লট বা দাগ সংযুক্ত মৌজা মুছে ফেলা সম্পূর্ণ সুরক্ষিত ও নিষিদ্ধ
+			151 table
+				152 row
+					153 cell
+						154 text #
+					155 cell
+						156 text মৌজার নাম (বাংলা ও ইংরেজি)
+					157 cell
+						158 text জে.এল. নম্বর
+					159 cell
+						160 text উপজেলা / থানা
+					161 cell
+						162 text জেলা ও বিভাগ
+					163 cell
+						164 text সংযুক্ত প্লট / দাগ
+					165 cell
+						166 text ভৌগোলিক স্থানাঙ্ক (GPS)
+					167 cell
+						168 text অ্যাকশন
+				176 row
+					177 cell
+						178 text ১
+					179 cell
+						180 text বাসন
+						181 text Bason
+					182 cell
+						183 text ০৮
+					184 cell
+						185 text গাজীপুর সদর
+					186 cell
+						187 text গাজীপুর
+						188 text ঢাকা
+					189 cell
+						190 container সক্রিয় প্লট সংযুক্ত রয়েছে
+							191 image
+							192 text ২০ টি প্লট
+					193 cell
+						194 text 23.9980 ,  90.4200
+					195 cell
+						196 button সম্পাদনা
+							197 image
+						198 button সংযুক্ত দাগ থাকায় ডিলিট নিষিদ্ধ
+							199 image
+				200 row
+					201 cell
+						202 text ২
+					203 cell
+						204 text বিরুলিয়া
+						205 text Birulia
+					206 cell
+						207 text ১২
+					208 cell
+						209 text সাভার
+					210 cell
+						211 text ঢাকা
+						212 text ঢাকা
+					213 cell
+						214 container সক্রিয় প্লট সংযুক্ত রয়েছে
+							215 image
+							216 text ২০ টি প্লট
+					217 cell
+						218 text 23.8580 ,  90.3180
+					219 cell
+						220 button সম্পাদনা
+							221 image
+						222 button সংযুক্ত দাগ থাকায় ডিলিট নিষিদ্ধ
+							223 image
+				224 row
+					225 cell
+						226 text ৩
+					227 cell
+						228 text পানাম
+						229 text Panam
+					230 cell
+						231 text ১৫
+					232 cell
+						233 text সোনারগাঁও
+					234 cell
+						235 text নারায়ণগঞ্জ
+						236 text ঢাকা
+					237 cell
+						238 container সক্রিয় প্লট সংযুক্ত রয়েছে
+							239 image
+							240 text ২০ টি প্লট
+					241 cell
+						242 text 23.6450 ,  90.6010
+					243 cell
+						244 button সম্পাদনা
+							245 image
+						246 button সংযুক্ত দাগ থাকায় ডিলিট নিষিদ্ধ
+							247 image
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5188/bn/admin?section=offices_config

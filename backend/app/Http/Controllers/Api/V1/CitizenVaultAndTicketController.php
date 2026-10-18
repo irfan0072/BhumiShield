@@ -72,6 +72,10 @@ final class CitizenVaultAndTicketController
             }
         }
 
+        $knownTypes = array_column($templates, 'document_type');
+        foreach ($docsByType as $type => $doc) {
+            if (!in_array($type, $knownTypes, true)) $templates[] = ['document_type'=>$type,'title_bn'=>$doc['title_bn'],'title_en'=>$doc['title_en'],'is_mandatory'=>0];
+        }
         // 3. Assemble unified checklist with L0-L3 trust levels
         $items = [];
         $verifiedCount = 0;
@@ -93,7 +97,7 @@ final class CitizenVaultAndTicketController
 
                 $items[] = [
                     'id' => (int) $d['id'],
-                    'template_id' => (int) $tmpl['id'],
+                    'template_id' => isset($tmpl['id']) ? (int)$tmpl['id'] : null,
                     'document_type' => $docType,
                     'title_bn' => $d['title_bn'],
                     'title_en' => $d['title_en'],
@@ -113,7 +117,7 @@ final class CitizenVaultAndTicketController
                 // Missing document -> Level L0
                 $items[] = [
                     'id' => null,
-                    'template_id' => (int) $tmpl['id'],
+                    'template_id' => isset($tmpl['id']) ? (int)$tmpl['id'] : null,
                     'document_type' => $docType,
                     'title_bn' => $tmpl['title_bn'] ?? $docType,
                     'title_en' => $tmpl['title_en'] ?? $docType,
@@ -232,7 +236,7 @@ final class CitizenVaultAndTicketController
             @mkdir($storageDir, 0775, true);
         }
         $storagePath = $storageDir . '/' . $fileHash . '.bin';
-        @file_put_contents($storagePath, $rawBytes);
+        if (file_put_contents($storagePath, $rawBytes) !== strlen($rawBytes)) throw new \RuntimeException('Document storage failed.');
 
         $docType = trim((string) ($payload['document_type'] ?? 'OTHER'));
         $titleBn = trim((string) ($payload['title_bn'] ?? 'নাগরিক কর্তৃক আপলোডকৃত দলিল'));
@@ -253,7 +257,7 @@ final class CitizenVaultAndTicketController
                 $origFileName,
                 $fileSize,
                 $fileHash,
-                (string) ($user['nid'] ?? '9900001001'),
+                (string) ($user['nid'] ?? ''),
                 $now,
                 $now,
             ]
@@ -292,7 +296,7 @@ final class CitizenVaultAndTicketController
         $cnt = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM tickets')['c'] ?? 0);
         $ticketCode = sprintf('TKT-2026-%06d', $cnt + 101);
 
-        $docType = trim((string) ($payload['document_type'] ?? 'GENERAL'));
+        $docType = trim((string) ($payload['document_type'] ?? $payload['doc_type'] ?? 'GENERAL'));
         $titleBn = trim((string) ($payload['title_bn'] ?? "অনুপস্থিত দলিল সংগ্রহ অনুরোধ (দাগ নং {$plot['dag_no_bn']})"));
         $titleEn = trim((string) ($payload['title_en'] ?? "Missing Document Retrieval (Plot {$plot['dag_no']})"));
         $descBn = trim((string) ($payload['description_bn'] ?? "দাগ নং {$plot['dag_no_bn']}-এর জন্য প্রয়োজনীয় {$docType} দলিলটি ডিজিটাল ভল্টে অনুপস্থিত। এটি রেকর্ড রুম হতে সংগ্রহ ও স্ক্যানের অনুরোধ করা হলো।"));
@@ -317,7 +321,7 @@ final class CitizenVaultAndTicketController
                 $titleBn,
                 $titleEn,
                 $descBn,
-                (string) ($user['nid'] ?? '9900001001'),
+                (string) ($user['nid'] ?? ''),
                 $priority,
                 'NEW',
                 $slaFirstReplyDueAt,
@@ -432,8 +436,10 @@ final class CitizenVaultAndTicketController
         $params = [];
 
         // Object scope for citizen (F02)
-        if ($user['role'] === 'citizen') {
-            $sql .= ' AND t.complainant_nid = ?';
+        if (!in_array($user['role'], ['support_agent','admin','system_admin','auditor'], true)) {
+            $sql .= ' AND (t.requester_user_id = ? OR (t.requester_user_id IS NULL AND t.complainant_nid != ? AND t.complainant_nid = ?))';
+            $params[] = (int) $user['id'];
+            $params[] = '';
             $params[] = (string) ($user['nid'] ?? '');
         }
 
@@ -480,8 +486,8 @@ final class CitizenVaultAndTicketController
         }
 
         // Scope check for citizen (F02)
-        if ($user['role'] === 'citizen') {
-            if (($t['complainant_nid'] ?? '') !== ($user['nid'] ?? '')) {
+        if (!in_array($user['role'], ['support_agent','admin','system_admin','auditor'], true)) {
+            if (!((int) ($t['requester_user_id'] ?? 0) === (int) $user['id'] || (empty($t['requester_user_id']) && !empty($user['nid']) && ($t['complainant_nid'] ?? '') === $user['nid']))) {
                 throw new \RuntimeException(json_encode([
                     'status' => 403,
                     'code' => 'FORBIDDEN',
@@ -498,7 +504,7 @@ final class CitizenVaultAndTicketController
         // Filter internal staff notes from citizen view (F02)
         $messages = [];
         foreach ($rawMessages as $msg) {
-            if ($user['role'] === 'citizen' && !empty($msg['is_internal'])) {
+            if (!in_array($user['role'], ['support_agent','admin','system_admin','auditor'], true) && !empty($msg['is_internal_note'])) {
                 continue;
             }
             $messages[] = $msg;

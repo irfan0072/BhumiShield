@@ -29,8 +29,8 @@ CREATE TABLE IF NOT EXISTS users (
     role TEXT NOT NULL,
     office_bn TEXT NOT NULL,
     office_en TEXT NOT NULL,
-    phone_dummy TEXT DEFAULT '01700-000000',
-    nid TEXT DEFAULT '9900001001',
+    phone_dummy TEXT DEFAULT '',
+    nid TEXT DEFAULT '',
     is_active INTEGER NOT NULL DEFAULT 1,
     token_version INTEGER NOT NULL DEFAULT 1,
     is_identity_verified INTEGER NOT NULL DEFAULT 0,
@@ -68,8 +68,8 @@ CREATE TABLE IF NOT EXISTS locations (
     mouza_bn TEXT NOT NULL,
     mouza_en TEXT NOT NULL,
     jl_no TEXT NOT NULL,
-    latitude REAL DEFAULT 23.8580,
-    longitude REAL DEFAULT 90.3180
+    latitude REAL,
+    longitude REAL
 );
 
 CREATE TABLE IF NOT EXISTS persons (
@@ -98,6 +98,10 @@ CREATE TABLE IF NOT EXISTS plots (
     total_area_decimal REAL NOT NULL,
     owner_sale_locked INTEGER NOT NULL DEFAULT 0,
     locked_by_nid TEXT,
+    is_admin_frozen INTEGER NOT NULL DEFAULT 0,
+    admin_freeze_reason TEXT,
+    admin_frozen_at TEXT,
+    admin_frozen_by TEXT,
     notes_bn TEXT,
     notes_en TEXT
 );
@@ -819,6 +823,11 @@ SQL,
 
         // Idempotent column migrations for existing databases
         $patches = [
+            'ALTER TABLE tickets ADD COLUMN requester_user_id INTEGER REFERENCES users(id)',
+            'ALTER TABLE notices ADD COLUMN created_by_user_id INTEGER REFERENCES users(id)',
+            'ALTER TABLE notices ADD COLUMN reviewed_by_user_id INTEGER REFERENCES users(id)',
+            'ALTER TABLE blog_posts ADD COLUMN created_by_user_id INTEGER REFERENCES users(id)',
+            'ALTER TABLE blog_posts ADD COLUMN reviewed_by_user_id INTEGER REFERENCES users(id)',
             'ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 1',
             'ALTER TABLE users ADD COLUMN is_identity_verified INTEGER NOT NULL DEFAULT 0',
             'ALTER TABLE plots ADD COLUMN plot_code TEXT',

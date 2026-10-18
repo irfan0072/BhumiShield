@@ -44,6 +44,8 @@ const ROLE_ROUTE: Record<string, string> = {
   platform_moderator: 'admin',
   content_editor: 'admin',
   content_approver: 'admin',
+  dc_acquisition_officer: 'specialist',
+  lawyer_court_user: 'specialist',
 };
 
 export const AuthPage: React.FC<{
@@ -76,6 +78,7 @@ export const AuthPage: React.FC<{
   const [profNameBn, setProfNameBn] = useState(user?.full_name_bn || '');
   const [profNameEn, setProfNameEn] = useState(user?.full_name_en || '');
   const [profPhone, setProfPhone] = useState(user?.phone_mock || '');
+  const [profNid, setProfNid] = useState(user?.nid || '');
   const [profOffice, setProfOffice] = useState(user?.office_name || '');
   const [profNewPass, setProfNewPass] = useState('');
   const [profCurrentPass, setProfCurrentPass] = useState('');
@@ -91,17 +94,6 @@ export const AuthPage: React.FC<{
     try {
       const res = await BhumiApi.login(u.trim(), p);
       if (res?.access_token && res?.user) {
-        // F05/F06: log the user in even if their dedicated workspace is not
-        // yet built. The Citizen Home shows a dismissible "under development"
-        // banner so they can still browse public resources instead of being
-        // stranded on the login screen.
-        if (res.user.role === 'dc_acquisition_officer' || res.user.role === 'lawyer_court_user') {
-          setErrorMsg(
-            lang === 'bn'
-              ? '✓ সফলভাবে প্রবেশ করেছেন — এই পদবীর জন্য নিবেদিত ওয়ার্কস্পেসটি এখনো নির্মাণাধীন। আপাতত আপনি নাগরিক হোম পেজটি ব্রাউজ করতে পারেন এবং প্রকাশ্য সেবাগুলো দেখতে পারেন।'
-              : '✓ Login successful — the dedicated workspace for this role is under active development. For now, you can browse the Citizen Home and access public services.'
-          );
-        }
         setToken(res.access_token);
         setUser(res.user);
         setSuccessMsg(t('সফলভাবে পরিচয় নিশ্চিত হয়েছে!', 'Signed in successfully!'));
@@ -186,6 +178,7 @@ export const AuthPage: React.FC<{
         full_name_bn: profNameBn,
         full_name_en: profNameEn,
         phone_mock: profPhone,
+        nid: profNid.trim() || undefined,
         ...(user?.role === 'admin' ? { office_name: profOffice } : {}),
         current_password: profNewPass ? profCurrentPass : undefined,
         new_password: profNewPass || undefined,
@@ -793,6 +786,39 @@ export const AuthPage: React.FC<{
                   onChange={(e) => setProfPhone(e.target.value)}
                   className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
                 />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    {t('জাতীয় পরিচয়পত্র (NID):', 'National ID (NID):')}
+                  </label>
+                  {Number(user?.is_identity_verified) === 1 ? (
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      ✓ {t('যাচাইকৃত', 'Verified')}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                      ⏳ {t('যাচাই অপেক্ষমাণ', 'Pending Verification')}
+                    </span>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  value={profNid}
+                  readOnly={Number(user?.is_identity_verified) === 1}
+                  onChange={(e) => setProfNid(e.target.value)}
+                  placeholder="e.g. 19901234567890123"
+                  className={`w-full p-2.5 rounded-lg border text-xs font-mono ${
+                    Number(user?.is_identity_verified) === 1
+                      ? 'bg-slate-50 border-slate-200 text-slate-600 cursor-not-allowed'
+                      : 'bg-white border-slate-300 text-slate-900 focus:border-[#006A4E]'
+                  }`}
+                />
+                <span className="text-[10px] text-slate-400 mt-0.5 block">
+                  {Number(user?.is_identity_verified) === 1
+                    ? t('যাচাইকৃত পরিচয়পত্র পরিবর্তনের জন্য হেল্পলাইনে যোগাযোগ করুন।', 'Contact helpline to correct verified identity.')
+                    : t('১০ বা ১৭ ডিজিটের এনআইডি দিন (অ্যাডমিন অনুমোদনের পর ভেরিফাইড হবে)।', 'Enter 10 or 17-digit NID (will be verified by admin).')}
+                </span>
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">

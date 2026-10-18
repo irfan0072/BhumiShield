@@ -184,15 +184,15 @@ export const NoticeboardPage: React.FC = () => {
         <div className="bg-[#006A4E] text-white rounded-2xl p-6 sm:p-8 shadow-sm space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-800/60 border border-emerald-600/40 text-emerald-100 text-xs font-semibold">
             <Bell className="w-4 h-4 text-emerald-300" />
-            <span>{t('অফিসিয়াল বিজ্ঞপ্তি ও পরিপত্র', 'Official Notices & Circulars')}</span>
+            <span>{t('ডিজিটাল নীতি ও নির্দেশনামূলক নোটিশবোর্ড', 'Digital Policy & Guidance Notices')}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            {t('ভূমি মন্ত্রণালয় ও নিবন্ধন অধিদপ্তর নোটিশবোর্ড', 'Ministry of Land & Registration Noticeboard')}
+            {t('ভূমি সুরক্ষা নীতি ও গণবিজ্ঞপ্তি কেন্দ্র', 'BhumiShield Land Policy & Notice Center')}
           </h1>
           <p className="text-emerald-100 text-sm sm:text-base max-w-3xl leading-relaxed">
             {t(
-              'ভূমি হস্তান্তর, নামজারি সময়সীমা, সাব-রেজিস্ট্রি ফি, এবং প্রতারণা প্রতিরোধে সরকার কর্তৃক জারিকৃত সকল অফিসিয়াল গেজেট, পরিপত্র এবং গণশুনানীর বিজ্ঞপ্তি। প্রতিটি নথির ক্রিপ্টোগ্রাফিক কিউআর সিল যুক্ত।',
-              'All statutory circulars, mutation guidelines, registration fees, and public hearing schedules issued by the Government of Bangladesh, sealed with verifiable Ed25519 QR codes.'
+              'ভূমি হস্তান্তর, নামজারি সময়সীমা, সাব-রেজিস্ট্রি ফি নির্দেশিকা এবং হয়রানি প্রতিরোধে স্বাধীন ডিজিটাল প্ল্যাটফর্মের নীতিমালা ও গণবিজ্ঞপ্তি। প্রতিটি নোটিশ ক্রিপ্টোগ্রাফিক কিউআর সিলমোহর দ্বারা সুরক্ষিত।',
+              'Operational policies, mutation guidelines, statutory fee guidance, and citizen notices published on the independent BhumiShield platform, sealed with verifiable Ed25519 QR codes.'
             )}
           </p>
         </div>

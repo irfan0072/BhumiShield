@@ -23,6 +23,8 @@ export type UserRole =
   | 'content_approver'
   | 'system_admin'
   | 'auditor'
+  | 'dc_acquisition_officer'
+  | 'lawyer_court_user'
   | 'admin';
 
 export interface AuthUser {
@@ -34,6 +36,7 @@ export interface AuthUser {
   role: UserRole;
   nid?: string;
   nid_mock?: string;
+  phone?: string;
   phone_dummy?: string;
   phone_mock?: string;
   office_name?: string;
@@ -106,7 +109,16 @@ export const AppUIProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     return (localStorage.getItem('bs_role') as UserRole) || 'citizen';
   });
-  const [activeSubTab, setActiveSubTab] = useState<string>('');
+  const [activeSubTab, setActiveSubTabState] = useState<string>(() => new URLSearchParams(window.location.search).get('section') || '');
+  const setActiveSubTab = (sub: string) => {
+    setActiveSubTabState(sub);
+    const url = new URL(window.location.href);
+    if ((url.searchParams.get('section') || '') !== sub) {
+      if (sub) url.searchParams.set('section', sub); else url.searchParams.delete('section');
+      window.history.pushState({}, '', url.pathname + url.search);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
+  };
   const [adminUserRoleFilter, setAdminUserRoleFilter] = useState<string>('all');
 
   useEffect(() => {

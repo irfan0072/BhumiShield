@@ -1,0 +1,157 @@
+Browser tab: 5, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:5175/en/admin".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/admin
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা Central Admin OS
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text Central Admin OS
+			8 button Toggle Sidebar
+				9 image
+			10 text National Admin & Governance Panel Central Cryptographic Ledger Governance & Security
+			11 container Sidebar Navigation
+				12 text MENU
+				13 button Overview & Dashboard
+					14 image
+					15 text Overview & Dashboard
+				16 button User & Officer Management
+					17 image
+					18 text User & Officer Management
+					19 image
+				20 button All Users & Officers
+				21 button Citizens
+				22 button Sub-Registrars
+				23 button AC Land Officers
+				24 button Bank Officers
+				25 button Field Officers
+				26 button Registry Data Officers
+				27 button Settlement Records
+				28 button UNO Supervisors
+				29 button UDC Operators
+				30 button System Admins
+				31 button Cryptographic Ledger
+					32 image
+					33 text Cryptographic Ledger
+				34 button Plots & Land Control
+					35 image
+					36 text Plots & Land Control
+				37 button Security Audit Trail
+					38 image
+					39 text Security Audit Trail
+				40 button Fraud Engine Policy
+					41 image
+					42 text Fraud Engine Policy
+				43 button RBAC Matrix
+					44 image
+					45 text RBAC Matrix
+				46 button Onboarding & Appeals
+					47 image
+					48 text Onboarding & Appeals
+				49 button Service & Fees
+					50 image
+					51 text Service & Fees
+				52 button SMS & OTP Outbox
+					53 image
+					54 text SMS & OTP Outbox
+			55 button Public Portal
+				56 image
+				57 text Public Portal
+			58 button Sign Out
+				59 image
+				60 text Sign Out
+		61 container
+			62 button Home
+				63 image
+				64 text Home
+			65 text / National Admin & Governance Panel
+			66 text field (settable)
+			67 image
+			68 button বাং
+			69 button Contrast
+				70 image
+			71 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				72 text স
+				73 text সিস্টেম অ্যাডমিন (ভূমি সুরক্ষা অ্যাডমিন)
+				74 text National Admin & Governance Panel
+				75 image
+		76 container
+			77 heading Central Governance & Admin Console, Value: 1
+				78 image
+				79 text Central Governance & Admin Console
+			80 text RBAC, hash ledger lab, officers directory, and append-only audit trail.
+			81 text System Administrator LEDGER HASH INTEGRITY 100 %
+			82 button Inspect Hash Lab →
+			83 image
+			84 text REGISTERED OFFICERS & USERS 0
+			85 button View User Directory →
+			86 image
+			87 text SECURITY AUDIT EVENTS 0
+			88 button Review Audit Logs →
+			89 image
+			90 text FRAUD VERIFICATION ENGINES 9 Engines Active
+			91 button Inspect Protocols →
+			92 image
+			93 heading CONTROL PANEL MODULES & SUBSYSTEMS, Value: 2
+				94 text CONTROL PANEL MODULES & SUBSYSTEMS
+			95 image
+			96 heading User & Officer Directory, Value: 3
+				97 text User & Officer Directory
+			98 text Citizen approvals, officer onboarding, role filters, and status toggles.
+			99 text 0 Users Manage  →
+			100 image
+			101 heading Cryptographic Ledger Lab, Value: 3
+				102 text Cryptographic Ledger Lab
+			103 text SHA-256 hash-chain states, genesis block validation, and real-time tamper auditing.
+			104 text 100 %  Integrity Inspect  →
+			105 image
+			106 heading Land Records & Plots Control, Value: 3
+				107 text Land Records & Plots Control
+			108 text Plot sale locks, mortgage encumbrance inspection, and full khatian lineages.
+			109 text 0 Plots Control  →
+			110 image
+			111 heading Security Audit Trail, Value: 3
+				112 text Security Audit Trail
+			113 text Immutable logs of all administrative actions, logins, and break-glass events.
+			114 text 0 Events Review  →
+			115 image
+			116 heading Policy & System Settings, Value: 3
+				117 text Policy & System Settings
+			118 text Risk engine thresholds, tax policies, and global system configuration.
+			119 text Active Configuration Configure  →
+			120 image
+			121 heading RBAC Permission Matrix, Value: 3
+				122 text RBAC Permission Matrix
+			123 text Strict role-permission mapping and capability matrix across all 21 roles.
+			124 text ২১টি  Roles View Matrix  →
+			125 image
+			126 heading Onboarding & Appeals, Value: 3
+				127 text Onboarding & Appeals
+			128 text Maker-checker staging batches and appellate tribunal hearings.
+			129 text 0 Appeals Oversight  →
+			130 image
+			131 heading Service Directory & Fees, Value: 3
+				132 text Service Directory & Fees
+			133 text Official citizen services catalog, fee schedules, and legal guidance.
+			134 text 0 Services Directory  →
+			135 image
+			136 heading SMS & OTP Outbox, Value: 3
+				137 text SMS & OTP Outbox
+			138 text Real-time inspection of dispatch queue, OTPs, and verification messages.
+			139 text Live Outbox View Outbox  →
+			140 image
+			141 heading Land Deeds Ledger & Audit, Value: 3
+				142 text Land Deeds Ledger & Audit
+			143 text Registered land deeds docket, plot ownership chain, mutation history, and administrative holds.
+			144 text 0 Deeds Inspect Deeds  →
+			145 image
+			146 heading Address Hierarchy & Mouzas, Value: 3
+				147 text Address Hierarchy & Mouzas
+			148 text Standardized administrative hierarchy (Division -> District -> Upazila -> Mouza) & J.L. mapping.
+			149 text 0 Mouzas Manage  →
+			150 heading Recent Security Audit Events, Value: 3
+				151 image
+				152 text Recent Security Audit Events
+			153 button View All Logs →
+			154 text No audit events found.
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/admin

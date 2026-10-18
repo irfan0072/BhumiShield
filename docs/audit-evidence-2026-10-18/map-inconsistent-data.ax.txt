@@ -1,0 +1,305 @@
+Browser tab: 5, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:5175/en/map".
+0 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/map
+	1 container root
+		2 container
+			3 button ভূ BhumiShield National Land & Deed Trust Platform
+				4 text ভূ
+				5 text BhumiShield
+				6 text National Land & Deed Trust Platform
+			7 container প্রধান মেনু
+				8 button Services
+					9 image
+					10 text Services
+				11 pop up button (collapsed) Land Services, Secondary Actions: Expand
+					12 image
+					13 text Land Services
+					14 image
+				15 pop up button (collapsed) Notices, Secondary Actions: Expand
+					16 image
+					17 text Notices
+					18 image
+				19 pop up button (collapsed) Helpline, Secondary Actions: Expand
+					20 image
+					21 text Helpline
+					22 image
+				23 button Verify Plot, Help: Instant Plot Verification
+					24 image
+					25 text Verify Plot
+			26 button Switch Language
+			27 button High Contrast
+				28 image
+			29 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				30 text ম
+				31 text মো. রফিকুল ইসলাম (নাগরিক)
+				32 text Citizen Land Portal
+				33 image
+		34 container
+			35 text ★ ভূ
+			36 heading Smart Bhumi Naksha — Digital Cadastral Map, Value: 1
+				37 text Smart Bhumi Naksha — Digital Cadastral Map
+			38 text NATIONAL PORTAL
+			39 text Mouza and Plot Based National Digital Land Zoning Project • Ministry of Land
+			40 container
+				41 button Land Map
+				42 button Project Objectives
+				43 button About Us
+				44 button Measurement Guide
+				45 button FAQ & Help
+			46 link Description: ১৬১২২, Help: ভূমি সেবা হটলাইন ১৬১২২, Value: tel:16122
+			47 button BhumiShield Portal
+				48 image
+				49 text BhumiShield Portal
+			50 text NOTICE
+			51 text Digital cadastral maps and land zoning attributes are displayed under the National Digital Land Zoning Project. For land assistance call 16122 (24/7). Unauthorized conversion of agricultural land is prohibited.
+			52 container
+				53 image
+				54 heading Search Menu, Value: 2
+					55 text Search Menu
+				56 text Mouza & Plot Digital Zoning
+				57 button Collapse Menu
+					58 image
+				59 text 1. Division
+				60 pop up button (collapsed, settable) Value: ঢাকা, Secondary Actions: Expand
+					61 menu
+						62 (selected) ঢাকা
+						63 চট্টগ্রাম
+						64 রাজশাহী
+						65 খুলনা
+						66 বরিশাল
+						67 সিলেট
+						68 রংপুর
+						69 ময়মনসিংহ
+				70 text 2. District
+				71 pop up button (collapsed, settable) Value: ঢাকা, Secondary Actions: Expand
+					72 menu
+						73 (selected) ঢাকা
+						74 গাজীপুর
+						75 নারায়ণগঞ্জ
+				76 text 3. Thana / Upazila
+				77 pop up button (collapsed, settable) Value: সাভার, Secondary Actions: Expand
+					78 menu
+						79 (selected) সাভার
+						80 ধানমন্ডি
+						81 তেজগাঁও
+				82 text 4. Mouza
+				83 pop up button (collapsed, settable) Value: বিরুলিয়া (JL-12), Secondary Actions: Expand
+					84 menu
+						85 (selected) বিরুলিয়া (JL-12)
+						86 আশুলিয়া (JL-01)
+						87 শিমুলিয়া (JL-15)
+				88 text 5. Sheet No
+				89 pop up button (collapsed, settable) Value: সিট-০১, Secondary Actions: Expand
+					90 menu
+						91 (selected) সিট-০১
+						92 সিট-০২
+				93 text 6. Plot / Dag
+				94 pop up button (collapsed, settable) Value: দাগ ১০১, Secondary Actions: Expand
+					95 menu
+						96 (selected) দাগ ১০১
+						97 দাগ ১০২
+						98 দাগ ১০৩
+						99 দাগ ১০৪
+						100 দাগ ১০৫
+						101 দাগ ১০৬
+						102 দাগ ১০৭
+						103 দাগ ১০৮
+						104 দাগ ১০৯
+						105 দাগ ১১০
+						106 দাগ ১১১
+						107 দাগ ১১২
+						108 দাগ ১১৩
+						109 দাগ ১১৪
+						110 দাগ ১১৫
+						111 দাগ ১১৬
+						112 দাগ ১১৭
+						113 দাগ ১১৮
+						114 দাগ ১১৯
+						115 দাগ ১২০
+				116 button Land Use Summary
+					117 image
+					118 text Land Use Summary
+				119 button Land Zoning Summary
+					120 image
+					121 text Land Zoning Summary
+				122 button Go to Plot
+					123 image
+					124 text Go to Plot
+				125 button Reset
+					126 image
+					127 text Reset
+			128 button Important Links
+				129 image
+				130 text Important Links
+				131 image
+			132 container
+				133 text MAP LAYERS
+				134 button Cadastral Sheet
+					135 image
+					136 text Cadastral Sheet
+				137 button Digital Zoning
+					138 image
+					139 text Digital Zoning
+				140 button Satellite View
+					141 image
+					142 text Satellite View
+				143 button BhumiShield Trust
+					144 image
+					145 text BhumiShield Trust
+			146 container
+				147 container North Arrow
+					148 text ▲ N উ
+				149 button Zoom In
+					150 image
+				151 button Zoom Out
+					152 image
+				153 button Reset View
+					154 image
+			155 container
+				156 image
+				157 text বিরুলিয়া (JL-12)  • সিট- ০১ ০ ১০০ মি. ২০০ মি. 23.8587 ° N,  90.3181 ° E
+			158 image
+				159 container
+					160 text ১০১ 20  শতক ★ বিক্রির জন্য
+				161 container
+					162 text ১০২ 15  শতক
+				163 container
+					164 text ১০৩ 24.5  শতক 🏦 বন্ধকযুক্ত
+				165 container
+					166 text ১০৪ 16  শতক
+				167 container
+					168 text ১০৫ 32  শতক 🔒 লককৃত
+				169 container
+					170 text ১০৬ 18  শতক
+				171 container
+					172 text ১০৭ 22  শতক ★ বিক্রির জন্য
+				173 container
+					174 text ১০৮ 12.5  শতক
+				175 container
+					176 text ১০৯ 19  শতক
+				177 container
+					178 text ১১০ 14  শতক
+				179 container
+					180 text ১১১ 28  শতক ★ বিক্রির জন্য
+				181 container
+					182 text ১১২ 21  শতক
+				183 container
+					184 text ১১৩ 45  শতক 🔒 লককৃত
+				185 container
+					186 text ১১৪ 17.5  শতক
+				187 container
+					188 text ১১৫ 25  শতক 🏦 বন্ধকযুক্ত
+				189 container
+					190 text ১১৬ 16.5  শতক
+				191 container
+					192 text ১১৭ 23  শতক
+				193 container
+					194 text ১১৮ 30  শতক ★ বিক্রির জন্য
+				195 container
+					196 text ১১৯ 15  শতক
+				197 container
+					198 text ১২০ 19.5  শতক 🔒 লককৃত
+			199 container
+				200 image
+				201 heading Mouza & Plot Details, Value: 3
+					202 text Mouza & Plot Details
+				203 button Close Popup
+					204 image
+				205 text Plot Dag:
+				206 text ১০১
+				207 text বিক্রির জন্য সক্রিয়
+				208 table
+					209 row
+						210 cell
+							211 text Division & District
+						212 cell
+							213 text ঢাকা ,  ঢাকা
+					214 row
+						215 cell
+							216 text Thana / Upazila
+						217 cell
+							218 text সাভার
+					219 row
+						220 cell
+							221 text Mouza & JL No
+						222 cell
+							223 text বিরুলিয়া  (জে.এল  ১২ )
+					224 row
+						225 cell
+							226 text Sheet No
+						227 cell
+							228 text সিট- ০১
+					229 row
+						230 cell
+							231 text Khatian No
+						232 cell
+							233 text ১২০৪
+					234 row
+						235 cell
+							236 text Land Class
+						237 cell
+							238 text ভিটা (আবাসিক)
+					239 row
+						240 cell
+							241 text Land Area
+						242 cell
+							243 text 20  শতক ( 12.1  কাঠা)
+					244 row
+						245 cell
+							246 text Zoning Category
+						247 cell
+							248 text পরিকল্পিত আবাসন জোন
+					249 row
+						250 cell
+							251 text Owner (Masked)
+						252 cell
+							253 text মোঃ রফিকুল ইসলাম  ( ****৫৮৯১ )
+				254 text Price:
+				255 container
+					256 text ৳  4500000
+				257 button Audit Plot in BhumiShield
+					258 image
+					259 text Audit Plot in BhumiShield
+				260 button View in Sale Marketplace
+					261 image
+					262 text View in Sale Marketplace
+			263 text ★ ভূ
+			264 heading Smart Bhumi Naksha & Zoning, Value: 4
+				265 text Smart Bhumi Naksha & Zoning
+			266 text Ministry of Land, Govt of Bangladesh
+			267 text Integrated nationwide cadastral zoning and parcel boundary GIS portal under the Ministry of Land.
+			268 heading Official Government Links, Value: 5
+				269 text Official Government Links
+			270 content list
+				271 link Description: ভূমি মন্ত্রণালয় (minland.gov.bd), Value: minland.gov.bd/
+				272 link Description: ই-নামজারি পোর্টাল (e-Mutation), Value: mutation.land.gov.bd/
+				273 link Description: ডিজিটাল রেকর্ড রুম (ই-পর্চা), Value: eporcha.gov.bd/
+				274 link Description: জাতীয় ভূমি সেবা পোর্টাল (land.gov.bd), Value: land.gov.bd/
+			275 heading Mobile Apps & Guides, Value: 5
+				276 text Mobile Apps & Guides
+			277 content list
+				278 button স্মার্ট ভূমি নকশা ব্যবহার নির্দেশিকা
+					279 image
+					280 text স্মার্ট ভূমি নকশা ব্যবহার নির্দেশিকা
+				281 button ক্যাডাস্ট্রাল সার্ভে ও পরিমাপ নিয়মাবলী
+					282 image
+					283 text ক্যাডাস্ট্রাল সার্ভে ও পরিমাপ নিয়মাবলী
+				284 button নাগরিক চার্টার ও অভিযোগ প্রতিকার
+					285 image
+					286 text নাগরিক চার্টার ও অভিযোগ প্রতিকার
+				287 button যাচাইকৃত জমির হাট (Bhumi Marketplace)
+					288 image
+					289 text যাচাইকৃত জমির হাট (Bhumi Marketplace)
+			290 heading Contact & Support, Value: 5
+				291 text Contact & Support
+			292 image
+			293 text ভূমি ভবন, ৯৮ শহীদ তাজউদ্দীন আহমদ সরণি, তেজগাঁও, ঢাকা-১২০৮।
+			294 image
+			295 text হটলাইন: 
+			296 text ১৬১২২
+			297 text  (২৪ ঘণ্টা সার্বক্ষণিক)
+			298 image
+			299 text info@minland.gov.bd
+			300 text Copyright © 2026 Ministry of Land, Government of the People’s Republic of Bangladesh. All rights reserved.
+			301 text Technical Innovation & Security Architecture: BhumiShield • LandTech Hackathon 2026
+
+The focused UI element is 0 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/map

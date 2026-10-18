@@ -16,7 +16,10 @@ import { PublicSalePage } from './pages/PublicSalePage';
 import { NoticeboardPage } from './pages/NoticeboardPage';
 import { EducationalBlogPage } from './pages/EducationalBlogPage';
 import { OfficeLocatorPage } from './pages/OfficeLocatorPage';
-import { CadastralMapPage } from './pages/CadastralMapPage';
+const CadastralMapPage = React.lazy(() => import('./pages/CadastralMapPage').then(m => ({ default: m.CadastralMapPage })));
+import { ApplicationsPage } from './pages/ApplicationsPage';
+import { SpecialistWorkspacePage } from './pages/SpecialistWorkspacePage';
+import { NotFoundPage } from './pages/NotFoundPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 const getInitialTab = (): string => {
@@ -29,6 +32,11 @@ const getInitialTab = (): string => {
     cleanPath = cleanPath.substring(3);
   }
   if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
+  if (cleanPath.endsWith('/') && cleanPath.length > 1) {
+    cleanPath = cleanPath.slice(0, -1);
+  }
+
+  if (cleanPath === '' || cleanPath === '/') return 'landing';
 
   if (
     cleanPath.startsWith('/verify') ||
@@ -43,6 +51,8 @@ const getInitialTab = (): string => {
   if (cleanPath.startsWith('/check') || search.has('plot_id')) {
     return 'check';
   }
+  if (cleanPath.startsWith('/applications') || cleanPath.startsWith('/transfers')) return 'applications';
+  if (cleanPath.startsWith('/specialist') || cleanPath.startsWith('/la') || cleanPath.startsWith('/court')) return 'specialist';
   if (cleanPath.startsWith('/sale') || cleanPath.startsWith('/marketplace')) return 'sale';
   if (cleanPath.startsWith('/notices') || cleanPath.startsWith('/circulars')) return 'notices';
   if (cleanPath.startsWith('/blog')) return 'blog';
@@ -58,8 +68,8 @@ const getInitialTab = (): string => {
   if (cleanPath.startsWith('/profile')) return 'profile';
 
   const tabParam = search.get('tab');
-  if (tabParam && ['landing', 'home', 'check', 'qr', 'help', 'auth', 'registrar', 'acland', 'bank', 'admin', 'profile', 'sale', 'notices', 'blog', 'map', 'offices'].includes(tabParam)) return tabParam;
-  return 'landing';
+  if (tabParam && ['landing', 'home', 'applications', 'specialist', 'check', 'qr', 'help', 'auth', 'registrar', 'acland', 'bank', 'admin', 'profile', 'sale', 'notices', 'blog', 'map', 'offices'].includes(tabParam)) return tabParam;
+  return 'notfound';
 };
 
 export const AppContent: React.FC = () => {
@@ -113,6 +123,11 @@ export const AppContent: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [lang]);
 
+  // Reset window scroll to top whenever active tab changes (R15)
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab]);
+
   return (
     <NavbarAndLayout activeTab={activeTab} setActiveTab={setActiveTab}>
       {/* 1. Public Pages (Accessible by All Visitors & Guests) */}
@@ -122,7 +137,7 @@ export const AppContent: React.FC = () => {
       {activeTab === 'sale' && <PublicSalePage onNavigate={setActiveTab} />}
       {activeTab === 'notices' && <NoticeboardPage />}
       {activeTab === 'blog' && <EducationalBlogPage />}
-      {activeTab === 'map' && <CadastralMapPage onNavigate={setActiveTab} />}
+      {activeTab === 'map' && <React.Suspense fallback={<div role="status" className="p-10 text-center">{lang === 'bn' ? 'মানচিত্র প্রস্তুত হচ্ছে…' : 'Preparing the map…'}</div>}><CadastralMapPage onNavigate={setActiveTab} /></React.Suspense>}
       {activeTab === 'offices' && <OfficeLocatorPage onNavigate={setActiveTab} />}
       {activeTab === 'help' && <HelpPage onNavigate={setActiveTab} />}
       {activeTab === 'auth' && <AuthPage mode="login" onSuccessNavigate={setActiveTab} />}
@@ -233,6 +248,8 @@ export const AppContent: React.FC = () => {
             'content_approver',
             'system_admin',
             'auditor',
+            'dc_acquisition_officer',
+            'lawyer_court_user',
             'admin',
           ]}
           roleTitleBn="ব্যবহারকারী প্রোফাইল"
@@ -242,6 +259,37 @@ export const AppContent: React.FC = () => {
           <AuthPage mode="profile" onSuccessNavigate={setActiveTab} />
         </AuthGuard>
       )}
+
+      {/* 3. Applications & 13-Step Transfer Hub */}
+      {activeTab === 'applications' && (
+        <AuthGuard
+          allowedRoles={['citizen', 'service_point_operator', 'admin', 'system_admin']}
+          roleTitleBn="১৩-ধাপের নিরাপদ জমি হস্তান্তর সেবা"
+          roleTitleEn="13-Step Secure Land Transfer Service"
+          deptBn="ভূমি সেবা ও নিবন্ধন সমন্বয় সেল"
+          deptEn="Land Transfer & Registry Coordination Cell"
+          onNavigate={setActiveTab}
+        >
+          <ApplicationsPage onNavigate={setActiveTab} />
+        </AuthGuard>
+      )}
+
+      {/* 4. Specialist Judicial & Land Acquisition Console */}
+      {activeTab === 'specialist' && (
+        <AuthGuard
+          allowedRoles={['dc_acquisition_officer', 'lawyer_court_user', 'admin', 'system_admin']}
+          roleTitleBn="বিশেষায়িত বিচারিক ও অধিগ্রহণ কনসোল"
+          roleTitleEn="Specialist Judicial & Acquisition Console"
+          deptBn="জেলা প্রশাসন ও দেওয়ানি আদালত ডেস্ক"
+          deptEn="District Administration & Civil Court Desk"
+          onNavigate={setActiveTab}
+        >
+          <SpecialistWorkspacePage onNavigate={setActiveTab} />
+        </AuthGuard>
+      )}
+
+      {/* 5. Explicit 404 Not Found Page */}
+      {activeTab === 'notfound' && <NotFoundPage onNavigate={setActiveTab} />}
     </NavbarAndLayout>
   );
 };

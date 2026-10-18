@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAppUI, UserRole, AuthUser } from '../i18n';
 import { BhumiApi } from '../api/client';
+import { NotificationCenter } from './NotificationCenter';
+import { FaraizCalculatorModal } from './FaraizCalculatorModal';
+import { BengaliPorchaOcrModal } from './BengaliPorchaOcrModal';
 import {
   ShieldCheck,
   QrCode,
@@ -41,7 +44,12 @@ import {
   Sparkles,
   Compass,
   Smartphone,
-  Users
+  Users,
+  FileSearch,
+  FolderOpen,
+  FileCheck,
+  Megaphone,
+  Newspaper,
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -70,6 +78,8 @@ const ROLE_DASHBOARD_MAP: Record<UserRole, string> = {
   content_approver: 'admin',
   system_admin: 'admin',
   auditor: 'admin',
+  dc_acquisition_officer: 'specialist',
+  lawyer_court_user: 'specialist',
   admin: 'admin',
 };
 
@@ -196,6 +206,18 @@ const ROLE_META: Record<
     titleEn: 'National Admin & Governance Panel',
     deptBn: 'কেন্দ্রীয় ক্রিপ্টোগ্রাফিক লেজার ও সিস্টেম গভর্ন্যান্স',
     deptEn: 'Central Cryptographic Ledger Governance & Security',
+  },
+  dc_acquisition_officer: {
+    titleBn: 'জেলা প্রশাসক কার্যালয় — ভূমি অধিগ্রহণ (LA) শাখা',
+    titleEn: 'DC Land Acquisition Division',
+    deptBn: 'জেলা প্রশাসন • ভূমি অধিগ্রহণ ও গেজেট উইং',
+    deptEn: 'District Administration • Land Acquisition & Gazette Wing',
+  },
+  lawyer_court_user: {
+    titleBn: 'দেওয়ানি আদালত ও আইনজীবী লিগ্যাল ডেস্ক',
+    titleEn: 'Civil Court & Legal Counsel Portal',
+    deptBn: 'বাংলাদেশ বার কাউন্সিল ও দেওয়ানি আদালত সহায়তা',
+    deptEn: 'Bangladesh Bar Council & Civil Court Title Verification',
   },
 };
 
@@ -699,6 +721,55 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
   const [usersMenuExpanded, setUsersMenuExpanded] = useState(true);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
+  const [faraizModalOpen, setFaraizModalOpen] = useState(false);
+  const [faraizPlotId, setFaraizPlotId] = useState<number | undefined>(undefined);
+  const [faraizArea, setFaraizArea] = useState<number | undefined>(undefined);
+  const [porchaModalOpen, setPorchaModalOpen] = useState(false);
+  const [broadcast, setBroadcast] = useState<{
+    is_active: boolean;
+    message_bn: string;
+    message_en: string;
+    level: 'URGENT' | 'WARNING' | 'INFO';
+  } | null>(null);
+
+  useEffect(() => {
+    BhumiApi.getEmergencyBroadcast()
+      .then((b) => {
+        if (b && b.is_active) {
+          setBroadcast(b);
+        } else {
+          setBroadcast(null);
+        }
+      })
+      .catch(() => {});
+
+    const handleBroadcastUpdated = (e: any) => {
+      if (e.detail) {
+        setBroadcast(e.detail.is_active ? e.detail : null);
+      }
+    };
+    window.addEventListener('emergency-broadcast-updated', handleBroadcastUpdated);
+    return () => {
+      window.removeEventListener('emergency-broadcast-updated', handleBroadcastUpdated);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleOpenFaraiz = (e: any) => {
+      if (e.detail?.plotId) setFaraizPlotId(e.detail.plotId);
+      if (e.detail?.area) setFaraizArea(e.detail.area);
+      setFaraizModalOpen(true);
+    };
+    const handleOpenPorcha = () => {
+      setPorchaModalOpen(true);
+    };
+    window.addEventListener('open-faraiz-calculator', handleOpenFaraiz);
+    window.addEventListener('open-porcha-ocr', handleOpenPorcha);
+    return () => {
+      window.removeEventListener('open-faraiz-calculator', handleOpenFaraiz);
+      window.removeEventListener('open-porcha-ocr', handleOpenPorcha);
+    };
+  }, []);
   const drawerCloseBtnRef = React.useRef<HTMLButtonElement>(null);
   const previousFocusedElementRef = React.useRef<HTMLElement | null>(null);
 
@@ -860,10 +931,13 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
     // 1. Citizen (Owner / Buyer / Heir)
     if (role === 'citizen') {
       return [
-        { id: 'vault', label: t('আমার জমির ভল্ট (L0-L3)', 'My Land Vault (L0-L3)'), icon: <ShieldCheck className="w-4 h-4" /> },
-        { id: 'transfers', label: t('১৩-ধাপের হস্তান্তর ট্র্যাকার', '13-Step Transfers'), icon: <Sparkles className="w-4 h-4" /> },
-        { id: 'disputes', label: t('আপত্তি ও বিরোধ দাখিল', 'Dispute Objections'), icon: <AlertOctagon className="w-4 h-4" /> },
-        { id: 'tickets', label: t('আমার সহায়তা টিকিট', 'Support Tickets'), icon: <FileText className="w-4 h-4" /> },
+        { id: 'overview', label: t('সারসংক্ষেপ ও সেবা হাব', 'Overview & Service Hub'), icon: <LayoutDashboard className="w-4 h-4" /> },
+        { id: 'plots', label: t('আমার জমি ও বিক্রয় লক', 'My Land & Sale Lock'), icon: <ShieldCheck className="w-4 h-4" /> },
+        { id: 'docs', label: t('ডিজিটাল কাগজপত্র ভল্ট', 'Digital Document Vault'), icon: <FolderOpen className="w-4 h-4" /> },
+        { id: 'deeds', label: t('রেজিস্ট্রিকৃত মূল দলিল', 'Registered Deeds'), icon: <FileCheck className="w-4 h-4" /> },
+        { id: 'transfers', label: t('হস্তান্তর ট্র্যাকার', 'Transfer Tracker'), icon: <Sparkles className="w-4 h-4" /> },
+        { id: 'disputes', label: t('আপত্তি ও বিরোধ দাখিল', 'Disputes & Objections'), icon: <AlertOctagon className="w-4 h-4" /> },
+        { id: 'tickets', label: t('সাহায্য ও সাপোর্ট টিকিট', 'Help & Support Tickets'), icon: <FileText className="w-4 h-4" /> },
         { id: 'profile', label: t('প্রোফাইল সেটিংস', 'Profile Settings'), icon: <UserCheck className="w-4 h-4" /> },
       ];
     }
@@ -984,31 +1058,27 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
     if (role === 'support_agent') {
       return [
         { id: 'tickets', label: t('নাগরিক টিকিট কিউ ও ট্রায়াজ', 'Citizen Support Tickets'), icon: <FileText className="w-4 h-4" /> },
-        { id: 'users', label: t('নাগরিক একাউন্ট অনুসন্ধান', 'Citizen Account Lookup'), icon: <UserCheck className="w-4 h-4" /> },
         { id: 'audit', label: t('সাপোর্ট অডিট ট্রেইল', 'Support Audit Log'), icon: <FileSpreadsheet className="w-4 h-4" /> },
       ];
     }
     // 15. Platform Moderator (Marketplace & Listings)
     if (role === 'platform_moderator') {
       return [
-        { id: 'onboarding_appeals', label: t('অনবোর্ডিং ও আপিল ওভারসাইট', 'Onboarding & Appeals'), icon: <Scale className="w-4 h-4" /> },
-        { id: 'catalogue', label: t('সার্ভিস ক্যাটালগ ও ফি', 'Service Directory & Fees'), icon: <Layers className="w-4 h-4" /> },
+        { id: 'marketplace_moderation', label: t('মার্কেটপ্লেস ও লিস্টিং মডারেশন', 'Marketplace & Listing Moderation'), icon: <Megaphone className="w-4 h-4" /> },
         { id: 'audit', label: t('মডারেশন অডিট লগ', 'Moderation Audit Trail'), icon: <FileSpreadsheet className="w-4 h-4" /> },
       ];
     }
     // 16. Content Editor
     if (role === 'content_editor') {
       return [
-        { id: 'catalogue', label: t('সার্ভিস নির্দেশিকা ও তথ্য', 'Service Catalogue & Guides'), icon: <Layers className="w-4 h-4" /> },
-        { id: 'settings', label: t('আইনি বিজ্ঞপ্তি ও কনফিগারেশন', 'Policy & Notice Settings'), icon: <Settings className="w-4 h-4" /> },
+        { id: 'content_editor', label: t('কন্টেন্ট এডিটর ও নির্দেশিকা', 'Content Editor & Guidelines'), icon: <Newspaper className="w-4 h-4" /> },
         { id: 'audit', label: t('পাবলিশিং অডিট লগ', 'Publishing Audit Log'), icon: <FileSpreadsheet className="w-4 h-4" /> },
       ];
     }
     // 17. Content Approver
     if (role === 'content_approver') {
       return [
-        { id: 'settings', label: t('বিজ্ঞপ্তি প্রকাশনা অনুমোদন (সিল)', 'Approve Notices (QR Seal)'), icon: <CheckCircle2 className="w-4 h-4" /> },
-        { id: 'catalogue', label: t('সার্ভিস ডিরেক্টরি প্রকাশনা', 'Publish Service Catalogue'), icon: <Layers className="w-4 h-4" /> },
+        { id: 'content_approver', label: t('প্রকাশনা অনুমোদন কর্তৃপক্ষ (সিল)', 'Approve & Publish (QR Seal)'), icon: <CheckCircle2 className="w-4 h-4" /> },
         { id: 'audit', label: t('অনুমোদন অডিট লগ', 'Approver Audit Trail'), icon: <FileSpreadsheet className="w-4 h-4" /> },
       ];
     }
@@ -1017,21 +1087,32 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
       return [
         { id: 'ledger', label: t('ক্রিপ্টোগ্রাফিক লেজার অখণ্ডতা', 'Cryptographic Ledger Integrity'), icon: <ShieldCheck className="w-4 h-4" /> },
         { id: 'audit', label: t('ব্রেক-গ্লাস ও পিআইআই অডিট লগ', 'Security & Break-Glass Audit'), icon: <FileSpreadsheet className="w-4 h-4" /> },
-        { id: 'rbac', label: t('রোল এখতিয়ার ম্যাট্রিক্স', 'Jurisdiction & Access Matrix'), icon: <KeyRound className="w-4 h-4" /> },
+        { id: 'deeds', label: t('দলিল ও লেজার নিরীক্ষা', 'Deed Records Audit'), icon: <FileCheck className="w-4 h-4" /> },
       ];
     }
-    // 19. System Admin / Admin
+    // 19. DC Land Acquisition Officer
+    if (role === 'dc_acquisition_officer') {
+      return [
+        { id: 'la_cases', label: t('ভূমি অধিগ্রহণ কেস ও গেজেট', 'LA Cases & Gazettes'), icon: <Building2 className="w-4 h-4" /> },
+        { id: 'plot_lookup', label: t('দাগ ও ক্ষতিপূরণ অনুসন্ধান', 'Plot & Compensation Check'), icon: <Search className="w-4 h-4" /> },
+        { id: 'map_gis', label: t('ক্যাডাস্ট্রাল সীমানা নকশা', 'Cadastral GIS Map'), icon: <Compass className="w-4 h-4" /> },
+      ];
+    }
+    // 20. Lawyer / Civil Court User
+    if (role === 'lawyer_court_user') {
+      return [
+        { id: 'title_scrutiny', label: t('টাইটেল ও খতিয়ান স্ক্রুটিনি', 'Title Scrutiny & Injunctions'), icon: <Scale className="w-4 h-4" /> },
+        { id: 'disputes', label: t('বিরোধ ট্রাইব্যুনাল নথি', 'Dispute Tribunal Docket'), icon: <FileSpreadsheet className="w-4 h-4" /> },
+        { id: 'deed_verify', label: t('দলিল ডিজিটাল সিল যাচাই', 'Verify Deed Authenticity'), icon: <QrCode className="w-4 h-4" /> },
+      ];
+    }
+    // 21. System Admin / Admin (5 Core Control Pillars)
     return [
-      { id: 'overview', label: t('সারসংক্ষেপ ও ড্যাশবোর্ড', 'Overview & Dashboard'), icon: <LayoutDashboard className="w-4 h-4" /> },
-      { id: 'users', label: t('ইউজার ও কর্মকর্তা ব্যবস্থাপনা', 'User & Officer Management'), icon: <Users className="w-4 h-4" /> },
-      { id: 'ledger', label: t('ক্রিপ্টোগ্রাফিক লেজার ও অখণ্ডতা', 'Cryptographic Ledger'), icon: <ShieldCheck className="w-4 h-4" /> },
-      { id: 'plots_control', label: t('ভূমি ও দাগ নিয়ন্ত্রণ', 'Plots & Land Control'), icon: <Compass className="w-4 h-4" /> },
-      { id: 'audit', label: t('সিকিউরিটি অডিট ট্রেইল', 'Security Audit Trail'), icon: <FileSpreadsheet className="w-4 h-4" /> },
-      { id: 'settings', label: t('জালিয়াতি প্রতিরোধ সেটিংস', 'Fraud Engine Policy'), icon: <Settings className="w-4 h-4" /> },
-      { id: 'rbac', label: t('রোল পারমিশন ম্যাট্রিক্স', 'RBAC Matrix'), icon: <KeyRound className="w-4 h-4" /> },
-      { id: 'onboarding_appeals', label: t('অনবোর্ডিং ও আপিল ওভারসাইট', 'Onboarding & Appeals'), icon: <Scale className="w-4 h-4" /> },
-      { id: 'catalogue', label: t('সার্ভিস ও ফি ডিরেক্টরি', 'Service & Fees'), icon: <Layers className="w-4 h-4" /> },
-      { id: 'dev_outbox', label: t('এসএমএস ও ওটিপি আউটবক্স', 'SMS & OTP Outbox'), icon: <Smartphone className="w-4 h-4" /> },
+      { id: 'overview', label: t('কমান্ড সেন্টার ও লাইভ নজরদারি', 'Command Center & Live Pulse'), icon: <LayoutDashboard className="w-4 h-4" /> },
+      { id: 'users', label: t('ইউজার ও কর্মকর্তা প্রশাসন', 'User & Officer Administration'), icon: <Users className="w-4 h-4" /> },
+      { id: 'plots_control', label: t('ভূমি রেকর্ড ও দাগ নিয়ন্ত্রণ', 'Plots & Land Governance'), icon: <Compass className="w-4 h-4" /> },
+      { id: 'ledger', label: t('লেজার অখণ্ডতা ও নিরাপত্তা অডিট', 'Ledger Integrity & Audit'), icon: <ShieldCheck className="w-4 h-4" /> },
+      { id: 'settings', label: t('সিস্টেম পলিসি ও কনফিগারেশন', 'System Policy & Configuration'), icon: <Settings className="w-4 h-4" /> },
     ];
   };
 
@@ -1088,6 +1169,26 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         badge: t('পোর্টাল', 'Portal'),
         onClick: () => setActiveTab('home'),
         isActive: activeTab === 'home',
+      },
+      {
+        id: 'faraiz',
+        label: t('ফারায়েজ ও ওয়ারিশান বণ্টন', 'Faraiz & Succession'),
+        subtitle: t('শরিয়াহ মোতাবেক উত্তরাধিকার হিস্যা ও ১-ক্লিক নামজারি', 'Islamic inheritance shares & 1-click mutation'),
+        icon: <Scale className="w-4 h-4 text-purple-700" />,
+        iconBg: 'bg-purple-100',
+        badge: t('ফারায়েজ', 'Faraiz'),
+        onClick: () => setFaraizModalOpen(true),
+        isActive: faraizModalOpen,
+      },
+      {
+        id: 'porcha-ocr',
+        label: t('ডকুমেন্ট এআই ও পর্চা স্ক্যানার', 'Document AI / Porcha Scanner'),
+        subtitle: t('সিএস/আরএস/বিএস পর্চা স্ক্যান ও এআই ফিল্ড এক্সট্রাকশন', 'Scan physical porcha and extract Dag & Khatian via AI'),
+        icon: <FileSearch className="w-4 h-4 text-emerald-700" />,
+        iconBg: 'bg-emerald-100',
+        badge: t('এআই স্ক্যানার', 'AI OCR'),
+        onClick: () => setPorchaModalOpen(true),
+        isActive: porchaModalOpen,
       },
     ];
 
@@ -1151,6 +1252,22 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
       <div className="min-h-screen flex flex-col bg-white text-slate-800 pb-28 lg:pb-0">
         {/* Top Accent Gradient Bar — Exactly like bcc.zohirrayhan.com */}
         <div className="h-1 bg-gradient-to-r from-emerald-700 via-emerald-600 to-amber-500" />
+
+        {/* Emergency Platform Broadcast Banner */}
+        {broadcast && (Boolean(broadcast.is_active) || Number(broadcast.is_active) === 1) && (
+          <div
+            className={`w-full py-2.5 px-4 text-center font-bold text-xs sm:text-sm flex items-center justify-center gap-2 tracking-wide shadow-xs ${
+              broadcast.level === 'URGENT'
+                ? 'bg-red-600 text-white animate-pulse'
+                : broadcast.level === 'WARNING'
+                ? 'bg-amber-500 text-slate-950 font-bold'
+                : 'bg-[#006A4E] text-white'
+            }`}
+          >
+            <Megaphone className="w-4 h-4 shrink-0" />
+            <span>{lang === 'bn' ? broadcast.message_bn : (broadcast.message_en || broadcast.message_bn)}</span>
+          </div>
+        )}
 
         {/* Clean Header Bar */}
         <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur">
@@ -1265,6 +1382,9 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
               >
                 <Contrast className="w-4 h-4" />
               </button>
+
+              {/* Real-time Notification Center Bell & Dropdown */}
+              <NotificationCenter onNavigate={(tab) => setActiveTab(tab)} />
 
               {user && token ? (
                 <UserProfileMenu
@@ -1427,6 +1547,19 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
                       </span>
                       <ChevronRight className="w-3.5 h-3.5 opacity-40" />
                     </button>
+                    <button
+                      onClick={() => {
+                        setMobileDrawerOpen(false);
+                        setFaraizModalOpen(true);
+                      }}
+                      className="w-full px-3 py-2 rounded-lg text-xs font-semibold text-left flex items-center justify-between text-white/80 hover:bg-white/5 transition"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Scale className="w-4 h-4 text-purple-400" />
+                        <span>{t('ফারায়েজ ও ওয়ারিশান বণ্টন', 'Faraiz & Succession')}</span>
+                      </span>
+                      <ChevronRight className="w-3.5 h-3.5 opacity-40" />
+                    </button>
                   </div>
                 </div>
 
@@ -1541,6 +1674,22 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
 
         {/* Mobile Bottom Dock */}
         <MobileBottomDock activeTab={activeTab} setActiveTab={setActiveTab} role={role} t={t} />
+
+        {/* Islamic Faraiz Calculator Modal */}
+        <FaraizCalculatorModal
+          isOpen={faraizModalOpen}
+          onClose={() => setFaraizModalOpen(false)}
+          preselectedPlotId={faraizPlotId}
+          preselectedArea={faraizArea}
+          onMutationSuccess={() => setActiveTab('home')}
+        />
+
+        {/* Bengali Porcha Document AI Scanner Modal */}
+        <BengaliPorchaOcrModal
+          isOpen={porchaModalOpen}
+          onClose={() => setPorchaModalOpen(false)}
+          onNavigate={(r) => setActiveTab(r)}
+        />
       </div>
     );
   }
@@ -1560,6 +1709,10 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
             const isUsersItem = item.id === 'users' && (role === 'admin' || role === 'system_admin');
             const isActive = isOfficerRole
               ? (activeSubTab ? activeSubTab === item.id : idx === 0)
+              : role === 'citizen'
+              ? (item.id === 'profile'
+                  ? activeTab === 'profile'
+                  : activeTab === 'home' && (activeSubTab ? (activeSubTab === item.id || (activeSubTab === 'vault' && item.id === 'plots')) : item.id === 'overview'))
               : activeTab === item.id;
 
             if (isUsersItem) {
@@ -1782,6 +1935,22 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
 
       {/* Main Area */}
       <div className="flex-1 flex flex-col min-w-0 pt-0">
+        {/* Emergency Platform Broadcast Banner */}
+        {broadcast && (Boolean(broadcast.is_active) || Number(broadcast.is_active) === 1) && (
+          <div
+            className={`w-full py-2 px-4 text-center font-bold text-xs sm:text-sm flex items-center justify-center gap-2 tracking-wide border-b z-30 ${
+              broadcast.level === 'URGENT'
+                ? 'bg-red-600 text-white animate-pulse border-red-700'
+                : broadcast.level === 'WARNING'
+                ? 'bg-amber-500 text-slate-950 font-bold border-amber-600'
+                : 'bg-[#006A4E] text-white border-emerald-800'
+            }`}
+          >
+            <Megaphone className="w-4 h-4 shrink-0" />
+            <span>{lang === 'bn' ? broadcast.message_bn : (broadcast.message_en || broadcast.message_bn)}</span>
+          </div>
+        )}
+
         {/* Top Navbar */}
         <header className="sticky top-1 z-20 h-16 bg-white/95 backdrop-blur border-b border-slate-200 px-4 lg:px-6 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -1891,6 +2060,22 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
 
       {/* Mobile Bottom Navigation Dock */}
       <MobileBottomDock activeTab={activeTab} setActiveTab={setActiveTab} role={role} t={t} />
+
+      {/* Islamic Faraiz Calculator Modal */}
+      <FaraizCalculatorModal
+        isOpen={faraizModalOpen}
+        onClose={() => setFaraizModalOpen(false)}
+        preselectedPlotId={faraizPlotId}
+        preselectedArea={faraizArea}
+        onMutationSuccess={() => setActiveTab(role === 'citizen' ? 'home' : 'acland')}
+      />
+
+      {/* Bengali Porcha Document AI Scanner Modal */}
+      <BengaliPorchaOcrModal
+        isOpen={porchaModalOpen}
+        onClose={() => setPorchaModalOpen(false)}
+        onNavigate={(r) => setActiveTab(r)}
+      />
     </div>
   );
 };

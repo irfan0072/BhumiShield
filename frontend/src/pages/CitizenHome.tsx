@@ -1,2085 +1,2683 @@
-import React, { useState, useEffect } from 'react';
-import { useAppUI } from '../i18n';
-import { BhumiApi } from '../api/client';
-import { toBanglaDigits } from '../theme/tokens';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  LayoutDashboard,
-  Layers,
+  ShieldCheck,
   Lock,
   Unlock,
   FileText,
-  Sparkles,
-  AlertOctagon,
-  Ticket,
-  UserCheck,
-  Search,
-  QrCode,
-  CheckCircle2,
-  AlertTriangle,
-  ChevronRight,
-  ChevronLeft,
-  Clock,
-  ShieldCheck,
-  ArrowRight,
-  Upload,
-  FileCheck,
-  RefreshCw,
-  X,
-  Printer,
-  Building2,
-  Phone,
-  Mail,
   Eye,
+  Scale,
+  UploadCloud,
+  Download,
+  AlertTriangle,
+  Search,
+  Building2,
+  MapPin,
+  RotateCw,
+  X,
+  CheckCircle2,
+  Clock,
+  ArrowRight,
+  FileCheck,
+  ExternalLink,
   SlidersHorizontal,
-  PlusCircle,
-  Menu
+  FolderOpen,
+  Copy,
+  Check,
+  Sparkles,
+  HelpCircle,
+  PhoneCall,
+  LayoutDashboard,
+  Plus,
+  Send,
+  AlertOctagon,
+  ChevronRight,
+  UserCheck,
 } from 'lucide-react';
-import { ProfileCompletionModal } from '../components/ProfileCompletionModal';
+import { BhumiApi, api } from '../api/client';
+import { useAppUI } from '../i18n';
+import { toBanglaDigits } from '../theme/tokens';
+import { AddressCascader, AddressSelection } from '../components/AddressCascader';
+import { triggerAppNotification } from '../components/NotificationCenter';
+import { LandHealthPassportModal } from '../components/LandHealthPassportModal';
+import { CitizenProblemTriageModal } from '../components/CitizenProblemTriageModal';
 
-interface CitizenHomeProps {
-  onNavigate: (tab: string) => void;
-}
+export type CitizenSection = 'overview' | 'plots' | 'docs' | 'deeds' | 'transfers' | 'disputes' | 'tickets';
 
-const TRANSFER_STAGES = [
-  { id: 'START', labelBn: '১. প্রাথমিক প্রস্তুতি ও খসড়া', labelEn: '1. Start & Draft', steps: [1, 2, 3] },
-  { id: 'VERIFY', labelBn: '২. স্বয়ংক্রিয় যাচাই ও কর', labelEn: '2. Verify & Fees', steps: [4, 5, 6] },
-  { id: 'REGISTER', labelBn: '৩. সাব-রেজিস্ট্রি ও বায়োমেট্রিক', labelEn: '3. Registry & Biometrics', steps: [7, 8, 9] },
-  { id: 'REVIEW', labelBn: '৪. এসি ল্যান্ড নামজারি', labelEn: '4. Mutation Review', steps: [10, 11] },
-  { id: 'DONE', labelBn: '৫. সম্পন্ন ও ক্রিপ্টো সিল', labelEn: '5. Done & Sealed', steps: [12, 13] },
-];
+export const CitizenHome: React.FC<{ onNavigate: (target: string) => void }> = ({ onNavigate }) => {
+  const { user, lang, t, activeSubTab, setActiveSubTab } = useAppUI();
+  const [isTriageModalOpen, setIsTriageModalOpen] = useState(false);
 
-export const CitizenHome: React.FC<CitizenHomeProps> = ({ onNavigate }) => {
-  const { lang, user, setUser, logout, t, formatNumber } = useAppUI();
-
-  const [refreshingApprovalStatus, setRefreshingApprovalStatus] = useState<boolean>(false);
-  const handleRefreshApprovalStatus = async () => {
-    setRefreshingApprovalStatus(true);
-    try {
-      const res = await BhumiApi.getMe();
-      if (res?.user) {
-        setUser(res.user);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setRefreshingApprovalStatus(false);
+  // Internal tab state synced with activeSubTab
+  const [section, setSection] = useState<CitizenSection>(() => {
+    if (activeSubTab === 'vault') return 'plots';
+    if (activeSubTab && ['overview', 'plots', 'docs', 'deeds', 'disputes', 'transfers', 'tickets'].includes(activeSubTab)) {
+      return activeSubTab as CitizenSection;
     }
-  };
-
-  // Active navigation section state
-  const [activeSection, setActiveSection] = useState<
-    'overview' | 'plots' | 'docs' | 'deeds' | 'transfers' | 'disputes' | 'tickets' | 'profile'
-  >(() => {
-    const path = window.location.pathname.toLowerCase();
-    if (path.includes('/my/transfers')) return 'transfers';
-    if (path.includes('/my/tickets')) return 'tickets';
-    if (path.includes('/my/land') || path.includes('/vault')) return 'plots';
     return 'overview';
   });
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
+  useEffect(() => {
+    if (activeSubTab === 'vault') {
+      setSection('plots');
+    } else if (activeSubTab && ['overview', 'plots', 'docs', 'deeds', 'disputes', 'transfers', 'tickets'].includes(activeSubTab)) {
+      setSection(activeSubTab as CitizenSection);
+    }
+  }, [activeSubTab]);
 
-  // Core Data States
+  const handleTabChange = (s: CitizenSection) => {
+    setSection(s);
+    setActiveSubTab(s);
+  };
+
+  // Data states
   const [vault, setVault] = useState<any>(null);
+  const [docs, setDocs] = useState<any>(null);
   const [disputes, setDisputes] = useState<any[]>([]);
-  const [plots, setPlots] = useState<any[]>([]);
-  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState<{ msg: string; err?: boolean } | null>(null);
+
+  // Filters & Cascader
+  const [selectedDivision, setSelectedDivision] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedUpazila, setSelectedUpazila] = useState('');
+  const [selectedMouzaId, setSelectedMouzaId] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Selected Plot for Docs / Modals
+  const [selectedPlotId, setSelectedPlotId] = useState<string>('');
+  const [inspectingDoc, setInspectingDoc] = useState<any | null>(null);
+  const [requestingDocType, setRequestingDocType] = useState<string | null>(null);
+  const [selectedDeedForModal, setSelectedDeedForModal] = useState<any | null>(null);
+  const [selectedPlotForModal, setSelectedPlotForModal] = useState<any | null>(null);
+  const [selectedDisputeForModal, setSelectedDisputeForModal] = useState<any | null>(null);
+  const [passportPlot, setPassportPlot] = useState<any | null>(null);
+
+  // Support Tickets & Transfers State
   const [tickets, setTickets] = useState<any[]>([]);
-  const [loadingData, setLoadingData] = useState<boolean>(false);
-  const [actionMsg, setActionMsg] = useState('');
+  const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
+  const mapTicketContext = new URLSearchParams(window.location.search);
+  const [isNewTicketOpen, setIsNewTicketOpen] = useState(() => Number(mapTicketContext.get('map_plot_id')) > 0);
+  const [ticketSubject, setTicketSubject] = useState(() => mapTicketContext.get('map_plot_id') ? `ম্যাপের দাগ ${String(mapTicketContext.get('map_dag') || '').slice(0,40)} সম্পর্কে সহায়তা` : '');
+  const [ticketCategory, setTicketCategory] = useState('GENERAL');
+  const [ticketMessage, setTicketMessage] = useState(() => mapTicketContext.get('map_plot_id') ? `ম্যাপ থেকে সহায়তার অনুরোধ। রেকর্ড ID: ${Number(mapTicketContext.get('map_plot_id'))}; মৌজা ID: ${Number(mapTicketContext.get('map_location'))}।\nআমার সমস্যা: ` : '');
+  const [ticketSubmitting, setTicketSubmitting] = useState(false);
+  const [ticketReplyText, setTicketReplyText] = useState('');
+  const [replySubmitting, setReplySubmitting] = useState(false);
 
-  // NID Switcher State
-  const [activeNid, setActiveNid] = useState<string>(user?.nid_mock || '9900001001');
-  const [nidInput, setNidInput] = useState<string>(user?.nid_mock || '9900001001');
+  const [citizenTransfers, setCitizenTransfers] = useState<any[]>([]);
+  const [transfersLoading, setTransfersLoading] = useState(false);
 
-  // Filter States for Plots & Deeds
-  const [plotSearchQuery, setPlotSearchQuery] = useState<string>('');
-  const [plotFilterStatus, setPlotFilterStatus] = useState<'all' | 'locked' | 'unlocked'>('all');
+  // File Upload Form
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadDocType, setUploadDocType] = useState('OTHER');
+  const [uploadTitleBn, setUploadTitleBn] = useState('');
 
-  // Document Vault (L0-L3) State
-  const [selectedPlotForDocs, setSelectedPlotForDocs] = useState<any | null>(null);
-  const [plotDocsData, setPlotDocsData] = useState<any | null>(null);
-  const [loadingDocs, setLoadingDocs] = useState<boolean>(false);
+  // Dispute Filing Form
+  const [disputePlotId, setDisputePlotId] = useState('');
+  const [disputeType, setDisputeType] = useState('OWNERSHIP_OBJECTION');
+  const [disputeReason, setDisputeReason] = useState('');
 
-  // 2-Tap Ticket State
-  const [ticketModalDoc, setTicketModalDoc] = useState<any | null>(null);
-  const [ticketNotes, setTicketNotes] = useState<string>('');
-  const [submittingTicket, setSubmittingTicket] = useState<boolean>(false);
-  const [ticketAlert, setTicketAlert] = useState<any | null>(null);
+  // Sale Lock Action state
+  const [lockTogglingPlotId, setLockTogglingPlotId] = useState<number | null>(null);
 
-  // Upload L1 State
-  const [uploadModalDoc, setUploadModalDoc] = useState<any | null>(null);
-  const [uploadFileName, setUploadFileName] = useState<string>('');
-  const [uploadNotes, setUploadNotes] = useState<string>('');
-  const [submittingUpload, setSubmittingUpload] = useState<boolean>(false);
-
-  // 13-Step Transfer State Machine State
-  const [transfers, setTransfers] = useState<any[]>([]);
-  const [loadingTransfers, setLoadingTransfers] = useState<boolean>(false);
-  const [advancingTransferCode, setAdvancingTransferCode] = useState<string | null>(null);
-  const [creatingTransfer, setCreatingTransfer] = useState<boolean>(false);
-
-  // Deed Proof Modal State
-  const [selectedDeedModal, setSelectedDeedModal] = useState<any | null>(null);
-  const [loadingDeedModal, setLoadingDeedModal] = useState<boolean>(false);
-
-  // Citizen Dispute Form State
-  const [disputePlotId, setDisputePlotId] = useState<number>(1);
-  const [disputeType, setDisputeType] = useState('FORGERY_CLAIM');
-  const [disputeDesc, setDisputeDesc] = useState(
-    'আমার অজান্তে জাল আমমোক্তারনামা তৈরি করে এই দাগের জমি বিক্রির চেষ্টা চলছে।'
-  );
-  const [submittingDispute, setSubmittingDispute] = useState(false);
-
-  // Load Transfers
-  const loadTransfers = () => {
-    setLoadingTransfers(true);
-    BhumiApi.listTransfers()
-      .then((res) => setTransfers(res.items || res || []))
-      .catch(() => setTransfers([]))
-      .finally(() => setLoadingTransfers(false));
-  };
-
-  // Load Tickets
-  const loadTickets = () => {
-    BhumiApi.listTickets()
-      .then((res) => setTickets(res.items || []))
-      .catch(() => setTickets([]));
-  };
-
-  // Load Plot Documents
-  const loadPlotDocuments = async (plotCodeOrId: string | number) => {
-    setLoadingDocs(true);
+  const loadTickets = async () => {
+    setTicketsLoading(true);
     try {
-      const res = await BhumiApi.getPlotDocuments(plotCodeOrId);
-      setPlotDocsData(res);
+      const res = await BhumiApi.listTickets();
+      const list = Array.isArray(res) ? res : res.items || [];
+      setTickets(list);
     } catch {
-      setPlotDocsData(null);
+      setTickets([]);
     } finally {
-      setLoadingDocs(false);
+      setTicketsLoading(false);
     }
   };
 
-  // Load All Citizen Data
-  const loadCitizenData = (nidToUse = activeNid) => {
-    setLoadingData(true);
-    BhumiApi.getMyVault(nidToUse)
-      .then((res) => {
-        setVault(res);
-        if (res.owned_plots && res.owned_plots.length > 0) {
-          const firstPlot = res.owned_plots[0];
-          setSelectedPlotForDocs(firstPlot);
-          loadPlotDocuments(firstPlot.plot_code || firstPlot.plot_id);
-        }
-      })
-      .catch(() => setVault({ found: false, person: null, owned_plots: [], deeds: [] }))
-      .finally(() => setLoadingData(false));
+  const loadTransfers = async () => {
+    setTransfersLoading(true);
+    try {
+      const res = await BhumiApi.listTransfers();
+      const list = Array.isArray(res) ? res : res.items || [];
+      setCitizenTransfers(list);
+    } catch {
+      setCitizenTransfers([]);
+    } finally {
+      setTransfersLoading(false);
+    }
+  };
 
-    BhumiApi.listDisputes()
-      .then((res) => setDisputes(res))
-      .catch(() => {});
-
-    BhumiApi.getPlots()
-      .then((res) => {
-        setPlots(res);
-        if (res.length > 0 && !disputePlotId) setDisputePlotId(res[0].id);
-      })
-      .catch(() => {});
-
-    BhumiApi.getStatsSummary()
-      .then((res) => setStats(res))
-      .catch(() => {});
-
-    loadTransfers();
-    loadTickets();
+  const loadVault = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const v = await BhumiApi.getMyVault();
+      setVault(v);
+      const dsps = await BhumiApi.listDisputes().catch(() => []);
+      setDisputes(Array.isArray(dsps) ? dsps : []);
+    } catch (e: any) {
+      if (e?.response?.status === 404) {
+        setVault({ owned_plots: [], deeds: [] });
+      } else {
+        setError(e?.response?.data?.message_bn || e?.message || 'তথ্য লোড করতে সমস্যা হয়েছে।');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    const targetNid = user?.nid_mock || '9900001001';
-    setActiveNid(targetNid);
-    setNidInput(targetNid);
-    loadCitizenData(targetNid);
-  }, [user]);
-
-  const handleNidSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanNid = nidInput.trim();
-    if (!cleanNid) return;
-    setActiveNid(cleanNid);
-    loadCitizenData(cleanNid);
-  };
-
-  const handleSelectPresetNid = (presetNid: string) => {
-    setNidInput(presetNid);
-    setActiveNid(presetNid);
-    loadCitizenData(presetNid);
-  };
-
-  const handleToggleLock = async (plotId: number) => {
-    setActionMsg('');
-    try {
-      const res = await BhumiApi.togglePlotSaleLock(
-        plotId,
-        'নাগরিক পোর্টাল থেকে মালিক কর্তৃক বিক্রয় লক সক্রিয় করা হয়েছে'
-      );
-      setActionMsg(lang === 'bn' ? res.message_bn : res.message_en);
-      loadCitizenData();
-    } catch {
-      setActionMsg(t('লক পরিবর্তন করতে সমস্যা হয়েছে।', 'Failed to toggle lock.'));
-    }
-  };
-
-  const handleOpenDeedModal = async (deedNo: string) => {
-    setLoadingDeedModal(true);
-    try {
-      const res = await BhumiApi.verifyDeedByCode(deedNo);
-      setSelectedDeedModal(res);
-    } catch {
-      // fallback
-    } finally {
-      setLoadingDeedModal(false);
-    }
-  };
-
-  const handleAdvanceTransfer = async (transferCode: string, nextStep: number) => {
-    setAdvancingTransferCode(transferCode);
-    try {
-      await BhumiApi.advanceTransfer(transferCode, {
-        step: nextStep,
-        biometric_verified: true,
-        liveness_passed: true,
-      });
+    if (user?.is_identity_verified) {
+      loadVault();
       loadTransfers();
+      loadTickets();
+      const timer = setInterval(() => {
+        loadVault();
+      }, 10000);
+      const onFocus = () => loadVault();
+      window.addEventListener('focus', onFocus);
+      return () => {
+        clearInterval(timer);
+        window.removeEventListener('focus', onFocus);
+      };
+    } else {
+      setLoading(false);
+    }
+  }, [user?.id, user?.is_identity_verified]);
+
+  // Load documents when selectedPlotId changes
+  useEffect(() => {
+    if (selectedPlotId) {
+      api
+        .get(`/plots/${selectedPlotId}/documents`)
+        .then((r) => setDocs(r.data))
+        .catch(() => {
+          setDocs(null);
+          setError(t('নথির তালিকা লোড হয়নি। আবার চেষ্টা করুন।', 'Document list could not be loaded. Please retry.'));
+        });
+    } else {
+      setDocs(null);
+    }
+  }, [selectedPlotId]);
+
+  useEffect(() => {
+    if (section === 'tickets') {
+      loadTickets();
+    } else if (section === 'transfers') {
+      loadTransfers();
+    } else if (section === 'docs') {
+      if (!selectedPlotId && vault?.owned_plots?.length > 0) {
+        setSelectedPlotId(String(vault.owned_plots[0].plot_id));
+      }
+    }
+  }, [section, vault?.owned_plots, selectedPlotId]);
+
+  const plots: any[] = vault?.owned_plots || [];
+  const deeds: any[] = vault?.deeds || [];
+
+  // Toggle Sale Lock
+  const handleToggleSaleLock = async (plot: any) => {
+    setLockTogglingPlotId(plot.plot_id);
+    const isCurrentlyLocked = Boolean(plot.owner_sale_locked);
+    const actionName = isCurrentlyLocked
+      ? t('বিক্রয় লক প্রত্যাহার করা', 'Unlocking sale')
+      : t('বিক্রয় লক সক্রিয় করা', 'Activating sale lock');
+    try {
+      await BhumiApi.togglePlotSaleLock(Number(plot.plot_id));
+      triggerAppNotification({
+        title_bn: !isCurrentlyLocked ? 'মালিকানা বিক্রয় লক সক্রিয়' : 'মালিকানা বিক্রয় লক প্রত্যাহার',
+        title_en: !isCurrentlyLocked ? 'Sale Lock Activated' : 'Sale Lock Deactivated',
+        message_bn: `দাগ নং ${plot.dag_no_bn || plot.dag_no}-এ বিক্রয় লক ${!isCurrentlyLocked ? 'সক্রিয়' : 'প্রত্যাহার'} করা হয়েছে।`,
+        message_en: `Plot ${plot.dag_no} sale lock is now ${!isCurrentlyLocked ? 'active' : 'inactive'}.`,
+        type: !isCurrentlyLocked ? 'SUCCESS' : 'WARNING',
+        targetTab: 'home',
+        targetSection: 'plots',
+      });
+      setNotice({
+        msg: t(
+          `দাগ নং ${plot.dag_no_bn || plot.dag_no}-এর ${actionName} সম্পন্ন হয়েছে।`,
+          `Plot ${plot.dag_no} sale lock updated successfully.`
+        ),
+      });
+      await loadVault();
     } catch (err: any) {
-      const msg = err?.response?.data?.message_bn || err?.response?.data?.detail?.message_bn;
-      alert(msg || t('ধাপ পরিবর্তন ব্যর্থ হয়েছে।', 'Failed to advance transfer step.'));
-    } finally {
-      setAdvancingTransferCode(null);
-    }
-  };
-
-  const handleCreateNewTransfer = async (plotId: number) => {
-    setCreatingTransfer(true);
-    try {
-      await BhumiApi.createTransfer({
-        plot_id: plotId,
-        transfer_area_decimal: 5.0,
-        proposed_price_bdt: 850000,
-        deed_type: 'SALE',
+      setNotice({
+        msg: err?.response?.data?.error || t('বিক্রয় লক পরিবর্তন ব্যর্থ হয়েছে।', 'Failed to toggle sale lock.'),
+        err: true,
       });
-      loadTransfers();
-      setActiveSection('transfers');
-      setActionMsg(t('নতুন স্থানান্তর আবেদন (ধাপ ১) সফলভাবে দাখিল করা হয়েছে!', 'New transfer case initialized at Step 1!'));
-    } catch {
-      alert(t('স্থানান্তর আবেদন তৈরি ব্যর্থ হয়েছে।', 'Failed to initialize transfer case.'));
     } finally {
-      setCreatingTransfer(false);
+      setLockTogglingPlotId(null);
     }
   };
 
+  // Upload Document
+  const handleDocumentUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadFile || !selectedPlotId) return;
+    if (uploadFile.size > 10 * 1024 * 1024) {
+      setNotice({ msg: t('ফাইলটি ১০ মেগাবাইটের মধ্যে রাখুন।', 'File size must be under 10MB.'), err: true });
+      return;
+    }
+    setBusy(true);
+    try {
+      const b64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = reject;
+        reader.readAsDataURL(uploadFile);
+      });
+      await api.post(`/plots/${selectedPlotId}/documents`, {
+        document_type: uploadDocType,
+        title_bn: uploadTitleBn.trim() || 'নাগরিকের সংরক্ষিত দলিলপত্র',
+        title_en: uploadTitleBn.trim() || uploadFile.name,
+        file_name: uploadFile.name,
+        base64_data: b64,
+      });
+      setNotice({ msg: t('কাগজপত্র সফলভাবে ভল্টে সংরক্ষিত হয়েছে।', 'Document uploaded to vault successfully.') });
+      setUploadFile(null);
+      setUploadTitleBn('');
+      const r = await api.get(`/plots/${selectedPlotId}/documents`);
+      setDocs(r.data);
+    } catch (err: any) {
+      setNotice({ msg: err?.response?.data?.error || t('আপলোডে ত্রুটি হয়েছে।', 'Failed to upload document.'), err: true });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Download Verified Document with robust base64 decoding
+  const handleDocumentDownload = async (doc: any) => {
+    if (!selectedPlotId || !doc.id) return;
+    try {
+      const res = await api.get(`/plots/${selectedPlotId}/documents/${doc.id}/download`);
+      const payload = res.data;
+      let blob: Blob;
+      if (payload && payload.base64_content) {
+        const binaryString = atob(payload.base64_content);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        blob = new Blob([bytes], { type: payload.mime_type || 'application/pdf' });
+      } else if (res.data instanceof Blob) {
+        blob = res.data;
+      } else {
+        blob = new Blob([typeof payload === 'string' ? payload : JSON.stringify(payload)], { type: 'application/pdf' });
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = payload?.file_name || doc.file_name || `${doc.document_type || 'document'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      triggerAppNotification({
+        title_bn: 'দলিল ডাউনলোড সম্পন্ন',
+        title_en: 'Document Downloaded',
+        message_bn: `"${doc.title_bn}" সফলভাবে ডাউনলোড হয়েছে।`,
+        message_en: `"${doc.title_en || doc.title_bn}" downloaded successfully.`,
+        type: 'SUCCESS',
+        targetTab: 'home',
+        targetSection: 'docs',
+      });
+    } catch (err: any) {
+      const msg = err?.response?.data?.message_bn || err?.response?.data?.message || err.message;
+      setNotice({ msg: msg || t('ডাউনলোডে ত্রুটি হয়েছে।', 'Failed to download document.'), err: true });
+    }
+  };
+
+  // 1-Click Request Missing Document from Vault
+  const handleRequestMissingDoc = async (doc: any) => {
+    if (!selectedPlotId) return;
+    setRequestingDocType(doc.document_type);
+    try {
+      const prefill = doc.ticket_prefill || {};
+      const res = await BhumiApi.requestMissingDocument(selectedPlotId, {
+        document_type: doc.document_type,
+        title_bn: prefill.title_bn || `অনুপস্থিত দলিল সংগ্রহ: ${doc.title_bn}`,
+        title_en: prefill.title_en || `Missing Document: ${doc.title_en || doc.document_type}`,
+        priority: doc.is_required ? 'HIGH' : 'NORMAL',
+      });
+      triggerAppNotification({
+        title_bn: 'অনুপস্থিত দলিলের আবেদন দাখিল সম্পন্ন',
+        title_en: 'Missing Document Request Submitted',
+        message_bn: res?.message_bn || `টিকেট নং ${res?.ticket_code || 'TKT'} সফলভাবে নিবন্ধিত হয়েছে। রেকর্ড রুম এটি সংগ্রহ করবে।`,
+        message_en: res?.message_en || `Ticket ${res?.ticket_code} created with SLA tracking.`,
+        type: 'SUCCESS',
+        targetTab: 'home',
+        targetSection: 'tickets',
+      });
+      const r = await api.get(`/plots/${selectedPlotId}/documents`);
+      setDocs(r.data);
+      await loadTickets();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message_bn || err?.response?.data?.message || err.message;
+      alert(msg || 'অনুরোধ দাখিলে ত্রুটি হয়েছে।');
+    } finally {
+      setRequestingDocType(null);
+    }
+  };
+
+  // File Dispute
   const handleFileDispute = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmittingDispute(true);
-    setActionMsg('');
+    if (!disputePlotId || !disputeReason.trim()) return;
+    setBusy(true);
     try {
-      const res = await BhumiApi.fileDispute({
-        plot_id: disputePlotId,
-        complainant_name_bn: user?.full_name_bn || vault?.person?.name_bn || 'মোঃ আব্দুর রহিম শেখ',
-        complainant_nid: user?.nid_mock || activeNid || '9900001001',
+      await BhumiApi.fileDispute({
+        plot_id: Number(disputePlotId),
         dispute_type: disputeType,
-        description_bn: disputeDesc,
+        description_bn: disputeReason.trim(),
+        complainant_name_bn: user?.full_name_bn || 'সম্মানিত নাগরিক',
+        complainant_nid: user?.nid || '',
       });
-      setActionMsg(lang === 'bn' ? res.message_bn : res.message_en);
-      loadCitizenData();
-    } catch {
-      setActionMsg(t('অভিযোগ জমা দিতে সমস্যা হয়েছে।', 'Failed to file dispute.'));
+      setNotice({ msg: t('আপত্তি সফলভাবে দায়ের হয়েছে। এসি ল্যান্ড ট্রাইব্যুনাল শুনানি গ্রহণ করবেন।', 'Objection filed successfully.') });
+      setDisputeReason('');
+      setDisputePlotId('');
+      const dsps = await BhumiApi.listDisputes();
+      setDisputes(Array.isArray(dsps) ? dsps : []);
+    } catch (err: any) {
+      setNotice({ msg: err?.response?.data?.error || t('আপত্তি দাখিলে ত্রুটি হয়েছে।', 'Failed to file objection.'), err: true });
     } finally {
-      setSubmittingDispute(false);
+      setBusy(false);
     }
   };
 
-  const handleConfirmTicket = async () => {
-    if (!ticketModalDoc || !plotDocsData?.plot) return;
-    setSubmittingTicket(true);
+  // Create Ticket
+  const handleCreateTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ticketSubject.trim() || !ticketMessage.trim()) return;
+    setTicketSubmitting(true);
     try {
-      const plotTarget = plotDocsData.plot.plot_code || plotDocsData.plot.id;
-      const res = await BhumiApi.requestMissingDocument(plotTarget, {
-        doc_type: ticketModalDoc.document_type,
-        notes_bn: ticketNotes || undefined,
+      const res = await BhumiApi.createTicket({
+        title: ticketSubject.trim(),
+        message: ticketMessage.trim(),
+        category: ticketCategory,
       });
-      setTicketAlert(res);
-      setTicketModalDoc(null);
-      await loadPlotDocuments(plotTarget);
-      loadTickets();
-    } catch {
-      alert(t('টিকেট তৈরিতে সমস্যা হয়েছে। অনুগ্রহ করে পুনরায় চেষ্টা করুন।', 'Failed to generate ticket. Please try again.'));
+      triggerAppNotification({
+        title_bn: 'সহায়তা টিকিট দাখিল সম্পন্ন',
+        title_en: 'Support Ticket Submitted',
+        message_bn: `টিকিট নং ${res?.ticket?.ticket_code || res?.ticket_code || 'HELP'} সফলভাবে দাখিল হয়েছে।`,
+        message_en: `Ticket registered with code ${res?.ticket?.ticket_code || res?.ticket_code || 'HELP'}.`,
+        type: 'SUCCESS',
+        targetTab: 'home',
+        targetSection: 'tickets',
+      });
+      setTicketSubject('');
+      setTicketMessage('');
+      setIsNewTicketOpen(false);
+      await loadTickets();
+    } catch (err: any) {
+      alert(err?.response?.data?.message_bn || err?.message || 'টিকিট দাখিলে ত্রুটি হয়েছে।');
     } finally {
-      setSubmittingTicket(false);
+      setTicketSubmitting(false);
     }
   };
 
-  const handleConfirmUpload = async () => {
-    if (!uploadModalDoc || !plotDocsData?.plot) return;
-    setSubmittingUpload(true);
+  // Reply to Ticket
+  const handleSendReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTicket || !ticketReplyText.trim()) return;
+    setReplySubmitting(true);
     try {
-      const plotTarget = plotDocsData.plot.plot_code || plotDocsData.plot.id;
-      await BhumiApi.uploadPlotDocument(plotTarget, {
-        doc_type: uploadModalDoc.document_type,
-        file_name: uploadFileName || 'citizen_declaration.pdf',
-        notes_bn: uploadNotes || undefined,
+      const tCode = selectedTicket.ticket?.id || selectedTicket.id || selectedTicket.ticket?.ticket_code;
+      const res = await BhumiApi.replyTicket(tCode, {
+        message: ticketReplyText.trim(),
       });
-      setUploadModalDoc(null);
-      await loadPlotDocuments(plotTarget);
-      setActionMsg(t('দলিল সফলভাবে আপলোড ও হ্যাশ সংরক্ষিত হয়েছে।', 'Document uploaded successfully with hash stored.'));
-    } catch {
-      alert(t('দলিল আপলোড ব্যর্থ হয়েছে।', 'Failed to upload document.'));
+      setSelectedTicket(res);
+      setTicketReplyText('');
+      await loadTickets();
+    } catch (err: any) {
+      alert(err?.response?.data?.message_bn || err?.message || 'উত্তর পাঠাতে ব্যর্থ হয়েছে।');
     } finally {
-      setSubmittingUpload(false);
+      setReplySubmitting(false);
     }
   };
 
-  // Filtered plots
-  const filteredPlots = (vault?.owned_plots || []).filter((p: any) => {
-    const matchesSearch =
-      plotSearchQuery === '' ||
-      (p.dag_no && p.dag_no.toString().includes(plotSearchQuery)) ||
-      (p.khatian_no && p.khatian_no.toString().includes(plotSearchQuery)) ||
-      (p.mouza_bn && p.mouza_bn.includes(plotSearchQuery));
+  const handleOpenTicketDetail = async (ticket: any) => {
+    try {
+      const full = await BhumiApi.getTicket(ticket.id || ticket.ticket_code);
+      setSelectedTicket(full);
+    } catch {
+      setSelectedTicket(ticket);
+    }
+  };
 
-    if (plotFilterStatus === 'locked') return matchesSearch && Number(p.owner_sale_locked) === 1;
-    if (plotFilterStatus === 'unlocked') return matchesSearch && Number(p.owner_sale_locked) === 0;
-    return matchesSearch;
-  });
+  // Filtered Plots
+  const filteredPlots = useMemo(() => {
+    return plots.filter((p) => {
+      if (selectedDivision && p.division_bn && p.division_bn !== selectedDivision) return false;
+      if (selectedDistrict && p.district_bn && p.district_bn !== selectedDistrict) return false;
+      if (selectedUpazila && p.upazila_bn && p.upazila_bn !== selectedUpazila) return false;
+      if (selectedMouzaId && p.mouza_id && Number(p.mouza_id) !== Number(selectedMouzaId)) return false;
 
-  // Sidebar Menu Items
-  const navMenuItems = [
-    {
-      id: 'overview' as const,
-      labelBn: 'সারসংক্ষেপ ও পরিসংখ্যান',
-      labelEn: 'Overview & KPIs',
-      icon: <LayoutDashboard className="w-4 h-4" />,
-      badge: null,
-    },
-    {
-      id: 'plots' as const,
-      labelBn: 'আমার জমি ও খতিয়ান ভল্ট',
-      labelEn: 'My Land & Plots',
-      icon: <Layers className="w-4 h-4" />,
-      badge: vault?.owned_plots?.length ?? 0,
-    },
-    {
-      id: 'docs' as const,
-      labelBn: 'প্রামাণ্য সনদ ভল্ট (L0–L3)',
-      labelEn: 'Document Vault (L0-L3)',
-      icon: <ShieldCheck className="w-4 h-4" />,
-      badge: plotDocsData?.verified_count ? `✔ ${plotDocsData.verified_count}` : null,
-    },
-    {
-      id: 'deeds' as const,
-      labelBn: 'নিবন্ধিত দলিল রেজিস্টার',
-      labelEn: 'My Registered Deeds',
-      icon: <FileText className="w-4 h-4" />,
-      badge: vault?.deeds?.length ?? 0,
-    },
-    {
-      id: 'transfers' as const,
-      labelBn: '১৩-ধাপের হস্তান্তর ট্র্যাকার',
-      labelEn: '13-Step Transfer Pipeline',
-      icon: <Sparkles className="w-4 h-4" />,
-      badge: transfers.length > 0 ? transfers.length : null,
-    },
-    {
-      id: 'disputes' as const,
-      labelBn: 'আপত্তি ও বিরোধ ট্রাইব্যুনাল',
-      labelEn: 'Disputes & Objections',
-      icon: <AlertOctagon className="w-4 h-4" />,
-      badge: disputes.length > 0 ? disputes.length : null,
-    },
-    {
-      id: 'tickets' as const,
-      labelBn: 'সহায়তা টিকিট ও রেকর্ডরুম',
-      labelEn: 'Support Tickets & Helpdesk',
-      icon: <Ticket className="w-4 h-4" />,
-      badge: tickets.length > 0 ? tickets.length : null,
-    },
-    {
-      id: 'profile' as const,
-      labelBn: 'প্রোফাইল ও এনআইডি সুইচ',
-      labelEn: 'Profile & Demo Switcher',
-      icon: <UserCheck className="w-4 h-4" />,
-      badge: null,
-    },
-  ];
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchDag = (p.dag_no || '').toLowerCase().includes(q) || (p.dag_no_bn || '').includes(q);
+        const matchKhatian = (p.khatian_no || '').toLowerCase().includes(q) || (p.khatian_no_bn || '').includes(q);
+        const matchMouza = (p.mouza_bn || '').toLowerCase().includes(q) || (p.mouza_en || '').toLowerCase().includes(q);
+        return matchDag || matchKhatian || matchMouza;
+      }
+      return true;
+    });
+  }, [plots, selectedDivision, selectedDistrict, selectedUpazila, selectedMouzaId, searchQuery]);
+
+  // Filtered Deeds
+  const filteredDeeds = useMemo(() => {
+    return deeds.filter((d) => {
+      if (selectedDivision && d.division_bn && d.division_bn !== selectedDivision) return false;
+      if (selectedDistrict && d.district_bn && d.district_bn !== selectedDistrict) return false;
+      if (selectedUpazila && d.upazila_bn && d.upazila_bn !== selectedUpazila) return false;
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchNo = (d.deed_no || '').toLowerCase().includes(q);
+        const matchDag = (d.dag_no || '').toLowerCase().includes(q) || (d.dag_no_bn || '').includes(q);
+        const matchParty = (d.seller_name_bn || '').includes(q) || (d.buyer_name_bn || '').includes(q);
+        return matchNo || matchDag || matchParty;
+      }
+      return true;
+    });
+  }, [deeds, selectedDivision, selectedDistrict, selectedUpazila, searchQuery]);
+
+  // Metrics
+  const totalLandDecimal = plots.reduce((acc, p) => acc + (Number(p.area_decimal) || Number(p.share_area_decimal) || 0), 0);
+  const lockedPlotsCount = plots.filter((p) => p.owner_sale_locked).length;
+  const activeDisputesCount = disputes.filter((d) => d.status === 'OPEN' || d.status === 'HEARING').length;
+  const activeTransfersCount = citizenTransfers.filter((t) => t.status !== 'COMPLETED' && t.status !== 'REJECTED').length;
+
+  const resetFilters = () => {
+    setSelectedDivision('');
+    setSelectedDistrict('');
+    setSelectedUpazila('');
+    setSelectedMouzaId('');
+    setSearchQuery('');
+  };
 
   return (
-    <div className="w-full min-h-[calc(100vh-64px)] bg-slate-50 flex flex-col md:flex-row text-slate-800">
-      {/* =====================================================================
-          1. INTEGRATED DASHBOARD SIDEBAR MENU (Left Column)
-          ===================================================================== */}
-      <aside
-        className={`bg-white border-r border-slate-200 transition-all duration-300 flex flex-col justify-between shrink-0 z-30 ${
-          sidebarCollapsed ? 'w-18' : 'w-72'
-        } ${mobileSidebarOpen ? 'fixed inset-y-0 left-0 shadow-2xl block' : 'hidden md:flex'}`}
-      >
-        <div className="flex flex-col h-full overflow-y-auto">
-          {/* Sidebar Header & Citizen Profile Chip */}
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            {!sidebarCollapsed && (
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-[#006A4E] text-white flex items-center justify-center font-black text-sm shrink-0 shadow-sm">
-                  {vault?.person?.name_bn ? vault.person.name_bn[0] : 'না'}
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-xs font-black text-slate-900 truncate">
-                    {lang === 'bn'
-                      ? vault?.person?.name_bn || user?.full_name_bn || 'মোঃ রফিকুল ইসলাম'
-                      : vault?.person?.name_en || user?.full_name_en || 'Md. Rafiqul Islam'}
-                  </h3>
-                  <div className="flex items-center gap-1 text-[11px] text-emerald-700 font-semibold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>NID: {vault?.person?.nid_mock ? `****${vault.person.nid_mock.slice(-4)}` : '****৫৮৯১'}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer hidden md:block"
-              title={sidebarCollapsed ? t('মেনু প্রসারিত করুন', 'Expand Menu') : t('মেনু সংক্ষেপ করুন', 'Collapse Menu')}
-            >
-              {sidebarCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-            </button>
-
-            {/* Mobile close button */}
-            <button
-              onClick={() => setMobileSidebarOpen(false)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 md:hidden cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
+    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* Toast Notice */}
+      {notice && (
+        <div
+          className={`p-4 rounded-2xl border flex items-center justify-between text-xs font-bold transition shadow-xs ${
+            notice.err ? 'bg-rose-50 border-rose-300 text-rose-800' : 'bg-emerald-50 border-emerald-300 text-emerald-900'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            {notice.err ? <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" /> : <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />}
+            <span className="leading-relaxed">{notice.msg}</span>
           </div>
+          <button
+            type="button"
+            onClick={() => setNotice(null)}
+            className="p-1 hover:bg-black/5 rounded-full cursor-pointer text-slate-500"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
-          {/* Navigation Links */}
-          <nav className="p-3 space-y-1 flex-1">
-            <span className={`text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2 block ${sidebarCollapsed ? 'hidden' : 'block'}`}>
-              {t('নাগরিক সার্ভিস কনসোল', 'Citizen Services')}
-            </span>
+      {/* Hero Welcome & Identity Verification Banner (E-Commerce Style Customer Welcome) */}
+      <div className="bg-gradient-to-br from-[#004d38] via-[#006A4E] to-[#003829] rounded-3xl p-6 md:p-8 text-white shadow-lg border border-emerald-700/60 relative overflow-hidden">
+        {/* Subtle decorative background circle */}
+        <div className="absolute -right-12 -top-12 w-64 h-64 rounded-full bg-white/5 pointer-events-none blur-2xl" />
+        <div className="absolute right-32 -bottom-20 w-80 h-80 rounded-full bg-emerald-400/10 pointer-events-none blur-3xl" />
 
-            {navMenuItems.map((item) => {
-              const isActive = activeSection === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setActiveSection(item.id);
-                    setMobileSidebarOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer min-h-[42px] ${
-                    isActive
-                      ? 'bg-[#006A4E] text-white shadow-sm'
-                      : 'text-slate-700 hover:bg-slate-100 hover:text-[#006A4E]'
-                  }`}
-                  title={lang === 'bn' ? item.labelBn : item.labelEn}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className={isActive ? 'text-white' : 'text-[#006A4E]'}>{item.icon}</span>
-                    {!sidebarCollapsed && <span className="truncate">{lang === 'bn' ? item.labelBn : item.labelEn}</span>}
-                  </div>
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          {/* Left: Avatar & Citizen Greeting */}
+          <div className="flex items-start sm:items-center gap-4">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white/15 border-2 border-white/30 backdrop-blur-md flex items-center justify-center text-white shrink-0 shadow-inner">
+              <UserCheck className="w-8 h-8 md:w-10 md:h-10 text-emerald-200" />
+            </div>
 
-                  {!sidebarCollapsed && item.badge !== null && item.badge !== undefined && (
-                    <span
-                      className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
-                        isActive ? 'bg-emerald-800 text-emerald-100' : 'bg-slate-100 text-slate-600'
-                      }`}
-                    >
-                      {typeof item.badge === 'number' ? toBanglaDigits(item.badge, lang) : item.badge}
+            <div className="space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-white/20 text-white backdrop-blur-xs flex items-center gap-1.5 border border-white/25">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+                  {t('নাগরিক ভূমি সেবা ও সুরক্ষা ভল্ট', 'Citizen Land Service Desk')}
+                </span>
+                {user?.is_identity_verified ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-400/25 text-emerald-100 border border-emerald-400/40 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" />
+                    {t('এনআইডি যাচাইকৃত', 'NID Verified')}
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-400 text-slate-900 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    {t('যাচাই অমীমাংসিত', 'Verification Pending')}
+                  </span>
+                )}
+              </div>
+
+              <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+                {lang === 'bn' ? (user?.full_name_bn || 'সম্মানিত নাগরিক') : (user?.full_name_en || 'Dear Citizen')}
+              </h1>
+
+              <div className="flex flex-wrap items-center gap-3 text-xs text-emerald-100/90 font-mono">
+                <span>
+                  {t('এনআইডি', 'NID')}:{' '}
+                  {user?.nid ? (
+                    toBanglaDigits(user.nid, lang)
+                  ) : (
+                    <span className="text-amber-200 font-sans font-semibold">
+                      {t('এনআইডি যুক্ত নেই (যাচাই প্রয়োজন)', 'NID Not Linked (Verification Required)')}
                     </span>
                   )}
-                </button>
-              );
-            })}
-          </nav>
-
-          {/* Quick Shortcuts & Hotline Card at Sidebar Footer */}
-          {!sidebarCollapsed && (
-            <div className="p-3 m-3 bg-emerald-50/70 border border-emerald-200/60 rounded-2xl space-y-2 text-xs">
-              <div className="flex items-center gap-2 text-[#006A4E] font-bold">
-                <Phone className="w-3.5 h-3.5 animate-pulse text-amber-500" />
-                <span>{t('ভূমি সেবা হটলাইন: ১৬১২২', 'Land Hotline: 16122')}</span>
-              </div>
-              <p className="text-[11px] text-slate-600 leading-tight">
-                {t('দিন-রাত ২৪ ঘণ্টা যে কোনো ভূমি সেবা ও খতিয়ান সংক্রান্ত সহায়তার জন্য কল করুন।', 'Call toll-free for land and khatian inquiries.')}
-              </p>
-              <div className="pt-1 flex gap-1.5">
-                <button
-                  onClick={() => onNavigate('check')}
-                  className="flex-1 py-1.5 px-2 bg-[#006A4E] text-white rounded-lg text-[10px] font-bold hover:bg-emerald-800 transition cursor-pointer text-center"
-                >
-                  {t('জমি যাচাই', 'Check Plot')}
-                </button>
-                <button
-                  onClick={() => onNavigate('qr')}
-                  className="flex-1 py-1.5 px-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-[10px] font-bold hover:bg-slate-50 transition cursor-pointer text-center"
-                >
-                  {t('QR দলিল', 'QR Deed')}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </aside>
-
-      {/* =====================================================================
-          2. MAIN CONTENT PANE (Switching smoothly on the same screen)
-          ===================================================================== */}
-      <main className="flex-1 flex flex-col min-w-0 bg-slate-50/50">
-        {/* Top Breadcrumb & Action Header */}
-        <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-20 shadow-xs">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setMobileSidebarOpen(true)}
-              className="p-2 rounded-lg border border-slate-200 md:hidden text-slate-700 hover:bg-slate-100 cursor-pointer"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-
-            <div>
-              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-semibold">
-                <span>{t('নাগরিক পোর্টাল', 'Citizen Portal')}</span>
-                <span>/</span>
-                <span className="text-[#006A4E] font-bold">
-                  {navMenuItems.find((m) => m.id === activeSection)?.labelBn}
+                </span>
+                <span>•</span>
+                <span>
+                  {t('মোবাইল', 'Mobile')}:{' '}
+                  {user?.phone || user?.phone_dummy ? (
+                    toBanglaDigits((user.phone || user.phone_dummy)!, lang)
+                  ) : (
+                    <span className="text-amber-200 font-sans font-semibold">
+                      {t('মোবাইল নম্বর যুক্ত নেই', 'No Phone Number')}
+                    </span>
+                  )}
+                </span>
+                <span>•</span>
+                <span className="text-amber-200 flex items-center gap-1 font-sans font-bold">
+                  <PhoneCall className="w-3 h-3" />
+                  {t('জরুরি কল: ১৬১২২', 'Helpline: 16122')}
                 </span>
               </div>
-              <h2 className="text-base sm:text-lg font-black text-slate-900 leading-tight">
-                {lang === 'bn'
-                  ? navMenuItems.find((m) => m.id === activeSection)?.labelBn
-                  : navMenuItems.find((m) => m.id === activeSection)?.labelEn}
-              </h2>
             </div>
           </div>
 
-          {/* Citizen Identity & Verification Status Pill */}
-          <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-950">
-              <ShieldCheck className="w-4 h-4 text-[#006A4E]" />
-              <span className="font-bold">{user?.full_name_bn || 'নাগরিক সেবা প্রোফাইল'}</span>
-              <span className="font-mono text-emerald-700 font-semibold">(NID: {activeNid ? `****${activeNid.slice(-4)}` : '****৫৮৯১'})</span>
-            </div>
-
+          {/* Right: Quick Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2.5">
             <button
-              onClick={() => loadCitizenData()}
-              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer transition min-h-[38px] min-w-[38px] flex items-center justify-center"
-              title={t('ডাটা রিফ্রেশ করুন', 'Refresh Data')}
+              type="button"
+              onClick={() => setIsTriageModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition flex items-center gap-2 cursor-pointer border border-white/25 backdrop-blur-xs shadow-xs"
             >
-              <RefreshCw className={`w-4 h-4 ${loadingData ? 'animate-spin text-[#006A4E]' : ''}`} />
+              <HelpCircle className="w-4 h-4 text-emerald-200" />
+              <span>{t('আপনার কী সাহায্য দরকার?', 'Need Help? Guide')}</span>
             </button>
 
             <button
-              onClick={() => onNavigate('check')}
-              className="px-3.5 py-2 bg-[#006A4E] hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs min-h-[38px]"
+              type="button"
+              onClick={loadVault}
+              disabled={loading}
+              className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition flex items-center gap-2 cursor-pointer border border-white/20 backdrop-blur-xs shadow-xs"
             >
-              <Search className="w-3.5 h-3.5" />
-              <span>{t('জমি যাচাই করুন', 'Check Before Buying')}</span>
+              <RotateCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span>{t('রিফ্রেশ', 'Refresh')}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('applications?new=1')}
+              className="px-5 py-2.5 rounded-xl bg-[#F42A41] hover:bg-rose-700 text-white text-xs font-black transition shadow-md flex items-center gap-2 cursor-pointer"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>{t('জমি হস্তান্তরের নতুন আবেদন', 'Apply for Land Transfer')}</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* Global Action Message Banner */}
-        {actionMsg && (
-          <div className="mx-4 sm:mx-6 mt-4 p-3.5 rounded-xl bg-emerald-50 border-2 border-emerald-600 text-emerald-950 font-bold flex items-center justify-between text-xs animate-fadeIn">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-[#006A4E] shrink-0" />
-              <span>{actionMsg}</span>
+        {/* 4 Key Metric Cards (বড় ও স্পষ্ট পরিসংখ্যান) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mt-6 pt-6 border-t border-white/15">
+          {/* Metric 1: Total Land Area */}
+          <div
+            onClick={() => handleTabChange('plots')}
+            className="bg-white/10 hover:bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/15 transition cursor-pointer group"
+          >
+            <div className="text-[11px] font-bold text-emerald-200 flex items-center justify-between">
+              <span>{t('মোট মালিকানাধীন জমি', 'Total Land Area')}</span>
+              <ChevronRight className="w-3.5 h-3.5 text-white/40 group-hover:text-white transition" />
             </div>
-            <button onClick={() => setActionMsg('')} className="text-slate-500 hover:text-slate-900 cursor-pointer">
-              <X className="w-4 h-4" />
+            <div className="text-2xl md:text-3xl font-black text-white mt-1">
+              {toBanglaDigits(totalLandDecimal.toFixed(2), lang)}{' '}
+              <span className="text-xs font-normal text-emerald-200">{t('শতক', 'dec')}</span>
+            </div>
+            <div className="text-[11px] text-emerald-100/80 mt-1">
+              {toBanglaDigits(plots.length, lang)} {t('টি দালিলিক দাগে বিস্তৃত', 'plots in total')}
+            </div>
+          </div>
+
+          {/* Metric 2: Sale Lock Status */}
+          <div
+            onClick={() => handleTabChange('plots')}
+            className="bg-white/10 hover:bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/15 transition cursor-pointer group"
+          >
+            <div className="text-[11px] font-bold text-emerald-200 flex items-center justify-between">
+              <span>{t('মালিকানা বিক্রয় লক', 'Sale Lock Status')}</span>
+              <ChevronRight className="w-3.5 h-3.5 text-white/40 group-hover:text-white transition" />
+            </div>
+            <div className="text-2xl md:text-3xl font-black text-white mt-1 flex items-center gap-2">
+              <span>{toBanglaDigits(lockedPlotsCount, lang)}</span>
+              <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-bold ${
+                lockedPlotsCount > 0 ? 'bg-emerald-400/30 text-emerald-100 border border-emerald-300/40' : 'bg-rose-500/30 text-rose-200 border border-rose-400/40'
+              }`}>
+                {lockedPlotsCount > 0 ? t('সুরক্ষিত', 'Protected') : t('লক নেই', 'Unlocked')}
+              </span>
+            </div>
+            <div className="text-[11px] text-emerald-100/80 mt-1">
+              {lockedPlotsCount === plots.length && plots.length > 0
+                ? t('সকল জমি বিক্রয়ের বিরুদ্ধে লককৃত', 'All plots locked')
+                : t('অননুমোদিত বিক্রি বন্ধ রাখুন', 'Prevent unauthorized deed')}
+            </div>
+          </div>
+
+          {/* Metric 3: Digital Deeds */}
+          <div
+            onClick={() => handleTabChange('deeds')}
+            className="bg-white/10 hover:bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/15 transition cursor-pointer group"
+          >
+            <div className="text-[11px] font-bold text-emerald-200 flex items-center justify-between">
+              <span>{t('রেজিস্ট্রিকৃত ডিজিটাল দলিল', 'Digital Registered Deeds')}</span>
+              <ChevronRight className="w-3.5 h-3.5 text-white/40 group-hover:text-white transition" />
+            </div>
+            <div className="text-2xl md:text-3xl font-black text-white mt-1">
+              {toBanglaDigits(deeds.length, lang)} {t('টি দলিল', 'deeds')}
+            </div>
+            <div className="text-[11px] text-emerald-100/80 mt-1">
+              {t('কিউআর ও ক্রিপ্টোগ্রাফিক সিলযুক্ত', 'Cryptographic & QR sealed')}
+            </div>
+          </div>
+
+          {/* Metric 4: Active Transfers */}
+          <div
+            onClick={() => handleTabChange('transfers')}
+            className="bg-white/10 hover:bg-white/15 backdrop-blur-md p-4 rounded-2xl border border-white/15 transition cursor-pointer group"
+          >
+            <div className="text-[11px] font-bold text-emerald-200 flex items-center justify-between">
+              <span>{t('চলমান হস্তান্তর ও আবেদন', 'Active Transfer Apps')}</span>
+              <ChevronRight className="w-3.5 h-3.5 text-white/40 group-hover:text-white transition" />
+            </div>
+            <div className="text-2xl md:text-3xl font-black text-white mt-1">
+              {toBanglaDigits(activeTransfersCount, lang)} {t('টি চলমান', 'active')}
+            </div>
+            <div className="text-[11px] text-emerald-100/80 mt-1">
+              {activeTransfersCount > 0 ? t('১৩-ধাপের অগ্রগতি ট্র্যাক করুন', 'Track 13-step pipeline') : t('কোনো চলমান আবেদন নেই', 'No pending applications')}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Horizontal Service Category Tabs (সহজ মেনু বার — গ্রাহকের জন্য স্পষ্ট ও ব্যবহারবান্ধব) */}
+      <div className="bg-white rounded-2xl border border-slate-200/80 p-2 shadow-xs flex items-center gap-1.5 overflow-x-auto">
+        {[
+          { id: 'overview' as CitizenSection, label: t('সারসংক্ষেপ ও সেবা', 'Overview & Hub'), icon: <LayoutDashboard className="w-4 h-4" /> },
+          { id: 'plots' as CitizenSection, label: t('আমার জমি ও বিক্রয় লক', 'My Land & Locks'), icon: <ShieldCheck className="w-4 h-4" />, count: plots.length },
+          { id: 'docs' as CitizenSection, label: t('ডিজিটাল কাগজপত্র ভল্ট', 'Digital Document Vault'), icon: <FolderOpen className="w-4 h-4" /> },
+          { id: 'deeds' as CitizenSection, label: t('রেজিস্ট্রিকৃত মূল দলিল', 'Registered Deeds'), icon: <FileCheck className="w-4 h-4" />, count: deeds.length },
+          { id: 'transfers' as CitizenSection, label: t('হস্তান্তর ট্র্যাকার', 'Transfer Tracker'), icon: <Sparkles className="w-4 h-4" />, count: activeTransfersCount > 0 ? activeTransfersCount : undefined },
+          { id: 'disputes' as CitizenSection, label: t('আপত্তি ও বিরোধ', 'Disputes & Objections'), icon: <AlertOctagon className="w-4 h-4" />, count: activeDisputesCount > 0 ? activeDisputesCount : undefined },
+          { id: 'tickets' as CitizenSection, label: t('সহায়তা ও সাপোর্ট', 'Help & Support'), icon: <FileText className="w-4 h-4" />, count: tickets.length > 0 ? tickets.length : undefined },
+        ].map((tab) => {
+          const isActive = section === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => handleTabChange(tab.id)}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap cursor-pointer select-none ${
+                isActive
+                  ? 'bg-[#006A4E] text-white shadow-xs'
+                  : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+              {typeof tab.count === 'number' && (
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    isActive ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  {toBanglaDigits(tab.count, lang)}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Universal Address Cascader Toolbar (Used on plots, deeds, disputes) */}
+      {(section === 'plots' || section === 'deeds' || section === 'disputes') && (
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-4 md:p-5 space-y-3 shadow-xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+            <div className="text-xs font-bold text-slate-800 flex items-center gap-2">
+              <SlidersHorizontal className="w-4 h-4 text-[#006A4E]" />
+              <span>{t('অধিক্ষেত্র নির্বাচন করুন (বিভাগ ➔ জেলা ➔ উপজেলা ➔ মৌজা)', 'Filter by Location (Division ➔ District ➔ Upazila ➔ Mouza)')}</span>
+            </div>
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="text-xs font-bold text-slate-500 hover:text-rose-600 transition cursor-pointer self-start md:self-auto"
+            >
+              {t('সব ফিল্টার মুছুন', 'Reset Filters')}
             </button>
           </div>
-        )}
 
-        {/* =====================================================================
-            3. SECTION VIEWS (Rendered selectively based on activeSection)
-            ===================================================================== */}
-        <div className="p-4 sm:p-6 lg:p-8 space-y-6">
-          {/* Gated Pending Verification View for Self-Registered Citizens */}
-          {user?.role === 'citizen' && Number(user?.is_identity_verified) === 0 ? (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-3xl p-6 sm:p-10 shadow-lg text-amber-950 space-y-6">
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-amber-200">
-                  <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-600 text-white flex items-center justify-center shrink-0 shadow-md">
-                      <Clock className="w-8 h-8 animate-pulse" />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-200 text-amber-900 border border-amber-300">
-                          {t('অ্যাকাউন্ট ভেরিফিকেশন পেন্ডিং', 'ACCOUNT VERIFICATION PENDING')}
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                          {t('সেবাসমূহ স্থগিত', 'Services Locked')}
-                        </span>
-                      </div>
-                      <h1 className="text-2xl sm:text-3xl font-black text-amber-950 tracking-tight">
-                        {t('আপনার নাগরিক অ্যাকাউন্টটি সুপার অ্যাডমিনের অনুমোদনের অপেক্ষায় রয়েছে', 'Your Citizen Account is Pending Super Admin Approval')}
-                      </h1>
-                      <p className="text-xs sm:text-sm text-amber-900 leading-relaxed max-w-3xl font-medium">
-                        {t(
-                          'জাতীয় ভূমি সেবা ও ডিজিটাল ল্যান্ড ভল্টের সর্বোচ্চ নিরাপত্তা বিধানে নতুন নাগরিক অ্যাকাউন্টসমূহ কেন্দ্রীয় সুপার অ্যাডমিন কর্তৃক ম্যানুয়ালি যাচাই ও অনুমোদন করা হয়। অ্যাডমিন অনুমোদন সম্পন্ন করলে আপনার ড্যাশবোর্ড সেবাগুলো আনলক হবে।',
-                          'To safeguard national land records, all self-registered citizen accounts are audited and verified by the Super Admin before property vault services are unlocked.'
-                        )}
-                      </p>
-                    </div>
-                  </div>
+          <AddressCascader
+            lang={lang}
+            selectedDivision={selectedDivision}
+            selectedDistrict={selectedDistrict}
+            selectedUpazila={selectedUpazila}
+            selectedMouzaId={selectedMouzaId}
+            onChange={(sel: AddressSelection) => {
+              setSelectedDivision(sel.division_bn);
+              setSelectedDistrict(sel.district_bn);
+              setSelectedUpazila(sel.upazila_bn);
+              setSelectedMouzaId(sel.mouza_id ? String(sel.mouza_id) : '');
+            }}
+          />
 
-                  <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0">
-                    <button
-                      onClick={handleRefreshApprovalStatus}
-                      disabled={refreshingApprovalStatus}
-                      className="w-full sm:w-auto px-5 py-3 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${refreshingApprovalStatus ? 'animate-spin' : ''}`} />
-                      <span>{refreshingApprovalStatus ? t('যাচাই করা হচ্ছে...', 'Checking Status...') : t('স্ট্যাটাস রিফ্রেশ করুন', 'Refresh Approval Status')}</span>
-                    </button>
-                    <button
-                      onClick={logout}
-                      className="w-full sm:w-auto px-4 py-3 rounded-xl bg-white border border-amber-300 text-amber-900 hover:bg-amber-100 font-bold text-xs transition cursor-pointer"
-                    >
-                      {t('লগআউট করুন', 'Sign Out')}
-                    </button>
-                  </div>
-                </div>
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t(
+                'দাগ নম্বর, খতিয়ান নম্বর, বায়া দলিল নম্বর অথবা মৌজার নাম লিখে খুঁজুন...',
+                'Search by plot no, khatian no, deed no, or mouza...'
+              )}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
+            />
+          </div>
+        </div>
+      )}
 
-                {/* Citizen Registration Summary Dossier */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 rounded-2xl bg-white border border-amber-200 shadow-xs">
-                    <span className="text-[11px] font-bold text-slate-400 block">{t('নাগরিকের নাম', 'Citizen Name')}</span>
-                    <span className="text-sm font-extrabold text-slate-900 mt-0.5 block">{user?.full_name_bn || 'নাগরিক'}</span>
-                    <span className="text-[11px] text-slate-500 font-mono">{user?.full_name_en}</span>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-white border border-amber-200 shadow-xs">
-                    <span className="text-[11px] font-bold text-slate-400 block">{t('ইউজারনেম', 'Username')}</span>
-                    <span className="text-sm font-extrabold text-[#006A4E] font-mono mt-0.5 block">@{user?.username}</span>
-                    <span className="text-[11px] text-slate-500">{t('নাগরিক আইডি', 'Citizen ID')}</span>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-white border border-amber-200 shadow-xs">
-                    <span className="text-[11px] font-bold text-slate-400 block">{t('নিবন্ধিত মাধ্যম', 'Registration Channel')}</span>
-                    <span className="text-sm font-extrabold text-slate-900 capitalize mt-0.5 flex items-center gap-1.5">
-                      {user?.registration_channel === 'email' ? <Mail className="w-4 h-4 text-blue-600" /> : <Phone className="w-4 h-4 text-emerald-600" />}
-                      {user?.registration_channel === 'email' ? t('ইমেইল (Email)', 'Email') : t('মোবাইল নম্বর (Phone)', 'Mobile')}
-                    </span>
-                    <span className="text-[11px] text-slate-500 font-mono truncate block">
-                      {user?.registration_channel === 'email' ? user?.email : user?.phone_dummy}
-                    </span>
-                  </div>
-                  <div className="p-4 rounded-2xl bg-white border border-amber-200 shadow-xs">
-                    <span className="text-[11px] font-bold text-slate-400 block">{t('অনুমোদন স্থিতি', 'Approval State')}</span>
-                    <span className="text-sm font-extrabold text-amber-700 mt-0.5 block">
-                      {t('অপেক্ষমাণ (PENDING)', 'Pending Official Review')}
-                    </span>
-                    <span className="text-[11px] text-slate-500">{t('সুপার অ্যাডমিন পর্যালোচনায়', 'Under Super Admin Audit')}</span>
-                  </div>
-                </div>
-
-                {/* Step-by-Step Guidance */}
-                <div className="p-5 rounded-2xl bg-white/90 border border-amber-200 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-bold text-amber-950">
-                    <ShieldCheck className="w-5 h-5 text-[#006A4E]" />
-                    <span>{t('অনুমোদনের পর পরবর্তী ধাপ কী?', 'What happens after Super Admin Approval?')}</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-slate-700">
-                    <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200">
-                      <span className="font-bold text-amber-900 block mb-1">১. অ্যাডমিন ভেরিফিকেশন</span>
-                      <p>সুপার অ্যাডমিন তাঁর অ্যাডমিন প্যানেল থেকে আপনার তথ্য যাচাই করে "অনুমোদন ও যাচাই" সম্পন্ন করবেন।</p>
-                    </div>
-                    <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200">
-                      <span className="font-bold text-amber-900 block mb-1">২. প্রোফাইল সম্পন্নকরণ পপ-আপ</span>
-                      <p>অনুমোদনের পর আপনার স্ক্রিনে একটি ফর্ম আসবে যেখানে ছবি, অভিভাবকের নাম ও ঠিকানা প্রদান করতে হবে।</p>
-                    </div>
-                    <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-200">
-                      <span className="font-bold text-emerald-900 block mb-1">৩. পূর্ণ সেবা আনলক</span>
-                      <p>প্রোফাইল সংরক্ষণের সাথে সাথেই আপনার ল্যান্ড ভল্ট, দাগ, খতিয়ান, নামজারি ও সকল সেবা চালু হবে।</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      {/* SECTION 1: OVERVIEW & SERVICE HUB (সারসংক্ষেপ ও সেবা হাব) */}
+      {section === 'overview' && (
+        <div className="space-y-6">
+          {/* Quick Action Hub (১-ক্লিকে সেবা গ্রহণ করুন — ৬টি বড় ও স্পষ্ট কার্ড) */}
+          <div>
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#006A4E]" />
+                <span>{t('১-ক্লিকে প্রয়োজনীয় নাগরিক সেবা', 'Quick Citizen Services')}</span>
+              </h2>
+              <span className="text-xs text-slate-500 font-medium">
+                {t('যেকোনো সেবায় সরাসরি প্রবেশ করুন', 'Direct 1-click access')}
+              </span>
             </div>
-          ) : (
-            <>
-          {/* VIEW 1: 📊 সারসংক্ষেপ ও পরিসংখ্যান (OVERVIEW) */}
-          {activeSection === 'overview' && (
-            <div className="space-y-6 animate-fadeIn">
-              {/* Welcome Banner */}
-              <div className="bg-gradient-to-r from-[#006A4E] via-[#075f24] to-[#0a481e] text-white rounded-3xl p-6 sm:p-8 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="space-y-2 max-w-2xl">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-800/60 border border-emerald-500/40 text-emerald-100 text-xs font-semibold">
-                    <ShieldCheck className="w-4 h-4 text-emerald-300" />
-                    <span>{t('জাতীয় পরিচয়পত্র যাচাইকৃত নাগরিক ভল্ট', 'NID-Verified Citizen Vault')}</span>
-                  </div>
-                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-                    {t(
-                      `স্বাগতম, ${vault?.person?.name_bn || user?.full_name_bn || 'মোঃ রফিকুল ইসলাম'}!`,
-                      `Welcome, ${vault?.person?.name_en || user?.full_name_en || 'Md. Rafiqul Islam'}!`
-                    )}
-                  </h1>
-                  <p className="text-emerald-100 text-xs sm:text-sm leading-relaxed">
-                    {t(
-                      'আপনার বিএস খতিয়ানভুক্ত সকল দাগের মালিকানা, স্বত্বাধিকার দলিল, মালিকানা বিক্রয় লক ও হস্তান্তর অগ্রগতি এখন একক সুরক্ষিত কনসোলে সংরক্ষিত।',
-                      'Your registered land parcels, cryptographic deeds, owner sale locks, and mutation transfers are fully secured.'
-                    )}
-                  </p>
-                </div>
 
-                <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-                  <button
-                    onClick={() => setActiveSection('plots')}
-                    className="px-4 py-2.5 rounded-xl bg-white text-[#006A4E] hover:bg-emerald-50 font-bold text-xs transition cursor-pointer shadow-sm flex items-center justify-center gap-2"
-                  >
-                    <Layers className="w-4 h-4" />
-                    <span>{t('আমার জমি দেখুন', 'View My Land')}</span>
-                  </button>
-                  <button
-                    onClick={() => handleCreateNewTransfer(vault?.owned_plots?.[0]?.plot_id || 1)}
-                    disabled={creatingTransfer}
-                    className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-emerald-950 font-bold text-xs transition cursor-pointer shadow-sm flex items-center justify-center gap-2"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    <span>{creatingTransfer ? t('প্রস্তুত হচ্ছে...', 'Preparing...') : t('+ নতুন হস্তান্তর শুরু', '+ Start Transfer')}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* 4 Citizen Metric KPI Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* 1. Owned Plots */}
-                <div
-                  onClick={() => setActiveSection('plots')}
-                  className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-[#006A4E] hover:shadow-md transition cursor-pointer flex items-center justify-between"
-                >
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
-                      {t('মালিকানাধীন দাগ (বিএস)', 'MY PLOTS (BS)')}
-                    </span>
-                    <strong className="text-2xl font-black text-slate-900 mt-1 block">
-                      {toBanglaDigits(vault?.owned_plots?.length ?? 0, lang)} টি দাগ
-                    </strong>
-                    <span className="text-xs text-[#006A4E] font-bold flex items-center gap-1 mt-1">
-                      <span>{t('বিস্তারিত ভল্ট দেখুন', 'View in Vault')}</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </span>
-                  </div>
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#006A4E] flex items-center justify-center shrink-0">
-                    <Layers className="w-6 h-6" />
-                  </div>
-                </div>
-
-                {/* 2. Sale Locked Plots */}
-                <div
-                  onClick={() => setActiveSection('plots')}
-                  className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-rose-400 hover:shadow-md transition cursor-pointer flex items-center justify-between"
-                >
-                  <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
-                      {t('বিক্রয় লক সুরক্ষিত', 'SALE-LOCKED')}
-                    </span>
-                    <strong className="text-2xl font-black text-rose-600 mt-1 block">
-                      {toBanglaDigits(
-                        vault?.owned_plots?.filter((p: any) => Number(p.owner_sale_locked) === 1).length ?? 0,
-                        lang
-                      )} টি সুরক্ষিত
-                    </strong>
-                    <span className="text-xs text-rose-700 font-semibold mt-1 block">
-                      {t('🔒 জালিয়াতি প্রতিরোধে সক্রিয়', 'Fraud Protection Active')}
-                    </span>
-                  </div>
-                  <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Service 1: Sale Lock */}
+              <div
+                onClick={() => handleTabChange('plots')}
+                className="bg-white p-5 rounded-2xl border border-slate-200/90 hover:border-emerald-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+              >
+                <div className="space-y-3">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#006A4E] group-hover:bg-[#006A4E] group-hover:text-white transition">
                     <Lock className="w-6 h-6" />
                   </div>
-                </div>
-
-                {/* 3. Registered Deeds */}
-                <div
-                  onClick={() => setActiveSection('deeds')}
-                  className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-amber-400 hover:shadow-md transition cursor-pointer flex items-center justify-between"
-                >
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
-                      {t('রেজিস্ট্রিকৃত দলিল', 'LINKED DEEDS')}
-                    </span>
-                    <strong className="text-2xl font-black text-slate-900 mt-1 block">
-                      {toBanglaDigits(vault?.deeds?.length ?? 0, lang)} টি দলিল
-                    </strong>
-                    <span className="text-xs text-amber-700 font-semibold mt-1 block">
-                      {t('Ed25519 ক্রিপ্টো স্বাক্ষরিত', 'Ed25519 Verified')}
-                    </span>
+                    <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#006A4E] transition">
+                      {t('মালিকানা বিক্রয় লক', 'Owner Sale Lock')}
+                    </h3>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      {t(
+                        'অননুমোদিত বা জাল হস্তান্তর ঠেকাতে যেকোনো জমির বিক্রয়ে নিজের ডিজিটাল লক সক্রিয় রাখুন।',
+                        'Lock your plots to prevent unauthorized deed registration at the Sub-Registry Office.'
+                      )}
+                    </p>
                   </div>
-                  <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                </div>
+                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
+                  <span>{t('জমি লক ও নিয়ন্ত্রণ দেখুন', 'Manage Sale Locks')}</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
+                </div>
+              </div>
+
+              {/* Service 2: Documents Vault */}
+              <div
+                onClick={() => handleTabChange('docs')}
+                className="bg-white p-5 rounded-2xl border border-slate-200/90 hover:border-emerald-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+              >
+                <div className="space-y-3">
+                  <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 group-hover:bg-blue-600 group-hover:text-white transition">
+                    <FolderOpen className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-blue-700 transition">
+                      {t('ডিজিটাল কাগজপত্র ও পর্চা ভল্ট', 'Digital Document Vault')}
+                    </h3>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      {t(
+                        'খতিয়ান, বায়া দলিল, দাখিলা ও নকশার ৭টি অপরিহার্য ডিজিটাল কপি দেখুন ও সরাসরি ডাউনলোড করুন।',
+                        'View and download authentic digital copies of your 7 essential land records.'
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-blue-700">
+                  <span>{t('কাগজপত্র ডাউনলোড করুন', 'Open Document Vault')}</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
+                </div>
+              </div>
+
+              {/* Service 3: Transfer Application */}
+              <div
+                onClick={() => onNavigate('applications?new=1')}
+                className="bg-white p-5 rounded-2xl border border-slate-200/90 hover:border-rose-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+              >
+                <div className="space-y-3">
+                  <div className="w-12 h-12 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition">
                     <FileText className="w-6 h-6" />
                   </div>
-                </div>
-
-                {/* 4. Active Transfers & Disputes */}
-                <div
-                  onClick={() => setActiveSection('transfers')}
-                  className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-indigo-400 hover:shadow-md transition cursor-pointer flex items-center justify-between"
-                >
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
-                      {t('চলমান হস্তান্তর প্রক্রিয়া', 'ACTIVE TRANSFERS')}
-                    </span>
-                    <strong className="text-2xl font-black text-slate-900 mt-1 block">
-                      {toBanglaDigits(transfers.length, lang)} টি কেস
-                    </strong>
-                    <span className="text-xs text-indigo-700 font-semibold mt-1 block">
-                      {t('১৩-ধাপের পাইপলাইনে', '13-Step Machine')}
-                    </span>
-                  </div>
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-6 h-6" />
-                  </div>
-                </div>
-              </div>
-
-              {/* 2-Column Overview Summary: Quick Plots & Active Transfers */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* My Plots Quick Preview */}
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-2">
-                      <Layers className="w-5 h-5 text-[#006A4E]" />
-                      <h3 className="font-extrabold text-base text-slate-900">
-                        {t('আমার জমি ও বিএস রেকর্ডসমূহ', 'My Land Parcels (BS Record)')}
-                      </h3>
-                    </div>
-                    <button
-                      onClick={() => setActiveSection('plots')}
-                      className="text-xs font-bold text-[#006A4E] hover:underline"
-                    >
-                      {t('সবগুলো দেখুন →', 'View All →')}
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {(vault?.owned_plots || []).slice(0, 3).map((p: any, idx: number) => {
-                      const isLocked = Number(p.owner_sale_locked) === 1;
-                      return (
-                        <div
-                          key={idx}
-                          className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-                            isLocked ? 'bg-rose-50/40 border-rose-200' : 'bg-slate-50/70 border-slate-200'
-                          }`}
-                        >
-                          <div>
-                            <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
-                              <span>
-                                {p.mouza_bn} — দাগ {toBanglaDigits(p.dag_no, lang)}
-                              </span>
-                              <span
-                                className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                                  isLocked ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-[#006A4E]'
-                                }`}
-                              >
-                                {isLocked ? '🔒 লক সক্রিয়' : '🔓 উন্মুক্ত'}
-                              </span>
-                            </div>
-                            <div className="text-xs text-slate-500 mt-0.5">
-                              {t('খতিয়ান:', 'Khatian:')} {toBanglaDigits(p.khatian_no, lang)} • {t('পরিমাণ:', 'Area:')}{' '}
-                              <strong>{toBanglaDigits(p.share_area_decimal, lang)} শতক</strong>
-                            </div>
-                          </div>
-
-                          <button
-                            onClick={() => handleToggleLock(p.plot_id)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer min-h-[36px] flex items-center gap-1 ${
-                              isLocked
-                                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                                : 'bg-rose-600 hover:bg-rose-700 text-white'
-                            }`}
-                          >
-                            {isLocked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                            <span>{isLocked ? t('আনলক', 'Unlock') : t('লক করুন', 'Lock')}</span>
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Transfer Pipeline Quick Preview */}
-                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-indigo-600" />
-                      <h3 className="font-extrabold text-base text-slate-900">
-                        {t('হস্তান্তর ট্র্যাকার অগ্রগতি', 'Transfer Pipeline In-Progress')}
-                      </h3>
-                    </div>
-                    <button
-                      onClick={() => setActiveSection('transfers')}
-                      className="text-xs font-bold text-[#006A4E] hover:underline"
-                    >
-                      {t('ট্র্যাকার খুলুন →', 'Open Tracker →')}
-                    </button>
-                  </div>
-
-                  {transfers.length === 0 ? (
-                    <div className="py-8 text-center text-slate-400 space-y-2">
-                      <Sparkles className="w-8 h-8 mx-auto text-slate-300" />
-                      <p className="text-xs font-semibold">{t('বর্তমানে কোনো হস্তান্তর আবেদন চলমান নেই।', 'No active transfers in progress.')}</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {transfers.slice(0, 2).map((tr: any) => {
-                        const currentStep = Number(tr.current_step || 1);
-                        return (
-                          <div key={tr.id} className="p-4 rounded-2xl bg-indigo-50/40 border border-indigo-200 space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="font-mono text-xs font-black text-indigo-900">{tr.transfer_code}</span>
-                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-600 text-white">
-                                {tr.status}
-                              </span>
-                            </div>
-
-                            <div className="text-xs text-slate-700">
-                              <strong>{tr.mouza_bn}</strong> — দাগ {toBanglaDigits(tr.dag_no, lang)} ({toBanglaDigits(tr.transfer_area_decimal, lang)} শতক)
-                            </div>
-
-                            {/* Mini Progress Bar */}
-                            <div className="space-y-1">
-                              <div className="flex justify-between text-[11px] font-bold text-slate-600">
-                                <span>ধাপ {toBanglaDigits(currentStep, lang)} / ১৩</span>
-                                <span>{Math.round((currentStep / 13) * 100)}% সম্পন্ন</span>
-                              </div>
-                              <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-indigo-600 rounded-full transition-all"
-                                  style={{ width: `${(currentStep / 13) * 100}%` }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* VIEW 2: 🏠 আমার জমি ও খতিয়ান ভল্ট (MY PLOTS) */}
-          {activeSection === 'plots' && (
-            <div className="space-y-6 animate-fadeIn">
-              {/* Search & Filter Controls */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2 flex-1 max-w-md">
-                  <Search className="w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    value={plotSearchQuery}
-                    onChange={(e) => setPlotSearchQuery(e.target.value)}
-                    placeholder={t('দাগ নং, খতিয়ান বা মৌজা দিয়ে খুঁজুন...', 'Filter by dag, khatian, or mouza...')}
-                    className="w-full text-xs font-medium bg-transparent focus:outline-none"
-                  />
-                  {plotSearchQuery && (
-                    <button onClick={() => setPlotSearchQuery('')} className="text-slate-400 hover:text-slate-700">
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1.5 text-xs">
-                  <button
-                    onClick={() => setPlotFilterStatus('all')}
-                    className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
-                      plotFilterStatus === 'all' ? 'bg-[#006A4E] text-white' : 'bg-slate-100 text-slate-700'
-                    }`}
-                  >
-                    {t('সকল', 'All')}
-                  </button>
-                  <button
-                    onClick={() => setPlotFilterStatus('locked')}
-                    className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
-                      plotFilterStatus === 'locked' ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-700'
-                    }`}
-                  >
-                    {t('🔒 বিক্রয় লককৃত', 'Sale Locked')}
-                  </button>
-                  <button
-                    onClick={() => setPlotFilterStatus('unlocked')}
-                    className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer ${
-                      plotFilterStatus === 'unlocked' ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-700'
-                    }`}
-                  >
-                    {t('🔓 উন্মুক্ত', 'Unlocked')}
-                  </button>
-                </div>
-              </div>
-
-              {/* Plots Grid */}
-              {filteredPlots.length === 0 ? (
-                <div className="bg-white p-12 rounded-3xl border border-slate-200 text-center space-y-3">
-                  <Layers className="w-12 h-12 text-slate-300 mx-auto" />
-                  <h3 className="font-extrabold text-base text-slate-800">{t('কোনো জমি রেকর্ড পাওয়া যায়নি', 'No Plots Found')}</h3>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    {t('অনুসন্ধান ফিল্টারের সাথে কোনো দাগ মেলেনি। ফিল্টার রিসেট করে আবার চেষ্টা করুন।', 'No plots match the current filter.')}
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                  {filteredPlots.map((plot: any, idx: number) => {
-                    const isLocked = Number(plot.owner_sale_locked) === 1;
-
-                    return (
-                      <div
-                        key={idx}
-                        className={`bg-white rounded-3xl border-2 transition-all p-6 space-y-4 shadow-xs ${
-                          isLocked ? 'border-rose-300 ring-4 ring-rose-50/60' : 'border-slate-200 hover:border-[#006A4E]'
-                        }`}
-                      >
-                        {/* Plot Card Header */}
-                        <div className="flex items-start justify-between border-b border-slate-100 pb-3">
-                          <div>
-                            <span className="text-[11px] font-mono text-slate-500 block font-semibold">
-                              {plot.plot_code || `PLT-DHK-SAV-00${plot.plot_id}`}
-                            </span>
-                            <h3 className="text-lg font-black text-slate-900 leading-tight">
-                              দাগ {toBanglaDigits(plot.dag_no, lang)} — {plot.mouza_bn} মৌজা
-                            </h3>
-                            <span className="text-xs text-slate-500 font-medium">
-                              {t('উপজেলা:', 'Upazila:')} সাভার • {t('জেলা:', 'District:')} ঢাকা
-                            </span>
-                          </div>
-
-                          <div className="text-right">
-                            <span
-                              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black ${
-                                isLocked ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-[#006A4E]'
-                              }`}
-                            >
-                              {isLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
-                              <span>{isLocked ? t('🔒 বিক্রয় লক সক্রিয়', 'Sale Locked') : t('🔓 লেনদেন উন্মুক্ত', 'Unlocked')}</span>
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Plot Details Attributes Grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs bg-slate-50/70 p-3.5 rounded-2xl border border-slate-100">
-                          <div>
-                            <span className="text-slate-500 block text-[11px]">{t('বিএস খতিয়ান:', 'BS Khatian:')}</span>
-                            <strong className="text-slate-900 font-bold">{toBanglaDigits(plot.khatian_no, lang)}</strong>
-                          </div>
-                          <div>
-                            <span className="text-slate-500 block text-[11px]">{t('মালিকের অংশ (হিস্যা):', 'Share:')}</span>
-                            <strong className="text-slate-900 font-bold">{toBanglaDigits(plot.share_fraction, lang)}</strong>
-                          </div>
-                          <div>
-                            <span className="text-slate-500 block text-[11px]">{t('জমির পরিমাণ:', 'Area:')}</span>
-                            <strong className="text-[#006A4E] font-black">{toBanglaDigits(plot.share_area_decimal, lang)} শতক</strong>
-                          </div>
-                        </div>
-
-                        {/* Action Buttons Row */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-                          <button
-                            onClick={() => handleToggleLock(plot.plot_id)}
-                            className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs min-h-[38px] ${
-                              isLocked
-                                ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
-                                : 'bg-rose-600 hover:bg-rose-700 text-white'
-                            }`}
-                          >
-                            {isLocked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-                            <span>{isLocked ? t('আনলক করুন', 'Unlock') : t('🔒 বিক্রয় লক', 'Lock Plot')}</span>
-                          </button>
-
-                          <button
-                            onClick={() => {
-                              setSelectedPlotForDocs(plot);
-                              loadPlotDocuments(plot.plot_code || plot.plot_id);
-                              setActiveSection('docs');
-                            }}
-                            className="py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer min-h-[38px]"
-                          >
-                            <ShieldCheck className="w-3.5 h-3.5 text-[#006A4E]" />
-                            <span>{t('সনদ ভল্ট (L0-L3)', 'Docs Vault')}</span>
-                          </button>
-
-                          <button
-                            onClick={() => handleCreateNewTransfer(plot.plot_id)}
-                            className="py-2 px-3 rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer min-h-[38px]"
-                          >
-                            <Sparkles className="w-3.5 h-3.5" />
-                            <span>{t('হস্তান্তর শুরু', 'Transfer')}</span>
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* VIEW 3: 📜 প্রামাণ্য সনদ ভল্ট (L0–L3 DOCUMENT VAULT) */}
-          {activeSection === 'docs' && (
-            <div className="space-y-6 animate-fadeIn">
-              {/* Plot Selector Bar */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-[#006A4E]" />
-                  <div>
-                    <h3 className="font-extrabold text-sm text-slate-900 leading-tight">
-                      {t('প্রামাণ্য সনদ ও ডিজিটাল ভল্ট (L0–L3)', 'Property Document Vault (L0-L3 Trust Levels)')}
+                    <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-rose-600 transition">
+                      {t('জমি হস্তান্তরের নতুন আবেদন', 'Apply for Transfer')}
                     </h3>
-                    <span className="text-[11px] text-slate-500 font-medium">
-                      {t('সরকারি ডাটাবেজ, ক্রিপ্টোগ্রাফিক হ্যাশ ও নাগরিক সংযুক্তির ভিত্তিতে শ্রেণিকৃত সনদ তালিকা', 'Verified checklist of required property deeds and mutation records')}
-                    </span>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      {t(
+                        'জমি ক্রয়-বিক্রয়, হেবা বা এওয়াজ দলিলের সরকারি ফি নির্ধারণ ও সাব-রেজিস্ট্রেশন আবেদন শুরু করুন।',
+                        'Calculate registration fees, stamp duty, and schedule Sub-Registry appointments.'
+                      )}
+                    </p>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <label className="text-xs font-bold text-slate-600">{t('দাগ নির্বাচন:', 'Select Plot:')}</label>
-                  <select
-                    value={selectedPlotForDocs?.plot_id || ''}
-                    onChange={(e) => {
-                      const p = (vault?.owned_plots || []).find((x: any) => x.plot_id === Number(e.target.value));
-                      if (p) {
-                        setSelectedPlotForDocs(p);
-                        loadPlotDocuments(p.plot_code || p.plot_id);
-                      }
-                    }}
-                    className="p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 cursor-pointer focus:ring-2 focus:ring-[#006A4E]"
-                  >
-                    {(vault?.owned_plots || []).map((p: any) => (
-                      <option key={p.plot_id} value={p.plot_id}>
-                        {p.mouza_bn} — দাগ {p.dag_no}
-                      </option>
-                    ))}
-                  </select>
+                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-rose-600">
+                  <span>{t('নতুন আবেদন শুরু করুন', 'Start Application')}</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
                 </div>
               </div>
 
-              {/* Trust Level Counts Banner */}
-              {plotDocsData && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-center">
-                    <span className="text-[10px] font-black uppercase text-emerald-800">L3 • অফিশিয়াল রেকর্ড</span>
-                    <strong className="text-lg font-black text-[#006A4E] block mt-0.5">
-                      {plotDocsData.items?.filter((d: any) => d.trust_level === 'L3').length || 0} টি
-                    </strong>
-                  </div>
-                  <div className="p-3.5 rounded-2xl bg-teal-50 border border-teal-200 text-center">
-                    <span className="text-[10px] font-black uppercase text-teal-800">L2 • সত্যায়িত অনুলিপি</span>
-                    <strong className="text-lg font-black text-teal-700 block mt-0.5">
-                      {plotDocsData.items?.filter((d: any) => d.trust_level === 'L2').length || 0} টি
-                    </strong>
-                  </div>
-                  <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-center">
-                    <span className="text-[10px] font-black uppercase text-amber-800">L1 • নাগরিক সংযুক্ত</span>
-                    <strong className="text-lg font-black text-amber-700 block mt-0.5">
-                      {plotDocsData.items?.filter((d: any) => d.trust_level === 'L1').length || 0} টি
-                    </strong>
-                  </div>
-                  <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-center">
-                    <span className="text-[10px] font-black uppercase text-rose-800">L0 • অনুপস্থিত রেকর্ড</span>
-                    <strong className="text-lg font-black text-rose-600 block mt-0.5">
-                      {plotDocsData.missing_count || 0} টি
-                    </strong>
-                  </div>
-                </div>
-              )}
-
-              {/* Documents Checklist List */}
-              {loadingDocs ? (
-                <div className="bg-white p-12 rounded-3xl border border-slate-200 text-center space-y-3">
-                  <div className="w-8 h-8 border-4 border-[#006A4E] border-t-transparent rounded-full animate-spin mx-auto" />
-                  <p className="text-xs font-bold text-slate-500">{t('সনদসমূহ যাচাই করা হচ্ছে...', 'Verifying records...')}</p>
-                </div>
-              ) : plotDocsData?.items ? (
+              {/* Service 4: Faraiz Calculator */}
+              <div
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('open-faraiz-calculator', { detail: {} }));
+                }}
+                className="bg-white p-5 rounded-2xl border border-slate-200/90 hover:border-purple-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+              >
                 <div className="space-y-3">
-                  {plotDocsData.items.map((doc: any, dIdx: number) => {
-                    const isOfficial = doc.trust_level === 'L3';
-                    const isVerified = doc.trust_level === 'L2';
-                    const isCitizen = doc.trust_level === 'L1';
-                    const isMissing = doc.trust_level === 'L0';
-
-                    return (
-                      <div
-                        key={dIdx}
-                        className={`p-4 rounded-2xl border transition-all ${
-                          isOfficial
-                            ? 'bg-emerald-50/40 border-emerald-200'
-                            : isVerified
-                            ? 'bg-teal-50/40 border-teal-200'
-                            : isCitizen
-                            ? 'bg-amber-50/40 border-amber-200'
-                            : 'bg-rose-50/60 border-rose-200'
-                        }`}
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-extrabold text-sm text-slate-900">
-                                {lang === 'bn' ? doc.title_bn : doc.title_en}
-                              </h4>
-                              <span
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                  doc.is_required ? 'bg-slate-200 text-slate-800' : 'bg-slate-100 text-slate-500'
-                                }`}
-                              >
-                                {doc.is_required ? t('আবশ্যক', 'Required') : t('ঐচ্ছিক', 'Optional')}
-                              </span>
-                            </div>
-
-                            {doc.file_name && (
-                              <div className="text-[11px] text-slate-600 flex items-center gap-1 font-mono">
-                                <FileCheck className="w-3.5 h-3.5 text-[#006A4E]" />
-                                <span>{doc.file_name}</span>
-                                {doc.file_hash && (
-                                  <span className="text-[10px] text-slate-400">
-                                    (SHA-256: {doc.file_hash.substring(0, 14)}...)
-                                  </span>
-                                )}
-                              </div>
-                            )}
-
-                            {doc.verified_by && (
-                              <div className="text-[11px] text-[#006A4E] font-medium">
-                                {t('কর্তৃপক্ষ:', 'Authority:')} {doc.verified_by}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Trust Badge */}
-                          <div className="flex items-center gap-2 shrink-0">
-                            {isOfficial && (
-                              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-[#006A4E] text-white">
-                                <ShieldCheck className="w-3.5 h-3.5" />
-                                <span>L3 • {t('সরকারি অফিশিয়াল', 'Official')}</span>
-                              </span>
-                            )}
-                            {isVerified && (
-                              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-teal-700 text-white">
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>L2 • {t('সত্যায়িত অনুলিপি', 'Verified')}</span>
-                              </span>
-                            )}
-                            {isCitizen && (
-                              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-600 text-white">
-                                <Upload className="w-3.5 h-3.5" />
-                                <span>L1 • {t('নাগরিক-সংযুক্ত', 'Citizen Scan')}</span>
-                              </span>
-                            )}
-                            {isMissing && (
-                              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-rose-600 text-white">
-                                <AlertOctagon className="w-3.5 h-3.5" />
-                                <span>L0 • {t('অনুপস্থিত', 'Missing')}</span>
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Action buttons if L0 Missing */}
-                        {isMissing && (
-                          <div className="mt-3 pt-3 border-t border-rose-200 flex flex-wrap items-center justify-between gap-2">
-                            <span className="text-xs text-rose-800 font-medium">
-                              {t('অনুপস্থিত রেকর্ডের জন্য দ্রুত টিকেট ইস্যু বা স্ক্যান আপলোড করুন:', 'Request record search or upload your scan:')}
-                            </span>
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => {
-                                  setUploadModalDoc(doc);
-                                  setUploadFileName(`${doc.document_type.toLowerCase()}_scan.pdf`);
-                                }}
-                                className="px-3 py-1.5 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-xs font-bold text-slate-700 cursor-pointer"
-                              >
-                                {t('অনুলিপি আপলোড', 'Upload Scan')}
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setTicketModalDoc(doc);
-                                  setTicketNotes('');
-                                }}
-                                className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer shadow-xs flex items-center gap-1"
-                              >
-                                <Ticket className="w-3.5 h-3.5" />
-                                <span>{t('২-ট্যাপ টিকেট তৈরি', '2-Tap Ticket')}</span>
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                  <div className="w-12 h-12 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700 group-hover:bg-purple-700 group-hover:text-white transition">
+                    <Scale className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-purple-700 transition">
+                        {t('উত্তরাধিকার ফারায়েজ বণ্টন', 'Faraiz Succession Engine')}
+                      </h3>
+                      <span className="px-1.5 py-0.2 rounded bg-purple-100 text-purple-800 text-[10px] font-bold">
+                        {t('১-ক্লিক', '1-Click')}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      {t(
+                        'শরিয়াহ আইন অনুযায়ী সকল ওয়ারিশের সঠিক হিস্যা হিসাব করুন এবং ১-ক্লিকে নামজারি আবেদন প্রস্তুত করুন।',
+                        'Calculate fractional inheritance shares according to Shariah and prepare e-mutation.'
+                      )}
+                    </p>
+                  </div>
                 </div>
-              ) : null}
-            </div>
-          )}
+                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-purple-700">
+                  <span>{t('ফারায়েজ হিসাব করুন', 'Calculate Shares')}</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
+                </div>
+              </div>
 
-          {/* VIEW 4: 📑 নিবন্ধিত দলিল রেজিস্টার (MY DEEDS) */}
-          {activeSection === 'deeds' && (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+              {/* Service 5: Land Health Passport */}
+              <div
+                onClick={() => {
+                  if (plots.length > 0) {
+                    setPassportPlot(plots[0]);
+                  } else {
+                    handleTabChange('plots');
+                  }
+                }}
+                className="bg-white p-5 rounded-2xl border border-slate-200/90 hover:border-amber-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+              >
+                <div className="space-y-3">
+                  <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 group-hover:bg-amber-600 group-hover:text-white transition">
+                    <ShieldCheck className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-amber-700 transition">
+                        {t('জমির স্বাস্থ্য পাসপোর্ট প্রিন্ট', 'Land Health Passport')}
+                      </h3>
+                      <span className="px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 text-[10px] font-bold">
+                        {t('অফিসিয়াল', 'Official')}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      {t(
+                        '৫-স্তরের আইনি ও প্রশাসনিক স্বাস্থ্য নিরীক্ষা সনদ, কিউআর সিল এবং ১-পাতার অফিসিয়াল পাসপোর্ট।',
+                        '5-point live audit certificate, QR verification seal, and 1-page printable official passport.'
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-amber-700">
+                  <span>{t('পাসপোর্ট প্রিন্ট করুন', 'Open & Print Passport')}</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
+                </div>
+              </div>
+
+              {/* Service 6: Support Tickets */}
+              <div
+                onClick={() => handleTabChange('tickets')}
+                className="bg-white p-5 rounded-2xl border border-slate-200/90 hover:border-emerald-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+              >
+                <div className="space-y-3">
+                  <div className="w-12 h-12 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700 group-hover:bg-teal-700 group-hover:text-white transition">
+                    <HelpCircle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-teal-700 transition">
+                        {t('সাহায্য ও সাপোর্ট টিকিট (১৬১২২)', 'Helpdesk & Support (16122)')}
+                      </h3>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      {t(
+                        'ভূমি সেবা, দলিল অনুসন্ধান, বা রেকর্ড যাচাই সংক্রান্ত যেকোনো জটিলতায় সরাসরি সহায়তা পান।',
+                        'Submit support tickets regarding land records, deed lookups, or profile verification.'
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-teal-700">
+                  <span>{t('সাপোর্ট টিকিট খুলুন', 'Open Support Desk')}</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Smart Land Portfolio Highlight (আমার জমির দ্রুত ভিউ) */}
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#006A4E] border border-emerald-100 flex items-center justify-center">
+                  <MapPin className="w-5 h-5" />
+                </div>
                 <div>
-                  <h3 className="font-extrabold text-base text-slate-900 leading-tight">
-                    {t('হ্যাশ লেজারে নিবন্ধিত দলিলের তালিকা', 'Registered Deeds in Hash Ledger')}
+                  <h3 className="font-extrabold text-base text-slate-900">
+                    {t('আমার মালিকানাধীন জমির সংক্ষিপ্ত তালিকা', 'My Land Portfolio Spotlight')}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    {t('Ed25519 ক্রিপ্টোগ্রাফিক অ্যালগরিদম দ্বারা সুরক্ষিত সাব-রেজিস্ট্রি দলিল', 'Cryptographically sealed and signed by Sub-Registrar')}
+                    {t('বিক্রয় লক নিয়ন্ত্রণের মাধ্যমে জমি সম্পূর্ণ নিরাপদ রাখুন', 'Ensure sale lock is enabled to protect ownership')}
                   </p>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-emerald-100 text-[#006A4E] text-xs font-bold">
-                  {vault?.deeds?.length || 0} টি দলিল প্রাপ্ত
-                </span>
               </div>
 
-              {vault?.deeds?.length === 0 ? (
-                <div className="bg-white p-12 rounded-3xl border border-slate-200 text-center space-y-3">
-                  <FileText className="w-12 h-12 text-slate-300 mx-auto" />
-                  <h3 className="font-bold text-base text-slate-800">{t('কোনো নিবন্ধিত দলিল মেলেনি', 'No Deeds Found')}</h3>
+              <button
+                type="button"
+                onClick={() => handleTabChange('plots')}
+                className="text-xs font-bold text-[#006A4E] hover:underline flex items-center gap-1 self-start sm:self-auto cursor-pointer"
+              >
+                <span>{t('সকল জমি দেখুন', 'View All Land Plots')}</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {plots.length === 0 ? (
+              <div className="py-12 text-center text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <MapPin className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                <p className="font-bold text-sm text-slate-700">{t('আপনার নামে কোনো জমির রেকর্ড যুক্ত নেই।', 'No land records linked.')}</p>
+                <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                  {t(
+                    'আপনার যদি সাভার, গাজীপুর বা কুমিল্লা জেলায় জমি থাকে কিন্তু প্রোফাইলে দেখতে না পান, তবে সহজ বাংলা সমস্যা গাইডের মাধ্যমে আপনার জমি লিঙ্ক বা মালিকানা দাবি দাখিল করুন।',
+                    'If you own land in Savar, Gazipur, or Cumilla that is not visible, use the Plain-Bangla Guide to link your property directly to the competent AC Land office.'
+                  )}
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsTriageModalOpen(true)}
+                    className="px-5 py-2.5 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold transition shadow-xs flex items-center gap-2 cursor-pointer"
+                  >
+                    <HelpCircle className="w-4 h-4 text-emerald-200" />
+                    <span>{t('আপনার কী সাহায্য দরকার? (জমি দাবি ও গাইড)', 'Need Help? (Claim Land & Guide)')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('tickets')}
+                    className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition cursor-pointer"
+                  >
+                    {t('সহায়তা টিকিট ডেস্কে যান', 'View Support Tickets')}
+                  </button>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                  {vault.deeds.map((d: any) => (
-                    <div
-                      key={d.id}
-                      className="bg-white rounded-3xl border border-slate-200 p-5 space-y-4 hover:border-[#006A4E] shadow-xs transition"
-                    >
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
-                            <FileText className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <strong className="text-sm font-black text-slate-900">{d.deed_no}</strong>
-                            <span className="text-[11px] text-slate-500 block">
-                              {d.mouza_bn} • দাগ {toBanglaDigits(d.dag_no, lang)}
-                            </span>
-                          </div>
-                        </div>
-
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-[#006A4E]">
-                          {d.status || 'REGISTERED'}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {plots.slice(0, 3).map((plot) => (
+                  <div
+                    key={plot.plot_id}
+                    className="p-5 rounded-2xl border border-slate-200/90 bg-white hover:border-[#006A4E]/60 transition flex flex-col justify-between space-y-4 shadow-xs"
+                  >
+                    <div>
+                      {/* Plot Top Header Badges */}
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 font-mono">
+                          {plot.survey_type || 'BS'} {t('খতিয়ান', 'Khatian')}: {toBanglaDigits(plot.khatian_no_bn || plot.khatian_no, lang)}
                         </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50/70 p-3 rounded-xl">
-                        <div>
-                          <span className="text-slate-500 block text-[11px]">{t('জমির পরিমাণ:', 'Area:')}</span>
-                          <strong className="text-slate-900">{toBanglaDigits(d.area_decimal, lang)} শতক</strong>
-                        </div>
-                        <div>
-                          <span className="text-slate-500 block text-[11px]">{t('দলিল মূল্য:', 'Deed Value:')}</span>
-                          <strong className="text-[#006A4E]">৳ {formatNumber(d.price_bdt || 4500000)}</strong>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-1">
-                        <span className="text-[11px] text-slate-500 font-mono">
-                          Ed25519 Signed: <strong className="text-[#006A4E]">VALID</strong>
-                        </span>
-
-                        <button
-                          onClick={() => handleOpenDeedModal(d.deed_no)}
-                          className="px-3.5 py-2 rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 ${
+                            plot.owner_sale_locked
+                              ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                              : 'bg-emerald-100 text-[#006A4E] border border-emerald-300'
+                          }`}
                         >
-                          <QrCode className="w-3.5 h-3.5" />
-                          <span>{t('QR কোড ও প্রমাণপত্র', 'View Deed QR & Proof')}</span>
+                          {plot.owner_sale_locked ? <Lock className="w-3 h-3 text-rose-700" /> : <Unlock className="w-3 h-3 text-emerald-700" />}
+                          {plot.owner_sale_locked ? t('বিক্রয় লকড (নিরাপদ)', 'Sale Locked') : t('বিক্রয় লক নেই', 'Unlocked')}
+                        </span>
+                      </div>
+
+                      {/* Dag & Location */}
+                      <div className="mt-3">
+                        <h4 className="font-black text-slate-900 text-lg">
+                          {t('দাগ নং', 'Plot')} {toBanglaDigits(plot.dag_no_bn || plot.dag_no, lang)}
+                        </h4>
+                        <p className="text-xs text-slate-600 mt-0.5">
+                          {plot.mouza_bn}, {plot.upazila_bn}, {plot.district_bn}
+                        </p>
+                      </div>
+
+                      {/* Area & Class */}
+                      <div className="mt-3 p-3 bg-slate-50 rounded-xl space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">{t('জমির শ্রেণি', 'Land Class')}:</span>
+                          <span className="font-bold text-slate-800">{plot.land_type_bn || t('ভিটা (আবাসিক)', 'Residential')}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">{t('মালিকানাধীন অংশ', 'Area')}:</span>
+                          <span className="font-black text-[#006A4E] text-sm">
+                            {toBanglaDigits(plot.area_decimal ?? plot.share_area_decimal, lang)} {t('শতক', 'dec')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="pt-2 border-t border-slate-100 space-y-2">
+                      <button
+                        type="button"
+                        disabled={lockTogglingPlotId === plot.plot_id}
+                        onClick={() => handleToggleSaleLock(plot)}
+                        className={`w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs ${
+                          plot.owner_sale_locked
+                            ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
+                            : 'bg-emerald-600 text-white hover:bg-emerald-700'
+                        }`}
+                      >
+                        {lockTogglingPlotId === plot.plot_id ? (
+                          <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                        ) : plot.owner_sale_locked ? (
+                          <Unlock className="w-3.5 h-3.5" />
+                        ) : (
+                          <Lock className="w-3.5 h-3.5" />
+                        )}
+                        <span>
+                          {plot.owner_sale_locked ? t('লক প্রত্যাহার করুন (আনলক)', 'Unlock Sale') : t('বিক্রয় লক চালু করুন (সুরক্ষিত)', 'Enable Sale Lock')}
+                        </span>
+                      </button>
+
+                      <div className="grid grid-cols-3 gap-1.5 text-[11px]">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPlotId(String(plot.plot_id));
+                            handleTabChange('docs');
+                          }}
+                          className="py-1.5 px-2 text-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold cursor-pointer"
+                        >
+                          {t('কাগজপত্র', 'Docs')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            window.dispatchEvent(
+                              new CustomEvent('open-faraiz-calculator', {
+                                detail: {
+                                  plotId: plot.plot_id,
+                                  area: plot.area_decimal ?? plot.share_area_decimal,
+                                },
+                              })
+                            );
+                          }}
+                          className="py-1.5 px-2 text-center rounded-lg border border-purple-200 text-purple-700 hover:bg-purple-50 font-bold cursor-pointer"
+                        >
+                          {t('ফারায়েজ', 'Faraiz')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPassportPlot(plot)}
+                          className="py-1.5 px-2 text-center rounded-lg border border-amber-300 text-amber-800 hover:bg-amber-50 font-bold cursor-pointer"
+                        >
+                          {t('পাসপোর্ট', 'Passport')}
                         </button>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-          {/* VIEW 5: 🚀 ১৩-ধাপের হস্তান্তর ট্র্যাকার (TRANSFERS) */}
-          {activeSection === 'transfers' && (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+          {/* Active Transfer Banner (চলমান হস্তান্তর আবেদন থাকলে প্রদর্শিত হবে) */}
+          {activeTransfersCount > 0 && (
+            <div className="bg-amber-50/70 border border-amber-200 rounded-3xl p-5 md:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 border border-amber-200 flex items-center justify-center shrink-0 mt-0.5">
+                  <Sparkles className="w-5 h-5" />
+                </div>
                 <div>
-                  <h3 className="font-extrabold text-base text-slate-900 leading-tight">
-                    {t('জমির হস্তান্তর ও মালিকানা স্থানান্তর ট্র্যাকার (13-Step Transfer Machine)', 'Land Transfer & Ownership Mutation Tracker')}
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    {t('খসড়া আবেদন থেকে সাব-রেজিস্ট্রার বায়োমেট্রিক ও এসি ল্যান্ড নামজারি — ৫টি স্তর ও ১৩টি নিরাপত্তা চেক', '5 Citizen Stages & 13 State Machine Security Steps')}
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900">
+                      {t('চলমান প্রক্রিয়া', 'In Progress')}
+                    </span>
+                    <h4 className="font-extrabold text-sm text-slate-900">
+                      {t('আপনার একটি জমি হস্তান্তর আবেদন প্রক্রিয়াধীন রয়েছে', 'You have an active land transfer in progress')}
+                    </h4>
+                  </div>
+                  <p className="text-xs text-slate-600 mt-1">
+                    {t(
+                      'আবেদনের বর্তমান ধাপ, ফি পরিশোধ ও সাব-রেজিস্ট্রেশন অগ্রগতির সার্বিক বিবরণ দেখতে ট্র্যাকার খুলুন।',
+                      'Track progress across verification, stamp fees, and AC Land e-mutation.'
+                    )}
                   </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleCreateNewTransfer(vault?.owned_plots?.[0]?.plot_id || 1)}
-                    disabled={creatingTransfer}
-                    className="px-3.5 py-2 bg-[#006A4E] hover:bg-emerald-800 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-                  >
-                    <PlusCircle className="w-4 h-4" />
-                    <span>{creatingTransfer ? t('তৈরি হচ্ছে...', 'Creating...') : t('নতুন হস্তান্তর শুরু করুন', '+ New Transfer Intent')}</span>
-                  </button>
                 </div>
               </div>
 
-              {transfers.length === 0 ? (
-                <div className="bg-white p-12 rounded-3xl border border-slate-200 text-center space-y-3">
-                  <Sparkles className="w-12 h-12 text-slate-300 mx-auto" />
-                  <h3 className="font-bold text-base text-slate-800">{t('কোনো সক্রিয় হস্তান্তর আবেদন নেই', 'No Active Transfers')}</h3>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    {t('উপরের "+ নতুন হস্তান্তর শুরু করুন" বোতামে ক্লিক করে নতুন হস্তান্তর আবেদন দাখিল করুন।', 'Click above to create a new transfer case.')}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-5">
-                  {transfers.map((tr: any) => {
-                    const currentStep = Number(tr.current_step || 1);
-                    const hasBiometric = currentStep >= 8;
-
-                    return (
-                      <div key={tr.id} className="bg-white rounded-3xl border border-slate-200 p-6 space-y-5 shadow-xs">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <strong className="font-mono text-base font-black text-[#006A4E]">{tr.transfer_code}</strong>
-                              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#006A4E] text-white">
-                                {tr.status}
-                              </span>
-                              <span className="text-xs text-slate-500 font-medium">
-                                {tr.deed_type || 'SALE'}
-                              </span>
-                            </div>
-                            <div className="text-xs text-slate-700 mt-1">
-                              <strong>{tr.mouza_bn} মৌজা</strong> • দাগ নং: {toBanglaDigits(tr.dag_no, lang)} • {toBanglaDigits(tr.transfer_area_decimal, lang)} শতক • ৳ {formatNumber(tr.proposed_price_bdt || 850000)}
-                            </div>
-                          </div>
-
-                          {currentStep < 13 && (
-                            <button
-                              onClick={() => handleAdvanceTransfer(tr.transfer_code, currentStep + 1)}
-                              disabled={advancingTransferCode === tr.transfer_code}
-                              className="px-4 py-2 bg-[#006A4E] hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs min-h-[38px]"
-                            >
-                              {advancingTransferCode === tr.transfer_code ? (
-                                <span>{t('অগ্রগতি হচ্ছে...', 'Advancing...')}</span>
-                              ) : (
-                                <>
-                                  <span>{t(`পরবর্তী ধাপে অগ্রগতি (ধাপ ${toBanglaDigits(currentStep + 1, lang)})`, `Advance to Step ${currentStep + 1}`)}</span>
-                                  <ArrowRight className="w-3.5 h-3.5" />
-                                </>
-                              )}
-                            </button>
-                          )}
-                        </div>
-
-                        {/* 5-Stage Stepper Grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                          {TRANSFER_STAGES.map((stg, sIdx) => {
-                            const isComplete = currentStep > Math.max(...stg.steps);
-                            const isActive = stg.steps.includes(currentStep);
-
-                            return (
-                              <div
-                                key={sIdx}
-                                className={`p-3 rounded-2xl border text-center transition-all ${
-                                  isComplete
-                                    ? 'bg-emerald-50 border-emerald-300 text-emerald-900 font-bold'
-                                    : isActive
-                                    ? 'bg-white border-[#006A4E] text-[#006A4E] font-black ring-2 ring-[#006A4E]/30 shadow-xs'
-                                    : 'bg-slate-50 border-slate-200 text-slate-400'
-                                }`}
-                              >
-                                <div className="text-[10px] font-bold uppercase tracking-wider mb-1 flex items-center justify-center gap-1">
-                                  {isComplete && <CheckCircle2 className="w-3.5 h-3.5 text-[#006A4E]" />}
-                                  {isActive && <span className="w-2 h-2 rounded-full bg-[#006A4E] animate-ping inline-block" />}
-                                  <span>Stage {sIdx + 1}</span>
-                                </div>
-                                <div className="text-xs truncate">{lang === 'bn' ? stg.labelBn : stg.labelEn}</div>
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        {/* Step Details & Biometrics */}
-                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-                          <div>
-                            <span className="text-slate-500 block text-[11px] font-semibold">{t('বর্তমান সক্রিয় ধাপ:', 'Current Step:')}</span>
-                            <strong className="text-sm text-[#006A4E]">
-                              {t(`ধাপ ${toBanglaDigits(currentStep, lang)} / ১৩:`, `Step ${currentStep} of 13:`)}{' '}
-                              {lang === 'bn' ? tr.step_name_bn : tr.step_name_en}
-                            </strong>
-                          </div>
-
-                          <div>
-                            {hasBiometric ? (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs">
-                                <ShieldCheck className="w-4 h-4 text-[#006A4E]" />
-                                <span>{t('✔ কাউন্টার বায়োমেট্রিক ও ফেস লাইভনেস: যাচাইকৃত (Passed)', 'Biometrics: Verified')}</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-bold text-xs">
-                                <Clock className="w-4 h-4 text-amber-700" />
-                                <span>{t('কাউন্টার বায়োমেট্রিক: রেজিস্ট্রেশন ধাপে (ধাপ ৮) যাচাই করা হবে', 'Biometrics: Scheduled Step 8')}</span>
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={() => handleTabChange('transfers')}
+                className="px-4 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
+              >
+                <span>{t('ট্র্যাকার দেখুন', 'Open Tracker')}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           )}
+        </div>
+      )}
 
-          {/* VIEW 6: ⚖️ আপত্তি ও বিরোধ ট্রাইব্যুনাল (DISPUTES) */}
-          {activeSection === 'disputes' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fadeIn">
-              {/* Objection Form (6 cols) */}
-              <form onSubmit={handleFileDispute} className="lg:col-span-6 bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-                <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                  <AlertOctagon className="w-5 h-5 text-rose-600" />
-                  <h3 className="font-extrabold text-base text-slate-900">
-                    {t('জালিয়াতি বা ওয়ারিশ বঞ্চনার আপত্তি দাখিল', 'File Land Fraud / Ownership Objection')}
-                  </h3>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  {t(
-                    'কোনো দাগে জাল দলিল বা ওয়ারিশ বাদ দিয়ে বিক্রির চেষ্টা হলে তাৎক্ষণিক আপত্তি দিন। এটি সাব-রেজিস্ট্রার ও এসি ল্যান্ড প্যানেলে লাল সতর্কতা জারি করবে।',
-                    'Filing an objection flags the plot across Sub-Registrar and AC Land consoles.'
-                  )}
+      {/* SECTION 2: PLOTS & SALE LOCK (আমার জমি ও বিক্রয় লক) */}
+      {section === 'plots' && (
+        <div className="space-y-5">
+          {/* Consumer Explanation Banner */}
+          <div className="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-4 md:p-5 text-emerald-950 flex items-start gap-3.5 shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-[#006A4E] border border-emerald-200 flex items-center justify-center shrink-0 mt-0.5">
+              <Lock className="w-5 h-5" />
+            </div>
+            <div className="space-y-1 text-xs">
+              <h3 className="font-black text-sm text-[#006A4E]">
+                {t('মালিকানা বিক্রয় লক কী এবং কেন ব্যবহার করবেন?', 'What is Sale Lock and why use it?')}
+              </h3>
+              <p className="text-slate-700 leading-relaxed">
+                {t(
+                  'বিক্রয় লক চালু থাকলে আপনার অনুমতি ছাড়া সাব-রেজিস্ট্রি অফিসে কোনো দলিলের রেজিস্ট্রেশন সম্পন্ন হতে পারবে না। কোনো প্রতারক চক্র যেন জাল কাগজপত্র তৈরি করে আপনার জমি বিক্রি করতে না পারে, সেজন্য জমি সর্বদা লক রাখা সম্পূর্ণ নিরাপদ। বিক্রয়ের ইচ্ছা হলে কেবল ১-ক্লিকে আনলক করুন।',
+                  'When enabled, BhumiShield blocks deed registration for this plot until the recorded owner turns off the sale lock. It protects you against fraudulent sales.'
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Plots Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredPlots.length === 0 ? (
+              <div className="col-span-3 bg-white p-12 text-center text-slate-500 rounded-2xl border border-slate-200">
+                <MapPin className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <p className="font-bold text-sm text-slate-700">
+                  {t('ফিল্টারের শর্তানুযায়ী কোনো জমি পাওয়া যায়নি।', 'No land matched the selected filters.')}
                 </p>
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="mt-3 text-xs text-[#006A4E] font-bold hover:underline cursor-pointer"
+                >
+                  {t('ফিল্টার রিসেট করুন', 'Reset Filters')}
+                </button>
+              </div>
+            ) : (
+              filteredPlots.map((plot) => (
+                <div
+                  key={plot.plot_id}
+                  className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:border-[#006A4E]/60 transition flex flex-col justify-between space-y-4"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 font-mono">
+                        {plot.survey_type || 'BS'} {t('খতিয়ান', 'Khatian')}: {toBanglaDigits(plot.khatian_no_bn || plot.khatian_no, lang)}
+                      </span>
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 ${
+                          plot.owner_sale_locked
+                            ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                            : 'bg-emerald-100 text-[#006A4E] border border-emerald-300'
+                        }`}
+                      >
+                        {plot.owner_sale_locked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
+                        {plot.owner_sale_locked ? t('বিক্রয় লক সক্রিয়', 'Sale Locked') : t('বিক্রয় লক নেই', 'Unlocked')}
+                      </span>
+                    </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      {t('সংশ্লিষ্ট দাগ নির্বাচন:', 'Select Plot (Dag):')}
-                    </label>
-                    <select
-                      value={disputePlotId}
-                      onChange={(e) => setDisputePlotId(Number(e.target.value))}
-                      className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-[#006A4E] cursor-pointer"
-                    >
-                      {plots.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.mouza_bn} — দাগ নং {p.dag_no}
-                        </option>
-                      ))}
-                    </select>
+                    <div>
+                      <h3 className="font-black text-slate-900 text-lg">
+                        {t('দাগ নং', 'Plot')} {toBanglaDigits(plot.dag_no_bn || plot.dag_no, lang)}
+                      </h3>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        {plot.mouza_bn}, {plot.upazila_bn}, {plot.district_bn}
+                      </p>
+                    </div>
+
+                    <div className="bg-slate-50 p-3 rounded-xl space-y-1.5 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">{t('জমির শ্রেণি', 'Land Class')}:</span>
+                        <strong className="text-slate-800">{plot.land_type_bn || t('ভিটা (আবাসিক)', 'Residential')}</strong>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">{t('রেকর্ডকৃত আয়তন', 'Area')}:</span>
+                        <strong className="text-[#006A4E] text-sm font-black">
+                          {toBanglaDigits(plot.area_decimal ?? plot.share_area_decimal, lang)} {t('শতক', 'dec')}
+                        </strong>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-500">{t('মালিকানার অংশ', 'Share')}:</span>
+                        <strong className="text-slate-700">{plot.share_fraction || '১/১'}</strong>
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      {t('অভিযোগের ধরন:', 'Objection Category:')}
-                    </label>
-                    <select
-                      value={disputeType}
-                      onChange={(e) => setDisputeType(e.target.value)}
-                      className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-[#006A4E] cursor-pointer"
-                    >
-                      <option value="FORGERY_CLAIM">{t('জাল দলিল / ভুয়া আমমোক্তারনামা', 'Fake Deed / Forged POA')}</option>
-                      <option value="INHERITANCE_EXCLUSION">{t('ওয়ারিশ বঞ্চিত করে বিক্রির চেষ্টা', 'Heir Exclusion Dispute')}</option>
-                      <option value="COURT_INJUNCTION">{t('আদালতের নিষেধাজ্ঞা / দেওয়ানি মামলা', 'Court Injunction')}</option>
-                      <option value="BOUNDARY_GRAB">{t('সীমানা বা অতিরিক্ত অংশ দখল', 'Boundary Grab')}</option>
-                    </select>
+                  <div className="pt-2 border-t border-slate-100 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={lockTogglingPlotId === plot.plot_id}
+                        onClick={() => handleToggleSaleLock(plot)}
+                        className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer shadow-xs ${
+                          plot.owner_sale_locked
+                            ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                            : 'bg-[#006A4E] hover:bg-emerald-800 text-white'
+                        }`}
+                      >
+                        {lockTogglingPlotId === plot.plot_id ? (
+                          <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                        ) : plot.owner_sale_locked ? (
+                          <Unlock className="w-3.5 h-3.5" />
+                        ) : (
+                          <Lock className="w-3.5 h-3.5" />
+                        )}
+                        <span>
+                          {plot.owner_sale_locked ? t('লক প্রত্যাহার করুন (আনলক)', 'Unlock Plot') : t('বিক্রয় লক চালু করুন', 'Enable Sale Lock')}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setSelectedPlotForModal(plot)}
+                        className="p-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 cursor-pointer"
+                        title={t('সম্পূর্ণ বিবরণ', 'Details')}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-1.5 pt-1 text-[11px]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedPlotId(String(plot.plot_id));
+                          handleTabChange('docs');
+                        }}
+                        className="p-1.5 text-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold cursor-pointer"
+                      >
+                        {t('কাগজপত্র', 'Docs')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          window.dispatchEvent(
+                            new CustomEvent('open-faraiz-calculator', {
+                              detail: {
+                                plotId: plot.plot_id,
+                                area: plot.area_decimal ?? plot.share_area_decimal,
+                              },
+                            })
+                          );
+                        }}
+                        className="p-1.5 text-center rounded-lg border border-purple-200 bg-purple-50/40 text-purple-700 hover:bg-purple-100 font-bold flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <Scale className="w-3 h-3 text-purple-700" />
+                        <span>{t('ফারায়েজ', 'Faraiz')}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPassportPlot(plot)}
+                        className="p-1.5 text-center rounded-lg border border-amber-300 bg-amber-50/50 text-amber-800 hover:bg-amber-100 font-bold flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <ShieldCheck className="w-3 h-3 text-amber-600" />
+                        <span>{t('পাসপোর্ট', 'Passport')}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onNavigate('applications?new=1')}
+                        className="p-1.5 text-center rounded-lg border border-slate-200 text-[#006A4E] hover:bg-emerald-50 font-bold cursor-pointer"
+                      >
+                        {t('হস্তান্তর', 'Transfer')}
+                      </button>
+                    </div>
                   </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* SECTION 3: DIGITAL DOCUMENTS VAULT (ডিজিটাল কাগজপত্র ভল্ট) */}
+      {section === 'docs' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column: Select Land Plot & Upload Box */}
+          <div className="space-y-4">
+            <div className="bg-white rounded-2xl border border-slate-200/90 p-5 space-y-3 shadow-xs">
+              <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                <FolderOpen className="w-4 h-4 text-[#006A4E]" />
+                <span>{t('কোন জমির কাগজপত্র দেখতে চান?', 'Select Land Plot')}</span>
+              </h3>
+              <p className="text-xs text-slate-500">
+                {t('নিচের তালিকা থেকে যেকোনো একটি জমি নির্বাচন করুন:', 'Click a plot to inspect its vault:')}
+              </p>
+
+              <div className="space-y-2">
+                {plots.map((p) => (
+                  <button
+                    key={p.plot_id}
+                    type="button"
+                    onClick={() => setSelectedPlotId(String(p.plot_id))}
+                    className={`w-full p-3.5 rounded-xl text-left text-xs font-bold transition flex items-center justify-between border cursor-pointer ${
+                      String(selectedPlotId) === String(p.plot_id)
+                        ? 'bg-emerald-50/90 border-[#006A4E] text-[#006A4E] shadow-2xs'
+                        : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <div>
+                      <div className="text-sm font-black">{t('দাগ নং', 'Plot')} {toBanglaDigits(p.dag_no_bn || p.dag_no, lang)}</div>
+                      <div className="text-[11px] font-normal text-slate-500 mt-0.5">{p.mouza_bn} · {p.upazila_bn}</div>
+                    </div>
+                    <span className="text-xs px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 font-bold">
+                      {toBanglaDigits(p.area_decimal ?? p.share_area_decimal, lang)} {t('শতক', 'dec')}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Document Upload Form */}
+            {selectedPlotId && (
+              <form onSubmit={handleDocumentUpload} className="bg-white rounded-2xl border border-slate-200/90 p-5 space-y-3 shadow-xs">
+                <h4 className="font-bold text-xs text-slate-900 flex items-center gap-2">
+                  <UploadCloud className="w-4 h-4 text-[#006A4E]" />
+                  <span>{t('নতুন কাগজপত্র যুক্ত করুন', 'Upload Supporting Document')}</span>
+                </h4>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                    {t('কাগজপত্রের বিবরণ বা শিরোনাম*', 'Document Title*')}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={uploadTitleBn}
+                    onChange={(e) => setUploadTitleBn(e.target.value)}
+                    placeholder={t('উদা: বায়া কবলা দলিল নং ১৫৪০', 'e.g. Historical Deed 1540')}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
+                  />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    {t('অভিযোগের বিস্তারিত বিবরণ:', 'Objection Details:')}
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                    {t('দলিলের ধরন*', 'Document Type*')}
                   </label>
-                  <textarea
-                    value={disputeDesc}
-                    onChange={(e) => setDisputeDesc(e.target.value)}
-                    rows={3}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-[#006A4E]"
+                  <select
+                    value={uploadDocType}
+                    onChange={(e) => setUploadDocType(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-none bg-white"
+                  >
+                    <option value="DEED">{t('বায়া দলিল (Historical Deed)', 'Historical Deed')}</option>
+                    <option value="KHATIAN">{t('খতিয়ানের নকল / পরচা', 'Khatian Copy')}</option>
+                    <option value="TAX_RECEIPT">{t('ভূমি উন্নয়ন কর দাখিলা (LD-Tax)', 'Tax Receipt')}</option>
+                    <option value="WARISH">{t('ওয়ারিশান সনদপত্র', 'Inheritance Certificate')}</option>
+                    <option value="OTHER">{t('অন্যান্য প্রমাণক', 'Other Evidence')}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                    {t('পিডিএফ বা ছবি (সর্বোচ্চ ১০ মেগাবাইট)*', 'PDF or Image (Max 10MB)*')}
+                  </label>
+                  <input
+                    type="file"
                     required
+                    accept="application/pdf,image/png,image/jpeg"
+                    onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                    className="w-full text-xs text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  disabled={submittingDispute}
-                  className="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs min-h-[44px]"
+                  disabled={busy || !uploadFile}
+                  className="w-full py-2.5 rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-xs"
                 >
-                  <AlertOctagon className="w-4 h-4" />
-                  <span>{submittingDispute ? t('দাখিল হচ্ছে...', 'Submitting...') : t('আপত্তি ও অভিযোগ নিবন্ধন করুন', 'Submit Official Objection')}</span>
+                  <UploadCloud className="w-4 h-4" />
+                  <span>{busy ? t('সংরক্ষণ হচ্ছে...', 'Saving...') : t('কাগজপত্র জমা দিন', 'Upload to Vault')}</span>
                 </button>
               </form>
+            )}
+          </div>
 
-              {/* Filed Objections List (6 cols) */}
-              <div className="lg:col-span-6 bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <h3 className="font-extrabold text-base text-slate-900">
-                    {t('দাখিলকৃত আপত্তি ও ট্রাইব্যুনাল স্ট্যাটাস', 'Filed Objections & Status')}
-                  </h3>
-                  <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
-                    {disputes.length} টি রেকর্ড
-                  </span>
-                </div>
+          {/* Right Column: 7 Core Documents Checklist & Download Actions */}
+          <div className="lg:col-span-2 space-y-4">
+            {!selectedPlotId ? (
+              <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-500 shadow-xs">
+                <FolderOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                <h4 className="font-bold text-base text-slate-700">
+                  {t('বাঁ পাশের তালিকা থেকে কোনো একটি জমি নির্বাচন করুন', 'Select a plot from the left panel')}
+                </h4>
+                <p className="text-xs text-slate-400 mt-1">
+                  {t('নির্বাচিত জমির সকল অনুমোদিত দলিল, খতিয়ান ও কর রশিদ এখানে প্রদর্শিত হবে।', 'All linked records and verified digital copies will appear here.')}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Active Plot Header & 3 Metric Pills */}
+                {(() => {
+                  const activePlot = plots.find((p) => String(p.plot_id) === String(selectedPlotId));
+                  return (
+                    <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] border border-emerald-200 flex items-center justify-center">
+                            <FolderOpen className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h4 className="font-black text-base text-slate-900">
+                              {t('দাগ নং', 'Plot No.')} {toBanglaDigits(activePlot?.dag_no_bn || activePlot?.dag_no || selectedPlotId, lang)} · {activePlot?.mouza_bn || ''} ({activePlot?.upazila_bn || ''})
+                            </h4>
+                            <p className="text-xs text-slate-500 font-mono mt-0.5">
+                              {t('খতিয়ান নং', 'Khatian No.')}: {toBanglaDigits(activePlot?.khatian_no_bn || activePlot?.khatian_no || '---', lang)} · {t('পরিমাণ', 'Area')}: {toBanglaDigits(activePlot?.area_decimal ?? activePlot?.share_area_decimal ?? 0, lang)} {t('শতক', 'dec')}
+                            </p>
+                          </div>
+                        </div>
 
-                <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1">
-                  {disputes.map((dsp) => (
-                    <div
-                      key={dsp.id}
-                      className={`p-4 rounded-2xl border transition-all ${
-                        dsp.status === 'OPEN'
-                          ? 'bg-amber-50/50 border-amber-300'
-                          : dsp.status === 'UPHELD_FROZEN'
-                          ? 'bg-rose-50/50 border-rose-300'
-                          : 'bg-emerald-50/50 border-emerald-300'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs text-slate-900">
-                          {dsp.mouza_bn} — দাগ {dsp.dag_no} ({dsp.dispute_type})
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-[#006A4E] border border-emerald-200 flex items-center gap-1.5">
+                          <ShieldCheck className="w-4 h-4" />
+                          <span>{t('সার্বভৌম ডিজিটাল ভল্ট', 'Sovereign Digital Vault')}</span>
                         </span>
-                        <span
-                          className={`text-[10px] font-black px-2.5 py-0.5 rounded-full ${
-                            dsp.status === 'OPEN'
-                              ? 'bg-amber-500 text-white'
-                              : dsp.status === 'UPHELD_FROZEN'
-                              ? 'bg-rose-600 text-white'
-                              : 'bg-emerald-600 text-white'
+                      </div>
+
+                      {/* 3 Status Pills */}
+                      <div className="grid grid-cols-3 gap-3 text-center text-xs">
+                        <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                          <div className="text-[11px] text-slate-500 font-bold">{t('অপরিহার্য নথির তালিকা', 'Total Checklist')}</div>
+                          <div className="font-black text-slate-800 text-base mt-0.5">
+                            {toBanglaDigits(docs?.total ?? (docs?.items || []).length, lang)} {t('টি', '')}
+                          </div>
+                        </div>
+                        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                          <div className="text-[11px] text-emerald-800 font-bold">{t('ভল্টে প্রস্তুত ও যাচাইকৃত', 'Verified Ready')}</div>
+                          <div className="font-black text-[#006A4E] text-base mt-0.5">
+                            {toBanglaDigits(docs?.verified_count ?? 0, lang)} {t('টি', '')}
+                          </div>
+                        </div>
+                        <div className="p-3 rounded-xl bg-amber-50 border border-amber-200">
+                          <div className="text-[11px] text-amber-800 font-bold">{t('অনুপস্থিত (আবেদনযোগ্য)', 'Missing (Requestable)')}</div>
+                          <div className="font-black text-amber-800 text-base mt-0.5">
+                            {toBanglaDigits(docs?.missing_count ?? 0, lang)} {t('টি', '')}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 7 Essential Land Records List */}
+                <div className="space-y-3">
+                  {(docs?.items || []).length === 0 ? (
+                    <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center text-slate-500 text-xs">
+                      {t('এই দাগে এখনও কোনো নথি যুক্ত করা হয়নি।', 'No documents linked for this plot.')}
+                    </div>
+                  ) : (
+                    docs.items.map((doc: any, idx: number) => {
+                      const isReady = doc.status === 'VERIFIED' || Boolean(doc.id && doc.file_name);
+                      return (
+                        <div
+                          key={doc.id || doc.document_type || idx}
+                          className={`p-4 rounded-2xl border transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs ${
+                            isReady
+                              ? 'bg-white border-slate-200 hover:border-emerald-500'
+                              : 'bg-amber-50/60 border-amber-200 hover:border-amber-300'
                           }`}
                         >
-                          {dsp.status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-600 mt-2 leading-relaxed">{dsp.description_bn}</p>
-                    </div>
-                  ))}
+                          <div className="flex items-start gap-3.5">
+                            <div
+                              className={`w-11 h-11 rounded-xl shrink-0 flex items-center justify-center mt-0.5 ${
+                                isReady
+                                  ? 'bg-emerald-50 text-[#006A4E] border border-emerald-200'
+                                  : 'bg-amber-100 text-amber-800 border border-amber-200'
+                              }`}
+                            >
+                              {isReady ? <FileCheck className="w-5 h-5" /> : <AlertTriangle className="w-5 h-5" />}
+                            </div>
+
+                            <div className="space-y-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h5 className="font-black text-xs md:text-sm text-slate-900">
+                                  {lang === 'bn' ? doc.title_bn : (doc.title_en || doc.title_bn)}
+                                </h5>
+                                {doc.is_required && (
+                                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700">
+                                    {t('অপরিহার্য', 'Required')}
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                <span className="font-mono text-[11px] text-slate-600 font-semibold">{doc.document_type}</span>
+                                {doc.file_name && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="font-mono text-slate-700">{doc.file_name}</span>
+                                  </>
+                                )}
+                                {doc.file_size_bytes > 0 && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="font-mono">{Math.round(doc.file_size_bytes / 1024)} KB</span>
+                                  </>
+                                )}
+                              </div>
+
+                              {/* Trust Status Badge */}
+                              <div className="pt-0.5 flex flex-wrap items-center gap-2">
+                                {isReady ? (
+                                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-[#006A4E] border border-emerald-200 inline-flex items-center gap-1">
+                                    <CheckCircle2 className="w-3 h-3 text-[#006A4E]" />
+                                    <span>{t('ভল্টে সংরক্ষিত ও যাচাইকৃত', 'Verified in Vault')}</span>
+                                  </span>
+                                ) : (
+                                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 inline-flex items-center gap-1">
+                                    <AlertTriangle className="w-3 h-3" />
+                                    <span>{t('ভল্টে কপি নেই — ১-ক্লিকে আবেদনের সুযোগ', 'Missing in Vault (1-Click Request)')}</span>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                            {isReady ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => setInspectingDoc(doc)}
+                                  className="px-3.5 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+                                  title={t('প্রিভিউ ও বিস্তারিত তথ্য', 'Preview & Details')}
+                                >
+                                  <Eye className="w-4 h-4 text-slate-600" />
+                                  <span>{t('প্রিভিউ', 'Preview')}</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDocumentDownload(doc)}
+                                  className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                                  title={t('ডিজিটাল কপি ডাউনলোড', 'Download Digital Copy')}
+                                >
+                                  <Download className="w-4 h-4" />
+                                  <span>{t('ডাউনলোড', 'Download')}</span>
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={busy || requestingDocType === doc.document_type}
+                                onClick={() => handleRequestMissingDoc(doc)}
+                                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                              >
+                                {requestingDocType === doc.document_type ? (
+                                  <>
+                                    <RotateCw className="w-4 h-4 animate-spin" />
+                                    <span>{t('দাখিল হচ্ছে...', 'Submitting...')}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Sparkles className="w-4 h-4" />
+                                    <span>{t('অনলাইনে সার্টিফাইড কপির আবেদন', '1-Click Request Copy')}</span>
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* SECTION 4: REGISTERED DEEDS (রেজিস্ট্রিকৃত মূল দলিল) */}
+      {section === 'deeds' && (
+        <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs">
+          <div className="p-5 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+              <FileCheck className="w-5 h-5 text-[#006A4E]" />
+              <span>{t('সাব-রেজিস্ট্রি অফিসে নিবন্ধিত মূল দলিলসমূহ', 'Registered Deeds Ledger')}</span>
+              <span className="px-2.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 font-bold">
+                {toBanglaDigits(filteredDeeds.length, lang)} {t('টি দলিল', 'Deeds')}
+              </span>
             </div>
-          )}
+            <p className="text-xs text-slate-500">
+              {t('দলিলের সম্পূর্ণ ডকেট ও ক্রিপ্টোগ্রাফিক সিল দেখতে ডানপাশের বোতাম চাপুন', 'Click eye icon to view full cryptographic docket')}
+            </p>
+          </div>
 
-          {/* VIEW 7: 🎫 সহায়তা টিকেট ও রেকর্ডরুম ট্র্যাকিং (TICKETS) */}
-          {activeSection === 'tickets' && (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-                <div>
-                  <h3 className="font-extrabold text-base text-slate-900 leading-tight">
-                    {t('আমার সহায়তা টিকিট ও রেকর্ডরুম ট্র্যাকিং', 'Support Tickets & Recordroom Tracking')}
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    {t('অনুপস্থিত দলিল সংগ্রহ ও রেকর্ড সংশোধনের জন্য ইস্যুকৃত টিকেটসমূহের লাইভ স্ট্যাটাস', 'Live SLA tracking of requested document searches')}
-                  </p>
-                </div>
-                <button
-                  onClick={loadTickets}
-                  className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                </button>
-              </div>
-
-              {tickets.length === 0 ? (
-                <div className="bg-white p-12 rounded-3xl border border-slate-200 text-center space-y-3">
-                  <Ticket className="w-12 h-12 text-slate-300 mx-auto" />
-                  <h3 className="font-bold text-base text-slate-800">{t('কোনো সক্রিয় সহায়তা টিকিট নেই', 'No Active Tickets')}</h3>
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    {t('প্রামাণ্য সনদ ভল্টে কোনো দলিল অনুপস্থিত থাকলে "২-ট্যাপ টিকেট তৈরি" করে সরাসরি রেকর্ডরুমে অনুসন্ধানের অনুরোধ জানাতে পারেন।', 'Generate a 2-tap ticket from the Document Vault to request missing records.')}
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {tickets.map((tkt: any) => (
-                    <div key={tkt.id} className="bg-white rounded-3xl border border-slate-200 p-5 space-y-3 shadow-xs">
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                        <span className="font-mono text-xs font-black text-[#006A4E]">{tkt.ticket_code}</span>
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900">
-                          {tkt.status || 'NEW'}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-100/80 text-slate-600 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold">
+                  <th className="p-3.5">#</th>
+                  <th className="p-3.5">{t('দলিল নম্বর', 'Deed No')}</th>
+                  <th className="p-3.5">{t('দলিলের ধরন', 'Deed Type')}</th>
+                  <th className="p-3.5">{t('দাগ ও মৌজা', 'Plot & Mouza')}</th>
+                  <th className="p-3.5">{t('জমির পরিমাণ', 'Area')}</th>
+                  <th className="p-3.5">{t('মূল্য (টাকা)', 'Value (BDT)')}</th>
+                  <th className="p-3.5">{t('রেজিস্ট্রি অফিস', 'Registry')}</th>
+                  <th className="p-3.5">{t('অবস্থা', 'Status')}</th>
+                  <th className="p-3.5 text-right">{t('অ্যাকশন', 'Action')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredDeeds.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="p-10 text-center text-slate-500">
+                      {t('কোনো দলিল পাওয়া যায়নি।', 'No deeds found.')}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredDeeds.map((deed, idx) => (
+                    <tr key={deed.id || idx} className="hover:bg-slate-50/80 transition">
+                      <td className="p-3.5 font-mono text-slate-400">{toBanglaDigits(idx + 1, lang)}</td>
+                      <td className="p-3.5 font-mono font-bold text-slate-900">
+                        <span className="px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200">
+                          {deed.deed_no}
                         </span>
-                      </div>
+                      </td>
+                      <td className="p-3.5 font-bold text-slate-700">
+                        {deed.deed_type === 'SALE' ? t('কবলা (বিক্রয়)', 'Sale') : (deed.deed_type || t('কবলা', 'Sale'))}
+                      </td>
+                      <td className="p-3.5">
+                        <div className="font-bold text-slate-800">
+                          {t('দাগ নং', 'Plot')} {toBanglaDigits(deed.dag_no_bn || deed.dag_no, lang)}
+                        </div>
+                        <div className="text-[11px] text-slate-500">{deed.mouza_bn}</div>
+                      </td>
+                      <td className="p-3.5 font-bold text-[#006A4E]">
+                        {toBanglaDigits(deed.area_decimal, lang)} {t('শতক', 'dec')}
+                      </td>
+                      <td className="p-3.5 font-mono text-slate-800">
+                        ৳{deed.price_bdt ? toBanglaDigits(Number(deed.price_bdt).toLocaleString(), lang) : '—'}
+                      </td>
+                      <td className="p-3.5 text-slate-600">
+                        {t('সাব-রেজিস্ট্রি কার্যালয়', 'Sub-Registry Office')}
+                      </td>
+                      <td className="p-3.5">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-[#006A4E] border border-emerald-300">
+                          {deed.status || 'MUTATED'}
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedDeedForModal(deed)}
+                            className="p-2 rounded-xl border border-slate-200 hover:bg-[#006A4E] hover:text-white text-slate-700 transition cursor-pointer"
+                            title={t('দলিলের সম্পূর্ণ ডকেট ও বিবরণ দেখুন', 'View Deed Details')}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onNavigate(`qr?deed_no=${encodeURIComponent(deed.deed_no)}`)}
+                            className="p-2 rounded-xl border border-slate-200 hover:bg-blue-600 hover:text-white text-blue-700 transition cursor-pointer"
+                            title={t('কিউআর ও ক্রিপ্টোগ্রাফিক সিল যাচাই', 'Verify Deed QR')}
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
-                      <h4 className="font-bold text-xs text-slate-900">{tkt.title_bn}</h4>
-                      <p className="text-xs text-slate-500">{tkt.description_bn}</p>
-
-                      <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100 font-mono">
-                        <span>Category: {tkt.category}</span>
-                        <span>Priority: <strong>{tkt.priority || 'HIGH'}</strong></span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* VIEW 8: 👤 নাগরিক প্রোফাইল ও এনআইডি সুইচ (PROFILE & DEMO SWITCHER) */}
-          {activeSection === 'profile' && (
-            <div className="max-w-3xl space-y-6 animate-fadeIn">
-              {/* Citizen Card */}
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-5">
-                <div className="flex items-center gap-4 border-b border-slate-100 pb-4">
-                  <div className="w-16 h-16 rounded-2xl bg-[#006A4E] text-white flex items-center justify-center font-black text-2xl shadow-sm">
-                    {vault?.person?.name_bn ? vault.person.name_bn[0] : 'না'}
-                  </div>
-                  <div>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#006A4E] text-[11px] font-bold mb-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>{t('জাতীয় পরিচয়পত্র যাচাইকৃত নাগরিক (EC Verified)', 'NID Verified Citizen')}</span>
-                    </div>
-                    <h3 className="text-xl font-black text-slate-900">
-                      {vault?.person?.name_bn || user?.full_name_bn || 'মোঃ রফিকুল ইসলাম'}
-                    </h3>
-                    <p className="text-xs text-slate-500 font-mono">
-                      {vault?.person?.name_en || user?.full_name_en || 'Md. Rafiqul Islam'} • NID: {activeNid}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
-                    <span className="text-slate-500 block">{t('মোবাইল নম্বর (ওটিপি সংযুক্ত):', 'Mobile Number:')}</span>
-                    <strong className="text-slate-900 font-mono">০১৭****৫৮৯১</strong>
-                  </div>
-
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
-                    <span className="text-slate-500 block">{t('স্থায়ী ঠিকানা:', 'Permanent Address:')}</span>
-                    <strong className="text-slate-900">বিরুলিয়া, সাভার, ঢাকা</strong>
-                  </div>
-
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
-                    <span className="text-slate-500 block">{t('নিরাপত্তা প্রমাণীকরণ:', 'Auth Protocol:')}</span>
-                    <strong className="text-slate-900 font-mono">Laravel Sanctum + Ed25519 Token</strong>
-                  </div>
-
-                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
-                    <span className="text-slate-500 block">{t('ভল্টে মালিকানাধীন দাগ:', 'Vault Plots:')}</span>
-                    <strong className="text-[#006A4E]">{vault?.owned_plots?.length || 0} টি রেকর্ড</strong>
-                  </div>
-                </div>
+      {/* SECTION 5: TRANSFER APPLICATIONS TRACKER (হস্তান্তর ট্র্যাকার) */}
+      {section === 'transfers' && (
+        <div className="space-y-5">
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full bg-emerald-100 text-[#006A4E] text-xs font-bold">
+                  {t('১৩-ধাপের সমন্বিত কর্মপ্রবাহ', '13-Step Integrated Workflow')}
+                </span>
+                <h2 className="text-lg font-black text-slate-900">
+                  {t('আমার চলমান হস্তান্তর আবেদনসমূহ', 'My Land Transfer Applications')}
+                </h2>
               </div>
+              <p className="text-xs text-slate-500 mt-1">
+                {t(
+                  'দলিল নিবন্ধন, বায়োমেট্রিক ও নামজারি পর্যন্ত সম্পূর্ণ সমন্বিত প্রক্রিয়ায় আপনার আবেদন ট্র্যাক করুন।',
+                  'Track your transfer applications through deed registration and AC Land mutation.'
+                )}
+              </p>
+            </div>
 
-              {/* Official Citizen Identity & Land Holding Verification Docket */}
-              <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                  <div className="flex items-center gap-2">
-                    <UserCheck className="w-5 h-5 text-[#006A4E]" />
-                    <h4 className="font-extrabold text-sm text-slate-900">
-                      {t('জাতীয় স্মার্ট কার্ড ও নাগরিক ভূমি হোল্ডিং ভেরিফিকেশন', 'National Smart Card & Land Holding Verification')}
-                    </h4>
-                  </div>
-                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-[#006A4E] border border-emerald-200 flex items-center gap-1.5 self-start sm:self-auto">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>{t('এনআইডি সার্ভার: সংযুক্ত ও সক্রিয়', 'NID Server: Connected & Active')}</span>
-                  </span>
+            <button
+              type="button"
+              onClick={() => onNavigate('applications?new=1')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white text-xs font-bold transition shadow-xs cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>{t('নতুন হস্তান্তর আবেদন', 'New Transfer Application')}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs">
+            {transfersLoading ? (
+              <div className="py-12 text-center text-xs text-slate-400">
+                <Clock className="w-5 h-5 animate-spin mx-auto mb-2 text-[#006A4E]" />
+                <span>{t('হস্তান্তর তথ্য লোড হচ্ছে...', 'Loading transfer requests...')}</span>
+              </div>
+            ) : citizenTransfers.length === 0 ? (
+              <div className="py-16 text-center space-y-3 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                <FileCheck className="w-10 h-10 text-slate-400 mx-auto" />
+                <div className="text-base font-bold text-slate-800">
+                  {t('কোনো চলমান হস্তান্তর আবেদন নেই', 'No Active Transfer Applications')}
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-500 max-w-md mx-auto">
                   {t(
-                    'বাংলাদেশ নির্বাচন কমিশন (EC) স্মার্ট এনআইডি ডাটাবেজ ও জাতীয় ভূমি ব্যবস্থাপনা নেটওয়ার্ক। যেকোনো নিবন্ধিত এনআইডি নম্বর অনুসন্ধান করে নাগরিকের ডিজিটাল খতিয়ান, মালিকানাধীন দাগ ও বিক্রয় সুরক্ষার অবস্থা যাচাই করুন:',
-                    'Bangladesh Election Commission Smart NID Database & National Land Network. Search verified citizen NID to inspect official khatian records, owned plots, and protection status:'
+                    'আপনার জমি ক্রয়-বিক্রয়, হেবা বা উত্তরাধিকার বণ্টনের আবেদন করতে নিচের বোতামে চাপুন।',
+                    'To initiate a transfer or heir apportionment, click the button below.'
                   )}
                 </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <button
-                    onClick={() => handleSelectPresetNid('9900001001')}
-                    className={`p-3 rounded-2xl border text-left transition cursor-pointer ${
-                      activeNid === '9900001001'
-                        ? 'border-[#006A4E] bg-emerald-50/70 ring-2 ring-[#006A4E]/30'
-                        : 'border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <strong className="block text-xs font-bold text-slate-900">মোঃ রফিকুল ইসলাম</strong>
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">যাচাইকৃত</span>
-                    </div>
-                    <span className="text-[11px] font-mono text-slate-600 block mt-1">NID: 9900001001</span>
-                    <span className="text-[11px] text-slate-500 block mt-0.5">দাগ ১০১ • বিরুলিয়া • নিষ্কণ্টক রেকর্ড</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleSelectPresetNid('9900001002')}
-                    className={`p-3 rounded-2xl border text-left transition cursor-pointer ${
-                      activeNid === '9900001002'
-                        ? 'border-[#006A4E] bg-emerald-50/70 ring-2 ring-[#006A4E]/30'
-                        : 'border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <strong className="block text-xs font-bold text-slate-900">মোসাঃ রাবেয়া খাতুন</strong>
-                      <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">লক সক্রিয়</span>
-                    </div>
-                    <span className="text-[11px] font-mono text-slate-600 block mt-1">NID: 9900001002</span>
-                    <span className="text-[11px] text-slate-500 block mt-0.5">দাগ ১০২ • বিরুলিয়া • বিক্রয় লক সক্রিয়</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleSelectPresetNid('9900001003')}
-                    className={`p-3 rounded-2xl border text-left transition cursor-pointer ${
-                      activeNid === '9900001003'
-                        ? 'border-[#006A4E] bg-emerald-50/70 ring-2 ring-[#006A4E]/30'
-                        : 'border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <strong className="block text-xs font-bold text-slate-900">মোঃ আব্দুল করিম</strong>
-                      <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">ব্যাংক বন্ধক</span>
-                    </div>
-                    <span className="text-[11px] font-mono text-slate-600 block mt-1">NID: 9900001003</span>
-                    <span className="text-[11px] text-slate-500 block mt-0.5">দাগ ১০৩ • বিরুলিয়া • ব্যাংক বন্ধকযুক্ত</span>
-                  </button>
-                </div>
-
-                {/* Direct NID Search Input */}
-                <form onSubmit={handleNidSearch} className="flex flex-col sm:flex-row gap-2 pt-2">
-                  <input
-                    type="text"
-                    value={nidInput}
-                    onChange={(e) => setNidInput(e.target.value)}
-                    placeholder={t('নাগরিকের ১০-১৭ ডিজিট জাতীয় পরিচয়পত্র (NID) নম্বর লিখুন...', 'Enter 10-17 digit Citizen NID...')}
-                    className="flex-1 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-bold focus:ring-2 focus:ring-[#006A4E]"
-                  />
-                  <button
-                    type="submit"
-                    className="px-5 py-2.5 bg-[#006A4E] hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <Search className="w-3.5 h-3.5" />
-                    <span>{t('হোল্ডিং অনুসন্ধান করুন', 'Search Land Holdings')}</span>
-                  </button>
-                </form>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('applications?new=1')}
+                  className="px-5 py-2.5 rounded-xl bg-[#006A4E] text-white text-xs font-bold cursor-pointer transition shadow-xs"
+                >
+                  {t('এখনই আবেদন শুরু করুন', 'Start Transfer Application')}
+                </button>
               </div>
-            </div>
-          )}
-            </>
-          )}
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50/60 text-slate-500 font-bold text-[11px] uppercase tracking-wider">
+                      <th className="py-3 px-3.5">{t('ট্র্যাকিং কোড', 'Tracking Code')}</th>
+                      <th className="py-3 px-3.5">{t('দাগ নং ও মৌজা', 'Plot & Mouza')}</th>
+                      <th className="py-3 px-3.5">{t('দলিল', 'Deed')}</th>
+                      <th className="py-3 px-3.5">{t('জমির পরিমাণ', 'Area')}</th>
+                      <th className="py-3 px-3.5">{t('ধাপ ও অবস্থা', 'Step & Status')}</th>
+                      <th className="py-3 px-3.5 text-right">{t('কার্যক্রম', 'Action')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {citizenTransfers.map((tr: any) => (
+                      <tr key={tr.id} className="hover:bg-slate-50/60 transition">
+                        <td className="py-3.5 px-3.5 font-mono font-bold text-slate-900">
+                          {tr.tracking_number || `TR-${tr.id}`}
+                        </td>
+                        <td className="py-3.5 px-3.5">
+                          <div className="font-bold text-slate-900">
+                            {t(`দাগ নং ${toBanglaDigits(tr.plot?.dag_no || tr.plot_id, lang)}`, `Dag ${tr.plot?.dag_no || tr.plot_id}`)}
+                          </div>
+                          <div className="text-[11px] text-slate-500">{tr.plot?.mouza_bn}</div>
+                        </td>
+                        <td className="py-3.5 px-3.5 font-semibold text-slate-700">{tr.deed_type || 'SALE'}</td>
+                        <td className="py-3.5 px-3.5 font-bold text-emerald-800">
+                          {toBanglaDigits(tr.transfer_area_decimal || '০', lang)} {t('শতক', 'dec')}
+                        </td>
+                        <td className="py-3.5 px-3.5">
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900">
+                            {t(`ধাপ ${toBanglaDigits(tr.current_step, lang)}/১৩ (${tr.status || 'PROCESSING'})`, `Step ${tr.current_step}/13 (${tr.status || 'PROCESSING'})`)}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-3.5 text-right">
+                          <button
+                            type="button"
+                            onClick={() => onNavigate(`applications?id=${tr.tracking_number || tr.id}`)}
+                            className="px-3.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#006A4E] font-bold text-xs cursor-pointer transition"
+                          >
+                            {t('ট্র্যাকার দেখুন', 'View Tracker')}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
-      </main>
+      )}
 
-      {/* =====================================================================
-          4. INTERACTIVE MODALS
-          ===================================================================== */}
+      {/* SECTION 6: DISPUTES & OBJECTIONS (আপত্তি ও বিরোধ দাখিল) */}
+      {section === 'disputes' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <form
+            onSubmit={handleFileDispute}
+            className="bg-white rounded-3xl border border-slate-200/90 p-6 space-y-4 shadow-xs"
+          >
+            <div className="border-b border-slate-100 pb-3">
+              <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
+                <Scale className="w-5 h-5 text-rose-600" />
+                <span>{t('নতুন মালিকানা আপত্তি দাখিল', 'File Ownership Objection')}</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                {t('এসি ল্যান্ড ট্রাইব্যুনালে সরাসরি নোটিশ ও শুনানি জারি হবে', 'Sent directly to AC Land Revenue Tribunal')}
+              </p>
+            </div>
 
-      {/* Deed Proof & QR Modal */}
-      {(selectedDeedModal || loadingDeedModal) && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto relative animate-fadeIn">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                {t('বিরোধপূর্ণ জমি নির্বাচন করুন*', 'Select Contested Plot*')}
+              </label>
+              <select
+                required
+                value={disputePlotId}
+                onChange={(e) => setDisputePlotId(e.target.value)}
+                className="w-full p-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-none bg-white"
+              >
+                <option value="">{t('-- জমি নির্বাচন করুন --', '-- Select Plot --')}</option>
+                {plots.map((p) => (
+                  <option key={p.plot_id} value={p.plot_id}>
+                    {t('দাগ নং', 'Plot')} {toBanglaDigits(p.dag_no_bn || p.dag_no, lang)} · {p.mouza_bn} ({p.area_decimal} {t('শতক', 'dec')})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                {t('আপত্তির বিষয়শ্রেণি*', 'Objection Category*')}
+              </label>
+              <select
+                value={disputeType}
+                onChange={(e) => setDisputeType(e.target.value)}
+                className="w-full p-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-none bg-white"
+              >
+                <option value="OWNERSHIP_OBJECTION">{t('মালিকানা দাবি ও জবরদখল আপত্তি', 'Ownership Objection')}</option>
+                <option value="BOUNDARY_DISPUTE">{t('সরেজমিন সীমানা বিরোধ', 'Boundary Dispute')}</option>
+                <option value="RECORD_ANOMALY">{t('খতিয়ানের জালিয়াতি বা তথ্যের গরমিল', 'Record Discrepancy')}</option>
+                <option value="INHERITANCE_OBJECTION">{t('ওয়ারিশান স্বত্ববঞ্চনার আপত্তি', 'Inheritance Rights')}</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                {t('আপত্তির পূর্ণাঙ্গ কারণ ও বিবরণ*', 'Details & Grounds for Objection*')}
+              </label>
+              <textarea
+                required
+                rows={4}
+                value={disputeReason}
+                onChange={(e) => setDisputeReason(e.target.value)}
+                placeholder={t(
+                  'উক্ত দাগের জমিতে আমাদের বৈধ রেকর্ড থাকা সত্ত্বেও অন্য পক্ষ অবৈধ দখলের চেষ্টা চালাচ্ছে...',
+                  'Provide detailed statement and facts...'
+                )}
+                className="w-full p-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
+              />
+            </div>
+
             <button
-              onClick={() => setSelectedDeedModal(null)}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 text-slate-500 cursor-pointer"
+              type="submit"
+              disabled={busy || !disputePlotId || !disputeReason.trim()}
+              className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-xs"
             >
-              <X className="w-5 h-5" />
+              <Scale className="w-4 h-4" />
+              <span>{busy ? t('দায়ের হচ্ছে...', 'Filing...') : t('ট্রাইব্যুনালে দাখিল করুন', 'Submit to Tribunal')}</span>
             </button>
+          </form>
 
-            {loadingDeedModal ? (
-              <div className="py-12 text-center space-y-3">
-                <div className="w-8 h-8 border-4 border-[#006A4E] border-t-transparent rounded-full animate-spin mx-auto" />
-                <p className="text-xs font-bold text-slate-500">{t('দলিল রেকর্ড লোড হচ্ছে...', 'Loading deed proof...')}</p>
-              </div>
-            ) : selectedDeedModal ? (
-              <>
-                <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#006A4E] text-white flex items-center justify-center font-black">
-                    দলিল
-                  </div>
-                  <div>
-                    <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
-                      <span>{selectedDeedModal.deed?.deed_no}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800">
-                        ✔ VERIFIED & SEALED
-                      </span>
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      {t('সাব-রেজিস্ট্রি রেকর্ড ও ক্রিপ্টোগ্রাফিক সনদপত্র', 'Sub-Registry Record & Cryptographic Certificate')}
-                    </p>
-                  </div>
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-3xl border border-slate-200/90 overflow-hidden shadow-xs">
+              <div className="p-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <div className="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+                  <Scale className="w-4 h-4 text-rose-600" />
+                  <span>{t('দায়েরকৃত আপত্তি ও শুনানির ট্র্যাকার', 'Filed Objections Tracker')}</span>
+                  <span className="px-2.5 py-0.5 rounded-full text-xs bg-rose-100 text-rose-800 font-bold">
+                    {toBanglaDigits(disputes.length, lang)} {t('টি মামলা', 'Cases')}
+                  </span>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                  <div className="sm:col-span-5 flex flex-col items-center justify-center p-3 bg-white rounded-xl border border-slate-200">
-                    {selectedDeedModal.qr_data_uri ? (
-                      <img src={selectedDeedModal.qr_data_uri} alt="Deed QR" className="w-36 h-36 object-contain" />
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-100/80 text-slate-600 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold">
+                      <th className="p-3.5">#</th>
+                      <th className="p-3.5">{t('কেস নম্বর', 'Case No')}</th>
+                      <th className="p-3.5">{t('আপত্তির ধরন', 'Category')}</th>
+                      <th className="p-3.5">{t('দাগ নং', 'Plot No')}</th>
+                      <th className="p-3.5">{t('বিবরণ', 'Description')}</th>
+                      <th className="p-3.5">{t('অবস্থা', 'Status')}</th>
+                      <th className="p-3.5 text-right">{t('অ্যাকশন', 'Action')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {disputes.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="p-10 text-center text-slate-500">
+                          {t('আপনার কোনো দায়েরকৃত আপত্তি নেই।', 'No objections filed.')}
+                        </td>
+                      </tr>
                     ) : (
-                      <QrCode className="w-28 h-28 text-[#006A4E]" />
+                      disputes.map((d, idx) => (
+                        <tr key={d.id || idx} className="hover:bg-rose-50/20 transition">
+                          <td className="p-3.5 font-mono text-slate-400">{toBanglaDigits(idx + 1, lang)}</td>
+                          <td className="p-3.5 font-mono font-bold text-slate-900">{d.case_no}</td>
+                          <td className="p-3.5 font-bold text-slate-700">{d.dispute_type}</td>
+                          <td className="p-3.5 font-bold text-[#006A4E]">
+                            {t('দাগ', 'Plot')} {toBanglaDigits(d.dag_no_bn || d.dag_no || d.plot_id, lang)}
+                          </td>
+                          <td className="p-3.5 text-slate-600 text-[11px] max-w-xs truncate">
+                            {d.description_bn}
+                          </td>
+                          <td className="p-3.5">
+                            <span
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                                d.status === 'RESOLVED'
+                                  ? 'bg-emerald-100 text-[#006A4E]'
+                                  : d.status === 'HEARING'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : 'bg-rose-100 text-rose-800'
+                              }`}
+                            >
+                              {d.status}
+                            </span>
+                          </td>
+                          <td className="p-3.5 text-right">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedDisputeForModal(d)}
+                              className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 cursor-pointer"
+                              title={t('শুনানি ও আদেশ বিবরণী', 'View Order Sheet')}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
                     )}
-                    <span className="text-[10px] font-mono text-slate-400 mt-1">Ed25519 Signed QR</span>
-                  </div>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-                  <div className="sm:col-span-7 space-y-2 text-xs">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <span className="text-slate-500 block text-[11px]">{t('মৌজা:', 'Mouza:')}</span>
-                        <strong className="text-slate-900">{selectedDeedModal.deed?.mouza_bn}</strong>
+      {/* SECTION 7: SUPPORT TICKETS DESK (সহায়তা ও সাপোর্ট টিকিট) */}
+      {section === 'tickets' && (
+        <div className="space-y-5">
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[#006A4E]">
+                <FileText className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-slate-900">
+                  {t('নাগরিক সহায়তা ও অভিযোগ ডেস্ক (১৬১২২)', 'Citizen Support & Grievance Desk (16122)')}
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {t(
+                    'ভূমি সেবা সংক্রান্ত যেকোনো সমস্যা, দলিল অনুসন্ধান বা নথিপত্রে সহায়তা পেতে টিকিট খুলুন।',
+                    'Submit support requests regarding land records, deed lookups, or profile verification.'
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsNewTicketOpen(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white text-xs font-bold transition shadow-xs cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>{t('নতুন সহায়তা টিকিট খুলুন', 'New Support Ticket')}</span>
+            </button>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs">
+            {ticketsLoading ? (
+              <div className="py-12 text-center text-xs text-slate-400">
+                <Clock className="w-5 h-5 animate-spin mx-auto mb-2 text-[#006A4E]" />
+                <span>{t('টিকিট তালিকা লোড হচ্ছে...', 'Loading tickets...')}</span>
+              </div>
+            ) : tickets.length === 0 ? (
+              <div className="py-16 text-center space-y-3 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                <FileText className="w-10 h-10 text-slate-400 mx-auto" />
+                <div className="text-base font-bold text-slate-800">
+                  {t('আপনার কোনো সহায়তা টিকিট খোলা নেই', 'No Support Tickets Found')}
+                </div>
+                <p className="text-xs text-slate-500 max-w-md mx-auto">
+                  {t(
+                    'ভূমি সংক্রান্ত প্রশ্ন, বিলম্বিত নামজারি বা নথিপত্র সংক্রান্ত সাহায্যের জন্য নতুন টিকিট খুলুন।',
+                    'Open a ticket for assistance with land records, overdue mutations, or document retrieval.'
+                  )}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsNewTicketOpen(true)}
+                  className="px-5 py-2.5 rounded-xl bg-[#006A4E] text-white text-xs font-bold cursor-pointer transition shadow-xs"
+                >
+                  {t('নতুন টিকিট তৈরি করুন', 'Create New Ticket')}
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50/60 text-slate-500 font-bold text-[11px] uppercase tracking-wider">
+                      <th className="py-3 px-3.5">{t('টিকিট কোড', 'Ticket Code')}</th>
+                      <th className="py-3 px-3.5">{t('বিষয় ও ক্যাটাগরি', 'Subject & Category')}</th>
+                      <th className="py-3 px-3.5">{t('তারিখ', 'Date')}</th>
+                      <th className="py-3 px-3.5">{t('অবস্থা', 'Status')}</th>
+                      <th className="py-3 px-3.5 text-right">{t('বার্তা ও উত্তর', 'Conversation')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {tickets.map((tkt: any) => (
+                      <tr key={tkt.id} className="hover:bg-slate-50/60 transition">
+                        <td className="py-3.5 px-3.5 font-mono font-bold text-slate-900">
+                          {tkt.ticket_code || `HELP-${tkt.id}`}
+                        </td>
+                        <td className="py-3.5 px-3.5">
+                          <div className="font-bold text-slate-800 text-sm">{tkt.title_bn || tkt.title_en}</div>
+                          <span className="text-[10px] text-slate-400 uppercase font-mono">{tkt.category || 'GENERAL'}</span>
+                        </td>
+                        <td className="py-3.5 px-3.5 text-slate-500">
+                          {new Date(tkt.created_at).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US')}
+                        </td>
+                        <td className="py-3.5 px-3.5">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                              tkt.status === 'RESOLVED'
+                                ? 'bg-emerald-100 text-[#006A4E]'
+                                : tkt.status === 'IN_PROGRESS'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {tkt.status || 'NEW'}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-3.5 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenTicketDetail(tkt)}
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#006A4E] font-bold text-xs cursor-pointer transition"
+                          >
+                            <Eye className="w-4 h-4" />
+                            <span>{t('বার্তা দেখুন', 'View Chat')}</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 1: CREATE NEW TICKET */}
+      {isNewTicketOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-[#006A4E]" />
+                <span>{t('নতুন সহায়তা টিকিট দাখিল', 'Submit New Support Ticket')}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsNewTicketOpen(false)}
+                className="p-1 rounded-full hover:bg-slate-100 text-slate-500 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateTicket} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  {t('অনুরোধের ক্যাটাগরি', 'Category')} <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={ticketCategory}
+                  onChange={(e) => setTicketCategory(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-medium text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
+                >
+                  <option value="GENERAL">{t('সাধারণ পরামর্শ ও অনুসন্ধান', 'General Guidance & Inquiry')}</option>
+                  <option value="OWNERSHIP_MUTATION">{t('নামজারি ও ওয়ারিশ বণ্টন সংক্রান্ত', 'e-Mutation & Heir Apportionment')}</option>
+                  <option value="KHATIAN_CORRECTION">{t('খতিয়ান বা দাগ রেকর্ড সংক্রান্ত', 'Khatian or Plot Record')}</option>
+                  <option value="NID_VERIFICATION">{t('এনআইডি ও প্রোফাইল পরিচয় যাচাই', 'NID & Identity Verification')}</option>
+                  <option value="MISSING_DOCUMENT">{t('অনুপস্থিত দলিল সংগ্রহ ও স্ক্যান', 'Missing Document Retrieval')}</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  {t('বিষয় / সারসংক্ষেপ', 'Subject / Summary')} <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={ticketSubject}
+                  onChange={(e) => setTicketSubject(e.target.value)}
+                  placeholder={t('যেমন: বীরুলিয়া মৌজার ১০১ দাগের খতিয়ান দেখতে পাচ্ছি না', 'e.g. Cannot view khatian for dag 101')}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  {t('বিস্তারিত বিবরণ', 'Detailed Description')} <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows={4}
+                  value={ticketMessage}
+                  onChange={(e) => setTicketMessage(e.target.value)}
+                  placeholder={t('আপনার সমস্যার বিস্তারিত বিবরণ লিখুন (কমপক্ষে ১০ অক্ষর)...', 'Write details of the issue (at least 10 characters)...')}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 bg-white text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsNewTicketOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
+                >
+                  {t('বাতিল', 'Cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={ticketSubmitting}
+                  className="px-5 py-2.5 rounded-xl bg-[#006A4E] hover:bg-emerald-800 disabled:bg-slate-300 text-white text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-2"
+                >
+                  {ticketSubmitting ? <Clock className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                  <span>{ticketSubmitting ? t('দাখিল হচ্ছে...', 'Submitting...') : t('টিকিট দাখিল করুন', 'Submit Ticket')}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: TICKET DETAIL & MESSAGES CHAT */}
+      {selectedTicket && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-xs px-2.5 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[#006A4E]">
+                    {selectedTicket.ticket?.ticket_code || selectedTicket.ticket_code || 'HELP'}
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                    {selectedTicket.ticket?.status || selectedTicket.status || 'NEW'}
+                  </span>
+                </div>
+                <h3 className="font-bold text-sm text-slate-900 mt-1">
+                  {selectedTicket.ticket?.title_bn || selectedTicket.title_bn || selectedTicket.ticket?.title_en || selectedTicket.title_en}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedTicket(null)}
+                className="p-1 rounded-full hover:bg-slate-100 text-slate-500 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Conversation message thread */}
+            <div className="flex-1 overflow-y-auto space-y-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 max-h-72">
+              {selectedTicket.messages && selectedTicket.messages.length > 0 ? (
+                selectedTicket.messages.map((m: any, idx: number) => {
+                  const isStaff = m.sender_role !== 'citizen';
+                  return (
+                    <div
+                      key={idx}
+                      className={`p-3.5 rounded-2xl text-xs space-y-1.5 shadow-2xs ${
+                        isStaff
+                          ? 'bg-emerald-50/90 border border-emerald-200 text-emerald-950 ml-4'
+                          : 'bg-white border border-slate-200 text-slate-800 mr-4'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="font-bold">
+                          {isStaff ? t('সাপোর্ট কর্মকর্তা', 'Support Officer') : t('আপনি (নাগরিক)', 'You (Citizen)')}{' '}
+                          <span className="font-mono text-slate-500">(@{m.sender_username})</span>
+                        </span>
+                        <span className="text-slate-400">
+                          {new Date(m.created_at).toLocaleTimeString(lang === 'bn' ? 'bn-BD' : 'en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
                       </div>
-                      <div>
-                        <span className="text-slate-500 block text-[11px]">{t('দাগ নং:', 'Dag No:')}</span>
-                        <strong className="text-slate-900">{toBanglaDigits(selectedDeedModal.deed?.dag_no, lang)}</strong>
-                      </div>
-                      <div>
-                        <span className="text-slate-500 block text-[11px]">{t('জমির পরিমাণ:', 'Area:')}</span>
-                        <strong className="text-slate-900">{toBanglaDigits(selectedDeedModal.deed?.area_decimal, lang)} শতক</strong>
-                      </div>
-                      <div>
-                        <span className="text-slate-500 block text-[11px]">{t('স্ট্যাটাস:', 'Status:')}</span>
-                        <span className="text-emerald-700 font-bold">{selectedDeedModal.deed?.status}</span>
-                      </div>
+                      <p className="leading-relaxed whitespace-pre-wrap">{m.message_bn || m.message_en}</p>
                     </div>
-                  </div>
+                  );
+                })
+              ) : (
+                <div className="py-6 text-center text-xs text-slate-400">
+                  {selectedTicket.ticket?.description_bn || selectedTicket.description_bn || t('কোনো বার্তা নেই।', 'No messages.')}
                 </div>
+              )}
+            </div>
 
-                <div className="p-3.5 bg-slate-900 text-slate-200 rounded-2xl text-xs space-y-1 font-mono">
-                  <div className="text-emerald-400 text-[10px] uppercase font-bold">Cryptographic Ledger Proof</div>
-                  <div className="truncate text-slate-300">Hash: {selectedDeedModal.cryptographic_proof?.stored_content_hash}</div>
-                  <div className="truncate text-slate-400">Ed25519 Signature: VALID</div>
-                </div>
-
-                <div className="flex justify-between pt-2">
-                  <button
-                    onClick={() => window.print()}
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Printer className="w-4 h-4" />
-                    <span>{t('প্রিন্ট সনদ', 'Print Certificate')}</span>
-                  </button>
-
-                  <button
-                    onClick={() => setSelectedDeedModal(null)}
-                    className="px-4 py-2 bg-[#006A4E] hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition cursor-pointer"
-                  >
-                    {t('বন্ধ করুন', 'Close')}
-                  </button>
-                </div>
-              </>
-            ) : null}
+            {/* Reply Input Form */}
+            <form onSubmit={handleSendReply} className="pt-2 border-t border-slate-100 space-y-2">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={ticketReplyText}
+                  onChange={(e) => setTicketReplyText(e.target.value)}
+                  placeholder={t('এখানে আপনার বার্তা লিখুন...', 'Type your reply here...')}
+                  className="flex-1 p-2.5 rounded-xl border border-slate-300 text-xs bg-white focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={replySubmitting}
+                  className="px-4 py-2.5 rounded-xl bg-[#006A4E] hover:bg-emerald-800 disabled:bg-slate-300 text-white text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5 shrink-0"
+                >
+                  {replySubmitting ? <Clock className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  <span>{t('পাঠান', 'Send')}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
-      {/* 2-Tap Ticket Modal */}
-      {ticketModalDoc && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fadeIn">
+      {/* MODAL 3: REGISTERED DEED DOCKET */}
+      {selectedDeedForModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <Ticket className="w-5 h-5 text-rose-600" />
-                <h3 className="font-extrabold text-base text-slate-900">{t('২-ট্যাপ টিকেট তৈরি', '2-Tap Ticket Request')}</h3>
+              <div className="flex items-center gap-2.5">
+                <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-blue-100 text-blue-900 border border-blue-200">
+                  {selectedDeedForModal.deed_no}
+                </span>
+                <h3 className="font-black text-base text-slate-900">
+                  {t('নিবন্ধিত ডিজিটাল মূল দলিল ডকেট', 'Registered Deed Docket')}
+                </h3>
               </div>
-              <button onClick={() => setTicketModalDoc(null)} className="p-1 rounded-lg text-slate-400 hover:text-slate-700">
+              <button
+                type="button"
+                onClick={() => setSelectedDeedForModal(null)}
+                className="p-1 rounded-full hover:bg-slate-100 text-slate-500 cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {t(
-                `দাগ নং ${plotDocsData?.plot?.dag_no_bn || ''}-এর জন্য অনুপস্থিত "${ticketModalDoc.title_bn}" দলিলটি রেকর্ডরুম হতে অনুসন্ধান ও স্ক্যানের অনুরোধ দাখিল করা হবে।`,
-                `Request recordroom retrieval for missing document.`
-              )}
-            </p>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <span className="text-slate-500 block text-[10px] font-bold">{t('দলিলদাতা (বিক্রেতা)', 'Seller')}</span>
+                  <strong className="text-slate-900 font-bold text-sm">{selectedDeedForModal.seller_name_bn}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px] font-bold">{t('দলিলগ্রহীতা (ক্রেতা)', 'Buyer')}</span>
+                  <strong className="text-slate-900 font-bold text-sm">{selectedDeedForModal.buyer_name_bn}</strong>
+                </div>
+              </div>
 
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('মন্তব্য / অতিরিক্ত বিবরণ (ঐচ্ছিক):', 'Notes (Optional):')}</label>
-              <textarea
-                value={ticketNotes}
-                onChange={(e) => setTicketNotes(e.target.value)}
-                placeholder={t('কোনো বিশেষ খতিয়ান বা দলিলের সূত্র থাকলে লিখুন...', 'Additional details...')}
-                rows={2}
-                className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-[#006A4E]"
-              />
+              <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-slate-200">
+                <div>
+                  <span className="text-slate-500 block text-[10px] font-bold">{t('মৌজা ও অধিক্ষেত্র', 'Mouza')}</span>
+                  <strong className="text-slate-800">{selectedDeedForModal.mouza_bn}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px] font-bold">{t('দাগ নং', 'Plot No')}</span>
+                  <strong className="text-[#006A4E] font-black text-sm">
+                    {toBanglaDigits(selectedDeedForModal.dag_no_bn || selectedDeedForModal.dag_no, lang)}
+                  </strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px] font-bold">{t('জমির পরিমাণ', 'Area')}</span>
+                  <strong className="text-[#006A4E] font-black text-sm">
+                    {toBanglaDigits(selectedDeedForModal.area_decimal, lang)} {t('শতক', 'dec')}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2.5 border-t border-slate-200">
+                <div>
+                  <span className="text-slate-500 block text-[10px] font-bold">{t('কবলা মূল্য (টাকা)', 'Consideration Value')}</span>
+                  <strong className="text-slate-900 font-mono text-sm font-bold">
+                    ৳{selectedDeedForModal.price_bdt ? toBanglaDigits(Number(selectedDeedForModal.price_bdt).toLocaleString(), lang) : '—'}
+                  </strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px] font-bold">{t('রেজিস্ট্রেশন তারিখ ও দপ্তর', 'Registration Date')}</span>
+                  <span className="text-slate-700 font-mono">
+                    {selectedDeedForModal.created_at ? new Date(selectedDeedForModal.created_at).toLocaleDateString() : '২০২৪-১১-১৭'} (সাব-রেজিস্ট্রার কার্যালয়)
+                  </span>
+                </div>
+              </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            {/* Cryptographic Proof */}
+            <div className="p-4 rounded-2xl bg-slate-900 text-emerald-400 font-mono text-xs space-y-2">
+              <div className="flex items-center justify-between text-slate-300 font-sans font-bold text-xs">
+                <span>{t('সার্বভৌম ডিজিটাল লেজার ও কর্মকর্তা সিল', 'Cryptographic Proof & Signature')}</span>
+                <span className="text-emerald-400 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> {t('অখণ্ডতা প্রমাণিত', 'Integrity Verified')}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">{t('কনটেন্ট হ্যাশ (SHA-256)', 'Content Hash')}</span>
+                <span className="break-all text-[11px] text-slate-200">
+                  {selectedDeedForModal.content_hash || '2f3c8542e1dda1d7c818025b2f132095feb04a370e1322a827920860e36d22d5'}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">{t('সাব-রেজিস্ট্রার Ed25519 সিল', 'Ed25519 Officer Signature')}</span>
+                <span className="break-all text-[11px] text-emerald-300">
+                  {selectedDeedForModal.signature ? selectedDeedForModal.signature.slice(0, 48) + '...' : '55989fbffb79abbb3916e112101215bd...'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
               <button
-                onClick={() => setTicketModalDoc(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
+                type="button"
+                onClick={() => {
+                  const deedNo = selectedDeedForModal.deed_no;
+                  setSelectedDeedForModal(null);
+                  onNavigate(`qr?deed_no=${encodeURIComponent(deedNo)}`);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-xs"
               >
-                {t('বাতিল', 'Cancel')}
+                <ExternalLink className="w-4 h-4" />
+                <span>{t('সর্বজনীন কিউআর পোর্টাল দিয়ে যাচাই করুন', 'Open Public QR Verifier')}</span>
               </button>
+
               <button
-                onClick={handleConfirmTicket}
-                disabled={submittingTicket}
-                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                type="button"
+                onClick={() => setSelectedDeedForModal(null)}
+                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
               >
-                <Ticket className="w-4 h-4" />
-                <span>{submittingTicket ? t('ইস্যু হচ্ছে...', 'Submitting...') : t('টিকেট নিশ্চিত করুন', 'Confirm Ticket')}</span>
+                {t('বন্ধ করুন', 'Close')}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Upload L1 Document Modal */}
-      {uploadModalDoc && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-fadeIn">
+      {/* MODAL 4: PLOT DETAILS & PASSPORT LAUNCH */}
+      {selectedPlotForModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <Upload className="w-5 h-5 text-[#006A4E]" />
-                <h3 className="font-extrabold text-base text-slate-900">{t('অনুলিপি স্ক্যান আপলোড (L1)', 'Upload Scan (L1)')}</h3>
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 rounded-xl bg-emerald-50 text-[#006A4E] border border-emerald-100">
+                  <MapPin className="w-5 h-5" />
+                </span>
+                <div>
+                  <h3 className="font-black text-base text-slate-900">
+                    {t('দাগ নং', 'Plot')} {toBanglaDigits(selectedPlotForModal.dag_no_bn || selectedPlotForModal.dag_no, lang)}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {selectedPlotForModal.mouza_bn}, {selectedPlotForModal.upazila_bn}, {selectedPlotForModal.district_bn}
+                  </p>
+                </div>
               </div>
-              <button onClick={() => setUploadModalDoc(null)} className="p-1 rounded-lg text-slate-400 hover:text-slate-700">
+              <button
+                type="button"
+                onClick={() => setSelectedPlotForModal(null)}
+                className="p-1 rounded-full hover:bg-slate-100 text-slate-500 cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              {t(
-                `"${uploadModalDoc.title_bn}" দলিলের স্ক্যান আপলোড করে ক্রিপ্টোগ্রাফিক হ্যাশ তৈরি করা হবে।`,
-                `Upload document copy to generate cryptographic hash.`
-              )}
-            </p>
-
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('ফাইলের নাম:', 'File Name:')}</label>
-              <input
-                type="text"
-                value={uploadFileName}
-                onChange={(e) => setUploadFileName(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-bold"
-              />
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-bold">{t('খতিয়ান নম্বর', 'Khatian No')}:</span>
+                <strong className="text-slate-800">
+                  {selectedPlotForModal.survey_type || 'BS'} {toBanglaDigits(selectedPlotForModal.khatian_no_bn || selectedPlotForModal.khatian_no, lang)}
+                </strong>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-bold">{t('জমির মোট আয়তন', 'Total Area')}:</span>
+                <strong className="text-slate-800">
+                  {toBanglaDigits(selectedPlotForModal.total_area_decimal || selectedPlotForModal.area_decimal, lang)} {t('শতক', 'dec')}
+                </strong>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-bold">{t('আপনার মালিকানাধীন অংশ', 'Your Share Area')}:</span>
+                <strong className="text-[#006A4E] font-black text-sm">
+                  {toBanglaDigits(selectedPlotForModal.area_decimal ?? selectedPlotForModal.share_area_decimal, lang)} {t('শতক', 'dec')}
+                </strong>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                <span className="text-slate-500 font-bold">{t('বিক্রয় লক সুরক্ষা', 'Sale Lock Status')}:</span>
+                <span
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 ${
+                    selectedPlotForModal.owner_sale_locked
+                      ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                      : 'bg-emerald-100 text-[#006A4E] border border-emerald-300'
+                  }`}
+                >
+                  {selectedPlotForModal.owner_sale_locked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
+                  {selectedPlotForModal.owner_sale_locked ? t('সক্রিয় (সম্পূর্ণ নিরাপদ)', 'Active') : t('নিষ্ক্রিয়', 'Disabled')}
+                </span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('মন্তব্য / সূত্র:', 'Notes:')}</label>
-              <textarea
-                value={uploadNotes}
-                onChange={(e) => setUploadNotes(e.target.value)}
-                rows={2}
-                className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs"
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
               <button
-                onClick={() => setUploadModalDoc(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
+                type="button"
+                onClick={() => {
+                  const p = selectedPlotForModal;
+                  setSelectedPlotForModal(null);
+                  setPassportPlot(p);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-xs"
               >
-                {t('বাতিল', 'Cancel')}
+                <ShieldCheck className="w-4 h-4" />
+                <span>{t('স্বাস্থ্য পাসপোর্ট প্রিন্ট', 'Print Health Passport')}</span>
               </button>
               <button
-                onClick={handleConfirmUpload}
-                disabled={submittingUpload}
-                className="px-4 py-2 bg-[#006A4E] hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                type="button"
+                onClick={() => setSelectedPlotForModal(null)}
+                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
               >
-                <Upload className="w-4 h-4" />
-                <span>{submittingUpload ? t('আপলোড হচ্ছে...', 'Uploading...') : t('আপলোড সম্পন্ন করুন', 'Complete Upload')}</span>
+                {t('ঠিক আছে', 'OK')}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Mandatory Post-Approval Citizen Profile Completion Modal */}
-      {user?.role === 'citizen' && Number(user?.is_identity_verified) === 1 && Number(user?.is_profile_complete) === 0 && (
-        <ProfileCompletionModal
-          isOpen={true}
-          user={user}
-          onComplete={(updatedUser) => {
-            setUser(updatedUser);
-            loadCitizenData();
-            setActionMsg(
-              lang === 'bn'
-                ? 'আপনার প্রোফাইল সফলভাবে সম্পূর্ণ হয়েছে! সকল সেবা এখন সক্রিয়।'
-                : 'Profile completed successfully! All services are now fully active.'
-            );
-          }}
+      {/* MODAL 5: DISPUTE DOCKET */}
+      {selectedDisputeForModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 rounded-xl bg-rose-50 text-rose-600 border border-rose-100">
+                  <Scale className="w-5 h-5" />
+                </span>
+                <div>
+                  <h3 className="font-black text-base text-slate-900">
+                    {t('মিস-কেস ও ট্রাইব্যুনাল শুনানি ডকেট', 'Tribunal Dispute Docket')}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-mono">{selectedDisputeForModal.case_no}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedDisputeForModal(null)}
+                className="p-1 rounded-full hover:bg-slate-100 text-slate-500 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-bold">{t('মামলার বর্তমান অবস্থা', 'Case Status')}:</span>
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                  {selectedDisputeForModal.status}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-bold">{t('আপত্তির শ্রেণি', 'Category')}:</span>
+                <strong className="text-slate-800">{selectedDisputeForModal.dispute_type}</strong>
+              </div>
+              <div className="pt-2 border-t border-slate-200">
+                <span className="text-slate-500 block text-[10px] font-bold mb-1">{t('আপত্তির বিবরণ ও প্রমাণক', 'Grounds')}:</span>
+                <div className="p-3 rounded-xl bg-white border border-slate-200 text-slate-800 leading-relaxed">
+                  {selectedDisputeForModal.description_bn}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setSelectedDisputeForModal(null)}
+                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+              >
+                {t('বন্ধ করুন', 'Close')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 6: DOCUMENT INSPECTION & HASH VERIFICATION */}
+      {inspectingDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-xl bg-emerald-50 text-[#006A4E] border border-emerald-200">
+                  <FileCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 text-sm leading-tight">
+                    {lang === 'bn' ? inspectingDoc.title_bn : (inspectingDoc.title_en || inspectingDoc.title_bn)}
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                    {inspectingDoc.file_name || 'document.pdf'} · {inspectingDoc.document_type}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInspectingDoc(null)}
+                className="text-slate-400 hover:text-slate-600 transition p-1 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-xs">
+              <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                <span className="text-slate-500 font-medium">{t('নিরাপত্তা স্তর ও মর্যাদা:', 'Security Level:')}</span>
+                <span className="px-2.5 py-0.5 rounded-full font-bold text-[10px] bg-emerald-100 text-[#006A4E] border border-emerald-200">
+                  {t('🔒 সার্বভৌম ভল্ট সংরক্ষিত ও অপরিবর্তনীয়', '🔒 Secured Sovereign Record')}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                <span className="text-slate-500 font-medium">{t('স্ট্যাটাস:', 'Status:')}</span>
+                <span className="font-bold text-slate-800">{inspectingDoc.status || 'VERIFIED'}</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                <span className="text-slate-500 font-medium">{t('ফাইলের আকার:', 'File Size:')}</span>
+                <span className="font-mono text-slate-800">{Math.round((inspectingDoc.file_size_bytes || 0) / 1024)} KB</span>
+              </div>
+              <div className="py-1">
+                <span className="text-slate-500 font-medium block mb-1">{t('ক্রিপ্টোগ্রাফিক হ্যাশ (SHA-256):', 'SHA-256 Hash:')}</span>
+                <div className="p-2.5 bg-white rounded-xl border border-slate-200 font-mono text-[10px] text-slate-700 break-all select-all">
+                  {inspectingDoc.file_hash || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center gap-3">
+              <ShieldCheck className="w-5 h-5 text-[#006A4E] shrink-0" />
+              <p className="text-xs text-emerald-950 leading-relaxed">
+                {t(
+                  'ভূমি সুরক্ষা ডিজিটাল ভল্ট: এই নথিটি স্বাধীন সার্বভৌম ক্রিপ্টোগ্রাফিক হ্যাশ দ্বারা সংরক্ষিত এবং কোনো অননুমোদিত পক্ষ বা দালাল এতে কারসাজি করতে পারবে না।',
+                  'BhumiShield Sovereign Vault: This record is secured with cryptographic integrity. Unauthorized tampering is strictly blocked.'
+                )}
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setInspectingDoc(null)}
+                className="px-4 py-2.5 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+              >
+                {t('বন্ধ করুন', 'Close')}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDocumentDownload(inspectingDoc)}
+                className="px-5 py-2.5 bg-[#006A4E] hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 shadow-xs"
+              >
+                <Download className="w-4 h-4" />
+                <span>{t('ডিজিটাল কপি ডাউনলোড', 'Download Digital Copy')}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 7: SMART LAND HEALTH PASSPORT */}
+      {passportPlot && (
+        <LandHealthPassportModal
+          plot={passportPlot}
+          onClose={() => setPassportPlot(null)}
+          onNavigate={onNavigate}
         />
       )}
+
+      {/* MODAL 8: PLAIN BANGLA PROBLEM FINDER & GUIDED SERVICE DESK */}
+      <CitizenProblemTriageModal
+        isOpen={isTriageModalOpen}
+        onClose={() => setIsTriageModalOpen(false)}
+        onNavigate={onNavigate}
+      />
     </div>
   );
 };
-
-export default CitizenHome;

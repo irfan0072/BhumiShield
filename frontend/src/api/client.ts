@@ -101,6 +101,196 @@ export interface ServiceFeeItem {
   updated_at: string;
 }
 
+export interface HierarchyMouzaItem {
+  division_bn?: string; division_en?: string; district_bn?: string; district_en?: string; upazila_bn?: string; upazila_en?: string;
+  id: number;
+  mouza_bn: string;
+  mouza_en: string;
+  jl_no: string;
+  latitude: number | null;
+  longitude: number | null;
+  plots_count: number;
+}
+
+export interface HierarchyUpazilaItem {
+  upazila_bn: string;
+  upazila_en: string;
+  mouzas_count: number;
+  plots_count: number;
+  mouzas: HierarchyMouzaItem[];
+}
+
+export interface HierarchyDistrictItem {
+  district_bn: string;
+  district_en: string;
+  upazilas_count: number;
+  mouzas_count: number;
+  plots_count: number;
+  upazilas: HierarchyUpazilaItem[];
+}
+
+export interface HierarchyDivisionItem {
+  division_bn: string;
+  division_en: string;
+  districts_count: number;
+  upazilas_count: number;
+  mouzas_count: number;
+  plots_count: number;
+  districts: HierarchyDistrictItem[];
+}
+
+export interface AdminDeedItem {
+  id: number;
+  deed_code: string;
+  deed_no: string;
+  deed_type: string;
+  status: string;
+  is_flagged_admin: number;
+  flag_reason_bn: string | null;
+  share_fraction: string;
+  area_decimal: number;
+  price_bdt: number;
+  chain_index: number;
+  content_hash: string;
+  prev_hash: string;
+  signature: string;
+  registered_by: string;
+  created_at: string;
+  mouza_bn: string;
+  mouza_en: string;
+  jl_no: string;
+  upazila_bn: string;
+  district_bn: string;
+  division_bn: string;
+  dag_no: string;
+  land_type: string;
+  seller_name_bn: string;
+  seller_nid: string;
+  seller_phone: string;
+  buyer_name_bn: string;
+  buyer_nid: string;
+  buyer_phone: string;
+  is_mutated: boolean;
+  mutation_case_no?: string;
+  dispute_count: number;
+  ledger_valid: boolean;
+}
+
+export interface AdminDeedsResponse {
+  items: AdminDeedItem[];
+  total: number;
+  page: number;
+  per_page: number;
+  kpis: {
+    total_deeds: number;
+    total_volume_bdt: number;
+    mutated_deeds: number;
+    flagged_deeds: number;
+    registered_deeds: number;
+  };
+}
+
+export interface AdminDeedDetailResponse {
+  deed: any;
+  seller: any;
+  buyer: any;
+  plot: any;
+  location: any;
+  verification: {
+    is_valid: boolean;
+    hash_valid: boolean;
+    signature_valid: boolean;
+    stored_hash: string;
+    recomputed_hash: string;
+    prev_hash: string;
+    chain_index: number;
+  };
+  history: {
+    khatians: any[];
+    mutations: any[];
+    mortgages: any[];
+    disputes: any[];
+    audit_logs: any[];
+  };
+}
+
+export interface AdminAnomalyItem {
+  id: string;
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM';
+  type: string;
+  title_bn: string;
+  title_en: string;
+  description_bn: string;
+  created_at: string;
+  plot_id?: number;
+  deed_id?: number;
+}
+
+export interface AdminAnomaliesResponse {
+  total_anomalies: number;
+  critical_count: number;
+  high_count: number;
+  medium_count: number;
+  items: AdminAnomalyItem[];
+}
+
+export interface EmergencyBroadcastState {
+  is_active: boolean;
+  message_bn: string;
+  message_en: string;
+  level: 'URGENT' | 'WARNING' | 'INFO';
+  updated_at?: string | null;
+  updated_by?: string;
+}
+
+export interface DatabaseBackupResponse {
+  status: string;
+  backup_filename: string;
+  file_size_bytes: number;
+  file_size_kb: number;
+  sha256_checksum: string;
+  total_tables: number;
+  plots_count: number;
+  deeds_count: number;
+  users_count: number;
+  generated_at: string;
+  backup_path: string;
+  message_bn: string;
+  message_en: string;
+}
+
+export interface LedgerHealthCheckResponse {
+  is_valid: boolean;
+  status: 'HEALTHY' | 'COMPROMISED';
+  total_blocks_checked: number;
+  verified_at: string;
+  verification_time_ms: number;
+  genesis_hash: string;
+  latest_block_hash: string;
+  details: any;
+  message_bn: string;
+  message_en: string;
+}
+
+export interface TogglePlotFreezeResponse {
+  status: string;
+  plot_id: number;
+  is_admin_frozen: boolean;
+  admin_freeze_reason?: string | null;
+  message_bn: string;
+  message_en: string;
+}
+
+export interface TransferOfficerResponse {
+  status: string;
+  user_id: number;
+  previous_office: string;
+  new_office: string;
+  message_bn: string;
+  message_en: string;
+}
+
+
 export interface Finding {
   rule_code: string;
   severity: 'SAFE' | 'WARNING' | 'HIGH';
@@ -435,8 +625,8 @@ export const BhumiApi = {
     api.post('/auth/login', { username, password }).then((r) => {
       const u = r.data.user;
       if (u) {
-        u.nid_mock = u.nid || u.nid_mock || '9900001001';
-        u.phone_mock = u.phone_dummy || u.phone_mock || '01700-001001';
+        u.nid_mock = u.nid || u.nid_mock || '';
+        u.phone_mock = u.phone_dummy || u.phone_mock || '';
         u.office_name = u.office_bn || u.office_name || '';
       }
       return r.data;
@@ -445,8 +635,8 @@ export const BhumiApi = {
     api.post('/auth/register', payload).then((r) => {
       const u = r.data.user;
       if (u) {
-        u.nid_mock = u.nid || u.nid_mock || '9900001001';
-        u.phone_mock = u.phone_dummy || u.phone_mock || '01700-001001';
+        u.nid_mock = u.nid || u.nid_mock || '';
+        u.phone_mock = u.phone_dummy || u.phone_mock || '';
         u.office_name = u.office_bn || u.office_name || '';
       }
       return r.data;
@@ -467,8 +657,8 @@ export const BhumiApi = {
     api.post('/auth/switch-demo-role', { role }).then((r) => {
       const u = r.data.user;
       if (u) {
-        u.nid_mock = u.nid || u.nid_mock || '9900001001';
-        u.phone_mock = u.phone_dummy || u.phone_mock || '01700-001001';
+        u.nid_mock = u.nid || u.nid_mock || '';
+        u.phone_mock = u.phone_dummy || u.phone_mock || '';
         u.office_name = u.office_bn || u.office_name || '';
       }
       return r.data;
@@ -495,6 +685,9 @@ export const BhumiApi = {
   updateSettings: (settings: Record<string, string>) =>
     api.put('/settings', { settings }).then((r) => r.data),
   getStatsSummary: () => api.get('/analytics/summary').then((r) => r.data),
+  getDocumentSecurityConfig: () => api.get('/document-security-config').then((r) => r.data),
+  updateDocumentSecurityConfig: (payload: any) =>
+    api.post('/admin/document-security-config', payload).then((r) => r.data),
 
   // Citizen Vault, Sale Lock & Disputes
   getMyVault: (nid?: string) =>
@@ -504,7 +697,7 @@ export const BhumiApi = {
         found: true,
         person: {
           ...data.person,
-          nid_mock: data.person?.nid || data.person?.nid_mock || '9900001001',
+          nid_mock: data.person?.nid || data.person?.nid_mock || '',
         },
         owned_plots: (data.owned_plots || []).map((op: any) => ({
           ...op,
@@ -569,6 +762,9 @@ export const BhumiApi = {
       const items = r.data.items || r.data || [];
       return items.map((k: any) => ({
         ...k,
+        area_rs: k.total_area_decimal ?? k.recorded_area_decimal,
+        area_bs: k.recorded_area_decimal ?? k.total_area_decimal,
+        area_decimal: k.total_area_decimal ?? k.recorded_area_decimal,
         reconcile_status: k.status,
         anomaly_note_bn: k.remarks_bn || '',
         anomaly_note_en: k.remarks_en || '',
@@ -677,6 +873,10 @@ export const BhumiApi = {
       },
     });
     return normalizeRiskBundle(r.data);
+  },
+  citizenCheckBeforeYouBuy: async (plotCodeOrId: number | string) => {
+    const res = await api.get(`/plots/${plotCodeOrId}/check-before-you-buy`);
+    return res.data;
   },
   verifyDeedByCode: (deedNo: string, hashPrefix?: string | null) =>
     api
@@ -790,7 +990,7 @@ export const BhumiApi = {
       const items = r.data.items || r.data || [];
       return items.map((m: any) => ({
         ...m,
-        share_fraction: m.share_fraction || '1/2',
+        share_fraction: m.share_fraction || '',
         decision_note_bn: m.decision_reason_bn || '',
       }));
     }),
@@ -801,6 +1001,23 @@ export const BhumiApi = {
         reason_bn: decision_note_bn,
       })
       .then((r) => r.data),
+  applyMutation: (data: {
+    plot_id: number;
+    mutation_type?: 'SUCCESSION' | 'SALE' | 'HEBA';
+    seller_id?: number;
+    buyer_id?: number;
+    area_decimal?: number;
+    heirs?: Array<{
+      name_bn: string;
+      relation: string;
+      fraction: string;
+      share_percent: number;
+      area_decimal: number;
+      nid?: string;
+    }>;
+    documents_note?: string;
+    notes_bn?: string;
+  }) => api.post('/mutations/apply', data).then((r) => r.data),
   getMortgages: () =>
     api.get('/mortgages').then((r) => {
       const items = r.data.items || r.data || [];
@@ -896,7 +1113,7 @@ export const BhumiApi = {
     api.get(`/plots/${plotCodeOrId}/documents`).then((r) => r.data),
   uploadPlotDocument: (plotCodeOrId: string | number, data: { doc_type: string; document_no?: string; notes_bn?: string; file_name?: string }): Promise<any> =>
     api.post(`/plots/${plotCodeOrId}/documents`, data).then((r) => r.data),
-  requestMissingDocument: (plotCodeOrId: string | number, data: { doc_type: string; notes_bn?: string }): Promise<any> =>
+  requestMissingDocument: (plotCodeOrId: string | number, data: { doc_type?: string; document_type?: string; notes_bn?: string; title_bn?: string; title_en?: string; priority?: string }): Promise<any> =>
     api.post(`/plots/${plotCodeOrId}/request-missing-document`, data).then((r) => r.data),
 
   // 13-Step Transfer State Machine (Phase 4)
@@ -914,6 +1131,18 @@ export const BhumiApi = {
     api.get('/tickets', { params: query }).then((r) => r.data),
   getTicket: (codeOrId: string | number): Promise<any> =>
     api.get(`/tickets/${codeOrId}`).then((r) => r.data),
+  createTicket: (data: { title: string; message: string; priority?: string; category?: string }): Promise<any> =>
+    api.post('/tickets', data).then((r) => r.data),
+  replyTicket: (codeOrId: string | number, data: { message: string; status?: string; internal_note?: boolean }): Promise<any> =>
+    api.post(`/tickets/${codeOrId}/messages`, data).then((r) => r.data),
+
+  // Content & Moderation Workflows (R08)
+  listManagedContent: (query?: { kind?: string }): Promise<any> =>
+    api.get('/manage/content', { params: query }).then((r) => r.data),
+  saveManagedContent: (data: any, id?: number): Promise<any> =>
+    id ? api.put(`/manage/content/${id}`, data).then((r) => r.data) : api.post('/manage/content', data).then((r) => r.data),
+  transitionManagedContent: (id: number, data: { kind?: string; status: string }): Promise<any> =>
+    api.post(`/manage/content/${id}/status`, data).then((r) => r.data),
 
   // Institutional Public Registers & Blog (Phase 3 & Tier B)
   listOffices: (query?: any): Promise<any[]> =>
@@ -983,8 +1212,10 @@ export const BhumiApi = {
     api.get(`/onboarding/batches/${idOrBatchNo}`).then((r) => r.data),
   createOnboardingBatch: (data: { record_type: string; items: any[]; [key: string]: any }): Promise<any> =>
     api.post('/onboarding/batches', data).then((r) => r.data),
-  decideOnboardingBatch: (idOrBatchNo: string | number, decision: 'APPROVED' | 'REJECTED', officer_note?: string): Promise<any> =>
-    api.post(`/onboarding/batches/${idOrBatchNo}/decide`, { decision, officer_note }).then((r) => r.data),
+  decideOnboardingBatch: (idOrBatchNo: string | number, decision: 'APPROVED' | 'REJECTED' | 'RETURNED', notes_bn?: string): Promise<any> =>
+    api.post(`/onboarding/batches/${idOrBatchNo}/decide`, { decision, notes_bn, reason_bn: notes_bn }).then((r) => r.data),
+  resubmitOnboardingBatch: (idOrBatchNo: string | number, data: { items: any[]; notes_bn?: string }): Promise<any> =>
+    api.post(`/onboarding/batches/${idOrBatchNo}/resubmit`, data).then((r) => r.data),
 
   // Appellate Review Mirror & Legal Roles (Tier C Section 8.8)
   listAppeals: (params?: { status?: string }): Promise<any[]> =>
@@ -1024,5 +1255,182 @@ export const BhumiApi = {
     api.post('/payments/initiate', data).then((r) => r.data),
   verifyPayment: (paymentId: string): Promise<{ payment_id: string; status: string; transaction_trx_id: string; amount_bdt: number; receipt_no: string; paid_at: string }> =>
     api.post(`/payments/verify/${encodeURIComponent(paymentId)}`).then((r) => r.data),
+
+  // Address & Hierarchy CRUD (Division -> District -> Upazila -> Mouza)
+  getHierarchyTree: (): Promise<HierarchyDivisionItem[]> =>
+    api.get('/hierarchy/tree').then((r) => r.data.tree || r.data.items || (Array.isArray(r.data) ? r.data : [])),
+  getHierarchyDivisions: (): Promise<any[]> =>
+    api.get('/hierarchy/divisions').then((r) => r.data.items || r.data || []),
+  getHierarchyDistricts: (division_bn?: string): Promise<any[]> =>
+    api.get('/hierarchy/districts', { params: division_bn ? { division_bn } : {} }).then((r) => r.data.items || r.data || []),
+  getHierarchyUpazilas: (division_bn?: string, district_bn?: string): Promise<any[]> =>
+    api.get('/hierarchy/upazilas', { params: { division_bn, district_bn } }).then((r) => r.data.items || r.data || []),
+  getHierarchyMouzas: (division_bn?: string, district_bn?: string, upazila_bn?: string): Promise<any[]> =>
+    api.get('/hierarchy/mouzas', { params: { division_bn, district_bn, upazila_bn } }).then((r) => r.data.items || r.data || []),
+  createHierarchyMouza: (data: {
+    division_bn: string;
+    division_en?: string;
+    district_bn: string;
+    district_en?: string;
+    upazila_bn: string;
+    upazila_en?: string;
+    mouza_bn: string;
+    mouza_en?: string;
+    jl_no: string;
+    latitude?: number;
+    longitude?: number;
+  }): Promise<{ message_bn: string; message_en: string; item: any }> =>
+    api.post('/admin/hierarchy/mouza', data).then((r) => r.data),
+  updateHierarchyMouza: (
+    id: number,
+    data: {
+      division_bn: string;
+      division_en?: string;
+      district_bn: string;
+      district_en?: string;
+      upazila_bn: string;
+      upazila_en?: string;
+      mouza_bn: string;
+      mouza_en?: string;
+      jl_no: string;
+      latitude?: number;
+      longitude?: number;
+    }
+  ): Promise<{ message_bn: string; message_en: string; item: any }> =>
+    api.put(`/admin/hierarchy/mouza/${id}`, data).then((r) => r.data),
+  deleteHierarchyMouza: (id: number): Promise<{ message_bn: string; message_en: string }> =>
+    api.delete(`/admin/hierarchy/mouza/${id}`).then((r) => r.data),
+  renameHierarchyTier: (data: {
+    tier: 'DIVISION' | 'DISTRICT' | 'UPAZILA';
+    old_bn: string;
+    new_bn: string;
+    new_en?: string;
+  }): Promise<{ message_bn: string; message_en: string; updated_count: number }> =>
+    api.post('/admin/hierarchy/rename', data).then((r) => r.data),
+
+  // Super Admin Deed Ledger & Actionable Supervision Endpoints
+  listAdminDeeds: (params?: {
+    q?: string;
+    status?: string;
+    deed_type?: string;
+    division_bn?: string;
+    district_bn?: string;
+    upazila_bn?: string;
+    mouza_id?: number | string;
+    date_from?: string;
+    date_to?: string;
+    page?: number;
+    per_page?: number;
+  }): Promise<AdminDeedsResponse> =>
+    api.get('/admin/deeds', { params }).then((r) => r.data),
+  getAdminDeedDetail: (id: number): Promise<AdminDeedDetailResponse> =>
+    api.get(`/admin/deeds/${id}`).then((r) => r.data),
+  flagAdminDeed: (
+    id: number,
+    data: { action: 'HOLD' | 'CLEAR'; flag_reason_bn: string }
+  ): Promise<{ message_bn: string; message_en: string; deed_id: number; is_flagged_admin: number }> =>
+    api.post(`/admin/deeds/${id}/flag`, data).then((r) => r.data),
+
+  // Super Admin Power Tools
+  toggleAdminPlotFreeze: (
+    plotId: number,
+    data: { is_frozen: boolean; reason?: string }
+  ): Promise<TogglePlotFreezeResponse> =>
+    api.post(`/admin/plots/${plotId}/toggle-freeze`, data).then((r) => r.data),
+
+  getLiveAnomalies: (): Promise<AdminAnomaliesResponse> =>
+    api.get('/admin/anomalies').then((r) => r.data),
+
+  transferOfficer: (
+    userId: number,
+    data: { new_office_id: number; transfer_order_ref?: string; notes?: string }
+  ): Promise<TransferOfficerResponse> =>
+    api.post(`/admin/users/${userId}/transfer-office`, data).then((r) => r.data),
+
+  getEmergencyBroadcast: (): Promise<EmergencyBroadcastState> =>
+    api.get('/system/broadcast').then((r) => r.data),
+
+  updateEmergencyBroadcast: (
+    data: { is_active: boolean; message_bn: string; message_en: string; level: 'URGENT' | 'WARNING' | 'INFO' }
+  ): Promise<EmergencyBroadcastState & { message_bn: string; message_en: string }> =>
+    api.post('/admin/system/broadcast', data).then((r) => r.data),
+
+  exportDatabaseBackup: (): Promise<DatabaseBackupResponse> =>
+    api.get('/admin/database/backup').then((r) => r.data),
+
+  runLedgerHealthCheck: (): Promise<LedgerHealthCheckResponse> =>
+    api.post('/admin/ledger/health-check').then((r) => r.data),
+
+  // Super Admin Workspace Endpoints
+  getSuperAdminDashboardStats: (): Promise<{
+    status: number;
+    counts: Record<string, number>;
+    queues: Record<string, { label_bn: string; count: number; items: any[] }>;
+    timestamp: string;
+  }> =>
+    api.get('/admin/dashboard-stats').then((r) => r.data),
+
+  reassignTransfer: (
+    transferId: number,
+    data: {
+      assigned_to_user_id?: number;
+      assigned_to_name?: string;
+      assigned_office_id?: number;
+      assigned_office_bn?: string;
+      reason_bn?: string;
+    }
+  ): Promise<{ status: number; message_bn: string; message_en: string; assigned_to_name: string; assigned_office_bn: string }> =>
+    api.post(`/admin/transfers/${transferId}/reassign`, data).then((r) => r.data),
+
+  requestTransferCorrection: (
+    transferId: number,
+    data: { reason_bn: string }
+  ): Promise<{ status: number; message_bn: string; message_en: string; correction_notes_bn: string }> =>
+    api.post(`/admin/transfers/${transferId}/correction-request`, data).then((r) => r.data),
+
+  performAdminOverride: (data: {
+    target_type: string;
+    target_id: string;
+    reason_bn: string;
+    evidence_reference: string;
+    confirmation: boolean;
+  }): Promise<{ status: number; message_bn: string; message_en: string; target_type: string; target_id: string; before_state: any; after_state: any }> =>
+    api.post('/admin/override-action', data).then((r) => r.data),
+
+  listAcquisitionCases: (params?: {
+    q?: string;
+    status?: string;
+    district?: string;
+    upazila?: string;
+  }): Promise<{ status: number; items: any[]; total: number }> =>
+    api.get('/admin/acquisition/cases', { params }).then((r) => r.data),
+
+  createAcquisitionCase: (data: any): Promise<{ status: number; message_bn: string; id: number; case_no: string }> =>
+    api.post('/admin/acquisition/cases', data).then((r) => r.data),
+
+  retryFailedDeliveries: (data?: { limit?: number }): Promise<{ status: number; retried_count: number; message_bn: string; message_en: string }> =>
+    api.post('/admin/integrations/retry', data || {}).then((r) => r.data),
+
+  // National Office Lifecycle & Scope Management (Phase B)
+  listSetupOffices: (): Promise<{ offices: any[]; roles: any; valid_office_types: string[] }> =>
+    api.get('/admin/setup/offices').then((r) => r.data),
+
+  getSetupOffice: (id: number): Promise<{ office: any; staff: any[] }> =>
+    api.get(`/admin/setup/offices/${id}`).then((r) => r.data),
+
+  createSetupOffice: (data: any): Promise<{ status: number; message_bn: string; office: any }> =>
+    api.post('/admin/setup/offices', data).then((r) => r.data),
+
+  updateSetupOffice: (id: number, data: any): Promise<{ status: number; message_bn: string; office: any }> =>
+    api.put(`/admin/setup/offices/${id}`, data).then((r) => r.data),
+
+  toggleSetupOfficeActive: (id: number): Promise<{ status: number; is_active: number; message_bn: string }> =>
+    api.post(`/admin/setup/offices/${id}/toggle-active`).then((r) => r.data),
+
+  // Genuine Biometric & Identity Readiness (Phase D)
+  getIdentityReadiness: (): Promise<any> =>
+    api.get('/identity/readiness').then((r) => r.data),
 };
+
+
 

@@ -1,0 +1,279 @@
+Browser tab: 5, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:5175/en/registrar".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/registrar
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা Central Admin OS
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text Central Admin OS
+			8 button Toggle Sidebar
+				9 image
+			10 text Registry Data Entry Officer Sub-Registry Record Staging Cell
+			11 container Sidebar Navigation
+				12 text MENU
+				13 button Draft Deed Entry (Maker)
+					14 image
+					15 text Draft Deed Entry (Maker)
+				16 button Stamp Duty & Fees
+					17 image
+					18 text Stamp Duty & Fees
+				19 button Khatian & Dag Lookup
+					20 image
+					21 text Khatian & Dag Lookup
+				22 button Submitted Drafts Queue
+					23 image
+					24 text Submitted Drafts Queue
+				25 button Deed Ledger Verifier
+					26 image
+					27 text Deed Ledger Verifier
+			28 button Public Portal
+				29 image
+				30 text Public Portal
+			31 button Sign Out
+				32 image
+				33 text Sign Out
+		34 container
+			35 button Home
+				36 image
+				37 text Home
+			38 text / Registry Data Entry Officer
+			39 text field (settable)
+			40 image
+			41 button বাং
+			42 button Contrast
+				43 image
+			44 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				45 text ম
+				46 text মো. কামরুল হাসান (রেজিস্ট্রি ডাটা অফিসার - মেকার)
+				47 text Registry Data Entry Officer
+				48 image
+		49 container
+			50 heading Registry Data Entry Cell (Maker Console), Value: 1
+				51 text Registry Data Entry Cell (Maker Console)
+			52 text Draft deed data entry, party NID validation, and treasury stamp duty calculation.
+			53 text TOTAL REGISTERED DEEDS 80
+			54 button View Deed Registry →
+			55 image
+			56 text HELD DEEDS QUEUE 0
+			57 button Review Held Hearings →
+			58 image
+			59 text TOTAL DECLARED DEED VALUE ৳ 1825.0  Lac
+			60 button Fee Calculator →
+			61 image
+			62 text CRYPTOGRAPHIC LEDGER 97.5 %
+			63 button Verify Ledger →
+			64 image
+			65 heading Pre-Registration Gatekeeper, Deed Control & Verification, Value: 2
+				66 image
+				67 text Pre-Registration Gatekeeper, Deed Control & Verification
+			68 text Run pre-registration fraud checks, manage held hearings, inspect khatian lineage and ledger proofs:
+			69 button Pre-Reg Gatekeeper
+				70 image
+				71 text Pre-Reg Gatekeeper
+			72 button Held Queue (0)
+				73 image
+				74 text Held Queue
+				75 text  (
+				76 text 0
+				77 text )
+			78 button Deed Registry (37)
+				79 image
+				80 text Deed Registry
+				81 text  (
+				82 text 37
+				83 text )
+			84 button Khatian Lineage
+				85 image
+				86 text Khatian Lineage
+			87 button Deed Verifier
+				88 image
+				89 text Deed Verifier
+			90 button Stamp & Challan
+				91 image
+				92 text Stamp & Challan
+			93 image
+			94 text Jurisdiction Selector
+			95 image
+			96 text Division
+			97 pop up button (collapsed, settable) Value: -- Select Division --, Secondary Actions: Expand
+				98 menu
+					99 (selected) -- Select Division --
+					100 Dhaka
+			101 text District
+			102 pop up button (disabled, collapsed, settable) Value: -- Select District --, Secondary Actions: Expand
+				103 menu
+					104 (disabled) -- Select District --
+			105 text Upazila / Thana
+			106 pop up button (disabled, collapsed, settable) Value: -- Select Upazila --, Secondary Actions: Expand
+				107 menu
+					108 (disabled) -- Select Upazila --
+			109 text Mouza & J.L. No
+			110 pop up button (disabled, collapsed, settable) Value: -- Select Mouza --, Secondary Actions: Expand
+				111 menu
+					112 (disabled) -- Select Mouza --
+			113 text Plot / Dag No: ( 60 plots found )
+			114 pop up button (collapsed, settable) Value: -- Select Plot --, Secondary Actions: Expand
+				115 menu
+					116 (selected) -- Select Plot --
+					117 Birulia — Dag 101 (20 dec)
+					118 Birulia — Dag 102 (15 dec)
+					119 Birulia — Dag 103 (24 dec)
+					120 Birulia — Dag 104 (16 dec)
+					121 Birulia — Dag 105 (20 dec)
+					122 Birulia — Dag 106 (30 dec)
+					123 Birulia — Dag 107 (18 dec)
+					124 Birulia — Dag 108 (22 dec)
+					125 Birulia — Dag 109 (16 dec)
+					126 Birulia — Dag 110 (25 dec)
+					127 Birulia — Dag 111 (17 dec)
+					128 Birulia — Dag 112 (20 dec)
+					129 Birulia — Dag 113 (23 dec)
+					130 Birulia — Dag 114 (26 dec)
+					131 Birulia — Dag 115 (29 dec)
+					132 Birulia — Dag 116 (32 dec)
+					133 Birulia — Dag 117 (35 dec)
+					134 Birulia — Dag 118 (38 dec)
+					135 Birulia — Dag 119 (13 dec)
+					136 Birulia — Dag 120 (16 dec)
+					137 Bason — Dag 201 (19 dec)
+					138 Bason — Dag 202 (22 dec)
+					139 Bason — Dag 203 (25 dec)
+					140 Bason — Dag 204 (28 dec)
+					141 Bason — Dag 205 (31 dec)
+					142 Bason — Dag 206 (34 dec)
+					143 Bason — Dag 207 (37 dec)
+					144 Bason — Dag 208 (12 dec)
+					145 Bason — Dag 209 (15 dec)
+					146 Bason — Dag 210 (18 dec)
+					147 Bason — Dag 211 (21 dec)
+					148 Bason — Dag 212 (24 dec)
+					149 Bason — Dag 213 (27 dec)
+					150 Bason — Dag 214 (30 dec)
+					151 Bason — Dag 215 (33 dec)
+					152 Bason — Dag 216 (36 dec)
+					153 Bason — Dag 217 (39 dec)
+					154 Bason — Dag 218 (14 dec)
+					155 Bason — Dag 219 (17 dec)
+					156 Bason — Dag 220 (20 dec)
+					157 Panam — Dag 301 (23 dec)
+					158 Panam — Dag 302 (26 dec)
+					159 Panam — Dag 303 (29 dec)
+					160 Panam — Dag 304 (32 dec)
+					161 Panam — Dag 305 (35 dec)
+					162 Panam — Dag 306 (38 dec)
+					163 Panam — Dag 307 (13 dec)
+					164 Panam — Dag 308 (16 dec)
+					165 Panam — Dag 309 (19 dec)
+					166 Panam — Dag 310 (22 dec)
+					167 Panam — Dag 311 (25 dec)
+					168 Panam — Dag 312 (28 dec)
+					169 Panam — Dag 313 (31 dec)
+					170 Panam — Dag 314 (34 dec)
+					171 Panam — Dag 315 (37 dec)
+					172 Panam — Dag 316 (12 dec)
+					173 Panam — Dag 317 (15 dec)
+					174 Panam — Dag 318 (18 dec)
+					175 Panam — Dag 319 (21 dec)
+					176 Panam — Dag 320 (24 dec)
+			177 text Seller (with NID):
+			178 pop up button (collapsed, settable) Value: Md. Rafiqul Islam (9900****01), Secondary Actions: Expand
+				179 menu
+					180 (selected) Md. Rafiqul Islam (9900****01)
+					181 Mst. Rabeya Khatun (9900****02)
+					182 Abdul Karim (9900****03)
+					183 Md. Jahangir Alam (9900****04)
+					184 Md. Kamrul Hasan (9900****05)
+					185 Md. Anwar Hossain (9900****06)
+					186 Md. Delwar Hossain (9900****07)
+					187 Fatema Begum (9900****08)
+					188 Md. Saiful Islam (9900****09)
+					189 Md. Moniruzzaman (9900****10)
+					190 Md. Mahbubur Rahman (9900****11)
+					191 Salma Akter (9900****12)
+					192 Md. Shahidul Islam (9900****13)
+					193 Alhaj Nurul Haque (9900****14)
+					194 Md. Tariq Aziz (9900****15)
+					195 Nasrin Sultana (9900****16)
+					196 Md. Mizanur Rahman (9900****17)
+					197 Md. Humayun Kabir (9900****18)
+					198 Shirin Akter (9900****19)
+					199 Md. Zakir Hossain (9900****20)
+					200 Md. Golam Rabbani (9900****21)
+					201 Mst. Rehana Parvin (9900****22)
+					202 Md. Shafiqul Alam (9900****23)
+					203 Md. Khorshed Alam (9900****24)
+					204 Md. Ashraful Islam (9900****25)
+			205 text Buyer (with NID):
+			206 pop up button (collapsed, settable) Value: Md. Rafiqul Islam (9900****01), Secondary Actions: Expand
+				207 menu
+					208 (selected) Md. Rafiqul Islam (9900****01)
+					209 Mst. Rabeya Khatun (9900****02)
+					210 Abdul Karim (9900****03)
+					211 Md. Jahangir Alam (9900****04)
+					212 Md. Kamrul Hasan (9900****05)
+					213 Md. Anwar Hossain (9900****06)
+					214 Md. Delwar Hossain (9900****07)
+					215 Fatema Begum (9900****08)
+					216 Md. Saiful Islam (9900****09)
+					217 Md. Moniruzzaman (9900****10)
+					218 Md. Mahbubur Rahman (9900****11)
+					219 Salma Akter (9900****12)
+					220 Md. Shahidul Islam (9900****13)
+					221 Alhaj Nurul Haque (9900****14)
+					222 Md. Tariq Aziz (9900****15)
+					223 Nasrin Sultana (9900****16)
+					224 Md. Mizanur Rahman (9900****17)
+					225 Md. Humayun Kabir (9900****18)
+					226 Shirin Akter (9900****19)
+					227 Md. Zakir Hossain (9900****20)
+					228 Md. Golam Rabbani (9900****21)
+					229 Mst. Rehana Parvin (9900****22)
+					230 Md. Shafiqul Alam (9900****23)
+					231 Md. Khorshed Alam (9900****24)
+					232 Md. Ashraful Islam (9900****25)
+			233 text Transfer Area (Decimal):
+			234 stepper (settable)
+			235 text Share Fraction:
+			236 text field (settable)
+			237 text Declared Value (BDT):
+			238 stepper (settable)
+			239 text Selected Plot: ধানমন্ডি  •  Dag 101 Seller: বিক্রেতা
+			240 image
+			241 text Buyer: ক্রেতা
+			242 heading AUTOMATED 11-RULE GATEKEEPER ENGINE:, Value: 4
+				243 image
+				244 text AUTOMATED 11-RULE GATEKEEPER ENGINE:
+			245 text 1 Seller NID & Heir Identity Check 2 CS -> SA -> RS -> BS Lineage 3 Seller Share Balance Calculation 4 Mortgage Lien & Clearance Check 5 Civil Court Injunction Check 6 Citizen Biometric Sale Lock Status 7 Vested / Khas Property Filter 8 Survey Field Area Discrepancy Check 9 Duplicate Same-Day Filing Prevention 10 Ed25519 Sub-Registrar Signing Prep 11 Treasury Challan & Tax Compliance
+			246 button 1. Run Pre-Registration Risk & Fee Check
+				247 image
+				248 text 1. Run Pre-Registration Risk & Fee Check
+			249 button 2. Register Deed in Hash Ledger & Sign
+				250 image
+				251 text 2. Register Deed in Hash Ledger & Sign
+		252 container
+			253 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			254 content list
+				255 button Check Before Buy
+				256 button Land Sale Marketplace
+				257 button Cadastral Mouza Map
+				258 button Verify Deed QR Code
+				259 button Official Noticeboard
+				260 button Land Literacy Blog
+				261 button Offices & Service Points
+				262 button Citizen Sale Lock Vault
+			263 text Workspaces
+			264 content list
+				265 button Sub-Registrar Panel
+				266 button AC Land Tribunal
+				267 button Bank Lien & NOC
+				268 button National Ledger & Audit
+			269 text Support & Helpline
+			270 content list
+				271 text Land Service Call Center: 16122
+				272 text Ministry of Land (Official service hours)
+				273 text Check official service hours
+				274 button Frequently Asked Questions
+				275 button Bangladeshi Land Glossary
+			276 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved. Synthetic data environment / সিনথেটিক ডেটা পরিবেশ
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/registrar

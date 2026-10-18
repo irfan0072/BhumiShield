@@ -32,7 +32,7 @@ final class MockBiometricProvider implements BiometricProvider
         }
 
         $nonce = 'NONCE-' . strtoupper(substr(hash('sha256', $nid . microtime(true)), 0, 8));
-        $transactionId = sprintf('BIO-%s-%s', strtoupper(substr(hash('sha256', $nid), 0, 6)), strtoupper($role));
+        $transactionId = sprintf('BIO-%s-%s-%s', strtoupper(substr(hash('sha256', $nid), 0, 6)), strtoupper($role), strtoupper(bin2hex(random_bytes(3))));
 
         $notesBn = $isMatch
             ? 'কাউন্টার ওয়েবক্যাম লাইভনেস এবং অপটিক্যাল ফিঙ্গারপ্রিন্ট সফলভাবে মিলেছে (স্কোর: ৯৮.৫%)।'

@@ -1,0 +1,90 @@
+Browser tab: 6, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5188/bn/admin".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5188/bn/admin
+	2 container root
+		3 container
+			4 button
+				5 image
+			6 button হোম
+				7 image
+				8 text হোম
+			9 text / সাপোর্ট এজেন্ট (১৬১২২ হেল্পলাইন)
+			10 button EN
+			11 button Contrast
+				12 image
+			13 pop up button (collapsed) Description: ব্যবহারকারী প্রোফাইল ও সেটিংস মেনু, Secondary Actions: Expand
+				14 text ম
+				15 image
+		16 container
+			17 button সাপোর্ট ও ১৬১২২
+			18 button অডিট লগ ও রিপোর্ট
+			19 button সিকিউরিটি অডিট
+			20 button রিফ্রেশ
+				21 image
+				22 text রিফ্রেশ
+			23 heading নাগরিক সহায়তা ও জিআরএস টিকিট ট্রায়াজ (১৬১২২), Value: 1
+				24 image
+				25 text নাগরিক সহায়তা ও জিআরএস টিকিট ট্রায়াজ (১৬১২২)
+			26 text অনুপস্থিত দলিল পুনরুদ্ধার, জমি সংক্রান্ত জিজ্ঞাসা ও নাগরিক সাপোর্ট টিকেটের ট্রায়াজ ও দ্রুত সমাধান।
+			27 image
+			28 text SLA: ৭২ ঘণ্টায় প্রথম প্রতিক্রিয়া মোট টিকিট ৯ নতুন দাখিল ২ প্রক্রিয়াধীন ৭ নাগরিকের অপেক্ষা ০ সমাধানকৃত ০
+			29 button সকল
+			30 button নতুন
+			31 button চলমান
+			32 button নাগরিক
+			33 button সমাধান
+			34 image
+			35 text field (settable)
+			90 container
+				91 text HELP-2026-546DCCA2B8 IN_PROGRESS পরীক্ষা: ঢাকায় থাকি, কুমিল্লার জমির রেকর্ড খুঁজে পাচ্ছি না GENERAL ২০২৬-১০-১৮
+			92 container
+				93 text HELP-2026-F3DFFEE041 IN_PROGRESS দাগ নং ১০১ খতিয়ান যাচাই সংক্রান্ত জিজ্ঞাসা GENERAL ২০২৬-১০-১৮
+			94 container
+				95 text HELP-2026-247A5CD455 IN_PROGRESS দাগ নং ১০১ খতিয়ান যাচাই সংক্রান্ত জিজ্ঞাসা GENERAL ২০২৬-১০-১৮
+			96 container
+				97 text HELP-2026-B6E46C85A2 IN_PROGRESS দাগ নং ১০১ খতিয়ান যাচাই সংক্রান্ত জিজ্ঞাসা GENERAL ২০২৬-১০-১৮
+			98 container
+				99 text HELP-2026-D9621099B3 IN_PROGRESS দাগ নং ১০১ খতিয়ান যাচাই সংক্রান্ত জিজ্ঞাসা GENERAL ২০২৬-১০-১৮
+			100 container
+				101 text TKT-2026-000104 IN_PROGRESS অনুপস্থিত দলিল অনুরোধ: ব্যাংক ঋণ বা বন্ধক অবমুক্তি সনদ (এনওসি) (দাগ নং ১১৩) দাগ ১১৩ ২০২৬-১০-১৮
+			102 container
+				103 text TKT-2026-000103 NEW অনুপস্থিত দলিল অনুরোধ: সর্বশেষ বিএস খতিয়ান (পর্চা) (দাগ নং ১১৩) দাগ ১১৩ ২০২৬-১০-১৮
+			104 container
+				105 text TKT-2026-000102 NEW অনুপস্থিত দলিল অনুরোধ: সর্বশেষ বিএস খতিয়ান (পর্চা) (দাগ নং ১১৩) দাগ ১১৩ ২০২৬-১০-১৮
+			106 container
+				107 text TKT-2026-000045 IN_PROGRESS দাগ নং ১০৮-এর জন্য প্রয়োজনীয় ওয়ারিশান সনদ অনুপস্থিত দাগ ১০৮ ২০২৬-১০-১৭
+			54 text HELP-2026-546DCCA2B8 GENERAL IN_PROGRESS
+			55 heading পরীক্ষা: ঢাকায় থাকি, কুমিল্লার জমির রেকর্ড খুঁজে পাচ্ছি না, Value: 3
+				56 text পরীক্ষা: ঢাকায় থাকি, কুমিল্লার জমির রেকর্ড খুঁজে পাচ্ছি না
+			57 text নাগরিক এনআইডি:  **** দাখিলের সময়:  2026-10-18 04:58 @ national_audit_1810 ( citizen ) ২০২৬-১০-১৮ ০৪:৫৮ এটি আলাদা QA পরিবেশের পরীক্ষা। কোন কুমিল্লা ভূমি অফিসে আবেদন করব, কী কাগজ লাগবে এবং সশরীরে যেতে হবে কি না জানতে চাই। কোনো বাস্তব জমি বা ব্যক্তির তথ্য নয়। @ support_agent ( support_agent ) ২০২৬-১০-১৮ ০৪:৫৯ QA উত্তর: কুমিল্লা অফিসের যাচাইকৃত তালিকা এই সংস্করণে পাওয়া যাচ্ছে না। এটি পরীক্ষামূলক সাপোর্ট উত্তর; সরকারি অ্যাপয়েন্টমেন্ট বা অনুমোদন নয়।
+			58 text প্রত্যুত্তর বা অফিস আদেশ নথিভুক্ত করুন:
+			59 text entry area (settable)
+			60 text পরবর্তী স্ট্যাটাস:
+			61 pop up button (collapsed, settable) Value: চলমান (In Progress), Secondary Actions: Expand
+				62 menu
+					63 (selected) চলমান (In Progress)
+					64 নাগরিকের উত্তর আবশ্যক (Waiting Citizen)
+					65 নিষ্পন্ন / সমাধানকৃত (Resolved)
+			66 container
+				67 checkbox (settable, integer) Description: গোপন অভ্যন্তরীণ নোট (নাগরিক দেখতে পারবে না), Value: 0
+				68 text গোপন অভ্যন্তরীণ নোট (নাগরিক দেখতে পারবে না)
+			69 button উত্তর প্রেরণ ও আপডেট
+				70 image
+				71 text উত্তর প্রেরণ ও আপডেট
+		72 container দ্রুত নেভিগেশন
+			73 button সেবাসমূহ
+				74 image
+				75 text সেবাসমূহ
+			76 button যাচাই
+				77 image
+				78 text যাচাই
+			79 button দলিল QR, Help: QR Verify
+				80 image
+				81 text দলিল QR
+			82 button ভল্ট / প্যানেল
+				83 image
+				84 text ভল্ট / প্যানেল
+			85 button সহায়তা
+				86 image
+				87 text সহায়তা
+
+The focused UI element is 69 button উত্তর প্রেরণ ও আপডেট

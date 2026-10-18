@@ -57,6 +57,7 @@ final class FieldOperationsController
             ], JSON_UNESCAPED_UNICODE));
         }
 
+        \App\Services\OfficeScopeService::requirePlot((int)$plot['id'], $actor);
         $possession = trim((string) ($payload['possession_status'] ?? ''));
         $boundary = trim((string) ($payload['boundary_status'] ?? ''));
         $tax = trim((string) ($payload['tax_status'] ?? ''));
@@ -64,7 +65,11 @@ final class FieldOperationsController
         $lat = isset($payload['latitude']) && is_numeric($payload['latitude']) ? (float) $payload['latitude'] : null;
         $lng = isset($payload['longitude']) && is_numeric($payload['longitude']) ? (float) $payload['longitude'] : null;
 
-        if ($possession === '' || $boundary === '' || $tax === '' || $remarks === '') {
+        $validPossessions = ['VERIFIED', 'CONTESTED', 'UNOCCUPIED', 'POSSESSED_BY_OWNER', 'PARTIAL_DISPUTE', 'ENCROACHED'];
+        $validBoundaries = ['MATCHED', 'DISPUTED', 'INTACT', 'ENCROACHED_NORTH', 'ENCROACHED'];
+        $validTaxes = ['PAID', 'DUE', 'NOT_VERIFIED', 'PAID_UP_TO_2026', 'PARTIAL_DUE'];
+
+        if (!in_array($possession, $validPossessions, true) || !in_array($boundary, $validBoundaries, true) || !in_array($tax, $validTaxes, true) || trim($remarks) === '') {
             throw new \RuntimeException(json_encode([
                 'status' => 422,
                 'code' => 'FIELDS_REQUIRED',
@@ -141,7 +146,7 @@ final class FieldOperationsController
 
         $where = '';
         $params = [];
-        // FVO sees their own; AC Land / UNO / admin see all.
+        // FVO sees their own reports; other institutional roles see reports within their assigned office jurisdiction
         if (in_array((string) $actor['role'], ['field_verification_officer'], true)) {
             $where = ' WHERE signed_by_user_id = ?';
             $params[] = (int) $actor['id'];
@@ -157,6 +162,10 @@ final class FieldOperationsController
             . $where
             . ' ORDER BY fr.id DESC LIMIT 200';
         $items = DB::select($sql, $params);
+
+        if (!in_array((string) ($actor['role'] ?? ''), ['admin', 'system_admin', 'auditor', 'field_verification_officer'], true)) {
+            $items = array_values(array_filter($items, static fn(array $it): bool => \App\Services\OfficeScopeService::canAccessPlot((int) $it['plot_id'], $actor)));
+        }
 
         return [
             'status' => 200,

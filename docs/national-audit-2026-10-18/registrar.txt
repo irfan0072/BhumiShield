@@ -1,0 +1,1304 @@
+Browser tab: 6, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5188/bn/registrar".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5188/bn/registrar
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা Central Admin OS
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text Central Admin OS
+			8 button Toggle Sidebar
+				9 image
+			10 text সাব-রেজিস্ট্রার প্যানেল নিবন্ধন অধিদপ্তর • আইন মন্ত্রণালয়
+			11 container Sidebar Navigation
+				12 text মেনু
+				13 button স্থগিত দলিল (HELD) কিউ
+					14 image
+					15 text স্থগিত দলিল (HELD) কিউ
+				16 button প্রাক-নিবন্ধন গেটকিপার
+					17 image
+					18 text প্রাক-নিবন্ধন গেটকিপার
+				19 button দলিল রেজিস্টার রেকর্ড
+					20 image
+					21 text দলিল রেজিস্টার রেকর্ড
+				22 button অনবোর্ডিং ব্যাচ অনুমোদন
+					23 image
+					24 text অনবোর্ডিং ব্যাচ অনুমোদন
+				25 button খতিয়ান পরম্পরা ও রেকর্ড
+					26 image
+					27 text খতিয়ান পরম্পরা ও রেকর্ড
+				28 button দলিল লেজার যাচাই
+					29 image
+					30 text দলিল লেজার যাচাই
+				31 button সরকারি শুল্ক ও ফি
+					32 image
+					33 text সরকারি শুল্ক ও ফি
+			34 button পাবলিক পোর্টাল
+				35 image
+				36 text পাবলিক পোর্টাল
+			37 button লগআউট
+				38 image
+				39 text লগআউট
+		40 container
+			41 button হোম
+				42 image
+				43 text হোম
+			44 text / সাব-রেজিস্ট্রার প্যানেল
+			45 text field (settable)
+			46 image
+			47 button EN
+			48 button Contrast
+				49 image
+			50 pop up button (collapsed) Description: ব্যবহারকারী প্রোফাইল ও সেটিংস মেনু, Secondary Actions: Expand
+				51 text ফ
+				52 text ফারহানা ইয়াসমিন (সাব-রেজিস্ট্রার)
+				53 text সাব-রেজিস্ট্রার প্যানেল
+				54 image
+		55 container
+			56 heading সাব-রেজিস্ট্রার কনসোল (চেকার ও নিবন্ধন কর্তৃপক্ষ), Value: 1
+				57 text সাব-রেজিস্ট্রার কনসোল (চেকার ও নিবন্ধন কর্তৃপক্ষ)
+			58 text প্রাক-নিবন্ধন গেটকিপার, স্থগিত দলিল (HELD) কিউ, কাউন্টার বায়োমেট্রিক ও ক্রিপ্টোগ্রাফিক সিল।
+			59 text মোট নিবন্ধিত দলিল ৮৮
+			60 button দলিল রেজিস্টার দেখুন →
+			61 image
+			62 text স্থগিত দলিল (HELD কিউ) ০
+			63 button শুনানি ও নিষ্পত্তি কিউ →
+			64 image
+			65 text দলিলের ঘোষিত মোট মূল্য ৳ ১৮৩৫.০  Lac
+			66 button শুল্ক ক্যালকুলেটর →
+			67 image
+			68 text ক্রিপ্টোগ্রাফিক লেজার ৯৭.৭৩ %
+			69 button লেজার অখণ্ডতা যাচাই →
+			70 image
+			71 heading সাব-রেজিস্ট্রার প্রাক-নিবন্ধন গেটকিপার ও দলিল রেজিস্টার কন্ট্রোল, Value: 2
+				72 image
+				73 text সাব-রেজিস্ট্রার প্রাক-নিবন্ধন গেটকিপার ও দলিল রেজিস্টার কন্ট্রোল
+			74 text দলিল সম্পাদনের পূর্বে ১১টি রুল পরীক্ষা, স্থগিত দলিল (HELD) শুনানি নিষ্পত্তি, খতিয়ান চেইন ও লেজার যাচাই:
+			75 button নতুন দলিল ও প্রাক-যাচাই
+				76 image
+				77 text নতুন দলিল ও প্রাক-যাচাই
+			78 button স্থগিত (HELD) কিউ (০)
+				79 image
+				80 text স্থগিত (HELD) কিউ
+				81 text  (
+				82 text ০
+				83 text )
+			84 button দলিল রেজিস্টার (৪৫)
+				85 image
+				86 text দলিল রেজিস্টার
+				87 text  (
+				88 text ৪৫
+				89 text )
+			90 button খতিয়ান পরম্পরা
+				91 image
+				92 text খতিয়ান পরম্পরা
+			93 button দলিল লেজার যাচাই
+				94 image
+				95 text দলিল লেজার যাচাই
+			96 button সরকারি ফি ও চালান
+				97 image
+				98 text সরকারি ফি ও চালান
+			99 button অনবোর্ডিং ব্যাচ অনুমোদন (চেকার) (৭)
+				100 image
+				101 text অনবোর্ডিং ব্যাচ অনুমোদন (চেকার)
+				102 text  (
+				103 text ৭
+				104 text )
+			105 image
+			106 text অধিক্ষেত্র ভিত্তিক দলিল ফিল্টারিং (বিভাগ ➔ জেলা ➔ উপজেলা ➔ মৌজা)
+			107 image
+			108 text বিভাগ
+			109 pop up button (collapsed, settable) Value: -- বিভাগ নির্বাচন করুন --, Secondary Actions: Expand
+				110 menu
+					111 (selected) -- বিভাগ নির্বাচন করুন --
+					112 ঢাকা
+			113 text জেলা
+			114 pop up button (disabled, collapsed, settable) Value: -- জেলা নির্বাচন করুন --, Secondary Actions: Expand
+				115 menu
+					116 (disabled) -- জেলা নির্বাচন করুন --
+			117 text উপজেলা / থানা
+			118 pop up button (disabled, collapsed, settable) Value: -- উপজেলা নির্বাচন করুন --, Secondary Actions: Expand
+				119 menu
+					120 (disabled) -- উপজেলা নির্বাচন করুন --
+			121 text মৌজা ও জে.এল. নং
+			122 pop up button (disabled, collapsed, settable) Value: -- মৌজা নির্বাচন করুন --, Secondary Actions: Expand
+				123 menu
+					124 (disabled) -- মৌজা নির্বাচন করুন --
+			125 image
+			126 text field (settable)
+			127 button সকল (All)
+			128 button স্থগিত (HELD)
+			129 button নিবন্ধিত (REGISTERED)
+			130 button পেন্ডিং মিউটেশন
+			131 button বাতিল (REJECTED)
+			132 table
+				133 row
+					134 cell
+						135 text দলিল নং
+					136 cell
+						137 text মৌজা ও দাগ
+					138 cell
+						139 text বিক্রেতা → ক্রেতা
+					140 cell
+						141 text পরিমাণ ও মূল্য
+					142 cell
+						143 text স্ট্যাটাস
+					144 cell
+						145 text দাপ্তরিক সিদ্ধান্ত
+				146 row
+					147 cell
+						148 text DL-2026-1088
+						149 container
+							150 text Block # 88  •  SALE
+					151 cell
+						152 text বিরুলিয়া  —  দাগ 113
+					153 cell
+						154 container
+							155 text বিক্রেতা: মো. রফিকুল ইসলাম
+						156 container
+							157 text ক্রেতা: মোসা. রাবেয়া খাতুন
+					158 cell
+						159 container
+							160 text ২ শতাংশ
+						161 container
+							162 text ৳ 200,000
+					163 cell
+						164 text MUTATED
+					165 cell
+						166 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							167 image
+						168 button ✖ বাতিল
+							169 text ✖ 
+							170 text বাতিল
+				171 row
+					172 cell
+						173 text DL-2026-1087
+						174 container
+							175 text Block # 87  •  SALE
+					176 cell
+						177 text বিরুলিয়া  —  দাগ 113
+					178 cell
+						179 container
+							180 text বিক্রেতা: মো. রফিকুল ইসলাম
+						181 container
+							182 text ক্রেতা: মোসা. রাবেয়া খাতুন
+					183 cell
+						184 container
+							185 text ৩ শতাংশ
+						186 container
+							187 text ৳ 300,000
+					188 cell
+						189 text MUTATED
+					190 cell
+						191 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							192 image
+						193 button ✖ বাতিল
+							194 text ✖ 
+							195 text বাতিল
+				196 row
+					197 cell
+						198 text DL-2026-1086
+						199 container
+							200 text Block # 86  •  SALE
+					201 cell
+						202 text বিরুলিয়া  —  দাগ 113
+					203 cell
+						204 container
+							205 text বিক্রেতা: মো. রফিকুল ইসলাম
+						206 container
+							207 text ক্রেতা: মোসা. রাবেয়া খাতুন
+					208 cell
+						209 container
+							210 text ৫ শতাংশ
+						211 container
+							212 text ৳ 500,000
+					213 cell
+						214 text MUTATED
+					215 cell
+						216 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							217 image
+						218 button ✖ বাতিল
+							219 text ✖ 
+							220 text বাতিল
+				221 row
+					222 cell
+						223 text DL-WARISH-2026-2085
+						224 container
+							225 text Block # 85  •  SUCCESSION
+					226 cell
+						227 text বিরুলিয়া  —  দাগ 101
+					228 cell
+						229 container
+							230 text বিক্রেতা: পুত্র তারেক
+						231 container
+							232 text ক্রেতা: মো. রফিকুল ইসলাম
+					233 cell
+						234 container
+							235 text ২০ শতাংশ
+						236 container
+							237 text ৳ 0
+					238 cell
+						239 text PENDING_MUTATION
+					240 cell
+						241 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							242 image
+						243 button ✖ বাতিল
+							244 text ✖ 
+							245 text বাতিল
+				246 row
+					247 cell
+						248 text DL-WARISH-2026-2084
+						249 container
+							250 text Block # 84  •  SUCCESSION
+					251 cell
+						252 text বিরুলিয়া  —  দাগ 101
+					253 cell
+						254 container
+							255 text বিক্রেতা: পুত্র তারেক
+						256 container
+							257 text ক্রেতা: মো. রফিকুল ইসলাম
+					258 cell
+						259 container
+							260 text ২০ শতাংশ
+						261 container
+							262 text ৳ 0
+					263 cell
+						264 text PENDING_MUTATION
+					265 cell
+						266 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							267 image
+						268 button ✖ বাতিল
+							269 text ✖ 
+							270 text বাতিল
+				271 row
+					272 cell
+						273 text DL-WARISH-2026-2083
+						274 container
+							275 text Block # 83  •  SUCCESSION
+					276 cell
+						277 text বিরুলিয়া  —  দাগ 101
+					278 cell
+						279 container
+							280 text বিক্রেতা: মো. রফিকুল ইসলাম
+						281 container
+							282 text ক্রেতা: মো. রফিকুল ইসলাম
+					283 cell
+						284 container
+							285 text ২০ শতাংশ
+						286 container
+							287 text ৳ 0
+					288 cell
+						289 text MUTATED
+					290 cell
+						291 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							292 image
+						293 button ✖ বাতিল
+							294 text ✖ 
+							295 text বাতিল
+				296 row
+					297 cell
+						298 text DL-WARISH-2026-2082
+						299 container
+							300 text Block # 82  •  SUCCESSION
+					301 cell
+						302 text বিরুলিয়া  —  দাগ 101
+					303 cell
+						304 container
+							305 text বিক্রেতা: মো. রফিকুল ইসলাম
+						306 container
+							307 text ক্রেতা: মো. রফিকুল ইসলাম
+					308 cell
+						309 container
+							310 text ৩৩ শতাংশ
+						311 container
+							312 text ৳ 0
+					313 cell
+						314 text PENDING_MUTATION
+					315 cell
+						316 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							317 image
+						318 button ✖ বাতিল
+							319 text ✖ 
+							320 text বাতিল
+				321 row
+					322 cell
+						323 text DL-WARISH-2026-2081
+						324 container
+							325 text Block # 81  •  SUCCESSION
+					326 cell
+						327 text বিরুলিয়া  —  দাগ 101
+					328 cell
+						329 container
+							330 text বিক্রেতা: মো. রফিকুল ইসলাম
+						331 container
+							332 text ক্রেতা: মো. রফিকুল ইসলাম
+					333 cell
+						334 container
+							335 text ৩৩ শতাংশ
+						336 container
+							337 text ৳ 0
+					338 cell
+						339 text PENDING_MUTATION
+					340 cell
+						341 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							342 image
+						343 button ✖ বাতিল
+							344 text ✖ 
+							345 text বাতিল
+				346 row
+					347 cell
+						348 text DL-2023-1077
+						349 container
+							350 text Block # 77  •  HIBA
+					351 cell
+						352 text বিরুলিয়া  —  দাগ 120
+					353 cell
+						354 container
+							355 text বিক্রেতা: মোসা. রেহানা পারভীন
+						356 container
+							357 text ক্রেতা: মো. আবুল বাশার
+					358 cell
+						359 container
+							360 text ১৪ শতাংশ
+						361 container
+							362 text ৳ 3,125,000
+					363 cell
+						364 text PENDING_MUTATION
+					365 cell
+						366 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							367 image
+						368 button ✖ বাতিল
+							369 text ✖ 
+							370 text বাতিল
+				371 row
+					372 cell
+						373 text DL-2022-1076
+						374 container
+							375 text Block # 76  •  SALE
+					376 cell
+						377 text বিরুলিয়া  —  দাগ 119
+					378 cell
+						379 container
+							380 text বিক্রেতা: শিরিন আক্তার
+						381 container
+							382 text ক্রেতা: মো. খোরশেদ আলম
+					383 cell
+						384 container
+							385 text ৮ শতাংশ
+						386 container
+							387 text ৳ 3,100,000
+					388 cell
+						389 text PENDING_MUTATION
+					390 cell
+						391 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							392 image
+						393 button ✖ বাতিল
+							394 text ✖ 
+							395 text বাতিল
+				396 row
+					397 cell
+						398 text DL-2021-1075
+						399 container
+							400 text Block # 75  •  SALE
+					401 cell
+						402 text বিরুলিয়া  —  দাগ 118
+					403 cell
+						404 container
+							405 text বিক্রেতা: নাসরিন সুলতানা
+						406 container
+							407 text ক্রেতা: মো. গোলাম রব্বানী
+					408 cell
+						409 container
+							410 text ১৪ শতাংশ
+						411 container
+							412 text ৳ 3,075,000
+					413 cell
+						414 text MUTATED
+					415 cell
+						416 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							417 image
+						418 button ✖ বাতিল
+							419 text ✖ 
+							420 text বাতিল
+				421 row
+					422 cell
+						423 text DL-2020-1074
+						424 container
+							425 text Block # 74  •  INHERITANCE
+					426 cell
+						427 text বিরুলিয়া  —  দাগ 117
+					428 cell
+						429 container
+							430 text বিক্রেতা: মো. শহিদুল ইসলাম
+						431 container
+							432 text ক্রেতা: মো. হুমায়ুন কবির
+					433 cell
+						434 container
+							435 text ৮ শতাংশ
+						436 container
+							437 text ৳ 3,050,000
+					438 cell
+						439 text MUTATED
+					440 cell
+						441 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							442 image
+						443 button ✖ বাতিল
+							444 text ✖ 
+							445 text বাতিল
+				446 row
+					447 cell
+						448 text DL-2019-1073
+						449 container
+							450 text Block # 73  •  SALE
+					451 cell
+						452 text বিরুলিয়া  —  দাগ 116
+					453 cell
+						454 container
+							455 text বিক্রেতা: মো. মনিরুজ্জামান
+						456 container
+							457 text ক্রেতা: মো. তারেক আজিজ
+					458 cell
+						459 container
+							460 text ১৪ শতাংশ
+						461 container
+							462 text ৳ 3,025,000
+					463 cell
+						464 text MUTATED
+					465 cell
+						466 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							467 image
+						468 button ✖ বাতিল
+							469 text ✖ 
+							470 text বাতিল
+				471 row
+					472 cell
+						473 text DL-2018-1072
+						474 container
+							475 text Block # 72  •  HIBA
+					476 cell
+						477 text বিরুলিয়া  —  দাগ 115
+					478 cell
+						479 container
+							480 text বিক্রেতা: মো. দেলোয়ার হোসেন
+						481 container
+							482 text ক্রেতা: সালমা আক্তার
+					483 cell
+						484 container
+							485 text ৮ শতাংশ
+						486 container
+							487 text ৳ 3,000,000
+					488 cell
+						489 text MUTATED
+					490 cell
+						491 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							492 image
+						493 button ✖ বাতিল
+							494 text ✖ 
+							495 text বাতিল
+				496 row
+					497 cell
+						498 text DL-2025-1071
+						499 container
+							500 text Block # 71  •  SALE
+					501 cell
+						502 text বিরুলিয়া  —  দাগ 114
+					503 cell
+						504 container
+							505 text বিক্রেতা: মো. জাহাঙ্গীর আলম
+						506 container
+							507 text ক্রেতা: মো. সাইফুল ইসলাম
+					508 cell
+						509 container
+							510 text ১৪ শতাংশ
+						511 container
+							512 text ৳ 2,975,000
+					513 cell
+						514 text MUTATED
+					515 cell
+						516 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							517 image
+						518 button ✖ বাতিল
+							519 text ✖ 
+							520 text বাতিল
+				521 row
+					522 cell
+						523 text DL-2024-1070
+						524 container
+							525 text Block # 70  •  SALE
+					526 cell
+						527 text বিরুলিয়া  —  দাগ 113
+					528 cell
+						529 container
+							530 text বিক্রেতা: মো. রফিকুল ইসলাম
+						531 container
+							532 text ক্রেতা: মো. আনোয়ার হোসেন
+					533 cell
+						534 container
+							535 text ৮ শতাংশ
+						536 container
+							537 text ৳ 2,950,000
+					538 cell
+						539 text MUTATED
+					540 cell
+						541 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							542 image
+						543 button ✖ বাতিল
+							544 text ✖ 
+							545 text বাতিল
+				546 row
+					547 cell
+						548 text DL-2023-1069
+						549 container
+							550 text Block # 69  •  INHERITANCE
+					551 cell
+						552 text বিরুলিয়া  —  দাগ 112
+					553 cell
+						554 container
+							555 text বিক্রেতা: মো. বাবুল আক্তার
+						556 container
+							557 text ক্রেতা: আবদুল করিম
+					558 cell
+						559 container
+							560 text ১৪ শতাংশ
+						561 container
+							562 text ৳ 2,925,000
+					563 cell
+						564 text MUTATED
+					565 cell
+						566 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							567 image
+						568 button ✖ বাতিল
+							569 text ✖ 
+							570 text বাতিল
+				571 row
+					572 cell
+						573 text DL-2022-1068
+						574 container
+							575 text Block # 68  •  SALE
+					576 cell
+						577 text বিরুলিয়া  —  দাগ 111
+					578 cell
+						579 container
+							580 text বিক্রেতা: মো. কামাল উদ্দিন
+						581 container
+							582 text ক্রেতা: মোসা. পারভীন সুলতানা
+					583 cell
+						584 container
+							585 text ৮ শতাংশ
+						586 container
+							587 text ৳ 2,900,000
+					588 cell
+						589 text MUTATED
+					590 cell
+						591 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							592 image
+						593 button ✖ বাতিল
+							594 text ✖ 
+							595 text বাতিল
+				596 row
+					597 cell
+						598 text DL-2021-1067
+						599 container
+							600 text Block # 67  •  HIBA
+					601 cell
+						602 text বিরুলিয়া  —  দাগ 110
+					603 cell
+						604 container
+							605 text বিক্রেতা: মোসা. নাজমা খাতুন
+						606 container
+							607 text ক্রেতা: মো. জসিম উদ্দিন
+					608 cell
+						609 container
+							610 text ১৪ শতাংশ
+						611 container
+							612 text ৳ 2,875,000
+					613 cell
+						614 text MUTATED
+					615 cell
+						616 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							617 image
+						618 button ✖ বাতিল
+							619 text ✖ 
+							620 text বাতিল
+				621 row
+					622 cell
+						623 text DL-2020-1066
+						624 container
+							625 text Block # 66  •  SALE
+					626 cell
+						627 text বিরুলিয়া  —  দাগ 109
+					628 cell
+						629 container
+							630 text বিক্রেতা: মো. ফারুক আহমেদ
+						631 container
+							632 text ক্রেতা: মো. হারুন অর রশিদ
+					633 cell
+						634 container
+							635 text ৮ শতাংশ
+						636 container
+							637 text ৳ 2,850,000
+					638 cell
+						639 text MUTATED
+					640 cell
+						641 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							642 image
+						643 button ✖ বাতিল
+							644 text ✖ 
+							645 text বাতিল
+				646 row
+					647 cell
+						648 text DL-2019-1065
+						649 container
+							650 text Block # 65  •  SALE
+					651 cell
+						652 text বিরুলিয়া  —  দাগ 108
+					653 cell
+						654 container
+							655 text বিক্রেতা: মো. সাইদুর রহমান
+						656 container
+							657 text ক্রেতা: মো. ইকবাল হোসেন
+					658 cell
+						659 container
+							660 text ১৪ শতাংশ
+						661 container
+							662 text ৳ 2,825,000
+					663 cell
+						664 text MUTATED
+					665 cell
+						666 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							667 image
+						668 button ✖ বাতিল
+							669 text ✖ 
+							670 text বাতিল
+				671 row
+					672 cell
+						673 text DL-2018-1064
+						674 container
+							675 text Block # 64  •  INHERITANCE
+					676 cell
+						677 text বিরুলিয়া  —  দাগ 107
+					678 cell
+						679 container
+							680 text বিক্রেতা: মো. আশরাফুল ইসলাম
+						681 container
+							682 text ক্রেতা: মোসা. শারমিন আক্তার
+					683 cell
+						684 container
+							685 text ৮ শতাংশ
+						686 container
+							687 text ৳ 2,800,000
+					688 cell
+						689 text MUTATED
+					690 cell
+						691 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							692 image
+						693 button ✖ বাতিল
+							694 text ✖ 
+							695 text বাতিল
+				696 row
+					697 cell
+						698 text DL-2025-1063
+						699 container
+							700 text Block # 63  •  SALE
+					701 cell
+						702 text বিরুলিয়া  —  দাগ 106
+					703 cell
+						704 container
+							705 text বিক্রেতা: মোসা. রেহানা পারভীন
+						706 container
+							707 text ক্রেতা: মো. আবুল বাশার
+					708 cell
+						709 container
+							710 text ১৪ শতাংশ
+						711 container
+							712 text ৳ 2,775,000
+					713 cell
+						714 text MUTATED
+					715 cell
+						716 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							717 image
+						718 button ✖ বাতিল
+							719 text ✖ 
+							720 text বাতিল
+				721 row
+					722 cell
+						723 text DL-2024-1062
+						724 container
+							725 text Block # 62  •  HIBA
+					726 cell
+						727 text বিরুলিয়া  —  দাগ 105
+					728 cell
+						729 container
+							730 text বিক্রেতা: শিরিন আক্তার
+						731 container
+							732 text ক্রেতা: মো. খোরশেদ আলম
+					733 cell
+						734 container
+							735 text ৮ শতাংশ
+						736 container
+							737 text ৳ 2,750,000
+					738 cell
+						739 text MUTATED
+					740 cell
+						741 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							742 image
+						743 button ✖ বাতিল
+							744 text ✖ 
+							745 text বাতিল
+				746 row
+					747 cell
+						748 text DL-2023-1061
+						749 container
+							750 text Block # 61  •  SALE
+					751 cell
+						752 text বিরুলিয়া  —  দাগ 104
+					753 cell
+						754 container
+							755 text বিক্রেতা: নাসরিন সুলতানা
+						756 container
+							757 text ক্রেতা: মো. গোলাম রব্বানী
+					758 cell
+						759 container
+							760 text ১৪ শতাংশ
+						761 container
+							762 text ৳ 2,725,000
+					763 cell
+						764 text MUTATED
+					765 cell
+						766 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							767 image
+						768 button ✖ বাতিল
+							769 text ✖ 
+							770 text বাতিল
+				771 row
+					772 cell
+						773 text DL-2022-1060
+						774 container
+							775 text Block # 60  •  SALE
+					776 cell
+						777 text বিরুলিয়া  —  দাগ 103
+					778 cell
+						779 container
+							780 text বিক্রেতা: মো. শহিদুল ইসলাম
+						781 container
+							782 text ক্রেতা: মো. হুমায়ুন কবির
+					783 cell
+						784 container
+							785 text ৮ শতাংশ
+						786 container
+							787 text ৳ 2,700,000
+					788 cell
+						789 text MUTATED
+					790 cell
+						791 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							792 image
+						793 button ✖ বাতিল
+							794 text ✖ 
+							795 text বাতিল
+				796 row
+					797 cell
+						798 text DL-2021-1059
+						799 container
+							800 text Block # 59  •  INHERITANCE
+					801 cell
+						802 text বিরুলিয়া  —  দাগ 102
+					803 cell
+						804 container
+							805 text বিক্রেতা: মো. মনিরুজ্জামান
+						806 container
+							807 text ক্রেতা: মো. তারেক আজিজ
+					808 cell
+						809 container
+							810 text ১৪ শতাংশ
+						811 container
+							812 text ৳ 2,675,000
+					813 cell
+						814 text MUTATED
+					815 cell
+						816 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							817 image
+						818 button ✖ বাতিল
+							819 text ✖ 
+							820 text বাতিল
+				821 row
+					822 cell
+						823 text DL-2020-1058
+						824 container
+							825 text Block # 58  •  SALE
+					826 cell
+						827 text বিরুলিয়া  —  দাগ 101
+					828 cell
+						829 container
+							830 text বিক্রেতা: মো. দেলোয়ার হোসেন
+						831 container
+							832 text ক্রেতা: সালমা আক্তার
+					833 cell
+						834 container
+							835 text ৮ শতাংশ
+						836 container
+							837 text ৳ 2,650,000
+					838 cell
+						839 text MUTATED
+					840 cell
+						841 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							842 image
+						843 button ✖ বাতিল
+							844 text ✖ 
+							845 text বাতিল
+				846 row
+					847 cell
+						848 text DL-2019-1017
+						849 container
+							850 text Block # 17  •  HIBA
+					851 cell
+						852 text বিরুলিয়া  —  দাগ 120
+					853 cell
+						854 container
+							855 text বিক্রেতা: মো. মনিরুজ্জামান
+						856 container
+							857 text ক্রেতা: মো. তারেক আজিজ
+					858 cell
+						859 container
+							860 text ১৪ শতাংশ
+						861 container
+							862 text ৳ 1,625,000
+					863 cell
+						864 text MUTATED
+					865 cell
+						866 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							867 image
+						868 button ✖ বাতিল
+							869 text ✖ 
+							870 text বাতিল
+				871 row
+					872 cell
+						873 text DL-2018-1016
+						874 container
+							875 text Block # 16  •  SALE
+					876 cell
+						877 text বিরুলিয়া  —  দাগ 119
+					878 cell
+						879 container
+							880 text বিক্রেতা: মো. দেলোয়ার হোসেন
+						881 container
+							882 text ক্রেতা: সালমা আক্তার
+					883 cell
+						884 container
+							885 text ৮ শতাংশ
+						886 container
+							887 text ৳ 1,600,000
+					888 cell
+						889 text MUTATED
+					890 cell
+						891 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							892 image
+						893 button ✖ বাতিল
+							894 text ✖ 
+							895 text বাতিল
+				896 row
+					897 cell
+						898 text DL-2025-1015
+						899 container
+							900 text Block # 15  •  SALE
+					901 cell
+						902 text বিরুলিয়া  —  দাগ 118
+					903 cell
+						904 container
+							905 text বিক্রেতা: মো. জাহাঙ্গীর আলম
+						906 container
+							907 text ক্রেতা: মো. সাইফুল ইসলাম
+					908 cell
+						909 container
+							910 text ১৪ শতাংশ
+						911 container
+							912 text ৳ 1,575,000
+					913 cell
+						914 text MUTATED
+					915 cell
+						916 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							917 image
+						918 button ✖ বাতিল
+							919 text ✖ 
+							920 text বাতিল
+				921 row
+					922 cell
+						923 text DL-2024-1014
+						924 container
+							925 text Block # 14  •  INHERITANCE
+					926 cell
+						927 text বিরুলিয়া  —  দাগ 117
+					928 cell
+						929 container
+							930 text বিক্রেতা: মো. রফিকুল ইসলাম
+						931 container
+							932 text ক্রেতা: মো. আনোয়ার হোসেন
+					933 cell
+						934 container
+							935 text ৮ শতাংশ
+						936 container
+							937 text ৳ 1,550,000
+					938 cell
+						939 text MUTATED
+					940 cell
+						941 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							942 image
+						943 button ✖ বাতিল
+							944 text ✖ 
+							945 text বাতিল
+				946 row
+					947 cell
+						948 text DL-2023-1013
+						949 container
+							950 text Block # 13  •  SALE
+					951 cell
+						952 text বিরুলিয়া  —  দাগ 116
+					953 cell
+						954 container
+							955 text বিক্রেতা: মো. বাবুল আক্তার
+						956 container
+							957 text ক্রেতা: আবদুল করিম
+					958 cell
+						959 container
+							960 text ১৪ শতাংশ
+						961 container
+							962 text ৳ 1,525,000
+					963 cell
+						964 text MUTATED
+					965 cell
+						966 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							967 image
+						968 button ✖ বাতিল
+							969 text ✖ 
+							970 text বাতিল
+				971 row
+					972 cell
+						973 text DL-2022-1012
+						974 container
+							975 text Block # 12  •  HIBA
+					976 cell
+						977 text বিরুলিয়া  —  দাগ 115
+					978 cell
+						979 container
+							980 text বিক্রেতা: মো. কামাল উদ্দিন
+						981 container
+							982 text ক্রেতা: মোসা. পারভীন সুলতানা
+					983 cell
+						984 container
+							985 text ৮ শতাংশ
+						986 container
+							987 text ৳ 1,500,000
+					988 cell
+						989 text MUTATED
+					990 cell
+						991 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							992 image
+						993 button ✖ বাতিল
+							994 text ✖ 
+							995 text বাতিল
+				996 row
+					997 cell
+						998 text DL-2021-1011
+						999 container
+							1000 text Block # 11  •  SALE
+					1001 cell
+						1002 text বিরুলিয়া  —  দাগ 114
+					1003 cell
+						1004 container
+							1005 text বিক্রেতা: মোসা. নাজমা খাতুন
+						1006 container
+							1007 text ক্রেতা: মো. জসিম উদ্দিন
+					1008 cell
+						1009 container
+							1010 text ১৪ শতাংশ
+						1011 container
+							1012 text ৳ 1,475,000
+					1013 cell
+						1014 text MUTATED
+					1015 cell
+						1016 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							1017 image
+						1018 button ✖ বাতিল
+							1019 text ✖ 
+							1020 text বাতিল
+				1021 row
+					1022 cell
+						1023 text DL-2020-1010
+						1024 container
+							1025 text Block # 10  •  SALE
+					1026 cell
+						1027 text বিরুলিয়া  —  দাগ 113
+					1028 cell
+						1029 container
+							1030 text বিক্রেতা: মো. ফারুক আহমেদ
+						1031 container
+							1032 text ক্রেতা: মো. হারুন অর রশিদ
+					1033 cell
+						1034 container
+							1035 text ৮ শতাংশ
+						1036 container
+							1037 text ৳ 1,450,000
+					1038 cell
+						1039 text MUTATED
+					1040 cell
+						1041 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							1042 image
+						1043 button ✖ বাতিল
+							1044 text ✖ 
+							1045 text বাতিল
+				1046 row
+					1047 cell
+						1048 text DL-2019-1009
+						1049 container
+							1050 text Block # 9  •  INHERITANCE
+					1051 cell
+						1052 text বিরুলিয়া  —  দাগ 112
+					1053 cell
+						1054 container
+							1055 text বিক্রেতা: মো. সাইদুর রহমান
+						1056 container
+							1057 text ক্রেতা: মো. ইকবাল হোসেন
+					1058 cell
+						1059 container
+							1060 text ১৪ শতাংশ
+						1061 container
+							1062 text ৳ 1,425,000
+					1063 cell
+						1064 text MUTATED
+					1065 cell
+						1066 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							1067 image
+						1068 button ✖ বাতিল
+							1069 text ✖ 
+							1070 text বাতিল
+				1071 row
+					1072 cell
+						1073 text DL-2018-1008
+						1074 container
+							1075 text Block # 8  •  SALE
+					1076 cell
+						1077 text বিরুলিয়া  —  দাগ 111
+					1078 cell
+						1079 container
+							1080 text বিক্রেতা: মো. আশরাফুল ইসলাম
+						1081 container
+							1082 text ক্রেতা: মোসা. শারমিন আক্তার
+					1083 cell
+						1084 container
+							1085 text ৮ শতাংশ
+						1086 container
+							1087 text ৳ 1,400,000
+					1088 cell
+						1089 text MUTATED
+					1090 cell
+						1091 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							1092 image
+						1093 button ✖ বাতিল
+							1094 text ✖ 
+							1095 text বাতিল
+				1096 row
+					1097 cell
+						1098 text DL-2026-1007
+						1099 container
+							1100 text Block # 7  •  SALE
+					1101 cell
+						1102 text বিরুলিয়া  —  দাগ 109
+					1103 cell
+						1104 container
+							1105 text বিক্রেতা: মো. জাকির হোসেন
+						1106 container
+							1107 text ক্রেতা: নাসরিন সুলতানা
+					1108 cell
+						1109 container
+							1110 text ১৬ শতাংশ
+						1111 container
+							1112 text ৳ 2,800,000
+					1113 cell
+						1114 text MUTATED
+					1115 cell
+						1116 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							1117 image
+						1118 button ✖ বাতিল
+							1119 text ✖ 
+							1120 text বাতিল
+				1121 row
+					1122 cell
+						1123 text DL-2026-1006
+						1124 container
+							1125 text Block # 6  •  MORTGAGE
+					1126 cell
+						1127 text বিরুলিয়া  —  দাগ 106
+					1128 cell
+						1129 container
+							1130 text বিক্রেতা: মো. মাহবুবুর রহমান
+						1131 container
+							1132 text ক্রেতা: শিরিন আক্তার
+					1133 cell
+						1134 container
+							1135 text ৩০ শতাংশ
+						1136 container
+							1137 text ৳ 2,500,000
+					1138 cell
+						1139 text REGISTERED
+					1140 cell
+						1141 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							1142 image
+						1143 button ✔ রিলিজ
+							1144 text ✔ 
+							1145 text রিলিজ
+						1146 button ✖ বাতিল
+							1147 text ✖ 
+							1148 text বাতিল
+				1149 row
+					1150 cell
+						1151 text DL-2026-1005
+						1152 container
+							1153 text Block # 5  •  SALE
+					1154 cell
+						1155 text বিরুলিয়া  —  দাগ 105
+					1156 cell
+						1157 container
+							1158 text বিক্রেতা: মো. মনিরুজ্জামান
+						1159 container
+							1160 text ক্রেতা: সালমা আক্তার
+					1161 cell
+						1162 container
+							1163 text ২৫ শতাংশ
+						1164 container
+							1165 text ৳ 1,800,000
+					1166 cell
+						1167 text REGISTERED
+					1168 cell
+						1169 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							1170 image
+						1171 button ✔ রিলিজ
+							1172 text ✔ 
+							1173 text রিলিজ
+						1174 button ✖ বাতিল
+							1175 text ✖ 
+							1176 text বাতিল
+				1177 row
+					1178 cell
+						1179 text DL-2022-1004
+						1180 container
+							1181 text Block # 4  •  SALE
+					1182 cell
+						1183 text বিরুলিয়া  —  দাগ 104
+					1184 cell
+						1185 container
+							1186 text বিক্রেতা: মো. সাইফুল ইসলাম
+						1187 container
+							1188 text ক্রেতা: ফাতেমা বেগম
+					1189 cell
+						1190 container
+							1191 text ১৬ শতাংশ
+						1192 container
+							1193 text ৳ 2,100,000
+					1194 cell
+						1195 text MUTATED
+					1196 cell
+						1197 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							1198 image
+						1199 button ✖ বাতিল
+							1200 text ✖ 
+							1201 text বাতিল
+				1202 row
+					1203 cell
+						1204 text DL-2023-1003
+						1205 container
+							1206 text Block # 3  •  INHERITANCE
+					1207 cell
+						1208 text বিরুলিয়া  —  দাগ 103
+					1209 cell
+						1210 container
+							1211 text বিক্রেতা: মো. হুমায়ুন কবির
+						1212 container
+							1213 text ক্রেতা: মো. আনোয়ার হোসেন
+					1214 cell
+						1215 container
+							1216 text ১২ শতাংশ
+						1217 container
+							1218 text ৳ 0
+					1219 cell
+						1220 text MUTATED
+					1221 cell
+						1222 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							1223 image
+						1224 button ✖ বাতিল
+							1225 text ✖ 
+							1226 text বাতিল
+				1227 row
+					1228 cell
+						1229 text DL-2026-1002
+						1230 container
+							1231 text Block # 2  •  SALE
+					1232 cell
+						1233 text বিরুলিয়া  —  দাগ 102
+					1234 cell
+						1235 container
+							1236 text বিক্রেতা: আবদুল করিম
+						1237 container
+							1238 text ক্রেতা: মো. জাহাঙ্গীর আলম
+					1239 cell
+						1240 container
+							1241 text ১৫ শতাংশ
+						1242 container
+							1243 text ৳ 2,400,000
+					1244 cell
+						1245 text PENDING_MUTATION
+					1246 cell
+						1247 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							1248 image
+						1249 button ✖ বাতিল
+							1250 text ✖ 
+							1251 text বাতিল
+				1252 row
+					1253 cell
+						1254 text DL-2026-1001
+						1255 container
+							1256 text Block # 1  •  SALE
+					1257 cell
+						1258 text বিরুলিয়া  —  দাগ 101
+					1259 cell
+						1260 container
+							1261 text বিক্রেতা: মো. মিজানুর রহমান
+						1262 container
+							1263 text ক্রেতা: মো. রফিকুল ইসলাম
+					1264 cell
+						1265 container
+							1266 text ২০ শতাংশ
+						1267 container
+							1268 text ৳ 3,000,000
+					1269 cell
+						1270 text MUTATED
+					1271 cell
+						1272 button দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়
+							1273 image
+						1274 button ✖ বাতিল
+							1275 text ✖ 
+							1276 text বাতিল
+		1277 container
+			1278 text ভূ ভূমি সুরক্ষা ভূমি নিরাপত্তা ও ট্রাস্ট প্রোটোটাইপ ভূমি সুরক্ষা একটি স্বাধীন উদ্ভাবনী প্রোটোটাইপ (LandTech Hackathon 2026)। সরকারি সেবাসমূহ সংশ্লিষ্ট ভূমি অফিস ও নিবন্ধন অধিদপ্তরের অফিসিয়াল পোর্টালের আওতাধীন। Ed25519 • SHA-256 Hash Chain নাগরিক সেবাসমূহ
+			1279 content list
+				1280 button জমি কেনার আগে যাচাই
+				1281 button জমির হাট (নিরাপদ বিক্রয়)
+				1282 button ক্যাডাস্ট্রাল মৌজা ম্যাপ
+				1283 button দলিল QR কোড যাচাই
+				1284 button অফিসিয়াল নোটিশবোর্ড
+				1285 button ভূমি সাক্ষরতা ও আইন ব্লগ
+				1286 button দপ্তর ও সেবা কেন্দ্রসমূহ
+				1287 button নাগরিক ভল্ট ও বিক্রয় লক
+			1288 text দাপ্তরিক প্যানেল
+			1289 content list
+				1290 button সাব-রেজিস্ট্রার কনসোল
+				1291 button এসি ল্যান্ড ট্রাইব্যুনাল
+				1292 button ব্যাংক জামানত ও ডিজিটাল NOC
+				1293 button জাতীয় লেজার ও RBAC অডিট
+			1294 text সহায়তা ও যোগাযোগ
+			1295 content list
+				1296 text ভূমি সেবা কল সেন্টার: ১৬১২২
+				1297 text ভূমি মন্ত্রণালয় (সরকারি সময়সূচী অনুযায়ী)
+				1298 text অফিসিয়াল সেবার সময়সূচি দেখুন
+				1299 button সাধারণ জিজ্ঞাসাসমূহ (FAQ)
+				1300 button ভূমি ও জরিপ পরিভাষা কোষ
+			1301 text © ২০২৬ ভূমি সুরক্ষা (BhumiShield) · LandTech Hackathon Innovation. সর্বস্বত্ব সংরক্ষিত। সিনথেটিক ডেটা পরিবেশ / Synthetic data environment
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5188/bn/registrar

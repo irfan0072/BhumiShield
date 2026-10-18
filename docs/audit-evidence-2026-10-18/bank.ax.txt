@@ -1,0 +1,250 @@
+Browser tab: 5, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:5175/en/bank".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/bank
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা Central Admin OS
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text Central Admin OS
+			8 button Toggle Sidebar
+				9 image
+			10 text Bank Mortgage Panel Commercial Bank Collateral & Lien Division
+			11 container Sidebar Navigation
+				12 text MENU
+				13 button Prepare Loan Lien (Maker)
+					14 image
+					15 text Prepare Loan Lien (Maker)
+				16 button Active Mortgages
+					17 image
+					18 text Active Mortgages
+				19 button Collateral Khatian Check
+					20 image
+					21 text Collateral Khatian Check
+			22 button Public Portal
+				23 image
+				24 text Public Portal
+			25 button Sign Out
+				26 image
+				27 text Sign Out
+		28 container
+			29 button Home
+				30 image
+				31 text Home
+			32 text / Bank Mortgage Panel
+			33 text field (settable)
+			34 image
+			35 button বাং
+			36 button Contrast
+				37 image
+			38 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				39 text ন
+				40 text নাজমুল হাসান (ব্যাংক কর্মকর্তা - ঋণ শাখা)
+				41 text Bank Mortgage Panel
+				42 image
+		43 container
+			44 heading Bank Credit Officer Console (Lien Maker), Value: 1
+				45 text Bank Credit Officer Console (Lien Maker)
+			46 text Verify collateral, prepare new mortgage lien drafts, and inspect khatian records.
+			47 text Lien Preparer (Maker) ACTIVE MORTGAGES 1
+			48 button View Lien Register →
+			49 image
+			50 text TOTAL COLLATERAL VALUE ৳ 0.25 Cr
+			51 button New Mortgage Lien →
+			52 image
+			53 text RELEASED NOCS 0
+			54 button View Release NOCs →
+			55 image
+			56 text DOUBLE MORTGAGE BLOCK ১০০%  Protected
+			57 button Verify Collateral →
+			58 image
+			59 heading Bank Mortgage & Lien Workspace, Value: 3
+				60 text Bank Mortgage & Lien Workspace
+			61 text Lien registry, new mortgage lock, and digital release NOCs:
+			62 button Prepare Loan Lien (Maker)
+				63 image
+				64 text Prepare Loan Lien (Maker)
+			65 button Mortgages & Liens (1)
+				66 image
+				67 text Mortgages & Liens
+				68 text  (
+				69 text 1
+				70 text )
+			71 button Collateral Khatian Check
+				72 image
+				73 text Collateral Khatian Check
+			74 heading Register New Bank Mortgage Lien & Collateral Lock, Value: 2
+				75 image
+				76 text Register New Bank Mortgage Lien & Collateral Lock
+			77 text Verify collateral ownership, prevent double-mortgaging, and lock the plot under active bank lien. QUICK BANK PRESETS:
+			78 button Sonali Bank PLC
+			79 image
+			80 text Jurisdiction Selector
+			81 image
+			82 text বিভাগ
+			83 pop up button (collapsed, settable) Value: -- বিভাগ নির্বাচন করুন --, Secondary Actions: Expand
+				84 menu
+					85 (selected) -- বিভাগ নির্বাচন করুন --
+					86 ঢাকা
+			87 text জেলা
+			88 pop up button (disabled, collapsed, settable) Value: -- জেলা নির্বাচন করুন --, Secondary Actions: Expand
+				89 menu
+					90 (disabled) -- জেলা নির্বাচন করুন --
+			91 text উপজেলা / থানা
+			92 pop up button (disabled, collapsed, settable) Value: -- উপজেলা নির্বাচন করুন --, Secondary Actions: Expand
+				93 menu
+					94 (disabled) -- উপজেলা নির্বাচন করুন --
+			95 text মৌজা ও জে.এল. নং
+			96 pop up button (disabled, collapsed, settable) Value: -- মৌজা নির্বাচন করুন --, Secondary Actions: Expand
+				97 menu
+					98 (disabled) -- মৌজা নির্বাচন করুন --
+			99 text Select Plot (Dag): ( 60 plots )
+			100 pop up button (collapsed, settable) Value: -- Select Plot --, Secondary Actions: Expand
+				101 menu
+					102 (selected) -- Select Plot --
+					103 Dag 101 (Birulia)
+					104 Dag 102 (Birulia)
+					105 Dag 103 (Birulia)
+					106 Dag 104 (Birulia)
+					107 Dag 105 (Birulia)
+					108 Dag 106 (Birulia)
+					109 Dag 107 (Birulia)
+					110 Dag 108 (Birulia)
+					111 Dag 109 (Birulia)
+					112 Dag 110 (Birulia)
+					113 Dag 111 (Birulia)
+					114 Dag 112 (Birulia)
+					115 Dag 113 (Birulia)
+					116 Dag 114 (Birulia)
+					117 Dag 115 (Birulia)
+					118 Dag 116 (Birulia)
+					119 Dag 117 (Birulia)
+					120 Dag 118 (Birulia)
+					121 Dag 119 (Birulia)
+					122 Dag 120 (Birulia)
+					123 Dag 201 (Bason)
+					124 Dag 202 (Bason)
+					125 Dag 203 (Bason)
+					126 Dag 204 (Bason)
+					127 Dag 205 (Bason)
+					128 Dag 206 (Bason)
+					129 Dag 207 (Bason)
+					130 Dag 208 (Bason)
+					131 Dag 209 (Bason)
+					132 Dag 210 (Bason)
+					133 Dag 211 (Bason)
+					134 Dag 212 (Bason)
+					135 Dag 213 (Bason)
+					136 Dag 214 (Bason)
+					137 Dag 215 (Bason)
+					138 Dag 216 (Bason)
+					139 Dag 217 (Bason)
+					140 Dag 218 (Bason)
+					141 Dag 219 (Bason)
+					142 Dag 220 (Bason)
+					143 Dag 301 (Panam)
+					144 Dag 302 (Panam)
+					145 Dag 303 (Panam)
+					146 Dag 304 (Panam)
+					147 Dag 305 (Panam)
+					148 Dag 306 (Panam)
+					149 Dag 307 (Panam)
+					150 Dag 308 (Panam)
+					151 Dag 309 (Panam)
+					152 Dag 310 (Panam)
+					153 Dag 311 (Panam)
+					154 Dag 312 (Panam)
+					155 Dag 313 (Panam)
+					156 Dag 314 (Panam)
+					157 Dag 315 (Panam)
+					158 Dag 316 (Panam)
+					159 Dag 317 (Panam)
+					160 Dag 318 (Panam)
+					161 Dag 319 (Panam)
+					162 Dag 320 (Panam)
+			163 text Borrower:
+			164 pop up button (collapsed, settable) Value: Md. Rafiqul Islam (9900001001), Secondary Actions: Expand
+				165 menu
+					166 (selected) Md. Rafiqul Islam (9900001001)
+					167 Mst. Rabeya Khatun (9900001002)
+					168 Abdul Karim (9900001003)
+					169 Md. Jahangir Alam (9900001004)
+					170 Md. Kamrul Hasan (9900001005)
+					171 Md. Anwar Hossain (9900001006)
+					172 Md. Delwar Hossain (9900001007)
+					173 Fatema Begum (9900001008)
+					174 Md. Saiful Islam (9900001009)
+					175 Md. Moniruzzaman (9900001010)
+					176 Md. Mahbubur Rahman (9900001011)
+					177 Salma Akter (9900001012)
+					178 Md. Shahidul Islam (9900001013)
+					179 Alhaj Nurul Haque (9900001014)
+					180 Md. Tariq Aziz (9900001015)
+					181 Nasrin Sultana (9900001016)
+					182 Md. Mizanur Rahman (9900001017)
+					183 Md. Humayun Kabir (9900001018)
+					184 Shirin Akter (9900001019)
+					185 Md. Zakir Hossain (9900001020)
+					186 Md. Golam Rabbani (9900001021)
+					187 Mst. Rehana Parvin (9900001022)
+					188 Md. Shafiqul Alam (9900001023)
+					189 Md. Khorshed Alam (9900001024)
+					190 Md. Ashraful Islam (9900001025)
+					191 Roksana Yasmin (9900001026)
+					192 Md. Abul Bashar (9900001027)
+					193 Md. Saidur Rahman (9900001028)
+					194 Md. Nazmul Huda (9900001029)
+					195 Mst. Sharmin Akter (9900001030)
+					196 Md. Faruque Ahmed (9900001031)
+					197 Md. Mostafizur Rahman (9900001032)
+					198 Md. Iqbal Hossain (9900001033)
+					199 Mst. Nazma Khatun (9900001034)
+					200 Md. Enamul Haque (9900001035)
+					201 Md. Harun Or Rashid (9900001036)
+					202 Md. Kamal Uddin (9900001037)
+					203 Mst. Tanjila Akter (9900001038)
+					204 Md. Jasim Uddin (9900001039)
+					205 Md. Babul Akter (9900001040)
+					206 Md. Sohel Rana (9900001041)
+					207 Mst. Parvin Sultana (9900001042)
+			208 text Bank Name & Branch:
+			209 text field সোনালী ব্যাংক পিএলসি
+			210 text field (settable)
+			211 text Assigned Bank (English)
+			212 text field Assigned Bank (English), Value: Sonali Bank PLC, ID: bank-identity-en
+			213 text Mortgaged Area (Decimal)
+			214 stepper (settable) Mortgaged Area (Decimal), ID: mortgaged-area
+			215 text Loan Amount (BDT):
+			216 stepper (settable)
+			217 button 1. Verify Collateral & Prior Liens
+				218 image
+				219 text 1. Verify Collateral & Prior Liens
+			220 button 2. Register New Mortgage Lien Lock
+				221 image
+				222 text 2. Register New Mortgage Lien Lock
+		223 container
+			224 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			225 content list
+				226 button Check Before Buy
+				227 button Land Sale Marketplace
+				228 button Cadastral Mouza Map
+				229 button Verify Deed QR Code
+				230 button Official Noticeboard
+				231 button Land Literacy Blog
+				232 button Offices & Service Points
+				233 button Citizen Sale Lock Vault
+			234 text Workspaces
+			235 content list
+				236 button Sub-Registrar Panel
+				237 button AC Land Tribunal
+				238 button Bank Lien & NOC
+				239 button National Ledger & Audit
+			240 text Support & Helpline
+			241 content list
+				242 text Land Service Call Center: 16122
+				243 text Ministry of Land (Official service hours)
+				244 text Check official service hours
+				245 button Frequently Asked Questions
+				246 button Bangladeshi Land Glossary
+			247 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved. Synthetic data environment / সিনথেটিক ডেটা পরিবেশ
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/bank

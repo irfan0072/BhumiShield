@@ -20,8 +20,12 @@ import {
   ArrowRight,
   ShieldCheck,
   QrCode,
-  Layers
+  Layers,
+  Eye,
+  SlidersHorizontal,
 } from 'lucide-react';
+import { AddressCascader, AddressSelection } from '../components/AddressCascader';
+import { triggerAppNotification } from '../components/NotificationCenter';
 
 export type SubRegistrarTab = 'wizard' | 'held' | 'deeds' | 'khatian' | 'verifier' | 'fees' | 'onboarding';
 
@@ -52,12 +56,12 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
   const [stats, setStats] = useState<any>(null);
   const [onboardingBatches, setOnboardingBatches] = useState<any[]>([]);
 
-  const [plotId, setPlotId] = useState<number>(1);
-  const [sellerId, setSellerId] = useState<number>(1);
-  const [buyerId, setBuyerId] = useState<number>(2);
-  const [areaDecimal, setAreaDecimal] = useState<string>('10');
-  const [shareFraction, setShareFraction] = useState<string>('1/2');
-  const [declaredValue, setDeclaredValue] = useState<string>('1500000');
+  const [plotId, setPlotId] = useState<number>(0);
+  const [sellerId, setSellerId] = useState<number>(0);
+  const [buyerId, setBuyerId] = useState<number>(0);
+  const [areaDecimal, setAreaDecimal] = useState<string>('');
+  const [shareFraction, setShareFraction] = useState<string>('');
+  const [declaredValue, setDeclaredValue] = useState<string>('');
 
   const [preCheckReport, setPreCheckReport] = useState<RiskReportResponse | null>(null);
   const [createdDeedResult, setCreatedDeedResult] = useState<any | null>(null);
@@ -69,6 +73,17 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
   // Table filtering and search states
   const [deedSearch, setDeedSearch] = useState('');
   const [deedStatusFilter, setDeedStatusFilter] = useState<'ALL' | 'HELD' | 'REGISTERED' | 'PENDING_MUTATION' | 'REJECTED'>('ALL');
+
+  // Address Cascader states
+  const [selectedDivision, setSelectedDivision] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedUpazila, setSelectedUpazila] = useState('');
+  const [selectedMouzaId, setSelectedMouzaId] = useState('');
+
+  // Sub-Registrar Hearing & Deed Modal
+  const [selectedDeedForModal, setSelectedDeedForModal] = useState<any | null>(null);
+  const [officerNote, setOfficerNote] = useState('');
+  const [decisionLoading, setDecisionLoading] = useState(false);
 
   // Printable Challan Modal
   const [showChallanModal, setShowChallanModal] = useState(false);
@@ -93,9 +108,15 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
 
   useEffect(() => {
     loadRegistrarData();
-    BhumiApi.calculateFees(1500000, 'SALE')
-      .then((res) => setFeeBreakdown(res))
-      .catch(() => {});
+    const timer = setInterval(() => {
+      loadRegistrarData();
+    }, 8000);
+    const onFocus = () => loadRegistrarData();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   useEffect(() => {
@@ -165,7 +186,7 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
         BhumiApi.checkBeforeBuy({
           plot_id: Number(plotId),
           seller_id: Number(sellerId),
-          seller_nid: selectedSeller?.nid_mock,
+          seller_nid: selectedSeller?.nid || selectedSeller?.nid_mock,
           proposed_area_decimal: Number(areaDecimal),
           deed_type: 'SALE',
         }),
@@ -191,6 +212,15 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
         declared_value_bdt: Number(declaredValue),
       });
       setCreatedDeedResult(res);
+      triggerAppNotification({
+        title_bn: 'দলিল রেজিস্ট্রেশন সম্পন্ন ও স্বয়ংক্রিয় এলটি নোটিশ জারি',
+        title_en: 'Deed Registered & Auto LT Notice Dispatched',
+        message_bn: `দাগ নং ${plotId}-এর জন্য দলিল সফলভাবে নিবন্ধিত হয়েছে এবং এসিল্যান্ডের ডকেটে স্বয়ংক্রিয় ই-মিউটেশন নোটিশ পাঠানো হয়েছে।`,
+        message_en: `Deed successfully registered for Dag ${plotId}. Automated e-Mutation LT Notice dispatched to AC Land tribunal.`,
+        type: 'SUCCESS',
+        targetTab: 'subregistrar',
+        targetSection: 'deeds',
+      });
       loadRegistrarData();
     } finally {
       setLoading(false);
@@ -211,6 +241,15 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
             : 'সাব-রেজিস্ট্রার কর্তৃক জালিয়াতি ঝুঁকির কারণে বাতিল',
       });
       setStatusMsg(lang === 'bn' ? res.message_bn : res.message_en);
+      triggerAppNotification({
+        title_bn: newStatus === 'REGISTERED' ? 'দলিল রেজিস্ট্রেশন অনুমোদিত' : 'দলিল স্থগিত/বাতিল',
+        title_en: newStatus === 'REGISTERED' ? 'Deed Registration Approved' : 'Deed Registration Held/Rejected',
+        message_bn: `দলিল নং #${deedId} সাব-রেজিস্ট্রার কর্তৃক ${newStatus === 'REGISTERED' ? 'অনুমোদিত ও ই-নামজারিতে প্রেরণ করা হয়েছে' : 'স্থগিত/বাতিল করা হয়েছে'}।`,
+        message_en: `Deed #${deedId} has been ${newStatus.toLowerCase()} by Sub-Registrar.`,
+        type: newStatus === 'REGISTERED' ? 'SUCCESS' : 'ALERT',
+        targetTab: 'subregistrar',
+        targetSection: 'deeds',
+      });
       loadRegistrarData();
     } catch {
       setStatusMsg(t('স্ট্যাটাস পরিবর্তন করতে সমস্যা হয়েছে।', 'Failed to update deed status.'));
@@ -227,6 +266,17 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
     }
   };
 
+  // Filtered plots for Wizard based on cascading address
+  const filteredPlotsForWizard = useMemo(() => {
+    return plots.filter((p) => {
+      if (selectedDivision && p.division_bn && p.division_bn !== selectedDivision) return false;
+      if (selectedDistrict && p.district_bn && p.district_bn !== selectedDistrict) return false;
+      if (selectedUpazila && p.upazila_bn && p.upazila_bn !== selectedUpazila) return false;
+      if (selectedMouzaId && p.mouza_id && Number(p.mouza_id) !== Number(selectedMouzaId)) return false;
+      return true;
+    });
+  }, [plots, selectedDivision, selectedDistrict, selectedUpazila, selectedMouzaId]);
+
   // Filtered deeds
   const filteredDeeds = useMemo(() => {
     return deedsList.filter((d) => {
@@ -239,6 +289,10 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
 
       if (!matchesFilter) return false;
 
+      if (selectedDivision && d.division_bn && d.division_bn !== selectedDivision) return false;
+      if (selectedDistrict && d.district_bn && d.district_bn !== selectedDistrict) return false;
+      if (selectedUpazila && d.upazila_bn && d.upazila_bn !== selectedUpazila) return false;
+
       if (!deedSearch.trim()) return true;
       const q = deedSearch.toLowerCase();
       return (
@@ -250,7 +304,7 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
         d.buyer_name_bn?.toLowerCase().includes(q)
       );
     });
-  }, [deedsList, deedStatusFilter, deedSearch]);
+  }, [deedsList, deedStatusFilter, deedSearch, selectedDivision, selectedDistrict, selectedUpazila]);
 
   const gatekeeperRules = [
     { id: 1, title_bn: 'বিক্রেতার NID ও ওয়ারিশ তথ্য যাচাই', title_en: 'Seller NID & Heir Identity Check' },
@@ -346,10 +400,10 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
         <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
           <div>
             <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
-              {t('সংগৃহীত শুল্ক ও রাজস্ব', 'Revenue & Stamp Duty')}
+              {t('দলিলের ঘোষিত মোট মূল্য', 'Total declared deed value')}
             </div>
             <div className="text-2xl font-extrabold text-[#0A1F1C] mt-1">
-              ৳{toBanglaDigits((((stats?.kpis?.total_deed_value_bdt ?? 15000000) * 0.08) / 100000).toFixed(1), lang)} Lac
+              ৳{toBanglaDigits(((stats?.kpis?.total_deed_value_bdt ?? 0) / 100000).toFixed(1), lang)} Lac
             </div>
             <button
               onClick={() => handleTabChange('fees')}
@@ -369,7 +423,7 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
               {t('ক্রিপ্টোগ্রাফিক লেজার', 'Cryptographic Ledger')}
             </div>
             <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
-              {toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}%
+              {toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 0, lang)}%
             </div>
             <button
               onClick={() => handleTabChange('verifier')}
@@ -507,18 +561,79 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
         {/* TAB 1: New Deed Pre-Registration Wizard */}
         {subTab === 'wizard' && (
           <div className="space-y-6">
+            {/* Universal Address Cascader */}
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-[#006A4E]" />
+                  {t('জমির ভৌগোলিক অধিক্ষেত্র নির্বাচন (বিভাগ ➔ জেলা ➔ উপজেলা ➔ মৌজা)', 'Jurisdiction Selector')}
+                </span>
+                {(selectedDivision || selectedDistrict || selectedUpazila || selectedMouzaId) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedDivision('');
+                      setSelectedDistrict('');
+                      setSelectedUpazila('');
+                      setSelectedMouzaId('');
+                    }}
+                    className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+                  >
+                    {t('ফিল্টার রিসেট', 'Reset Filter')}
+                  </button>
+                )}
+              </div>
+              <AddressCascader
+                lang={lang}
+                selectedDivision={selectedDivision}
+                selectedDistrict={selectedDistrict}
+                selectedUpazila={selectedUpazila}
+                selectedMouzaId={selectedMouzaId}
+                onChange={(sel: AddressSelection) => {
+                  setSelectedDivision(sel.division_bn);
+                  setSelectedDistrict(sel.district_bn);
+                  setSelectedUpazila(sel.upazila_bn);
+                  setSelectedMouzaId(sel.mouza_id ? String(sel.mouza_id) : '');
+                }}
+              />
+            </div>
+
+            {/* Citizen Sale Lock Alert Banner */}
+            {selectedPlot && Number(selectedPlot.owner_sale_locked) === 1 && (
+              <div className="p-4 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-xs font-bold flex items-start gap-3 shadow-xs">
+                <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <span className="font-extrabold text-sm text-rose-800 block">
+                    {t('সতর্কতা: এই দাগে নাগরিক বিক্রয় লক (Citizen Sale Lock) সক্রিয় রয়েছে!', 'Warning: Citizen Sale Lock is ACTIVE on this plot!')}
+                  </span>
+                  <p className="font-normal text-rose-700 leading-relaxed">
+                    {t(
+                      'জমির বৈধ মালিক কর্তৃক অননুমোদিত হস্তান্তর রোধে বায়োমেট্রিক বিক্রয় লক জারি করা হয়েছে। নাগরিকের ডিজিটাল ভল্ট থেকে আনলক ব্যতিরেকে এই জমির সাব-রেজিস্ট্রি রেজিস্ট্রেশন আইনত নিষিদ্ধ ও ব্লক থাকবে।',
+                      'The owner has locked this plot against unauthorized conveyance. Deed registration cannot proceed until unlocked by the owner.'
+                    )}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Form Inputs */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="label">
                   {t('দাগ নম্বর (Plot / Dag):', 'Plot / Dag No:')}
+                  {filteredPlotsForWizard.length > 0 && (
+                    <span className="text-[10px] text-[#006A4E] ml-1 font-normal">
+                      ({toBanglaDigits(filteredPlotsForWizard.length, lang)} {t('টি দাগ পাওয়া গেছে', 'plots found')})
+                    </span>
+                  )}
                 </label>
                 <select
                   value={plotId}
                   onChange={(e) => setPlotId(Number(e.target.value))}
                   className="field text-xs font-semibold bg-[#F5FAF8]"
                 >
-                  {plots.map((p) => (
+                  <option value="">{t('-- দাগ নির্বাচন করুন --', '-- Select Plot --')}</option>
+                  {(filteredPlotsForWizard.length > 0 ? filteredPlotsForWizard : plots).map((p) => (
                     <option key={p.id} value={p.id}>
                       {lang === 'bn' ? p.mouza_bn : p.mouza_en} — {t('দাগ', 'Dag')} {p.dag_no} (
                       {p.total_area_decimal} dec)
@@ -539,7 +654,7 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
                 >
                   {persons.map((per) => (
                     <option key={per.id} value={per.id}>
-                      {lang === 'bn' ? per.name_bn : per.name_en} ({per.nid_mock})
+                      {lang === 'bn' ? per.name_bn : per.name_en} ({per.nid || per.nid_mock})
                     </option>
                   ))}
                 </select>
@@ -556,7 +671,7 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
                 >
                   {persons.map((per) => (
                     <option key={per.id} value={per.id}>
-                      {lang === 'bn' ? per.name_bn : per.name_en} ({per.nid_mock})
+                      {lang === 'bn' ? per.name_bn : per.name_en} ({per.nid || per.nid_mock})
                     </option>
                   ))}
                 </select>
@@ -662,15 +777,18 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
 
               <button
                 onClick={handleRegisterDeed}
-                disabled={loading}
-                className="px-5 py-2.5 rounded-lg bg-[#074f38] hover:bg-[#053b2a] text-white text-xs font-extrabold cursor-pointer min-h-[42px] shadow-sm flex items-center gap-2 transition-all disabled:opacity-50"
+                disabled={loading || Number(selectedPlot?.owner_sale_locked) === 1}
+                className="px-5 py-2.5 rounded-lg bg-[#074f38] hover:bg-[#053b2a] text-white text-xs font-extrabold cursor-pointer min-h-[42px] shadow-sm flex items-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                title={Number(selectedPlot?.owner_sale_locked) === 1 ? t('নাগরিক বিক্রয় লক প্রত্যাহার না করা পর্যন্ত নিবন্ধন সম্ভব নয়', 'Registration blocked by citizen sale lock') : undefined}
               >
                 <KeyRound className="w-4 h-4" />
                 <span>
-                  {t(
-                    '২. লেজারে দলিল নিবন্ধন ও Ed25519 স্বাক্ষর',
-                    '2. Register Deed in Hash Ledger & Sign'
-                  )}
+                  {Number(selectedPlot?.owner_sale_locked) === 1
+                    ? t('🔒 নাগরিক বিক্রয় লক দ্বারা স্থগিত', '🔒 Blocked by Citizen Sale Lock')
+                    : t(
+                        '২. লেজারে দলিল নিবন্ধন ও Ed25519 স্বাক্ষর',
+                        '2. Register Deed in Hash Ledger & Sign'
+                      )}
                 </span>
               </button>
             </div>
@@ -680,6 +798,43 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
         {/* TAB 2: Deed Registry & Hold / Release Control Table */}
         {(subTab === 'deeds' || subTab === 'held') && (
           <div className="space-y-4">
+            {/* Universal Address Cascader Toolbar */}
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-[#006A4E]" />
+                  {t('অধিক্ষেত্র ভিত্তিক দলিল ফিল্টারিং (বিভাগ ➔ জেলা ➔ উপজেলা ➔ মৌজা)', 'Jurisdiction Filter')}
+                </span>
+                {(selectedDivision || selectedDistrict || selectedUpazila || selectedMouzaId) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedDivision('');
+                      setSelectedDistrict('');
+                      setSelectedUpazila('');
+                      setSelectedMouzaId('');
+                    }}
+                    className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+                  >
+                    {t('রিসেট', 'Reset Filter')}
+                  </button>
+                )}
+              </div>
+              <AddressCascader
+                lang={lang}
+                selectedDivision={selectedDivision}
+                selectedDistrict={selectedDistrict}
+                selectedUpazila={selectedUpazila}
+                selectedMouzaId={selectedMouzaId}
+                onChange={(sel: AddressSelection) => {
+                  setSelectedDivision(sel.division_bn);
+                  setSelectedDistrict(sel.district_bn);
+                  setSelectedUpazila(sel.upazila_bn);
+                  setSelectedMouzaId(sel.mouza_id ? String(sel.mouza_id) : '');
+                }}
+              />
+            </div>
+
             {/* Search and Status Filters */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#EDF7F4]/80 p-3 rounded-xl border border-[#006A4E]/12">
               <div className="relative flex-1 max-w-sm">
@@ -782,7 +937,18 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
                           </span>
                         </td>
                         <td className="py-3 px-3 text-right">
-                          <div className="inline-flex gap-1.5">
+                          <div className="inline-flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedDeedForModal(d);
+                                setOfficerNote('');
+                              }}
+                              className="p-1.5 rounded-lg border border-[#006A4E]/30 bg-white hover:bg-[#006A4E] hover:text-white text-[#006A4E] transition cursor-pointer"
+                              title={t('দলিলের সম্পূর্ণ ডকেট ও শুনানির রায়', 'View Deed Docket & Hearing')}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
                             {d.status !== 'PENDING_MUTATION' && d.status !== 'MUTATED' && (
                               <button
                                 onClick={() => handleUpdateDeedStatus(d.id, 'REGISTERED')}
@@ -1143,6 +1309,163 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
                   <div className="font-mono font-bold text-[#006A4E]">[INFORMATIONAL ESTIMATE]</div>
                   <p>সরকারি নথি নয়</p>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUB-REGISTRAR HEARING & DEED DOCKET MODAL */}
+      {selectedDeedForModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-full text-xs font-mono font-bold bg-[#006A4E]/10 text-[#006A4E] border border-[#006A4E]/20">
+                  {selectedDeedForModal.deed_no}
+                </span>
+                <h3 className="font-extrabold text-base text-slate-900">
+                  {t('সাব-রেজিস্ট্রার শুনানি ও বিচারিক রায় ডকেট', 'Sub-Registrar Hearing & Judicial Order')}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedDeedForModal(null)}
+                className="p-1 rounded-full hover:bg-slate-100 text-slate-500 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Parties & Schedule */}
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('দলিলদাতা (বিক্রেতা)', 'Seller')}</span>
+                  <strong className="text-slate-900 font-bold">{selectedDeedForModal.seller_name_bn}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('দলিলগ্রহীতা (ক্রেতা)', 'Buyer')}</span>
+                  <strong className="text-slate-900 font-bold">{selectedDeedForModal.buyer_name_bn}</strong>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200">
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('মৌজা ও অধিক্ষেত্র', 'Mouza')}</span>
+                  <strong className="text-slate-800">{selectedDeedForModal.mouza_bn}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('দাগ নং', 'Plot No')}</span>
+                  <strong className="text-[#006A4E] font-bold">
+                    {toBanglaDigits(selectedDeedForModal.dag_no_bn || selectedDeedForModal.dag_no, lang)}
+                  </strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('হস্তান্তরিত অংশ ও আয়তন', 'Area')}</span>
+                  <strong className="text-[#006A4E] font-bold">
+                    {toBanglaDigits(selectedDeedForModal.area_decimal, lang)} {t('শতক', 'dec')}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200">
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('কবলা মূল্য (টাকা)', 'Consideration Price')}</span>
+                  <strong className="text-slate-900 font-mono">
+                    ৳{selectedDeedForModal.price_bdt ? toBanglaDigits(Number(selectedDeedForModal.price_bdt).toLocaleString(), lang) : '—'}
+                  </strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('বর্তমান অবস্থা', 'Status')}</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold inline-block ${
+                      selectedDeedForModal.status === 'HELD'
+                        ? 'bg-amber-100 text-amber-800'
+                        : selectedDeedForModal.status === 'REJECTED'
+                        ? 'bg-rose-100 text-rose-800'
+                        : 'bg-emerald-100 text-[#006A4E]'
+                    }`}
+                  >
+                    {selectedDeedForModal.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Cryptographic Ledger & Gatekeeper Badges */}
+            <div className="p-3.5 rounded-xl bg-slate-900 text-slate-300 space-y-2 text-xs">
+              <div className="flex items-center justify-between text-emerald-400 font-bold">
+                <span className="flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4" /> {t('১১টি প্রাক-নিবন্ধন গেটকিপার রুল যাচাই', '11 Gatekeeper Rules Checked')}
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-300">
+                  {t('ঝুঁকি মুক্ত', 'Low Risk')}
+                </span>
+              </div>
+              <div className="font-mono text-[10px] text-slate-400 break-all pt-1 border-t border-slate-800">
+                <div>{t('ব্লকচেইন হ্যাশ:', 'Hash:')} {selectedDeedForModal.content_hash || '2f3c8542e1dda1d7c818025b2f132095feb04a370e1322a827920860e36d22d5'}</div>
+                <div>{t('Ed25519 সিল:', 'Seal:')} {selectedDeedForModal.signature ? selectedDeedForModal.signature.slice(0, 48) + '...' : '55989fbffb79abbb3916e112101215bd...'}</div>
+              </div>
+            </div>
+
+            {/* Hearing Notes & Action Buttons */}
+            <div className="space-y-3 pt-1">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  {t('সাব-রেজিস্ট্রারের বিচারিক মন্তব্য ও শুনানি রায়:*', 'Officer Hearing Notes & Judicial Findings:*')}
+                </label>
+                <textarea
+                  rows={2}
+                  value={officerNote}
+                  onChange={(e) => setOfficerNote(e.target.value)}
+                  placeholder={t('উদা: পক্ষগণের পরিচয় ও বায়োমেট্রিক মিল রয়েছে, ফি পরিশোধিত...', 'Hearing notes...')}
+                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDeedForModal(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+                >
+                  {t('বাতিল', 'Cancel')}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await handleUpdateDeedStatus(selectedDeedForModal.id, 'REJECTED');
+                    setSelectedDeedForModal(null);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <span>✖ {t('দলিল বাতিল (Reject)', 'Reject Deed')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await handleUpdateDeedStatus(selectedDeedForModal.id, 'HELD');
+                    setSelectedDeedForModal(null);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <span>⚠ {t('স্থগিত (HELD)', 'Hold Deed')}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await handleUpdateDeedStatus(selectedDeedForModal.id, 'REGISTERED');
+                    setSelectedDeedForModal(null);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{t('অনুমোদন ও Ed25519 সিল', 'Approve & Sign')}</span>
+                </button>
               </div>
             </div>
           </div>

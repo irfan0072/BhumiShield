@@ -15,3 +15,10 @@ frontend/dist/
 .pytest_cache/
 *.bak*
 backend/storage/
+.backups/
+backend/database/*.sqlite
+backend/database/*.sqlite-wal
+backend/database/*.sqlite-shm
+backend/database/backups/
+backend/database/*.recheck_backup*
+scratch/

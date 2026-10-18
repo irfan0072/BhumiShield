@@ -38,6 +38,7 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
   const [stats, setStats] = useState<any>(null);
   const [locations, setLocations] = useState<any[]>([]);
   const [plots, setPlots] = useState<any[]>([]);
+  const [deeds, setDeeds] = useState<any[]>([]);
   const [catalogueServices, setCatalogueServices] = useState<ServiceCatalogueItem[]>([]);
   const [catalogueState, setCatalogueState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [selectedServiceCat, setSelectedServiceCat] = useState<string>('ALL');
@@ -48,23 +49,43 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
   const [selectedMouza, setSelectedMouza] = useState<number>(1);
   const [selectedPlotId, setSelectedPlotId] = useState<number>(1);
 
-  useEffect(() => {
+  const fetchLandingData = () => {
     Promise.allSettled([
       BhumiApi.getStatsSummary(),
       BhumiApi.getLocations(),
       BhumiApi.getPlots(),
+      BhumiApi.listRegistrarDeeds().catch(() => []),
       BhumiApi.listPublicServices(),
     ])
-      .then(([st, locs, plts, svcs]) => {
+      .then(([st, locs, plts, dds, svcs]) => {
         if (st.status === 'fulfilled') setStats(st.value);
         if (locs.status === 'fulfilled') setLocations(locs.value);
-        if (plts.status === 'fulfilled') setPlots(plts.value);
+        if (plts.status === 'fulfilled' && Array.isArray(plts.value)) {
+          setPlots(plts.value);
+          if (plts.value.length > 0 && !selectedPlotId) {
+            setSelectedPlotId(plts.value[0].id);
+          }
+        }
+        if (dds.status === 'fulfilled' && Array.isArray(dds.value)) {
+          setDeeds(dds.value);
+        }
         if (svcs.status === 'fulfilled') {
           setCatalogueServices(svcs.value?.items || []);
           setCatalogueState('ready');
         } else setCatalogueState('error');
       })
       .catch(() => setCatalogueState('error'));
+  };
+
+  useEffect(() => {
+    fetchLandingData();
+    const timer = setInterval(fetchLandingData, 8000);
+    const onFocus = () => fetchLandingData();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   const enterRolePortal = (targetRole: UserRole) => {
@@ -309,38 +330,68 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
               )}
             </form>
 
-            {/* Quick Preset Links (like bcc.zohirrayhan.com) */}
+            {/* Dynamic Real-time Quick Preset Links from Database */}
             <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
               <button
                 type="button"
-                onClick={() => onNavigate('qr')}
+                onClick={() => {
+                  setSearchType('deed');
+                  const deedCode = deeds[0]?.deed_code || 'DL-2026-1001';
+                  setTrackInput(deedCode);
+                  onNavigate('qr');
+                }}
                 className="rounded-lg bg-slate-50 border border-slate-200/90 p-2.5 hover:bg-emerald-50 text-slate-700 font-semibold text-left transition-colors flex items-center justify-between cursor-pointer min-h-[36px]"
               >
-                <span className="truncate">DL-2026-1001 (অক্ষত)</span>
+                <span className="truncate">{deeds[0]?.deed_code || 'DL-2026-1001'} (অক্ষত)</span>
                 <span className="text-emerald-700 font-bold ml-1">→</span>
               </button>
               <button
                 type="button"
-                onClick={() => onNavigate('qr')}
+                onClick={() => {
+                  setSearchType('deed');
+                  const targetDeed = deeds.find((d: any) => d.status === 'HELD' || d.is_flagged_admin) || deeds[1] || deeds[0];
+                  const code = targetDeed?.deed_code || 'DL-2026-1005';
+                  setTrackInput(code);
+                  onNavigate('qr');
+                }}
                 className="rounded-lg bg-slate-50 border border-slate-200/90 p-2.5 hover:bg-rose-50 text-slate-700 font-semibold text-left transition-colors flex items-center justify-between cursor-pointer min-h-[36px]"
               >
-                <span className="truncate">DL-2026-1005 (টেম্পার)</span>
+                <span className="truncate">{(deeds.find((d: any) => d.status === 'HELD' || d.is_flagged_admin) || deeds[1])?.deed_code || 'DL-2026-1005'} (স্থগিত/টেম্পার)</span>
                 <span className="text-rose-600 font-bold ml-1">→</span>
               </button>
               <button
                 type="button"
-                onClick={() => onNavigate('check')}
+                onClick={() => {
+                  setSearchType('plot');
+                  if (plots[0]) {
+                    setSelectedMouza(plots[0].location_id || plots[0].mouza_id || 1);
+                    setSelectedPlotId(plots[0].id);
+                  }
+                  onNavigate('check');
+                }}
                 className="rounded-lg bg-slate-50 border border-slate-200/90 p-2.5 hover:bg-emerald-50 text-slate-700 font-semibold text-left transition-colors flex items-center justify-between cursor-pointer min-h-[36px]"
               >
-                <span className="truncate">দাগ ১০১ (ধানমন্ডি)</span>
+                <span className="truncate">{plots[0] ? `দাগ ${plots[0].dag_no_bn || plots[0].dag_no} (${plots[0].mouza_bn || ''})` : 'দাগ ১০১ (ধানমন্ডি)'}</span>
                 <span className="text-emerald-700 font-bold ml-1">→</span>
               </button>
               <button
                 type="button"
-                onClick={() => onNavigate('check')}
+                onClick={() => {
+                  setSearchType('plot');
+                  const targetP = plots.find((p: any) => p.has_active_mortgage || p.owner_sale_locked) || plots[1] || plots[0];
+                  if (targetP) {
+                    setSelectedMouza(targetP.location_id || targetP.mouza_id || 1);
+                    setSelectedPlotId(targetP.id);
+                  }
+                  onNavigate('check');
+                }}
                 className="rounded-lg bg-slate-50 border border-slate-200/90 p-2.5 hover:bg-amber-50 text-slate-700 font-semibold text-left transition-colors flex items-center justify-between cursor-pointer min-h-[36px]"
               >
-                <span className="truncate">দাগ ১০৬ (বন্ধকী দাগ)</span>
+                <span className="truncate">
+                  {plots.find((p: any) => p.has_active_mortgage || p.owner_sale_locked)
+                    ? `দাগ ${plots.find((p: any) => p.has_active_mortgage || p.owner_sale_locked).dag_no_bn || plots.find((p: any) => p.has_active_mortgage || p.owner_sale_locked).dag_no} (বন্ধকী/লক)`
+                    : (plots[1] ? `দাগ ${plots[1].dag_no_bn || plots[1].dag_no} (${plots[1].mouza_bn || ''})` : 'দাগ ১০৬ (বন্ধকী দাগ)')}
+                </span>
                 <span className="text-amber-700 font-bold ml-1">→</span>
               </button>
             </div>
@@ -746,8 +797,8 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
             </h3>
             <p className="text-xs sm:text-sm text-emerald-100/80 max-w-xl">
               {t(
-                'ভূমি মন্ত্রণালয়ের নাগরিক সেবা কল সেন্টার ১৬১২২ এ কল করে তথ্য ও সহায়তা নিন (সরকারি সময়সূচী অনুযায়ী সেবা চালু; টেলিকম অপারেটর নির্ধারিত কল চার্জ প্রযোজ্য)।',
-                'Call Ministry of Land Call Center 16122 for assistance during official service hours (standard telecom charges apply).'
+                'ভূমি সুরক্ষা নাগরিক সেবা সার্বক্ষণিক হটলাইন ১৬১২২ এ কল করে তথ্য ও কারিগরি সহায়তা নিন (সার্বক্ষণিক সেবা চালু; অপারেটর নির্ধারিত সাধারণ কল চার্জ প্রযোজ্য)।',
+                'Call BhumiShield Citizen Support Hotline 16122 for platform assistance and inquiry (24/7 service; standard telecom charges apply).'
               )}
             </p>
           </div>

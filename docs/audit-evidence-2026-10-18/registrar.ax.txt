@@ -1,0 +1,360 @@
+Browser tab: 5, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:5175/en/registrar".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/registrar
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা Central Admin OS
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text Central Admin OS
+			8 button Toggle Sidebar
+				9 image
+			10 text Sub-Registrar Panel Directorate of Registration • Ministry of Law
+			11 container Sidebar Navigation
+				12 text MENU
+				13 button Held Deeds Queue
+					14 image
+					15 text Held Deeds Queue
+				16 button Pre-Reg Gatekeeper
+					17 image
+					18 text Pre-Reg Gatekeeper
+				19 button Deeds Register
+					20 image
+					21 text Deeds Register
+				22 button Approve Staging Batches
+					23 image
+					24 text Approve Staging Batches
+				25 button Khatian Lineage
+					26 image
+					27 text Khatian Lineage
+				28 button Deed Ledger Verifier
+					29 image
+					30 text Deed Ledger Verifier
+				31 button Stamp Duty & Fees
+					32 image
+					33 text Stamp Duty & Fees
+			34 button Public Portal
+				35 image
+				36 text Public Portal
+			37 button Sign Out
+				38 image
+				39 text Sign Out
+		40 container
+			41 button Home
+				42 image
+				43 text Home
+			44 text / Sub-Registrar Panel
+			45 text field (settable)
+			46 image
+			47 button বাং
+			48 button Contrast
+				49 image
+			50 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				51 text ফ
+				52 text ফারহানা ইয়াসমিন (সাব-রেজিস্ট্রার)
+				53 text Sub-Registrar Panel
+				54 image
+		55 container
+			56 heading Sub-Registrar Console (Checker & Registration Authority), Value: 1
+				57 text Sub-Registrar Console (Checker & Registration Authority)
+			58 text Pre-registration gatekeeper, held queue resolution, counter biometrics, and Ed25519 deed sealing.
+			59 text TOTAL REGISTERED DEEDS 80
+			60 button View Deed Registry →
+			61 image
+			62 text HELD DEEDS QUEUE 0
+			63 button Review Held Hearings →
+			64 image
+			65 text TOTAL DECLARED DEED VALUE ৳ 1825.0  Lac
+			66 button Fee Calculator →
+			67 image
+			68 text CRYPTOGRAPHIC LEDGER 97.5 %
+			69 button Verify Ledger →
+			70 image
+			71 heading Pre-Registration Gatekeeper, Deed Control & Verification, Value: 2
+				72 image
+				73 text Pre-Registration Gatekeeper, Deed Control & Verification
+			74 text Run pre-registration fraud checks, manage held hearings, inspect khatian lineage and ledger proofs:
+			75 button Pre-Reg Gatekeeper
+				76 image
+				77 text Pre-Reg Gatekeeper
+			78 button Held Queue (0)
+				79 image
+				80 text Held Queue
+				81 text  (
+				82 text 0
+				83 text )
+			84 button Deed Registry (37)
+				85 image
+				86 text Deed Registry
+				87 text  (
+				88 text 37
+				89 text )
+			90 button Khatian Lineage
+				91 image
+				92 text Khatian Lineage
+			93 button Deed Verifier
+				94 image
+				95 text Deed Verifier
+			96 button Stamp & Challan
+				97 image
+				98 text Stamp & Challan
+			99 button Approve Staging Batches (2)
+				100 image
+				101 text Approve Staging Batches
+				102 text  (
+				103 text 2
+				104 text )
+			105 image
+			106 text Jurisdiction Filter
+			107 image
+			108 text Division
+			109 pop up button (collapsed, settable) Value: -- Select Division --, Secondary Actions: Expand
+				110 menu
+					111 (selected) -- Select Division --
+					112 Dhaka
+			113 text District
+			114 pop up button (disabled, collapsed, settable) Value: -- Select District --, Secondary Actions: Expand
+				115 menu
+					116 (disabled) -- Select District --
+			117 text Upazila / Thana
+			118 pop up button (disabled, collapsed, settable) Value: -- Select Upazila --, Secondary Actions: Expand
+				119 menu
+					120 (disabled) -- Select Upazila --
+			121 text Mouza & J.L. No
+			122 pop up button (disabled, collapsed, settable) Value: -- Select Mouza --, Secondary Actions: Expand
+				123 menu
+					124 (disabled) -- Select Mouza --
+			125 image
+			126 text field (settable)
+			127 button All
+			128 button Held
+			129 button Registered
+			130 button Pending Mutation
+			131 button Rejected
+			132 table
+				133 row
+					134 cell
+						135 text DEED ID
+					136 cell
+						137 text MOUZA & DAG
+					138 cell
+						139 text PARTIES
+					140 cell
+						141 text AREA & PRICE
+					142 cell
+						143 text STATUS
+					144 cell
+						145 text OFFICER ACTION
+				146 row
+					147 cell
+						148 button
+							149 image
+						150 button
+				151 row
+					152 cell
+						153 button
+							154 image
+						155 button
+				156 row
+					157 cell
+						158 button
+							159 image
+						160 button
+				161 row
+					162 cell
+						163 button
+							164 image
+						165 button
+				166 row
+					167 cell
+						168 button
+							169 image
+						170 button
+				171 row
+					172 cell
+						173 button
+							174 image
+						175 button
+				176 row
+					177 cell
+						178 button
+							179 image
+						180 button
+				181 row
+					182 cell
+						183 button
+							184 image
+						185 button
+				186 row
+					187 cell
+						188 button
+							189 image
+						190 button
+				191 row
+					192 cell
+						193 button
+							194 image
+						195 button
+				196 row
+					197 cell
+						198 button
+							199 image
+						200 button
+				201 row
+					202 cell
+						203 button
+							204 image
+						205 button
+				206 row
+					207 cell
+						208 button
+							209 image
+						210 button
+				211 row
+					212 cell
+						213 button
+							214 image
+						215 button
+				216 row
+					217 cell
+						218 button
+							219 image
+						220 button
+				221 row
+					222 cell
+						223 button
+							224 image
+						225 button
+				226 row
+					227 cell
+						228 button
+							229 image
+						230 button
+				231 row
+					232 cell
+						233 button
+							234 image
+						235 button
+				236 row
+					237 cell
+						238 button
+							239 image
+						240 button
+				241 row
+					242 cell
+						243 button
+							244 image
+						245 button
+				246 row
+					247 cell
+						248 button
+							249 image
+						250 button
+				251 row
+					252 cell
+						253 button
+							254 image
+						255 button
+				256 row
+					257 cell
+						258 button
+							259 image
+						260 button
+				261 row
+					262 cell
+						263 button
+							264 image
+						265 button
+				266 row
+					267 cell
+						268 button
+							269 image
+						270 button
+				271 row
+					272 cell
+						273 button
+							274 image
+						275 button
+				276 row
+					277 cell
+						278 button
+							279 image
+						280 button
+				281 row
+					282 cell
+						283 button
+							284 image
+						285 button
+				286 row
+					287 cell
+						288 button
+							289 image
+						290 button
+				291 row
+					292 cell
+						293 button
+							294 image
+						295 button
+				296 row
+					297 cell
+						298 button
+							299 image
+						300 button
+				301 row
+					302 cell
+						303 button
+							304 image
+						305 button
+						306 button
+				307 row
+					308 cell
+						309 button
+							310 image
+						311 button
+						312 button
+				313 row
+					314 cell
+						315 button
+							316 image
+						317 button
+				318 row
+					319 cell
+						320 button
+							321 image
+						322 button
+				323 row
+					324 cell
+						325 button
+							326 image
+						327 button
+				328 row
+					329 cell
+						330 button
+							331 image
+						332 button
+		333 container
+			334 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			335 content list
+				336 button Check Before Buy
+				337 button Land Sale Marketplace
+				338 button Cadastral Mouza Map
+				339 button Verify Deed QR Code
+				340 button Official Noticeboard
+				341 button Land Literacy Blog
+				342 button Offices & Service Points
+				343 button Citizen Sale Lock Vault
+			344 text Workspaces
+			345 content list
+				346 button Sub-Registrar Panel
+				347 button AC Land Tribunal
+				348 button Bank Lien & NOC
+				349 button National Ledger & Audit
+			350 text Support & Helpline
+			351 content list
+				352 text Land Service Call Center: 16122
+				353 text Ministry of Land (Official service hours)
+				354 text Check official service hours
+				355 button Frequently Asked Questions
+				356 button Bangladeshi Land Glossary
+			357 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved. Synthetic data environment / সিনথেটিক ডেটা পরিবেশ
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/registrar

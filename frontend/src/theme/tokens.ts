@@ -24,7 +24,7 @@ export const THEME = {
   bgPage: '#F8FAF9',
 };
 
-export function toBanglaDigits(input: string | number, lang: 'bn' | 'en'): string {
+export function toBanglaDigits(input: string | number, lang: 'bn' | 'en' = 'bn'): string {
   const str = String(input);
   if (lang === 'en') return str;
   const bnMap: Record<string, string> = {

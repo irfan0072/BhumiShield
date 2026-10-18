@@ -1,0 +1,171 @@
+Browser tab: 8, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5190/bn/map".
+0 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5190/bn/map
+	1 container root
+		2 container
+			3 button ভূ ভূমি সুরক্ষা জাতীয় জমি ও দলিল নিরাপত্তা প্ল্যাটফর্ম
+				4 text ভূ
+				5 text ভূমি সুরক্ষা
+				6 text জাতীয় জমি ও দলিল নিরাপত্তা প্ল্যাটফর্ম
+			7 container প্রধান মেনু
+				8 button সেবাসমূহ
+					9 image
+					10 text সেবাসমূহ
+				11 pop up button (collapsed) ভূমি সেবা, Secondary Actions: Expand
+					12 image
+					13 text ভূমি সেবা
+					14 image
+				15 pop up button (collapsed) নোটিশ, Secondary Actions: Expand
+					16 image
+					17 text নোটিশ
+					18 image
+				19 pop up button (collapsed) হেল্পলাইন, Secondary Actions: Expand
+					20 image
+					21 text হেল্পলাইন
+					22 image
+				23 button জমি যাচাই, Help: জমি কেনার আগে তাৎক্ষণিক যাচাই
+					24 image
+					25 text জমি যাচাই
+			26 button Switch Language
+			27 button উচ্চ কনট্রাস্ট
+				28 image
+			29 button বিজ্ঞপ্তি ও নোটিফিকেশন
+				30 image
+				31 text ৩
+			32 button লগইন করুন
+				33 image
+				34 text লগইন করুন
+		35 container
+			36 image
+			37 container
+				38 text BHUMISHIELD /  ভূমি অনুসন্ধান
+			39 heading নকশা থেকে নাগরিক সেবা, Value: 1
+				40 text নকশা থেকে নাগরিক সেবা
+			41 text একই জায়গায় মৌজা, ভূমি রেকর্ড ও প্রয়োজনীয় সেবার পথ।
+			42 link Description: সরকারি নকশা, Value: map.land.gov.bd/
+			43 image
+			44 heading আপনার জমি খুঁজুন, Value: 2
+				45 text আপনার জমি খুঁজুন
+			46 container
+				47 text বিভাগ
+				48 pop up button (collapsed, settable) Description: বিভাগ, Value: সকল বিভাগ, Secondary Actions: Expand
+					49 menu
+						50 (selected) সকল বিভাগ
+						124 ঢাকা
+			51 container
+				52 text জেলা
+				53 pop up button (collapsed, settable) Description: জেলা, Value: সকল জেলা, Secondary Actions: Expand
+					54 menu
+						55 (selected) সকল জেলা
+						125 গাজীপুর
+						126 ঢাকা
+						127 নারায়ণগঞ্জ
+			56 container
+				57 text উপজেলা
+				58 pop up button (collapsed, settable) Description: উপজেলা, Value: সকল উপজেলা, Secondary Actions: Expand
+					59 menu
+						60 (selected) সকল উপজেলা
+						128 গাজীপুর সদর
+						129 সাভার
+						130 সোনারগাঁও
+			61 container
+				62 text মৌজা / JL
+				63 pop up button (collapsed, settable) Description: মৌজা / JL, Value: বিরুলিয়া · 12, Secondary Actions: Expand
+					64 menu
+						65 মৌজা নির্বাচন করুন
+						131 বাসন · 08
+						132 (selected) বিরুলিয়া · 12
+						133 পানাম · 15
+			66 container
+				67 text দাগ নম্বর বা প্লট কোড
+				68 text field (settable) দাগ নম্বর বা প্লট কোড, Value: ১১৩, ID: parcel-search
+				69 button দাগ খুঁজুন
+					70 image
+			71 text 1 টি রেকর্ড সীমানার প্রমাণ নয়
+			559 button দাগ ১১৩ PLT-DHK-SAV-0013 23 শতক
+				560 container
+					561 text দাগ ১১৩
+				562 text PLT-DHK-SAV-0013
+				563 text 23
+				564 text শতক
+				565 image
+			72 button (disabled) Previous page
+				73 image
+			74 text 1  /  1
+			75 button (disabled) Next page
+				76 image
+			77 image
+			78 text 3 টি মৌজার স্থানীয় রেকর্ড। দেশব্যাপী পূর্ণ coverage দাবি করা হচ্ছে না।
+			79 container ইন্টারঅ্যাকটিভ মানচিত্র
+				80 container 500 m Zoom in Zoom out Leaflet © OpenStreetMap contributors
+					588 container
+						589 text 500 m
+						590 container
+							591 button Zoom in
+							592 button Zoom out
+						593 container
+							594 link Description:  Leaflet, Help: A JavaScript library for interactive maps, Value: leafletjs.com/
+							595 text  © 
+							596 link Description: OpenStreetMap, Value: openstreetmap.org/copyright
+							597 text  contributors
+				89 container
+					90 text বিরুলিয়া সাভার · ঢাকা · JL 12
+				91 container
+					92 button নির্বাচিত এলাকায় ফিরুন
+						93 image
+					94 button আনুমানিক দূরত্ব মাপুন
+						95 image
+					96 button লিংক কপি করুন
+						97 image
+					98 button সারাংশ প্রিন্ট
+						99 image
+				598 container
+					599 image
+					600 text 976.0 m · আনুমানিক; আইনি জরিপ নয়
+					601 button মুছুন
+				100 container
+					101 button রাস্তার মানচিত্র
+					102 button শুধু নকশা
+				103 container
+					104 text সীমানা অনুপলব্ধ বিন্দু = মৌজার আনুমানিক কেন্দ্র; দাগের অবস্থান বা সীমানা নয়।
+			105 image
+			106 heading তথ্য ও পরবর্তী সেবা, Value: 2
+				107 text তথ্য ও পরবর্তী সেবা
+			566 text PLT-DHK-SAV-0013
+			567 heading দাগ ১১৩, Value: 2
+				568 text দাগ ১১৩
+			569 container
+				570 text 23  শতক · রেকর্ড অনুযায়ী
+			571 text ভিটা (আবাসিক)
+			572 text বিক্রয় লক
+			573 text রেকর্ডে নেই
+			574 text সক্রিয় ব্যাংক লিয়েন
+			575 text রেকর্ডে নেই
+			576 text প্রশাসনিক স্থগিত
+			577 text রেকর্ডে নেই
+			578 text এই চিহ্নগুলো মালিকানার নিশ্চয়তা বা সম্পূর্ণ আইনি যাচাই নয়।
+			579 button এই জমির বিস্তারিত যাচাই
+				580 text এই জমির বিস্তারিত যাচাই
+				581 image
+			582 button আমার জমি হলে হস্তান্তরের আবেদন
+				583 text আমার জমি হলে হস্তান্তরের আবেদন
+				584 image
+			585 button এই রেকর্ড নিয়ে সহায়তা চাই
+				586 text এই রেকর্ড নিয়ে সহায়তা চাই
+				587 image
+			112 heading প্রকাশিত নকশা ও উৎস, Value: 3
+				113 text প্রকাশিত নকশা ও উৎস
+			114 text এই মৌজার কোনো উৎস-পর্যালোচিত নকশা প্রকাশিত হয়নি। সরকারি পোর্টালে খুঁজুন অথবা অনুমোদিত নকশা আমদানি করুন।
+			115 heading এই এলাকার সেবা দপ্তর, Value: 3
+				116 image
+				117 text এই এলাকার সেবা দপ্তর
+			118 text এলাকার মিল অনুযায়ী; চূড়ান্ত সেবা-অধিক্ষেত্র ও উপস্থিতি সংশ্লিষ্ট অফিস নিশ্চিত করবে।
+			556 text সাব-রেজিস্ট্রি অফিস, সাভার
+			557 text উপজেলা ভূমি অফিস, সাভার
+			558 text বিরুলিয়া ইউনিয়ন ডিজিটাল সেন্টার (ইউডিসি)
+			119 button অফিসের তথ্য ও সাক্ষাতের অনুরোধ
+				120 text অফিসের তথ্য ও সাক্ষাতের অনুরোধ
+				121 image
+			122 image
+			123 text BhumiShield স্বাধীন প্রোটোটাইপ। নকশা দেখা মালিকানার সনদ নয়। উৎস দৃশ্যমান · গোপনীয়তা সংরক্ষিত · সেবা সংযুক্ত
+
+The focused UI element is 80 container 500 m Zoom in Zoom out Leaflet © OpenStreetMap contributors

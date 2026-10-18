@@ -1,0 +1,120 @@
+Browser tab: 5, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:5175/en/acland".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/acland
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা Central Admin OS
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text Central Admin OS
+			8 button Toggle Sidebar
+				9 image
+			10 text Appellate Reviewer (ADC Rev) Deputy Commissioner Office • Revenue Appeals Division
+			11 container Sidebar Navigation
+				12 text MENU
+				13 button Revenue Appeals & Hearings
+					14 image
+					15 text Revenue Appeals & Hearings
+				16 button Dispute Tribunal Records
+					17 image
+					18 text Dispute Tribunal Records
+				19 button Contested Mutations
+					20 image
+					21 text Contested Mutations
+				22 button Khatian Explorer
+					23 image
+					24 text Khatian Explorer
+			25 button Public Portal
+				26 image
+				27 text Public Portal
+			28 button Sign Out
+				29 image
+				30 text Sign Out
+		31 container
+			32 button Home
+				33 image
+				34 text Home
+			35 text / Appellate Reviewer (ADC Rev)
+			36 text field (settable)
+			37 image
+			38 button বাং
+			39 button Contrast
+				40 image
+			41 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				42 text ম
+				43 text মো. সাইদুর রহমান (অতিরিক্ত জেলা প্রশাসক - রাজস্ব)
+				44 text Appellate Reviewer (ADC Rev)
+				45 image
+		46 container
+			47 text Upazila Land Office / AC Land Tribunal & Mutation Workbench
+			48 heading Assistant Commissioner (Land) Tribunal & e-Mutation Workbench, Value: 1
+				49 image
+				50 text Assistant Commissioner (Land) Tribunal & e-Mutation Workbench
+			51 text Adjudicate e-mutations, reconcile khatian discrepancies, resolve land ownership disputes, and supervise field inspections.
+			52 button Refresh
+				53 image
+				54 text Refresh
+			55 image
+			56 text AC Land Magistrate PENDING MUTATIONS
+			57 image
+			58 text 2 Awaiting hearing & order APPROVED MUTATIONS
+			59 image
+			60 text 1 New khatians created FLAGGED KHATIANS
+			61 image
+			62 text 0 Reconciliation needed OWNERSHIP DISPUTES
+			63 image
+			64 text 0 Active objections
+			65 button e-Mutation Workbench 2
+				66 image
+				67 text e-Mutation Workbench
+				68 text 2
+			69 button Record Discrepancies 0
+				70 image
+				71 text Record Discrepancies
+				72 text 0
+			73 button Objections & Court 0
+				74 image
+				75 text Objections & Court
+				76 text 0
+			77 button Field Reports 0
+				78 image
+				79 text Field Reports
+				80 text 0
+			81 button SLA Escalations 0
+				82 image
+				83 text SLA Escalations
+				84 text 0
+			85 button Appeals Tribunal
+				86 image
+				87 text Appeals Tribunal
+			88 button Khatian Explorer
+				89 image
+				90 text Khatian Explorer
+			91 image
+			92 text Revenue Appeals Tribunal APL-2026-0001 সহকারী কমিশনার (ভূমি) কর্তৃক নামজারি স্থগিতাদেশের বিরুদ্ধে অতিরিক্ত জেলা প্রশাসক (রাজস্ব) বরাবর রিভিউ আপিল। ওয়ারিশি ফারায়েজ সনদ সংযুক্ত। HEARING_SCHEDULED
+		93 container
+			94 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			95 content list
+				96 button Check Before Buy
+				97 button Land Sale Marketplace
+				98 button Cadastral Mouza Map
+				99 button Verify Deed QR Code
+				100 button Official Noticeboard
+				101 button Land Literacy Blog
+				102 button Offices & Service Points
+				103 button Citizen Sale Lock Vault
+			104 text Workspaces
+			105 content list
+				106 button Sub-Registrar Panel
+				107 button AC Land Tribunal
+				108 button Bank Lien & NOC
+				109 button National Ledger & Audit
+			110 text Support & Helpline
+			111 content list
+				112 text Land Service Call Center: 16122
+				113 text Ministry of Land (Official service hours)
+				114 text Check official service hours
+				115 button Frequently Asked Questions
+				116 button Bangladeshi Land Glossary
+			117 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved. Synthetic data environment / সিনথেটিক ডেটা পরিবেশ
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/acland

@@ -1,0 +1,12 @@
+Browser tab: 6, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5188/bn/admin".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5188/bn/admin
+	2 container root
+		3 text ভূ
+		4 heading ভূমি সুরক্ষা (BhumiShield), Value: 2
+			5 text ভূমি সুরক্ষা (BhumiShield)
+		6 text সেশন অথবা ক্যাশ সম্পর্কিত কারণে পৃষ্ঠাটি পুনরায় লোড করা প্রয়োজন। নিচের বাটনে ক্লিক করুন।
+		7 text Cannot read properties of undefined (reading 'count')
+		8 button রিলোড করুন (Reload)
+		9 button সেশন রিসেট (Reset)
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5188/bn/admin

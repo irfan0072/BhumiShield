@@ -1,0 +1,46 @@
+<?php
+declare(strict_types=1);
+namespace App\Http\Controllers\Api\V1;
+use App\Http\Middleware\RoleMiddleware;
+use App\Services\OwnershipGuard;
+use App\Support\DB;
+use Database\Seeders\DatabaseSeeder;
+/** Reviewed opening balances for the independent local register. Never proof of official title. */
+final class OpeningRecordController {
+ private static function fail(int $status,string $code,string $en):never {throw new \RuntimeException(json_encode(['status'=>$status,'code'=>$code,'message_en'=>$en,'message_bn'=>'তথ্য ও দায়িত্ব যাচাই করুন। '.$en],JSON_UNESCAPED_UNICODE));}
+ public static function list(?array $actor=null):array {
+  $u=RoleMiddleware::authorize(['admin','land_office_assistant','settlement_records_officer','ac_land'],$actor);
+  $rows=DB::select("SELECT b.*,u.username maker_username FROM onboarding_batches b JOIN users u ON u.id=b.maker_user_id WHERE b.record_type='OPENING_RECORD' ORDER BY b.id DESC");$out=[];
+  foreach($rows as $r){$proof=json_decode($r['proof_package_json'],true)?:[];$data=$proof['record']??[];if($u['role']!=='admin'&&!self::scope($u,$data))continue;$r['record']=$data;$r['source_name']=$proof['source_name']??'';$r['source_sha256']=$proof['source_sha256']??'';unset($r['proof_package_json']);$out[]=$r;}
+  return ['items'=>$out];
+ }
+ private static function scope(array $u,array $r):bool {return (bool)DB::selectOne('SELECT o.id FROM offices o JOIN office_user ou ON ou.office_id=o.id WHERE ou.user_id=? AND o.is_active=1 AND o.district_en=? AND o.upazila_en=?',[$u['id'],$r['district_en']??'',$r['upazila_en']??'']);}
+ public static function create(array $body,?array $actor=null):array {
+  $u=RoleMiddleware::authorize(['land_office_assistant','settlement_records_officer'],$actor);$r=[];
+  foreach(['owner_nid','plot_code','dag_no','khatian_no','survey_type','source_reference','division_bn','division_en','district_bn','district_en','upazila_bn','upazila_en','mouza_bn','mouza_en','jl_no','land_type_bn','land_type_en'] as $f){$r[$f]=trim((string)($body[$f]??''));if($r[$f]==='')self::fail(422,'RECORD_DETAILS_REQUIRED','Complete all source record fields.');}
+  $r['area_decimal']=(float)($body['area_decimal']??0);$r['survey_year']=(int)($body['survey_year']??0);
+  if(!is_finite($r['area_decimal'])||$r['area_decimal']<=0||$r['survey_year']<1800||$r['survey_year']>(int)date('Y'))self::fail(422,'INVALID_RECORD','Provide a positive area and a valid survey year.');
+  if(!self::scope($u,$r))self::fail(403,'OFFICE_SCOPE_REQUIRED','This record is outside your assigned office.');
+  if(!DB::selectOne("SELECT id FROM users WHERE nid=? AND role='citizen' AND is_active=1 AND is_identity_verified=1",[$r['owner_nid']]))self::fail(422,'VERIFIED_OWNER_REQUIRED','The owner needs an active, identity-reviewed citizen account.');
+  $bytes=base64_decode((string)($body['source_base64']??''),true);
+  if($bytes===false||strlen($bytes)>5*1024*1024||!str_starts_with($bytes,'%PDF-'))self::fail(422,'SOURCE_PDF_REQUIRED','Attach the source PDF, up to 5 MB.');
+  $code='OPEN-'.date('Y').'-'.strtoupper(bin2hex(random_bytes(5)));$proof=['record'=>$r,'source_name'=>basename((string)($body['source_name']??'source.pdf')),'source_sha256'=>hash('sha256',$bytes),'source_base64'=>base64_encode($bytes)];$now=gmdate('c');
+  return DB::transaction(static function()use($code,$proof,$r,$u,$now){$id=DB::insert("INSERT INTO onboarding_batches (batch_no,record_type,maker_user_id,status,proof_package_json,batch_hash,created_at) VALUES (?,'OPENING_RECORD',?,'SUBMITTED',?,?,?)",[$code,$u['id'],json_encode($proof,JSON_UNESCAPED_UNICODE),hash('sha256',json_encode($r)),$now]);DatabaseSeeder::appendAuditEntry($u['username'],$u['role'],'OPENING_RECORD_SUBMITTED','onboarding',(string)$id,['source_sha256'=>$proof['source_sha256']],$now);return ['id'=>$id,'batch_no'=>$code];});
+ }
+ public static function decide(int $id,array $body,?array $actor=null):array {
+  $u=RoleMiddleware::authorize(['ac_land'],$actor);$decision=$body['decision']??'';$reason=trim((string)($body['reason']??''));if(!in_array($decision,['APPROVED','REJECTED'],true)||strlen($reason)<10)self::fail(422,'REASON_REQUIRED','Choose a decision and enter its reasons.');
+  return DB::transaction(static function()use($id,$u,$decision,$reason){$b=DB::selectOne("SELECT * FROM onboarding_batches WHERE id=? AND record_type='OPENING_RECORD'",[$id]);if(!$b)self::fail(404,'RECORD_NOT_FOUND','Record not found.');if($b['status']!=='SUBMITTED')self::fail(409,'ALREADY_REVIEWED','This record has already been reviewed.');if((int)$b['maker_user_id']===(int)$u['id'])self::fail(403,'INDEPENDENT_REVIEW_REQUIRED','A different officer must review this record.');$proof=json_decode($b['proof_package_json'],true);$r=$proof['record'];if(!self::scope($u,$r))self::fail(403,'OFFICE_SCOPE_REQUIRED','This record is outside your assigned office.');
+   $plotId=null;
+   if($decision==='APPROVED'){
+    if(DB::selectOne('SELECT id FROM plots WHERE plot_code=?',[$r['plot_code']])||DB::selectOne('SELECT p.id FROM plots p JOIN locations l ON l.id=p.location_id WHERE p.dag_no=? AND l.district_en=? AND l.upazila_en=? AND l.mouza_en=? AND l.jl_no=?',[$r['dag_no'],$r['district_en'],$r['upazila_en'],$r['mouza_en'],$r['jl_no']]))self::fail(409,'PLOT_ALREADY_EXISTS','This plot is already in the register. Review its existing record.');
+    $owner=DB::selectOne("SELECT p.id FROM persons p JOIN users u ON u.nid=p.nid WHERE p.nid=? AND u.role='citizen' AND u.is_active=1 AND u.is_identity_verified=1",[$r['owner_nid']]);if(!$owner)self::fail(422,'VERIFIED_OWNER_REQUIRED','Owner identity review is required.');
+    $l=DB::selectOne('SELECT id FROM locations WHERE district_en=? AND upazila_en=? AND mouza_en=? AND jl_no=?',[$r['district_en'],$r['upazila_en'],$r['mouza_en'],$r['jl_no']]);$locationId=$l?$l['id']:DB::insert('INSERT INTO locations (division_bn,division_en,district_bn,district_en,upazila_bn,upazila_en,mouza_bn,mouza_en,jl_no) VALUES (?,?,?,?,?,?,?,?,?)',array_map(static fn($k)=>$r[$k],['division_bn','division_en','district_bn','district_en','upazila_bn','upazila_en','mouza_bn','mouza_en','jl_no']));
+    $plotId=DB::insert('INSERT INTO plots (plot_code,location_id,dag_no,dag_no_bn,land_type_bn,land_type_en,total_area_decimal,notes_bn,notes_en) VALUES (?,?,?,?,?,?,?,?,?)',[$r['plot_code'],$locationId,$r['dag_no'],$r['dag_no'],$r['land_type_bn'],$r['land_type_en'],$r['area_decimal'],'পর্যালোচিত প্রারম্ভিক স্থানীয় রেকর্ড; সরকারি শিরোনামের প্রমাণ নয়।','Reviewed opening local record; not proof of government title.']);
+    $k=DB::insert("INSERT INTO khatian_records (plot_id,survey_type,khatian_no,khatian_no_bn,recorded_area_decimal,survey_year,status,remarks_en) VALUES (?,?,?,?,?,?,'VALID',?)",[$plotId,$r['survey_type'],$r['khatian_no'],$r['khatian_no'],$r['area_decimal'],$r['survey_year'],$r['source_reference']]);
+    OwnershipGuard::executeInMutationContext($b['batch_no'],$u['username'],$u['role'],static fn()=>DB::insert("INSERT INTO ownerships (khatian_id,plot_id,person_id,share_fraction,share_float,area_decimal,is_latest) VALUES (?,?,?,'1/1',1,?,1)",[$k,$plotId,$owner['id'],$r['area_decimal']]));
+   }
+   $proof['decision_reason']=$reason;$proof['plot_id']=$plotId;DB::statement('UPDATE onboarding_batches SET status=?,checker_user_id=?,decided_at=?,proof_package_json=? WHERE id=? AND status=?',[$decision,$u['id'],gmdate('c'),json_encode($proof,JSON_UNESCAPED_UNICODE),$id,'SUBMITTED']);DatabaseSeeder::appendAuditEntry($u['username'],$u['role'],'OPENING_RECORD_'.$decision,'onboarding',(string)$id,['reason'=>$reason,'plot_id'=>$plotId,'source_sha256'=>$proof['source_sha256']],gmdate('c'));return ['status'=>$decision,'plot_id'=>$plotId];
+  });
+ }
+ public static function source(int $id,?array $actor=null):array { $rows=self::list($actor)['items'];if(!array_filter($rows,static fn($r)=>(int)$r['id']===$id))self::fail(404,'RECORD_NOT_FOUND','Record not found.');$b=DB::selectOne('SELECT proof_package_json FROM onboarding_batches WHERE id=?',[$id]);$p=json_decode($b['proof_package_json'],true);return ['_binary'=>true,'status'=>200,'content_type'=>'application/pdf','content_disposition'=>'attachment; filename="source.pdf"','body'=>base64_decode($p['source_base64'])]; }
+}

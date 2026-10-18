@@ -1,0 +1,61 @@
+Browser tab: 6, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5188/bn/admin".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5188/bn/admin
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা Central Admin OS
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text Central Admin OS
+			8 button Toggle Sidebar
+				9 image
+			10 text কনটেন্ট অ্যাপ্রুভার ভূমি তথ্য ও গণযোগাযোগ উইং
+			11 container Sidebar Navigation
+				12 text মেনু
+				13 button প্রকাশনা অনুমোদন কর্তৃপক্ষ (সিল)
+					14 image
+					15 text প্রকাশনা অনুমোদন কর্তৃপক্ষ (সিল)
+				16 button অনুমোদন অডিট লগ
+					17 image
+					18 text অনুমোদন অডিট লগ
+			19 button পাবলিক পোর্টাল
+				20 image
+				21 text পাবলিক পোর্টাল
+			22 button লগআউট
+				23 image
+				24 text লগআউট
+		25 container
+			26 button হোম
+				27 image
+				28 text হোম
+			29 text / কনটেন্ট অ্যাপ্রুভার
+			30 text field (settable)
+			31 image
+			32 button EN
+			33 button Contrast
+				34 image
+			35 pop up button (collapsed) Description: ব্যবহারকারী প্রোফাইল ও সেটিংস মেনু, Secondary Actions: Expand
+				36 text ম
+				37 text মো. আতিকুল ইসলাম (কনটেন্ট অ্যাপ্রুভার)
+				38 text কনটেন্ট অ্যাপ্রুভার
+				39 image
+		40 container
+			41 button বিজ্ঞপ্তি ও প্রকাশনা
+			42 button প্রকাশনা কর্তৃপক্ষ
+			43 button সিকিউরিটি অডিট
+			44 button রিফ্রেশ
+				45 image
+				46 text রিফ্রেশ
+			47 heading কন্টেন্ট ও নোটিশ প্রকাশনা কর্তৃপক্ষ (চেকার), Value: 1
+				48 image
+				49 text কন্টেন্ট ও নোটিশ প্রকাশনা কর্তৃপক্ষ (চেকার)
+			50 text কন্টেন্ট এডিটর কর্তৃক প্রস্তুতকৃত খসড়া পর্যালোচনা, নিরপেক্ষ নিরীক্ষা এবং ডিজিটাল কিউআর সিলসহ গেজেট প্রকাশ।
+			51 text নিরপেক্ষ নিরীক্ষা সক্রিয় (Maker != Checker) কন্টেন্ট ধরন:
+			52 button সচেতনতামূলক ব্লগ ও নির্দেশিকা
+			53 button অফিসিয়াল নোটিশ ও আদেশ
+			54 button বিচারাধীন (Awaiting)
+			55 button প্রকাশিত
+			56 button প্রত্যাখ্যাত
+			57 button সকল
+			58 text বর্তমানে অনুমোদনের জন্য কোনো বিচারাধীন খসড়া নেই।
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5188/bn/admin

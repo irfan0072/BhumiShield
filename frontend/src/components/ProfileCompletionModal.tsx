@@ -54,20 +54,14 @@ export const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
   const [email, setEmail] = useState<string>(
     user.email && !user.email.includes('@citizen.bhumishield.gov.bd') ? user.email : ''
   );
-  const [nid, setNid] = useState<string>(
-    user.nid && !user.nid.startsWith('99') ? user.nid : (user.nid_mock || '9900001099')
-  );
-  const [fatherNameBn, setFatherNameBn] = useState<string>(user.father_name_bn || 'মোঃ আবদুল করিম');
-  const [fatherNameEn, setFatherNameEn] = useState<string>('Md. Abdul Karim');
-  const [motherNameBn, setMotherNameBn] = useState<string>(user.mother_name_bn || 'রোকেয়া বেগম');
-  const [dob, setDob] = useState<string>(user.date_of_birth || '1990-05-15');
+  const [nid, setNid] = useState<string>(user.nid || user.nid_mock || '');
+  const [fatherNameBn, setFatherNameBn] = useState<string>(user.father_name_bn || '');
+  const [fatherNameEn, setFatherNameEn] = useState<string>('');
+  const [motherNameBn, setMotherNameBn] = useState<string>(user.mother_name_bn || '');
+  const [dob, setDob] = useState<string>(user.date_of_birth || '');
   const [gender, setGender] = useState<string>(user.gender || 'male');
-  const [presentAddressBn, setPresentAddressBn] = useState<string>(
-    user.present_address_bn || 'বাড়ি নং ১২, রোড নং ৫, ধানমন্ডি, ঢাকা'
-  );
-  const [permanentAddressBn, setPermanentAddressBn] = useState<string>(
-    user.present_address_bn || 'গ্রাম: কৃষ্ণপুর, ডাকঘর: ধামরাই, ঢাকা'
-  );
+  const [presentAddressBn, setPresentAddressBn] = useState<string>(user.present_address_bn || '');
+  const [permanentAddressBn, setPermanentAddressBn] = useState<string>(user.present_address_bn || '');
 
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>('');

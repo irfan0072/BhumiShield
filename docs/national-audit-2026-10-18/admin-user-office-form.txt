@@ -1,0 +1,1000 @@
+Browser tab: 6, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5188/bn/admin?section=users".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5188/bn/admin?section=users
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা Central Admin OS
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text Central Admin OS
+			8 button Toggle Sidebar
+				9 image
+			10 text জাতীয় অ্যাডমিন ও গভর্ন্যান্স প্যানেল কেন্দ্রীয় ক্রিপ্টোগ্রাফিক লেজার ও সিস্টেম গভর্ন্যান্স
+			11 container Sidebar Navigation
+				12 text মেনু
+				13 button কমান্ড সেন্টার ও লাইভ নজরদারি
+					14 image
+					15 text কমান্ড সেন্টার ও লাইভ নজরদারি
+				16 button ইউজার ও কর্মকর্তা প্রশাসন
+					17 image
+					18 text ইউজার ও কর্মকর্তা প্রশাসন
+					19 image
+				20 button সকল ইউজার ও কর্মকর্তা
+				21 button সাধারণ নাগরিকবৃন্দ
+				22 button সাব-রেজিস্ট্রারগণ
+				23 button সহকারী কমিশনার (ভূমি)
+				24 button ব্যাংক কর্মকর্তাবৃন্দ
+				25 button ফিল্ড অফিসার (সার্ভেয়ার)
+				26 button রেজিস্ট্রি ডাটা মেকার
+				27 button সেটেলমেন্ট রেকর্ডস অফিসার
+				28 button ইউএনও তদারককারী
+				29 button সার্ভিস পয়েন্ট অপারেটর (UDC)
+				30 button সিস্টেম অ্যাডমিনিস্ট্রেটর
+				31 button ভূমি রেকর্ড ও দাগ নিয়ন্ত্রণ
+					32 image
+					33 text ভূমি রেকর্ড ও দাগ নিয়ন্ত্রণ
+				34 button লেজার অখণ্ডতা ও নিরাপত্তা অডিট
+					35 image
+					36 text লেজার অখণ্ডতা ও নিরাপত্তা অডিট
+				37 button সিস্টেম পলিসি ও কনফিগারেশন
+					38 image
+					39 text সিস্টেম পলিসি ও কনফিগারেশন
+			40 button পাবলিক পোর্টাল
+				41 image
+				42 text পাবলিক পোর্টাল
+			43 button লগআউট
+				44 image
+				45 text লগআউট
+		46 container
+			47 button হোম
+				48 image
+				49 text হোম
+			50 text / জাতীয় অ্যাডমিন ও গভর্ন্যান্স প্যানেল
+			51 text field (settable)
+			52 image
+			53 button EN
+			54 button Contrast
+				55 image
+			56 pop up button (collapsed) Description: ব্যবহারকারী প্রোফাইল ও সেটিংস মেনু, Secondary Actions: Expand
+				57 text স
+				58 text সিস্টেম অ্যাডমিন (ভূমি সুরক্ষা অ্যাডমিন)
+				59 text জাতীয় অ্যাডমিন ও গভর্ন্যান্স প্যানেল
+				60 image
+		61 container
+			62 button কমান্ড সেন্টার ও ওভারভিউ
+			63 button ইউজার ও পদায়ন
+			64 button নাগরিক সেবা ও হস্তান্তর
+			65 button দলিল ও সাব-রেজিস্ট্রি
+			66 button নামজারি ও খতিয়ান
+			67 button মাঠ তদন্ত ও পরিদর্শন
+			68 button জরিপ ও মেকার-চেকার
+			69 button ব্যাংক লিয়েন ও এনওসি
+			70 button আপিল ও আদালত নথি
+			71 button ভূমি অধিগ্রহণ (LA)
+			72 button মার্কেটপ্লেস মডারেশন
+			73 button সাপোর্ট ও ১৬১২২
+			74 button বিজ্ঞপ্তি ও প্রকাশনা
+			75 button অফিস ও সেবা কনফিগ
+			76 button ইন্টিগ্রেশন ও আউটবক্স
+			77 button অডিট লগ ও রিপোর্ট
+			78 text টুলস:
+			79 button এডিটর
+			80 button অ্যাপ্রুভার
+			81 button মডারেশন
+			82 button রিফ্রেশ
+				83 image
+				84 text রিফ্রেশ
+			85 button কন্ট্রোল প্যানেল
+			86 text / পিলার ২: নাগরিক ও এক্সেস প্রশাসন
+			87 heading নাগরিক, কর্মকর্তা ও এক্সেস নিয়ন্ত্রণ কেন্দ্র, Value: 2
+				88 image
+				89 text নাগরিক, কর্মকর্তা ও এক্সেস নিয়ন্ত্রণ কেন্দ্র
+			90 button ইউজার ডিরেক্টরি
+				91 image
+				92 text ইউজার ডিরেক্টরি
+			93 button কর্মকর্তা বদলি ডেস্ক POWER
+				94 image
+				95 text কর্মকর্তা বদলি ডেস্ক
+				96 text POWER
+			97 button অনবোর্ডিং ও আপিল
+				98 image
+				99 text অনবোর্ডিং ও আপিল
+			100 button অনুমতি ও আরবিক (RBAC)
+				101 image
+				102 text অনুমতি ও আরবিক (RBAC)
+			103 text মোট অ্যাকাউন্ট
+			104 text ২৬
+			105 text প্ল্যাটফর্মে নিবন্ধিত সাধারণ নাগরিক
+			106 text ৩
+			107 text ভূমি মালিক ও আবেদনকারী অপেক্ষমাণ অনুমোদন
+			108 text ১
+			109 text যাচাই ও অনুমোদন প্রয়োজন কর্মকর্তাবৃন্দ
+			110 text ৬
+			111 text সাব-রেজিস্ট্রার, এসি ল্যান্ড ও ব্যাংক অ্যাডমিনিস্ট্রেটর
+			112 text ২
+			113 text সুপার অ্যাডমিন ও অডিটর
+			114 text field (settable)
+			115 image
+			116 button + নতুন ব্যবহারকারী / কর্মকর্তা যুক্ত করুন
+				117 image
+				118 text + নতুন ব্যবহারকারী / কর্মকর্তা যুক্ত করুন
+			119 image
+			120 text ফিল্টারিং:
+			121 pop up button (collapsed, settable) Value: সকল ভূমিকা (All Roles), Secondary Actions: Expand
+				122 menu
+					123 (selected) সকল ভূমিকা (All Roles)
+					124 নাগরিক (Citizen)
+					125 সাব-রেজিস্ট্রার (Sub-Registrar)
+					126 এসি ল্যান্ড (AC Land)
+					127 ব্যাংক কর্মকর্তা (Bank Officer)
+					128 ফিল্ড অফিসার (Field Officer)
+					129 রেজিস্ট্রি ডেটা অফিসার (Registry Data)
+					130 সার্ভেয়ার / সেটেলমেন্ট অফিসার (Settlement)
+					131 ইউএনও / এডিসি সুপারভাইজার (UNO/ADC)
+					132 ইউডিসি উদ্যোক্তা (UDC)
+					133 সাপোর্ট এজেন্ট (Support)
+					134 সিস্টেম অ্যাডমিন (Admin)
+			135 pop up button (collapsed, settable) Value: সকল স্ট্যাটাস (All Status), Secondary Actions: Expand
+				136 menu
+					137 (selected) সকল স্ট্যাটাস (All Status)
+					138 ⚠️ অপেক্ষমাণ অনুমোদন (Pending Approval)
+					139 ✓ সক্রিয় ও যাচাইকৃত (Active & Verified)
+					140 ⛔ নিষ্ক্রিয় / স্থগিত (Suspended)
+			141 pop up button (collapsed, settable) Value: যোগদানের তারিখ: সকল সময়, Secondary Actions: Expand
+				142 menu
+					143 (selected) যোগদানের তারিখ: সকল সময়
+					144 আজকে নিবন্ধিত (Registered Today)
+					145 গত ৭ দিন (Last 7 Days)
+					146 গত ৩০ দিন (Last 30 Days)
+					147 কাস্টম তারিখ পরিসীমা (Custom Range)
+			148 image
+			149 heading ব্যবহারকারী ও কর্মকর্তা তালিকা, Value: 2
+				150 text ব্যবহারকারী ও কর্মকর্তা তালিকা
+			151 text ২৬ জন প্রদর্শিত মোট নিবন্ধিত:  ২৬ জন
+			152 table
+				153 row
+					154 cell
+						155 text #
+					156 cell
+						157 text নাম ও ইউজারনেম
+					158 cell
+						159 text ভূমিকা
+					160 cell
+						161 text যোগাযোগ
+					162 cell
+						163 text অফিস / এলাকা
+					164 cell
+						165 text যোগদানের তারিখ
+					166 cell
+						167 text স্ট্যাটাস
+					168 cell
+						169 text অ্যাকশন
+				170 row
+					171 cell
+						172 text ১
+					173 cell
+						174 text ম
+						175 text মো. রফিকুল ইসলাম (নাগরিক)
+						176 container
+							177 text @ citizen
+					178 cell
+						179 text citizen
+					180 cell
+						181 image
+						182 text 01700-001001
+						183 container
+							184 image
+							185 text rafiqul.citizen@demo.bhumishield.gov.bd
+					186 cell
+						187 text নাগরিক পোর্টাল — সাভার, ঢাকা
+					188 cell
+						189 text ০১/০১/২০২৬
+					190 cell
+						191 text ACTIVE আইডি যাচাইকৃত
+					192 cell
+						193 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							194 image
+						195 button স্থগিত, Help: নিষ্ক্রিয় করুন
+				196 row
+					197 cell
+						198 text ২
+					199 cell
+						200 text ম
+						201 text মোসা. রাবেয়া খাতুন (নাগরিক - ওয়ারিশ)
+						202 container
+							203 text @ rabeya
+					204 cell
+						205 text citizen
+					206 cell
+						207 image
+						208 text 01700-001002
+						209 container
+							210 image
+							211 text rabeya.citizen@demo.bhumishield.gov.bd
+					212 cell
+						213 text নাগরিক পোর্টাল — বিরুলিয়া, সাভার
+					214 cell
+						215 text ০১/০১/২০২৬
+					216 cell
+						217 text ACTIVE আইডি যাচাইকৃত
+					218 cell
+						219 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							220 image
+						221 button স্থগিত, Help: নিষ্ক্রিয় করুন
+				222 row
+					223 cell
+						224 text ৩
+					225 cell
+						226 text ম
+						227 text মো. শাহীনুর রহমান (সার্ভিস পয়েন্ট অপারেটর)
+						228 container
+							229 text @ spo_birulia
+					230 cell
+						231 text service_point_operator
+					232 cell
+						233 image
+						234 text 01700-001003
+						235 container
+							236 image
+							237 text spo.birulia@demo.bhumishield.gov.bd
+					238 cell
+						239 text বিরুলিয়া ইউনিয়ন ডিজিটাল সেন্টার (ইউডিসি)
+					240 cell
+						241 text ০১/০১/২০২৬
+					242 cell
+						243 text ACTIVE
+					244 cell
+						245 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							246 image
+						247 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							248 image
+						249 button স্থগিত, Help: নিষ্ক্রিয় করুন
+				250 row
+					251 cell
+						252 text ৪
+					253 cell
+						254 text ফ
+						255 text ফারহানা ইয়াসমিন (সাব-রেজিস্ট্রার)
+						256 container
+							257 text @ registrar
+					258 cell
+						259 text sub_registrar
+					260 cell
+						261 image
+						262 text 01700-002001
+						263 container
+							264 image
+							265 text sr.savar@demo.bhumishield.gov.bd
+					266 cell
+						267 text সাব-রেজিস্ট্রি অফিস, সাভার, ঢাকা
+					268 cell
+						269 text ০১/০১/২০২৬
+					270 cell
+						271 text ACTIVE
+					272 cell
+						273 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							274 image
+						275 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							276 image
+						277 button স্থগিত, Help: নিষ্ক্রিয় করুন
+				278 row
+					279 cell
+						280 text ৫
+					281 cell
+						282 text ম
+						283 text মো. শফিকুল আলম (সাব-রেজিস্ট্রার)
+						284 container
+							285 text @ registrar_gazipur
+					286 cell
+						287 text sub_registrar
+					288 cell
+						289 image
+						290 text 01700-002002
+						291 container
+							292 image
+							293 text sr.gazipur@demo.bhumishield.gov.bd
+					294 cell
+						295 text সাব-রেজিস্ট্রি অফিস, গাজীপুর সদর
+					296 cell
+						297 text ০১/০১/২০২৬
+					298 cell
+						299 text ACTIVE
+					300 cell
+						301 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							302 image
+						303 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							304 image
+						305 button স্থগিত, Help: নিষ্ক্রিয় করুন
+				306 row
+					307 cell
+						308 text ৬
+					309 cell
+						310 text ম
+						311 text মো. কামরুল হাসান (রেজিস্ট্রি ডাটা অফিসার - মেকার)
+						312 container
+							313 text @ rdo_savar
+					314 cell
+						315 text registry_data_officer
+					316 cell
+						317 image
+						318 text 01700-002003
+						319 container
+							320 image
+							321 text rdo.savar@demo.bhumishield.gov.bd
+					322 cell
+						323 text সাব-রেজিস্ট্রি অফিস, সাভার, ঢাকা
+					324 cell
+						325 text ০১/০১/২০২৬
+					326 cell
+						327 text ACTIVE
+					328 cell
+						329 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							330 image
+						331 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							332 image
+						333 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						334 button অপসারণ
+							335 image
+				336 row
+					337 cell
+						338 text ৭
+					339 cell
+						340 text ত
+						341 text তানভীর আহমেদ (সহকারী কমিশনার - ভূমি)
+						342 container
+							343 text @ acland
+					344 cell
+						345 text ac_land
+					346 cell
+						347 image
+						348 text 01700-003001
+						349 container
+							350 image
+							351 text acland.savar@demo.bhumishield.gov.bd
+					352 cell
+						353 text উপজেলা ভূমি অফিস, সাভার, ঢাকা
+					354 cell
+						355 text ০১/০১/২০২৬
+					356 cell
+						357 text ACTIVE
+					358 cell
+						359 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							360 image
+						361 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							362 image
+						363 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						364 button অপসারণ
+							365 image
+				366 row
+					367 cell
+						368 text ৮
+					369 cell
+						370 text স
+						371 text সালমা আক্তার (ভূমি অফিস সহকারী - মেকার)
+						372 container
+							373 text @ loa_savar
+					374 cell
+						375 text land_office_assistant
+					376 cell
+						377 image
+						378 text 01700-003002
+						379 container
+							380 image
+							381 text loa.savar@demo.bhumishield.gov.bd
+					382 cell
+						383 text উপজেলা ভূমি অফিস, সাভার, ঢাকা
+					384 cell
+						385 text ০১/০১/২০২৬
+					386 cell
+						387 text ACTIVE
+					388 cell
+						389 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							390 image
+						391 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							392 image
+						393 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						394 button অপসারণ
+							395 image
+				396 row
+					397 cell
+						398 text ৯
+					399 cell
+						400 text ম
+						401 text মো. জাহাঙ্গীর আলম (ফিল্ড ভেরিফিকেশন অফিসার)
+						402 container
+							403 text @ fvo_savar
+					404 cell
+						405 text field_verification_officer
+					406 cell
+						407 image
+						408 text 01700-003003
+						409 container
+							410 image
+							411 text fvo.savar@demo.bhumishield.gov.bd
+					412 cell
+						413 text ইউনিয়ন ভূমি অফিস, বিরুলিয়া, সাভার
+					414 cell
+						415 text ০১/০১/২০২৬
+					416 cell
+						417 text ACTIVE
+					418 cell
+						419 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							420 image
+						421 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							422 image
+						423 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						424 button অপসারণ
+							425 image
+				426 row
+					427 cell
+						428 text ১০
+					429 cell
+						430 text ম
+						431 text মো. দেলোয়ার হোসেন (সেটেলমেন্ট রেকর্ডস অফিসার - মেকার)
+						432 container
+							433 text @ sro_dhaka
+					434 cell
+						435 text settlement_records_officer
+					436 cell
+						437 image
+						438 text 01700-003004
+						439 container
+							440 image
+							441 text sro.dhaka@demo.bhumishield.gov.bd
+					442 cell
+						443 text জোনাল সেটেলমেন্ট অফিস, ঢাকা
+					444 cell
+						445 text ০১/০১/২০২৬
+					446 cell
+						447 text ACTIVE
+					448 cell
+						449 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							450 image
+						451 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							452 image
+						453 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						454 button অপসারণ
+							455 image
+				456 row
+					457 cell
+						458 text ১১
+					459 cell
+						460 text ন
+						461 text নাজনীন সুলতানা (সহকারী সেটেলমেন্ট অফিসার - চেকার)
+						462 container
+							463 text @ aso_dhaka
+					464 cell
+						465 text settlement_checker
+					466 cell
+						467 image
+						468 text 01700-003005
+						469 container
+							470 image
+							471 text aso.dhaka@demo.bhumishield.gov.bd
+					472 cell
+						473 text জোনাল সেটেলমেন্ট অফিস, ঢাকা
+					474 cell
+						475 text ০১/০১/২০২৬
+					476 cell
+						477 text ACTIVE
+					478 cell
+						479 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							480 image
+						481 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							482 image
+						483 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						484 button অপসারণ
+							485 image
+				486 row
+					487 cell
+						488 text ১২
+					489 cell
+						490 text ম
+						491 text মো. মশিউর রহমান (উপজেলা নির্বাহী কর্মকর্তা - তদারককারী)
+						492 container
+							493 text @ uno_savar
+					494 cell
+						495 text uno_supervisor
+					496 cell
+						497 image
+						498 text 01700-003006
+						499 container
+							500 image
+							501 text uno.savar@demo.bhumishield.gov.bd
+					502 cell
+						503 text উপজেলা নির্বাহী অফিসারের কার্যালয়, সাভার
+					504 cell
+						505 text ০১/০১/২০২৬
+					506 cell
+						507 text ACTIVE
+					508 cell
+						509 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							510 image
+						511 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							512 image
+						513 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						514 button অপসারণ
+							515 image
+				516 row
+					517 cell
+						518 text ১৩
+					519 cell
+						520 text ম
+						521 text মো. সাইদুর রহমান (অতিরিক্ত জেলা প্রশাসক - রাজস্ব)
+						522 container
+							523 text @ appellate_reviewer
+					524 cell
+						525 text appellate_reviewer
+					526 cell
+						527 image
+						528 text 01700-003007
+						529 container
+							530 image
+							531 text adc.dhaka@demo.bhumishield.gov.bd
+					532 cell
+						533 text জেলা প্রশাসকের কার্যালয় (রাজস্ব শাখা), ঢাকা
+					534 cell
+						535 text ০১/০১/২০২৬
+					536 cell
+						537 text ACTIVE
+					538 cell
+						539 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							540 image
+						541 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							542 image
+						543 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						544 button অপসারণ
+							545 image
+				546 row
+					547 cell
+						548 text ১৪
+					549 cell
+						550 text ন
+						551 text নাজমুল হাসান (ব্যাংক কর্মকর্তা - ঋণ শাখা)
+						552 container
+							553 text @ bank
+					554 cell
+						555 text bank_officer
+					556 cell
+						557 image
+						558 text 01700-004001
+						559 container
+							560 image
+							561 text credit.sonalibank@demo.bhumishield.gov.bd
+					562 cell
+						563 text সোনালী ব্যাংক পিএলসি, সাভার শাখা
+					564 cell
+						565 text ০১/০১/২০২৬
+					566 cell
+						567 text ACTIVE
+					568 cell
+						569 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							570 image
+						571 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							572 image
+						573 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						574 button অপসারণ
+							575 image
+				576 row
+					577 cell
+						578 text ১৫
+					579 cell
+						580 text স
+						581 text সৈয়দা খালেদা পারভীন (শাখা ব্যবস্থাপক - ব্যাংক)
+						582 container
+							583 text @ bank_manager
+					584 cell
+						585 text bank_manager
+					586 cell
+						587 image
+						588 text 01700-004002
+						589 container
+							590 image
+							591 text manager.sonalibank@demo.bhumishield.gov.bd
+					592 cell
+						593 text সোনালী ব্যাংক পিএলসি, সাভার শাখা
+					594 cell
+						595 text ০১/০১/২০২৬
+					596 cell
+						597 text ACTIVE
+					598 cell
+						599 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							600 image
+						601 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							602 image
+						603 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						604 button অপসারণ
+							605 image
+				606 row
+					607 cell
+						608 text ১৬
+					609 cell
+						610 text ম
+						611 text মোসা. ফারহানা আফরোজ (সাপোর্ট এজেন্ট - ১৬১২২)
+						612 container
+							613 text @ support_agent
+					614 cell
+						615 text support_agent
+					616 cell
+						617 image
+						618 text 01700-004003
+						619 container
+							620 image
+							621 text support.agent@demo.bhumishield.gov.bd
+					622 cell
+						623 text ভূমি সেবা হেল্পলাইন কলসেন্টার ১৬১২২
+					624 cell
+						625 text ০১/০১/২০২৬
+					626 cell
+						627 text ACTIVE
+					628 cell
+						629 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							630 image
+						631 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							632 image
+						633 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						634 button অপসারণ
+							635 image
+				636 row
+					637 cell
+						638 text ১৭
+					639 cell
+						640 text ম
+						641 text মো. ফাহিম চৌধুরী (প্ল্যাটফর্ম মডারেটর)
+						642 container
+							643 text @ platform_moderator
+					644 cell
+						645 text platform_moderator
+					646 cell
+						647 image
+						648 text 01700-004004
+						649 container
+							650 image
+							651 text mod.bhumishield@demo.bhumishield.gov.bd
+					652 cell
+						653 text ভূমি সুরক্ষা মার্কেটপ্লেস ও লিস্টিং সেল
+					654 cell
+						655 text ০১/০১/২০২৬
+					656 cell
+						657 text ACTIVE
+					658 cell
+						659 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							660 image
+						661 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							662 image
+						663 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						664 button অপসারণ
+							665 image
+				666 row
+					667 cell
+						668 text ১৮
+					669 cell
+						670 text ত
+						671 text তানজিলা হক (কনটেন্ট এডিটর)
+						672 container
+							673 text @ content_editor
+					674 cell
+						675 text content_editor
+					676 cell
+						677 image
+						678 text 01700-004005
+						679 container
+							680 image
+							681 text editor.land@demo.bhumishield.gov.bd
+					682 cell
+						683 text ভূমি প্রকাশনা ও জনসচেতনতা শাখা
+					684 cell
+						685 text ০১/০১/২০২৬
+					686 cell
+						687 text ACTIVE
+					688 cell
+						689 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							690 image
+						691 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							692 image
+						693 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						694 button অপসারণ
+							695 image
+				696 row
+					697 cell
+						698 text ১৯
+					699 cell
+						700 text ম
+						701 text মো. আতিকুল ইসলাম (কনটেন্ট অ্যাপ্রুভার)
+						702 container
+							703 text @ content_approver
+					704 cell
+						705 text content_approver
+					706 cell
+						707 image
+						708 text 01700-004006
+						709 container
+							710 image
+							711 text approver.land@demo.bhumishield.gov.bd
+					712 cell
+						713 text ভূমি মন্ত্রণালয় জনসংযোগ উইং
+					714 cell
+						715 text ০১/০১/২০২৬
+					716 cell
+						717 text ACTIVE
+					718 cell
+						719 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							720 image
+						721 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							722 image
+						723 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						724 button অপসারণ
+							725 image
+				726 row
+					727 cell
+						728 text ২০
+					729 cell
+						730 text স
+						731 text সিস্টেম অ্যাডমিন (ভূমি সুরক্ষা অ্যাডমিন)
+						732 container
+							733 text @ admin
+					734 cell
+						735 text admin
+					736 cell
+						737 image
+						738 text 01700-005001
+						739 container
+							740 image
+							741 text auditor.admin@demo.bhumishield.gov.bd
+					742 cell
+						743 text কেন্দ্রীয় সিস্টেম গভর্ন্যান্স ও কনফিগারেশন সেল
+					744 cell
+						745 text ০১/০১/২০২৬
+					746 cell
+						747 text ACTIVE
+					748 cell
+						749 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							750 image
+						751 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							752 image
+						753 button স্থগিত, Help: নিষ্ক্রিয় করুন
+				754 row
+					755 cell
+						756 text ২১
+					757 cell
+						758 text ম
+						759 text মো. শামসুল হক (জাতীয় ক্রিপ্টোগ্রাফিক অডিটর)
+						760 container
+							761 text @ lead_auditor
+					762 cell
+						763 text auditor
+					764 cell
+						765 image
+						766 text 01700-005002
+						767 container
+							768 image
+							769 text lead.auditor@demo.bhumishield.gov.bd
+					770 cell
+						771 text জাতীয় ভূমি লেজার অডিট অধিদপ্তর
+					772 cell
+						773 text ০১/০১/২০২৬
+					774 cell
+						775 text ACTIVE
+					776 cell
+						777 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							778 image
+						779 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							780 image
+						781 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						782 button অপসারণ
+							783 image
+				784 row
+					785 cell
+						786 text ২২
+					787 cell
+						788 text ম
+						789 text মো. তারেক হাসান (এলএ কর্মকর্তা - অধিগ্রহণ)
+						790 container
+							791 text @ dc_la
+					792 cell
+						793 text dc_acquisition_officer
+					794 cell
+						795 image
+						796 text 01700-005003
+						797 container
+							798 image
+							799 text dc.acquisition@demo.bhumishield.gov.bd
+					800 cell
+						801 text জেলা প্রশাসকের কার্যালয় (ভূমি অধিগ্রহণ শাখা)
+					802 cell
+						803 text ০১/০১/২০২৬
+					804 cell
+						805 text ACTIVE
+					806 cell
+						807 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							808 image
+						809 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							810 image
+						811 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						812 button অপসারণ
+							813 image
+				814 row
+					815 cell
+						816 text ২৩
+					817 cell
+						818 text এ
+						819 text এডভোকেট সিরাজুল করিম (দেওয়ানি আদালত প্রতিনিধি)
+						820 container
+							821 text @ lawyer
+					822 cell
+						823 text lawyer_court_user
+					824 cell
+						825 image
+						826 text 01700-005004
+						827 container
+							828 image
+							829 text advocate.karim@demo.bhumishield.gov.bd
+					830 cell
+						831 text ঢাকা জেলা ও দায়রা জজ আদালত বার
+					832 cell
+						833 text ০১/০১/২০২৬
+					834 cell
+						835 text ACTIVE
+					836 cell
+						837 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							838 image
+						839 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							840 image
+						841 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						842 button অপসারণ
+							843 image
+				844 row
+					845 cell
+						846 text ২৪
+					847 cell
+						848 text স
+						849 text সহকারী কমিশনার (ভূমি) সাভার
+						850 container
+							851 text @ acland_savar_new
+					852 cell
+						853 text ac_land
+					854 cell
+						855 image
+						856 text 01711-223344
+					857 cell
+						858 text সাব-রেজিস্ট্রি অফিস, গাজীপুর সদর
+					859 cell
+						860 text ১৮/১০/২০২৬
+					861 cell
+						862 text ACTIVE
+					863 cell
+						864 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							865 image
+						866 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							867 image
+						868 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						869 button অপসারণ
+							870 image
+				871 row
+					872 cell
+						873 text ২৫
+					874 cell
+						875 text স
+						876 text সিস্টেম অ্যাডমিন (প্ল্যাটফর্ম প্রধান)
+						877 container
+							878 text @ system_admin
+					879 cell
+						880 text system_admin
+					881 cell
+						882 image
+						883 text 01700-009999
+						884 container
+							885 image
+							886 text system.admin@demo.bhumishield.gov.bd
+					887 cell
+						888 text ভূমি মন্ত্রণালয় (কেন্দ্রীয় ডাটা সেন্টার)
+					889 cell
+						890 text ১৮/১০/২০২৬
+					891 cell
+						892 text ACTIVE
+					893 cell
+						894 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							895 image
+						896 button কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন
+							897 image
+						898 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						899 button অপসারণ
+							900 image
+				901 row
+					902 cell
+						903 text ২৬
+					904 cell
+						905 text প
+						906 text পরীক্ষামূলক দূরবর্তী নাগরিক
+						907 container
+							908 text @ national_audit_1810
+					909 cell
+						910 text citizen
+					911 cell
+						912 image
+						913 text —
+						914 container
+							915 image
+							916 text national.audit.20261018@example.invalid
+					917 cell
+						918 text ঢাকায় থাকি; জমি কুমিল্লায় — পরীক্ষামূলক তথ্য
+					919 cell
+						920 text ১৮/১০/২০২৬
+					921 cell
+						922 text ACTIVE ⚠️ পেন্ডিং
+					923 cell
+						924 button ইউজারের সম্পূর্ণ বিবরণ ও নিয়ন্ত্রণ দেখুন
+							925 image
+						926 button আইডি ও প্রোফাইল অনুমোদন করুন
+							927 image
+						928 button স্থগিত, Help: নিষ্ক্রিয় করুন
+						929 button অপসারণ
+							930 image
+			931 heading নতুন কর্মকর্তা বা ব্যবহারকারী অ্যাকাউন্ট তৈরি করুন, Value: 3
+				932 image
+				933 text নতুন কর্মকর্তা বা ব্যবহারকারী অ্যাকাউন্ট তৈরি করুন
+			934 button ✕
+			935 container
+				936 text ভূমিকা (Role):  *
+				937 pop up button (collapsed, settable) Value: Sub-Registrar (সাব-রেজিস্ট্রার), Secondary Actions: Expand
+					938 menu
+						939 container নাগরিক ও সার্ভিস পয়েন্ট
+							940 Citizen (সাধারণ নাগরিক)
+							941 Service Point Operator (UDC / ডিজিটাল সেন্টার)
+						942 container নিবন্ধন অধিদপ্তর (সাব-রেজিস্ট্রি)
+							943 (selected) Sub-Registrar (সাব-রেজিস্ট্রার)
+							944 Registry Data Officer (রেজিস্ট্রি ডাটা মেকার)
+						945 container ভূমি প্রশাসন ও এসি ল্যান্ড
+							946 AC Land (সহকারী কমিশনার ভূমি)
+							947 Land Office Assistant (উপজেলা ভূমি সহকারী)
+							948 Field Verification Officer (মাঠ তদন্ত কর্মকর্তা)
+							949 Settlement Records Officer (জরিপ মেকার)
+							950 Assistant Settlement Officer (জরিপ চেকার)
+							951 UNO Supervisor (উপজেলা নির্বাহী কর্মকর্তা)
+							952 Appellate Reviewer (এডিসি রাজস্ব / আপিল কর্তৃপক্ষ)
+						953 container ব্যাংক ও আর্থিক প্রতিষ্ঠান
+							954 Bank Officer (ঋণ ও জামানত মেকার)
+							955 Bank Manager (শাখা ব্যবস্থাপক - চেকার)
+						956 container প্ল্যাটফর্ম সাপোর্ট ও মডারেশন
+							957 Support Agent (১৬১২২ হেল্পলাইন / জিআরএস)
+							958 Platform Moderator (মার্কেটপ্লেস মডারেটর)
+							959 Content Editor (নোটিশ ও কন্টেন্ট এডিটর)
+							960 Content Approver (কন্টেন্ট ও নোটিশ অ্যাপ্রুভার)
+						961 container সিস্টেম ও অডিট
+							962 System Admin (সিস্টেম অ্যাডমিনিস্ট্রেটর)
+							963 Admin (অ্যাডমিন)
+							964 National Auditor (জাতীয় অডিটর)
+							965 DC Acquisition Officer (এলএ কর্মকর্তা)
+							966 Lawyer / Court User (আদালত প্রতিনিধি)
+				967 text ইউজারনেম (Username):  * @
+				968 text field (settable)
+				969 text পূর্ণ নাম (বাংলায়):  *
+				970 text field (settable)
+				971 text পূর্ণ নাম (ইংরেজিতে):
+				972 text field (settable)
+				973 text মোবাইল নম্বর:  *
+				974 text field (settable)
+				975 text ইমেইল ঠিকানা:
+				976 text field (settable)
+				977 text জাতীয় পরিচয়পত্র (NID):  *
+				978 text field (settable)
+				979 text অফিস / অধিক্ষেত্র:  *
+				980 pop up button (collapsed, settable) Value: -- সক্রিয় কার্যালয় নির্বাচন করুন --, Secondary Actions: Expand
+					981 menu
+						982 (selected) -- সক্রিয় কার্যালয় নির্বাচন করুন --
+						983 সাব-রেজিস্ট্রি অফিস, সাভার — ঢাকা (registry)
+						984 সাব-রেজিস্ট্রি অফিস, গাজীপুর সদর — গাজীপুর (registry)
+						985 উপজেলা ভূমি অফিস, সাভার — ঢাকা (ac_land)
+						986 বিরুলিয়া ইউনিয়ন ডিজিটাল সেন্টার (ইউডিসি) — ঢাকা (service_point)
+						987 সোনালী ব্যাংক পিএলসি, সাভার শাখা — ঢাকা (bank_branch)
+						988 জোনাল সেটেলমেন্ট অফিস, ঢাকা — ঢাকা (settlement)
+						989 কেন্দ্রীয় ভূমি সুরক্ষা গভর্ন্যান্স সেল — ঢাকা (admin_cell)
+				990 text প্রাথমিক পাসওয়ার্ড (অন্তত ৮ অক্ষর)
+				991 text field (settable) প্রাথমিক পাসওয়ার্ড (অন্তত ৮ অক্ষর)
+				992 image
+				993 text এই অ্যাকাউন্টের জন্য পৃথক পাসওয়ার্ড দিন। সবার জন্য একই পাসওয়ার্ড ব্যবহার করবেন না।
+				994 button বাতিল
+				995 button অ্যাকাউন্ট তৈরি ও সক্রিয় করুন
+					996 image
+					997 text অ্যাকাউন্ট তৈরি ও সক্রিয় করুন
+
+The focused UI element is 116 button + নতুন ব্যবহারকারী / কর্মকর্তা যুক্ত করুন

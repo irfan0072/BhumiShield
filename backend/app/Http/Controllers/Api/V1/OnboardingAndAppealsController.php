@@ -21,7 +21,7 @@ final class OnboardingAndAppealsController
 
     public static function listBatches(array $query = [], ?array $actor = null): array
     {
-        RoleMiddleware::authorize([
+        $user = $actor ?? RoleMiddleware::authorize([
             'registry_data_officer',
             'land_office_assistant',
             'settlement_records_officer',
@@ -30,6 +30,7 @@ final class OnboardingAndAppealsController
             'ac_land',
             'admin',
             'system_admin',
+            'auditor',
         ], $actor);
 
         $sql = 'SELECT b.*,
@@ -38,26 +39,29 @@ final class OnboardingAndAppealsController
                        (SELECT COUNT(*) FROM onboarding_items oi WHERE oi.batch_id = b.id) AS item_count
                 FROM onboarding_batches b
                 JOIN users um ON um.id = b.maker_user_id
-                LEFT JOIN users uc ON uc.id = b.checker_user_id';
+                LEFT JOIN users uc ON uc.id = b.checker_user_id WHERE b.record_type <> \'OPENING_RECORD\'';
         $params = [];
 
         if (!empty($query['status'])) {
-            $sql .= ' WHERE b.status = ?';
+            $sql .= ' AND b.status = ?';
             $params[] = $query['status'];
         }
 
         $sql .= ' ORDER BY b.id DESC';
         $rows = DB::select($sql, $params);
 
+        // Strict jurisdiction filtering: only return batches within officer's competent office/jurisdiction
+        $accessible = array_values(array_filter($rows, static fn(array $r): bool => \App\Services\OfficeScopeService::canAccessBatch($r, $user)));
+
         return [
-            'items' => $rows,
-            'total' => count($rows),
+            'items' => $accessible,
+            'total' => count($accessible),
         ];
     }
 
     public static function getBatch(string|int $idOrBatchNo, ?array $actor = null): array
     {
-        RoleMiddleware::authorize([
+        $user = $actor ?? RoleMiddleware::authorize([
             'registry_data_officer',
             'land_office_assistant',
             'settlement_records_officer',
@@ -66,6 +70,7 @@ final class OnboardingAndAppealsController
             'ac_land',
             'admin',
             'system_admin',
+            'auditor',
         ], $actor);
 
         $batch = null;
@@ -103,11 +108,18 @@ final class OnboardingAndAppealsController
             ], JSON_UNESCAPED_UNICODE));
         }
 
+        if ($batch['record_type'] === 'OPENING_RECORD') throw new \RuntimeException(json_encode(['status'=>403,'code'=>'DEDICATED_RECORD_REVIEW_REQUIRED','message_en'=>'Use the scoped opening-record workspace to review this document.','message_bn'=>'প্রারম্ভিক রেকর্ড কর্মক্ষেত্রে নথি পর্যালোচনা করুন।'],JSON_UNESCAPED_UNICODE));
+
+        // Enforce strict office and jurisdiction scope check (N05)
+        \App\Services\OfficeScopeService::requireBatch($batch, $user);
+
         $items = DB::select('SELECT * FROM onboarding_items WHERE batch_id = ? ORDER BY id ASC', [(int) $batch['id']]);
         $decodedItems = array_map(static function (array $it): array {
             $it['payload'] = json_decode((string) $it['item_payload_json'], true) ?: [];
             return $it;
         }, $items);
+
+        $batch['proof_package'] = json_decode((string) ($batch['proof_package_json'] ?? '{}'), true) ?: [];
 
         return [
             'batch' => $batch,
@@ -182,7 +194,7 @@ final class OnboardingAndAppealsController
                 $recordType,
                 (int) $maker['id'],
                 'SUBMITTED',
-                json_encode(['maker_username' => $maker['username'], 'item_count' => count($validatedItems)]),
+                json_encode(['maker_username' => $maker['username'], 'item_count' => count($validatedItems)], JSON_UNESCAPED_UNICODE),
                 $batchHash,
                 $now,
             ]
@@ -215,9 +227,10 @@ final class OnboardingAndAppealsController
 
         $batchRes = self::getBatch($idOrBatchNo, $checker);
         $batch = $batchRes['batch'];
+        if ($batch['record_type'] === 'OPENING_RECORD') return OpeningRecordController::decide((int)$batch['id'], ['decision'=>$payload['decision']??'', 'reason'=>$payload['reason_bn']??$payload['notes_bn']??''], $checker);
 
-        // Separation of duties check: Maker cannot check their own batch (unless super admin override in dev)
-        if ((int) $batch['maker_user_id'] === (int) $checker['id'] && ($checker['role'] ?? '') !== 'admin') {
+        // Separation of duties check: Maker cannot check their own batch (unconditional check)
+        if ((int) $batch['maker_user_id'] === (int) $checker['id']) {
             throw new \RuntimeException(json_encode([
                 'status' => 403,
                 'code' => 'SEPARATION_OF_DUTIES_VIOLATION',
@@ -226,34 +239,204 @@ final class OnboardingAndAppealsController
             ], JSON_UNESCAPED_UNICODE));
         }
 
-        $decision = strtoupper(trim((string) ($payload['decision'] ?? 'APPROVED')));
-        if (!in_array($decision, ['APPROVED', 'REJECTED'], true)) {
-            $decision = 'APPROVED';
+        $rawDecision = trim((string) ($payload['decision'] ?? ''));
+        $decision = strtoupper($rawDecision);
+        if (!in_array($decision, ['APPROVED', 'REJECTED', 'RETURNED'], true)) {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'INVALID_DECISION',
+                'message_bn' => 'অনুমোদন সিদ্ধান্তটি অবশ্যই APPROVED, RETURNED অথবা REJECTED হতে হবে।',
+                'message_en' => 'Decision must be explicitly APPROVED, RETURNED, or REJECTED.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        if (($batch['status'] ?? '') !== 'SUBMITTED') {
+            throw new \RuntimeException(json_encode([
+                'status' => 409,
+                'code' => 'INVALID_BATCH_STATUS',
+                'message_bn' => 'শুধুমাত্র জমাকৃত (SUBMITTED) ব্যাচেই অনুমোদন বা প্রত্যাখ্যান সিদ্ধান্ত দেওয়া সম্ভব। বর্তমান অবস্থা: ' . ($batch['status'] ?? 'UNKNOWN'),
+                'message_en' => 'Only batches in SUBMITTED state can be decided. Current status: ' . ($batch['status'] ?? 'UNKNOWN'),
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $notes = trim((string) ($payload['notes_bn'] ?? ($payload['reason_bn'] ?? ($payload['checker_notes'] ?? ''))));
+
+        if ($decision === 'RETURNED' && strlen($notes) < 5) {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'CORRECTION_NOTES_REQUIRED',
+                'message_bn' => 'সংশোধনের জন্য ফেরত পাঠাতে সুনির্দিষ্ট কারণ বা নির্দেশনামূলক নোট প্রদান করা আবশ্যক (ন্যূনতম ৫ অক্ষর)।',
+                'message_en' => 'Correction notes explaining requested revisions are required when returning a batch.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        if ($decision === 'APPROVED') {
+            $invalidCount = (int) (DB::selectOne("SELECT COUNT(*) AS c FROM onboarding_items WHERE batch_id = ? AND validation_status = 'INVALID'", [$batch['id']])['c'] ?? 0);
+            if ($invalidCount > 0) {
+                throw new \RuntimeException(json_encode([
+                    'status' => 422,
+                    'code' => 'CANNOT_APPROVE_INVALID_ITEMS',
+                    'message_bn' => 'এই ব্যাচে ত্রুটিপূর্ণ (INVALID) রেকর্ড বিদ্যমান। ত্রুটিপূর্ণ রেকর্ডসহ ব্যাচ অনুমোদন করা যাবে না।',
+                    'message_en' => 'Batch contains invalid records and cannot be approved.',
+                ], JSON_UNESCAPED_UNICODE));
+            }
         }
 
         $now = gmdate('c');
+        $proofPkg = json_decode((string) ($batch['proof_package_json'] ?? '{}'), true) ?: [];
+        if ($decision === 'RETURNED') {
+            $proofPkg['correction_notes'] = $notes;
+            $proofPkg['returned_at'] = $now;
+            $proofPkg['returned_by'] = $checker['username'] ?? 'checker';
+        }
+        $proofPkgJson = json_encode($proofPkg, JSON_UNESCAPED_UNICODE);
+
         DB::statement(
-            'UPDATE onboarding_batches SET status = ?, checker_user_id = ?, decided_at = ? WHERE id = ?',
+            'UPDATE onboarding_batches SET status = ?, checker_user_id = ?, proof_package_json = ?, decided_at = ? WHERE id = ?',
             [
                 $decision,
                 (int) $checker['id'],
+                $proofPkgJson,
                 $now,
                 (int) $batch['id'],
             ]
+        );
+
+        \Database\Seeders\DatabaseSeeder::appendAuditEntry(
+            (string) ($checker['username'] ?? 'checker'),
+            (string) ($checker['role'] ?? 'checker'),
+            'ONBOARDING_BATCH_' . $decision,
+            'onboarding_batch',
+            (string) $batch['id'],
+            [
+                'batch_no' => $batch['batch_no'],
+                'record_type' => $batch['record_type'],
+                'decision' => $decision,
+                'checker_user_id' => (int) $checker['id'],
+                'maker_user_id' => (int) $batch['maker_user_id'],
+                'notes_bn' => $notes,
+            ],
+            $now
         );
 
         return [
             'batch_no' => $batch['batch_no'],
             'status' => $decision,
             'checker_user_id' => (int) $checker['id'],
+            'checker_notes' => $notes,
             'decided_at' => $now,
-            'message_bn' => $decision === 'APPROVED'
-                ? '✔ মেকার-চেকার অনুমোদন সম্পন্ন: ব্যাচটি সফলভাবে অনুমোদিত হয়েছে।'
-                : '✕ ব্যাচটি প্রত্যাখ্যাত হয়েছে। মেকারকে সংশোধন করার জন্য নির্দেশ দেওয়া হলো।',
-            'message_en' => $decision === 'APPROVED'
-                ? '✔ Maker-Checker validation approved: Batch verified successfully.'
-                : '✕ Batch rejected. Remanded to maker for revision.',
+            'message_bn' => $decision === 'RETURNED'
+                ? 'ব্যাচটি সংশোধনের জন্য সফলভাবে মেকারের কাছে ফেরত পাঠানো হয়েছে।'
+                : ($decision === 'APPROVED' ? 'ব্যাচটি সফলভাবে অনুমোদিত হয়েছে।' : 'ব্যাচটি বাতিল করা হয়েছে।'),
         ];
+    }
+
+    /**
+     * Allows Maker to update and resubmit a RETURNED batch with corrected items.
+     */
+    public static function resubmitBatch(string|int $idOrBatchNo, array $payload, ?array $actor = null): array
+    {
+        $maker = RoleMiddleware::authorize([
+            'registry_data_officer',
+            'land_office_assistant',
+            'settlement_records_officer',
+            'admin',
+            'system_admin',
+        ], $actor);
+
+        $batchRes = self::getBatch($idOrBatchNo, $maker);
+        $batch = $batchRes['batch'];
+
+        if (($batch['status'] ?? '') !== 'RETURNED') {
+            throw new \RuntimeException(json_encode([
+                'status' => 409,
+                'code' => 'BATCH_NOT_RETURNED',
+                'message_bn' => 'শুধুমাত্র সংশোধনের জন্য ফেরত (RETURNED) ব্যাচ পুনরায় দাখিল করা যাবে। বর্তমান অবস্থা: ' . ($batch['status'] ?? ''),
+                'message_en' => 'Only batches in RETURNED state can be resubmitted.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        // Only the original maker (or admin) can resubmit
+        if ((int) $batch['maker_user_id'] !== (int) $maker['id'] && !in_array($maker['role'], ['admin', 'system_admin'], true)) {
+            throw new \RuntimeException(json_encode([
+                'status' => 403,
+                'code' => 'NOT_BATCH_MAKER',
+                'message_bn' => 'শুধুমাত্র মূল ডাটা এন্ট্রি কর্মকর্তা (মেকার) সংশোধিত ব্যাচ পুনরায় দাখিল করতে পারেন।',
+                'message_en' => 'Only the original maker can resubmit the returned batch.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $rawItems = (array) ($payload['items'] ?? []);
+        if (empty($rawItems)) {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'EMPTY_BATCH',
+                'message_bn' => 'সংশোধিত ব্যাচে ন্যূনতম ১টি রেকর্ড প্রদান করা আবশ্যক।',
+                'message_en' => 'Resubmitted batch must contain at least one item.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $now = gmdate('c');
+        $canonicalStrings = [];
+        $validatedItems = [];
+
+        foreach ($rawItems as $it) {
+            $itArr = is_array($it) ? $it : ['raw' => (string) $it];
+            $valid = true;
+            $validationErrors = [];
+
+            if (!empty($itArr['nid']) && strlen(trim((string) $itArr['nid'])) < 10) {
+                $valid = false;
+                $validationErrors[] = 'NID must be at least 10 digits';
+            }
+            if (isset($itArr['area_decimal']) && (float) $itArr['area_decimal'] <= 0) {
+                $valid = false;
+                $validationErrors[] = 'Area decimal must be positive';
+            }
+
+            $itArr['_validation_errors'] = $validationErrors;
+            $itemJson = json_encode($itArr, JSON_UNESCAPED_UNICODE);
+            $canonicalStrings[] = $itemJson;
+            $validatedItems[] = ['json' => $itemJson, 'status' => $valid ? 'VALID' : 'INVALID'];
+        }
+
+        $batchHash = hash('sha256', implode('|', $canonicalStrings));
+
+        // Delete old items and insert updated items
+        DB::statement('DELETE FROM onboarding_items WHERE batch_id = ?', [(int) $batch['id']]);
+        foreach ($validatedItems as $vIt) {
+            DB::insert(
+                'INSERT INTO onboarding_items (batch_id, item_payload_json, validation_status, created_at) VALUES (?, ?, ?, ?)',
+                [(int) $batch['id'], $vIt['json'], $vIt['status'], $now]
+            );
+        }
+
+        $proofPkg = json_decode((string) ($batch['proof_package_json'] ?? '{}'), true) ?: [];
+        $proofPkg['resubmitted_at'] = $now;
+        $proofPkg['resubmitted_by'] = $maker['username'];
+        $proofPkg['resubmit_notes'] = trim((string) ($payload['notes_bn'] ?? 'সংশোধনপূর্বক পুনরায় জমা দেওয়া হলো'));
+        $proofPkgJson = json_encode($proofPkg, JSON_UNESCAPED_UNICODE);
+
+        DB::statement(
+            'UPDATE onboarding_batches SET status = "SUBMITTED", checker_user_id = NULL, decided_at = NULL, batch_hash = ?, proof_package_json = ? WHERE id = ?',
+            [$batchHash, $proofPkgJson, (int) $batch['id']]
+        );
+
+        \Database\Seeders\DatabaseSeeder::appendAuditEntry(
+            (string) ($maker['username'] ?? 'maker'),
+            (string) ($maker['role'] ?? 'maker'),
+            'ONBOARDING_BATCH_RESUBMITTED',
+            'onboarding_batch',
+            (string) $batch['id'],
+            [
+                'batch_no' => $batch['batch_no'],
+                'resubmitted_by' => $maker['username'],
+                'items_count' => count($validatedItems),
+            ],
+            $now
+        );
+
+        return self::getBatch((int) $batch['id'], $maker);
     }
 
     // -------------------------------------------------------------------------
@@ -362,10 +545,10 @@ final class OnboardingAndAppealsController
     {
         $user = RoleMiddleware::authorize(['citizen', 'appellate_reviewer', 'admin', 'system_admin'], $actor);
 
-        $mutationId = (int) ($payload['mutation_id'] ?? 1);
-        $plotId = (int) ($payload['plot_id'] ?? 1);
-        $appellantName = trim((string) ($payload['appellant_name_bn'] ?? ($user['full_name_bn'] ?? 'মোসা. রাবেয়া খাতুন')));
-        $appellantNid = trim((string) ($payload['appellant_nid'] ?? ($user['nid'] ?? '9900001002')));
+        $mutationId = (int) ($payload['mutation_id'] ?? 0);
+        $plotId = (int) ($payload['plot_id'] ?? 0);
+        $appellantName = trim((string) ($payload['appellant_name_bn'] ?? ($user['full_name_bn'] ?? '')));
+        $appellantNid = trim((string) ($payload['appellant_nid'] ?? ($user['nid'] ?? '')));
         $reason = trim((string) ($payload['reason_bn'] ?? 'সহকারী কমিশনার (ভূমি) কর্তৃক প্রদত্ত আদেশের বিরুদ্ধে অতিরিক্ত জেলা প্রশাসক (রাজস্ব) বরাবর রিভিউ আপিল।'));
 
         $cnt = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM appeals')['c'] ?? 0);
@@ -398,9 +581,7 @@ final class OnboardingAndAppealsController
 
         $status = strtoupper(trim((string) ($payload['status'] ?? 'HEARING_SCHEDULED')));
         $validStatuses = ['FILED', 'HEARING_SCHEDULED', 'STAY_ORDER_GRANTED', 'UPHELD', 'OVERTURNED'];
-        if (!in_array($status, $validStatuses, true)) {
-            $status = 'HEARING_SCHEDULED';
-        }
+        if (!in_array($status, $validStatuses, true)) throw new \RuntimeException(json_encode(['status'=>422,'code'=>'INVALID_APPEAL_STATUS','message_bn'=>'সঠিক আপিলের অবস্থা নির্বাচন করুন।','message_en'=>'Choose a valid appeal status.'], JSON_UNESCAPED_UNICODE));
 
         $note = trim((string) ($payload['decision_note_bn'] ?? 'আপিল আদালতের সিদ্ধান্ত রেকর্ডভুক্ত করা হলো।'));
         $now = gmdate('c');

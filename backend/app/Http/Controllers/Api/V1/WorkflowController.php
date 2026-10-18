@@ -121,8 +121,8 @@ final class WorkflowController
         $password = (string) $body['password'];
         $cleanPhone = preg_replace('/[^\d]/', '', $ident);
         $user = DB::selectOne(
-            'SELECT * FROM users WHERE LOWER(username) = ? OR LOWER(email) = ? OR phone_dummy = ? OR replace(phone_dummy, \'-\', \'\') = ?',
-            [$ident, $ident, $ident, $cleanPhone]
+            'SELECT * FROM users WHERE LOWER(username) = ? OR LOWER(email) = ? OR phone_dummy = ? OR (? <> \'\' AND replace(phone_dummy, \'-\', \'\') = ?)',
+            [$ident, $ident, $ident, $cleanPhone, $cleanPhone]
         );
 
         if (!$user || !JwtAuthService::verifyPassword($password, (string) $user['password_hash'])) {
@@ -159,14 +159,14 @@ final class WorkflowController
             'user' => [
                 'id' => (int) $user['id'],
                 'username' => $user['username'],
-                'email' => $user['email'] ?? "{$user['username']}@demo.bhumishield.gov.bd",
+                'email' => $user['email'] ?? '',
                 'full_name_bn' => $user['full_name_bn'],
                 'full_name_en' => $user['full_name_en'],
                 'role' => $user['role'],
                 'office_bn' => $user['office_bn'],
                 'office_en' => $user['office_en'],
-                'phone_dummy' => $user['phone_dummy'] ?? '01700-001001',
-                'nid' => $user['nid'] ?? '9900001001',
+                'phone_dummy' => $user['phone_dummy'] ?? '',
+                'nid' => $user['nid'] ?? '',
                 'is_active' => (int) ($user['is_active'] ?? 1),
                 'is_identity_verified' => (int) ($user['is_identity_verified'] ?? 0),
                 'is_profile_complete' => (int) ($user['is_profile_complete'] ?? 0),
@@ -336,8 +336,8 @@ final class WorkflowController
 
     public static function subRegistrarPreCheck(array $req): array
     {
-        $plotId = (int) ($req['plot_id'] ?? 1);
-        $sellerId = (int) ($req['seller_id'] ?? ($req['seller_person_id'] ?? 1));
+        $plotId = (int) ($req['plot_id'] ?? 0);
+        $sellerId = (int) ($req['seller_id'] ?? ($req['seller_person_id'] ?? 0));
         $buyerId = (int) ($req['buyer_id'] ?? ($req['buyer_person_id'] ?? 2));
         $requestedArea = (float) ($req['requested_area_decimal'] ?? ($req['area_decimal'] ?? 10.0));
 
@@ -407,19 +407,8 @@ final class WorkflowController
     public static function subRegistrarRegisterDeed(array $req, ?array $user = null): array
     {
         $actor = RoleMiddleware::authorize(['sub_registrar', 'admin'], $user);
-        $registrarUsername = (string) ($actor['username'] ?? 'registrar');
 
-        $checkRes = self::subRegistrarPreCheck($req);
-        $risk = $checkRes['risk_report'];
-
-        $plotId = (int) $req['plot_id'];
-        $sellerId = (int) ($req['seller_id'] ?? ($req['seller_person_id'] ?? 0));
-        $buyerId = (int) ($req['buyer_id'] ?? ($req['buyer_person_id'] ?? 0));
         $requestedArea = round((float) ($req['requested_area_decimal'] ?? ($req['area_decimal'] ?? 0.0)), 2);
-        $priceBdt = max(0, (int) ($req['price_bdt'] ?? ($req['declared_value_bdt'] ?? 1500000)));
-        $deedType = (string) ($req['deed_type'] ?? 'SALE');
-        $forceHold = !empty($req['force_hold']);
-
         if ($requestedArea <= 0.0 || !is_finite($requestedArea)) {
             throw new \RuntimeException(json_encode([
                 'status' => 422,
@@ -428,6 +417,19 @@ final class WorkflowController
                 'message_en' => 'Deed area must be positive and finite.',
             ], JSON_UNESCAPED_UNICODE));
         }
+
+        \App\Services\OfficeScopeService::requirePlot((int)($req['plot_id']??0), $actor);
+        $registrarUsername = (string) ($actor['username'] ?? 'registrar');
+
+        $checkRes = self::subRegistrarPreCheck($req);
+        $risk = $checkRes['risk_report'];
+
+        $plotId = (int) $req['plot_id'];
+        $sellerId = (int) ($req['seller_id'] ?? ($req['seller_person_id'] ?? 0));
+        $buyerId = (int) ($req['buyer_id'] ?? ($req['buyer_person_id'] ?? 0));
+        $priceBdt = max(0, (int) ($req['price_bdt'] ?? ($req['declared_value_bdt'] ?? 0)));
+        $deedType = (string) ($req['deed_type'] ?? 'SALE');
+        $forceHold = !empty($req['force_hold']);
 
         if ($sellerId === $buyerId) {
             throw new \RuntimeException(json_encode([
@@ -501,10 +503,10 @@ final class WorkflowController
 
             $mutationCaseNo = null;
             if ($status === 'PENDING_MUTATION' && $autoQueue) {
-                $mutationCaseNo = 'MUT-2026-' . (500 + $nextIndex);
+                $mutationCaseNo = 'MUT-LT-2026-' . (500 + $nextIndex);
                 DB::insert(
-                    "INSERT INTO mutations (case_no, deed_id, plot_id, seller_id, buyer_id, area_decimal, status, decision_reason_bn, decision_reason_en, created_at) VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, 'Registered by Sub-Registrar and queued for AC Land e-Mutation.', ?)",
-                    [$mutationCaseNo, $deedId, $plotId, $sellerId, $buyerId, $requestedArea, $req['officer_notes_bn'] ?? 'সাব-রেজিস্ট্রার কর্তৃক নিবন্ধিত ও ই-নামজারির জন্য প্রেরিত।', $nowIso]
+                    "INSERT INTO mutations (case_no, deed_id, plot_id, seller_id, buyer_id, area_decimal, status, decision_reason_bn, decision_reason_en, created_at) VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, 'Auto LT-Notice from Sub-Registry queued for AC Land e-Mutation docket.', ?)",
+                    [$mutationCaseNo, $deedId, $plotId, $sellerId, $buyerId, $requestedArea, $req['officer_notes_bn'] ?? 'সাব-রেজিস্ট্রি থেকে স্বয়ংক্রিয় এলটি নোটিশ (Auto LT-Notice) হিসেবে প্রাপ্ত ও ই-নামজারির অপেক্ষায়।', $nowIso]
                 );
             }
 
@@ -550,13 +552,13 @@ final class WorkflowController
         });
     }
 
-    public static function listMutations(?string $status = null): array
+    public static function listMutations(?string $status = null, ?array $actor = null): array
     {
         $where = $status ? 'WHERE m.status = ?' : '';
         $params = $status ? [$status] : [];
         $rows = DB::select(
             "SELECT m.*,
-                    d.deed_no, d.deed_type, d.content_json, d.original_content_json,
+                    d.deed_no, d.deed_type, d.share_fraction, d.content_json, d.original_content_json,
                     d.content_hash, d.prev_hash, d.signature, d.chain_index,
                     p.dag_no, p.dag_no_bn, p.total_area_decimal,
                     l.mouza_bn, l.mouza_en, l.upazila_bn, l.upazila_en,
@@ -572,6 +574,10 @@ final class WorkflowController
              ORDER BY CASE WHEN m.status = 'PENDING' THEN 0 ELSE 1 END, m.id DESC",
             $params
         );
+
+        if ($actor && !in_array($actor['role'] ?? '', ['admin', 'system_admin', 'auditor'], true)) {
+            $rows = array_values(array_filter($rows, static fn(array $r): bool => \App\Services\OfficeScopeService::canAccessPlot((int) $r['plot_id'], $actor)));
+        }
 
         $items = [];
         foreach ($rows as $row) {
@@ -613,6 +619,7 @@ final class WorkflowController
                 'buyer_name_bn' => $row['buyer_name_bn'],
                 'buyer_name_en' => $row['buyer_name_en'],
                 'buyer_nid' => $row['buyer_nid'],
+                'share_fraction' => $row['share_fraction'],
                 'area_decimal' => (float) $row['area_decimal'],
                 'status' => $row['status'],
                 'decision_reason_bn' => $row['decision_reason_bn'],
@@ -630,6 +637,8 @@ final class WorkflowController
     public static function decideMutationCase(int $mutationId, array $req, ?array $user = null): array
     {
         $actor = RoleMiddleware::authorize(['ac_land'], $user);
+        $scopeCase = DB::selectOne('SELECT plot_id FROM mutations WHERE id=?', [$mutationId]);
+        if ($scopeCase) \App\Services\OfficeScopeService::requirePlot((int)$scopeCase['plot_id'], $actor);
 
         $decision = strtoupper(trim((string) ($req['decision'] ?? 'APPROVED')));
         if (!in_array($decision, ['APPROVED', 'REJECTED'], true)) {
@@ -748,7 +757,7 @@ final class WorkflowController
                     (string) $mut['case_no'],
                     $officer,
                     (string) ($actor['role'] ?? 'ac_land'),
-                    static function () use ($newSellerArea, $sellerFraction, $totalArea, $sellerOwn, $mut, $transferArea, $bsKhatian): void {
+                    static function () use ($newSellerArea, $sellerFraction, $totalArea, $sellerOwn, $mut, $transferArea, $bsKhatian, $deed): void {
                         // I07: Update seller ownership with exact conserved fraction (e.g. 19/23)
                         if ($newSellerArea <= 0.01) {
                             DB::statement("UPDATE ownerships SET is_latest = 0, area_decimal = 0, share_float = 0, share_fraction = '0/1' WHERE id = ?", [$sellerOwn['id']]);
@@ -759,32 +768,61 @@ final class WorkflowController
                             );
                         }
 
-                        // I07: Buyer ownership consolidation: if buyer already has an active latest holding on this plot, consolidate it
-                        $existingBuyerOwn = DB::selectOne(
-                            'SELECT * FROM ownerships WHERE plot_id = ? AND person_id = ? AND is_latest = 1',
-                            [$mut['plot_id'], $mut['buyer_id']]
-                        );
+                        // Check if this is a succession deed with multi-heirs
+                        $deedContent = json_decode((string) ($deed['content_json'] ?? '{}'), true) ?: [];
+                        $heirsList = $deedContent['heirs'] ?? [];
 
-                        if ($existingBuyerOwn) {
-                            $aggArea = round((float) $existingBuyerOwn['area_decimal'] + $transferArea, 2);
-                            $aggFloat = round($aggArea / $totalArea, 4);
-                            $buyerFraction = WorkflowController::formatConservedFraction($aggArea, $totalArea);
+                        if (!empty($heirsList) && is_array($heirsList)) {
+                            foreach ($heirsList as $hIdx => $heir) {
+                                $hArea = (float) ($heir['area_decimal'] ?? 0);
+                                if ($hArea <= 0) continue;
+                                $hNameBn = (string) ($heir['name_bn'] ?? ('ওয়ারিশ ' . ($hIdx + 1)));
+                                $hNid = (string) ($heir['nid'] ?? ('HEIR-' . ($mut['id'] * 100 + $hIdx + 1)));
 
-                            // Retire previous buyer row
-                            DB::statement('UPDATE ownerships SET is_latest = 0 WHERE id = ?', [$existingBuyerOwn['id']]);
+                                $existingPerson = DB::selectOne('SELECT id FROM persons WHERE nid = ?', [$hNid]);
+                                if (!$existingPerson) {
+                                    $hPersonId = DB::insert(
+                                        'INSERT INTO persons (name_bn, name_en, father_name_bn, father_name_en, mother_name_bn, nid, phone_dummy, is_deceased, heirs_recorded, address_bn, address_en) VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?)',
+                                        [$hNameBn, $heir['name_en'] ?? $hNameBn, 'প্রয়াত ওয়ারিশান', 'Late Inheritor', 'মাতা', $hNid, '01700000000', 'ওয়ারিশান বসতবাড়ি', 'Succession Homestead']
+                                    );
+                                } else {
+                                    $hPersonId = (int) $existingPerson['id'];
+                                }
 
-                            // Insert consolidated latest row
-                            DB::insert(
-                                'INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, ?, ?, ?, 1)',
-                                [$bsKhatian['id'], $mut['plot_id'], $mut['buyer_id'], $buyerFraction, $aggFloat, $aggArea]
-                            );
+                                $hFraction = WorkflowController::formatConservedFraction($hArea, $totalArea);
+                                DB::insert(
+                                    'INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, ?, ?, ?, 1)',
+                                    [$bsKhatian['id'], $mut['plot_id'], $hPersonId, $hFraction, round($hArea / $totalArea, 4), round($hArea, 2)]
+                                );
+                            }
                         } else {
-                            $buyerFraction = WorkflowController::formatConservedFraction($transferArea, $totalArea);
-
-                            DB::insert(
-                                'INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, ?, ?, ?, 1)',
-                                [$bsKhatian['id'], $mut['plot_id'], $mut['buyer_id'], $buyerFraction, round($transferArea / $totalArea, 4), round($transferArea, 2)]
+                            // Standard Buyer ownership consolidation: if buyer already has an active latest holding on this plot, consolidate it
+                            $existingBuyerOwn = DB::selectOne(
+                                'SELECT * FROM ownerships WHERE plot_id = ? AND person_id = ? AND is_latest = 1',
+                                [$mut['plot_id'], $mut['buyer_id']]
                             );
+
+                            if ($existingBuyerOwn) {
+                                $aggArea = round((float) $existingBuyerOwn['area_decimal'] + $transferArea, 2);
+                                $aggFloat = round($aggArea / $totalArea, 4);
+                                $buyerFraction = WorkflowController::formatConservedFraction($aggArea, $totalArea);
+
+                                // Retire previous buyer row
+                                DB::statement('UPDATE ownerships SET is_latest = 0 WHERE id = ?', [$existingBuyerOwn['id']]);
+
+                                // Insert consolidated latest row
+                                DB::insert(
+                                    'INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, ?, ?, ?, 1)',
+                                    [$bsKhatian['id'], $mut['plot_id'], $mut['buyer_id'], $buyerFraction, $aggFloat, $aggArea]
+                                );
+                            } else {
+                                $buyerFraction = WorkflowController::formatConservedFraction($transferArea, $totalArea);
+
+                                DB::insert(
+                                    'INSERT INTO ownerships (khatian_id, plot_id, person_id, share_fraction, share_float, area_decimal, is_latest) VALUES (?, ?, ?, ?, ?, ?, 1)',
+                                    [$bsKhatian['id'], $mut['plot_id'], $mut['buyer_id'], $buyerFraction, round($transferArea / $totalArea, 4), round($transferArea, 2)]
+                                );
+                            }
                         }
                     }
                 );
@@ -846,6 +884,131 @@ final class WorkflowController
                 'decided_at' => $nowIso,
                 'message_bn' => "নামজারি কেস নং {$mut['case_no']} না-মঞ্জুর (বাতিল) করা হয়েছে।",
                 'message_en' => "Mutation case {$mut['case_no']} rejected.",
+            ];
+        });
+    }
+
+    public static function applyMutation(array $req, array $actor): array
+    {
+        $plotId = (int) ($req['plot_id'] ?? 0);
+        $mutationType = strtoupper(trim((string) ($req['mutation_type'] ?? 'SUCCESSION')));
+        $sellerId = (int) ($req['seller_id'] ?? ($req['deceased_id'] ?? 0));
+        $buyerId = (int) ($req['buyer_id'] ?? ($req['applicant_id'] ?? 0));
+        $requestedArea = (float) ($req['area_decimal'] ?? 0);
+        $heirs = (array) ($req['heirs'] ?? []);
+        $docNote = (string) ($req['documents_note'] ?? 'ওয়ারিশান সনদপত্র ও ফারায়েজ বণ্টন বিবরণী');
+        $notesBn = (string) ($req['notes_bn'] ?? 'ওয়ারিশান ফারায়েজ বণ্টন মোতাবেক স্বয়ংক্রিয় ই-নামজারি আবেদন।');
+
+        if ($plotId <= 0) {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'INVALID_PLOT',
+                'message_bn' => 'জমির প্লট / দাগ নির্বাচন আবশ্যক।',
+                'message_en' => 'Plot ID is required.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        $plot = DB::selectOne('SELECT * FROM plots WHERE id = ?', [$plotId]);
+        if (!$plot) {
+            throw new \RuntimeException(json_encode([
+                'status' => 404,
+                'code' => 'PLOT_NOT_FOUND',
+                'message_bn' => 'জমির প্লট খুঁজে পাওয়া যায়নি।',
+                'message_en' => 'Plot not found.',
+            ], JSON_UNESCAPED_UNICODE));
+        }
+
+        // Auto resolve seller / deceased owner if not passed
+        if ($sellerId <= 0) {
+            $latestOwner = DB::selectOne('SELECT person_id, area_decimal FROM ownerships WHERE plot_id = ? AND is_latest = 1 ORDER BY area_decimal DESC LIMIT 1', [$plotId]);
+            if ($latestOwner) {
+                $sellerId = (int) $latestOwner['person_id'];
+                if ($requestedArea <= 0) {
+                    $requestedArea = (float) $latestOwner['area_decimal'];
+                }
+            } else {
+                $sellerId = 1;
+            }
+        }
+
+        if ($buyerId <= 0) {
+            $buyerId = (int) ($actor['person_id'] ?? 1);
+        }
+
+        if ($requestedArea <= 0) {
+            $requestedArea = (float) $plot['total_area_decimal'];
+        }
+
+        $totalArea = max(0.01, (float) $plot['total_area_decimal']);
+        $shareStr = round($requestedArea, 2) . '/' . round($totalArea, 2);
+
+        return DB::transaction(function () use ($plotId, $sellerId, $buyerId, $requestedArea, $mutationType, $shareStr, $heirs, $docNote, $notesBn, $actor) {
+            $lastDeed = DB::selectOne('SELECT content_hash, chain_index FROM deeds ORDER BY chain_index DESC LIMIT 1');
+            $prevHash = $lastDeed ? (string) $lastDeed['content_hash'] : LedgerService::GENESIS_HASH;
+            $nextIndex = $lastDeed ? ((int) $lastDeed['chain_index'] + 1) : 1;
+            $deedNo = 'DL-' . ($mutationType === 'SUCCESSION' ? 'WARISH-' : 'MUT-') . '2026-' . (2000 + $nextIndex);
+            $nowIso = gmdate('c');
+            $username = (string) ($actor['username'] ?? 'system_faraiz');
+
+            $contentObj = [
+                'deed_no' => $deedNo,
+                'deed_type' => $mutationType,
+                'seller_id' => $sellerId,
+                'buyer_id' => $buyerId,
+                'plot_id' => $plotId,
+                'share_fraction' => $shareStr,
+                'area_decimal' => $requestedArea,
+                'price_bdt' => 0,
+                'heirs' => $heirs,
+                'doc_note' => $docNote,
+                'registered_by' => $username,
+                'created_at' => $nowIso,
+            ];
+            $canonicalStr = LedgerService::canonicalJson($contentObj);
+            $contentHash = LedgerService::computeDeedHash($contentObj, $prevHash, $nextIndex);
+            $signature = LedgerService::signHash($contentHash);
+
+            $deedId = DB::insert(
+                'INSERT INTO deeds (deed_no, deed_type, seller_id, buyer_id, plot_id, share_fraction, area_decimal, price_bdt, status, content_json, original_content_json, content_hash, prev_hash, signature, chain_index, registered_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [$deedNo, $mutationType, $sellerId, $buyerId, $plotId, $shareStr, $requestedArea, 0, 'PENDING_MUTATION', $canonicalStr, $canonicalStr, $contentHash, $prevHash, $signature, $nextIndex, $username, $nowIso]
+            );
+
+            $caseNo = 'MUT-' . ($mutationType === 'SUCCESSION' ? 'WARISH-' : '') . '2026-' . (800 + $nextIndex);
+            $descBn = $mutationType === 'SUCCESSION'
+                ? ("ওয়ারিশান ফারায়েজ বণ্টন আবেদন: " . (count($heirs) > 0 ? count($heirs) . " জন ওয়ারিশ।" : "") . " " . $docNote)
+                : $notesBn;
+
+            $mutId = DB::insert(
+                "INSERT INTO mutations (case_no, deed_id, plot_id, seller_id, buyer_id, area_decimal, status, decision_reason_bn, decision_reason_en, created_at) VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?, 'Succession e-Mutation application submitted and queued for AC Land.', ?)",
+                [$caseNo, $deedId, $plotId, $sellerId, $buyerId, $requestedArea, $descBn, $nowIso]
+            );
+
+            DatabaseSeeder::appendAuditEntry(
+                $username,
+                (string) ($actor['role'] ?? 'citizen'),
+                'MUTATION_APPLICATION_FILED',
+                'mutation',
+                (string) $mutId,
+                [
+                    'case_no' => $caseNo,
+                    'mutation_type' => $mutationType,
+                    'plot_id' => $plotId,
+                    'area_decimal' => $requestedArea,
+                    'heirs_count' => count($heirs),
+                    'deed_no' => $deedNo,
+                ],
+                $nowIso
+            );
+
+            return [
+                'success' => true,
+                'mutation_id' => $mutId,
+                'case_no' => $caseNo,
+                'deed_id' => $deedId,
+                'deed_no' => $deedNo,
+                'status' => 'PENDING',
+                'message_bn' => "ওয়ারিশান নামজারি আবেদন সফলভাবে দাখিল হয়েছে! কেস নম্বর: {$caseNo}। এসিল্যান্ড ট্রাইব্যুনালে শুনানির জন্য প্রেরিত হয়েছে।",
+                'message_en' => "Succession mutation application submitted! Case No: {$caseNo}.",
             ];
         });
     }

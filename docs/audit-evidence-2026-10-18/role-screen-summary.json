@@ -1,0 +1,242 @@
+[
+  {
+    "username": "registrar",
+    "headings": [
+      "Sub-Registrar Console (Checker & Registration Authority)",
+      "Pre-Registration Gatekeeper, Deed Control & Verification"
+    ]
+  },
+  {
+    "username": "acland",
+    "headings": [
+      "Assistant Commissioner (Land) Tribunal & e-Mutation Workbench"
+    ]
+  },
+  {
+    "username": "bank",
+    "headings": [
+      "Bank Credit Officer Console (Lien Maker)",
+      "Bank Mortgage & Lien Workspace",
+      "Register New Bank Mortgage Lien & Collateral Lock"
+    ]
+  },
+  {
+    "username": "sro_dhaka",
+    "headings": [
+      "Assistant Commissioner (Land) Tribunal & e-Mutation Workbench"
+    ]
+  },
+  {
+    "username": "aso_dhaka",
+    "headings": [
+      "Assistant Commissioner (Land) Tribunal & e-Mutation Workbench"
+    ]
+  },
+  {
+    "username": "spo_birulia",
+    "headings": [
+      "Md. Shahinur Rahman (Service Point Operator)",
+      "Owner Sale Lock",
+      "Digital Deed Vault",
+      "Transfer Application"
+    ]
+  },
+  {
+    "username": "rdo_savar",
+    "headings": [
+      "Registry Data Entry Cell (Maker Console)",
+      "Pre-Registration Gatekeeper, Deed Control & Verification",
+      "Automated 11-Rule Gatekeeper Engine:"
+    ]
+  },
+  {
+    "username": "loa_savar",
+    "headings": [
+      "Assistant Commissioner (Land) Tribunal & e-Mutation Workbench"
+    ]
+  },
+  {
+    "username": "fvo_savar",
+    "headings": [
+      "Assistant Commissioner (Land) Tribunal & e-Mutation Workbench"
+    ]
+  },
+  {
+    "username": "uno_savar",
+    "headings": [
+      "Assistant Commissioner (Land) Tribunal & e-Mutation Workbench"
+    ]
+  },
+  {
+    "username": "appellate_reviewer",
+    "headings": [
+      "Assistant Commissioner (Land) Tribunal & e-Mutation Workbench"
+    ]
+  },
+  {
+    "username": "bank_manager",
+    "headings": [
+      "Bank Branch Manager Console (Checker)",
+      "Bank Mortgage & Lien Workspace",
+      "Registered Bank Mortgages & Digital NOC Controls"
+    ]
+  },
+  {
+    "username": "support_agent",
+    "headings": [
+      "Citizen Support & Helpline Desk (16122)",
+      "Control Panel Modules & Subsystems",
+      "User & Officer Directory",
+      "Cryptographic Ledger Lab",
+      "Land Records & Plots Control",
+      "Security Audit Trail",
+      "Policy & System Settings",
+      "RBAC Permission Matrix",
+      "Onboarding & Appeals",
+      "Service Directory & Fees",
+      "SMS & OTP Outbox",
+      "Land Deeds Ledger & Audit",
+      "Address Hierarchy & Mouzas",
+      "Recent Security Audit Events"
+    ]
+  },
+  {
+    "username": "platform_moderator",
+    "headings": [
+      "Platform Moderation & Oversight",
+      "Control Panel Modules & Subsystems",
+      "User & Officer Directory",
+      "Cryptographic Ledger Lab",
+      "Land Records & Plots Control",
+      "Security Audit Trail",
+      "Policy & System Settings",
+      "RBAC Permission Matrix",
+      "Onboarding & Appeals",
+      "Service Directory & Fees",
+      "SMS & OTP Outbox",
+      "Land Deeds Ledger & Audit",
+      "Address Hierarchy & Mouzas",
+      "Recent Security Audit Events"
+    ]
+  },
+  {
+    "username": "content_editor",
+    "headings": [
+      "Content Editor & Service Guidelines Console",
+      "Control Panel Modules & Subsystems",
+      "User & Officer Directory",
+      "Cryptographic Ledger Lab",
+      "Land Records & Plots Control",
+      "Security Audit Trail",
+      "Policy & System Settings",
+      "RBAC Permission Matrix",
+      "Onboarding & Appeals",
+      "Service Directory & Fees",
+      "SMS & OTP Outbox",
+      "Land Deeds Ledger & Audit",
+      "Address Hierarchy & Mouzas",
+      "Recent Security Audit Events"
+    ]
+  },
+  {
+    "username": "content_approver",
+    "headings": [
+      "Content Approver & Publishing Authority",
+      "Control Panel Modules & Subsystems",
+      "User & Officer Directory",
+      "Cryptographic Ledger Lab",
+      "Land Records & Plots Control",
+      "Security Audit Trail",
+      "Policy & System Settings",
+      "RBAC Permission Matrix",
+      "Onboarding & Appeals",
+      "Service Directory & Fees",
+      "SMS & OTP Outbox",
+      "Land Deeds Ledger & Audit",
+      "Address Hierarchy & Mouzas",
+      "Recent Security Audit Events"
+    ]
+  },
+  {
+    "username": "lead_auditor",
+    "headings": [
+      "Independent Security & Compliance Auditor",
+      "Control Panel Modules & Subsystems",
+      "User & Officer Directory",
+      "Cryptographic Ledger Lab",
+      "Land Records & Plots Control",
+      "Security Audit Trail",
+      "Policy & System Settings",
+      "RBAC Permission Matrix",
+      "Onboarding & Appeals",
+      "Service Directory & Fees",
+      "SMS & OTP Outbox",
+      "Land Deeds Ledger & Audit",
+      "Address Hierarchy & Mouzas",
+      "Recent Security Audit Events"
+    ]
+  },
+  {
+    "username": "dc_la",
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ]
+  },
+  {
+    "username": "lawyer",
+    "headings": [
+      "Access Denied — Insufficient Role Privileges"
+    ]
+  },
+  {
+    "username": "admin",
+    "headings": [
+      "Central Governance & Admin Console",
+      "Control Panel Modules & Subsystems",
+      "User & Officer Directory",
+      "Cryptographic Ledger Lab",
+      "Land Records & Plots Control",
+      "Security Audit Trail",
+      "Policy & System Settings",
+      "RBAC Permission Matrix",
+      "Onboarding & Appeals",
+      "Service Directory & Fees",
+      "SMS & OTP Outbox",
+      "Land Deeds Ledger & Audit",
+      "Address Hierarchy & Mouzas",
+      "Recent Security Audit Events"
+    ]
+  },
+  {
+    "username": "citizen",
+    "headings": [
+      "Md. Rafiqul Islam (Citizen)",
+      "Owner Sale Lock",
+      "Digital Deed Vault",
+      "Transfer Application",
+      "Plot ১০১",
+      "Plot ১১৩",
+      "Plot ২১৯"
+    ]
+  },
+  {
+    "username": "bank",
+    "headings": [
+      "Bank Credit Officer Console (Lien Maker)",
+      "Bank Mortgage & Lien Workspace",
+      "Register New Bank Mortgage Lien & Collateral Lock"
+    ]
+  },
+  {
+    "username": "citizen",
+    "headings": [
+      "Md. Rafiqul Islam (Citizen)",
+      "Owner Sale Lock",
+      "Digital Deed Vault",
+      "Transfer Application",
+      "Plot ১০১",
+      "Plot ১১৩",
+      "Plot ২১৯"
+    ]
+  }
+]

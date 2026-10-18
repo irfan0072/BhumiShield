@@ -1,0 +1,41 @@
+
+   PASS  Tests\Feature\RulesAndLedgerTest (Laravel 11 / PHP 8.4.3)
+  ✓ test_01_seed_counts_and_dummy_data (0ms)
+  ✓ test_02_rule_seller_not_owner (0ms)
+  ✓ test_03_rule_area_exceeds_owned (0ms)
+  ✓ test_04_rule_double_sale (0ms)
+  ✓ test_05_rule_khatian_chain_break (0ms)
+  ✓ test_06_rule_deed_tampered_and_ed25519_ledger (0.2ms)
+  ✓ test_07_rule_plot_mortgaged (0ms)
+  ✓ test_08_rule_rapid_resale (0.5ms)
+  ✓ test_09_rule_inheritance_unresolved (0ms)
+  ✓ test_10_rule_nid_mismatch (0.4ms)
+  ✓ test_11_all_core_fraud_rules_produce_expected_verdicts_from_real_database_rows (5.2ms)
+  ✓ test_12_live_tamper_and_restore_workflow (145.9ms)
+  ⨯ test_13_end_to_end_role_workflows: {"status":403,"code":"OFFICE_SCOPE_REQUIRED","message_bn":"এই জমির জন্য আপনার কার্যালয়ের অনুমতি নেই।","message_en":"This plot is outside your assigned office jurisdiction."}
+  ✓ test_14_user_registration_login_and_admin_management (342.3ms)
+  ✓ test_15_site_settings_and_analytics_summary (4.8ms)
+  ✓ test_16_rbac_role_middleware_enforces_role_guards (1.1ms)
+  ✓ test_17_citizen_plot_sale_lock_and_dispute_controls (1.3ms)
+  ✓ test_18_registrar_acland_and_bank_noc_controlling_systems (10.7ms)
+  ⨯ test_19_inviolable_ownership_guard_strictly_enforces_ac_land_mutation_only: {"status":403,"code":"OFFICE_SCOPE_REQUIRED","message_bn":"এই জমির জন্য আপনার কার্যালয়ের অনুমতি নেই।","message_en":"This plot is outside your assigned office jurisdiction."}
+  ⨯ test_20_public_codes_transfers_and_vault_documents_state_machine: {"status":403,"code":"IDENTITY_REVIEW_REQUIRED","message_bn":"পরিচয় যাচাইয়ের পর আবেদন করুন।","message_en":"Your identity must be reviewed before applying."}
+
+  Tests:    17 passed, 3 failed (17 assertions)
+
+
+   PASS  Tests\Feature\RoleAuditRegressionTest (Findings F01-F18 Regression)
+  ✓ test_f01_citizen_sale_lock_enforces_latest_owner_authority (3839.5ms)
+  ✓ test_f01_f12_noc_forbidden_on_active_lien_and_requires_released_state (3844.2ms)
+  ⨯ test_f02_f11_mutation_idempotency_prevents_duplicate_approval: Repeat mutation must be 409 conflict Expected [409] but got [403]
+  ⨯ test_f03_mutation_approval_blocks_tampered_deed: {"status":403,"code":"OFFICE_SCOPE_REQUIRED","message_bn":"এই জমির জন্য আপনার কার্যালয়ের অনুমতি নেই।","message_en":"This plot is outside your assigned office jurisdiction."}
+  ⨯ test_f04_upheld_frozen_dispute_blocks_all_plot_operations:  Expected [422] but got [403]
+  ✓ test_f05_open_disputes_consistently_surface_as_review_across_roles (4325.7ms)
+  ✓ test_f06_khatian_reconciliation_conserves_joint_owner_total_area (4271.4ms)
+  ✓ test_f07_anonymous_role_middleware_fails_closed_with_401 (5419ms)
+  ⨯ test_f08_negative_and_zero_areas_strictly_rejected:  Expected [422] but got [403]
+  ⨯ test_f09_mutation_conserves_share_fractions_and_debits_seller: {"status":403,"code":"OFFICE_SCOPE_REQUIRED","message_bn":"এই জমির জন্য আপনার কার্যালয়ের অনুমতি নেই।","message_en":"This plot is outside your assigned office jurisdiction."}
+  ✓ test_f12_bank_officer_scoping_and_idempotent_release_timestamp (28004.7ms)
+  ⨯ test_f13_honest_404_for_unknown_nid_and_registration_uniqueness:  Expected [409] but got [422]
+  ✓ test_f16_urls_and_ports_point_to_5175 (11027.7ms)
+  ✓ test_f17_dynamic_rapid_resale_days_honored_from_settings (12359.6ms)

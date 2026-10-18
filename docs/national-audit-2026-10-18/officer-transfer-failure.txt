@@ -1,0 +1,8 @@
+
+Fatal error: Uncaught PDOException: SQLSTATE[HY000]: General error: 1 no such column: office_id in /private/tmp/bhumishield-national-audit-20261018/backend/app/Support/DB.php:119
+Stack trace:
+#0 /private/tmp/bhumishield-national-audit-20261018/backend/app/Support/DB.php(119): PDO->prepare('UPDATE users SE...')
+#1 /private/tmp/bhumishield-national-audit-20261018/backend/app/Http/Controllers/Api/V1/SystemAdminController.php(1736): App\Support\DB::statement('UPDATE users SE...', Array)
+#2 /private/tmp/bhumishield-national-audit-20261018/staff-probe.php(8): App\Http\Controllers\Api\V1\SystemAdminController::transferOfficer(4, Array, Array)
+#3 {main}
+  thrown in /private/tmp/bhumishield-national-audit-20261018/backend/app/Support/DB.php on line 119

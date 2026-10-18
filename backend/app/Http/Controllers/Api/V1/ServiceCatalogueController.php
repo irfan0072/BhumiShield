@@ -120,7 +120,7 @@ final class ServiceCatalogueController
 
     public static function listAdminServices(): array
     {
-        $actor = RoleMiddleware::authorize(['admin']);
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin', 'platform_moderator', 'content_editor', 'content_approver', 'auditor', 'support_agent']);
         $rows = DB::select('SELECT * FROM service_catalogue ORDER BY display_order ASC, id ASC');
         return ['items' => $rows, 'total' => count($rows)];
     }
@@ -342,7 +342,7 @@ final class ServiceCatalogueController
 
     public static function listAdminFees(): array
     {
-        $actor = RoleMiddleware::authorize(['admin']);
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin', 'platform_moderator', 'content_editor', 'content_approver', 'auditor', 'support_agent']);
         $rows = DB::select('SELECT * FROM service_fees_registry ORDER BY id ASC');
         foreach ($rows as &$r) {
             $r['components'] = json_decode((string) ($r['components_json'] ?? '[]'), true) ?: [];

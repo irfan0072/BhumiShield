@@ -1,0 +1,59 @@
+Browser tab: 6, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5188/bn/admin".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5188/bn/admin
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা Central Admin OS
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text Central Admin OS
+			8 button Toggle Sidebar
+				9 image
+			10 text প্ল্যাটফর্ম মডারেটর ভূমি ক্রয়-বিক্রয় তালিকা ও ফ্রড মনিটরিং
+			11 container Sidebar Navigation
+				12 text মেনু
+				13 button মার্কেটপ্লেস ও লিস্টিং মডারেশন
+					14 image
+					15 text মার্কেটপ্লেস ও লিস্টিং মডারেশন
+				16 button মডারেশন অডিট লগ
+					17 image
+					18 text মডারেশন অডিট লগ
+			19 button পাবলিক পোর্টাল
+				20 image
+				21 text পাবলিক পোর্টাল
+			22 button লগআউট
+				23 image
+				24 text লগআউট
+		25 container
+			26 button হোম
+				27 image
+				28 text হোম
+			29 text / প্ল্যাটফর্ম মডারেটর
+			30 text field (settable)
+			31 image
+			32 button EN
+			33 button Contrast
+				34 image
+			35 pop up button (collapsed) Description: ব্যবহারকারী প্রোফাইল ও সেটিংস মেনু, Secondary Actions: Expand
+				36 text ম
+				37 text মো. ফাহিম চৌধুরী (প্ল্যাটফর্ম মডারেটর)
+				38 text প্ল্যাটফর্ম মডারেটর
+				39 image
+		40 container
+			41 button মার্কেটপ্লেস মডারেশন
+			42 button অডিট লগ ও রিপোর্ট
+			43 button সিকিউরিটি অডিট
+			44 button মার্কেটপ্লেস মডারেশন
+			45 button রিফ্রেশ
+				46 image
+				47 text রিফ্রেশ
+			48 heading জমি বিক্রয় মার্কেটপ্লেস ও লিস্টিং মডারেশন, Value: 1
+				49 image
+				50 text জমি বিক্রয় মার্কেটপ্লেস ও লিস্টিং মডারেশন
+			51 text নাগরিকদের প্রস্তাবিত জমি বিক্রয় তালিকার সত্যতা নিরীক্ষা, প্রতারণামূলক বিজ্ঞাপন আনলিস্ট ও মার্কেটপ্লেস সুরক্ষা।
+			52 text ০ টি তালিকাভুক্ত বিজ্ঞাপন স্ট্যাটাস ফিল্টার:
+			53 button সকল
+			54 button সক্রিয় (Active)
+			55 button স্থগিত (Suspended)
+			56 text কোনো বিজ্ঞাপন পাওয়া যায়নি।
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5188/bn/admin

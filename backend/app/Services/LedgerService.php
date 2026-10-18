@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Support\DB;
+
 /**
  * Cryptographic Hash-Chained Deed Ledger & Ed25519 Digital Signature Service (PHP 8.4 ext-sodium).
  */
@@ -103,6 +105,48 @@ final class LedgerService
             'chain_index' => $chainIndex,
         ];
         return self::computeSha256(self::canonicalJson($envelope));
+    }
+
+    /**
+     * Appends an audit entry with strict cryptographic chaining into audit_log.
+     */
+    public static function recordAuditEntry(
+        string $actorUsername,
+        string $actorRole,
+        string $action,
+        string $entityType,
+        string $entityId,
+        array $details
+    ): int {
+        $last = DB::selectOne('SELECT entry_hash, chain_index FROM audit_log ORDER BY chain_index DESC LIMIT 1');
+        $prevHash = $last ? (string) $last['entry_hash'] : self::GENESIS_HASH;
+        $nextIndex = $last ? ((int) $last['chain_index']) + 1 : 1;
+
+        $entryHash = self::computeAuditHash(
+            $actorUsername,
+            $action,
+            $entityType,
+            $entityId,
+            $details,
+            $prevHash,
+            $nextIndex
+        );
+
+        return DB::insert(
+            'INSERT INTO audit_log (actor_username, actor_role, action, entity_type, entity_id, details_json, entry_hash, prev_hash, chain_index, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                $actorUsername,
+                $actorRole,
+                $action,
+                $entityType,
+                $entityId,
+                self::canonicalJson($details),
+                $entryHash,
+                $prevHash,
+                $nextIndex,
+                gmdate('c'),
+            ]
+        );
     }
 
     public static function signHash(string $contentHash): string

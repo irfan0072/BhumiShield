@@ -135,7 +135,12 @@ final class JwtAuthService
         }
         // I02: Inactive or suspended accounts cannot be authenticated
         if (((int) ($user['is_active'] ?? 1)) !== 1) {
-            return null;
+            throw new \RuntimeException(json_encode([
+                'status' => 403,
+                'code' => 'ACCOUNT_SUSPENDED',
+                'message_bn' => 'আপনার অ্যাকাউন্টটি অ্যাডমিন কর্তৃক স্থগিত বা নিষ্ক্রিয় করা হয়েছে।',
+                'message_en' => 'Your account has been suspended or deactivated by the administrator.',
+            ], JSON_UNESCAPED_UNICODE));
         }
         // I03: Validate token version against user session state
         $tokenVer = (int) ($payload['ver'] ?? ($payload['token_version'] ?? 1));

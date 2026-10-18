@@ -1,0 +1,118 @@
+Browser tab: 5, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:5175/en/acland".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/acland
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা Central Admin OS
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text Central Admin OS
+			8 button Toggle Sidebar
+				9 image
+			10 text Settlement Records Officer Directorate of Land Records & Surveys (DLRS)
+			11 container Sidebar Navigation
+				12 text MENU
+				13 button Survey Batch Entry (Maker)
+					14 image
+					15 text Survey Batch Entry (Maker)
+				16 button Survey Lineage Ingestion
+					17 image
+					18 text Survey Lineage Ingestion
+				19 button Khatian Explorer
+					20 image
+					21 text Khatian Explorer
+				22 button Verify Deed
+					23 image
+					24 text Verify Deed
+			25 button Public Portal
+				26 image
+				27 text Public Portal
+			28 button Sign Out
+				29 image
+				30 text Sign Out
+		31 container
+			32 button Home
+				33 image
+				34 text Home
+			35 text / Settlement Records Officer
+			36 text field (settable)
+			37 image
+			38 button বাং
+			39 button Contrast
+				40 image
+			41 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				42 text ম
+				43 text মো. দেলোয়ার হোসেন (সেটেলমেন্ট রেকর্ডস অফিসার - মেকার)
+				44 text Settlement Records Officer
+				45 image
+		46 container
+			47 text Upazila Land Office / AC Land Tribunal & Mutation Workbench
+			48 heading Assistant Commissioner (Land) Tribunal & e-Mutation Workbench, Value: 1
+				49 image
+				50 text Assistant Commissioner (Land) Tribunal & e-Mutation Workbench
+			51 text Adjudicate e-mutations, reconcile khatian discrepancies, resolve land ownership disputes, and supervise field inspections.
+			52 button (disabled) Refresh
+				53 image
+				54 text Refresh
+			55 image
+			56 text Settlement Records Officer PENDING MUTATIONS
+			57 image
+			58 text 0 Awaiting hearing & order APPROVED MUTATIONS
+			59 image
+			60 text 0 New khatians created FLAGGED KHATIANS
+			61 image
+			62 text 0 Reconciliation needed OWNERSHIP DISPUTES
+			63 image
+			64 text 0 Active objections
+			65 button e-Mutation Workbench 0
+				66 image
+				67 text e-Mutation Workbench
+				68 text 0
+			69 button Record Discrepancies 0
+				70 image
+				71 text Record Discrepancies
+				72 text 0
+			73 button Objections & Court 0
+				74 image
+				75 text Objections & Court
+				76 text 0
+			77 button Field Reports 0
+				78 image
+				79 text Field Reports
+				80 text 0
+			81 button SLA Escalations 0
+				82 image
+				83 text SLA Escalations
+				84 text 0
+			85 button Appeals Tribunal
+				86 image
+				87 text Appeals Tribunal
+			88 button Khatian Explorer
+				89 image
+				90 text Khatian Explorer
+		91 container
+			92 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			93 content list
+				94 button Check Before Buy
+				95 button Land Sale Marketplace
+				96 button Cadastral Mouza Map
+				97 button Verify Deed QR Code
+				98 button Official Noticeboard
+				99 button Land Literacy Blog
+				100 button Offices & Service Points
+				101 button Citizen Sale Lock Vault
+			102 text Workspaces
+			103 content list
+				104 button Sub-Registrar Panel
+				105 button AC Land Tribunal
+				106 button Bank Lien & NOC
+				107 button National Ledger & Audit
+			108 text Support & Helpline
+			109 content list
+				110 text Land Service Call Center: 16122
+				111 text Ministry of Land (Official service hours)
+				112 text Check official service hours
+				113 button Frequently Asked Questions
+				114 button Bangladeshi Land Glossary
+			115 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved. Synthetic data environment / সিনথেটিক ডেটা পরিবেশ
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/acland

@@ -1,0 +1,124 @@
+Browser tab: 5, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:5175/en/admin".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/admin
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা Central Admin OS
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text Central Admin OS
+			8 button Toggle Sidebar
+				9 image
+			10 text Content Approver Land Information & Public Communications Wing
+			11 container Sidebar Navigation
+				12 text MENU
+				13 button Approve Notices (QR Seal)
+					14 image
+					15 text Approve Notices (QR Seal)
+				16 button Publish Service Catalogue
+					17 image
+					18 text Publish Service Catalogue
+				19 button Approver Audit Trail
+					20 image
+					21 text Approver Audit Trail
+			22 button Public Portal
+				23 image
+				24 text Public Portal
+			25 button Sign Out
+				26 image
+				27 text Sign Out
+		28 container
+			29 button Home
+				30 image
+				31 text Home
+			32 text / Content Approver
+			33 text field (settable)
+			34 image
+			35 button বাং
+			36 button Contrast
+				37 image
+			38 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				39 text ম
+				40 text মো. আতিকুল ইসলাম (কনটেন্ট অ্যাপ্রুভার)
+				41 text Content Approver
+				42 image
+		43 container
+			44 heading Content Approver & Publishing Authority, Value: 1
+				45 image
+				46 text Content Approver & Publishing Authority
+			47 text Approve and publish draft service catalogues, fees, and policy notices.
+			48 text Content Approver (Checker) LEDGER HASH INTEGRITY 100 %
+			49 button Inspect Hash Lab →
+			50 image
+			51 text REGISTERED OFFICERS & USERS 0
+			52 button View User Directory →
+			53 image
+			54 text SECURITY AUDIT EVENTS 0
+			55 button Review Audit Logs →
+			56 image
+			57 text FRAUD VERIFICATION ENGINES 9 Engines Active
+			58 button Inspect Protocols →
+			59 image
+			60 heading CONTROL PANEL MODULES & SUBSYSTEMS, Value: 2
+				61 text CONTROL PANEL MODULES & SUBSYSTEMS
+			62 image
+			63 heading User & Officer Directory, Value: 3
+				64 text User & Officer Directory
+			65 text Citizen approvals, officer onboarding, role filters, and status toggles.
+			66 text 0 Users Manage  →
+			67 image
+			68 heading Cryptographic Ledger Lab, Value: 3
+				69 text Cryptographic Ledger Lab
+			70 text SHA-256 hash-chain states, genesis block validation, and real-time tamper auditing.
+			71 text 100 %  Integrity Inspect  →
+			72 image
+			73 heading Land Records & Plots Control, Value: 3
+				74 text Land Records & Plots Control
+			75 text Plot sale locks, mortgage encumbrance inspection, and full khatian lineages.
+			76 text 0 Plots Control  →
+			77 image
+			78 heading Security Audit Trail, Value: 3
+				79 text Security Audit Trail
+			80 text Immutable logs of all administrative actions, logins, and break-glass events.
+			81 text 0 Events Review  →
+			82 image
+			83 heading Policy & System Settings, Value: 3
+				84 text Policy & System Settings
+			85 text Risk engine thresholds, tax policies, and global system configuration.
+			86 text Active Configuration Configure  →
+			87 image
+			88 heading RBAC Permission Matrix, Value: 3
+				89 text RBAC Permission Matrix
+			90 text Strict role-permission mapping and capability matrix across all 21 roles.
+			91 text ২১টি  Roles View Matrix  →
+			92 image
+			93 heading Onboarding & Appeals, Value: 3
+				94 text Onboarding & Appeals
+			95 text Maker-checker staging batches and appellate tribunal hearings.
+			96 text 0 Appeals Oversight  →
+			97 image
+			98 heading Service Directory & Fees, Value: 3
+				99 text Service Directory & Fees
+			100 text Official citizen services catalog, fee schedules, and legal guidance.
+			101 text 0 Services Directory  →
+			102 image
+			103 heading SMS & OTP Outbox, Value: 3
+				104 text SMS & OTP Outbox
+			105 text Real-time inspection of dispatch queue, OTPs, and verification messages.
+			106 text Live Outbox View Outbox  →
+			107 image
+			108 heading Land Deeds Ledger & Audit, Value: 3
+				109 text Land Deeds Ledger & Audit
+			110 text Registered land deeds docket, plot ownership chain, mutation history, and administrative holds.
+			111 text 0 Deeds Inspect Deeds  →
+			112 image
+			113 heading Address Hierarchy & Mouzas, Value: 3
+				114 text Address Hierarchy & Mouzas
+			115 text Standardized administrative hierarchy (Division -> District -> Upazila -> Mouza) & J.L. mapping.
+			116 text 0 Mouzas Manage  →
+			117 heading Recent Security Audit Events, Value: 3
+				118 image
+				119 text Recent Security Audit Events
+			120 button View All Logs →
+			121 text No audit events found.
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/admin

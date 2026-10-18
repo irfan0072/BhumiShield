@@ -137,7 +137,7 @@ final class PublicMarketplaceAndPortalController
     public static function createListing(array $payload, ?array $actor = null): array
     {
         $user = RoleMiddleware::authorize(['citizen', 'admin'], $actor);
-        $plot = LookupService::resolvePlot($payload['plot_code'] ?? ($payload['plot_id'] ?? 1));
+        $plot = LookupService::resolvePlot($payload['plot_code'] ?? ($payload['plot_id'] ?? 0));
 
         if (!$plot) {
             throw new \RuntimeException(json_encode([
@@ -174,7 +174,7 @@ final class PublicMarketplaceAndPortalController
         $now = gmdate('c');
         $expiresAt = gmdate('c', time() + (90 * 86400)); // 90 days validity
 
-        $price = max(100000, (int) ($payload['asking_price_bdt'] ?? 1500000));
+        $price = max(100000, (int) ($payload['asking_price_bdt'] ?? 0));
         $area = max(0.01, (float) ($payload['area_decimal'] ?? 10.0));
         $descBn = trim((string) ($payload['description_bn'] ?? 'সাভার বিরুলিয়ায় আবাসিক বাড়ি/শিল্প কারখানা নির্মাণের উপযোগী নিষ্কণ্টক জমি।'));
         $descEn = trim((string) ($payload['description_en'] ?? 'Verified residential land in Birulia, Savar suitable for development.'));
@@ -209,7 +209,7 @@ final class PublicMarketplaceAndPortalController
             [
                 $listingCode,
                 (int) $plot['id'],
-                (string) ($user['nid'] ?? '9900001001'),
+                (string) ($user['nid'] ?? ''),
                 $price,
                 $area,
                 $descBn,
@@ -464,21 +464,60 @@ final class PublicMarketplaceAndPortalController
         $params = [];
 
         if (!empty($query['type'])) {
-            $sql .= ' AND office_type = ?';
-            $params[] = $query['type'];
+            $t = strtolower(trim((string)$query['type']));
+            if ($t === 'registry' || $t === 'sub_registry') {
+                $sql .= " AND office_type IN ('registry', 'sub_registry')";
+            } elseif ($t === 'bank' || $t === 'bank_branch') {
+                $sql .= " AND office_type IN ('bank', 'bank_branch')";
+            } elseif ($t === 'admin_cell' || $t === 'platform') {
+                $sql .= " AND office_type IN ('admin_cell', 'platform')";
+            } else {
+                $sql .= ' AND office_type = ?';
+                $params[] = $t;
+            }
         }
+
+        if (!empty($query['district'])) {
+            $dist = trim((string)$query['district']);
+            $sql .= ' AND (district_bn = ? OR district_en = ?)';
+            $params[] = $dist;
+            $params[] = $dist;
+        }
+
+        if (!empty($query['division'])) {
+            $div = trim((string)$query['division']);
+            $sql .= ' AND (division_bn = ? OR division_en = ?)';
+            $params[] = $div;
+            $params[] = $div;
+        }
+
         if (!empty($query['upazila'])) {
             $sql .= ' AND (upazila_bn = ? OR upazila_en = ?)';
             $params[] = $query['upazila'];
             $params[] = $query['upazila'];
         }
 
+        if (!empty($query['q'])) {
+            $term = '%' . trim((string)$query['q']) . '%';
+            $sql .= ' AND (name_bn LIKE ? OR name_en LIKE ? OR office_code LIKE ? OR district_bn LIKE ? OR district_en LIKE ? OR upazila_bn LIKE ? OR upazila_en LIKE ? OR mouzas_served_json LIKE ?)';
+            for ($i = 0; $i < 8; $i++) {
+                $params[] = $term;
+            }
+        }
+
         $sql .= ' ORDER BY id ASC';
         $rows = DB::select($sql, $params);
+        $total = count($rows);
+
+        $hasSearch = !empty($query['q']) || !empty($query['district']) || !empty($query['upazila']);
+        $isCoverageGap = ($total === 0 && $hasSearch);
 
         return [
             'items' => $rows,
-            'total' => count($rows),
+            'total' => $total,
+            'coverage_gap' => $isCoverageGap,
+            'gap_message_bn' => $isCoverageGap ? 'এই অঞ্চলে এখনও কোনো সরকারি অফিস অনবোর্ড করা হয়নি। নিকটস্থ জোনাল অফিসের সহায়তা নিন।' : null,
+            'gap_message_en' => $isCoverageGap ? 'No competent office currently onboarded for this jurisdiction. Coverage expansion in progress.' : null,
         ];
     }
 
@@ -596,19 +635,8 @@ final class PublicMarketplaceAndPortalController
                 }
             }
 
-            // Fallback synthetic square polygon around location lat/lng if no custom polygon
-            if (empty($coords)) {
-                $cLat = (float) ($p['center_lat'] ?? ($p['latitude'] ?? 23.858));
-                $cLng = (float) ($p['center_lng'] ?? ($p['longitude'] ?? 90.318));
-                $delta = 0.0005;
-                $coords = [
-                    [$cLng - $delta, $cLat - $delta],
-                    [$cLng + $delta, $cLat - $delta],
-                    [$cLng + $delta, $cLat + $delta],
-                    [$cLng - $delta, $cLat + $delta],
-                    [$cLng - $delta, $cLat - $delta],
-                ];
-            }
+            // Missing boundary data is unavailable, never fabricated.
+            if (empty($coords)) continue;
 
             $features[] = [
                 'type' => 'Feature',
@@ -622,6 +650,7 @@ final class PublicMarketplaceAndPortalController
                     'dag_no' => $p['dag_no'],
                     'dag_no_bn' => $p['dag_no_bn'],
                     'mouza_bn' => $p['mouza_bn'],
+                    'mouza_en' => $p['mouza_en'],
                     'land_type_bn' => $p['land_type_bn'],
                     'area_decimal' => (float) $p['total_area_decimal'],
                     'is_sale_locked' => (bool) $p['owner_sale_locked'],
@@ -776,11 +805,21 @@ final class PublicMarketplaceAndPortalController
         $notes = trim((string) ($payload['notes_bn'] ?? 'ভূমি সংক্রান্ত সেবা গ্রহণের জন্য অ্যাপয়েন্টমেন্ট।'));
 
         // F10 double-booking guard: same office + same citizen + same date = conflict
-        $conflict = DB::selectOne(
-            'SELECT appointment_code, slot_time FROM appointments
-             WHERE office_id = ? AND citizen_nid = ? AND slot_date = ? AND status = "BOOKED" LIMIT 1',
-            [$officeId, $citizenNid, $slotDate]
-        );
+        $conflict = null;
+        if ($citizenNid !== '') {
+            $conflict = DB::selectOne(
+                'SELECT appointment_code, slot_time FROM appointments
+                 WHERE office_id = ? AND citizen_nid = ? AND slot_date = ? AND status IN ("BOOKED", "REQUESTED", "CONFIRMED") LIMIT 1',
+                [$officeId, $citizenNid, $slotDate]
+            );
+        } else {
+            $conflict = DB::selectOne(
+                'SELECT appointment_code, slot_time FROM appointments
+                 WHERE office_id = ? AND citizen_phone = ? AND slot_date = ? AND status IN ("BOOKED", "REQUESTED", "CONFIRMED") LIMIT 1',
+                [$officeId, $citizenPhone, $slotDate]
+            );
+        }
+
         if ($conflict !== null) {
             throw new \RuntimeException(json_encode([
                 'status' => 409,
@@ -790,8 +829,8 @@ final class PublicMarketplaceAndPortalController
             ], JSON_UNESCAPED_UNICODE));
         }
 
-        $cnt = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM appointments')['c'] ?? 0);
-        $aptCode = sprintf('APT-2026-%04d', $cnt + 101);
+        $randNum = random_int(10000, 99999);
+        $aptCode = sprintf('APT-2026-%05d', $randNum);
         $now = gmdate('c');
 
         $aptId = DB::insert(

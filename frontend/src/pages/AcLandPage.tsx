@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAppUI } from '../i18n';
-import { BhumiApi } from '../api/client';
+import { BhumiApi, RiskReportResponse } from '../api/client';
 import { toBanglaDigits } from '../theme/tokens';
+import { AddressCascader, AddressSelection } from '../components/AddressCascader';
+import { triggerAppNotification } from '../components/NotificationCenter';
 import { OfficerKhatianExplorer } from '../components/OfficerKhatianExplorer';
 import { OfficerDeedVerifier } from '../components/OfficerDeedVerifier';
 import {
@@ -9,9 +11,6 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  GitCompareArrows,
-  AlertOctagon,
-  KeyRound,
   Search,
   Filter,
   FileText,
@@ -26,7 +25,19 @@ import {
   ListChecks,
   Send,
   Sparkles,
-  ShieldAlert
+  ShieldAlert,
+  Compass,
+  MapPin,
+  Building2,
+  RefreshCw,
+  Plus,
+  AlertTriangle,
+  RotateCcw,
+  Gavel,
+  History,
+  Lock,
+  UserCheck,
+  FileSearch,
 } from 'lucide-react';
 
 export type AcLandTab =
@@ -41,10 +52,25 @@ export type AcLandTab =
   | 'explorer'
   | 'verifier';
 
-export const AcLandPage: React.FC = () => {
-  const { lang, role, setRole, setUser, setToken, activeSubTab, setActiveSubTab, t } = useAppUI();
+export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNavigate }) => {
+  const { user, lang, role, setRole, setUser, setToken, activeSubTab, setActiveSubTab, t } = useAppUI();
+
   const [subTab, setSubTab] = useState<AcLandTab>(() => {
-    if (activeSubTab && ['mutations', 'khatians', 'disputes', 'field_reports', 'survey_batches', 'sla_overview', 'appeals', 'onboarding', 'explorer', 'verifier'].includes(activeSubTab)) {
+    if (
+      activeSubTab &&
+      [
+        'mutations',
+        'khatians',
+        'disputes',
+        'field_reports',
+        'survey_batches',
+        'sla_overview',
+        'appeals',
+        'onboarding',
+        'explorer',
+        'verifier',
+      ].includes(activeSubTab)
+    ) {
       return activeSubTab as AcLandTab;
     }
     if (role === 'field_verification_officer') return 'field_reports';
@@ -58,909 +84,1068 @@ export const AcLandPage: React.FC = () => {
   const [mutations, setMutations] = useState<any[]>([]);
   const [flaggedKhatians, setFlaggedKhatians] = useState<any[]>([]);
   const [disputes, setDisputes] = useState<any[]>([]);
+  const [plots, setPlots] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [onboardingBatches, setOnboardingBatches] = useState<any[]>([]);
   const [appealsList, setAppealsList] = useState<any[]>([]);
-  const [selectedBatch, setSelectedBatch] = useState<any | null>(null);
+  const [fieldReportsList, setFieldReportsList] = useState<any[]>([]);
+  const [slaEscalationsList, setSlaEscalationsList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [actionMsg, setActionMsg] = useState('');
+  const [actionNotice, setActionNotice] = useState<{ msg: string; err?: boolean } | null>(null);
 
-  // Field Verification state
-  const [fieldForm, setFieldForm] = useState({
-    dag_no: '101',
-    possession: 'VERIFIED',
-    boundary: 'MATCHED',
-    tax_status: 'PAID',
-    remarks: 'জমির সরেজমিন সীমানা ও দখল আরএস এবং বিএস নকশার সাথে হুবহু মিলেছে।',
-  });
-  const [fieldSubmitted, setFieldSubmitted] = useState(false);
+  // Filters & Universal Address Cascading State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [mutationStatusFilter, setMutationStatusFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
+  const [selectedDivision, setSelectedDivision] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedUpazila, setSelectedUpazila] = useState('');
+  const [selectedMouzaId, setSelectedMouzaId] = useState<number | string>('');
 
-  // Survey Batch Creation state
-  const [surveyBatchForm, setSurveyBatchForm] = useState({
-    record_type: 'SURVEY_BS',
-    dag_no: '130',
-    mouza: 'Birulia',
-    area_decimal: '12.0',
-    owner_name: 'হাজী আব্দুল গফুর',
-    share_fraction: '1/1',
-  });
-  const [creatingBatch, setCreatingBatch] = useState(false);
-
-  // UNO SLA Escalation Notice
-  const [slaNoticeSent, setSlaNoticeSent] = useState(false);
-  const [decisionLoading, setDecisionLoading] = useState(false);
-  const [modalError, setModalError] = useState<string | null>(null);
-
-  // Field reports persistent list
-  const defaultFieldReports = [
-    {
-      id: 1,
-      dag_no: '101',
-      mouza_bn: 'বিরুলিয়া',
-      possession: 'VERIFIED',
-      boundary: 'MATCHED',
-      tax_status: 'PAID',
-      remarks: 'মাঠ সীমানা ও দখল আবেদনকারীর অনুকূলে পাওয়া গেছে। কোনো আপত্তি নেই।',
-      officer: 'মো. নুরুল ইসলাম (সার্ভেয়ার)',
-      date: '2026-10-15',
-    },
-    {
-      id: 2,
-      dag_no: '107',
-      mouza_bn: 'বিরুলিয়া',
-      possession: 'CONTESTED',
-      boundary: 'DISPUTED',
-      tax_status: 'DUE',
-      remarks: 'আরএস খতিয়ানে ১৮ শতক থাকলেও বিএস জরিপে ২৬ শতক দেখানো হয়েছে। অতিরিক্ত ৮ শতকের সীমানা বিরোধ বিদ্যমান।',
-      officer: 'এস এম জাকারিয়া (কানুনগো)',
-      date: '2026-10-14',
-    },
-  ];
-
-  const [fieldReportsList, setFieldReportsList] = useState<any[]>(() => {
-    try {
-      const saved = localStorage.getItem('bs_field_reports');
-      return saved ? JSON.parse(saved) : defaultFieldReports;
-    } catch {
-      return defaultFieldReports;
-    }
-  });
-
-  const [slaEscalationsList, setSlaEscalationsList] = useState<any[]>(() => {
-    try {
-      const saved = localStorage.getItem('bs_sla_escalations');
-      return saved
-        ? JSON.parse(saved)
-        : [
-            {
-              id: 'SLA-ESC-001',
-              case_no: 'MUT-2026-0008',
-              dag_no: '108',
-              mouza_bn: 'বিরুলিয়া',
-              days_elapsed: 22,
-              reason: 'ওয়ারিশদের উপস্থিতি না হওয়ায় ২২ দিন ধরে অপেক্ষমাণ।',
-              status: 'DIRECTIVE_ISSUED',
-              issued_at: '2026-10-16 11:30:00',
-            },
-          ];
-    } catch {
-      return [];
-    }
-  });
-
-  // Filtering states
-  const [mutationSearch, setMutationSearch] = useState('');
-  const [mutationFilter, setMutationFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
-
-  // Case details modal
+  // Modals & Action State
   const [selectedMutation, setSelectedMutation] = useState<any | null>(null);
+  const [mutationDecisionNotes, setMutationDecisionNotes] = useState('');
+  const [decisionLoading, setDecisionLoading] = useState(false);
 
-  const loadAcLandData = () => {
+  const [selectedDispute, setSelectedDispute] = useState<any | null>(null);
+  const [disputeNotes, setDisputeNotes] = useState('');
+
+  const [selectedKhatian, setSelectedKhatian] = useState<any | null>(null);
+  const [khatianReconcileArea, setKhatianReconcileArea] = useState<string>('');
+  const [khatianReconcileNotes, setKhatianReconcileNotes] = useState('');
+
+  const [isNewFieldReportOpen, setIsNewFieldReportOpen] = useState(false);
+  const [fieldForm, setFieldForm] = useState({
+    plot_id: '',
+    possession_status: 'VERIFIED',
+    boundary_status: 'MATCHED',
+    tax_status: 'PAID',
+    remarks: 'জমির সরেজমিন সীমানা ও দখল আবেদনকারীর অনুকূলে পাওয়া গেছে।',
+  });
+
+  const [isNewSlaOpen, setIsNewSlaOpen] = useState(false);
+  const [slaForm, setSlaForm] = useState({
+    case_reference: '',
+    target_role: 'land_office_assistant',
+    priority: 'NORMAL' as 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT',
+    due_at: '',
+    notes_bn: '',
+  });
+
+  // Survey Maker & Checker State (R07)
+  const [isNewSurveyBatchOpen, setIsNewSurveyBatchOpen] = useState(false);
+  const [surveyType, setSurveyType] = useState<'BS' | 'RS' | 'SA' | 'CS' | 'DIGITAL'>('BS');
+  const [surveyMouza, setSurveyMouza] = useState('Birulia');
+  const [surveyDagNo, setSurveyDagNo] = useState('');
+  const [surveyKhatianNo, setSurveyKhatianNo] = useState('');
+  const [surveyLandClass, setSurveyLandClass] = useState('নাল (Agricultural)');
+  const [surveyAreaDecimal, setSurveyAreaDecimal] = useState('');
+  const [surveyOwnerBn, setSurveyOwnerBn] = useState('');
+  const [surveyOwnerEn, setSurveyOwnerEn] = useState('');
+  const [surveyOwnerNid, setSurveyOwnerNid] = useState('');
+  const [surveyStagedItems, setSurveyStagedItems] = useState<any[]>([]);
+  const [surveySubmitting, setSurveySubmitting] = useState(false);
+
+  const [inspectingBatch, setInspectingBatch] = useState<any | null>(null);
+  const [checkerNote, setCheckerNote] = useState('');
+  const [checkerDeciding, setCheckerDeciding] = useState(false);
+
+  const handleAddSurveyItem = () => {
+    if (!surveyDagNo.trim() || !surveyAreaDecimal.trim() || !surveyOwnerBn.trim()) {
+      setActionNotice({
+        msg: lang === 'bn' ? 'দাগ নং, জমির পরিমাণ ও মালিকের নাম প্রদান করা বাধ্যতামূলক।' : 'Dag No, Area, and Owner Name are required.',
+        err: true,
+      });
+      setTimeout(() => setActionNotice(null), 3500);
+      return;
+    }
+    const newItem = {
+      survey_type: surveyType,
+      mouza: surveyMouza,
+      dag_no: surveyDagNo.trim(),
+      khatian_no: surveyKhatianNo.trim() || `KHT-${Math.floor(1000 + Math.random() * 9000)}`,
+      land_class: surveyLandClass,
+      area_decimal: parseFloat(surveyAreaDecimal) || 1.0,
+      owner_name_bn: surveyOwnerBn.trim(),
+      owner_name_en: surveyOwnerEn.trim() || surveyOwnerBn.trim(),
+      nid: surveyOwnerNid.trim() || undefined,
+    };
+    setSurveyStagedItems((prev) => [...prev, newItem]);
+    setSurveyDagNo('');
+    setSurveyKhatianNo('');
+    setSurveyAreaDecimal('');
+    setSurveyOwnerBn('');
+    setSurveyOwnerEn('');
+    setSurveyOwnerNid('');
+  };
+
+  const handleSubmitSurveyBatch = async () => {
+    if (surveyStagedItems.length === 0) {
+      setActionNotice({
+        msg: lang === 'bn' ? 'স্ট্যাজিং তালিকায় অন্তত একটি রেকর্ড যোগ করুন।' : 'Add at least one item to stage.',
+        err: true,
+      });
+      setTimeout(() => setActionNotice(null), 3500);
+      return;
+    }
+    setSurveySubmitting(true);
+    try {
+      const res = await BhumiApi.createOnboardingBatch({
+        record_type: 'SURVEY_RECORD',
+        items: surveyStagedItems,
+      });
+      setActionNotice({
+        msg: lang === 'bn'
+          ? `জরিপ ব্যাচ ${res.batch?.batch_no || ''} সফলভাবে দাখিল হয়েছে। চেকার পর্যালোচনার অপেক্ষায় আছে।`
+          : `Survey batch ${res.batch?.batch_no || ''} submitted successfully for checker review.`,
+      });
+      setSurveyStagedItems([]);
+      setIsNewSurveyBatchOpen(false);
+      loadAcLandData();
+      setTimeout(() => setActionNotice(null), 5000);
+    } catch (err: any) {
+      setActionNotice({
+        msg: err?.response?.data?.message_bn || err?.message || 'ব্যাচ সাবমিট ব্যর্থ হয়েছে।',
+        err: true,
+      });
+      setTimeout(() => setActionNotice(null), 5000);
+    } finally {
+      setSurveySubmitting(false);
+    }
+  };
+
+  const handleOpenBatchInspection = async (batch: any) => {
+    try {
+      const full = await BhumiApi.getOnboardingBatch(batch.id || batch.batch_no);
+      setInspectingBatch(full);
+      setCheckerNote('');
+    } catch (e: any) {
+      setActionNotice({ msg: e?.response?.data?.message_bn || 'ব্যাচ বিবরণ লোড হয়নি।', err: true });
+      setTimeout(() => setActionNotice(null), 3000);
+    }
+  };
+
+  const handleDecideBatch = async (decision: 'APPROVED' | 'REJECTED' | 'RETURNED') => {
+    if (!inspectingBatch?.batch?.id) return;
+    if (decision === 'RETURNED' && (!checkerNote || checkerNote.trim().length < 5)) {
+      setActionNotice({ msg: t('সংশোধনের কারণ ও সুনির্দিষ্ট নির্দেশনামূলক নোট প্রদান করুন (ন্যূনতম ৫ অক্ষর)।', 'Please provide detailed correction notes (min 5 chars).'), err: true });
+      return;
+    }
+    setCheckerDeciding(true);
+    try {
+      const res = await BhumiApi.decideOnboardingBatch(inspectingBatch.batch.id, decision, checkerNote);
+      setActionNotice({
+        msg: res.message_bn || (decision === 'APPROVED' ? 'জরিপ ব্যাচ অনুমোদিত ও গেজেট প্রকাশ হয়েছে।' : decision === 'RETURNED' ? 'জরিপ ব্যাচ সংশোধনের জন্য ফেরত পাঠানো হয়েছে।' : 'জরিপ ব্যাচ বাতিল করা হয়েছে।'),
+      });
+      setInspectingBatch(null);
+      loadAcLandData();
+      setTimeout(() => setActionNotice(null), 5000);
+    } catch (err: any) {
+      setActionNotice({
+        msg: err?.response?.data?.message_bn || err?.message || 'অনুমোদনে ত্রুটি হয়েছে।',
+        err: true,
+      });
+      setTimeout(() => setActionNotice(null), 5000);
+    } finally {
+      setCheckerDeciding(false);
+    }
+  };
+
+  const handleResubmitBatch = async () => {
+    if (!inspectingBatch?.batch?.id) return;
+    setCheckerDeciding(true);
+    try {
+      const items = (inspectingBatch.items || []).map((it: any) => it.payload || {});
+      const res = await BhumiApi.resubmitOnboardingBatch(inspectingBatch.batch.id, {
+        items,
+        notes_bn: 'সংশোধিত রেকর্ডসমূহ পুনরায় পরীক্ষার জন্য দাখিল করা হলো',
+      });
+      setActionNotice({
+        msg: res.message_bn || 'সংশোধিত ব্যাচ পুনরায় চেকার সমীপে দাখিল করা হয়েছে।',
+      });
+      setInspectingBatch(null);
+      loadAcLandData();
+      setTimeout(() => setActionNotice(null), 5000);
+    } catch (err: any) {
+      setActionNotice({
+        msg: err?.response?.data?.message_bn || err?.message || 'পুনরায় দাখিলে ত্রুটি হয়েছে।',
+        err: true,
+      });
+      setTimeout(() => setActionNotice(null), 5000);
+    } finally {
+      setCheckerDeciding(false);
+    }
+  };
+
+  const loadAcLandData = async () => {
     setLoading(true);
-    Promise.all([
-      BhumiApi.getMutations(),
-      BhumiApi.listFlaggedKhatians(),
-      BhumiApi.listDisputes(),
-      BhumiApi.getStatsSummary(),
-      BhumiApi.listOnboardingBatches().catch(() => []),
-      BhumiApi.listAppeals().catch(() => []),
-      BhumiApi.listFieldReports().catch(() => []),
-      BhumiApi.listSlaDispatches().catch(() => []),
-    ])
-      .then(([muts, khats, dsps, st, batches, appeals, fr, sla]) => {
-        setMutations(muts);
-        setFlaggedKhatians(khats);
-        setDisputes(dsps);
-        setStats(st);
-        setOnboardingBatches(Array.isArray(batches) ? batches : ((batches as any)?.items || []));
-        setAppealsList(Array.isArray(appeals) ? appeals : ((appeals as any)?.items || []));
-        // F08: server-side state replaces the previous localStorage-driven mocks.
-        setFieldReportsList(Array.isArray(fr) ? fr : []);
-        setSlaEscalationsList(Array.isArray(sla) ? sla : []);
-      })
-      .finally(() => setLoading(false));
+    try {
+      const [muts, khats, dsps, plts, st, batches, appeals, fr, sla] = await Promise.all([
+        BhumiApi.getMutations().catch(() => []),
+        BhumiApi.listFlaggedKhatians().catch(() => []),
+        BhumiApi.listDisputes().catch(() => []),
+        BhumiApi.getPlots().catch(() => []),
+        BhumiApi.getStatsSummary().catch(() => null),
+        BhumiApi.listOnboardingBatches().catch(() => []),
+        BhumiApi.listAppeals().catch(() => []),
+        BhumiApi.listFieldReports().catch(() => []),
+        BhumiApi.listSlaDispatches().catch(() => []),
+      ]);
+
+      setMutations(Array.isArray(muts) ? muts : []);
+      setFlaggedKhatians(Array.isArray(khats) ? khats : []);
+      setDisputes(Array.isArray(dsps) ? dsps : []);
+      setPlots(Array.isArray(plts) ? plts : []);
+      setStats(st);
+      setOnboardingBatches(Array.isArray(batches) ? batches : ((batches as any)?.items || []));
+      setAppealsList(Array.isArray(appeals) ? appeals : ((appeals as any)?.items || []));
+      setFieldReportsList(Array.isArray(fr) ? fr : []);
+      setSlaEscalationsList(Array.isArray(sla) ? sla : []);
+    } catch (err: any) {
+      console.error('Error loading AC Land data', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     loadAcLandData();
+    const timer = setInterval(() => {
+      loadAcLandData();
+    }, 8000);
+    const onFocus = () => loadAcLandData();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   useEffect(() => {
-    if (activeSubTab && ['mutations', 'khatians', 'disputes', 'field_reports', 'survey_batches', 'sla_overview', 'appeals', 'onboarding', 'explorer', 'verifier'].includes(activeSubTab)) {
+    if (
+      activeSubTab &&
+      [
+        'mutations',
+        'khatians',
+        'disputes',
+        'field_reports',
+        'survey_batches',
+        'sla_overview',
+        'appeals',
+        'onboarding',
+        'explorer',
+        'verifier',
+      ].includes(activeSubTab)
+    ) {
       setSubTab(activeSubTab as AcLandTab);
     }
   }, [activeSubTab]);
-
-  // F13: when the role changes, snap the sub-tab back to a value the new
-  // role is actually allowed to see. Without this, a citizen who becomes an
-  // FVO via switchDemoRole would still see the previous role's tab.
-  useEffect(() => {
-    const allowed: AcLandTab[] = ['mutations', 'khatians', 'disputes', 'field_reports', 'survey_batches', 'sla_overview', 'appeals', 'onboarding', 'explorer', 'verifier'];
-    if (!allowed.includes(subTab)) {
-      const roleDefault: Record<string, AcLandTab> = {
-        field_verification_officer: 'field_reports',
-        settlement_records_officer: 'survey_batches',
-        settlement_checker: 'onboarding',
-        uno_supervisor: 'sla_overview',
-        appellate_reviewer: 'appeals',
-        ac_land: 'mutations',
-      };
-      const fallback = roleDefault[role] || 'mutations';
-      setSubTab(fallback);
-      setActiveSubTab(fallback);
-    }
-  }, [role]);
 
   const handleTabChange = (target: AcLandTab) => {
     setSubTab(target);
     setActiveSubTab(target);
   };
 
-  const switchToAcLandRole = async () => {
-    const res = await BhumiApi.switchDemoRole('ac_land');
-    if (res?.access_token && res?.user) {
-      setToken(res.access_token);
-      setUser(res.user);
-    } else {
-      setRole('ac_land');
-    }
+  const handleAddressChange = (sel: AddressSelection) => {
+    setSelectedDivision(sel.division_bn);
+    setSelectedDistrict(sel.district_bn);
+    setSelectedUpazila(sel.upazila_bn);
+    setSelectedMouzaId(sel.mouza_id ? String(sel.mouza_id) : '');
   };
 
-  const handleDecideBatch = async (batchId: number, status: 'APPROVED' | 'REJECTED') => {
-    try {
-      const res = await BhumiApi.decideOnboardingBatch(batchId, status, 'চেকার কর্তৃপক্ষ কর্তৃক যাচাইপূর্বক অনুমোদন সম্পন্ন।');
-      setActionMsg(lang === 'bn' ? res.message_bn : res.message_en);
-      loadAcLandData();
-    } catch (err: any) {
-      setActionMsg(err.message || 'অনবোর্ডিং ব্যাচ প্রক্রিয়াকরণে ত্রুটি হয়েছে।');
-    }
+  const resetFilters = () => {
+    setSearchQuery('');
+    setMutationStatusFilter('ALL');
+    setSelectedDivision('');
+    setSelectedDistrict('');
+    setSelectedUpazila('');
+    setSelectedMouzaId('');
   };
 
-  const handleDecideAppeal = async (appealId: number, status: string, note: string) => {
-    try {
-      const res = await BhumiApi.decideAppeal(appealId, status, note);
-      setActionMsg(lang === 'bn' ? res.message_bn : res.message_en);
-      loadAcLandData();
-    } catch (err: any) {
-      setActionMsg(err.message || 'আপিল নিষ্পত্তিতে ত্রুটি হয়েছে।');
-    }
-  };
+  // Filtered Mutations
+  const filteredMutations = useMemo(() => {
+    return mutations.filter((m) => {
+      if (mutationStatusFilter !== 'ALL' && m.status !== mutationStatusFilter) return false;
+      if (selectedDivision && m.division_bn && m.division_bn !== selectedDivision) return false;
+      if (selectedDistrict && m.district_bn && m.district_bn !== selectedDistrict) return false;
+      if (selectedUpazila && m.upazila_bn && m.upazila_bn !== selectedUpazila) return false;
+      if (selectedMouzaId && m.mouza_id && Number(m.mouza_id) !== Number(selectedMouzaId)) return false;
 
-  const handleSubmitFieldReport = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      // F08: server-side persistence. Resolve plot_id from the entered dag_no.
-      const plots = await BhumiApi.getPlots();
-      const plot = (plots as any[]).find((p) => String(p.dag_no) === String(fieldForm.dag_no));
-      if (!plot) {
-        setActionMsg(
-          lang === 'bn'
-            ? `দাগ ${fieldForm.dag_no} এর জন্য কোনো প্লট পাওয়া যায়নি।`
-            : `No plot found for dag ${fieldForm.dag_no}.`
-        );
-        return;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchCase = (m.case_no || '').toLowerCase().includes(q);
+        const matchDag = String(m.dag_no || '').toLowerCase().includes(q);
+        const matchApplicant = (m.applicant_name_bn || m.buyer_name_bn || '').toLowerCase().includes(q);
+        const matchMouza = (m.mouza_bn || '').toLowerCase().includes(q);
+        const matchDeed = (m.deed_no || '').toLowerCase().includes(q);
+        if (!matchCase && !matchDag && !matchApplicant && !matchMouza && !matchDeed) return false;
       }
-      const res = await BhumiApi.createFieldReport({
-        plot_id: Number(plot.id),
-        possession_status: fieldForm.possession,
-        boundary_status: fieldForm.boundary,
-        tax_status: fieldForm.tax_status,
-        remarks_bn: fieldForm.remarks,
-      });
-      setFieldSubmitted(true);
-      setActionMsg(
-        lang === 'bn'
-          ? (res.message_bn || `দাগ নং ${fieldForm.dag_no} এর মাঠ তদন্ত প্রতিবেদন সফলভাবে দাখিল ও স্বাক্ষরিত হয়েছে।`)
-          : (res.message_en || `Field possession inspection report for Dag ${fieldForm.dag_no} submitted.`)
-      );
-      setFieldForm({ ...fieldForm, remarks: '' });
-      loadAcLandData();
-    } catch (err: any) {
-      const msg = err?.response?.data?.message_en || err?.message || 'Field report submission failed';
-      setActionMsg(msg);
-    }
-  };
+      return true;
+    });
+  }, [mutations, mutationStatusFilter, selectedDivision, selectedDistrict, selectedUpazila, selectedMouzaId, searchQuery]);
 
-  const handleCreateSurveyBatch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreatingBatch(true);
-    try {
-      const res = await BhumiApi.createOnboardingBatch({
-        record_type: surveyBatchForm.record_type,
-        mouza: surveyBatchForm.mouza,
-        jurisdiction: 'Dhaka-Savar-Birulia',
-        items: [
-          {
-            dag_no: surveyBatchForm.dag_no,
-            mouza: surveyBatchForm.mouza,
-            area_decimal: parseFloat(surveyBatchForm.area_decimal) || 12.0,
-            seller_name: surveyBatchForm.owner_name,
-            buyer_name: surveyBatchForm.owner_name,
-            share_fraction: surveyBatchForm.share_fraction,
-            declared_value_bdt: 2500000,
-          },
-        ],
-      });
-      setActionMsg(
-        lang === 'bn'
-          ? `নতুন জরিপ ব্যাচ (${res.batch?.batch_no || 'ONB-BATCH'}) তৈরি ও ক্রিপ্টোগ্রাফিক হ্যাশ সিল সম্পন্ন!`
-          : `New survey batch created with cryptographic hash seal!`
-      );
-      loadAcLandData();
-    } catch (err: any) {
-      setActionMsg(err.message || 'ব্যাচ তৈরিতে ত্রুটি হয়েছে।');
-    } finally {
-      setCreatingBatch(false);
-    }
-  };
-
-  const handleSendSlaEscalation = async () => {
-    try {
-      // F08: server-side persistence. Issue an SLA escalation dispatch to the
-      // relevant target role (default: land_office_assistant for overdue mutations).
-      const res = await BhumiApi.createSlaDispatch({
-        case_reference: 'MUT-2026-0008',
-        target_role: 'land_office_assistant',
-        priority: 'URGENT',
-        notes_bn: 'দাগ ১০৮ এর নামজারি ৪৫ দিনের বেশি অতিবাহিত; সাত দিনের মধ্যে আদেশনামা দাখিল করুন।',
-      });
-      setSlaNoticeSent(true);
-      setActionMsg(
-        lang === 'bn'
-          ? (res.message_bn || 'উপজেলা ভূমি কর্মকর্তা ও কানুনগো বরাবরে জরুরি এসএলএ তাগিদপত্র ইস্যু করা হয়েছে।')
-          : (res.message_en || 'Urgent SLA escalation directive dispatched to land revenue staff.')
-      );
-      loadAcLandData();
-    } catch (err: any) {
-      const msg = err?.response?.data?.message_en || err?.message || 'SLA dispatch failed';
-      setActionMsg(msg);
-    }
-  };
-
-  const handleDecision = async (mutationId: number, status: 'APPROVED' | 'REJECTED') => {
+  // Handlers
+  const handleDecideMutation = async (status: 'APPROVED' | 'REJECTED') => {
+    if (!selectedMutation) return;
     setDecisionLoading(true);
-    setModalError(null);
     try {
-      const note =
-        status === 'APPROVED'
-          ? 'এসি ল্যান্ড কর্তৃক অনুমোদিত এবং বিএস খতিয়ান স্বয়ংক্রিয়ভাবে হালনাগাদ করা হয়েছে।'
-          : 'এসি ল্যান্ড কর্তৃক কাগজপত্রের অসামঞ্জস্যতার কারণে নামজারি না-মঞ্জুর।';
-      const res = await BhumiApi.decideMutation(mutationId, status, note);
-      setActionMsg(lang === 'bn' ? res.message_bn : res.message_en);
-      if (selectedMutation && selectedMutation.id === mutationId) {
-        setSelectedMutation(null);
-      }
+      const res = await BhumiApi.decideMutation(
+        selectedMutation.id,
+        status,
+        mutationDecisionNotes.trim() ||
+          (status === 'APPROVED'
+            ? 'সহকারী কমিশনার (ভূমি) কর্তৃক বায়া দলিল ও খতিয়ান নিরীক্ষান্তে নামজারি আদেশ মঞ্জুর।'
+            : 'নথি ত্রুটি ও ওয়ারিশান বিরোধের কারণে নামজারি আবেদন নামঞ্জুর।')
+      );
+      setActionNotice({
+        msg:
+          res?.message_bn ||
+          (status === 'APPROVED'
+            ? `নামজারি কেস ${selectedMutation.case_no} সফলভাবে অনুমোদিত এবং নতুন খতিয়ান জারিকৃত।`
+            : `নামজারি কেস ${selectedMutation.case_no} নামঞ্জুর করা হয়েছে।`),
+      });
+      triggerAppNotification({
+        title_bn: status === 'APPROVED' ? 'নামজারি আবেদন অনুমোদিত ও খতিয়ান প্রস্তুত' : 'নামজারি আবেদন নামঞ্জুর',
+        title_en: status === 'APPROVED' ? 'Mutation Approved & New Khatian Ready' : 'Mutation Rejected',
+        message_bn: `নামজারি কেস নং ${selectedMutation.case_no} (দাগ নং ${selectedMutation.dag_no}) সহকারী কমিশনার (ভূমি) কর্তৃক ${status === 'APPROVED' ? 'অনুমোদিত' : 'নামঞ্জুর'} হয়েছে।`,
+        message_en: `Mutation case ${selectedMutation.case_no} for Dag ${selectedMutation.dag_no} was ${status.toLowerCase()} by AC Land.`,
+        type: status === 'APPROVED' ? 'SUCCESS' : 'ALERT',
+        targetTab: 'acland',
+        targetSection: 'mutations',
+      });
+      setSelectedMutation(null);
+      setMutationDecisionNotes('');
       loadAcLandData();
+      setTimeout(() => setActionNotice(null), 5000);
     } catch (err: any) {
-      const errDetail = err?.response?.data?.detail?.message_bn || err?.response?.data?.message || err?.message;
-      setModalError(errDetail || 'সিদ্ধান্ত প্রক্রিয়াকরণে ত্রুটি হয়েছে।');
-      setActionMsg(errDetail || 'সিদ্ধান্ত প্রক্রিয়াকরণে ত্রুটি হয়েছে।');
+      setActionNotice({
+        msg: err?.response?.data?.message_bn || err?.response?.data?.error || 'সিদ্ধান্ত কার্যকর করতে ত্রুটি হয়েছে।',
+        err: true,
+      });
     } finally {
       setDecisionLoading(false);
     }
   };
 
-  const handleReconcileKhatian = async (plotId: number, currentArea: number) => {
-    const res = await BhumiApi.reconcileKhatian(plotId, {
-      resolution_note_bn:
-        'এসি ল্যান্ড শুনানি ও মাঠ জরিপের মাধ্যমে আরএস-বিএস খতিয়ান চেইন ও ওয়ারিশ অংশ সমন্বয় করা হলো।',
-      updated_area_decimal: currentArea,
-    });
-    setActionMsg(lang === 'bn' ? res.message_bn : res.message_en);
-    loadAcLandData();
+  const handleResolveDispute = async (status: 'RESOLVED' | 'RESOLVED_FROZEN') => {
+    if (!selectedDispute) return;
+    setDecisionLoading(true);
+    try {
+      const res = await BhumiApi.resolveDispute(selectedDispute.id, {
+        status: status === 'RESOLVED_FROZEN' ? 'UPHELD_FROZEN' : 'RESOLVED',
+        resolution_note_bn:
+          disputeNotes.trim() ||
+          (status === 'RESOLVED_FROZEN'
+            ? 'আদালতের স্বত্ব মামলার নিষ্পত্তি না হওয়া পর্যন্ত দাগে প্রশাসনিক বিক্রয় স্থগিতাদেশ বহাল।'
+            : 'আপত্তি প্রত্যাহার ও শুনানিতে সমঝোতা হওয়ায় মিস-কেস নথিভুক্ত ও নিষ্পত্তি।'),
+      });
+      setActionNotice({ msg: res?.message_bn || 'বিরোধের শুনানি সিদ্ধান্ত সফলভাবে রেকর্ড করা হয়েছে।' });
+      triggerAppNotification({
+        title_bn: 'জমি বিরোধ ও মিস-কেস শুনানি আদেশ',
+        title_en: 'Dispute Hearing Order Recorded',
+        message_bn: `বিরোধ কেস নং ${selectedDispute.case_no} (দাগ নং ${selectedDispute.dag_no}) এসিল্যান্ড আদালত কর্তৃক শুনানি সম্পন্ন ও রেকর্ড হালনাগাদ করা হয়েছে।`,
+        message_en: `Dispute Case ${selectedDispute.case_no} hearing order recorded by AC Land.`,
+        type: status === 'RESOLVED_FROZEN' ? 'ALERT' : 'SUCCESS',
+        targetTab: 'acland',
+        targetSection: 'disputes',
+      });
+      setSelectedDispute(null);
+      setDisputeNotes('');
+      loadAcLandData();
+      setTimeout(() => setActionNotice(null), 5000);
+    } catch (err: any) {
+      setActionNotice({ msg: err?.response?.data?.error || 'সিদ্ধান্ত সংরক্ষণে ব্যর্থ হয়েছে।', err: true });
+    } finally {
+      setDecisionLoading(false);
+    }
   };
 
-  const handleResolveDispute = async (
-    disputeId: number,
-    status: 'RESOLVED_DISMISSED' | 'UPHELD_FROZEN'
-  ) => {
-    const note =
-      status === 'UPHELD_FROZEN'
-        ? 'অভিযোগের প্রাথমিক সত্যতা পাওয়ায় আদালতের চূড়ান্ত নিষ্পত্তি না হওয়া পর্যন্ত এই দাগের সকল হস্তান্তর স্থগিত (Frozen) করা হলো।'
-        : 'উভয় পক্ষের শুনানি শেষে অভিযোগের ভিত্তি না থাকায় তা নিষ্পত্তি ও খারিজ করা হলো।';
-    const res = await BhumiApi.resolveDispute(disputeId, {
-      status,
-      resolution_note_bn: note,
-    });
-    setActionMsg(lang === 'bn' ? res.message_bn : res.message_en);
-    loadAcLandData();
+  const handleReconcileKhatian = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedKhatian) return;
+    setDecisionLoading(true);
+    try {
+      const plotId = selectedKhatian.plot_id || selectedKhatian.id;
+      const res = await BhumiApi.reconcileKhatian(plotId, {
+        resolution_note_bn: khatianReconcileNotes.trim() || 'আরএস ও বিএস রেকর্ডের ক্ষেত্রফল সমন্বয় ও শুদ্ধিপত্র জারি।',
+        updated_area_decimal: khatianReconcileArea ? Number(khatianReconcileArea) : undefined,
+      });
+      setActionNotice({ msg: res?.message_bn || 'খতিয়ান রেকর্ড শুদ্ধিপত্র সফলভাবে জারি হয়েছে।' });
+      setSelectedKhatian(null);
+      setKhatianReconcileNotes('');
+      setKhatianReconcileArea('');
+      loadAcLandData();
+      setTimeout(() => setActionNotice(null), 5000);
+    } catch (err: any) {
+      setActionNotice({ msg: err?.response?.data?.error || 'খতিয়ান সংশোধনে ত্রুটি হয়েছে।', err: true });
+    } finally {
+      setDecisionLoading(false);
+    }
   };
 
-  // Filtered mutations
-  const filteredMutations = useMemo(() => {
-    return mutations.filter((m) => {
-      if (mutationFilter !== 'ALL' && m.status !== mutationFilter) {
-        return false;
-      }
-      if (!mutationSearch.trim()) return true;
-      const q = mutationSearch.toLowerCase();
-      return (
-        m.case_no?.toLowerCase().includes(q) ||
-        m.deed_no?.toLowerCase().includes(q) ||
-        m.dag_no?.toString().includes(q) ||
-        m.mouza_bn?.toLowerCase().includes(q) ||
-        m.mouza_en?.toLowerCase().includes(q) ||
-        m.seller_name_bn?.toLowerCase().includes(q) ||
-        m.buyer_name_bn?.toLowerCase().includes(q)
-      );
-    });
-  }, [mutations, mutationFilter, mutationSearch]);
+  const handleCreateFieldReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fieldForm.plot_id) return;
+    setDecisionLoading(true);
+    try {
+      const res = await BhumiApi.createFieldReport({
+        plot_id: Number(fieldForm.plot_id),
+        possession_status: fieldForm.possession_status,
+        boundary_status: fieldForm.boundary_status,
+        tax_status: fieldForm.tax_status,
+        remarks_bn: fieldForm.remarks.trim(),
+      });
+      setActionNotice({ msg: res?.message_bn || 'মাঠ পরিদর্শন প্রতিবেদন সফলভাবে দাখিল ও রেকর্ড করা হয়েছে।' });
+      setIsNewFieldReportOpen(false);
+      setFieldForm({
+        plot_id: '',
+        possession_status: 'VERIFIED',
+        boundary_status: 'MATCHED',
+        tax_status: 'PAID',
+        remarks: 'জমির সরেজমিন সীমানা ও দখল আবেদনকারীর অনুকূলে পাওয়া গেছে।',
+      });
+      loadAcLandData();
+      setTimeout(() => setActionNotice(null), 4000);
+    } catch (err: any) {
+      setActionNotice({ msg: err?.response?.data?.error || 'মাঠ প্রতিবেদন সংরক্ষণে ত্রুটি হয়েছে।', err: true });
+    } finally {
+      setDecisionLoading(false);
+    }
+  };
+
+  const handleCreateSla = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDecisionLoading(true);
+    try {
+      const res = await BhumiApi.createSlaDispatch({
+        case_reference: slaForm.case_reference.trim(),
+        target_role: slaForm.target_role,
+        priority: slaForm.priority,
+        due_at: slaForm.due_at || undefined,
+        notes_bn: slaForm.notes_bn.trim() || 'নির্ধারিত নাগরিক সেবা সনদের সময়সীমার মধ্যে নথি নিষ্পত্তির তাগিদ।',
+      });
+      setActionNotice({ msg: res?.message_bn || 'এসএলএ তাগিদ নোটিশ সফলভাবে জারি করা হয়েছে।' });
+      setIsNewSlaOpen(false);
+      setSlaForm({
+        case_reference: '',
+        target_role: 'land_office_assistant',
+        priority: 'NORMAL',
+        due_at: '',
+        notes_bn: '',
+      });
+      loadAcLandData();
+      setTimeout(() => setActionNotice(null), 4000);
+    } catch (err: any) {
+      setActionNotice({ msg: err?.response?.data?.error || 'তাগিদ নোটিশ জারিতে ত্রুটি হয়েছে।', err: true });
+    } finally {
+      setDecisionLoading(false);
+    }
+  };
+
+  // KPIs
+  const pendingMutationsCount = mutations.filter((m) => m.status === 'PENDING').length;
+  const approvedMutationsCount = mutations.filter((m) => m.status === 'APPROVED').length;
+  const flaggedKhatiansCount = flaggedKhatians.length;
+  const activeDisputesCount = disputes.filter((d) => d.status === 'OPEN' || d.status === 'HEARING').length;
 
   return (
     <div className="space-y-6">
-      <header className="page-intro animate-rise">
-        <h1>
-          {role === 'land_office_assistant'
-            ? t('উপজেলা ভূমি সহকারী কনসোল (নামজারি মেকার)', 'Land Office Assistant Console (Mutation Maker)')
-            : role === 'field_verification_officer'
-            ? t('ফিল্ড ভেরিফিকেশন অফিসার / কানুনগো কনসোল', 'Field Verification & Inspection Console')
-            : role === 'settlement_records_officer'
-            ? t('সেটেলমেন্ট রেকর্ডস অফিসার (জরিপ মেকার)', 'Settlement Records Officer (Survey Maker)')
-            : role === 'settlement_checker'
-            ? t('সহকারী সেটেলমেন্ট অফিসার (জরিপ চেকার)', 'Assistant Settlement Officer (Survey Checker)')
-            : role === 'uno_supervisor'
-            ? t('উপজেলা নির্বাহী কর্মকর্তা (ইউএনও তদারককারী কনসোল)', 'UNO Supervisor Console')
-            : role === 'appellate_reviewer'
-            ? t('রাজস্ব আপিল কর্তৃপক্ষ (এডিসি রাজস্ব কনসোল)', 'Revenue Appeals Authority (ADC Revenue Console)')
-            : t('সহকারী কমিশনার (ভূমি) কনসোল', 'AC Land Console')}
-        </h1>
-        <p>
-          {role === 'land_office_assistant'
-            ? t('নামজারি আবেদনের প্রাথমিক যাচাই, ওয়ারিশ হিস্যা হিসাব ও খসড়া প্রতিবেদন প্রস্তুতকরণ।', 'Initial scrutiny of mutation requests, heir share calculation, and draft reporting.')
-            : role === 'field_verification_officer'
-            ? t('জমির সরেজমিন দখল ও সীমানা তদন্ত প্রতিবেদন, নকশা যাচাই এবং বকেয়া এলডি ট্যাক্স স্ট্যাটাস।', 'On-site physical possession inspection, boundary verification, and LD Tax status.')
-            : role === 'settlement_records_officer'
-            ? t('সিএস-এসএ-আরএস-বিএস খতিয়ান চেইন ডাটা এন্ট্রি ও ক্রিপ্টোগ্রাফিক হ্যাশ প্রস্তুতকরণ।', 'Survey batch data staging, khatian lineage ingestion, and cryptographic hash sealing.')
-            : role === 'settlement_checker'
-            ? t('জরিপ অনবোর্ডিং ব্যাচ চার-চক্ষু নীতি অনুমোদন এবং চূড়ান্ত গেজেট প্রকাশনা ছাড়।', 'Survey batch four-eyes checker approval and official gazette publication sign-off.')
-            : role === 'uno_supervisor'
-            ? t('উপজেলা ভূমি সেবায় এসএলএ কার্যকারিতা মনিটরিং ও বিলম্বিত নামজারি ফাইল এসকেলেশন।', 'Upazila land services SLA performance monitoring and delayed mutation escalations.')
-            : role === 'appellate_reviewer'
-            ? t('এসি ল্যান্ডের আদেশের বিরুদ্ধে আপিল শুনানি, স্থগিতাদেশ (Stay Order) ও রায় প্রদান।', 'Hearing appeals against AC Land orders, granting stay orders, and issuing tribunal rulings.')
-            : t('চূড়ান্ত ই-মিউটেশন অনুমোদন, খতিয়ান সমন্বয় ও নাগরিক বিরোধ ট্রাইব্যুনাল।', 'Approve e-mutations, reconcile khatians, and hear citizen dispute cases.')}
-        </p>
-      </header>
-      {/* RBAC Guard Notice if not in an authorized land authority role */}
-      {!['ac_land', 'land_office_assistant', 'field_verification_officer', 'settlement_records_officer', 'settlement_checker', 'uno_supervisor', 'appellate_reviewer', 'admin', 'system_admin'].includes(role) && (
-        <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 flex flex-wrap items-center justify-between gap-3 shadow-xs">
-          <div className="flex items-center gap-2 text-xs font-bold text-[#0A1F1C]">
-            <KeyRound className="w-4 h-4 text-[#C4891A]" />
-            <span>
-              {t(
-                'দাপ্তরিক অ্যাক্সেস নোটিশ: এসি ল্যান্ড মিউটেশন ও খতিয়ান কন্ট্রোল ব্যবহার করতে এসি ল্যান্ড সেশনে প্রবেশ করুন।',
-                'Access Notice: Switch to the AC Land Officer session for mutation, khatian, and tribunal controls.'
-              )}
-            </span>
-          </div>
-          <button
-            onClick={switchToAcLandRole}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#074f38] hover:bg-[#053b2a] text-white font-bold text-xs cursor-pointer min-h-[36px] transition-colors"
-          >
-            {t('এসি ল্যান্ড প্যানেলে প্রবেশ করুন →', 'Activate AC Land Session →')}
+      {/* Toast Notification */}
+      {actionNotice && (
+        <div
+          className={`p-4 rounded-xl border flex items-center justify-between text-xs font-bold ${
+            actionNotice.err
+              ? 'bg-rose-50 border-rose-300 text-rose-800'
+              : 'bg-emerald-50 border-emerald-300 text-emerald-800'
+          }`}
+        >
+          <span>{actionNotice.msg}</span>
+          <button onClick={() => setActionNotice(null)} className="text-slate-500 hover:text-slate-800 cursor-pointer ml-3">
+            ✕
           </button>
         </div>
       )}
 
-      {/* AC Land Operational KPI Strip (Role-Specific) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-rise">
-        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
-              {t('অপেক্ষমাণ ই-নামজারি', 'Pending e-Mutations')}
-            </div>
-            <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
-              {toBanglaDigits(mutations.filter((m) => m.status === 'PENDING').length, lang)}
-            </div>
-            <button
-              onClick={() => handleTabChange('mutations')}
-              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
-            >
-              {t('মিউটেশন কিউ দেখুন →', 'Review Mutation Queue →')}
-            </button>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
-            <Clock className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
-              {t('খতিয়ান ও ওয়ারিশ সমন্বয়', 'Khatian Discrepancies')}
-            </div>
-            <div className="text-2xl font-extrabold text-[#C4891A] mt-1">
-              {toBanglaDigits(flaggedKhatians.length, lang)}
-            </div>
-            <button
-              onClick={() => handleTabChange('khatians')}
-              className="text-xs text-[#C4891A] font-semibold hover:underline mt-1 block cursor-pointer"
-            >
-              {t('সমন্বয় শুনানি কিউ →', 'Resolve Discrepancies →')}
-            </button>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-amber-50 text-[#C4891A] flex items-center justify-center">
-            <GitCompareArrows className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
-              {t('নাগরিক বিরোধ ও আপত্তি', 'Dispute Tribunal')}
-            </div>
-            <div className="text-2xl font-extrabold text-rose-600 mt-1">
-              {toBanglaDigits(disputes.length, lang)}
-            </div>
-            <button
-              onClick={() => handleTabChange('disputes')}
-              className="text-xs text-rose-600 font-semibold hover:underline mt-1 block cursor-pointer"
-            >
-              {t('ট্রাইব্যুনাল শুনানি দেখুন →', 'Review Disputes →')}
-            </button>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
-            <Scale className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
-              {t('খতিয়ান ও দলিল সত্যতা', 'Khatian & Deed Trust')}
-            </div>
-            <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
-              {toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}%
-            </div>
-            <button
-              onClick={() => handleTabChange('verifier')}
-              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
-            >
-              {t('দলিল ও লেজার যাচাই →', 'Verify Deed & Ledger →')}
-            </button>
-          </div>
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
-
-      {/* Operational Controlling Section */}
-      <div className="panel p-6 space-y-6 animate-rise-delay">
+      {/* Header Panel */}
+      <div className="panel p-6 bg-white border border-[#006A4E]/20 space-y-4 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
           <div>
-            <h2 className="font-bold text-lg md:text-xl text-[#074f38] flex items-center gap-2">
-              <Landmark className="w-5 h-5 text-[#006A4E]" />
-              <span>
-                {t(
-                  'ই-মিউটেশন কিউ, খতিয়ান চেইন সমন্বয় ও বিরোধ নিষ্পত্তি ট্রাইব্যুনাল',
-                  'e-Mutation Queue, Khatian Chain Reconciliation & Dispute Tribunal'
-                )}
+            <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
+              <span>{t('উপজেলা ভূমি অফিস', 'Upazila Land Office')}</span>
+              <span>/</span>
+              <span className="text-[#006A4E] font-extrabold">
+                {role === 'settlement_records_officer'
+                  ? t('সেটেলমেন্ট রেকর্ডস ও ক্যাডাস্ট্রাল স্ট্যাজিং', 'Cadastral Survey Records Staging')
+                  : role === 'settlement_checker'
+                  ? t('সহকারী সেটেলমেন্ট অফিসার ও গেজেট অনুমোদন', 'Assistant Settlement Officer & Checker')
+                  : role === 'uno_supervisor'
+                  ? t('ইউএনও তত্ত্বাবধায়ন ও এসএলএ মনিটরিং', 'UNO Oversight & SLA Monitoring')
+                  : role === 'field_verification_officer'
+                  ? t('মাঠ তদন্ত ও সীমানা যাচাই ডেস্ক', 'Field Verification & Boundary Desk')
+                  : t('সহকারী কমিশনার (ভূমি) ট্রাইব্যুনাল', 'AC Land Tribunal & Mutation Workbench')}
               </span>
-            </h2>
-            <p className="text-xs text-[#5F7A74] mt-0.5">
-              {t(
-                'নিবন্ধিত দলিল হতে স্বয়ংক্রিয়ভাবে আগত নামজারি অনুমোদন এবং বিএস খতিয়ান হস্তান্তর সম্পন্ন:',
-                'Approve e-Mutation cases queued from Sub-Registry and update BS Khatian owner shares:'
-              )}
+            </div>
+            <h1 className="font-bold text-xl text-[#074f38] flex items-center gap-2">
+              <Landmark className="w-6 h-6 text-[#006A4E]" />
+              <span>
+                {role === 'settlement_records_officer'
+                  ? t('জরিপ রেকর্ডস ও ক্যাডাস্ট্রাল স্ট্যাজিং (মেকার)', 'Cadastral Survey Records Staging (Maker)')
+                  : role === 'settlement_checker'
+                  ? t('সহকারী সেটেলমেন্ট অফিসার ও জরিপ গেজেট অনুমোদন (চেকার)', 'Assistant Settlement Officer & Checker')
+                  : role === 'uno_supervisor'
+                  ? t('উপজেলা নির্বাহী কর্মকর্তা (UNO) ওভারসাইট কনসোল', 'Upazila Nirbahi Officer (UNO) Console')
+                  : role === 'field_verification_officer'
+                  ? t('মাঠ তদন্তকারী (সার্ভেয়ার) কনসোল', 'Field Verification Officer Console')
+                  : t('সহকারী কমিশনার (ভূমি) ট্রাইব্যুনাল ও নামজারি বেঞ্চ', 'AC Land Tribunal & e-Mutation Workbench')}
+              </span>
+            </h1>
+            <p className="text-xs text-[#5F7A74] mt-1">
+              {role === 'settlement_records_officer'
+                ? t(
+                    'চলমান ডিজিটাল জরিপ (CS/SA/RS/BS) খতিয়ান ডাটা প্রস্তুত, সীমানা দাগ স্ট্যাজিং ও স্বাধীন চেকার সমীপে ব্যাচ দাখিল।',
+                    'Stage cadastral survey khatian entries and submit onboarding batches for independent checker verification.'
+                  )
+                : role === 'settlement_checker'
+                ? t(
+                    'সেটেলমেন্ট মেকার কর্তৃক প্রস্তুতকৃত জরিপ খতিয়ান ডাটা ও সীমানা যাচাই এবং চূড়ান্ত গেজেট প্রকাশ অনুমোদন।',
+                    'Inspect survey khatian data, ensure maker-checker separation, and approve official gazetted records.'
+                  )
+                : role === 'uno_supervisor'
+                ? t(
+                    'উপজেলা পর্যায়ে বিলম্বিত নামজারি, এসএলএ অতিক্রমকারী মামলা ও প্রশাসনিক সমন্বয় পর্যবেক্ষণ।',
+                    'Supervise delayed mutation cases, SLA escalations, and administrative coordination.'
+                  )
+                : role === 'field_verification_officer'
+                ? t(
+                    'মাঠপর্যায়ে জমির দখল তদন্ত, ছবি ও ভূ-অবস্থান প্রতিবেদন এবং এলডি ট্যাক্স হোল্ডিং যাচাই।',
+                    'Conduct physical land possession inspections, submit geotagged photos, and report findings.'
+                  )
+                : t(
+                    'ই-নামজারি (e-Mutation) শুনানি ও খতিয়ান অনুমোদন, স্বত্বলিপির রেকর্ডের অমিল নিরসন, দেওয়ানি আপত্তি ট্রাইব্যুনাল এবং মাঠ পরিদর্শন তদারকি।',
+                    'Adjudicate e-mutations, reconcile khatian discrepancies, resolve land ownership disputes, and supervise field inspections.'
+                  )}
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {/* 1. Field Verification Officer */}
-            {role === 'field_verification_officer' && (
-              <>
-                <button
-                  onClick={() => handleTabChange('field_reports')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'field_reports'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <Search className="w-4 h-4" />
-                  <span>{t('মাঠ তদন্ত ও দখল যাচাই', 'Field Possession Inspection')}</span>
-                </button>
-                <button
-                  onClick={() => handleTabChange('mutations')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'mutations'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <Clock className="w-4 h-4" />
-                  <span>{t('তদন্তাধীন নামজারি কিউ', 'Pending Verification Cases')} ({toBanglaDigits(mutations.length, lang)})</span>
-                </button>
-              </>
-            )}
-
-            {/* 2. Settlement Records Officer (Maker) */}
-            {role === 'settlement_records_officer' && (
-              <>
-                <button
-                  onClick={() => handleTabChange('survey_batches')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'survey_batches'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <FileSpreadsheet className="w-4 h-4" />
-                  <span>{t('জরিপ ব্যাচ এন্ট্রি (মেকার)', 'Survey Batch Entry (Maker)')}</span>
-                </button>
-                <button
-                  onClick={() => handleTabChange('khatians')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'khatians'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <GitCompareArrows className="w-4 h-4" />
-                  <span>{t('সিএস-এসএ-আরএস-বিএস রূপান্তর', 'Survey Lineage Staging')}</span>
-                </button>
-              </>
-            )}
-
-            {/* 3. Settlement Checker */}
-            {role === 'settlement_checker' && (
-              <>
-                <button
-                  onClick={() => handleTabChange('onboarding')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'onboarding'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>{t('জরিপ ব্যাচ অনুমোদন (চেকার)', 'Approve Survey Batches')} ({toBanglaDigits(onboardingBatches.length, lang)})</span>
-                </button>
-                <button
-                  onClick={() => handleTabChange('khatians')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'khatians'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <GitCompareArrows className="w-4 h-4" />
-                  <span>{t('খতিয়ান অখণ্ডতা ও গেজেট', 'Khatian Integrity & Gazette')}</span>
-                </button>
-              </>
-            )}
-
-            {/* 4. UNO Supervisor */}
-            {role === 'uno_supervisor' && (
-              <>
-                <button
-                  onClick={() => handleTabChange('sla_overview')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'sla_overview'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <Clock className="w-4 h-4" />
-                  <span>{t('উপজেলা এসএলএ ও পারফরম্যান্স', 'Upazila SLA Performance')}</span>
-                </button>
-                <button
-                  onClick={() => handleTabChange('mutations')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'mutations'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <ListChecks className="w-4 h-4" />
-                  <span>{t('নামজারি তদারকি কিউ', 'Mutation Oversight Queue')}</span>
-                </button>
-                <button
-                  onClick={() => handleTabChange('appeals')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'appeals'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <Scale className="w-4 h-4" />
-                  <span>{t('আপিল ও অভিযোগ মনিটরিং', 'Appeals & Disputes')} ({toBanglaDigits(appealsList.length, lang)})</span>
-                </button>
-              </>
-            )}
-
-            {/* 5. Appellate Reviewer (ADC Revenue) */}
-            {role === 'appellate_reviewer' && (
-              <>
-                <button
-                  onClick={() => handleTabChange('appeals')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'appeals'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <Scale className="w-4 h-4" />
-                  <span>{t('রাজস্ব আপিল ও ট্রাইব্যুনাল শুনানি', 'Revenue Appeals & Hearings')} ({toBanglaDigits(appealsList.length, lang)})</span>
-                </button>
-                <button
-                  onClick={() => handleTabChange('disputes')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'disputes'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <AlertOctagon className="w-4 h-4" />
-                  <span>{t('বিরোধ ট্রাইব্যুনাল রেকর্ডস', 'Dispute Tribunal Records')} ({toBanglaDigits(disputes.length, lang)})</span>
-                </button>
-                <button
-                  onClick={() => handleTabChange('mutations')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'mutations'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <Clock className="w-4 h-4" />
-                  <span>{t('বিরোধপূর্ণ নামজারি রেকর্ড', 'Contested Mutations')}</span>
-                </button>
-              </>
-            )}
-
-            {/* 6. AC Land / Land Office Assistant / Admin / Default */}
-            {!['field_verification_officer', 'settlement_records_officer', 'settlement_checker', 'uno_supervisor', 'appellate_reviewer'].includes(role) && (
-              <>
-                <button
-                  onClick={() => handleTabChange('mutations')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'mutations'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <Clock className="w-4 h-4" />
-                  <span>
-                    {role === 'land_office_assistant' ? t('নামজারি আবেদন কিউ (মেকার)', 'Mutation Queue (Maker)') : t('ই-মিউটেশন কিউ (অনুমোদন)', 'e-Mutation Queue (Approval)')} ({toBanglaDigits(mutations.length, lang)})
-                  </span>
-                </button>
-                <button
-                  onClick={() => handleTabChange('khatians')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'khatians'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <GitCompareArrows className="w-4 h-4" />
-                  <span>
-                    {t('খতিয়ান ও ওয়ারিশ সমন্বয়', 'Khatian & Heirs')} ({toBanglaDigits(flaggedKhatians.length, lang)})
-                  </span>
-                </button>
-                <button
-                  onClick={() => handleTabChange('disputes')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'disputes'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <Scale className="w-4 h-4" />
-                  <span>
-                    {t('বিরোধ ট্রাইব্যুনাল', 'Dispute Tribunal')} ({toBanglaDigits(disputes.length, lang)})
-                  </span>
-                </button>
-                <button
-                  onClick={() => handleTabChange('onboarding')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'onboarding'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>{t('অনবোর্ডিং ব্যাচ অনুমোদন (চেকার)', 'Approve Staging Batches')} ({toBanglaDigits(onboardingBatches.length, lang)})</span>
-                </button>
-                <button
-                  onClick={() => handleTabChange('appeals')}
-                  className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                    subTab === 'appeals'
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                  }`}
-                >
-                  <Scale className="w-4 h-4" />
-                  <span>{t('আপিল মামলা', 'Appeals')} ({toBanglaDigits(appealsList.length, lang)})</span>
-                </button>
-              </>
-            )}
-
-            {/* Always available in Land Office: Explorer and Verifier */}
+          <div className="flex items-center gap-2 shrink-0">
             <button
-              onClick={() => handleTabChange('explorer')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                subTab === 'explorer'
-                  ? 'bg-[#006A4E] text-white shadow-xs'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-              }`}
+              type="button"
+              onClick={loadAcLandData}
+              disabled={loading}
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
             >
-              <Search className="w-4 h-4" />
-              <span>{t('খতিয়ান ও দাগ অনুসন্ধান', 'Khatian Explorer')}</span>
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <span>{t('রিফ্রেশ', 'Refresh')}</span>
             </button>
-            <button
-              onClick={() => handleTabChange('verifier')}
-              className={`px-3 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                subTab === 'verifier'
-                  ? 'bg-[#006A4E] text-white shadow-xs'
-                  : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-              }`}
-            >
-              <QrCode className="w-4 h-4" />
-              <span>{t('দলিল সত্যতা যাচাই', 'Verify Deed')}</span>
-            </button>
+            <span className="px-3.5 py-2 rounded-xl text-xs font-bold border border-emerald-300 bg-emerald-50 text-emerald-900 flex items-center gap-1.5">
+              <Gavel className="w-4 h-4 text-[#006A4E]" />
+              <span>
+                {role === 'uno_supervisor'
+                  ? t('উপজেলা নির্বাহী কর্মকর্তা (UNO)', 'Upazila Nirbahi Officer')
+                  : role === 'field_verification_officer'
+                  ? t('মাঠ তদন্তকারী (সার্ভেয়ার)', 'Field Verification Officer')
+                  : role === 'settlement_records_officer'
+                  ? t('সেটেলমেন্ট রেকর্ডস অফিসার (মেকার)', 'Settlement Records Officer (Maker)')
+                  : role === 'settlement_checker'
+                  ? t('সহকারী সেটেলমেন্ট অফিসার (চেকার)', 'Assistant Settlement Officer (Checker)')
+                  : role === 'appellate_reviewer'
+                  ? t('আপিল কর্তৃপক্ষ (এডিসি রাজস্ব)', 'Appellate Reviewer (ADC Rev)')
+                  : t('সহকারী কমিশনার (ভূমি)', 'AC Land Magistrate')}
+              </span>
+            </span>
           </div>
         </div>
 
-        {actionMsg && (
-          <div className="p-4 rounded-xl bg-[#EDF7F4] border-l-4 border-[#006A4E] text-[#006A4E] font-bold text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>{actionMsg}</span>
-          </div>
-        )}
-
-        {/* TAB 1: e-Mutation Queue Table */}
-        {subTab === 'mutations' && (
-          <div className="space-y-4">
-            {/* Search and Status Filters */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#EDF7F4]/80 p-3 rounded-xl border border-[#006A4E]/12">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="w-4 h-4 text-[#5F7A74]/80 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="text"
-                  value={mutationSearch}
-                  onChange={(e) => setMutationSearch(e.target.value)}
-                  placeholder={t('কেস নং, দলিল নং বা নাম খুঁজুন...', 'Search case, deed or party...')}
-                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#006A4E]/20 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
-                />
+        {/* Operational KPI Strip */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+          {role === 'settlement_records_officer' ? (
+            <>
+              <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200">
+                <div className="text-[10px] font-bold uppercase text-amber-800 flex items-center justify-between">
+                  <span>{t('অপেক্ষমাণ স্ট্যাজিং ব্যাচ', 'Awaiting Review')}</span>
+                  <Clock className="w-3.5 h-3.5 text-amber-700" />
+                </div>
+                <div className="text-2xl font-extrabold text-amber-900 mt-1">
+                  {toBanglaDigits(onboardingBatches.filter((b) => b.status === 'SUBMITTED').length, lang)}
+                </div>
+                <div className="text-[11px] text-amber-700 mt-0.5">{t('চেকার পর্যালোচনার অপেক্ষায়', 'Under review')}</div>
               </div>
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                <div className="text-[10px] font-bold uppercase text-emerald-800 flex items-center justify-between">
+                  <span>{t('অনুমোদিত জরিপ রেকর্ড', 'Approved Batches')}</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#006A4E]" />
+                </div>
+                <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
+                  {toBanglaDigits(onboardingBatches.filter((b) => b.status === 'APPROVED').length, lang)}
+                </div>
+                <div className="text-[11px] text-emerald-700 mt-0.5">{t('লেজারে চূড়ান্ত যুক্ত', 'Officially recorded')}</div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200">
+                <div className="text-[10px] font-bold uppercase text-rose-800 flex items-center justify-between">
+                  <span>{t('সংশোধন ফেরত ব্যাচ', 'Returned Batches')}</span>
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                </div>
+                <div className="text-2xl font-extrabold text-rose-800 mt-1">
+                  {toBanglaDigits(onboardingBatches.filter((b) => b.status === 'REJECTED').length, lang)}
+                </div>
+                <div className="text-[11px] text-rose-600 mt-0.5">{t('সংশোধন প্রয়োজন', 'Needs correction')}</div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200">
+                <div className="text-[10px] font-bold uppercase text-blue-800 flex items-center justify-between">
+                  <span>{t('মোট দাখিলকৃত ব্যাচ', 'Total Batches')}</span>
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-blue-700" />
+                </div>
+                <div className="text-2xl font-extrabold text-blue-900 mt-1">
+                  {toBanglaDigits(onboardingBatches.length, lang)}
+                </div>
+                <div className="text-[11px] text-blue-700 mt-0.5">{t('ডিজিটাল জরিপ ডাটা', 'Survey batches')}</div>
+              </div>
+            </>
+          ) : role === 'settlement_checker' ? (
+            <>
+              <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200">
+                <div className="text-[10px] font-bold uppercase text-amber-800 flex items-center justify-between">
+                  <span>{t('নিরীক্ষার অপেক্ষায় ব্যাচ', 'Awaiting Inspection')}</span>
+                  <Clock className="w-3.5 h-3.5 text-amber-700" />
+                </div>
+                <div className="text-2xl font-extrabold text-amber-900 mt-1">
+                  {toBanglaDigits(onboardingBatches.filter((b) => b.status === 'SUBMITTED').length, lang)}
+                </div>
+                <div className="text-[11px] text-amber-700 mt-0.5">{t('সিদ্ধান্তের অপেক্ষায়', 'Pending approval')}</div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                <div className="text-[10px] font-bold uppercase text-emerald-800 flex items-center justify-between">
+                  <span>{t('অনুমোদিত গেজেট ব্যাচ', 'Approved Gazettes')}</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#006A4E]" />
+                </div>
+                <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
+                  {toBanglaDigits(onboardingBatches.filter((b) => b.status === 'APPROVED').length, lang)}
+                </div>
+                <div className="text-[11px] text-emerald-700 mt-0.5">{t('স্বাক্ষরিত ও প্রকাশিত', 'Signed & published')}</div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200">
+                <div className="text-[10px] font-bold uppercase text-rose-800 flex items-center justify-between">
+                  <span>{t('বাতিল / ফেরত ব্যাচ', 'Returned Batches')}</span>
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                </div>
+                <div className="text-2xl font-extrabold text-rose-800 mt-1">
+                  {toBanglaDigits(onboardingBatches.filter((b) => b.status === 'REJECTED').length, lang)}
+                </div>
+                <div className="text-[11px] text-rose-600 mt-0.5">{t('ত্রুটিপূর্ণ রেকর্ড', 'Rejected records')}</div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200">
+                <div className="text-[10px] font-bold uppercase text-blue-800 flex items-center justify-between">
+                  <span>{t('মোট নিরীক্ষিত ব্যাচ', 'Total Inspected')}</span>
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-blue-700" />
+                </div>
+                <div className="text-2xl font-extrabold text-blue-900 mt-1">
+                  {toBanglaDigits(onboardingBatches.length, lang)}
+                </div>
+                <div className="text-[11px] text-blue-700 mt-0.5">{t('সকল জরিপ নথি', 'All batches')}</div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200">
+                <div className="text-[10px] font-bold uppercase text-amber-800 flex items-center justify-between">
+                  <span>{t('বিচারাধীন নামজারি কেস', 'Pending Mutations')}</span>
+                  <Clock className="w-3.5 h-3.5 text-amber-700" />
+                </div>
+                <div className="text-2xl font-extrabold text-amber-900 mt-1">
+                  {toBanglaDigits(pendingMutationsCount, lang)}
+                </div>
+                <div className="text-[11px] text-amber-700 mt-0.5">{t('শুনানি ও অনুমোদনের অপেক্ষায়', 'Awaiting hearing & order')}</div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                <div className="text-[10px] font-bold uppercase text-emerald-800 flex items-center justify-between">
+                  <span>{t('অনুমোদিত নামজারি', 'Approved Mutations')}</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#006A4E]" />
+                </div>
+                <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
+                  {toBanglaDigits(approvedMutationsCount, lang)}
+                </div>
+                <div className="text-[11px] text-emerald-700 mt-0.5">{t('সৃজিত নতুন খতিয়ান', 'New khatians created')}</div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200">
+                <div className="text-[10px] font-bold uppercase text-rose-800 flex items-center justify-between">
+                  <span>{t('রেকর্ডের অমিল / ফ্ল্যাগ', 'Flagged Khatians')}</span>
+                  <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                </div>
+                <div className="text-2xl font-extrabold text-rose-800 mt-1">
+                  {toBanglaDigits(flaggedKhatiansCount, lang)}
+                </div>
+                <div className="text-[11px] text-rose-600 mt-0.5">{t('শুদ্ধিপত্র প্রয়োজন', 'Reconciliation needed')}</div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200">
+                <div className="text-[10px] font-bold uppercase text-blue-800 flex items-center justify-between">
+                  <span>{t('নাগরিক আপত্তি ও বিরোধ', 'Ownership Disputes')}</span>
+                  <Scale className="w-3.5 h-3.5 text-blue-700" />
+                </div>
+                <div className="text-2xl font-extrabold text-blue-900 mt-1">
+                  {toBanglaDigits(activeDisputesCount, lang)}
+                </div>
+                <div className="text-[11px] text-blue-700 mt-0.5">{t('মিস-কেস ও ট্রাইব্যুনাল', 'Active objections')}</div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
 
-              <div className="flex flex-wrap gap-1.5">
-                {(['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as const).map((st) => (
+      {/* Sub-Tabs Switcher */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
+        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
+          {(() => {
+            const roleAllowedTabs: AcLandTab[] = (
+              role === 'settlement_records_officer'
+                ? ['survey_batches', 'explorer']
+                : role === 'settlement_checker'
+                ? ['onboarding', 'explorer']
+                : role === 'field_verification_officer'
+                ? ['field_reports', 'mutations', 'explorer']
+                : role === 'uno_supervisor'
+                ? ['sla_overview', 'mutations', 'disputes', 'appeals']
+                : role === 'appellate_reviewer'
+                ? ['appeals', 'mutations', 'explorer']
+                : ['mutations', 'khatians', 'disputes', 'field_reports', 'survey_batches', 'onboarding', 'sla_overview', 'appeals', 'explorer', 'verifier']
+            );
+
+            return (
+              <>
+                {roleAllowedTabs.includes('mutations') && (
                   <button
-                    key={st}
-                    onClick={() => setMutationFilter(st)}
-                    className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-colors cursor-pointer min-h-[32px] ${
-                      mutationFilter === st
-                        ? 'bg-[#006A4E] text-white shadow-xs'
-                        : 'bg-white text-[#5F7A74] border border-[#006A4E]/12 hover:bg-[#EDF7F4]'
+                    type="button"
+                    onClick={() => handleTabChange('mutations')}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      subTab === 'mutations' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    {st === 'ALL'
-                      ? t('সকল (All)', 'All')
-                      : st === 'PENDING'
-                      ? t('অপেক্ষমান (PENDING)', 'Pending')
-                      : st === 'APPROVED'
-                      ? t('অনুমোদিত (APPROVED)', 'Approved')
-                      : t('বাতিল (REJECTED)', 'Rejected')}
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>{t('ই-নামজারি বেঞ্চ', 'e-Mutation Workbench')}</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-800 font-bold">
+                      {toBanglaDigits(pendingMutationsCount, lang)}
+                    </span>
                   </button>
-                ))}
+                )}
+
+                {roleAllowedTabs.includes('khatians') && (
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('khatians')}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      subTab === 'khatians' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <ShieldAlert className="w-3.5 h-3.5" />
+                    <span>{t('রেকর্ডের অমিল ও শুদ্ধিপত্র', 'Record Discrepancies')}</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-100 text-rose-800 font-bold">
+                      {toBanglaDigits(flaggedKhatiansCount, lang)}
+                    </span>
+                  </button>
+                )}
+
+                {roleAllowedTabs.includes('disputes') && (
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('disputes')}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      subTab === 'disputes' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Scale className="w-3.5 h-3.5" />
+                    <span>{t('আপত্তি ও মিস-কেস আদালত', 'Objections & Court')}</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-blue-100 text-blue-800 font-bold">
+                      {toBanglaDigits(activeDisputesCount, lang)}
+                    </span>
+                  </button>
+                )}
+
+                {roleAllowedTabs.includes('field_reports') && (
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('field_reports')}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      subTab === 'field_reports' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Compass className="w-3.5 h-3.5" />
+                    <span>{t('মাঠ তদন্ত প্রতিবেদন', 'Field Reports')}</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700">
+                      {toBanglaDigits(fieldReportsList.length, lang)}
+                    </span>
+                  </button>
+                )}
+
+                {roleAllowedTabs.includes('survey_batches') && (
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('survey_batches')}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      subTab === 'survey_batches' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5" />
+                    <span>{t('জরিপ রেকর্ড ও ব্যাচ দাখিল', 'Survey Records Staging')}</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-800 font-bold">
+                      {toBanglaDigits(onboardingBatches.length, lang)}
+                    </span>
+                  </button>
+                )}
+
+                {roleAllowedTabs.includes('onboarding') && (
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('onboarding')}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      subTab === 'onboarding' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>{t('জরিপ ব্যাচ নিরীক্ষা ও অনুমোদন', 'Survey Batches Inspection')}</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-800 font-bold">
+                      {toBanglaDigits(onboardingBatches.filter((b) => b.status === 'SUBMITTED').length, lang)}
+                    </span>
+                  </button>
+                )}
+
+                {roleAllowedTabs.includes('sla_overview') && (
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('sla_overview')}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      subTab === 'sla_overview' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>{t('সময়সীমা ও তাগিদ (SLA)', 'SLA Escalations')}</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700">
+                      {toBanglaDigits(slaEscalationsList.length, lang)}
+                    </span>
+                  </button>
+                )}
+
+                {roleAllowedTabs.includes('appeals') && (
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('appeals')}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      subTab === 'appeals' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Gavel className="w-3.5 h-3.5" />
+                    <span>{t('রাজস্ব আপিল ট্রাইব্যুনাল', 'Appeals Tribunal')}</span>
+                  </button>
+                )}
+
+                {roleAllowedTabs.includes('explorer') && (
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('explorer')}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      subTab === 'explorer' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <FileSearch className="w-3.5 h-3.5" />
+                    <span>{t('খতিয়ান এক্সপ্লোরার', 'Khatian Explorer')}</span>
+                  </button>
+                )}
+
+                {roleAllowedTabs.includes('verifier') && (
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('verifier')}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                      subTab === 'verifier' ? 'bg-white text-[#006A4E] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>{t('দলিল ভেরিফায়ার', 'Deed Verifier')}</span>
+                  </button>
+                )}
+              </>
+            );
+          })()}
+        </div>
+
+        {/* Reset Filter Button */}
+        {(searchQuery || mutationStatusFilter !== 'ALL' || selectedDivision || selectedDistrict || selectedUpazila || selectedMouzaId) && (
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="text-xs font-bold text-rose-600 hover:underline flex items-center gap-1 cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>{t('ফিল্টার রিসেট', 'Reset Filters')}</span>
+          </button>
+        )}
+      </div>
+
+      {/* ========================================================================= */}
+      {/* SUBTAB 1: E-MUTATION WORKBENCH                                            */}
+      {/* ========================================================================= */}
+      {subTab === 'mutations' && (
+        <div className="space-y-4">
+          {/* Universal Address Cascader & Search Toolbar */}
+          <div className="panel p-4 bg-white border border-slate-200 shadow-xs space-y-3">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <Filter className="w-3.5 h-3.5 text-[#006A4E]" />
+              <span>{t('সার্বজনীন অধিক্ষেত্র ফিল্টারিং (বিভাগ ➔ জেলা ➔ উপজেলা ➔ মৌজা)', 'Universal Hierarchy & Case Filter')}</span>
+            </div>
+
+            <AddressCascader
+              selectedDivision={selectedDivision}
+              selectedDistrict={selectedDistrict}
+              selectedUpazila={selectedUpazila}
+              selectedMouzaId={selectedMouzaId}
+              onChange={handleAddressChange}
+              isFilter={true}
+              showMouza={true}
+              lang={lang}
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 border-t border-slate-100">
+              <div className="sm:col-span-2">
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                  {t('অনুসন্ধান (কেস নং, দাগ নং, আবেদনকারী বা বায়া দলিল নং)', 'Search Case No, Dag, Applicant, Deed')}
+                </label>
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={t('কেস নং, দাগ নং, আবেদনকারীর নাম বা দলিল নং লিখুন...', 'Search by case no, plot, applicant...')}
+                    className="w-full text-xs pl-8 pr-2.5 py-2 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                  {t('আবেদনের বর্তমান স্থিতি', 'Status Filter')}
+                </label>
+                <select
+                  value={mutationStatusFilter}
+                  onChange={(e) => setMutationStatusFilter(e.target.value as any)}
+                  className="w-full text-xs p-2 rounded-lg border border-slate-300 bg-white font-medium focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                >
+                  <option value="ALL">{t('সকল আবেদন (All Status)', 'All Mutations')}</option>
+                  <option value="PENDING">{t('বিচারাধীন / শুনানির অপেক্ষায় (Pending)', 'Pending Hearing')}</option>
+                  <option value="APPROVED">{t('অনুমোদিত ও খতিয়ান সৃজিত (Approved)', 'Approved')}</option>
+                  <option value="REJECTED">{t('নামঞ্জুরকৃত (Rejected)', 'Rejected')}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Mutations Table */}
+          <div className="panel p-0 bg-white border border-slate-200 overflow-hidden shadow-xs">
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <div className="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-[#006A4E]" />
+                <span>{t('ই-নামজারি কেস ও রেজিস্ট্রি তালিকা', 'e-Mutation Cases Table')}</span>
+                <span className="px-2 py-0.5 rounded-full text-xs bg-emerald-100 text-[#006A4E] font-bold">
+                  {toBanglaDigits(filteredMutations.length, lang)} {t('টি কেস', 'Cases')}
+                </span>
+              </div>
+              <div className="text-xs text-slate-500 font-medium hidden sm:block">
+                {t('আই-আইকন (👁) ক্লিক করে বিস্তারিত দেখুন ও রায় প্রদান করুন', 'Click eye icon to inspect docket & order')}
               </div>
             </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto rounded-xl border border-[#006A4E]/12">
-              <table className="table-modern text-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="">
-                    <th className="py-3 px-3 font-bold">{t('কেস ও দলিল নং', 'Case & Deed')}</th>
-                    <th className="py-3 px-3 font-bold">{t('মৌজা ও দাগ', 'Mouza & Dag')}</th>
-                    <th className="py-3 px-3 font-bold">{t('হস্তান্তরকারী → গ্রহীতা', 'Parties')}</th>
-                    <th className="py-3 px-3 font-bold">{t('পরিমাণ', 'Area')}</th>
-                    <th className="py-3 px-3 font-bold">{t('স্ট্যাটাস', 'Status')}</th>
-                    <th className="py-3 px-3 font-bold text-right">
-                      {t('এসি ল্যান্ড সিদ্ধান্ত', 'AC Land Decision')}
-                    </th>
+                  <tr className="bg-slate-100/80 text-slate-600 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold">
+                    <th className="p-3">#</th>
+                    <th className="p-3">{t('কেস নম্বর ও তারিখ', 'Case No & Date')}</th>
+                    <th className="p-3">{t('আবেদনকারী ও গ্রহীতা', 'Applicant / Buyer')}</th>
+                    <th className="p-3">{t('মৌজা ও দাগ নং', 'Mouza & Dag No')}</th>
+                    <th className="p-3">{t('হস্তান্তরিত অংশ ও আয়তন', 'Area & Share')}</th>
+                    <th className="p-3">{t('বায়া দলিল নং', 'Provenance Deed')}</th>
+                    <th className="p-3 text-center">{t('স্থিতি', 'Status')}</th>
+                    <th className="p-3 text-right">{t('অ্যাকশন (শুনানি)', 'Action')}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#006A4E]/10 bg-white">
+                <tbody className="divide-y divide-slate-100">
                   {filteredMutations.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-[#5F7A74]">
-                        {loading
-                          ? t('লোড হচ্ছে...', 'Loading...')
-                          : t('কোনো মিউটেশন কেস পাওয়া যায়নি।', 'No mutation cases found.')}
+                      <td colSpan={8} className="p-8 text-center text-slate-500">
+                        {t('কোনো নামজারি আবেদন পাওয়া যায়নি। অনুসন্ধান ফিল্টার পরিবর্তন করুন।', 'No mutation records match your search.')}
                       </td>
                     </tr>
                   ) : (
-                    filteredMutations.map((m) => (
-                      <tr key={m.id} className="hover:bg-[#EDF7F4]/80 transition-colors">
-                        <td className="py-3 px-3 font-mono font-bold text-[#074f38]">
-                          <div className="flex items-center gap-1.5">
-                            <span>{m.case_no || `MUT-#${m.id}`}</span>
-                          </div>
-                          <div className="text-[10px] text-[#006A4E] font-sans">
-                            {t('দলিল:', 'Deed:')} {m.deed_no}
-                          </div>
-                        </td>
-                        <td className="py-3 px-3 font-semibold text-[#0A1F1C]/90">
-                          {lang === 'bn' ? m.mouza_bn : m.mouza_en} — {t('দাগ নং', 'Dag')}{' '}
-                          {toBanglaDigits(m.dag_no, lang)}
-                        </td>
-                        <td className="py-3 px-3 text-[#5F7A74]">
-                          <div>
-                            <span className="text-[#5F7A74]/80 text-[10px] mr-1">{t('বিক্রেতা:', 'From:')}</span>
-                            {m.seller_name_bn}
-                          </div>
-                          <div>
-                            <span className="text-[#5F7A74]/80 text-[10px] mr-1">{t('নামজারি:', 'To:')}</span>
-                            <strong>{m.buyer_name_bn}</strong>
-                          </div>
-                        </td>
-                        <td className="py-3 px-3 font-bold text-[#0A1F1C]/90">
-                          {toBanglaDigits(m.area_decimal, lang)} {t('শতাংশ', 'Decimal')}
-                        </td>
-                        <td className="py-3 px-3">
-                          <span
-                            className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold inline-block ${
-                              m.status === 'APPROVED'
-                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                : m.status === 'REJECTED'
-                                ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                                : 'bg-amber-100 text-amber-800 border border-amber-300'
-                            }`}
-                          >
-                            {m.status}
-                          </span>
-                        </td>
-                        <td className="py-3 px-3 text-right">
-                          <div className="inline-flex items-center gap-1.5">
-                            <button
-                              onClick={() => setSelectedMutation(m)}
-                              className="px-2 py-1 rounded bg-[#EDF7F4] hover:bg-[#E4EFEA] text-[#0A1F1C]/90 font-bold text-[11px] flex items-center gap-1 cursor-pointer min-h-[30px]"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>{t('শুনানি', 'Details')}</span>
-                            </button>
-
-                            {m.status === 'PENDING' && (
-                              <>
-                                <button
-                                  onClick={() => handleDecision(m.id, 'APPROVED')}
-                                  className="px-2.5 py-1 rounded bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer min-h-[30px] transition-colors"
-                                >
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
-                                  <span>{t('অনুমোদন', 'Approve')}</span>
-                                </button>
-                                <button
-                                  onClick={() => handleDecision(m.id, 'REJECTED')}
-                                  className="px-2.5 py-1 rounded bg-[#FF3B4A] hover:bg-[#E02E3C] text-white font-bold text-[11px] flex items-center gap-1 cursor-pointer min-h-[30px] transition-colors"
-                                >
-                                  <XCircle className="w-3.5 h-3.5" />
-                                  <span>{t('না-মঞ্জুর', 'Reject')}</span>
-                                </button>
-                              </>
+                    filteredMutations.map((m, idx) => (
+                      <tr key={m.id || idx} className="hover:bg-emerald-50/30 transition">
+                        <td className="p-3 font-mono text-slate-400">{toBanglaDigits(idx + 1, lang)}</td>
+                        <td className="p-3">
+                          <div className="font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
+                            <span>{m.case_no}</span>
+                            {m.case_no?.includes('WARISH') && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                ⚖️ ফারায়েজ
+                              </span>
+                            )}
+                            {(m.case_no?.includes('LT') || m.decision_reason_bn?.includes('এলটি নোটিশ')) && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                ⚡ অটো এলটি নোটিশ
+                              </span>
                             )}
                           </div>
+                          <div className="text-[10px] text-slate-400 font-mono">
+                            {m.created_at ? new Date(m.created_at).toLocaleDateString() : '—'}
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <div className="font-bold text-slate-900">{m.buyer_name_bn || m.applicant_name_bn || 'নাম উল্লেখ নেই'}</div>
+                          {m.buyer_nid && <div className="text-[10px] text-slate-500 font-mono">NID: {m.buyer_nid}</div>}
+                        </td>
+                        <td className="p-3 font-medium text-slate-800">
+                          <div>দাগ নং: {m.dag_no_bn || m.dag_no}</div>
+                          <div className="text-[10px] text-slate-500">
+                            {m.mouza_bn} {m.jl_no ? `(জে.এল. ${m.jl_no})` : ''}
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <span className="font-bold text-[#006A4E]">{toBanglaDigits(m.area_decimal, lang)} {t('শতক', 'dec')}</span>
+                          <span className="text-[10px] text-slate-500 ml-1">({m.share_fraction})</span>
+                        </td>
+                        <td className="p-3 font-mono text-slate-600">
+                          {m.deed_no ? (
+                            <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
+                              {m.deed_no}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">—</span>
+                          )}
+                        </td>
+                        <td className="p-3 text-center">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-block border ${
+                              m.status === 'APPROVED'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                : m.status === 'REJECTED'
+                                ? 'bg-rose-50 text-rose-800 border-rose-300'
+                                : 'bg-amber-50 text-amber-800 border-amber-300'
+                            }`}
+                          >
+                            {m.status === 'APPROVED'
+                              ? t('অনুমোদিত', 'Approved')
+                              : m.status === 'REJECTED'
+                              ? t('নামঞ্জুর', 'Rejected')
+                              : t('শুনানি অপেক্ষমাণ', 'Pending')}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedMutation(m);
+                              setMutationDecisionNotes(m.decision_note_bn || '');
+                            }}
+                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-[#006A4E] hover:text-white text-slate-700 transition cursor-pointer"
+                            title={t('নামজারি শুনানি ও বিস্তারিত দেখুন', 'Inspect mutation docket & hearing')}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -969,743 +1154,1503 @@ export const AcLandPage: React.FC = () => {
               </table>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* TAB 2: Khatian Chain & Heirs Reconciliation Control */}
-        {subTab === 'khatians' && (
-          <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-[#EDF7F4]/60 border border-[#006A4E]/20 text-xs text-[#074f38] flex items-start gap-3">
-              <GitCompareArrows className="w-5 h-5 text-[#006A4E] shrink-0 mt-0.5" />
+      {/* ========================================================================= */}
+      {/* SUBTAB 2: RECORD DISCREPANCIES & FLAGGED KHATIANS                         */}
+      {/* ========================================================================= */}
+      {subTab === 'khatians' && (
+        <div className="space-y-4">
+          <div className="panel p-4 bg-rose-50/60 border border-rose-200 text-rose-900 text-xs flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
               <div>
-                <strong>{t('খতিয়ান চেইন অডিট প্রটোকল:', 'Khatian Lineage Audit Protocol:')}</strong>{' '}
+                <strong>{t('স্বত্বলিপি ও রেকর্ডের অমিল নোটিশ:', 'Record Anomaly Warning:')}</strong>{' '}
                 {t(
-                  'সিএস (১৯৪০), এসএ (১৯৬২), আরএস (১৯৮৫) এবং বিএস (২০১২) খতিয়ানের মোট জমি ও ওয়ারিশ অংশের ফারায়েজ গণনা অসামঞ্জস্য হলে এসি ল্যান্ড শুনানির মাধ্যমে তা সংশোধন করতে পারেন।',
-                  'When total plot area or inherited shares diverge between CS, SA, RS and BS surveys, the AC Land conducts a formal hearing to reconcile records.'
+                  'সিএস/আরএস এর তুলনায় বিএস বা সিটি জরিপে আয়তন বৃদ্ধি, খাস জমি দখল কিংবা মালিকের নাম উধাও হওয়া দাগসমূহকে লাল পতাকাভুক্ত করা হয়েছে। সহকারী কমিশনার (ভূমি) কর্তৃক শুদ্ধিপত্র জারি ব্যতিরেকে এই দাগে নামজারি নিষিদ্ধ।',
+                  'Khatians with area mismatch, disputed government interest, or survey discrepancies are flagged. AC Land correction order required.'
                 )}
               </div>
             </div>
+          </div>
 
-            {flaggedKhatians.length === 0 ? (
-              <div className="p-6 rounded-xl bg-[#EDF7F4] text-[#006A4E] font-bold text-xs flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5" />
-                <span>{t('সকল ত্রুটিপূর্ণ খতিয়ান সমন্বয় সম্পন্ন হয়েছে!', 'All flagged khatians have been reconciled!')}</span>
+          <div className="panel p-0 bg-white border border-slate-200 overflow-hidden shadow-xs">
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <div className="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-rose-600" />
+                <span>{t('লাল পতাকাভুক্ত খতিয়ান ও দাগ তালিকা', 'Flagged Khatians Table')}</span>
+                <span className="px-2 py-0.5 rounded-full text-xs bg-rose-100 text-rose-800 font-bold">
+                  {toBanglaDigits(flaggedKhatians.length, lang)} {t('টি রেকর্ড', 'Records')}
+                </span>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-100/80 text-slate-600 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold">
+                    <th className="p-3">#</th>
+                    <th className="p-3">{t('মৌজা ও জে.এল.', 'Mouza & J.L.')}</th>
+                    <th className="p-3">{t('দাগ নং', 'Plot No')}</th>
+                    <th className="p-3">{t('আরএস আয়তন', 'RS Area')}</th>
+                    <th className="p-3">{t('বিএস আয়তন', 'BS Area')}</th>
+                    <th className="p-3">{t('অসংগতি ও ত্রুটির বিবরণ', 'Discrepancy Note')}</th>
+                    <th className="p-3 text-right">{t('অ্যাকশন', 'Action')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {flaggedKhatians.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center text-slate-500">
+                        {t('কোনো অমিল পাওয়া যায়নি। সকল রেকর্ড শুদ্ধ আছে।', 'No flagged khatians found.')}
+                      </td>
+                    </tr>
+                  ) : (
+                    flaggedKhatians.map((k, idx) => (
+                      <tr key={k.id || idx} className="hover:bg-rose-50/20 transition">
+                        <td className="p-3 font-mono text-slate-400">{toBanglaDigits(idx + 1, lang)}</td>
+                        <td className="p-3 font-bold text-slate-900">{k.mouza_bn}</td>
+                        <td className="p-3 font-bold text-slate-800">{k.dag_no_bn || k.dag_no}</td>
+                        <td className="p-3 font-mono">{toBanglaDigits(k.area_rs ?? k.area_decimal, lang)} {t('শতক', 'dec')}</td>
+                        <td className="p-3 font-mono text-rose-700 font-bold">{toBanglaDigits(k.area_bs ?? k.area_decimal, lang)} {t('শতক', 'dec')}</td>
+                        <td className="p-3 text-slate-600 text-[11px]">
+                          {k.anomaly_note_bn || k.remarks_bn || 'আরএস ও বিএস রেকর্ডের মধ্যে ৮ শতক অতিরিক্ত জমির অমিল।'}
+                        </td>
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedKhatian(k);
+                              setKhatianReconcileArea(String(k.area_rs ?? k.area_decimal ?? ''));
+                              setKhatianReconcileNotes('');
+                            }}
+                            className="px-3 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#00523C] text-white font-bold transition shadow-xs cursor-pointer"
+                          >
+                            {t('শুদ্ধিপত্র জারি', 'Reconcile')}
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUBTAB 3: DISPUTES & OBJECTIONS COURT                                     */}
+      {/* ========================================================================= */}
+      {subTab === 'disputes' && (
+        <div className="space-y-4">
+          <div className="panel p-0 bg-white border border-slate-200 overflow-hidden shadow-xs">
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <div className="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+                <Scale className="w-4 h-4 text-blue-700" />
+                <span>{t('নাগরিক মালিকানা আপত্তি ও মিস-কেস ট্রাইব্যুনাল', 'Objections & Miss-Case Court')}</span>
+                <span className="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800 font-bold">
+                  {toBanglaDigits(disputes.length, lang)} {t('টি মামলা', 'Cases')}
+                </span>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-100/80 text-slate-600 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold">
+                    <th className="p-3">#</th>
+                    <th className="p-3">{t('কেস নম্বর', 'Case No')}</th>
+                    <th className="p-3">{t('আপত্তিকারী নাগরিক', 'Complainant')}</th>
+                    <th className="p-3">{t('সংশ্লিষ্ট দাগ ও মৌজা', 'Plot & Mouza')}</th>
+                    <th className="p-3">{t('আপত্তির কারণ ও ধরন', 'Dispute Type')}</th>
+                    <th className="p-3 text-center">{t('স্থিতি', 'Status')}</th>
+                    <th className="p-3 text-right">{t('শুনানি সিদ্ধান্ত', 'Action')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {disputes.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center text-slate-500">
+                        {t('কোনো দেওয়ানি আপত্তি বা মিস-কেস পাওয়া যায়নি।', 'No dispute objections filed.')}
+                      </td>
+                    </tr>
+                  ) : (
+                    disputes.map((d, idx) => (
+                      <tr key={d.id || idx} className="hover:bg-blue-50/20 transition">
+                        <td className="p-3 font-mono text-slate-400">{toBanglaDigits(idx + 1, lang)}</td>
+                        <td className="p-3 font-bold text-slate-900">{d.case_no}</td>
+                        <td className="p-3">
+                          <div className="font-bold text-slate-900">{d.complainant_name_bn || 'নাম গোপন'}</div>
+                          {d.complainant_nid && <div className="text-[10px] text-slate-500 font-mono">NID: {d.complainant_nid}</div>}
+                        </td>
+                        <td className="p-3 font-medium text-slate-800">
+                          <div>দাগ নং: {d.dag_no_bn || d.dag_no || d.plot_id}</div>
+                          <div className="text-[10px] text-slate-500">{d.mouza_bn}</div>
+                        </td>
+                        <td className="p-3 text-slate-700 text-[11px]">
+                          <div className="font-bold">{d.dispute_type || 'OWNERSHIP_OBJECTION'}</div>
+                          <div className="text-slate-500 truncate max-w-xs">{d.description_bn || d.reason_bn}</div>
+                        </td>
+                        <td className="p-3 text-center">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              d.status === 'RESOLVED'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : d.status === 'UPHELD_FROZEN'
+                                ? 'bg-rose-100 text-rose-800'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {d.status === 'RESOLVED' ? 'নিষ্পন্ন' : d.status === 'UPHELD_FROZEN' ? 'স্থগিতাদেশ বহাল' : 'বিচারাধীন'}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedDispute(d);
+                              setDisputeNotes(d.resolution_note_bn || '');
+                            }}
+                            className="px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-100 font-bold text-slate-700 transition cursor-pointer"
+                          >
+                            {t('শুনানি রায়', 'Order')}
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUBTAB 4: FIELD INSPECTION REPORTS                                        */}
+      {/* ========================================================================= */}
+      {subTab === 'field_reports' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-slate-600">
+              {t(
+                'উপজেলা সার্ভেয়ার ও কানুনগো কর্তৃক সরেজমিন দখল ও সীমানা পরিদর্শন রিপোর্ট।',
+                'On-site surveyor and kanungo inspection reports for possession and boundary verification.'
+              )}
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsNewFieldReportOpen(true)}
+              className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00523C] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>{t('নতুন মাঠ প্রতিবেদন দাখিল', 'Submit Inspection Report')}</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {fieldReportsList.length === 0 ? (
+              <div className="col-span-2 panel p-8 text-center text-slate-500">
+                {t('কোনো মাঠ পরিদর্শন প্রতিবেদন পাওয়া যায়নি।', 'No field inspection reports filed.')}
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-3">
-                {flaggedKhatians.map((fk) => (
-                  <div
-                    key={fk.id}
-                    className="p-5 rounded-xl bg-amber-50/70 border border-amber-300 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-extrabold text-sm text-[#0A1F1C]">
-                          {lang === 'bn' ? fk.mouza_bn : fk.mouza_en} — {t('দাগ নং', 'Dag')}{' '}
-                          {toBanglaDigits(fk.dag_no, lang)}
-                        </span>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-white font-mono">
-                          খতিয়ান #{fk.khatian_no}
-                        </span>
-                        <span className="text-[10px] px-2.5 py-0.5 rounded-lg bg-amber-600 text-white font-extrabold">
-                          {fk.reconcile_status}
-                        </span>
-                      </div>
-                      <p className="text-xs text-[#0A1F1C]/90 leading-relaxed">
-                        {lang === 'bn' ? fk.anomaly_note_bn : fk.anomaly_note_en}
-                      </p>
-                      <div className="text-[11px] text-[#5F7A74] font-mono pt-1">
-                        নথিভুক্ত পরিমাণ: {fk.total_area_decimal} শতাংশ
-                      </div>
+              fieldReportsList.map((fr, idx) => (
+                <div key={fr.id || idx} className="panel p-5 bg-white border border-slate-200 shadow-xs space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <div className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                      <Compass className="w-4 h-4 text-[#006A4E]" />
+                      <span>দাগ নং {fr.dag_no || fr.plot_id} · {fr.mouza_bn || 'মৌজা রেকর্ড'}</span>
                     </div>
-
-                    <button
-                      onClick={() => handleReconcileKhatian(fk.plot_id, Number(fk.total_area_decimal))}
-                      className="px-4 py-2.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-extrabold text-xs shrink-0 cursor-pointer min-h-[38px] flex items-center gap-1.5 shadow-sm transition-colors"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>{t('শুনানি ও জরিপের মাধ্যমে সমন্বয় করুন', 'Reconcile Khatian Lineage')}</span>
-                    </button>
+                    <span className="text-[10px] text-slate-400 font-mono">
+                      {fr.created_at ? new Date(fr.created_at).toLocaleDateString() : 'হালনাগাদ'}
+                    </span>
                   </div>
-                ))}
-              </div>
+
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="p-2 rounded bg-slate-50 border border-slate-100">
+                      <div className="text-[10px] text-slate-500">{t('দখলের অবস্থা', 'Possession')}</div>
+                      <div className="font-bold text-slate-800">{fr.possession_status || fr.possession}</div>
+                    </div>
+                    <div className="p-2 rounded bg-slate-50 border border-slate-100">
+                      <div className="text-[10px] text-slate-500">{t('সীমানা স্থিতি', 'Boundary')}</div>
+                      <div className="font-bold text-slate-800">{fr.boundary_status || fr.boundary}</div>
+                    </div>
+                    <div className="p-2 rounded bg-slate-50 border border-slate-100">
+                      <div className="text-[10px] text-slate-500">{t('ভূমি উন্নয়ন কর', 'Tax Status')}</div>
+                      <div className="font-bold text-slate-800">{fr.tax_status}</div>
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-slate-600 bg-emerald-50/40 p-2.5 rounded-lg border border-emerald-100">
+                    <strong>{t('সার্ভেয়ারের পর্যবেক্ষণ:', 'Observations:')}</strong>{' '}
+                    {fr.remarks_bn || fr.remarks || 'মাঠ সীমানা ও দখল আবেদনকারীর অনুকূলে পাওয়া গেছে।'}
+                  </div>
+                </div>
+              ))
             )}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* TAB 3: Citizen Dispute Resolution Control */}
-        {subTab === 'disputes' && (
-          <div className="space-y-4">
-            <div className="p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12 text-xs text-[#0A1F1C]/90 flex items-start gap-3">
-              <Scale className="w-5 h-5 text-[#006A4E] shrink-0 mt-0.5" />
-              <div>
-                <strong>{t('এসি ল্যান্ড ট্রাইব্যুনাল এক্তিয়ার:', 'AC Land Dispute Tribunal Jurisdiction:')}</strong>{' '}
-                {t(
-                  'নাগরিক কর্তৃক দায়েরকৃত ওয়ারিশ জালিয়াতি বা সীমা বিরোধের ক্ষেত্রে এসি ল্যান্ড দাগের জমি ফ্রিজ (হস্তান্তর নিষিদ্ধ) করতে পারেন অথবা শুনানি শেষে নিষ্পত্তি করতে পারেন।',
-                  'Under State Acquisition & Tenancy Act, AC Land can place an emergency hold (freeze) on disputed plots or dismiss fraudulent complaints.'
-                )}
-              </div>
+      {/* ========================================================================= */}
+      {/* SUBTAB 5: SLA ESCALATIONS                                                 */}
+      {/* ========================================================================= */}
+      {subTab === 'sla_overview' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-slate-600">
+              {t(
+                'সিটিজেন চার্টার (২৮ দিন) অনুসারে নামজারি নথির সময়সীমা পর্যবেক্ষণ ও তাগিদ নোটিশ।',
+                'Monitor 28-day mutation Citizen Charter SLA and issue escalation directives.'
+              )}
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsNewSlaOpen(true)}
+              className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>{t('কেস তাগিদ নোটিশ পাঠান', 'Issue Escalation')}</span>
+            </button>
+          </div>
+
+          <div className="panel p-0 bg-white border border-slate-200 overflow-hidden shadow-xs">
+            <div className="p-4 bg-slate-50 border-b border-slate-200 font-extrabold text-sm text-slate-800 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-amber-600" />
+              <span>{t('এসএলএ তাগিদ ও বিলম্ব নোটিশ তালিকা', 'SLA Escalation Dispatches')}</span>
             </div>
-
-            <div className="grid grid-cols-1 gap-3">
-              {disputes.length === 0 ? (
-                <div className="p-6 rounded-xl bg-[#EDF7F4]/80 text-[#5F7A74] text-xs text-center border border-[#006A4E]/12">
-                  {t('কোনো অমীমাংসিত অভিযোগ নেই।', 'No pending citizen disputes.')}
-                </div>
+            <div className="divide-y divide-slate-100 text-xs">
+              {slaEscalationsList.length === 0 ? (
+                <div className="p-8 text-center text-slate-500">{t('কোনো বিলম্ব বা তাগিদ নোটিশ নেই।', 'No SLA escalations active.')}</div>
               ) : (
-                disputes.map((dsp) => (
-                  <div
-                    key={dsp.id}
-                    className={`p-5 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs ${
-                      dsp.status === 'OPEN'
-                        ? 'bg-amber-50/60 border-amber-300'
-                        : 'bg-white border-[#006A4E]/12'
-                    }`}
-                  >
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-extrabold text-sm text-[#0A1F1C]">
-                          {lang === 'bn' ? dsp.mouza_bn : dsp.mouza_en} — {t('দাগ নং', 'Dag')} {dsp.dag_no}
-                        </span>
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#074f38] text-white font-mono font-bold">
-                          {dsp.dispute_type}
-                        </span>
-                        <span
-                          className={`text-[10px] px-2.5 py-0.5 rounded-lg font-extrabold ${
-                            dsp.status === 'OPEN'
-                              ? 'bg-amber-500 text-white'
-                              : dsp.status === 'UPHELD_FROZEN'
-                              ? 'bg-rose-600 text-white'
-                              : 'bg-emerald-600 text-white'
-                          }`}
-                        >
-                          {dsp.status}
+                slaEscalationsList.map((s, idx) => (
+                  <div key={s.id || idx} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50">
+                    <div>
+                      <div className="font-extrabold text-slate-900 flex items-center gap-2">
+                        <span>{s.case_reference || s.case_no || 'MUT-SLA'}</span>
+                        <span className="px-2 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-800 font-bold">
+                          {s.priority || 'NORMAL'}
                         </span>
                       </div>
-                      <p className="text-xs text-[#0A1F1C]/90 leading-relaxed">{dsp.description_bn}</p>
-                      {dsp.complainant_name_bn && (
-                        <div className="text-[11px] text-[#5F7A74]">
-                          {t('অভিযোগকারী:', 'Complainant:')} <strong>{dsp.complainant_name_bn}</strong>{' '}
-                          {dsp.complainant_nid && `(NID: ${dsp.complainant_nid})`}
-                        </div>
-                      )}
+                      <p className="text-slate-600 mt-0.5">{s.notes_bn || s.reason}</p>
                     </div>
-
-                    <div className="flex flex-wrap gap-2 shrink-0">
-                      {dsp.status === 'OPEN' && (
-                        <>
-                          <button
-                            onClick={() => handleResolveDispute(dsp.id, 'UPHELD_FROZEN')}
-                            className="px-3.5 py-2 rounded-lg bg-[#FF3B4A] hover:bg-[#E02E3C] text-white font-bold text-xs cursor-pointer min-h-[36px] flex items-center gap-1.5 transition-colors shadow-xs"
-                          >
-                            <span>🔒 {t('দাগ ফ্রিজ (Freeze Plot)', 'Uphold & Freeze')}</span>
-                          </button>
-                          <button
-                            onClick={() => handleResolveDispute(dsp.id, 'RESOLVED_DISMISSED')}
-                            className="px-3.5 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs cursor-pointer min-h-[36px] flex items-center gap-1.5 transition-colors shadow-xs"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>{t('নিষ্পত্তি ও খারিজ (Dismiss)', 'Resolve & Dismiss')}</span>
-                          </button>
-                        </>
-                      )}
+                    <div className="text-right text-[11px] text-slate-400">
+                      <div>প্রত্যাশিত তারিখ: {s.due_at || 'শীঘ্রই'}</div>
+                      <div className="font-bold text-amber-700">{s.target_role}</div>
                     </div>
                   </div>
                 ))
               )}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* TAB 4: In-Panel Officer Khatian Explorer */}
-        {subTab === 'explorer' && (
-          <OfficerKhatianExplorer
-            onSelectPlotForAction={(plotId) => {
-              handleTabChange('khatians');
-            }}
-            actionLabel={t('খতিয়ান রেকর্ড সমন্বয়', 'Reconcile Khatian')}
-            actionType="reconcile"
-          />
-        )}
-
-        {/* TAB 5: In-Panel Officer Deed Verifier */}
-        {subTab === 'verifier' && <OfficerDeedVerifier />}
-
-        {/* TAB 6: Field Possession & Inspection Reports (Field Verification Officer / Surveyor) */}
-        {subTab === 'field_reports' && (
-          <div className="space-y-6">
-            <div className="bg-[#F4F9F6] p-5 rounded-xl border border-[#006A4E]/15">
-              <h3 className="font-bold text-base text-[#074f38] flex items-center gap-2 mb-1">
-                <Search className="w-5 h-5 text-[#006A4E]" />
-                <span>{t('জমির সরেজমিন মাঠ তদন্ত ও দখল প্রতিবেদন (Field Possession Inspection)', 'Field Possession & Boundary Inspection')}</span>
-              </h3>
-              <p className="text-xs text-[#5F7A74]">
-                {t(
-                  'নামজারি অনুমোদনের পূর্বে সার্ভেয়ার/কানুনগো কর্তৃক সরেজমিন সীমানা, প্রকৃত দখলদার এবং বকেয়া ভূমি উন্নয়ন কর যাচাই।',
-                  'On-site field verification of physical possession, boundary demarcation, and land tax status prior to mutation approval.'
-                )}
-              </p>
-
-              <form onSubmit={handleSubmitFieldReport} className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    {t('দাগ নম্বর নির্বাচন:', 'Select Plot (Dag):')}
-                  </label>
-                  <select
-                    value={fieldForm.dag_no}
-                    onChange={(e) => setFieldForm({ ...fieldForm, dag_no: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold"
-                  >
-                    <option value="101">দাগ ১০১ — বিরুলিয়া (আবেদনকারী: মো. রফিকুল ইসলাম)</option>
-                    <option value="102">দাগ ১০২ — বিরুলিয়া (তদন্তাধীন দ্বৈত বিক্রয়)</option>
-                    <option value="103">দাগ ১০৩ — বিরুলিয়া (অতিরিক্ত জমি তদন্ত)</option>
-                    <option value="107">দাগ ১০৭ — বিরুলিয়া (আরএস-বিএস সীমানা বিরোধ)</option>
-                    <option value="108">দাগ ১০৮ — বিরুলিয়া (ওয়ারিশ অংশ তদন্ত)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    {t('প্রকৃত সরেজমিন দখলদার:', 'Physical Possession Status:')}
-                  </label>
-                  <select
-                    value={fieldForm.possession}
-                    onChange={(e) => setFieldForm({ ...fieldForm, possession: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold"
-                  >
-                    <option value="VERIFIED">✔ আবেদনকারীর নিরঙ্কুশ দখল বিদ্যমান (Verified)</option>
-                    <option value="CONTESTED">⚠ স্থানীয় ওয়ারিশদের সাথে দখল বিরোধ রয়েছে (Contested)</option>
-                    <option value="UNOCCUPIED">✕ জমি পতিত / অনাবাদী অবস্থায় রয়েছে (Unoccupied)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    {t('সীমানা ও ক্যাডাস্ট্রাল নকশা মিল:', 'Boundary Demarcation Check:')}
-                  </label>
-                  <select
-                    value={fieldForm.boundary}
-                    onChange={(e) => setFieldForm({ ...fieldForm, boundary: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold"
-                  >
-                    <option value="MATCHED">✔ মৌজা ম্যাপ ও সীমানা খুঁটির সাথে হুবহু মিল (Matched)</option>
-                    <option value="DISPUTED">⚠ পার্শ্ববর্তী দাগের সাথে আংশিক সীমানা ব্যত্যয় (Disputed)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    {t('ভূমি উন্নয়ন কর (LD Tax) স্ট্যাটাস:', 'LD Tax Payment Status:')}
-                  </label>
-                  <select
-                    value={fieldForm.tax_status}
-                    onChange={(e) => setFieldForm({ ...fieldForm, tax_status: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold"
-                  >
-                    <option value="PAID">✔ বর্তমান অর্থবছর পর্যন্ত কর হালনাগাদ (Paid)</option>
-                    <option value="DUE">⚠ বকেয়া কর আদায়যোগ্য (Due)</option>
-                  </select>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    {t('সার্ভেয়ার / কানুনগো তদন্ত প্রতিবেদন মন্তব্য:', 'Surveyor Inspection Remarks:')}
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={fieldForm.remarks}
-                    onChange={(e) => setFieldForm({ ...fieldForm, remarks: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold"
-                    required
-                  />
-                </div>
-
-                <div className="md:col-span-2 flex justify-end">
-                  <button
-                    type="submit"
-                    className="btn-primary text-xs flex items-center gap-1.5 py-2 px-4 shadow-sm"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                    <span>{t('মাঠ তদন্ত প্রতিবেদন দাখিল ও স্বাক্ষর করুন', 'Submit Official Inspection Report')}</span>
-                  </button>
-                </div>
-              </form>
+      {/* ========================================================================= */}
+      {/* SUBTAB 6: APPEALS TRIBUNAL                                                */}
+      {/* ========================================================================= */}
+      {subTab === 'appeals' && (
+        <div className="space-y-4">
+          <div className="panel p-0 bg-white border border-slate-200 overflow-hidden shadow-xs">
+            <div className="p-4 bg-slate-50 border-b border-slate-200 font-extrabold text-sm text-slate-800 flex items-center gap-2">
+              <Gavel className="w-4 h-4 text-[#006A4E]" />
+              <span>{t('রাজস্ব আপিল ট্রাইব্যুনাল শুনানী ও আদেশ', 'Revenue Appeals Tribunal')}</span>
             </div>
-
-            {/* Field Investigation Docket */}
-            <div className="space-y-3">
-              <h4 className="font-bold text-sm text-slate-800">
-                {t('তদন্তাধীন ও অনুমোদিত মাঠ প্রতিবেদন তালিকা:', 'Pending Field Inspection Records:')}
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {fieldReportsList.map((fr: any) => (
-                  <div
-                    key={fr.id}
-                    className={`p-4 rounded-xl border space-y-2 ${
-                      fr.possession === 'VERIFIED'
-                        ? 'border-emerald-200 bg-emerald-50/40'
-                        : fr.possession === 'CONTESTED'
-                        ? 'border-amber-200 bg-amber-50/40'
-                        : 'border-slate-200 bg-slate-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between font-bold text-xs">
-                      <span className="text-slate-900">
-                        {t('দাগ নং', 'Dag No')} {toBanglaDigits(fr.dag_no, lang)} • {fr.mouza_bn}
-                      </span>
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                          fr.possession === 'VERIFIED'
-                            ? 'bg-emerald-200 text-emerald-900'
-                            : 'bg-amber-200 text-amber-900'
-                        }`}
-                      >
-                        {fr.possession}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-700 leading-relaxed">{fr.remarks}</p>
-                    <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono pt-1 border-t border-slate-100">
-                      <span>{fr.officer}</span>
-                      <span>{fr.date}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 7: Survey Batch Staging Ingestion (Settlement Records Officer - Maker) */}
-        {subTab === 'survey_batches' && (
-          <div className="space-y-6">
-            <div className="bg-[#F4F9F6] p-5 rounded-xl border border-[#006A4E]/15">
-              <h3 className="font-bold text-base text-[#074f38] flex items-center gap-2 mb-1">
-                <FileSpreadsheet className="w-5 h-5 text-[#006A4E]" />
-                <span>{t('নতুন জরিপ খতিয়ান ব্যাচ এন্ট্রি ও ক্রিপ্টোগ্রাফিক হ্যাশিং (Survey Batch Maker)', 'Survey Batch Staging Entry')}</span>
-              </h3>
-              <p className="text-xs text-[#5F7A74]">
-                {t(
-                  'সিএস, এসএ, আরএস ও বিএস মাঠ জরিপ হতে আগত রেকর্ডসমূহ প্রস্তুত করে ক্রিপ্টোগ্রাফিক হ্যাশ সিল প্যাকেজে সংরক্ষণ করুন। চেকার অনুমোদন ছাড়া গেজেট প্রকাশ পাবে না।',
-                  'Ingest survey records from CS, SA, RS, and BS survey sheets. Computes SHA-256 seal. Requires four-eyes checker approval.'
-                )}
-              </p>
-
-              <form onSubmit={handleCreateSurveyBatch} className="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    {t('জরিপের ধরন:', 'Survey Type:')}
-                  </label>
-                  <select
-                    value={surveyBatchForm.record_type}
-                    onChange={(e) => setSurveyBatchForm({ ...surveyBatchForm, record_type: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold"
-                  >
-                    <option value="SURVEY_BS">বিএস জরিপ (Bangladesh Survey)</option>
-                    <option value="SURVEY_RS">আরএস জরিপ (Revisional Survey)</option>
-                    <option value="SURVEY_SA">এসএ জরিপ (State Acquisition)</option>
-                    <option value="SURVEY_CS">সিএস জরিপ (Cadastral Survey)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">{t('দাগ নং:', 'Dag No:')}</label>
-                  <input
-                    type="text"
-                    value={surveyBatchForm.dag_no}
-                    onChange={(e) => setSurveyBatchForm({ ...surveyBatchForm, dag_no: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">{t('মৌজা:', 'Mouza:')}</label>
-                  <input
-                    type="text"
-                    value={surveyBatchForm.mouza}
-                    onChange={(e) => setSurveyBatchForm({ ...surveyBatchForm, mouza: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">{t('জমির পরিমাণ (শতক):', 'Area (dec):')}</label>
-                  <input
-                    type="text"
-                    value={surveyBatchForm.area_decimal}
-                    onChange={(e) => setSurveyBatchForm({ ...surveyBatchForm, area_decimal: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">{t('মালিক / প্রজার নাম:', 'Owner / Tenant Name:')}</label>
-                  <input
-                    type="text"
-                    value={surveyBatchForm.owner_name}
-                    onChange={(e) => setSurveyBatchForm({ ...surveyBatchForm, owner_name: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">{t('হিস্যা / অংশ:', 'Share Fraction:')}</label>
-                  <input
-                    type="text"
-                    value={surveyBatchForm.share_fraction}
-                    onChange={(e) => setSurveyBatchForm({ ...surveyBatchForm, share_fraction: e.target.value })}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-semibold"
-                    required
-                  />
-                </div>
-
-                <div className="sm:col-span-2 md:col-span-3 flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={creatingBatch}
-                    className="btn-primary text-xs flex items-center gap-1.5 py-2 px-4 shadow-sm"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>{creatingBatch ? t('হ্যাশ সিল হচ্ছে...', 'Sealing...') : t('জরিপ ব্যাচ তৈরি ও হ্যাশ সিল করুন', 'Create Survey Batch & Seal Hash')}</span>
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* Recent Survey Batches */}
-            <div className="space-y-3">
-              <h4 className="font-bold text-sm text-slate-800">
-                {t('প্রস্তুতকৃত জরিপ ব্যাচসমূহ (স্ট্যাটাস ট্র্যাকিং):', 'Staged Survey Batches:')}
-              </h4>
-              <div className="space-y-2">
-                {onboardingBatches.map((b: any) => (
-                  <div key={b.id} className="p-3.5 rounded-xl border border-slate-200 bg-white flex items-center justify-between gap-3 text-xs">
+            <div className="divide-y divide-slate-100 text-xs">
+              {appealsList.length === 0 ? (
+                <div className="p-8 text-center text-slate-500">{t('কোনো বিচারাধীন আপিল পাওয়া যায়নি।', 'No pending appeals.')}</div>
+              ) : (
+                appealsList.map((app, idx) => (
+                  <div key={app.id || idx} className="p-4 flex items-center justify-between gap-4 hover:bg-slate-50">
                     <div>
-                      <div className="font-bold text-slate-900">{b.batch_no} • {b.record_type}</div>
-                      <div className="text-[11px] text-slate-500 font-mono mt-0.5">Hash: {b.batch_hash?.substring(0, 24)}...</div>
+                      <div className="font-bold text-slate-900">{app.appeal_code || `APL-${app.id}`}</div>
+                      <p className="text-slate-600 text-xs mt-0.5">{app.description_bn || app.reason_bn}</p>
                     </div>
-                    <span className={`px-2.5 py-1 rounded-full font-bold text-[10px] ${b.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
-                      {b.status}
+                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                      {app.status}
                     </span>
                   </div>
-                ))}
-              </div>
+                ))
+              )}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* TAB 8: Upazila SLA Oversight & Performance (UNO Supervisor) */}
-        {subTab === 'sla_overview' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-4 rounded-xl bg-white border border-[#006A4E]/15 shadow-xs">
-                <div className="text-[11px] font-bold uppercase text-slate-500">{t('সংবিধিবদ্ধ এসএলএ টার্গেট', 'Statutory SLA Target')}</div>
-                <div className="text-2xl font-black text-[#006A4E] mt-1">২৮ {t('দিন', 'Days')}</div>
-                <div className="text-[11px] text-emerald-700 font-semibold mt-1">গড় নিষ্পত্তি: ১৮.৪ দিন (অন-ট্র্যাক)</div>
+      {/* ========================================================================= */}
+      {/* SUBTAB: SURVEY BATCHES (settlement_records_officer, ac_land)             */}
+      {/* ========================================================================= */}
+      {subTab === 'survey_batches' && (
+        <div className="space-y-5 animate-rise">
+          <div className="panel p-5 bg-white border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1">
+                <FileSpreadsheet className="w-4 h-4 text-[#006A4E]" />
+                <span className="text-[#006A4E] font-extrabold">{t('ক্যাডাস্ট্রাল জরিপ রেকর্ডস স্ট্যাজিং মেকার', 'Cadastral Survey Records Staging')}</span>
               </div>
-
-              <div className="p-4 rounded-xl bg-white border border-[#006A4E]/15 shadow-xs">
-                <div className="text-[11px] font-bold uppercase text-slate-500">{t('এসএলএ কমপ্লায়েন্স রেট', 'SLA Compliance Rate')}</div>
-                <div className="text-2xl font-black text-[#006A4E] mt-1">৯৪.২%</div>
-                <div className="text-[11px] text-emerald-700 font-semibold mt-1">লক্ষ্যমাত্রার চেয়ে এগিয়ে</div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-white border border-[#006A4E]/15 shadow-xs">
-                <div className="text-[11px] font-bold uppercase text-slate-500">{t('এই মাসে নিষ্পত্তিকৃত নামজারি', 'Mutations Disposed (Month)')}</div>
-                <div className="text-2xl font-black text-slate-800 mt-1">৩৪ {t('টি', 'Cases')}</div>
-                <div className="text-[11px] text-slate-500 font-semibold mt-1">সাভার উপজেলা ভূমি অফিস</div>
-              </div>
-
-              <div className="p-4 rounded-xl bg-white border border-rose-200 bg-rose-50/40 shadow-xs">
-                <div className="text-[11px] font-bold uppercase text-rose-700">{t('বিলম্বিত ফাইল (২১+ দিন)', 'Delayed Files (21+ Days)')}</div>
-                <div className="text-2xl font-black text-rose-700 mt-1">২ {t('টি', 'Cases')}</div>
-                <div className="text-[11px] text-rose-600 font-semibold mt-1">এসকেলেশন নোটিশ প্রয়োজন</div>
-              </div>
+              <h2 className="text-lg font-black text-slate-900">
+                {t('ডিজিটাল জরিপ খতিয়ান ডাটা এন্ট্রি ও ব্যাচ দাখিল', 'Digital Survey Records Entry & Batch Submission')}
+              </h2>
+              <p className="text-xs text-slate-600 mt-0.5">
+                {t(
+                  'চলমান সিএস/এসএ/আরএস/বিএস জরিপ খতিয়ান ডাটা প্রস্তুত করুন। একাধিক রেকর্ড স্ট্যাজিং করে স্বাধীন চেকার সমীপে দাখিল করুন।',
+                  'Stage survey khatian entries across CS, SA, RS, BS series and submit as a verifiable onboarding batch.'
+                )}
+              </p>
             </div>
 
-            <div className="p-5 rounded-xl border border-slate-200 bg-white space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h4 className="font-bold text-sm text-slate-900">{t('বিলম্বিত নামজারি ও এসকেলেশন ট্র্যাকার:', 'Delayed Mutation Escalations:')}</h4>
-                  <p className="text-xs text-slate-500">{t('যেসব আবেদনের বয়স ২১ দিন অতিক্রম করেছে, ইউএনও মহোদয়ের পক্ষ থেকে তাগিদপত্র ইস্যু করুন।', 'Directives for applications older than 21 days.')}</p>
+            <button
+              type="button"
+              onClick={() => setIsNewSurveyBatchOpen(true)}
+              className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              <span>{t('নতুন জরিপ রেকর্ড যোগ করুন', 'Add Survey Record')}</span>
+            </button>
+          </div>
+
+          {/* Staged Items Ready to Submit */}
+          {surveyStagedItems.length > 0 && (
+            <div className="panel p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="font-extrabold text-xs text-[#006A4E] flex items-center gap-2">
+                  <Layers className="w-4 h-4" />
+                  <span>
+                    {t('স্ট্যাজিং তালিকায় প্রস্তুত রেকর্ড:', 'Staged Records Ready for Batch Submission:')}{' '}
+                    {toBanglaDigits(surveyStagedItems.length, lang)} {t('টি', '')}
+                  </span>
                 </div>
                 <button
-                  onClick={handleSendSlaEscalation}
-                  disabled={slaNoticeSent}
-                  className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                  type="button"
+                  disabled={surveySubmitting}
+                  onClick={handleSubmitSurveyBatch}
+                  className="px-4 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
                 >
-                  <Clock className="w-3.5 h-3.5" />
-                  <span>{slaNoticeSent ? t('তাগিদপত্র প্রেরিত হয়েছে ✔', 'Directive Dispatched ✔') : t('বিলম্বিত ফাইলে জরুরি তাগিদপত্র জারি করুন', 'Issue Urgent SLA Escalation Notice')}</span>
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{surveySubmitting ? t('দাখিল হচ্ছে...', 'Submitting...') : t('চেকার সমীপে ব্যাচ দাখিল করুন', 'Submit Batch to Checker')}</span>
                 </button>
               </div>
 
-              <div className="space-y-2">
-                {slaEscalationsList.map((esc: any) => (
-                  <div
-                    key={esc.id}
-                    className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 flex flex-wrap items-center justify-between gap-2 text-xs"
-                  >
+              <div className="overflow-x-auto rounded-lg border border-emerald-200 bg-white">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-emerald-50/80 text-emerald-950 border-b border-emerald-200">
+                      <th className="p-2.5 font-bold">#</th>
+                      <th className="p-2.5 font-bold">{t('জরিপ', 'Survey')}</th>
+                      <th className="p-2.5 font-bold">{t('মৌজা', 'Mouza')}</th>
+                      <th className="p-2.5 font-bold">{t('দাগ নং', 'Dag')}</th>
+                      <th className="p-2.5 font-bold">{t('খতিয়ান নং', 'Khatian')}</th>
+                      <th className="p-2.5 font-bold">{t('শ্রেণি', 'Class')}</th>
+                      <th className="p-2.5 font-bold">{t('পরিমাণ (শতক)', 'Area (Dec)')}</th>
+                      <th className="p-2.5 font-bold">{t('মালিকের নাম', 'Owner Name')}</th>
+                      <th className="p-2.5 font-bold text-right">{t('মুছুন', 'Remove')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {surveyStagedItems.map((stItem, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50">
+                        <td className="p-2.5 font-mono text-slate-400">{idx + 1}</td>
+                        <td className="p-2.5 font-bold text-[#006A4E]">{stItem.survey_type}</td>
+                        <td className="p-2.5 text-slate-700">{stItem.mouza}</td>
+                        <td className="p-2.5 font-bold text-slate-800">{toBanglaDigits(stItem.dag_no, lang)}</td>
+                        <td className="p-2.5 font-mono text-slate-700">{stItem.khatian_no}</td>
+                        <td className="p-2.5 text-slate-600">{stItem.land_class}</td>
+                        <td className="p-2.5 font-extrabold text-slate-900">{toBanglaDigits(stItem.area_decimal, lang)}</td>
+                        <td className="p-2.5 font-medium text-slate-800">{stItem.owner_name_bn}</td>
+                        <td className="p-2.5 text-right">
+                          <button
+                            type="button"
+                            onClick={() => setSurveyStagedItems((prev) => prev.filter((_, i) => i !== idx))}
+                            className="p-1 rounded text-rose-500 hover:bg-rose-50 transition cursor-pointer"
+                          >
+                            ✕
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Submitted Batches Table */}
+          <div className="panel p-0 bg-white border border-slate-200 overflow-hidden shadow-xs">
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <div className="font-extrabold text-xs text-slate-800 flex items-center gap-2">
+                <FileSpreadsheet className="w-4 h-4 text-[#006A4E]" />
+                <span>{t('দাখিলকৃত জরিপ ব্যাচসমূহ', 'Submitted Survey Batches')}</span>
+              </div>
+              <span className="text-[11px] text-slate-500">
+                {toBanglaDigits(onboardingBatches.length, lang)} {t('টি ব্যাচ', 'Batches')}
+              </span>
+            </div>
+
+            {onboardingBatches.length === 0 ? (
+              <div className="p-12 text-center text-slate-500 text-xs">
+                {t('কোনো জরিপ ব্যাচ দাখিল করা হয়নি। নতুন রেকর্ড যোগ করতে উপরের বোতাম চাপুন।', 'No survey batches found. Click Add Survey Record to begin.')}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                      <th className="p-3 font-bold">#</th>
+                      <th className="p-3 font-bold">{t('ব্যাচ নং', 'Batch No')}</th>
+                      <th className="p-3 font-bold">{t('রেকর্ড ধরন', 'Record Type')}</th>
+                      <th className="p-3 font-bold">{t('মেকার কর্মকর্তা', 'Maker')}</th>
+                      <th className="p-3 font-bold">{t('রেকর্ড সংখ্যা', 'Items')}</th>
+                      <th className="p-3 font-bold">{t('স্ট্যাটাস', 'Status')}</th>
+                      <th className="p-3 font-bold">{t('দাখিলের তারিখ', 'Date')}</th>
+                      <th className="p-3 font-bold text-right">{t('কার্যক্রম', 'Action')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {onboardingBatches.map((b, idx) => (
+                      <tr key={b.id || idx} className="hover:bg-slate-50/70 transition">
+                        <td className="p-3 font-mono text-[11px] text-slate-400">#{b.id}</td>
+                        <td className="p-3 font-mono font-bold text-[#006A4E]">{b.batch_no}</td>
+                        <td className="p-3 font-semibold text-slate-700">{b.record_type}</td>
+                        <td className="p-3 text-slate-800">{b.maker_name_bn || `@${b.maker_role || 'maker'}`}</td>
+                        <td className="p-3 font-extrabold text-slate-900">{toBanglaDigits(b.total_items || 1, lang)}</td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                              b.status === 'APPROVED'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : b.status === 'REJECTED'
+                                ? 'bg-rose-100 text-rose-800'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {b.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-slate-500 text-[11px]">
+                          {b.created_at ? toBanglaDigits(b.created_at.substring(0, 10), lang) : '—'}
+                        </td>
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenBatchInspection(b)}
+                            className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer flex items-center gap-1.5 ml-auto"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-[#006A4E]" />
+                            <span>{t('পরিদর্শন', 'Inspect')}</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Modal: Add Record to Staging */}
+          {isNewSurveyBatchOpen && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
+              <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 my-8">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                    <FileSpreadsheet className="w-5 h-5 text-[#006A4E]" />
+                    <span>{t('নতুন জরিপ খতিয়ান রেকর্ড স্ট্যাজিং', 'Stage New Survey Khatian')}</span>
+                  </h3>
+                  <button onClick={() => setIsNewSurveyBatchOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+
+                <div className="space-y-3.5 text-xs">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-amber-950">
-                          {esc.case_no} • {t('দাগ', 'Dag')} {esc.dag_no} • {esc.mouza_bn}
-                        </span>
-                        <span className="font-mono text-[10px] text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded font-bold">
-                          {esc.id}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-600 mt-0.5">{esc.reason}</p>
-                      <div className="text-[10px] text-slate-500 font-mono mt-1">
-                        {t('জারি সময়:', 'Issued at:')} {esc.issued_at}
-                      </div>
-                    </div>
-                    <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold text-[10px]">
-                      {toBanglaDigits(esc.days_elapsed, lang)} {t('দিন অতিবাহিত', 'Days Elapsed')}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 9: Revenue Appeals & Tribunal (ADC Revenue / Appellate Reviewer) */}
-        {subTab === 'appeals' && (
-          <div className="space-y-6">
-            <div className="bg-[#F4F9F6] p-5 rounded-xl border border-[#006A4E]/15">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h3 className="font-bold text-base text-[#074f38] flex items-center gap-2 mb-1">
-                    <Scale className="w-5 h-5 text-[#006A4E]" />
-                    <span>{t('রাজস্ব আপিল ট্রাইব্যুনাল ও শুনানি কিউ (Appellate Tribunal)', 'Revenue Appeals Docket & Stay Orders')}</span>
-                  </h3>
-                  <p className="text-xs text-[#5F7A74]">
-                    {t(
-                      'এসি ল্যান্ডের আদেশের বিরুদ্ধে অতিরিক্ত জেলা প্রশাসক (রাজস্ব) সমীপে দায়েরকৃত আপিল পর্যালোচনা ও স্থগিতাদেশ জারি।',
-                      'Appeals against AC Land orders. Granting Stay Orders immediately locks the plot against any sale or mutation.'
-                    )}
-                  </p>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-emerald-100 text-[#006A4E] text-xs font-bold">
-                  {toBanglaDigits(appealsList.length, lang)} {t('টি আপিল তালিকাভুক্ত', 'Appeals in Docket')}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {appealsList.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 text-xs">কোনো আপিল আবেদন নথিভুক্ত নেই।</div>
-              ) : (
-                appealsList.map((apl: any) => (
-                  <div key={apl.id} className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 shadow-xs">
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
-                      <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
-                        <span>{apl.appeal_no}</span>
-                        <span className="text-xs text-slate-500">• দাগ নং {toBanglaDigits(apl.plot_id || 108, lang)}</span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${apl.status === 'STAY_ORDER_GRANTED' ? 'bg-rose-100 text-rose-800' : apl.status === 'MUTATION_UPHELD' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
-                          {apl.status}
-                        </span>
-                      </div>
-                      <span className="text-[11px] text-slate-500 font-mono">শুনানি তারিখ: {apl.hearing_date || '২০২৬-১০-২৪'}</span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700">
-                      <div><strong>আপিলকারী:</strong> {apl.appellant_name_bn || 'মোসা. রাবেয়া খাতুন'} (NID: {apl.appellant_nid || '****'})</div>
-                      <div><strong>বনাম:</strong> এসি ল্যান্ড ও নামজারি পক্ষগণ</div>
-                    </div>
-
-                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-700">
-                      <strong>আপিলের কারণ:</strong> {apl.reason_bn}
-                    </div>
-
-                    {apl.status === 'HEARING_SCHEDULED' && (
-                      <div className="flex flex-wrap gap-2 pt-2 border-t justify-end">
-                        <button
-                          onClick={() => handleDecideAppeal(apl.id, 'STAY_ORDER_GRANTED', 'আপিল চূড়ান্ত নিষ্পত্তি না হওয়া পর্যন্ত এই দাগের সকল হস্তান্তর স্থগিতাদেশ (Stay Order) মঞ্জুর করা হলো।')}
-                          className="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
-                        >
-                          <ShieldAlert className="w-3.5 h-3.5" />
-                          <span>🔒 {t('স্থগিতাদেশ ও বিক্রয় লক জারি করুন (Stay Order)', 'Grant Stay Order & Lock Plot')}</span>
-                        </button>
-                        <button
-                          onClick={() => handleDecideAppeal(apl.id, 'MUTATION_UPHELD', 'নথিপত্র পর্যালোচনায় এসি ল্যান্ডের আদেশ বহাল রাখা হলো।')}
-                          className="px-3.5 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>{t('নামজারি আদেশ বহাল (Uphold)', 'Uphold Mutation')}</span>
-                        </button>
-                        <button
-                          onClick={() => handleDecideAppeal(apl.id, 'MUTATION_SET_ASIDE', 'নামজারি আদেশে অসামঞ্জস্য থাকায় তা বাতিল করে পুনর্বিবেচনার নির্দেশ দেওয়া হলো।')}
-                          className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
-                        >
-                          <Scale className="w-3.5 h-3.5" />
-                          <span>{t('বাতিল ও পুনর্বিবেচনা (Set Aside)', 'Set Aside & Remand')}</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* TAB 10: Staging Data Onboarding Approvals (Settlement Checker / AC Land) */}
-        {subTab === 'onboarding' && (
-          <div className="space-y-6">
-            <div className="bg-[#F4F9F6] p-5 rounded-xl border border-[#006A4E]/15">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h3 className="font-bold text-base text-[#074f38] flex items-center gap-2 mb-1">
-                    <CheckCircle2 className="w-5 h-5 text-[#006A4E]" />
-                    <span>{t('অনবোর্ডিং ডাটা ব্যাচ অনুমোদন (চার-চক্ষু নীতি চেকার)', 'Staging Data Onboarding Approvals')}</span>
-                  </h3>
-                  <p className="text-xs text-[#5F7A74]">
-                    {t(
-                      'মেকার কর্তৃক প্রস্তুতকৃত জরিপ বা রেজিস্ট্রি ড্রাফট ব্যাচ পর্যালোচনা ও চার-চক্ষু নীতি (Separation of Duties) অনুসারে অনুমোদন প্রদান। প্রস্তুতকারী নিজে অনুমোদন করতে পারবেন না।',
-                      'Four-eyes principle: Maker cannot approve their own batch. Only authorized checker can grant final approval.'
-                    )}
-                  </p>
-                </div>
-                <span className="px-3 py-1 rounded-full bg-emerald-100 text-[#006A4E] text-xs font-bold">
-                  {toBanglaDigits(onboardingBatches.length, lang)} {t('টি ব্যাচ তালিকাভুক্ত', 'Batches in Queue')}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {onboardingBatches.length === 0 ? (
-                <div className="p-8 text-center text-slate-500 bg-white rounded-xl border border-dashed border-slate-300">
-                  {t('কোনো অনবোর্ডিং ব্যাচ অপেক্ষমান নেই।', 'No onboarding batches in pending review.')}
-                </div>
-              ) : (
-                onboardingBatches.map((batch: any) => (
-                <div key={batch.id} className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 shadow-xs">
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-2">
-                    <div className="flex items-center gap-2 font-bold text-sm text-slate-900">
-                      <span>{batch.batch_no}</span>
-                      <span className="text-xs text-slate-500">• {batch.record_type}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${batch.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' : batch.status === 'REJECTED' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>
-                        {batch.status}
-                      </span>
-                    </div>
-                    <span className="text-[11px] text-slate-500 font-mono">আইটেম সংখ্যা: {batch.total_records || 1} টি</span>
-                  </div>
-
-                  <div className="text-xs text-slate-600 font-mono">
-                    SHA-256 Batch Hash: {batch.batch_hash}
-                  </div>
-
-                  {batch.status === 'SUBMITTED' && (
-                    <div className="flex justify-end gap-2 pt-2 border-t">
-                      <button
-                        onClick={() => handleDecideBatch(batch.id, 'APPROVED')}
-                        className="px-4 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                      <label className="block font-bold text-slate-700 mb-1">{t('জরিপ সিরিজ (Survey):', 'Survey:')} *</label>
+                      <select
+                        value={surveyType}
+                        onChange={(e) => setSurveyType(e.target.value as any)}
+                        className="w-full p-2.5 rounded-lg border border-slate-300 font-bold bg-white"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>{t('✔ ব্যাচ অনুমোদন করুন (Approve)', 'Approve Batch')}</span>
-                      </button>
-                      <button
-                        onClick={() => handleDecideBatch(batch.id, 'REJECTED')}
-                        className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
-                      >
-                        <span>✕ {t('বাতিল (Reject)', 'Reject')}</span>
-                      </button>
+                        <option value="BS">BS (বাংলাদেশ সার্ভে)</option>
+                        <option value="RS">RS (রিভিশনাল সার্ভে)</option>
+                        <option value="SA">SA (স্টেট একুইজিশন)</option>
+                        <option value="CS">CS (ক্যাডাস্ট্রাল সার্ভে)</option>
+                        <option value="DIGITAL">DIGITAL (ডিজিটাল ভূমি জরিপ)</option>
+                      </select>
                     </div>
-                  )}
-                </div>
-              )))}
-            </div>
-          </div>
-        )}
-      </div>
 
-      {/* Hearing / Case Details Modal */}
-      {selectedMutation && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative border border-[#006A4E]/12 space-y-5">
-            <div className="flex items-center justify-between border-b pb-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('মৌজা (Mouza):', 'Mouza:')} *</label>
+                      <select
+                        value={surveyMouza}
+                        onChange={(e) => setSurveyMouza(e.target.value)}
+                        className="w-full p-2.5 rounded-lg border border-slate-300 bg-white"
+                      >
+                        <option value="Birulia">বিরুলিয়া (Birulia)</option>
+                        <option value="Savar">সাভার (Savar)</option>
+                        <option value="Dhamrai">ধামরাই (Dhamrai)</option>
+                        <option value="Ashulia">আশুলিয়া (Ashulia)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('দাগ নম্বর (Dag No):', 'Dag No:')} *</label>
+                      <input
+                        type="text"
+                        required
+                        value={surveyDagNo}
+                        onChange={(e) => setSurveyDagNo(e.target.value)}
+                        placeholder="উদা: ১২৮"
+                        className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('খতিয়ান নম্বর (Khatian No):', 'Khatian No:')}</label>
+                      <input
+                        type="text"
+                        value={surveyKhatianNo}
+                        onChange={(e) => setSurveyKhatianNo(e.target.value)}
+                        placeholder="উদা: ৪৫০"
+                        className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('জমির শ্রেণি:', 'Land Class:')} *</label>
+                      <select
+                        value={surveyLandClass}
+                        onChange={(e) => setSurveyLandClass(e.target.value)}
+                        className="w-full p-2.5 rounded-lg border border-slate-300 bg-white"
+                      >
+                        <option value="নাল (Agricultural)">নাল (Agricultural)</option>
+                        <option value="ভিটি (Highland)">ভিটি (Highland)</option>
+                        <option value="বাড়ি (Residential)">বাড়ি (Residential)</option>
+                        <option value="বাগান (Garden)">বাগান (Garden)</option>
+                        <option value="পুকুর (Pond)">পুকুর (Pond)</option>
+                        <option value="চালা (Commercial)">চালা (Commercial)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('জমির পরিমাণ (শতক):', 'Area (Decimal):')} *</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        required
+                        value={surveyAreaDecimal}
+                        onChange={(e) => setSurveyAreaDecimal(e.target.value)}
+                        placeholder="12.50"
+                        className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('মালিকের পূর্ণ নাম (বাংলায়):', 'Owner Name (Bangla):')} *</label>
+                      <input
+                        type="text"
+                        required
+                        value={surveyOwnerBn}
+                        onChange={(e) => setSurveyOwnerBn(e.target.value)}
+                        placeholder="মোঃ রফিকুল ইসলাম"
+                        className="w-full p-2.5 rounded-lg border border-slate-300 bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('মালিকের পূর্ণ নাম (ইংরেজিতে):', 'Owner Name (English):')}</label>
+                      <input
+                        type="text"
+                        value={surveyOwnerEn}
+                        onChange={(e) => setSurveyOwnerEn(e.target.value)}
+                        placeholder="Md. Rafiqul Islam"
+                        className="w-full p-2.5 rounded-lg border border-slate-300 bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">{t('মালিকের জাতীয় পরিচয়পত্র (NID):', 'Owner NID:')}</label>
+                    <input
+                      type="text"
+                      value={surveyOwnerNid}
+                      onChange={(e) => setSurveyOwnerNid(e.target.value)}
+                      placeholder="9900004455"
+                      className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsNewSurveyBatchOpen(false)}
+                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer transition text-xs"
+                  >
+                    {t('বাতিল', 'Cancel')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleAddSurveyItem();
+                      setIsNewSurveyBatchOpen(false);
+                    }}
+                    className="px-5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold cursor-pointer shadow-xs transition text-xs flex items-center gap-1.5"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>{t('তালিকায় যুক্ত করুন', 'Add to Staging List')}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUBTAB: ONBOARDING INSPECTION (settlement_checker, ac_land)              */}
+      {/* ========================================================================= */}
+      {subTab === 'onboarding' && (
+        <div className="space-y-5 animate-rise">
+          <div className="panel p-5 bg-white border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1">
+                <CheckCircle2 className="w-4 h-4 text-[#006A4E]" />
+                <span className="text-[#006A4E] font-extrabold">{t('সহকারী সেটেলমেন্ট অফিসার ও চেকার বেঞ্চ', 'Assistant Settlement Officer & Checker')}</span>
+              </div>
+              <h2 className="text-lg font-black text-slate-900">
+                {t('জরিপ খতিয়ান ব্যাচ নিরীক্ষা ও গেজেট প্রকাশ অনুমোদন', 'Survey Batches Inspection & Gazette Approval')}
+              </h2>
+              <p className="text-xs text-slate-600 mt-0.5">
+                {t(
+                  'মেকার কর্তৃক দাখিলকৃত জরিপ খতিয়ান তথ্য, সীমানা ও দাগ নম্বর নিরপেক্ষ নিরীক্ষা এবং গেজেট প্রকাশ অনুমোদন।',
+                  'Inspect and independently verify submitted survey batches. Enforces maker-checker separation before gazette publication.'
+                )}
+              </p>
+            </div>
+
+            <span className="px-3 py-1.5 rounded-full text-xs font-bold border border-emerald-300 bg-emerald-50 text-emerald-900">
+              {t('স্বাধীন নিরীক্ষা নীতি সক্রিয় (Maker != Checker)', 'Maker-Checker Isolation Active')}
+            </span>
+          </div>
+
+          {/* Batches Table for Checker */}
+          <div className="panel p-0 bg-white border border-slate-200 overflow-hidden shadow-xs">
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+              <div className="font-extrabold text-xs text-slate-800 flex items-center gap-2">
+                <FileSpreadsheet className="w-4 h-4 text-[#006A4E]" />
+                <span>{t('নিরীক্ষাযোগ্য জরিপ ব্যাচসমূহ', 'Batches Requiring Review')}</span>
+              </div>
+              <span className="text-[11px] text-slate-500">
+                {toBanglaDigits(onboardingBatches.length, lang)} {t('টি ব্যাচ', 'Batches')}
+              </span>
+            </div>
+
+            {onboardingBatches.length === 0 ? (
+              <div className="p-12 text-center text-slate-500 text-xs">
+                {t('বর্তমানে অনুমোদনের জন্য কোনো বিচারাধীন জরিপ ব্যাচ নেই।', 'No batches awaiting inspection.')}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                      <th className="p-3 font-bold">#</th>
+                      <th className="p-3 font-bold">{t('ব্যাচ কোড', 'Batch Code')}</th>
+                      <th className="p-3 font-bold">{t('রেকর্ড ধরন', 'Record Type')}</th>
+                      <th className="p-3 font-bold">{t('মেকার কর্মকর্তা', 'Maker')}</th>
+                      <th className="p-3 font-bold">{t('রেকর্ড সংখ্যা', 'Items')}</th>
+                      <th className="p-3 font-bold">{t('স্ট্যাটাস', 'Status')}</th>
+                      <th className="p-3 font-bold">{t('তারিখ', 'Date')}</th>
+                      <th className="p-3 font-bold text-right">{t('অনুমোদন কার্যক্রম', 'Action')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {onboardingBatches.map((b, idx) => (
+                      <tr key={b.id || idx} className="hover:bg-slate-50/70 transition">
+                        <td className="p-3 font-mono text-[11px] text-slate-400">#{b.id}</td>
+                        <td className="p-3 font-mono font-bold text-[#006A4E]">{b.batch_no}</td>
+                        <td className="p-3 font-semibold text-slate-700">{b.record_type}</td>
+                        <td className="p-3 text-slate-800">{b.maker_name_bn || `@${b.maker_role || 'maker'}`}</td>
+                        <td className="p-3 font-extrabold text-slate-900">{toBanglaDigits(b.total_items || 1, lang)}</td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                              b.status === 'APPROVED'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : b.status === 'REJECTED'
+                                ? 'bg-rose-100 text-rose-800'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {b.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-slate-500 text-[11px]">
+                          {b.created_at ? toBanglaDigits(b.created_at.substring(0, 10), lang) : '—'}
+                        </td>
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenBatchInspection(b)}
+                            className="px-3.5 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs transition cursor-pointer flex items-center gap-1.5 ml-auto shadow-2xs"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>{t('নিরীক্ষা ও সিদ্ধান্ত', 'Inspect & Decide')}</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* INSPECTION MODAL: Checker Batch Decision & Item Inspection */}
+      {inspectingBatch && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <Landmark className="w-5 h-5 text-[#006A4E]" />
-                <h3 className="font-extrabold text-[#0A1F1C] text-sm">
-                  {t('ই-মিউটেশন কেস শুনানি বিবরণী', 'e-Mutation Hearing Record')}
-                </h3>
+                <span className="font-mono text-sm font-extrabold px-2.5 py-0.5 rounded-lg bg-emerald-50 text-[#006A4E] border border-emerald-200">
+                  {inspectingBatch.batch?.batch_no}
+                </span>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                  {inspectingBatch.batch?.record_type}
+                </span>
               </div>
-              <button
-                onClick={() => {
-                  setSelectedMutation(null);
-                  setModalError(null);
-                }}
-                className="p-1 rounded text-[#5F7A74]/80 hover:text-[#5F7A74] cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <button onClick={() => setInspectingBatch(null)} className="text-slate-400 hover:text-slate-600">✕</button>
             </div>
 
-            {modalError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 flex items-start gap-2">
-                <ShieldAlert className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+            {/* Maker Details Info */}
+            <div className="p-3.5 rounded-xl bg-slate-50 text-xs space-y-1">
+              <div className="flex items-center justify-between text-slate-700">
+                <span>
+                  <strong className="text-slate-900">{t('মেকার কর্মকর্তা: ', 'Maker Officer: ')}</strong>
+                  {inspectingBatch.batch?.maker_name_bn} (@{inspectingBatch.batch?.maker_role})
+                </span>
+                <span className="font-mono text-slate-500">
+                  {inspectingBatch.batch?.created_at?.substring(0, 19).replace('T', ' ')}
+                </span>
+              </div>
+              <div className="text-slate-600 font-mono text-[11px]">
+                SHA-256 Batch Hash: {inspectingBatch.batch?.batch_hash ? `${inspectingBatch.batch.batch_hash.substring(0, 24)}...` : '—'}
+              </div>
+            </div>
+
+            {/* Maker-Checker Separation Warning */}
+            {Number(inspectingBatch.batch?.maker_user_id) === Number(user?.id) && (
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-xs flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
+                <span>
+                  {t(
+                    'স্ব-অনুমোদন নীতি লঙ্ঘন: আপনি এই ব্যাচের মেকার (প্রস্তুতকারী) হওয়ায় এটি নিজে অনুমোদন করতে পারবেন না। নিরপেক্ষ সহকারী সেটেলমেন্ট অফিসার বা অ্যাডমিনের আইডি থেকে প্রবেশ করুন।',
+                    'Separation of duties violation: You are the maker of this batch and cannot approve it. Another authorized checker must decide.'
+                  )}
+                </span>
+              </div>
+            )}
+
+            {/* Validation Invalid Items Warning */}
+            {(inspectingBatch.items || []).some((it: any) => it.validation_status === 'INVALID') && (
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>
+                  {t(
+                    'ব্যাচে ত্রুটিপূর্ণ (INVALID) রেকর্ড বিদ্যমান থাকায় এটি অনুমোদন করা যাবে না। সংশোধন ফেরত প্রদান করুন।',
+                    'Batch contains invalid records and cannot be approved until corrected.'
+                  )}
+                </span>
+              </div>
+            )}
+
+            {/* Items Table */}
+            <div className="space-y-2">
+              <div className="font-bold text-xs text-slate-700">{t('ব্যাচভুক্ত খতিয়ান ও দাগসমূহ:', 'Batch Records & Items:')}</div>
+              <div className="max-h-56 overflow-y-auto rounded-xl border border-slate-200">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                      <th className="p-2.5 font-bold">#</th>
+                      <th className="p-2.5 font-bold">{t('দাগ নং', 'Dag')}</th>
+                      <th className="p-2.5 font-bold">{t('মৌজা', 'Mouza')}</th>
+                      <th className="p-2.5 font-bold">{t('মালিকের নাম', 'Owner Name')}</th>
+                      <th className="p-2.5 font-bold">{t('পরিমাণ (শতক)', 'Area (Dec)')}</th>
+                      <th className="p-2.5 font-bold">{t('শ্রেণি', 'Class')}</th>
+                      <th className="p-2.5 font-bold">{t('যাচাইকরণ', 'Validation')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {(inspectingBatch.items || []).map((it: any, i: number) => {
+                      const payload = it.payload || {};
+                      const isValid = it.validation_status === 'VALID';
+                      return (
+                        <tr key={it.id || i} className="hover:bg-slate-50">
+                          <td className="p-2.5 font-mono text-slate-400">{i + 1}</td>
+                          <td className="p-2.5 font-bold text-slate-900">{toBanglaDigits(payload.dag_no || it.dag_no || '—', lang)}</td>
+                          <td className="p-2.5 text-slate-700">{payload.mouza || it.mouza || '—'}</td>
+                          <td className="p-2.5 font-medium text-slate-800">{payload.owner_name_bn || payload.buyer_name || '—'}</td>
+                          <td className="p-2.5 font-bold text-slate-900">{toBanglaDigits(payload.area_decimal || it.area_decimal || '—', lang)}</td>
+                          <td className="p-2.5 text-slate-600">{payload.land_class || '—'}</td>
+                          <td className="p-2.5">
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                                isValid
+                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                  : 'bg-rose-100 text-rose-800 border border-rose-300'
+                              }`}
+                            >
+                              {it.validation_status || 'VALID'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Return & Correction Feedback Box */}
+            {inspectingBatch.batch?.status === 'RETURNED' && (
+              <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-2">
+                <div className="flex items-center gap-2 font-bold text-amber-900">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>{t('চেকার কর্তৃক সংশোধনের নির্দেশনামূলক নোট (RETURNED):', 'Correction Directives from Checker (RETURNED):')}</span>
+                </div>
+                <p className="bg-white/80 p-3 rounded-lg border border-amber-200 text-amber-900 font-mono text-[11px] whitespace-pre-wrap">
+                  {inspectingBatch.batch?.proof_package?.correction_notes || inspectingBatch.batch?.notes_bn || t('রেকর্ডসমূহ পুনরায় সরেজমিন তথ্যের সাথে মিলিয়ে সংশোধন করুন।', 'Please revise the records according to field verification.')}
+                </p>
+                {(Number(inspectingBatch.batch?.maker_user_id) === Number(user?.id) || role === 'admin' || role === 'system_admin') && (
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      type="button"
+                      disabled={checkerDeciding}
+                      onClick={handleResubmitBatch}
+                      className="px-5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs transition cursor-pointer shadow-xs flex items-center gap-1.5"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>{checkerDeciding ? t('দাখিল হচ্ছে...', 'Submitting...') : t('সংশোধনপূর্বক পুনরায় জমা দিন', 'Resubmit Corrected Batch')}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Checker Decision Box (Only for checkers on SUBMITTED batches) */}
+            {inspectingBatch.batch?.status === 'SUBMITTED' && Number(inspectingBatch.batch?.maker_user_id) !== Number(user?.id) && (
+              <div className="space-y-3 pt-3 border-t border-slate-100 text-xs">
                 <div>
-                  <strong className="block text-red-800">{t('অনুরোধ ব্যর্থ হয়েছে:', 'Request Failed:')}</strong>
-                  <span>{modalError}</span>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    {t('চেকার মন্তব্য ও আইনি পর্যবেক্ষণ:', 'Checker Note & Order:')}
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={checkerNote}
+                    onChange={(e) => setCheckerNote(e.target.value)}
+                    placeholder={t('জরিপ খতিয়ান ডাটা সরেজমিন তথ্যের সহিত মিলিয়ে যাচাই করা হয়েছে... (সংশোধনে ফেরতের জন্য ন্যূনতম ৫ অক্ষর আবশ্যক)', 'Enter checker note...')}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setInspectingBatch(null)}
+                    className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 transition"
+                  >
+                    {t('বন্ধ করুন', 'Close')}
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={checkerDeciding}
+                      onClick={() => handleDecideBatch('RETURNED')}
+                      className="px-4 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold text-xs transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                      <span>{t('সংশোধনের জন্য ফেরত পাঠান', 'Return for Correction')}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={checkerDeciding}
+                      onClick={() => handleDecideBatch('REJECTED')}
+                      className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 font-bold text-xs transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                      <span>{t('স্থায়ীভাবে বাতিল', 'Reject Batch')}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={
+                        checkerDeciding ||
+                        Number(inspectingBatch.batch?.maker_user_id) === Number(user?.id) ||
+                        (inspectingBatch.items || []).some((it: any) => it.validation_status === 'INVALID')
+                      }
+                      onClick={() => handleDecideBatch('APPROVED')}
+                      className="px-5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-xs flex items-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>{t('অনুমোদন ও গেজেট প্রকাশ', 'Approve & Publish')}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
 
-            <div className="space-y-3 text-xs text-[#0A1F1C]/90">
-              <div className="p-3 bg-[#EDF7F4]/80 rounded-lg space-y-1 font-mono">
-                <div><strong>CASE NO:</strong> {selectedMutation.case_no || `MUT-#${selectedMutation.id}`}</div>
-                <div><strong>REGISTERED DEED NO:</strong> {selectedMutation.deed_no}</div>
-                <div><strong>MOUZA & DAG:</strong> {selectedMutation.mouza_bn} — দাগ নং {selectedMutation.dag_no}</div>
+            {/* Maker viewing pending batch */}
+            {inspectingBatch.batch?.status === 'SUBMITTED' && Number(inspectingBatch.batch?.maker_user_id) === Number(user?.id) && (
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-center justify-between">
+                <span>{t('এই ব্যাচটি বর্তমানে সহকারী সেটেলমেন্ট অফিসার / স্বাধীন চেকারের অনুমোদনের অপেক্ষায় রয়েছে।', 'This batch is currently under independent checker review.')}</span>
+                <button
+                  type="button"
+                  onClick={() => setInspectingBatch(null)}
+                  className="px-4 py-1.5 rounded-lg bg-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-300"
+                >
+                  {t('বন্ধ করুন', 'Close')}
+                </button>
               </div>
+            )}
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-[#EDF7F4]/80 rounded-lg">
-                  <span className="text-[10px] text-[#5F7A74] block">{t('মূল মালিক (Seller):', 'Seller:')}</span>
-                  <strong>{selectedMutation.seller_name_bn}</strong>
-                </div>
-                <div className="p-3 bg-[#EDF7F4]/80 rounded-lg">
-                  <span className="text-[10px] text-[#5F7A74] block">{t('নতুন খতিয়ান গ্রহীতা (Buyer):', 'Buyer:')}</span>
-                  <strong>{selectedMutation.buyer_name_bn}</strong>
-                </div>
+            {/* Approved or Rejected close bar */}
+            {(inspectingBatch.batch?.status === 'APPROVED' || inspectingBatch.batch?.status === 'REJECTED') && (
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setInspectingBatch(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200"
+                >
+                  {t('বন্ধ করুন', 'Close')}
+                </button>
               </div>
+            )}
+          </div>
+        </div>
+      )}
 
-              <div className="p-3 bg-[#EDF7F4] border border-[#006A4E]/30 rounded-lg text-[#006A4E]">
-                <span className="text-[10px] font-bold block">{t('হস্তান্তরিত জমির পরিমাণ:', 'Mutation Area:')}</span>
-                <span className="text-base font-extrabold">
-                  {toBanglaDigits(selectedMutation.area_decimal, lang)} {t('শতাংশ', 'Decimal')}
+      {/* ========================================================================= */}
+      {/* SUBTAB 7: KHATIAN EXPLORER & DEED VERIFIER                                */}
+      {/* ========================================================================= */}
+      {subTab === 'explorer' && <OfficerKhatianExplorer />}
+      {subTab === 'verifier' && <OfficerDeedVerifier />}
+
+      {/* ========================================================================= */}
+      {/* CENTER POPUP MODAL: E-MUTATION HEARING & ORDER DOCKET                     */}
+      {/* ========================================================================= */}
+      {selectedMutation && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-[#006A4E] font-mono font-bold text-xs">
+                  {selectedMutation.case_no}
                 </span>
-                <p className="text-[11px] mt-1">
-                  {t(
-                    'অনুমোদন দিলে বিক্রেতার বিএস খতিয়ান হতে স্বয়ংক্রিয়ভাবে এই অংশ বিয়োগ হয়ে ক্রেতার নামে নতুন বিএস খতিয়ান সৃষ্টি হবে।',
-                    'Approving will deduct area from seller and mint new BS khatian entry for buyer.'
-                  )}
-                </p>
+                {selectedMutation.case_no?.includes('WARISH') && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                    ⚖️ ফারায়েজ উত্তরাধিকার বণ্টন
+                  </span>
+                )}
+                {(selectedMutation.case_no?.includes('LT') || selectedMutation.decision_reason_bn?.includes('এলটি নোটিশ')) && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    ⚡ সাব-রেজিস্ট্রি স্বয়ংক্রিয় এলটি নোটিশ (Auto LT-Notice)
+                  </span>
+                )}
+                <h3 className="font-extrabold text-base text-slate-900">
+                  {t('ই-নামজারি শুনানি ও রায় আদেশ ডকেট', 'e-Mutation Hearing Docket & Order Sheet')}
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedMutation(null)}
+                className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Cryptographic Deed Verification Card */}
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                <div>
+                  <div className="font-bold text-slate-800">
+                    {selectedMutation.deed_no ? `দলিল নং ${selectedMutation.deed_no} (ক্রিপ্টোগ্রাফিক ডিজিটাল সিল সংরক্ষিত)` : 'ওয়ারিশনামা সনদ ও ফারায়েজ বণ্টন হিসাব'}
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-mono">
+                    {selectedMutation.case_no?.includes('LT')
+                      ? 'সাব-রেজিস্ট্রি সাবমিশন হতে সরাসরি প্রাপ্ত স্বয়ংক্রিয় ট্রান্সফার পাইপলাইন (Zero-Touch LT)'
+                      : 'ইসলামিক ফারায়েজ ও ওয়ারিশান উত্তরাধিকার যাচাইকৃত আবেদন'}
+                  </div>
+                </div>
+              </div>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-[#006A4E] border border-emerald-300 shrink-0">
+                যাচাই সম্পন্ন
+              </span>
+            </div>
+
+            {/* Applicant & Buyer Card */}
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+              <div className="font-bold text-slate-800 text-[11px] uppercase tracking-wider text-slate-500">
+                {t('আবেদনকারী / ক্রেতার বিবরণ', 'Applicant / Buyer Information')}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <strong>{t('নাম:', 'Name:')}</strong> {selectedMutation.buyer_name_bn || selectedMutation.applicant_name_bn}
+                </div>
+                <div>
+                  <strong>NID:</strong> {selectedMutation.buyer_nid || 'যাচাইকৃত'}
+                </div>
+                <div>
+                  <strong>{t('মোবাইল:', 'Mobile:')}</strong> {selectedMutation.phone || '01700-001000'}
+                </div>
+                <div>
+                  <strong>{t('বায়া দলিল নং:', 'Provenance Deed:')}</strong> {selectedMutation.deed_no || 'DL-2026-1001'}
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t">
-              {selectedMutation.status === 'PENDING' && (
-                <>
-                  <button
-                    onClick={() => handleDecision(selectedMutation.id, 'REJECTED')}
-                    disabled={decisionLoading}
-                    className="px-4 py-2 rounded-lg bg-[#FF3B4A] hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-bold cursor-pointer"
-                  >
-                    {decisionLoading ? t('প্রক্রিয়াকরণ...', 'Processing...') : t('না-মঞ্জুর করুন', 'Reject')}
-                  </button>
-                  <button
-                    onClick={() => handleDecision(selectedMutation.id, 'APPROVED')}
-                    disabled={decisionLoading}
-                    className="px-4 py-2 rounded-lg bg-[#006A4E] hover:bg-emerald-800 disabled:opacity-50 text-white text-xs font-bold cursor-pointer"
-                  >
-                    {decisionLoading ? t('প্রক্রিয়াকরণ...', 'Processing...') : t('শুনানি মঞ্জুর ও খতিয়ান হালনাগাদ', 'Approve & Mutate')}
-                  </button>
-                </>
-              )}
+            {/* Land Schedule */}
+            <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200 text-xs space-y-2">
+              <div className="font-bold text-emerald-900 text-[11px] uppercase tracking-wider">
+                {t('জমির তফসিল ও প্রস্তাবিত খতিয়ান', 'Land Schedule & Proposed Khatian')}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('মৌজা ও জে.এল.', 'Mouza')}</span>
+                  <strong className="text-slate-900">{selectedMutation.mouza_bn}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('দাগ নম্বর', 'Plot No')}</span>
+                  <strong className="text-slate-900">{selectedMutation.dag_no}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('হস্তান্তরিত অংশ', 'Share')}</span>
+                  <strong className="text-slate-900">{selectedMutation.share_fraction}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('নামজারি জমির আয়তন', 'Area')}</span>
+                  <strong className="text-[#006A4E]">{toBanglaDigits(selectedMutation.area_decimal, lang)} {t('শতক', 'dec')}</strong>
+                </div>
+              </div>
             </div>
+
+            {/* Hearing Notes & Order Textarea */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                {t('সহকারী কমিশনার (ভূমি) এর রায় ও আদেশের বিবরণ:*', 'Order Sheet & Decision Rationale:*')}
+              </label>
+              <textarea
+                rows={3}
+                value={mutationDecisionNotes}
+                onChange={(e) => setMutationDecisionNotes(e.target.value)}
+                placeholder={t(
+                  'বায়া দলিল, আরএস/বিএস নকশা ও সরেজমিন মাঠ প্রতিবেদন নিরীক্ষা করা হলো। আবেদনকারীর অনুকূলে নামজারি মঞ্জুর এবং পৃথক খতিয়ান সৃজনের আদেশ দেওয়া হলো...',
+                  'Enter official magistrate order notes...'
+                )}
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setSelectedMutation(null)}
+                className="px-4 py-2 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+              >
+                {t('বাতিল', 'Cancel')}
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={decisionLoading}
+                  onClick={() => handleDecideMutation('REJECTED')}
+                  className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                >
+                  <XCircle className="w-4 h-4" />
+                  <span>{t('নামজারি নামঞ্জুর', 'Reject Mutation')}</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={decisionLoading}
+                  onClick={() => handleDecideMutation('APPROVED')}
+                  className="px-5 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00523C] text-white text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{t('অনুমোদন ও নতুন খতিয়ান সৃজন', 'Approve & Issue Khatian')}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* CENTER POPUP MODAL: KHATIAN RECONCILIATION ORDER                          */}
+      {/* ========================================================================= */}
+      {selectedKhatian && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-[#006A4E]" />
+                <span>{t('খতিয়ান রেকর্ড শুদ্ধিপত্র ও অমিল নিরসন', 'Reconcile Khatian Record')}</span>
+              </h3>
+              <button
+                onClick={() => setSelectedKhatian(null)}
+                className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleReconcileKhatian} className="space-y-3 text-xs">
+              <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900">
+                <strong>দাগ নং {selectedKhatian.dag_no} ({selectedKhatian.mouza_bn}):</strong>{' '}
+                {selectedKhatian.anomaly_note_bn || 'আরএস ও বিএস রেকর্ডের মধ্যে ক্ষেত্রফল সমন্বয় আবশ্যক।'}
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  {t('সংশোধিত ও চূড়ান্ত বৈধ জমির পরিমাণ (শতক)*', 'Reconciled Valid Area (Decimal)*')}
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  required
+                  value={khatianReconcileArea}
+                  onChange={(e) => setKhatianReconcileArea(e.target.value)}
+                  className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  {t('সহকারী কমিশনার (ভূমি) এর শুদ্ধিপত্র আদেশ নোট:*', 'Magistrate Order & Correction Rationale:*')}
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={khatianReconcileNotes}
+                  onChange={(e) => setKhatianReconcileNotes(e.target.value)}
+                  placeholder="জরিপ নকশা ও বায়া রেকর্ড পর্যালোচনায় আরএস দাগের ১৮ শতক বহাল রেখে শুদ্ধিপত্র প্রদান করা হলো..."
+                  className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setSelectedKhatian(null)}
+                  className="px-4 py-2 rounded-lg border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 cursor-pointer"
+                >
+                  {t('বাতিল', 'Cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={decisionLoading}
+                  className="px-5 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00523C] text-white font-bold transition shadow-xs cursor-pointer"
+                >
+                  {t('শুদ্ধিপত্র কার্যকর করুন', 'Issue Correction Order')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* CENTER POPUP MODAL: DISPUTE HEARING ORDER                                 */}
+      {/* ========================================================================= */}
+      {selectedDispute && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                <Gavel className="w-5 h-5 text-blue-700" />
+                <span>{t('আপত্তি ও মিস-কেস শুনানি আদেশ', 'Dispute Hearing Order')}</span>
+              </h3>
+              <button
+                onClick={() => setSelectedDispute(null)}
+                className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="text-xs text-slate-600 space-y-1 p-3 bg-slate-50 rounded-lg border">
+              <div><strong>কেস নং:</strong> {selectedDispute.case_no}</div>
+              <div><strong>আপত্তিকারী:</strong> {selectedDispute.complainant_name_bn}</div>
+              <div><strong>দাগ নং:</strong> {selectedDispute.dag_no || selectedDispute.plot_id} ({selectedDispute.mouza_bn})</div>
+              <div><strong>অভিযোগ:</strong> {selectedDispute.description_bn}</div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                {t('আদালতের সিদ্ধান্ত ও আদেশ:*', 'Tribunal Order Notes:*')}
+              </label>
+              <textarea
+                rows={3}
+                value={disputeNotes}
+                onChange={(e) => setDisputeNotes(e.target.value)}
+                placeholder="উভয় পক্ষের শুনানিতে দেওয়ানি স্বত্ব মামলার মোকদ্দমা চলমান থাকায় সাময়িক স্থগিতাদেশ বহাল রাখা হলো..."
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+              <button
+                type="button"
+                onClick={() => setSelectedDispute(null)}
+                className="px-4 py-2 rounded-lg border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 cursor-pointer"
+              >
+                {t('বাতিল', 'Cancel')}
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={decisionLoading}
+                  onClick={() => handleResolveDispute('RESOLVED')}
+                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-xs cursor-pointer"
+                >
+                  {t('আপত্তি নিষ্পত্তি', 'Dismiss / Resolve')}
+                </button>
+                <button
+                  type="button"
+                  disabled={decisionLoading}
+                  onClick={() => handleResolveDispute('RESOLVED_FROZEN')}
+                  className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold transition shadow-xs cursor-pointer"
+                >
+                  {t('বিক্রয় স্থগিতাদেশ বহাল', 'Freeze Plot Sale')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* CENTER POPUP MODAL: NEW FIELD REPORT                                      */}
+      {/* ========================================================================= */}
+      {isNewFieldReportOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                <Compass className="w-5 h-5 text-[#006A4E]" />
+                <span>{t('নতুন মাঠ পরিদর্শন প্রতিবেদন দাখিল', 'Submit Field Inspection Report')}</span>
+              </h3>
+              <button
+                onClick={() => setIsNewFieldReportOpen(false)}
+                className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateFieldReport} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  {t('পরিদর্শনের জমি / দাগ নির্বাচন করুন*', 'Select Plot*')}
+                </label>
+                <select
+                  required
+                  value={fieldForm.plot_id}
+                  onChange={(e) => setFieldForm({ ...fieldForm, plot_id: e.target.value })}
+                  className="w-full p-2.5 rounded-lg border border-slate-300 bg-white font-medium focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                >
+                  <option value="">{t('-- জমি ও দাগ নির্বাচন করুন --', '-- Select Plot --')}</option>
+                  {plots.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      দাগ নং {p.dag_no_bn || p.dag_no} · {p.mouza_bn} ({p.area_decimal} শতক)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">{t('দখল স্থিতি', 'Possession')}</label>
+                  <select
+                    value={fieldForm.possession_status}
+                    onChange={(e) => setFieldForm({ ...fieldForm, possession_status: e.target.value })}
+                    className="w-full p-2 rounded-lg border border-slate-300 bg-white font-medium"
+                  >
+                    <option value="VERIFIED">VERIFIED (দখল নিশ্চিত)</option>
+                    <option value="CONTESTED">CONTESTED (দখল বিতর্কিত)</option>
+                    <option value="UNOCCUPIED">UNOCCUPIED (পতিত)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">{t('সীমানা স্থিতি', 'Boundary')}</label>
+                  <select
+                    value={fieldForm.boundary_status}
+                    onChange={(e) => setFieldForm({ ...fieldForm, boundary_status: e.target.value })}
+                    className="w-full p-2 rounded-lg border border-slate-300 bg-white font-medium"
+                  >
+                    <option value="MATCHED">MATCHED (নকশা মিলেছে)</option>
+                    <option value="DISPUTED">DISPUTED (সীমানা বিরোধ)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">{t('ভূমি কর', 'Tax Status')}</label>
+                  <select
+                    value={fieldForm.tax_status}
+                    onChange={(e) => setFieldForm({ ...fieldForm, tax_status: e.target.value })}
+                    className="w-full p-2 rounded-lg border border-slate-300 bg-white font-medium"
+                  >
+                    <option value="PAID">PAID (পরিশোধিত)</option>
+                    <option value="DUE">DUE (বকেয়া)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  {t('সরেজমিন পর্যবেক্ষণ ও রিপোর্ট বিবরণ:*', 'Inspection Findings & Evidence:*')}
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={fieldForm.remarks}
+                  onChange={(e) => setFieldForm({ ...fieldForm, remarks: e.target.value })}
+                  placeholder="জমির সরেজমিন সীমানা ও দখল আবেদনকারীর অনুকূলে পাওয়া গেছে..."
+                  className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsNewFieldReportOpen(false)}
+                  className="px-4 py-2 rounded-lg border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 cursor-pointer"
+                >
+                  {t('বাতিল', 'Cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={decisionLoading}
+                  className="px-5 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00523C] text-white font-bold transition shadow-xs cursor-pointer"
+                >
+                  {t('প্রতিবেদন জমা দিন', 'Submit Report')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* CENTER POPUP MODAL: NEW SLA ESCALATION                                    */}
+      {/* ========================================================================= */}
+      {isNewSlaOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                <Send className="w-5 h-5 text-amber-600" />
+                <span>{t('কেস সময়সীমা তাগিদ নোটিশ', 'Issue SLA Escalation Notice')}</span>
+              </h3>
+              <button
+                onClick={() => setIsNewSlaOpen(false)}
+                className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateSla} className="space-y-3 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  {t('কেস বা নথি নম্বর*', 'Case Reference Number*')}
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="যেমন: MUT-2026-0008"
+                  value={slaForm.case_reference}
+                  onChange={(e) => setSlaForm({ ...slaForm, case_reference: e.target.value })}
+                  className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">{t('দায়িত্বপ্রাপ্ত পদ', 'Target Role')}</label>
+                  <select
+                    value={slaForm.target_role}
+                    onChange={(e) => setSlaForm({ ...slaForm, target_role: e.target.value })}
+                    className="w-full p-2 rounded-lg border border-slate-300 bg-white font-medium"
+                  >
+                    <option value="land_office_assistant">ভূমি সহকারী কর্মকর্তা</option>
+                    <option value="field_verification_officer">মাঠ সার্ভেয়ার / কানুনগো</option>
+                    <option value="ac_land">সহকারী কমিশনার (ভূমি)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">{t('অগ্রাধিকার', 'Priority')}</label>
+                  <select
+                    value={slaForm.priority}
+                    onChange={(e) => setSlaForm({ ...slaForm, priority: e.target.value as any })}
+                    className="w-full p-2 rounded-lg border border-slate-300 bg-white font-medium"
+                  >
+                    <option value="LOW">LOW (স্বাভাবিক)</option>
+                    <option value="NORMAL">NORMAL (প্রমিত)</option>
+                    <option value="HIGH">HIGH (জরুরি)</option>
+                    <option value="URGENT">URGENT (অতি জরুরি)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">{t('প্রত্যাশিত নিষ্পত্তির তারিখ', 'Target Date')}</label>
+                <input
+                  type="date"
+                  value={slaForm.due_at}
+                  onChange={(e) => setSlaForm({ ...slaForm, due_at: e.target.value })}
+                  className="w-full p-2 rounded-lg border border-slate-300 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">{t('তাগিদ আদেশের বিবরণ', 'Directive Notes')}</label>
+                <textarea
+                  rows={2}
+                  value={slaForm.notes_bn}
+                  onChange={(e) => setSlaForm({ ...slaForm, notes_bn: e.target.value })}
+                  placeholder="নাগরিক ভোগান্তি লাঘবে ৩ কার্যদিবসের মধ্যে প্রতিবেদন দাখিল করুন..."
+                  className="w-full p-2 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsNewSlaOpen(false)}
+                  className="px-4 py-2 rounded-lg border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 cursor-pointer"
+                >
+                  {t('বাতিল', 'Cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={decisionLoading}
+                  className="px-5 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold transition shadow-xs cursor-pointer"
+                >
+                  {t('তাগিদ প্রেরণ', 'Dispatch')}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -1,0 +1,328 @@
+Browser tab: 6, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5188/bn/acland".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5188/bn/acland
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা Central Admin OS
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text Central Admin OS
+			8 button Toggle Sidebar
+				9 image
+			10 text সেটেলমেন্ট রেকর্ডস অফিসার ভূমি রেকর্ড ও জরিপ অধিদপ্তর (ডিএলআরএস)
+			11 container Sidebar Navigation
+				12 text মেনু
+				13 button জরিপ ব্যাচ এন্ট্রি (মেকার)
+					14 image
+					15 text জরিপ ব্যাচ এন্ট্রি (মেকার)
+				16 button সিএস-এসএ-আরএস-বিএস রূপান্তর
+					17 image
+					18 text সিএস-এসএ-আরএস-বিএস রূপান্তর
+				19 button খতিয়ান ও দাগ অনুসন্ধান
+					20 image
+					21 text খতিয়ান ও দাগ অনুসন্ধান
+				22 button দলিল সত্যতা যাচাই
+					23 image
+					24 text দলিল সত্যতা যাচাই
+			25 button পাবলিক পোর্টাল
+				26 image
+				27 text পাবলিক পোর্টাল
+			28 button লগআউট
+				29 image
+				30 text লগআউট
+		31 container
+			32 button হোম
+				33 image
+				34 text হোম
+			35 text / সেটেলমেন্ট রেকর্ডস অফিসার
+			36 text field (settable)
+			37 image
+			38 button EN
+			39 button Contrast
+				40 image
+			41 pop up button (collapsed) Description: ব্যবহারকারী প্রোফাইল ও সেটিংস মেনু, Secondary Actions: Expand
+				42 text ম
+				43 text মো. দেলোয়ার হোসেন (সেটেলমেন্ট রেকর্ডস অফিসার - মেকার)
+				44 text সেটেলমেন্ট রেকর্ডস অফিসার
+				45 image
+		46 container
+			47 text উপজেলা ভূমি অফিস / সেটেলমেন্ট রেকর্ডস ও ক্যাডাস্ট্রাল স্ট্যাজিং
+			48 heading জরিপ রেকর্ডস ও ক্যাডাস্ট্রাল স্ট্যাজিং (মেকার), Value: 1
+				49 image
+				50 text জরিপ রেকর্ডস ও ক্যাডাস্ট্রাল স্ট্যাজিং (মেকার)
+			51 text চলমান ডিজিটাল জরিপ (CS/SA/RS/BS) খতিয়ান ডাটা প্রস্তুত, সীমানা দাগ স্ট্যাজিং ও স্বাধীন চেকার সমীপে ব্যাচ দাখিল।
+			52 button রিফ্রেশ
+				53 image
+				54 text রিফ্রেশ
+			55 image
+			56 text সেটেলমেন্ট রেকর্ডস অফিসার (মেকার) অপেক্ষমাণ স্ট্যাজিং ব্যাচ
+			57 image
+			58 text ২ চেকার পর্যালোচনার অপেক্ষায় অনুমোদিত জরিপ রেকর্ড
+			59 image
+			60 text ৫ লেজারে চূড়ান্ত যুক্ত সংশোধন ফেরত ব্যাচ
+			61 image
+			62 text ১ সংশোধন প্রয়োজন মোট দাখিলকৃত ব্যাচ
+			63 image
+			64 text ৮ ডিজিটাল জরিপ ডাটা
+			65 button জরিপ রেকর্ড ও ব্যাচ দাখিল ৮
+				66 image
+				67 text জরিপ রেকর্ড ও ব্যাচ দাখিল
+				68 text ৮
+			69 button খতিয়ান এক্সপ্লোরার
+				70 image
+				71 text খতিয়ান এক্সপ্লোরার
+			72 image
+			73 text ক্যাডাস্ট্রাল জরিপ রেকর্ডস স্ট্যাজিং মেকার
+			74 heading ডিজিটাল জরিপ খতিয়ান ডাটা এন্ট্রি ও ব্যাচ দাখিল, Value: 2
+				75 text ডিজিটাল জরিপ খতিয়ান ডাটা এন্ট্রি ও ব্যাচ দাখিল
+			76 text চলমান সিএস/এসএ/আরএস/বিএস জরিপ খতিয়ান ডাটা প্রস্তুত করুন। একাধিক রেকর্ড স্ট্যাজিং করে স্বাধীন চেকার সমীপে দাখিল করুন।
+			77 button নতুন জরিপ রেকর্ড যোগ করুন
+				78 image
+				79 text নতুন জরিপ রেকর্ড যোগ করুন
+			80 image
+			81 text দাখিলকৃত জরিপ ব্যাচসমূহ ৮ টি ব্যাচ
+			82 table
+				83 row
+					84 cell
+						85 text #
+					86 cell
+						87 text ব্যাচ নং
+					88 cell
+						89 text রেকর্ড ধরন
+					90 cell
+						91 text মেকার কর্মকর্তা
+					92 cell
+						93 text রেকর্ড সংখ্যা
+					94 cell
+						95 text স্ট্যাটাস
+					96 cell
+						97 text দাখিলের তারিখ
+					98 cell
+						99 text কার্যক্রম
+				100 row
+					101 cell
+						102 text # 8
+					103 cell
+						104 text ONB-2026-0008
+					105 cell
+						106 text SURVEY_RECORD
+					107 cell
+						108 text মো. দেলোয়ার হোসেন (সেটেলমেন্ট রেকর্ডস অফিসার - মেকার)
+					109 cell
+						110 text ১
+					111 cell
+						112 text REJECTED
+					113 cell
+						114 text ২০২৬-১০-১৮
+					115 cell
+						116 button পরিদর্শন
+							117 image
+							118 text পরিদর্শন
+				119 row
+					120 cell
+						121 text # 7
+					122 cell
+						123 text ONB-2026-0007
+					124 cell
+						125 text SURVEY_RECORD
+					126 cell
+						127 text মো. দেলোয়ার হোসেন (সেটেলমেন্ট রেকর্ডস অফিসার - মেকার)
+					128 cell
+						129 text ১
+					130 cell
+						131 text APPROVED
+					132 cell
+						133 text ২০২৬-১০-১৮
+					134 cell
+						135 button পরিদর্শন
+							136 image
+							137 text পরিদর্শন
+				138 row
+					139 cell
+						140 text # 6
+					141 cell
+						142 text ONB-2026-0006
+					143 cell
+						144 text SURVEY_RECORD
+					145 cell
+						146 text মো. দেলোয়ার হোসেন (সেটেলমেন্ট রেকর্ডস অফিসার - মেকার)
+					147 cell
+						148 text ১
+					149 cell
+						150 text APPROVED
+					151 cell
+						152 text ২০২৬-১০-১৮
+					153 cell
+						154 button পরিদর্শন
+							155 image
+							156 text পরিদর্শন
+				157 row
+					158 cell
+						159 text # 5
+					160 cell
+						161 text ONB-2026-0005
+					162 cell
+						163 text SURVEY_RECORD
+					164 cell
+						165 text মো. দেলোয়ার হোসেন (সেটেলমেন্ট রেকর্ডস অফিসার - মেকার)
+					166 cell
+						167 text ১
+					168 cell
+						169 text APPROVED
+					170 cell
+						171 text ২০২৬-১০-১৮
+					172 cell
+						173 button পরিদর্শন
+							174 image
+							175 text পরিদর্শন
+				176 row
+					177 cell
+						178 text # 4
+					179 cell
+						180 text ONB-2026-0004
+					181 cell
+						182 text SURVEY_RECORD
+					183 cell
+						184 text মো. দেলোয়ার হোসেন (সেটেলমেন্ট রেকর্ডস অফিসার - মেকার)
+					185 cell
+						186 text ১
+					187 cell
+						188 text APPROVED
+					189 cell
+						190 text ২০২৬-১০-১৮
+					191 cell
+						192 button পরিদর্শন
+							193 image
+							194 text পরিদর্শন
+				195 row
+					196 cell
+						197 text # 3
+					198 cell
+						199 text ONB-2026-0003
+					200 cell
+						201 text SURVEY_RECORD
+					202 cell
+						203 text মো. দেলোয়ার হোসেন (সেটেলমেন্ট রেকর্ডস অফিসার - মেকার)
+					204 cell
+						205 text ১
+					206 cell
+						207 text SUBMITTED
+					208 cell
+						209 text ২০২৬-১০-১৮
+					210 cell
+						211 button পরিদর্শন
+							212 image
+							213 text পরিদর্শন
+				214 row
+					215 cell
+						216 text # 2
+					217 cell
+						218 text ONB-2026-0002
+					219 cell
+						220 text KHATIAN_RECONCILIATION
+					221 cell
+						222 text মো. কামরুল হাসান (রেজিস্ট্রি ডাটা অফিসার - মেকার)
+					223 cell
+						224 text ১
+					225 cell
+						226 text APPROVED
+					227 cell
+						228 text ২০২৬-১০-১৭
+					229 cell
+						230 button পরিদর্শন
+							231 image
+							232 text পরিদর্শন
+				233 row
+					234 cell
+						235 text # 1
+					236 cell
+						237 text ONB-2026-0001
+					238 cell
+						239 text DEED_DRAFT
+					240 cell
+						241 text মো. কামরুল হাসান (রেজিস্ট্রি ডাটা অফিসার - মেকার)
+					242 cell
+						243 text ১
+					244 cell
+						245 text SUBMITTED
+					246 cell
+						247 text ২০২৬-১০-১৭
+					248 cell
+						249 button পরিদর্শন
+							250 image
+							251 text পরিদর্শন
+			277 text ONB-2026-0008 SURVEY_RECORD
+			278 button ✕
+			279 text মেকার কর্মকর্তা: 
+			280 text মো. দেলোয়ার হোসেন (সেটেলমেন্ট রেকর্ডস অফিসার - মেকার)  (@ settlement_records_officer ) 2026-10-18 05:06:59
+			281 container
+				282 text SHA-256 Batch Hash:  c4e19ec869648d16141fe1e7...
+			283 image
+			284 text স্ব-অনুমোদন নীতি লঙ্ঘন: আপনি এই ব্যাচের মেকার (প্রস্তুতকারী) হওয়ায় এটি নিজে অনুমোদন করতে পারবেন না। নিরপেক্ষ সহকারী সেটেলমেন্ট অফিসার বা অ্যাডমিনের আইডি থেকে প্রবেশ করুন।
+			285 text ব্যাচভুক্ত খতিয়ান ও দাগসমূহ:
+			286 table
+				287 row
+					288 cell
+						289 text #
+					290 cell
+						291 text দাগ নং
+					292 cell
+						293 text মৌজা
+					294 cell
+						295 text মালিকের নাম
+					296 cell
+						297 text পরিমাণ (শতক)
+					298 cell
+						299 text শ্রেণি
+					300 cell
+						301 text যাচাইকরণ
+				302 row
+					303 cell
+						304 text 1
+					305 cell
+						306 text ৯৯০০১
+					307 cell
+						308 text Birulia
+					309 cell
+						310 text পরীক্ষামূলক জরিপ মালিক
+					311 cell
+						312 text ১
+					313 cell
+						314 text নাল (Agricultural)
+					315 cell
+						316 text VALID
+			317 text চেকার মন্তব্য ও আইনি পর্যবেক্ষণ:
+			318 text entry area (settable)
+			319 button বন্ধ করুন
+			320 button সংশোধন ফেরত / বাতিল
+				321 image
+				322 text সংশোধন ফেরত / বাতিল
+			323 button (disabled) অনুমোদন ও গেজেট প্রকাশ
+				324 image
+				325 text অনুমোদন ও গেজেট প্রকাশ
+		252 container
+			253 text ভূ ভূমি সুরক্ষা ভূমি নিরাপত্তা ও ট্রাস্ট প্রোটোটাইপ ভূমি সুরক্ষা একটি স্বাধীন উদ্ভাবনী প্রোটোটাইপ (LandTech Hackathon 2026)। সরকারি সেবাসমূহ সংশ্লিষ্ট ভূমি অফিস ও নিবন্ধন অধিদপ্তরের অফিসিয়াল পোর্টালের আওতাধীন। Ed25519 • SHA-256 Hash Chain নাগরিক সেবাসমূহ
+			254 content list
+				255 button জমি কেনার আগে যাচাই
+				256 button জমির হাট (নিরাপদ বিক্রয়)
+				257 button ক্যাডাস্ট্রাল মৌজা ম্যাপ
+				258 button দলিল QR কোড যাচাই
+				259 button অফিসিয়াল নোটিশবোর্ড
+				260 button ভূমি সাক্ষরতা ও আইন ব্লগ
+				261 button দপ্তর ও সেবা কেন্দ্রসমূহ
+				262 button নাগরিক ভল্ট ও বিক্রয় লক
+			263 text দাপ্তরিক প্যানেল
+			264 content list
+				265 button সাব-রেজিস্ট্রার কনসোল
+				266 button এসি ল্যান্ড ট্রাইব্যুনাল
+				267 button ব্যাংক জামানত ও ডিজিটাল NOC
+				268 button জাতীয় লেজার ও RBAC অডিট
+			269 text সহায়তা ও যোগাযোগ
+			270 content list
+				271 text ভূমি সেবা কল সেন্টার: ১৬১২২
+				272 text ভূমি মন্ত্রণালয় (সরকারি সময়সূচী অনুযায়ী)
+				273 text অফিসিয়াল সেবার সময়সূচি দেখুন
+				274 button সাধারণ জিজ্ঞাসাসমূহ (FAQ)
+				275 button ভূমি ও জরিপ পরিভাষা কোষ
+			276 text © ২০২৬ ভূমি সুরক্ষা (BhumiShield) · LandTech Hackathon Innovation. সর্বস্বত্ব সংরক্ষিত। সিনথেটিক ডেটা পরিবেশ / Synthetic data environment
+
+The focused UI element is 116 button পরিদর্শন

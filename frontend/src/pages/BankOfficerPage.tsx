@@ -18,8 +18,12 @@ import {
   AlertTriangle,
   FileText,
   ShieldCheck,
-  PlusCircle
+  PlusCircle,
+  Eye,
+  SlidersHorizontal,
 } from 'lucide-react';
+import { AddressCascader, AddressSelection } from '../components/AddressCascader';
+import { triggerAppNotification } from '../components/NotificationCenter';
 
 export type BankTab = 'mortgages' | 'new_lien' | 'noc' | 'khatian';
 
@@ -36,13 +40,13 @@ export const BankOfficerPage: React.FC = () => {
   const [mortgages, setMortgages] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
 
-  const [plotId, setPlotId] = useState<number>(6);
-  const [borrowerId, setBorrowerId] = useState<number>(11);
+  const [plotId, setPlotId] = useState<number>(0);
+  const [borrowerId, setBorrowerId] = useState<number>(0);
   const [bankNameBn, setBankNameBn] = useState(user?.office_bn?.split(',')[0] || '');
   const [bankNameEn, setBankNameEn] = useState(user?.office_en?.split(',')[0] || '');
-  const [mortgagedArea, setMortgagedArea] = useState('1');
-  const [branchName, setBranchName] = useState('সাভার শাখা');
-  const [loanAmount, setLoanAmount] = useState('3000000');
+  const [mortgagedArea, setMortgagedArea] = useState('');
+  const [branchName, setBranchName] = useState('');
+  const [loanAmount, setLoanAmount] = useState('');
 
   const [collateralReport, setCollateralReport] = useState<RiskReportResponse | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
@@ -53,6 +57,15 @@ export const BankOfficerPage: React.FC = () => {
   // Search and filter for mortgage register
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'RELEASED'>('ALL');
+
+  // Address Cascader states
+  const [selectedDivision, setSelectedDivision] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedUpazila, setSelectedUpazila] = useState('');
+  const [selectedMouzaId, setSelectedMouzaId] = useState('');
+
+  // Selected Mortgage for Docket Modal
+  const [selectedMortgageForModal, setSelectedMortgageForModal] = useState<any | null>(null);
 
   const bankPresets = [
     { bn: 'বাংলাদেশ কৃষি ব্যাংক', en: 'Bangladesh Krishi Bank', branch: 'সাভার শাখা' },
@@ -78,6 +91,15 @@ export const BankOfficerPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    const timer = setInterval(() => {
+      loadData();
+    }, 8000);
+    const onFocus = () => loadData();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   useEffect(() => {
@@ -157,6 +179,15 @@ export const BankOfficerPage: React.FC = () => {
         loan_amount_bdt: Number(loanAmount),
       });
       setActionMsg(lang === 'bn' ? res.message_bn : res.message_en);
+      triggerAppNotification({
+        title_bn: 'নতুন ব্যাংক লিয়েন ও বন্ধক অন্তর্ভুক্ত',
+        title_en: 'New Bank Mortgage Lien Registered',
+        message_bn: `${bankNameBn} কর্তৃক প্লট আইডি #${plotId}-এ ৳${Number(loanAmount).toLocaleString()} টাকার জামানত লিয়েন অন্তর্ভুক্ত হয়েছে।`,
+        message_en: `Mortgage lien of ৳${Number(loanAmount).toLocaleString()} registered by ${bankNameEn} for Plot #${plotId}.`,
+        type: 'WARNING',
+        targetTab: 'bank',
+        targetSection: 'mortgages',
+      });
       loadData();
     } catch (err: any) {
       const detail = err?.response?.data?.detail || err?.response?.data;
@@ -184,6 +215,15 @@ export const BankOfficerPage: React.FC = () => {
           'Mortgage successfully released and Digital NOC generated!'
         )
       );
+      triggerAppNotification({
+        title_bn: 'মর্টগেজ দায়মুক্তি ও ডিজিটাল NOC জারি',
+        title_en: 'Mortgage Released & Digital NOC Issued',
+        message_bn: `বন্ধক আইডি #${id} সম্পূর্ণ পরিশোধিত ও অবমুক্ত করা হয়েছে। ক্রিপ্টোগ্রাফিক NOC সনদ তৈরি সম্পন্ন।`,
+        message_en: `Mortgage #${id} successfully released. Cryptographic NOC clearance generated.`,
+        type: 'SUCCESS',
+        targetTab: 'bank',
+        targetSection: 'mortgages',
+      });
       loadData();
     } catch {
       setErrorMsg(t('মর্টগেজ অবমুক্ত করতে সমস্যা হয়েছে।', 'Failed to release mortgage.'));
@@ -200,11 +240,26 @@ export const BankOfficerPage: React.FC = () => {
     }
   };
 
+  // Filtered plots for new lien form based on cascading address
+  const filteredPlotsForLien = useMemo(() => {
+    return plots.filter((p) => {
+      if (selectedDivision && p.division_bn && p.division_bn !== selectedDivision) return false;
+      if (selectedDistrict && p.district_bn && p.district_bn !== selectedDistrict) return false;
+      if (selectedUpazila && p.upazila_bn && p.upazila_bn !== selectedUpazila) return false;
+      if (selectedMouzaId && p.mouza_id && Number(p.mouza_id) !== Number(selectedMouzaId)) return false;
+      return true;
+    });
+  }, [plots, selectedDivision, selectedDistrict, selectedUpazila, selectedMouzaId]);
+
   const filteredMortgages = useMemo(() => {
     return mortgages.filter((m) => {
       if (statusFilter !== 'ALL' && m.status !== statusFilter) {
         return false;
       }
+      if (selectedDivision && m.division_bn && m.division_bn !== selectedDivision) return false;
+      if (selectedDistrict && m.district_bn && m.district_bn !== selectedDistrict) return false;
+      if (selectedUpazila && m.upazila_bn && m.upazila_bn !== selectedUpazila) return false;
+
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
       return (
@@ -215,7 +270,7 @@ export const BankOfficerPage: React.FC = () => {
         m.branch_name?.toLowerCase().includes(q)
       );
     });
-  }, [mortgages, statusFilter, searchQuery]);
+  }, [mortgages, statusFilter, searchQuery, selectedDivision, selectedDistrict, selectedUpazila]);
 
   return (
     <div className="space-y-6">
@@ -509,18 +564,60 @@ export const BankOfficerPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Universal Address Cascader Toolbar */}
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-[#006A4E]" />
+              {t('জামানত জমির ভৌগোলিক অধিক্ষেত্র (বিভাগ ➔ জেলা ➔ উপজেলা ➔ মৌজা)', 'Jurisdiction Selector')}
+            </span>
+            {(selectedDivision || selectedDistrict || selectedUpazila || selectedMouzaId) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedDivision('');
+                  setSelectedDistrict('');
+                  setSelectedUpazila('');
+                  setSelectedMouzaId('');
+                }}
+                className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+              >
+                {t('ফিল্টার রিসেট', 'Reset Filter')}
+              </button>
+            )}
+          </div>
+          <AddressCascader
+            selectedDivision={selectedDivision}
+            selectedDistrict={selectedDistrict}
+            selectedUpazila={selectedUpazila}
+            selectedMouzaId={selectedMouzaId}
+            onChange={(sel: AddressSelection) => {
+              setSelectedDivision(sel.division_bn);
+              setSelectedDistrict(sel.district_bn);
+              setSelectedUpazila(sel.upazila_bn);
+              setSelectedMouzaId(sel.mouza_id ? String(sel.mouza_id) : '');
+            }}
+          />
+        </div>
+
         {/* Input Form */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="label">
               {t('দাগ নম্বর নির্বাচন করুন:', 'Select Plot (Dag):')}
+              {filteredPlotsForLien.length > 0 && (
+                <span className="text-[10px] text-[#006A4E] ml-1 font-normal">
+                  ({toBanglaDigits(filteredPlotsForLien.length, lang)} {t('টি দাগ', 'plots')})
+                </span>
+              )}
             </label>
             <select
               value={plotId}
               onChange={(e) => setPlotId(Number(e.target.value))}
               className="field text-xs font-semibold bg-[#F5FAF8]"
             >
-              {plots.map((p) => (
+              <option value="">{t('-- দাগ নির্বাচন করুন --', '-- Select Plot --')}</option>
+              {(filteredPlotsForLien.length > 0 ? filteredPlotsForLien : plots).map((p) => (
                 <option key={p.id} value={p.id}>
                   {t('দাগ নং', 'Dag')} {p.dag_no} ({lang === 'bn' ? p.mouza_bn : p.mouza_en})
                   {Number(p.owner_sale_locked) === 1 ? ' [🔒 LOCKED]' : ''}
@@ -540,7 +637,7 @@ export const BankOfficerPage: React.FC = () => {
             >
               {persons.map((per) => (
                 <option key={per.id} value={per.id}>
-                  {lang === 'bn' ? per.name_bn : per.name_en} ({per.nid_mock})
+                  {lang === 'bn' ? per.name_bn : per.name_en} ({per.nid || per.nid_mock})
                 </option>
               ))}
             </select>
@@ -635,6 +732,42 @@ export const BankOfficerPage: React.FC = () => {
       {/* Active & Released Mortgages Table */}
       {(subTab === 'mortgages' || subTab === 'noc') && (
       <div className="panel p-6 space-y-4">
+        {/* Universal Address Cascader Toolbar */}
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-[#006A4E]" />
+              {t('অধিক্ষেত্র অনুযায়ী মর্টগেজ ফিল্টারিং (বিভাগ ➔ জেলা ➔ উপজেলা ➔ মৌজা)', 'Jurisdiction Filter')}
+            </span>
+            {(selectedDivision || selectedDistrict || selectedUpazila || selectedMouzaId) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedDivision('');
+                  setSelectedDistrict('');
+                  setSelectedUpazila('');
+                  setSelectedMouzaId('');
+                }}
+                className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+              >
+                {t('ফিল্টার রিসেট', 'Reset Filter')}
+              </button>
+            )}
+          </div>
+          <AddressCascader
+            selectedDivision={selectedDivision}
+            selectedDistrict={selectedDistrict}
+            selectedUpazila={selectedUpazila}
+            selectedMouzaId={selectedMouzaId}
+            onChange={(sel: AddressSelection) => {
+              setSelectedDivision(sel.division_bn);
+              setSelectedDistrict(sel.district_bn);
+              setSelectedUpazila(sel.upazila_bn);
+              setSelectedMouzaId(sel.mouza_id ? String(sel.mouza_id) : '');
+            }}
+          />
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="font-bold text-base text-[#074f38]">
@@ -723,6 +856,14 @@ export const BankOfficerPage: React.FC = () => {
                     </td>
                     <td className="py-3 px-3 text-right">
                       <div className="inline-flex gap-1.5 items-center">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedMortgageForModal(m)}
+                          className="p-1.5 rounded-lg border border-[#006A4E]/30 bg-white hover:bg-[#006A4E] hover:text-white text-[#006A4E] transition cursor-pointer"
+                          title={t('মর্টগেজ ডকেট ও জামানতের বিবরণ দেখুন', 'View Mortgage Docket')}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                         {m.status === 'ACTIVE' ? (
                           <>
                             {role === 'bank_officer' ? (
@@ -887,6 +1028,140 @@ export const BankOfficerPage: React.FC = () => {
                   <p>{nocModalData.lien?.bank_name_bn}</p>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BANK MORTGAGE & COLLATERAL DOCKET MODAL */}
+      {selectedMortgageForModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="p-2 rounded-lg bg-emerald-50 text-[#006A4E]">
+                  <Building2 className="w-5 h-5" />
+                </span>
+                <div>
+                  <h3 className="font-extrabold text-base text-slate-900">
+                    {t('ব্যাংক জামানত ও মর্টগেজ লিয়েন ডকেট', 'Mortgage Lien & Collateral Docket')}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-mono">
+                    REF #{selectedMortgageForModal.id} · {selectedMortgageForModal.bank_name_bn}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedMortgageForModal(null)}
+                className="p-1 rounded-full hover:bg-slate-100 text-slate-500 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('ব্যাংক ও শাখা', 'Bank & Branch')}</span>
+                  <strong className="text-slate-900 font-bold">{selectedMortgageForModal.bank_name_bn}</strong>
+                  <div className="text-[10px] text-slate-500">{selectedMortgageForModal.branch_name}</div>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('ঋণগ্রহীতা (Borrower)', 'Borrower')}</span>
+                  <strong className="text-slate-900 font-bold">{selectedMortgageForModal.borrower_name_bn}</strong>
+                  <div className="text-[10px] text-slate-500 font-mono">NID: {selectedMortgageForModal.borrower_nid || '৯৯০০০০১০১২'}</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-200">
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('মৌজা ও অধিক্ষেত্র', 'Mouza')}</span>
+                  <strong className="text-slate-800">{selectedMortgageForModal.mouza_bn || 'বিরুলিয়া'}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('দাগ নং', 'Plot No')}</span>
+                  <strong className="text-[#006A4E] font-bold">
+                    {toBanglaDigits(selectedMortgageForModal.dag_no_bn || selectedMortgageForModal.dag_no, lang)}
+                  </strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('বন্ধককৃত জমির অংশ', 'Area')}</span>
+                  <strong className="text-[#006A4E] font-bold">
+                    {toBanglaDigits(selectedMortgageForModal.area_mortgaged_decimal || 12, lang)} {t('শতক', 'dec')}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200">
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('অনুমোদিত ঋণের পরিমাণ', 'Sanctioned Loan')}</span>
+                  <strong className="text-slate-900 font-mono text-sm">
+                    ৳{toBanglaDigits(Number(selectedMortgageForModal.loan_amount_bdt).toLocaleString(), lang)}
+                  </strong>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10px]">{t('লিয়েন স্ট্যাটাস', 'Lien Status')}</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold inline-block ${
+                      selectedMortgageForModal.status === 'ACTIVE'
+                        ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                        : 'bg-emerald-100 text-[#006A4E] border border-emerald-300'
+                    }`}
+                  >
+                    {selectedMortgageForModal.status === 'ACTIVE' ? '🔒 ACTIVE LIEN' : '✔ RELEASED (দায়মুক্ত)'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900 text-slate-300 text-xs flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span className="font-bold text-white">{t('দ্বৈত মর্টগেজ সুরক্ষা সক্রিয়', 'Double Mortgage Protection Active')}</span>
+              </div>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 font-bold">
+                {t('লেজার সমন্বিত', 'Ledger Synced')}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setSelectedMortgageForModal(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+              >
+                {t('বন্ধ করুন', 'Close')}
+              </button>
+
+              {selectedMortgageForModal.status === 'ACTIVE' && role !== 'bank_officer' && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await handleRelease(selectedMortgageForModal.id);
+                    setSelectedMortgageForModal(null);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <Unlock className="w-3.5 h-3.5" />
+                  <span>{t('লিয়েন অবমুক্ত ও ডিজিটাল NOC প্রদান', 'Release Lien & Issue NOC')}</span>
+                </button>
+              )}
+
+              {selectedMortgageForModal.status === 'RELEASED' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const id = selectedMortgageForModal.id;
+                    setSelectedMortgageForModal(null);
+                    handleViewNoc(id);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <FileBadge className="w-3.5 h-3.5" />
+                  <span>{t('ডিজিটাল NOC সনদপত্র দেখুন', 'View NOC Certificate')}</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

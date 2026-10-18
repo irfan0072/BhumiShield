@@ -27,9 +27,10 @@ return static function (string $method, string $uri, array $query, array $body):
         $sub = $path;
     }
 
-    if (strtolower((string) env('APP_ENV', 'development')) === 'production') {
+    $testEnvironment = strtolower((string) env('APP_ENV', 'development')) !== 'production' && (strtolower((string) env('APP_ENV', '')) === 'testing' || (bool)getenv('BHUMISHIELD_TEST_DB'));
+    if (!$testEnvironment) {
         $demoOnly = preg_match('#^/ledger/(tamper|restore)/#', $sub)
-            || in_array($sub, ['/auth/switch-demo-role', '/auth/demo-users', '/ocr/khatian-demo', '/ocr-assist/sample'], true);
+            || in_array($sub, ['/auth/switch-demo-role', '/auth/demo-users', '/ocr/khatian-demo', '/ocr-assist/sample', '/scenarios', '/demo-scenarios'], true);
         if ($demoOnly) {
             throw new \RuntimeException(json_encode([
                 'status' => 404, 'code' => 'DEMO_FEATURE_DISABLED',
@@ -55,6 +56,10 @@ return static function (string $method, string $uri, array $query, array $body):
             'mode' => strtolower((string) env('APP_ENV', 'development')),
             'disclaimer_en' => 'Independent land-record workflow and risk application; not a government authority.',
         ];
+    }
+
+    if ($method === 'GET' && $sub === '/identity/readiness') {
+        return \App\Services\ReadinessService::getIdentityAndBiometricReadiness();
     }
 
     // 1. Public & Admin Ledger Verification Routes
@@ -129,6 +134,15 @@ return static function (string $method, string $uri, array $query, array $body):
         return SystemAdminController::completeProfile($body);
     }
 
+    // Geographic evidence: published public layers; controlled admin imports/review.
+    if ($method === 'GET' && $sub === '/map/workspace') return \App\Http\Controllers\Api\V1\MapWorkspaceController::workspace($query);
+    if ($method === 'GET' && $sub === '/map/layers') return \App\Http\Controllers\Api\V1\MapWorkspaceController::layers($query);
+    if ($method === 'GET' && preg_match('#^/map/layers/(\d+)$#',$sub,$m)) return \App\Http\Controllers\Api\V1\MapWorkspaceController::geometry((int)$m[1]);
+    if ($method === 'GET' && $sub === '/admin/map/layers') return \App\Http\Controllers\Api\V1\MapWorkspaceController::layers($query,true);
+    if ($method === 'POST' && $sub === '/admin/map/layers') return \App\Http\Controllers\Api\V1\MapWorkspaceController::import($body);
+    if ($method === 'GET' && preg_match('#^/admin/map/layers/(\d+)$#',$sub,$m)) return \App\Http\Controllers\Api\V1\MapWorkspaceController::geometry((int)$m[1],true);
+    if ($method === 'POST' && preg_match('#^/admin/map/layers/(\d+)/review$#',$sub,$m)) return \App\Http\Controllers\Api\V1\MapWorkspaceController::transition((int)$m[1],$body);
+
     // 3. Citizen Portfolio, Sale Lock & Dispute Control Routes
     if ($method === 'GET' && $sub === '/locations') {
         return WorkflowController::listLocations();
@@ -196,6 +210,8 @@ return static function (string $method, string $uri, array $query, array $body):
     }
 
     // 3c. SLA Support Tickets (Section 8.2)
+    if ($method === 'POST' && $sub === '/tickets') return \App\Http\Controllers\Api\V1\SupportWorkflowController::create($body);
+    if ($method === 'POST' && preg_match('#^/tickets/([^/]+)/messages$#', $sub, $m)) return \App\Http\Controllers\Api\V1\SupportWorkflowController::reply(urldecode($m[1]), $body);
     if ($method === 'GET' && $sub === '/tickets') {
         return \App\Http\Controllers\Api\V1\CitizenVaultAndTicketController::listTickets($query);
     }
@@ -203,6 +219,10 @@ return static function (string $method, string $uri, array $query, array $body):
         return \App\Http\Controllers\Api\V1\CitizenVaultAndTicketController::getTicket(urldecode($m[1]));
     }
 
+    if ($method === 'GET' && $sub === '/manage/content') return \App\Http\Controllers\Api\V1\ContentWorkflowController::listing($query);
+    if ($method === 'POST' && $sub === '/manage/content') return \App\Http\Controllers\Api\V1\ContentWorkflowController::save($body);
+    if ($method === 'POST' && preg_match('#^/manage/content/(\d+)/status$#', $sub, $m)) return \App\Http\Controllers\Api\V1\ContentWorkflowController::transition((int)$m[1], $body);
+    if ($method === 'PUT' && preg_match('#^/manage/content/(\d+)$#', $sub, $m)) return \App\Http\Controllers\Api\V1\ContentWorkflowController::save($body, (int)$m[1]);
     // 3d. Offices, Public Notices and Educational Blog (Sections 6, 8.5, 8.6)
     if ($method === 'GET' && $sub === '/offices') {
         return PublicMarketplaceAndPortalController::listOffices($query);
@@ -272,6 +292,9 @@ return static function (string $method, string $uri, array $query, array $body):
     }
     if ($method === 'POST' && preg_match('#^/onboarding/batches/([^/]+)/decide$#', $sub, $m)) {
         return OnboardingAndAppealsController::decideBatch(urldecode($m[1]), $body);
+    }
+    if ($method === 'POST' && preg_match('#^/onboarding/batches/([^/]+)/resubmit$#', $sub, $m)) {
+        return OnboardingAndAppealsController::resubmitBatch(urldecode($m[1]), $body);
     }
     if ($method === 'GET' && $sub === '/appeals') {
         return OnboardingAndAppealsController::listAppeals($query);
@@ -388,12 +411,16 @@ return static function (string $method, string $uri, array $query, array $body):
     }
 
     // 5. AC Land & Land Office Controlling Routes (Protected by RoleMiddleware)
+    if ($method === 'POST' && ($sub === '/mutations/apply' || $sub === '/mutations')) {
+        $actor = RoleMiddleware::authorize(['citizen', 'sub_registrar', 'ac_land', 'admin']);
+        return WorkflowController::applyMutation($body, $actor);
+    }
     if ($method === 'GET' && $sub === '/mutations') {
-        RoleMiddleware::authorize(['ac_land', 'land_office_assistant', 'field_verification_officer', 'settlement_records_officer', 'settlement_checker', 'uno_supervisor', 'appellate_reviewer', 'admin', 'auditor']);
-        return WorkflowController::listMutations($query['status'] ?? null);
+        $actor = RoleMiddleware::authorize(['ac_land', 'land_office_assistant', 'field_verification_officer', 'settlement_records_officer', 'settlement_checker', 'uno_supervisor', 'appellate_reviewer', 'admin', 'auditor']);
+        return WorkflowController::listMutations($query['status'] ?? null, $actor);
     }
     if ($method === 'POST' && (preg_match('#^/mutations/(\d+)/decide$#', $sub, $m) || preg_match('#^/mutations/(\d+)/decision$#', $sub, $m))) {
-        $actor = RoleMiddleware::authorize(['ac_land', 'admin']);
+        $actor = RoleMiddleware::authorize(['ac_land']);
         if (isset($body['status']) && !isset($body['decision'])) {
             $body['decision'] = $body['status'];
         }
@@ -438,38 +465,112 @@ return static function (string $method, string $uri, array $query, array $body):
 
     // 7. Audit Log, Bangla OCR & System Admin Routes
     if ($method === 'GET' && ($sub === '/audit-log' || $sub === '/audit-logs')) {
-        RoleMiddleware::authorize(['admin', 'auditor']);
+        RoleMiddleware::authorize(['admin', 'system_admin', 'auditor', 'support_agent', 'platform_moderator', 'content_editor', 'content_approver']);
         return WorkflowController::getAuditLog();
     }
     if (($method === 'POST' || $method === 'GET') && ($sub === '/ocr/khatian-demo' || $sub === '/ocr-assist/sample')) {
         return WorkflowController::parseDummyKhatianOcr($body ?: $query);
     }
     if ($method === 'GET' && ($sub === '/admin/users' || $sub === '/users')) {
-        RoleMiddleware::authorize(['admin', 'system_admin', 'auditor', 'support_agent', 'platform_moderator']);
+        RoleMiddleware::authorize(['admin', 'system_admin', 'auditor', 'support_agent', 'platform_moderator', 'content_editor', 'content_approver']);
         return SystemAdminController::adminListUsers($query['role'] ?? null, $query['q'] ?? null);
     }
     if ($method === 'POST' && ($sub === '/admin/users' || $sub === '/users')) {
-        $actor = RoleMiddleware::authorize(['admin']);
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
         return SystemAdminController::registerUser($body, $actor);
     }
     if ($method === 'PUT' && (preg_match('#^/admin/users/(\d+)$#', $sub, $m) || preg_match('#^/users/(\d+)$#', $sub, $m))) {
-        $actor = RoleMiddleware::authorize(['admin']);
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
         return SystemAdminController::adminUpdateUser((int) $m[1], $body, $actor);
     }
     if ($method === 'DELETE' && (preg_match('#^/admin/users/(\d+)$#', $sub, $m) || preg_match('#^/users/(\d+)$#', $sub, $m))) {
-        $actor = RoleMiddleware::authorize(['admin']);
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
         return SystemAdminController::adminDeleteUser((int) $m[1], $actor);
     }
     if ($method === 'GET' && $sub === '/settings') {
         return SystemAdminController::getSiteSettings();
     }
     if ($method === 'PUT' && $sub === '/settings') {
-        $actor = RoleMiddleware::authorize(['admin']);
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
         return SystemAdminController::updateSiteSettings($body, $actor);
     }
     if ($method === 'GET' && ($sub === '/analytics/summary' || $sub === '/stats/summary')) {
         return SystemAdminController::getAnalyticsSummary();
     }
+
+    // Super Admin Sovereign Power Endpoints
+    if ($method === 'POST' && preg_match('#^/admin/plots/(\d+)/toggle-freeze$#', $sub, $m)) {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
+        return SystemAdminController::togglePlotFreeze((int) $m[1], $body, $actor);
+    }
+    if ($method === 'GET' && $sub === '/admin/anomalies') {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin', 'auditor']);
+        return SystemAdminController::getLiveAnomalies($actor);
+    }
+    if ($method === 'POST' && preg_match('#^/admin/users/(\d+)/transfer-office$#', $sub, $m)) {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
+        return SystemAdminController::transferOfficer((int) $m[1], $body, $actor);
+    }
+    if ($method === 'GET' && ($sub === '/system/broadcast' || $sub === '/broadcast')) {
+        return SystemAdminController::getEmergencyBroadcast();
+    }
+    if ($method === 'POST' && ($sub === '/admin/system/broadcast' || $sub === '/admin/broadcast')) {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
+        return SystemAdminController::updateEmergencyBroadcast($body, $actor);
+    }
+    if ($method === 'GET' && $sub === '/admin/database/backup') {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
+        return SystemAdminController::exportDatabaseBackup($actor);
+    }
+    if ($method === 'POST' && $sub === '/admin/ledger/health-check') {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin', 'auditor']);
+        return SystemAdminController::runLedgerHealthCheck($actor);
+    }
+    if ($method === 'GET' && ($sub === '/admin/dashboard-stats' || $sub === '/admin/stats/queues')) {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
+        return SystemAdminController::getSuperAdminDashboardStats($actor);
+    }
+    if ($method === 'POST' && preg_match('#^/admin/transfers/(\d+)/reassign$#', $sub, $m)) {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
+        return SystemAdminController::reassignTransfer((int) $m[1], $body, $actor);
+    }
+    if ($method === 'POST' && preg_match('#^/admin/transfers/(\d+)/correction-request$#', $sub, $m)) {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
+        return SystemAdminController::requestTransferCorrection((int) $m[1], $body, $actor);
+    }
+    if ($method === 'POST' && ($sub === '/admin/override-action' || $sub === '/admin/security/override')) {
+        $actor = RoleMiddleware::authorize(['system_admin', 'admin']);
+        return SystemAdminController::performAdminOverride($body, $actor);
+    }
+    if ($method === 'GET' && ($sub === '/admin/acquisition/cases' || $sub === '/acquisition/cases')) {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin', 'dc_acquisition_officer', 'auditor']);
+        return SystemAdminController::listAcquisitionCases($query, $actor);
+    }
+    if ($method === 'POST' && ($sub === '/admin/acquisition/cases' || $sub === '/acquisition/cases')) {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin', 'dc_acquisition_officer']);
+        return SystemAdminController::createAcquisitionCase($body, $actor);
+    }
+    if ($method === 'POST' && ($sub === '/admin/integrations/retry' || $sub === '/admin/notifications/retry')) {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
+        return SystemAdminController::retryFailedDeliveries($body, $actor);
+    }
+    if ($method === 'GET' && ($sub === '/document-security-config' || $sub === '/admin/document-security-config')) {
+        return SystemAdminController::getDocumentSecurityConfig();
+    }
+    if (($method === 'POST' || $method === 'PUT') && ($sub === '/document-security-config' || $sub === '/admin/document-security-config')) {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
+        return SystemAdminController::updateDocumentSecurityConfig($body, $actor);
+    }
+
+    if ($method === 'GET' && $sub === '/opening-records') return \App\Http\Controllers\Api\V1\OpeningRecordController::list();
+    if ($method === 'POST' && $sub === '/opening-records') return \App\Http\Controllers\Api\V1\OpeningRecordController::create($body);
+    if ($method === 'POST' && preg_match('#^/opening-records/(\d+)/decision$#',$sub,$m)) return \App\Http\Controllers\Api\V1\OpeningRecordController::decide((int)$m[1],$body);
+    if ($method === 'GET' && preg_match('#^/opening-records/(\d+)/source$#',$sub,$m)) return \App\Http\Controllers\Api\V1\OpeningRecordController::source((int)$m[1]);
+    if ($method === 'GET' && $sub === '/admin/setup/offices') return \App\Http\Controllers\Api\V1\OfficeSetupController::list();
+    if ($method === 'POST' && $sub === '/admin/setup/offices') return \App\Http\Controllers\Api\V1\OfficeSetupController::create($body);
+    if ($method === 'GET' && preg_match('#^/admin/setup/offices/(\d+)$#', $sub, $m)) return \App\Http\Controllers\Api\V1\OfficeSetupController::get((int)$m[1]);
+    if ($method === 'PUT' && preg_match('#^/admin/setup/offices/(\d+)$#', $sub, $m)) return \App\Http\Controllers\Api\V1\OfficeSetupController::update((int)$m[1], $body);
+    if ($method === 'POST' && preg_match('#^/admin/setup/offices/(\d+)/toggle-active$#', $sub, $m)) return \App\Http\Controllers\Api\V1\OfficeSetupController::toggleActive((int)$m[1]);
 
     // 8. Service Catalogue & Fee Registry (Bilingual, Source-Linked)
     if ($method === 'GET' && $sub === '/services') {
@@ -484,7 +585,7 @@ return static function (string $method, string $uri, array $query, array $body):
 
     // Admin Service Catalogue & Fee Registry Management
     if ($method === 'GET' && $sub === '/admin/services') {
-        RoleMiddleware::authorize(['admin']);
+        RoleMiddleware::authorize(['admin', 'system_admin', 'auditor', 'support_agent', 'platform_moderator', 'content_editor', 'content_approver']);
         return ServiceCatalogueController::listAdminServices();
     }
     if ($method === 'POST' && $sub === '/admin/services') {
@@ -504,7 +605,7 @@ return static function (string $method, string $uri, array $query, array $body):
         return ServiceCatalogueController::archiveService((int) $m[1], $actor);
     }
     if ($method === 'GET' && $sub === '/admin/fees') {
-        RoleMiddleware::authorize(['admin']);
+        RoleMiddleware::authorize(['admin', 'system_admin', 'auditor', 'support_agent', 'platform_moderator', 'content_editor', 'content_approver']);
         return ServiceCatalogueController::listAdminFees();
     }
     if ($method === 'PUT' && preg_match('#^/admin/fees/(\d+)$#', $sub, $m)) {
@@ -514,6 +615,53 @@ return static function (string $method, string $uri, array $query, array $body):
     if ($method === 'POST' && (preg_match('#^/admin/users/(\d+)/verify-identity$#', $sub, $m) || preg_match('#^/admin/users/(\d+)/verify$#', $sub, $m))) {
         $actor = RoleMiddleware::authorize(['admin']);
         return SystemAdminController::verifyCitizenIdentity((int) $m[1], $actor);
+    }
+
+    // 9. Administrative Address Hierarchy & Geographic Cascading Routes
+    if ($method === 'GET' && $sub === '/hierarchy/tree') {
+        return SystemAdminController::getHierarchyTree();
+    }
+    if ($method === 'GET' && $sub === '/hierarchy/divisions') {
+        return SystemAdminController::getHierarchyDivisions();
+    }
+    if ($method === 'GET' && $sub === '/hierarchy/districts') {
+        return SystemAdminController::getHierarchyDistricts($query['division'] ?? null);
+    }
+    if ($method === 'GET' && $sub === '/hierarchy/upazilas') {
+        return SystemAdminController::getHierarchyUpazilas($query['district'] ?? null, $query['division'] ?? null);
+    }
+    if ($method === 'GET' && $sub === '/hierarchy/mouzas') {
+        return SystemAdminController::getHierarchyMouzas($query['upazila'] ?? null, $query['district'] ?? null);
+    }
+    if ($method === 'POST' && $sub === '/admin/hierarchy/mouza') {
+        $actor = RoleMiddleware::authorize(['admin']);
+        return SystemAdminController::createHierarchyMouza($body, $actor);
+    }
+    if ($method === 'PUT' && preg_match('#^/admin/hierarchy/mouza/(\d+)$#', $sub, $m)) {
+        $actor = RoleMiddleware::authorize(['admin']);
+        return SystemAdminController::updateHierarchyMouza((int) $m[1], $body, $actor);
+    }
+    if ($method === 'DELETE' && preg_match('#^/admin/hierarchy/mouza/(\d+)$#', $sub, $m)) {
+        $actor = RoleMiddleware::authorize(['admin']);
+        return SystemAdminController::deleteHierarchyMouza((int) $m[1], $actor);
+    }
+    if ($method === 'POST' && $sub === '/admin/hierarchy/rename') {
+        $actor = RoleMiddleware::authorize(['admin']);
+        return SystemAdminController::renameHierarchyTier($body, $actor);
+    }
+
+    // 10. Super Admin Deeds Registry & Governance Console Routes
+    if ($method === 'GET' && $sub === '/admin/deeds') {
+        $actor = RoleMiddleware::authorize(['admin', 'auditor', 'system_admin', 'support_agent']);
+        return SystemAdminController::listAdminDeeds($query, $actor);
+    }
+    if ($method === 'GET' && preg_match('#^/admin/deeds/(\d+)$#', $sub, $m)) {
+        $actor = RoleMiddleware::authorize(['admin', 'auditor', 'system_admin', 'sub_registrar', 'support_agent']);
+        return SystemAdminController::getAdminDeedDetail((int) $m[1], $actor);
+    }
+    if ($method === 'POST' && preg_match('#^/admin/deeds/(\d+)/flag$#', $sub, $m)) {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
+        return SystemAdminController::flagAdminDeed((int) $m[1], $body, $actor);
     }
 
     throw new \RuntimeException(json_encode([

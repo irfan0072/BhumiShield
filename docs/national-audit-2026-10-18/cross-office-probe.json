@@ -1,0 +1,16 @@
+{
+    "test": "Cross-office survey batch detail",
+    "actor_role": "sub_registrar",
+    "assigned_offices": [
+        {
+            "id": 2,
+            "office_type": "registry",
+            "district_en": "Gazipur",
+            "upazila_en": "Gazipur Sadar"
+        }
+    ],
+    "can_access_savar_plot": false,
+    "batch_read": "ALLOWED",
+    "batch_no": "ONB-2026-0008",
+    "item_count": 1
+}

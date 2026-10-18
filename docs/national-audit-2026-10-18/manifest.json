@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-18",
+  "isolation": "Source snapshot and SQLite backup; UI localhost:5188, API localhost:8058; no product fixes or main DB writes",
+  "typecheck": "PASS exit 0",
+  "build": "PASS; main JS 1790.06 kB, gzip 385.95 kB",
+  "backend_suite": "Stopped after reproduced failures; partial run, not a full-suite result",
+  "source_files": [
+    {
+      "path": "backend/app/Services/OfficeScopeService.php",
+      "sha256": "d66c38698f5653730e4bf716414e6f745a25d6a8918142dc69646540734de88a",
+      "matches_tested_snapshot": true
+    },
+    {
+      "path": "backend/app/Services/TransferStateMachine.php",
+      "sha256": "c025895289fdf27eecc6d3cfe2ed5e64609c787db426f3129e6a06cd38c78dcc",
+      "matches_tested_snapshot": true
+    },
+    {
+      "path": "backend/app/Http/Controllers/Api/V1/SystemAdminController.php",
+      "sha256": "49e89900b6dbd562d65799846cc26c454e4b48e3ad8e51a8518a3582196b1ae4",
+      "matches_tested_snapshot": true
+    },
+    {
+      "path": "frontend/src/pages/ApplicationsPage.tsx",
+      "sha256": "690e4382eb3e0866584a98a0709113d06fe2c1ad607cd85dd22e8f3db12cb0f6",
+      "matches_tested_snapshot": true
+    },
+    {
+      "path": "frontend/src/pages/AdminDashboardPage.tsx",
+      "sha256": "30e3f9715592ca418a592f658e880609aaee8ce9a050404581d4ae21c4bab1ee",
+      "matches_tested_snapshot": true
+    },
+    {
+      "path": "frontend/src/pages/SpecialistWorkspacePage.tsx",
+      "sha256": "c6f9330cd00d036fa7ba33ab631c2c8e1cf0f9f58df03c50492e0845a416ec9f",
+      "matches_tested_snapshot": true
+    },
+    {
+      "path": "frontend/src/pages/admin/SuperAdminOverviewQueues.tsx",
+      "sha256": "35e1546b98877a90937eef661a4f06b6ed28928fc410ed94221c1b6a2bfecc78",
+      "matches_tested_snapshot": true
+    }
+  ],
+  "main_database_after_audit": {
+    "users": 25,
+    "offices": 7,
+    "plots": 60,
+    "transfer_requests": 7,
+    "onboarding_batches": 7,
+    "tickets": 8
+  },
+  "main_contains_new_audit_user": 0,
+  "cleanup": "Own isolated frontend/API stopped, viewport reset, own browser tab closed; user main servers/tab untouched",
+  "coverage": {
+    "authenticated_roles": 22,
+    "distinct_accounts": 24,
+    "all_feature_actions_end_to_end_passed": false,
+    "new_transfer": "TR-8 blocked at step 5",
+    "survey": "ONB-2026-0008 returned as REJECTED; no edit/resubmit",
+    "support": "HELP-2026-546DCCA2B8 citizen-agent-citizen round trip passed"
+  }
+}

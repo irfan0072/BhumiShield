@@ -43,15 +43,19 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
   const { t, lang } = useAppUI();
   const [offices, setOffices] = useState<OfficeItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [districtFilter, setDistrictFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [upazilaFilter, setUpazilaFilter] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => new URLSearchParams(window.location.search).get('area') || '');
 
   // Appointment Modal
   const [bookingOffice, setBookingOffice] = useState<OfficeItem | null>(null);
   const [appointmentName, setAppointmentName] = useState('');
   const [appointmentPhone, setAppointmentPhone] = useState('');
   const [appointmentDate, setAppointmentDate] = useState('');
+  const [appointmentTimeSlot, setAppointmentTimeSlot] = useState('10:00 AM - 11:30 AM');
+  const [appointmentServiceType, setAppointmentServiceType] = useState('GENERAL_INQUIRY');
+  const [appointmentCaseRef, setAppointmentCaseRef] = useState('');
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState('');
@@ -62,7 +66,9 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
     setLoading(true);
     const params: any = {};
     if (typeFilter) params.type = typeFilter;
+    if (districtFilter) params.district = districtFilter;
     if (upazilaFilter) params.upazila = upazilaFilter;
+    if (searchQuery.trim()) params.q = searchQuery.trim();
 
     BhumiApi.listOffices(params)
       .then((res: any) => {
@@ -76,11 +82,12 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
 
   useEffect(() => {
     fetchOffices();
-  }, [typeFilter, upazilaFilter]);
+  }, [typeFilter, districtFilter, upazilaFilter]);
 
   const getOfficeTypeBadge = (type: string) => {
     switch (type) {
       case 'registry':
+      case 'sub_registry':
         return {
           labelBn: 'সাব-রেজিস্ট্রি অফিস',
           labelEn: 'Sub-Registry Office',
@@ -92,6 +99,12 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
           labelEn: 'Upazila Land Office',
           bg: 'bg-blue-50 text-blue-800 border-blue-200',
         };
+      case 'settlement':
+        return {
+          labelBn: 'জোনাল সেটেলমেন্ট অফিস',
+          labelEn: 'Zonal Settlement Office',
+          bg: 'bg-indigo-50 text-indigo-800 border-indigo-200',
+        };
       case 'service_point':
         return {
           labelBn: 'ইউনিয়ন ডিজিটাল সেন্টার (সার্ভিস পয়েন্ট)',
@@ -99,10 +112,17 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
           bg: 'bg-amber-50 text-amber-800 border-amber-200',
         };
       case 'bank_branch':
+      case 'bank':
         return {
           labelBn: 'তফসিলি ব্যাংক শাখা',
           labelEn: 'Bank Branch',
           bg: 'bg-purple-50 text-purple-800 border-purple-200',
+        };
+      case 'admin_cell':
+        return {
+          labelBn: 'জেলা প্রশাসন ও গভর্ন্যান্স সেল',
+          labelEn: 'District Administration / Cell',
+          bg: 'bg-teal-50 text-teal-800 border-teal-200',
         };
       default:
         return {
@@ -117,11 +137,16 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     const nameMatch =
-      item.name_bn.toLowerCase().includes(q) || item.name_en.toLowerCase().includes(q);
-    const codeMatch = item.office_code.toLowerCase().includes(q);
+      item.name_bn?.toLowerCase().includes(q) || item.name_en?.toLowerCase().includes(q);
+    const codeMatch = item.office_code?.toLowerCase().includes(q);
     const upazilaMatch =
-      item.upazila_bn.toLowerCase().includes(q) || item.upazila_en.toLowerCase().includes(q);
-    return nameMatch || codeMatch || upazilaMatch;
+      item.upazila_bn?.toLowerCase().includes(q) || item.upazila_en?.toLowerCase().includes(q);
+    const districtMatch =
+      item.district_bn?.toLowerCase().includes(q) || item.district_en?.toLowerCase().includes(q);
+    const mouzaMatch = item.mouzas_served_json?.toLowerCase().includes(q);
+    const addressMatch =
+      item.address_bn?.toLowerCase().includes(q) || item.address_en?.toLowerCase().includes(q);
+    return nameMatch || codeMatch || upazilaMatch || districtMatch || mouzaMatch || addressMatch;
   });
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
@@ -132,10 +157,13 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
     try {
       const res = await BhumiApi.createAppointment({
         office_id: bookingOffice.id,
-        citizen_name_bn: appointmentName,
-        citizen_phone: appointmentPhone,
+        citizen_name_bn: appointmentName.trim(),
+        citizen_phone: appointmentPhone.trim(),
         slot_date: appointmentDate,
-        service_type: 'GENERAL_INQUIRY',
+        slot_time: appointmentTimeSlot,
+        service_type: appointmentServiceType,
+        case_reference: appointmentCaseRef.trim() || undefined,
+        notes_bn: `${appointmentServiceType} সংক্রান্ত সেবা সাক্ষাত। পছন্দের সময় স্লট: ${appointmentTimeSlot}`,
       });
       setBookingResult(res.appointment);
       setBookingSuccess(true);
@@ -151,8 +179,6 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
     if (off.latitude && off.longitude) {
       onNavigate?.(`map?lat=${off.latitude}&lng=${off.longitude}&office_id=${off.id}`);
     } else {
-      // F18: inline notice instead of an alert(). The banner auto-dismisses
-      // after 6s; users can also close it manually.
       setMapNotice(
         t(
           'মানচিত্রে দেখানো যাচ্ছে না — এই দপ্তরের GPS স্থানাঙ্ক জরিপ চলমান।',
@@ -177,8 +203,8 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
           </h1>
           <p className="text-emerald-100 text-sm sm:text-base max-w-3xl leading-relaxed">
             {t(
-              'সাভার, ঢাকা এবং গাজীপুরের সাব-রেজিস্ট্রি অফিস, সহকারী কমিশনার (ভূমি) কার্যালয়, ইউনিয়ন ডিজিটাল সেন্টারের সার্ভিস পয়েন্ট এবং বন্ধকী ঋণ অনাপত্তিপত্র প্রদানকারী অনুমোদিত ব্যাংক শাখাগুলির সম্পূর্ণ তালিকা ও সময়সূচী।',
-              'Official directory of sub-registry offices, upazila land offices, union digital service points, and authorized bank branches with contact details and jurisdictional mouzas.'
+              'ঢাকা, গাজীপুর ও কুমিল্লা জেলাসহ বাংলাদেশের বিভিন্ন সাব-রেজিস্ট্রি অফিস, সহকারী কমিশনার (ভূমি) কার্যালয়, জোনাল সেটেলমেন্ট অফিস এবং ইউনিয়ন ডিজিটাল সেন্টার সেবা কেন্দ্রের সম্পূর্ণ তালিকা, অধিক্ষেত্র ও সেবা নির্দেশিকা।',
+              'Official nationwide directory of sub-registry offices, upazila land offices, zonal settlement offices, and union digital service points with jurisdiction details.'
             )}
           </p>
         </div>
@@ -202,16 +228,48 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
         )}
 
         {/* Filters and Search */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('দপ্তর বা উপজেলার নাম...', 'Search by office or upazila...')}
+              placeholder={t('দপ্তর, জেলা, উপজেলা বা মৌজা...', 'Search by office, district, mouza...')}
               className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
             />
+          </div>
+
+          <div>
+            <select
+              value={districtFilter}
+              onChange={(e) => {
+                setDistrictFilter(e.target.value);
+                setUpazilaFilter('');
+              }}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
+            >
+              <option value="">{t('সকল জেলা', 'All Districts')}</option>
+              <option value="ঢাকা">{t('ঢাকা', 'Dhaka')}</option>
+              <option value="গাজীপুর">{t('গাজীপুর', 'Gazipur')}</option>
+              <option value="কুমিল্লা">{t('কুমিল্লা', 'Cumilla')}</option>
+              <option value="নারায়ণগঞ্জ">{t('নারায়ণগঞ্জ', 'Narayanganj')}</option>
+            </select>
+          </div>
+
+          <div>
+            <select
+              value={upazilaFilter}
+              onChange={(e) => setUpazilaFilter(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
+            >
+              <option value="">{t('সকল উপজেলা', 'All Upazilas')}</option>
+              {(!districtFilter || districtFilter === 'ঢাকা') && <option value="সাভার">{t('সাভার (ঢাকা)', 'Savar (Dhaka)')}</option>}
+              {(!districtFilter || districtFilter === 'ঢাকা') && <option value="তেজগাঁও">{t('তেজগাঁও (ঢাকা)', 'Tejgaon (Dhaka)')}</option>}
+              {(!districtFilter || districtFilter === 'গাজীপুর') && <option value="গাজীপুর সদর">{t('গাজীপুর সদর', 'Gazipur Sadar')}</option>}
+              {(!districtFilter || districtFilter === 'কুমিল্লা') && <option value="দাউদকান্দি">{t('দাউদকান্দি (কুমিল্লা)', 'Daudkandi (Cumilla)')}</option>}
+              {(!districtFilter || districtFilter === 'কুমিল্লা') && <option value="কুমিল্লা আদর্শ সদর">{t('কুমিল্লা আদর্শ সদর', 'Cumilla Adarsha Sadar')}</option>}
+            </select>
           </div>
 
           <div>
@@ -223,20 +281,10 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
               <option value="">{t('সকল প্রকার দপ্তর', 'All Office Types')}</option>
               <option value="registry">{t('সাব-রেজিস্ট্রি অফিস', 'Sub-Registry')}</option>
               <option value="ac_land">{t('উপজেলা ভূমি অফিস', 'Upazila Land Office')}</option>
+              <option value="settlement">{t('জোনাল সেটেলমেন্ট অফিস', 'Zonal Settlement')}</option>
               <option value="service_point">{t('ইউনিয়ন সার্ভিস পয়েন্ট', 'UDC Service Point')}</option>
               <option value="bank_branch">{t('ব্যাংক শাখা', 'Bank Branch')}</option>
-            </select>
-          </div>
-
-          <div>
-            <select
-              value={upazilaFilter}
-              onChange={(e) => setUpazilaFilter(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
-            >
-              <option value="">{t('সকল উপজেলা', 'All Upazilas')}</option>
-              <option value="সাভার">{t('সাভার', 'Savar')}</option>
-              <option value="গাজীপুর সদর">{t('গাজীপুর সদর', 'Gazipur Sadar')}</option>
+              <option value="admin_cell">{t('জেলা প্রশাসন ও সেল', 'District Admin / Cell')}</option>
             </select>
           </div>
         </div>
@@ -248,11 +296,44 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
             <p className="font-semibold">{t('দপ্তরের তালিকা লোড হচ্ছে...', 'Loading offices...')}</p>
           </div>
         ) : filteredOffices.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500">
-            <Building2 className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-            <p className="text-base font-semibold text-slate-800">
-              {t('কোনো দপ্তর খুঁজে পাওয়া যায়নি।', 'No offices matched your filter criteria.')}
-            </p>
+          <div className="bg-white rounded-2xl border border-amber-200 p-10 text-center text-slate-600 space-y-4 shadow-xs">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center">
+              <Building2 className="w-8 h-8" />
+            </div>
+            <div className="max-w-md mx-auto space-y-2">
+              <h3 className="text-base font-bold text-slate-900">
+                {t('এই অঞ্চলে কোনো সরকারি কার্যালয় অনবোর্ড করা হয়নি (Coverage Gap)', 'No Onboarded Office for this Jurisdiction')}
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                {t(
+                  'অনুসন্ধানকৃত এলাকা বা ফিল্টারের অধীনে কোনো সক্রিয় দপ্তর নিবন্ধিত নেই। নতুন এলাকা অনবোর্ডিং প্রক্রিয়াধীন রয়েছে। জরুরি ভূমি সেবা বা তথ্য অনুসন্ধানের জন্য সরাসরি ১৬১২২ হেল্পলাইনে যোগাযোগ করুন।',
+                  'No active office registered under this jurisdiction. Coverage expansion is in progress. For emergency land services, call 16122.'
+                )}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDistrictFilter('');
+                  setUpazilaFilter('');
+                  setTypeFilter('');
+                  setSearchQuery('');
+                }}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+              >
+                {t('ফিল্টার রিসেট করুন', 'Reset Filters')}
+              </button>
+              {onNavigate && (
+                <button
+                  type="button"
+                  onClick={() => onNavigate('tickets?new=1')}
+                  className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold transition cursor-pointer"
+                >
+                  {t('নতুন অঞ্চল অনবোর্ডিং আবেদন', 'Request Jurisdiction Onboarding')}
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -360,9 +441,14 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-[#006A4E]" />
-                  <h3 className="font-bold text-slate-900 text-base">
-                    {t('দপ্তরে উপস্থিতির অ্যাপয়েন্টমেন্ট', 'Schedule In-Person Appointment')}
-                  </h3>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-base leading-tight">
+                      {t('স্থানীয় সেবা অ্যাপয়েন্টমেন্ট অনুরোধ', 'Local Service Appointment Request')}
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      {t('দপ্তরের কাজের চাপ ও সময়সূচী সাপেক্ষে সেবা অনুরোধ', 'Subject to office schedule & capacity confirmation')}
+                    </p>
+                  </div>
                 </div>
                 <button
                   onClick={() => {
@@ -381,20 +467,23 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
                 <div className="p-6 text-center space-y-3 bg-emerald-50 rounded-xl border border-emerald-200">
                   <ShieldCheck className="w-10 h-10 text-[#006A4E] mx-auto animate-bounce" />
                   <p className="font-bold text-emerald-950 text-base">
-                    {t('✔ আপনার অ্যাপয়েন্টমেন্ট সফলভাবে নিবন্ধিত হয়েছে!', '✔ Appointment booked successfully!')}
+                    {t('✔ আপনার অ্যাপয়েন্টমেন্ট অনুরোধ সফলভাবে গৃহীত হয়েছে!', '✔ Appointment request submitted successfully!')}
                   </p>
-                  <div className="bg-white p-3 rounded-lg border border-emerald-200 text-left space-y-1 text-xs">
+                  <div className="bg-white p-3 rounded-lg border border-emerald-200 text-left space-y-1.5 text-xs">
                     <div>
                       <span className="text-slate-500">{t('ট্র্যাকিং কোড:', 'Tracking Code:')}</span>{' '}
                       <span className="font-mono font-bold text-[#006A4E]">{bookingResult.appointment_code}</span>
                     </div>
                     <div>
-                      <span className="text-slate-500">{t('তারিখ ও সময়:', 'Date & Time:')}</span>{' '}
+                      <span className="text-slate-500">{t('অনুরোধকৃত তারিখ ও সময়:', 'Requested Date & Time:')}</span>{' '}
                       <span className="font-semibold">{bookingResult.slot_date} ({bookingResult.slot_time})</span>
                     </div>
                     <div>
                       <span className="text-slate-500">{t('সেবার ধরণ:', 'Service:')}</span>{' '}
                       <span className="font-semibold">{bookingResult.service_type}</span>
+                    </div>
+                    <div className="pt-1 border-t border-slate-100 text-[11px] text-amber-800">
+                      <span>• {t('স্ট্যাটাস: স্থানীয় অনুরোধ অপেক্ষমাণ (দপ্তরের অনুমোদন সাপেক্ষে)', 'Status: Local Request Pending Confirmation')}</span>
                     </div>
                   </div>
                   <p className="text-xs text-emerald-800">
@@ -409,6 +498,7 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
                       setAppointmentName('');
                       setAppointmentPhone('');
                       setAppointmentDate('');
+                      setAppointmentCaseRef('');
                     }}
                     className="mt-3 w-full py-2.5 bg-[#006A4E] text-white rounded-lg text-xs font-bold hover:bg-emerald-800 transition cursor-pointer min-h-[40px]"
                   >
@@ -416,7 +506,7 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleBookingSubmit} className="space-y-4">
+                <form onSubmit={handleBookingSubmit} className="space-y-3.5">
                   {bookingError && (
                     <div className="p-3 bg-red-50 text-red-700 text-xs rounded-lg border border-red-200">
                       {bookingError}
@@ -428,7 +518,7 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
                       <strong>{t('নির্বাচিত দপ্তর:', 'Office:')}</strong>{' '}
                       {lang === 'bn' ? bookingOffice.name_bn : bookingOffice.name_en}
                     </p>
-                    <p className="text-slate-500 mt-1">
+                    <p className="text-slate-500 mt-0.5">
                       {lang === 'bn' ? bookingOffice.address_bn : bookingOffice.address_en}
                     </p>
                   </div>
@@ -443,7 +533,7 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
                       value={appointmentName}
                       onChange={(e) => setAppointmentName(e.target.value)}
                       placeholder={t('উদা: মো. রফিকুল ইসলাম', 'e.g. Md. Rafiqul Islam')}
-                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[44px]"
+                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
                     />
                   </div>
 
@@ -457,20 +547,66 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
                       value={appointmentPhone}
                       onChange={(e) => setAppointmentPhone(e.target.value)}
                       placeholder="01700-001001"
-                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[44px]"
+                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
                     />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        {t('পছন্দের তারিখ', 'Preferred Date')} *
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        value={appointmentDate}
+                        onChange={(e) => setAppointmentDate(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 mb-1">
+                        {t('পছন্দের সময় স্লট', 'Time Slot')} *
+                      </label>
+                      <select
+                        value={appointmentTimeSlot}
+                        onChange={(e) => setAppointmentTimeSlot(e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
+                      >
+                        <option value="10:00 AM - 11:30 AM">{t('সকাল ১০:০০ - ১১:৩০', 'Morning 10:00 - 11:30 AM')}</option>
+                        <option value="11:30 AM - 01:00 PM">{t('দুপুর ১১:৩০ - ০১:০০', 'Noon 11:30 AM - 01:00 PM')}</option>
+                        <option value="02:00 PM - 03:30 PM">{t('দুপুর ০২:০০ - ০৩:৩০', 'Afternoon 02:00 - 03:30 PM')}</option>
+                        <option value="03:30 PM - 05:00 PM">{t('বিকাল ০৩:৩০ - ০৫:০০', 'Late Afternoon 03:30 - 05:00 PM')}</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      {t('তারিখ নির্বাচন করুন', 'Select Preferred Date')} *
+                      {t('সেবার ধরণ', 'Service Category')} *
+                    </label>
+                    <select
+                      value={appointmentServiceType}
+                      onChange={(e) => setAppointmentServiceType(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
+                    >
+                      <option value="GENERAL_INQUIRY">{t('সাধারণ নাগরিক পরামর্শ ও তথ্য অনুসন্ধান', 'General Inquiry & Advisory')}</option>
+                      <option value="MUTATION_HEARING">{t('ই-নামজারি শুনানী তথ্য ও কাগজপত্র জমা', 'Mutation Hearing & Record Submission')}</option>
+                      <option value="DEED_REGISTRATION">{t('দলিল রেজিস্ট্রি প্রস্তুতি ও ফি যাচাই', 'Deed Registry Preparation & Fee Check')}</option>
+                      <option value="RECORD_VERIFICATION">{t('খতিয়ান/পর্চা রেকর্ড শুদ্ধিকরণ পরামর্শ', 'Khatian/Porcha Correction Advisory')}</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      {t('আবেদন বা মামলা রেফারেন্স (ঐচ্ছিক)', 'Application / Case Ref (Optional)')}
                     </label>
                     <input
-                      type="date"
-                      required
-                      value={appointmentDate}
-                      onChange={(e) => setAppointmentDate(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[44px]"
+                      type="text"
+                      value={appointmentCaseRef}
+                      onChange={(e) => setAppointmentCaseRef(e.target.value)}
+                      placeholder={t('উদা: MUT-2026-0042', 'e.g. MUT-2026-0042')}
+                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
                     />
                   </div>
 
@@ -479,16 +615,16 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
                       type="button"
                       onClick={() => setBookingOffice(null)}
                       disabled={bookingLoading}
-                      className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer min-h-[44px]"
+                      className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer min-h-[40px]"
                     >
                       {t('বাতিল', 'Cancel')}
                     </button>
                     <button
                       type="submit"
                       disabled={bookingLoading}
-                      className="px-5 py-2 bg-[#006A4E] hover:bg-emerald-800 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition cursor-pointer min-h-[44px]"
+                      className="px-5 py-2 bg-[#006A4E] hover:bg-emerald-800 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition cursor-pointer min-h-[40px]"
                     >
-                      {bookingLoading ? t('বুকিং হচ্ছে...', 'Booking...') : t('বুকিং নিশ্চিত করুন', 'Confirm Booking')}
+                      {bookingLoading ? t('অনুরোধ দাখিল হচ্ছে...', 'Submitting Request...') : t('অ্যাপয়েন্টমেন্ট অনুরোধ পাঠান', 'Send Appointment Request')}
                     </button>
                   </div>
                 </form>

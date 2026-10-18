@@ -67,7 +67,7 @@ final class RoleMiddleware
             $effectiveAllowed[] = 'admin';
         }
 
-        if (!$isAdminRole && !empty($allowedRoles) && !in_array($userRole, $effectiveAllowed, true)) {
+        if (!empty($allowedRoles) && !in_array($userRole, $effectiveAllowed, true)) {
             $reqRolesStr = implode(', ', $allowedRoles);
             throw new \RuntimeException(json_encode([
                 'status' => 403,
@@ -107,5 +107,23 @@ final class RoleMiddleware
     public static function getPermissionMatrix(): array
     {
         return RbacService::PERMISSION_MATRIX;
+    }
+
+    /**
+     * Enforces strict maker-checker segregation.
+     * Prevents self-approval of work created or drafted by the same officer.
+     */
+    public static function assertMakerCheckerSegregation(int $makerUserId, int $checkerUserId, string $actionName = 'অনুমোদন'): void
+    {
+        if ($makerUserId > 0 && $checkerUserId > 0 && $makerUserId === $checkerUserId) {
+            throw new \RuntimeException(json_encode([
+                'status' => 422,
+                'code' => 'MAKER_CHECKER_VIOLATION',
+                'maker_user_id' => $makerUserId,
+                'checker_user_id' => $checkerUserId,
+                'message_bn' => "স্বতন্ত্র অনুমোদন নীতি লঙ্ঘন: মেকার এবং চেকার একই ব্যক্তি হতে পারেন না ({$actionName})।",
+                'message_en' => "Maker-checker segregation policy violation: maker and checker cannot be the same user ({$actionName}).",
+            ], JSON_UNESCAPED_UNICODE));
+        }
     }
 }

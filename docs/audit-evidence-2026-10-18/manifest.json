@@ -1,0 +1,31 @@
+{
+  "audit_date": "2026-10-18",
+  "timezone": "Asia/Dhaka",
+  "source_sha256": {
+    "frontend/src/App.tsx": "75b604573bad314aeeb29db8f9a751445bdf50cf2e7aa07e5466dea22893f861",
+    "frontend/src/pages/BankOfficerPage.tsx": "ae143b798dcd67e1b1556f7551a645733f6497fc891216f12bed270e8310de49",
+    "frontend/src/pages/CadastralMapPage.tsx": "434368c266cc81a26636c03cef13f83be54fc041d67090a3c4b13ab6c2147a1d",
+    "frontend/src/pages/AuthPage.tsx": "fab390f26e016077f3de19e3c3aa542765b88f2e4f307afc0036d083de9a1cf2",
+    "backend/app/Services/TransferStateMachine.php": "2879cf27841cb9c9fadf29b410f973b213e11635854c2a25db4fdfe4e3c4420a",
+    "backend/app/Http/Controllers/Api/V1/OnboardingAndAppealsController.php": "32476a0562a9fa9590b7929b901021ad5d0ccf209859afd2968fac412b639699"
+  },
+  "database_integrity": "ok",
+  "business_counts": {
+    "users": 23,
+    "persons": 42,
+    "plots": 60,
+    "ownerships": 241,
+    "deeds": 80,
+    "mutations": 3,
+    "transfer_requests": 3,
+    "tickets": 1,
+    "offices": 7,
+    "blog_posts": 5,
+    "notices": 5
+  },
+  "fresh_checks": {
+    "typescript": "FAIL: four bank AddressCascader/type errors",
+    "vite_build": "PASS; 1273.57 kB minified JS, 289.61 kB gzip",
+    "backend_suite": "NOT RUN: avoid seed-based changes to usable storage; old logs not current evidence"
+  }
+}

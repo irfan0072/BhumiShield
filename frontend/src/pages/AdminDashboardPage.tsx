@@ -1,8 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useAppUI, UserRole } from '../i18n';
-import { BhumiApi, RiskReportResponse, ServiceCatalogueItem, ServiceFeeItem, FeeComponent } from '../api/client';
+import {
+  BhumiApi,
+  RiskReportResponse,
+  ServiceCatalogueItem,
+  ServiceFeeItem,
+  FeeComponent,
+  AdminDeedItem,
+  AdminDeedsResponse,
+  AdminDeedDetailResponse,
+  HierarchyDivisionItem,
+  HierarchyDistrictItem,
+  HierarchyUpazilaItem,
+  HierarchyMouzaItem,
+  AdminAnomalyItem,
+  AdminAnomaliesResponse,
+  EmergencyBroadcastState,
+  DatabaseBackupResponse,
+  LedgerHealthCheckResponse,
+  TogglePlotFreezeResponse,
+  TransferOfficerResponse,
+} from '../api/client';
+import { AddressCascader } from '../components/AddressCascader';
 import { toBanglaDigits } from '../theme/tokens';
 import { ResultHeroBanner } from '../components/ResultHeroBanner';
+import { SuperAdminTransfersTab } from './admin/SuperAdminTransfersTab';
+import { SuperAdminMutationsTab } from './admin/SuperAdminMutationsTab';
+import { SuperAdminFieldVerificationTab } from './admin/SuperAdminFieldVerificationTab';
+import { SuperAdminAcquisitionsTab } from './admin/SuperAdminAcquisitionsTab';
+import { SuperAdminBankLiensTab } from './admin/SuperAdminBankLiensTab';
+import { SuperAdminAppealsTab } from './admin/SuperAdminAppealsTab';
+import { SuperAdminOverviewQueues } from './admin/SuperAdminOverviewQueues';
+import { SuperAdminOverrideModal } from './admin/SuperAdminOverrideModal';
+import { SuperAdminDocumentSecurityTab } from './admin/SuperAdminDocumentSecurityTab';
+import { SuperAdminOfficesTab } from './admin/SuperAdminOfficesTab';
 import {
   Lock,
   Flame,
@@ -52,6 +83,18 @@ import {
   Phone,
   Mail,
   LayoutDashboard,
+  Ban,
+  MessageSquare,
+  HelpCircle,
+  FilePlus,
+  ThumbsUp,
+  ThumbsDown,
+  Newspaper,
+  Megaphone,
+  Download,
+  Radio,
+  Activity,
+  CheckCheck,
 } from 'lucide-react';
 
 const ROLE_DASHBOARD_MAP: Record<string, string> = {
@@ -65,6 +108,22 @@ const ROLE_DASHBOARD_MAP: Record<string, string> = {
 export type AdminTab =
   | 'overview'
   | 'users'
+  | 'transfers'
+  | 'deeds'
+  | 'mutations'
+  | 'field_verification'
+  | 'survey_records'
+  | 'bank_liens'
+  | 'appeals'
+  | 'acquisitions'
+  | 'marketplace'
+  | 'tickets'
+  | 'notices'
+  | 'offices_config'
+  | 'integrations'
+  | 'audit_reports'
+  // Legacy / Role-specific tabs for backward compatibility:
+  | 'hierarchy'
   | 'ledger'
   | 'plots_control'
   | 'audit'
@@ -73,42 +132,154 @@ export type AdminTab =
   | 'catalogue'
   | 'risk_protocols'
   | 'onboarding_appeals'
-  | 'dev_outbox';
+  | 'dev_outbox'
+  | 'content_editor'
+  | 'content_approver'
+  | 'marketplace_moderation';
 
 export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNavigate }) => {
   const { lang, role, setRole, user, setUser, token, setToken, activeSubTab, setActiveSubTab, adminUserRoleFilter, setAdminUserRoleFilter, t } = useAppUI();
 
   const roleAllowedTabs: Record<string, AdminTab[]> = {
-    auditor: ['overview', 'ledger', 'plots_control', 'audit', 'rbac', 'dev_outbox'],
-    support_agent: ['overview', 'users', 'plots_control', 'audit', 'dev_outbox'],
-    platform_moderator: ['overview', 'onboarding_appeals', 'catalogue', 'audit'],
-    content_editor: ['overview', 'catalogue', 'settings', 'audit'],
-    content_approver: ['overview', 'settings', 'catalogue', 'audit'],
-    system_admin: ['overview', 'users', 'ledger', 'plots_control', 'audit', 'settings', 'rbac', 'catalogue', 'onboarding_appeals', 'risk_protocols', 'dev_outbox'],
-    admin: ['overview', 'users', 'ledger', 'plots_control', 'audit', 'settings', 'rbac', 'catalogue', 'onboarding_appeals', 'risk_protocols', 'dev_outbox'],
+    auditor: ['audit_reports', 'deeds', 'ledger', 'audit'],
+    support_agent: ['tickets', 'audit_reports', 'audit'],
+    platform_moderator: ['marketplace', 'audit_reports', 'audit', 'marketplace_moderation'],
+    content_editor: ['content_editor', 'audit'],
+    content_approver: ['content_approver', 'notices', 'audit'],
+    system_admin: [
+      'overview',
+      'users',
+      'transfers',
+      'deeds',
+      'mutations',
+      'field_verification',
+      'survey_records',
+      'bank_liens',
+      'appeals',
+      'acquisitions',
+      'marketplace',
+      'tickets',
+      'notices',
+      'offices_config',
+      'integrations',
+      'audit_reports',
+    ],
+    admin: [
+      'overview',
+      'users',
+      'transfers',
+      'deeds',
+      'mutations',
+      'field_verification',
+      'survey_records',
+      'bank_liens',
+      'appeals',
+      'acquisitions',
+      'marketplace',
+      'tickets',
+      'notices',
+      'offices_config',
+      'integrations',
+      'audit_reports',
+    ],
   };
   const allowedTabs: AdminTab[] = roleAllowedTabs[role] || [
     'overview',
     'users',
-    'ledger',
-    'plots_control',
-    'audit',
-    'settings',
-    'rbac',
-    'catalogue',
-    'onboarding_appeals',
-    'risk_protocols',
-    'dev_outbox',
+    'transfers',
+    'deeds',
+    'mutations',
+    'field_verification',
+    'survey_records',
+    'bank_liens',
+    'appeals',
+    'acquisitions',
+    'marketplace',
+    'tickets',
+    'notices',
+    'offices_config',
+    'integrations',
+    'audit_reports',
   ];
 
-  const getValidTab = (requested?: string | null): AdminTab => {
-    if (requested && allowedTabs.includes(requested as AdminTab)) {
-      return requested as AdminTab;
+  const mapLegacyToPillar = (requested?: string | null): { pillar: AdminTab; segment?: string } => {
+    if (!requested) {
+      if (role === 'support_agent') return { pillar: 'tickets' };
+      if (role === 'content_editor') return { pillar: 'content_editor' };
+      if (role === 'content_approver') return { pillar: 'content_approver' };
+      if (role === 'platform_moderator') return { pillar: 'marketplace' };
+      if (role === 'auditor') return { pillar: 'audit_reports' };
+      return { pillar: 'overview' };
     }
-    return allowedTabs[0] || 'overview';
+    if (requested === 'transfers') return { pillar: 'transfers' };
+    if (requested === 'mutations') return { pillar: 'mutations' };
+    if (requested === 'field_verification') return { pillar: 'field_verification' };
+    if (requested === 'survey_records') return { pillar: 'survey_records' };
+    if (requested === 'bank_liens') return { pillar: 'bank_liens' };
+    if (requested === 'appeals') return { pillar: 'appeals' };
+    if (requested === 'acquisitions') return { pillar: 'acquisitions' };
+    if (requested === 'marketplace' || requested === 'marketplace_moderation') return { pillar: 'marketplace' };
+    if (requested === 'content_editor') return { pillar: 'content_editor' };
+    if (requested === 'content_approver') return { pillar: 'content_approver' };
+    if (requested === 'notices') return { pillar: role === 'content_editor' ? 'content_editor' : 'notices' };
+    if (requested === 'offices_config' || requested === 'hierarchy' || requested === 'catalogue' || requested === 'settings') return { pillar: 'offices_config' };
+    if (requested === 'integrations' || requested === 'dev_outbox') return { pillar: 'integrations' };
+    if (requested === 'audit_reports' || requested === 'audit' || requested === 'ledger') return { pillar: 'audit_reports' };
+    if (requested === 'deeds') return { pillar: 'deeds' };
+    if (requested === 'plots_control') return { pillar: 'mutations' };
+    if (requested === 'rbac') return { pillar: 'users', segment: 'rbac' };
+    if (requested === 'onboarding_appeals') return { pillar: 'survey_records' };
+    if (requested === 'users') return { pillar: 'users', segment: 'directory' };
+    if (requested === 'tickets') return { pillar: 'tickets' };
+    if (requested === 'risk_protocols') return { pillar: 'mutations' };
+    const fallbackTab = allowedTabs[0] || 'overview';
+    return { pillar: (allowedTabs.includes(requested as AdminTab) ? (requested as AdminTab) : fallbackTab) };
   };
 
-  const [subTab, setSubTab] = useState<AdminTab>(() => getValidTab(activeSubTab));
+  const initialMapped = mapLegacyToPillar(activeSubTab);
+  const [subTab, setSubTab] = useState<AdminTab>(initialMapped.pillar);
+
+  // 5 Core Pillars Sub-segment State
+  const [usersSubSegment, setUsersSubSegment] = useState<'directory' | 'transfer' | 'onboarding_appeals' | 'rbac'>('directory');
+  const [plotsSubSegment, setPlotsSubSegment] = useState<'plots' | 'deeds' | 'hierarchy'>('plots');
+  const [ledgerSubSegment, setLedgerSubSegment] = useState<'ledger_lab' | 'audit_trail' | 'database_backup'>('ledger_lab');
+  const [settingsSubSegment, setSettingsSubSegment] = useState<'fraud_policy' | 'catalogue' | 'tickets' | 'diagnostics'>('fraud_policy');
+
+  // Master Administrative Plot Freeze State
+  const [freezeModalPlot, setFreezeModalPlot] = useState<any | null>(null);
+  const [freezeReason, setFreezeReason] = useState<string>('উচ্চ আদালতের স্থগিতাদেশ (High Court Stay Order)');
+  const [freezeCustomReason, setFreezeCustomReason] = useState<string>('');
+  const [freezeLoading, setFreezeLoading] = useState(false);
+
+  // Officer Transfer State
+  const [transferOfficerUser, setTransferOfficerUser] = useState<any | null>(null);
+  const [transferTargetOfficeId, setTransferTargetOfficeId] = useState<number>(0);
+  const [transferOrderRef, setTransferOrderRef] = useState<string>('');
+  const [transferNotes, setTransferNotes] = useState<string>('');
+  const [transferLoading, setTransferLoading] = useState(false);
+  const [transferNotice, setTransferNotice] = useState<{ msg: string; err?: boolean } | null>(null);
+
+  // Live Anomaly & Security Stream State
+  const [anomaliesData, setAnomaliesData] = useState<AdminAnomaliesResponse | null>(null);
+  const [anomaliesLoading, setAnomaliesLoading] = useState(false);
+
+  // 1-Click Cryptographic Ledger Health Check State
+  const [healthCheckData, setHealthCheckData] = useState<LedgerHealthCheckResponse | null>(null);
+  const [healthCheckLoading, setHealthCheckLoading] = useState(false);
+
+  // 1-Click Sovereign Database Backup State
+  const [backupData, setBackupData] = useState<DatabaseBackupResponse | null>(null);
+  const [backupLoading, setBackupLoading] = useState(false);
+
+  // Emergency Platform Broadcast Controller State
+  const [broadcastForm, setBroadcastForm] = useState<EmergencyBroadcastState>({
+    is_active: false,
+    message_bn: '',
+    message_en: '',
+    level: 'INFO',
+  });
+  const [broadcastLoading, setBroadcastLoading] = useState(false);
+  const [broadcastNotice, setBroadcastNotice] = useState<{ msg: string; err?: boolean } | null>(null);
 
   // Maker-Checker & Appeals state (Tier C Sections 8.7 & 8.8)
   const [onboardingBatches, setOnboardingBatches] = useState<any[]>([]);
@@ -164,14 +335,53 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   const [selectedUserDetail, setSelectedUserDetail] = useState<any | null>(null);
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
   const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [newNameBn, setNewNameBn] = useState('');
   const [newNameEn, setNewNameEn] = useState('');
   const [newRole, setNewRole] = useState<UserRole>('sub_registrar');
   const [newEmail, setNewEmail] = useState('');
-  const [newPhone, setNewPhone] = useState('01711-000111');
-  const [newNid, setNewNid] = useState('9900008888');
-  const [newOffice, setNewOffice] = useState('সাভার সাব-রেজিস্ট্রি অফিস');
+  const [newPhone, setNewPhone] = useState('');
+  const [newNid, setNewNid] = useState('');
+  const [newOffice, setNewOffice] = useState('');
+  const [newOfficeId, setNewOfficeId] = useState<number>(0);
+  const [officesList, setOfficesList] = useState<any[]>([]);
   const [userActionNotice, setUserActionNotice] = useState<{ msg: string; err?: boolean } | null>(null);
+
+  // Dedicated Role Workspaces State (R08)
+  // 1. Tickets Desk (support_agent)
+  const [ticketsList, setTicketsList] = useState<any[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
+  const [ticketFilter, setTicketFilter] = useState<'ALL' | 'NEW' | 'IN_PROGRESS' | 'WAITING_CITIZEN' | 'RESOLVED'>('ALL');
+  const [ticketSearch, setTicketSearch] = useState('');
+  const [selectedTicketCode, setSelectedTicketCode] = useState<string | null>(null);
+  const [selectedTicketDetail, setSelectedTicketDetail] = useState<any | null>(null);
+  const [ticketDetailLoading, setTicketDetailLoading] = useState(false);
+  const [ticketReplyMsg, setTicketReplyMsg] = useState('');
+  const [ticketReplyStatus, setTicketReplyStatus] = useState<'IN_PROGRESS' | 'WAITING_CITIZEN' | 'RESOLVED'>('IN_PROGRESS');
+  const [ticketIsInternal, setTicketIsInternal] = useState(false);
+  const [ticketActionNotice, setTicketActionNotice] = useState<{ msg: string; err?: boolean } | null>(null);
+
+  // 2. Content Workflow (content_editor & content_approver)
+  const [managedContent, setManagedContent] = useState<any[]>([]);
+  const [managedContentLoading, setManagedContentLoading] = useState(false);
+  const [contentKind, setContentKind] = useState<'blog' | 'notice'>('blog');
+  const [contentStatusFilter, setContentStatusFilter] = useState<'ALL' | 'DRAFT' | 'SUBMITTED' | 'PUBLISHED' | 'REJECTED'>('ALL');
+  const [isCreateContentOpen, setIsCreateContentOpen] = useState(false);
+  const [contentForm, setContentForm] = useState<{ id?: number; kind: 'blog' | 'notice'; title_bn: string; title_en: string; body_bn: string; body_en: string }>({
+    kind: 'blog',
+    title_bn: '',
+    title_en: '',
+    body_bn: '',
+    body_en: '',
+  });
+  const [selectedContentPreview, setSelectedContentPreview] = useState<any | null>(null);
+  const [contentActionNotice, setContentActionNotice] = useState<{ msg: string; err?: boolean } | null>(null);
+
+  // 3. Marketplace Moderation (platform_moderator)
+  const [moderationList, setModerationList] = useState<any[]>([]);
+  const [moderationLoading, setModerationLoading] = useState(false);
+  const [moderationFilter, setModerationFilter] = useState<'ALL' | 'ACTIVE' | 'SUSPENDED'>('ALL');
+  const [moderationActionNotice, setModerationActionNotice] = useState<{ msg: string; err?: boolean } | null>(null);
 
   // Service Catalogue & Fees State (Phase 2)
   const [adminServices, setAdminServices] = useState<ServiceCatalogueItem[]>([]);
@@ -186,7 +396,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   // Plots & Land Control Management State
   const [plotsList, setPlotsList] = useState<any[]>([]);
   const [plotsLoading, setPlotsLoading] = useState(false);
-  const [plotFilter, setPlotFilter] = useState<'ALL' | 'LOCKED' | 'UNLOCKED' | 'MORTGAGED' | 'DISPUTED'>('ALL');
+  const [plotFilter, setPlotFilter] = useState<'ALL' | 'LOCKED' | 'UNLOCKED' | 'MORTGAGED' | 'DISPUTED' | 'FROZEN'>('ALL');
   const [plotSearchQuery, setPlotSearchQuery] = useState('');
   const [selectedPlotDetail, setSelectedPlotDetail] = useState<any | null>(null);
   const [plotDetailLoading, setPlotDetailLoading] = useState(false);
@@ -194,38 +404,152 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   const [allMortgages, setAllMortgages] = useState<any[]>([]);
   const [plotActionNotice, setPlotActionNotice] = useState<{ msg: string; err?: boolean } | null>(null);
 
+  // Super Admin Deeds Supervision State
+  const [deedsData, setDeedsData] = useState<AdminDeedsResponse>({
+    items: [],
+    total: 0,
+    page: 1,
+    per_page: 15,
+    kpis: {
+      total_deeds: 0,
+      total_volume_bdt: 0,
+      mutated_deeds: 0,
+      flagged_deeds: 0,
+      registered_deeds: 0,
+    },
+  });
+  const [deedsLoading, setDeedsLoading] = useState(false);
+  const [deedSearchQuery, setDeedSearchQuery] = useState('');
+  const [deedStatusFilter, setDeedStatusFilter] = useState('ALL');
+  const [deedTypeFilter, setDeedTypeFilter] = useState('ALL');
+  const [deedDateFrom, setDeedDateFrom] = useState('');
+  const [deedDateTo, setDeedDateTo] = useState('');
+  const [deedDivision, setDeedDivision] = useState('');
+  const [deedDistrict, setDeedDistrict] = useState('');
+  const [deedUpazila, setDeedUpazila] = useState('');
+  const [deedMouzaId, setDeedMouzaId] = useState<number | string>('');
+  const [deedPage, setDeedPage] = useState(1);
+  const [selectedDeedDocket, setSelectedDeedDocket] = useState<AdminDeedDetailResponse | null>(null);
+  const [deedDocketLoading, setDeedDocketLoading] = useState(false);
+  const [flagDeedModal, setFlagDeedModal] = useState<{ deed: AdminDeedItem; action: 'HOLD' | 'CLEAR'; reason: string } | null>(null);
+  const [deedActionNotice, setDeedActionNotice] = useState<{ msg: string; err?: boolean } | null>(null);
+
+  // Administrative Address Hierarchy CRUD State
+  const [hierarchyTree, setHierarchyTree] = useState<HierarchyDivisionItem[]>([]);
+  const [hierarchyLoading, setHierarchyLoading] = useState(false);
+  const [activeHierarchyTier, setActiveHierarchyTier] = useState<'MOUZAS' | 'UPAZILAS' | 'DISTRICTS' | 'DIVISIONS'>('MOUZAS');
+  const [hierarchySearch, setHierarchySearch] = useState('');
+  const [hierarchyDivisionFilter, setHierarchyDivisionFilter] = useState('');
+  const [hierarchyDistrictFilter, setHierarchyDistrictFilter] = useState('');
+  const [hierarchyUpazilaFilter, setHierarchyUpazilaFilter] = useState('');
+  const [isAddMouzaOpen, setIsAddMouzaOpen] = useState(false);
+  const [editingMouza, setEditingMouza] = useState<any | null>(null);
+  const [mouzaForm, setMouzaForm] = useState({
+    division_bn: 'ঢাকা',
+    division_en: 'Dhaka',
+    district_bn: 'ঢাকা',
+    district_en: 'Dhaka',
+    upazila_bn: 'সাভার',
+    upazila_en: 'Savar',
+    mouza_bn: '',
+    mouza_en: '',
+    jl_no: '',
+    latitude: '',
+    longitude: '',
+  });
+  const [renamingTierModal, setRenamingTierModal] = useState<{ tier: 'DIVISION' | 'DISTRICT' | 'UPAZILA'; old_bn: string; new_bn: string; new_en: string } | null>(null);
+  const [hierarchyNotice, setHierarchyNotice] = useState<{ msg: string; err?: boolean } | null>(null);
+
   // Site Settings state
   const [settingsList, setSettingsList] = useState<any[]>([]);
   const [settingsMap, setSettingsMap] = useState<Record<string, string>>({});
   const [saveMsg, setSaveMsg] = useState('');
   const [loadError, setLoadError] = useState('');
 
+  // Super Admin OS Workspace State
+  const [superAdminStats, setSuperAdminStats] = useState<any | null>(null);
+  const [transfersList, setTransfersList] = useState<any[]>([]);
+  const [mutationsList, setMutationsList] = useState<any[]>([]);
+  const [fieldReportsList, setFieldReportsList] = useState<any[]>([]);
+  const [slaDispatchesList, setSlaDispatchesList] = useState<any[]>([]);
+  const [acquisitionCasesList, setAcquisitionCasesList] = useState<any[]>([]);
+  const [officesSubSegment, setOfficesSubSegment] = useState<'offices' | 'hierarchy' | 'document_security'>('offices');
+  const [overrideModal, setOverrideModal] = useState<{
+    isOpen: boolean;
+    actionType: string;
+    targetId: string | number;
+    extraContext?: any;
+  }>({
+    isOpen: false,
+    actionType: 'ADMINISTRATIVE_OVERRIDE',
+    targetId: '',
+    extraContext: null,
+  });
+
   const refreshAll = async () => {
+    let hadCriticalError = false;
     const results = await Promise.allSettled([
-      BhumiApi.getLedgerState(),
-      BhumiApi.getAuditLogs(),
+      BhumiApi.getLedgerState().catch((err) => {
+        console.error('Ledger state fetch failed:', err);
+        hadCriticalError = true;
+        return null;
+      }),
+      BhumiApi.getAuditLogs().catch(() => ({ items: [], total: 0 })),
       BhumiApi.getOcrSample().catch(() => null),
-      BhumiApi.listUsers(), BhumiApi.getSettings(), BhumiApi.getPermissions(),
-      BhumiApi.getStatsSummary(), BhumiApi.listAdminServices(), BhumiApi.listAdminFees(),
+      BhumiApi.listUsers().catch(() => ({ items: [], total: 0 })),
+      BhumiApi.getSettings().catch(() => ({ items: [], map: {}, settings: {} })),
+      BhumiApi.getPermissions().catch(() => ({ roles: [], permissions: [] })),
+      BhumiApi.getStatsSummary().catch(() => null),
+      BhumiApi.listAdminServices().catch(() => ({ items: [], total: 0 })),
+      BhumiApi.listAdminFees().catch(() => ({ items: [], total: 0 })),
       BhumiApi.listOnboardingBatches().catch(() => ({ items: [] })),
       BhumiApi.listAppeals().catch(() => ({ items: [] })),
       BhumiApi.getPlots().catch(() => []),
       BhumiApi.listDisputes().catch(() => []),
       BhumiApi.getMortgages().catch(() => []),
+      BhumiApi.listAdminDeeds().catch(() => ({ items: [], total: 0, page: 1, per_page: 15, kpis: { total_deeds: 0, total_volume_bdt: 0, mutated_deeds: 0, flagged_deeds: 0, registered_deeds: 0 } })),
+      BhumiApi.getHierarchyTree().catch(() => []),
+      BhumiApi.listOffices().catch(() => []),
+      BhumiApi.listTickets().catch(() => ({ items: [] })),
+      BhumiApi.getLiveAnomalies().catch(() => null),
+      BhumiApi.getEmergencyBroadcast().catch(() => null),
+      BhumiApi.getSuperAdminDashboardStats().catch(() => null),
+      BhumiApi.listTransfers().catch(() => ({ transfers: [] })),
+      BhumiApi.getMutations().catch(() => []),
+      BhumiApi.listFieldReports().catch(() => []),
+      BhumiApi.listSlaDispatches().catch(() => []),
+      BhumiApi.listAcquisitionCases().catch(() => ({ cases: [] })),
     ]);
     const setters: ((value: any) => void)[] = [
-      setLedgerState, setAuditLogs, setOcrSample, setUsersList,
-      (value) => { setSettingsList(value.items || []); setSettingsMap(value.map || value.settings || {}); },
-      setPermissionsData, setStats, (value) => setAdminServices(value?.items || []),
+      (val) => val && setLedgerState(val),
+      setAuditLogs,
+      setOcrSample,
+      setUsersList,
+      (value) => { setSettingsList(value?.items || []); setSettingsMap(value?.map || value?.settings || {}); },
+      setPermissionsData,
+      (val) => val && setStats(val),
+      (value) => setAdminServices(value?.items || []),
       (value) => setAdminFees(value?.items || []),
       (value) => setOnboardingBatches(value?.items || []),
       (value) => setAppealsList(value?.items || []),
       (value) => setPlotsList(Array.isArray(value) ? value : (value?.items || [])),
       (value) => setAllDisputes(Array.isArray(value) ? value : (value?.items || [])),
       (value) => setAllMortgages(Array.isArray(value) ? value : (value?.mortgages || value?.items || [])),
+      (value) => setDeedsData(value || { items: [], total: 0, page: 1, per_page: 15, kpis: { total_deeds: 0, total_volume_bdt: 0, mutated_deeds: 0, flagged_deeds: 0, registered_deeds: 0 } }),
+      (value) => setHierarchyTree(Array.isArray(value) ? value : (value?.items || [])),
+      (value) => setOfficesList(Array.isArray(value) ? value : (value?.items || [])),
+      (value) => setTicketsList(Array.isArray(value) ? value : (value?.items || [])),
+      (value) => value && setAnomaliesData(value),
+      (value) => value && setBroadcastForm(value),
+      (val) => val && setSuperAdminStats(val),
+      (val) => setTransfersList(Array.isArray(val) ? val : (val?.transfers || val?.items || [])),
+      (val) => setMutationsList(Array.isArray(val) ? val : (val?.mutations || val?.items || [])),
+      (val) => setFieldReportsList(Array.isArray(val) ? val : (val?.reports || val?.items || [])),
+      (val) => setSlaDispatchesList(Array.isArray(val) ? val : (val?.dispatches || val?.items || [])),
+      (val) => setAcquisitionCasesList(Array.isArray(val) ? val : (val?.cases || val?.items || [])),
     ];
     results.forEach((result, i) => { if (result.status === 'fulfilled') setters[i](result.value); });
-    setLoadError(results.some((result) => result.status === 'rejected')
+    setLoadError(hadCriticalError
       ? t('কিছু তথ্য লোড হয়নি। আবার চেষ্টা করুন।', 'Some records could not be loaded. Please retry.') : '');
   };
 
@@ -280,18 +604,306 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     }
   };
 
+  const fetchDeeds = async (overrides?: any) => {
+    setDeedsLoading(true);
+    try {
+      const q = overrides?.q !== undefined ? overrides.q : deedSearchQuery;
+      const status = overrides?.status !== undefined ? overrides.status : deedStatusFilter;
+      const deed_type = overrides?.deed_type !== undefined ? overrides.deed_type : deedTypeFilter;
+      const division_bn = overrides?.division_bn !== undefined ? overrides.division_bn : deedDivision;
+      const district_bn = overrides?.district_bn !== undefined ? overrides.district_bn : deedDistrict;
+      const upazila_bn = overrides?.upazila_bn !== undefined ? overrides.upazila_bn : deedUpazila;
+      const mouza_id = overrides?.mouza_id !== undefined ? overrides.mouza_id : deedMouzaId;
+      const date_from = overrides?.date_from !== undefined ? overrides.date_from : deedDateFrom;
+      const date_to = overrides?.date_to !== undefined ? overrides.date_to : deedDateTo;
+      const page = overrides?.page !== undefined ? overrides.page : deedPage;
+
+      const params: any = { page };
+      if (q) params.q = q;
+      if (status && status !== 'ALL') params.status = status;
+      if (deed_type && deed_type !== 'ALL') params.deed_type = deed_type;
+      if (division_bn) params.division_bn = division_bn;
+      if (district_bn) params.district_bn = district_bn;
+      if (upazila_bn) params.upazila_bn = upazila_bn;
+      if (mouza_id) params.mouza_id = mouza_id;
+      if (date_from) params.date_from = date_from;
+      if (date_to) params.date_to = date_to;
+
+      const res = await BhumiApi.listAdminDeeds(params);
+      setDeedsData(res);
+    } catch (err: any) {
+      console.error('Failed to list admin deeds', err);
+    } finally {
+      setDeedsLoading(false);
+    }
+  };
+
+  const fetchHierarchyTree = async () => {
+    setHierarchyLoading(true);
+    try {
+      const tree = await BhumiApi.getHierarchyTree();
+      setHierarchyTree(tree || []);
+    } catch (err: any) {
+      console.error('Failed to load hierarchy tree', err);
+    } finally {
+      setHierarchyLoading(false);
+    }
+  };
+
+  const handleInspectDeed = async (deedId: number) => {
+    setDeedDocketLoading(true);
+    try {
+      const docket = await BhumiApi.getAdminDeedDetail(deedId);
+      setSelectedDeedDocket(docket);
+    } catch (err: any) {
+      setDeedActionNotice({ msg: err?.response?.data?.error || 'দলিল বিস্তারিত লোড করতে ব্যর্থ হয়েছে।', err: true });
+    } finally {
+      setDeedDocketLoading(false);
+    }
+  };
+
+  const handleConfirmFlagDeed = async () => {
+    if (!flagDeedModal) return;
+    try {
+      const res = await BhumiApi.flagAdminDeed(flagDeedModal.deed.id, {
+        action: flagDeedModal.action,
+        flag_reason_bn: flagDeedModal.reason || (flagDeedModal.action === 'HOLD' ? 'প্রশাসনিক তদন্তের স্বার্থে সাময়িক স্থগিতাদেশ জারি।' : 'স্থগিতাদেশ প্রত্যাহার ও রেকর্ড অবমুক্তকরণ।'),
+      });
+      setDeedActionNotice({ msg: res.message_bn });
+      setFlagDeedModal(null);
+      fetchDeeds();
+      if (selectedDeedDocket && Number(selectedDeedDocket.deed?.id) === Number(flagDeedModal.deed.id)) {
+        handleInspectDeed(flagDeedModal.deed.id);
+      }
+      setTimeout(() => setDeedActionNotice(null), 4000);
+    } catch (err: any) {
+      setDeedActionNotice({ msg: err?.response?.data?.error || 'অ্যাকশন সম্পন্ন করতে ব্যর্থ হয়েছে।', err: true });
+    }
+  };
+
+  const handleSaveMouza = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const payload: any = {
+        division_bn: mouzaForm.division_bn,
+        division_en: mouzaForm.division_en,
+        district_bn: mouzaForm.district_bn,
+        district_en: mouzaForm.district_en,
+        upazila_bn: mouzaForm.upazila_bn,
+        upazila_en: mouzaForm.upazila_en,
+        mouza_bn: mouzaForm.mouza_bn,
+        mouza_en: mouzaForm.mouza_en,
+        jl_no: mouzaForm.jl_no,
+        latitude: mouzaForm.latitude ? Number(mouzaForm.latitude) : null,
+        longitude: mouzaForm.longitude ? Number(mouzaForm.longitude) : null,
+      };
+      if (editingMouza && editingMouza.id) {
+        const res = await BhumiApi.updateHierarchyMouza(editingMouza.id, payload);
+        setHierarchyNotice({ msg: res.message_bn });
+      } else {
+        const res = await BhumiApi.createHierarchyMouza(payload);
+        setHierarchyNotice({ msg: res.message_bn });
+      }
+      setIsAddMouzaOpen(false);
+      setEditingMouza(null);
+      fetchHierarchyTree();
+      setTimeout(() => setHierarchyNotice(null), 4000);
+    } catch (err: any) {
+      setHierarchyNotice({ msg: err?.response?.data?.error || 'মৌজা সংরক্ষণে ব্যর্থ হয়েছে।', err: true });
+    }
+  };
+
+  const handleDeleteMouza = async (mouza: HierarchyMouzaItem) => {
+    if (mouza.plots_count > 0) {
+      alert(
+        lang === 'bn'
+          ? `সতর্কতা: এই মৌজায় (${mouza.mouza_bn}) ${mouza.plots_count}টি সক্রিয় প্লট বা দাগ সংযুক্ত রয়েছে! কোনো দাগ বা দলিল সংযুক্ত থাকলে মৌজা মুছে ফেলা সম্পূর্ণ নিষিদ্ধ।`
+          : `Forbidden: Mouza has ${mouza.plots_count} active plots attached. Deletion is blocked.`
+      );
+      return;
+    }
+    const confirmMsg =
+      lang === 'bn'
+        ? `আপনি কি নিশ্চিতভাবে "${mouza.mouza_bn}" মৌজাটি ডিলিট করতে চান?`
+        : `Are you sure you want to delete mouza "${mouza.mouza_bn}"?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const res = await BhumiApi.deleteHierarchyMouza(mouza.id);
+      setHierarchyNotice({ msg: res.message_bn });
+      fetchHierarchyTree();
+      setTimeout(() => setHierarchyNotice(null), 4000);
+    } catch (err: any) {
+      setHierarchyNotice({ msg: err?.response?.data?.error || 'মুছে ফেলতে ব্যর্থ হয়েছে।', err: true });
+    }
+  };
+
+  const handleSaveRenameTier = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!renamingTierModal) return;
+    try {
+      const res = await BhumiApi.renameHierarchyTier({
+        tier: renamingTierModal.tier,
+        old_bn: renamingTierModal.old_bn,
+        new_bn: renamingTierModal.new_bn,
+        new_en: renamingTierModal.new_en,
+      });
+      setHierarchyNotice({ msg: res.message_bn });
+      setRenamingTierModal(null);
+      fetchHierarchyTree();
+      setTimeout(() => setHierarchyNotice(null), 4000);
+    } catch (err: any) {
+      setHierarchyNotice({ msg: err?.response?.data?.error || 'নাম পরিবর্তনে ত্রুটি হয়েছে।', err: true });
+    }
+  };
+
+  // 1. Run Complete Cryptographic Ledger Health Check
+  const handleRunLedgerHealthCheck = async () => {
+    try {
+      setHealthCheckLoading(true);
+      const res = await BhumiApi.runLedgerHealthCheck();
+      setHealthCheckData(res);
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setHealthCheckLoading(false);
+    }
+  };
+
+  // 2. 1-Click Sovereign Database Backup Exporter
+  const handleExportDatabaseBackup = async () => {
+    try {
+      setBackupLoading(true);
+      const res = await BhumiApi.exportDatabaseBackup();
+      setBackupData(res);
+    } catch (e: any) {
+      console.error(e);
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  // 3. Emergency Platform Broadcast Save & Publish
+  const handleSaveBroadcast = async () => {
+    try {
+      setBroadcastLoading(true);
+      const res = await BhumiApi.updateEmergencyBroadcast(broadcastForm);
+      setBroadcastForm(res);
+      setBroadcastNotice({ msg: res.message_bn || 'জরুরি ব্রডকাস্ট সফলভাবে প্রচার করা হয়েছে।' });
+      window.dispatchEvent(new CustomEvent('emergency-broadcast-updated', { detail: res }));
+      setTimeout(() => setBroadcastNotice(null), 4000);
+    } catch (e: any) {
+      setBroadcastNotice({ msg: e.message || 'ব্রডকাস্ট সংরক্ষণ ব্যর্থ হয়েছে।', err: true });
+    } finally {
+      setBroadcastLoading(false);
+    }
+  };
+
+  // 4. Officer Transfer & Office Re-assignment
+  const handleExecuteTransfer = async () => {
+    if (!transferOfficerUser || !transferTargetOfficeId) return;
+    try {
+      setTransferLoading(true);
+      const res = await BhumiApi.transferOfficer(transferOfficerUser.id, {
+        new_office_id: transferTargetOfficeId,
+        transfer_order_ref: transferOrderRef || undefined,
+        notes: transferNotes || undefined,
+      });
+      setTransferNotice({ msg: res.message_bn });
+      setUsersList((prev) =>
+        prev.map((u) =>
+          u.id === transferOfficerUser.id
+            ? { ...u, office_bn: res.new_office, office_name: res.new_office }
+            : u
+        )
+      );
+      setTransferOfficerUser(null);
+      setTransferTargetOfficeId(0);
+      setTransferOrderRef('');
+      setTransferNotes('');
+      setTimeout(() => setTransferNotice(null), 4000);
+    } catch (e: any) {
+      setTransferNotice({ msg: e.message || 'বদলি সম্পন্ন করা সম্ভব হয়নি।', err: true });
+    } finally {
+      setTransferLoading(false);
+    }
+  };
+
+  // 5. Master Administrative Plot Freeze / Hold
+  const handleExecutePlotFreeze = async () => {
+    if (!freezeModalPlot) return;
+    try {
+      setFreezeLoading(true);
+      const targetIsFrozen = !(Number(freezeModalPlot.is_admin_frozen) === 1);
+      const finalReason = freezeCustomReason.trim() ? freezeCustomReason.trim() : freezeReason;
+      const res = await BhumiApi.toggleAdminPlotFreeze(freezeModalPlot.id, {
+        is_frozen: targetIsFrozen,
+        reason: finalReason,
+      });
+      setPlotActionNotice({ msg: res.message_bn });
+      setPlotsList((prev) =>
+        prev.map((p) =>
+          p.id === freezeModalPlot.id
+            ? {
+                ...p,
+                is_admin_frozen: res.is_admin_frozen ? 1 : 0,
+                admin_freeze_reason: res.admin_freeze_reason,
+              }
+            : p
+        )
+      );
+      setFreezeModalPlot(null);
+      setFreezeCustomReason('');
+      BhumiApi.getLiveAnomalies().then((a) => a && setAnomaliesData(a)).catch(() => {});
+      setTimeout(() => setPlotActionNotice(null), 4000);
+    } catch (e: any) {
+      setPlotActionNotice({ msg: e.message || 'স্থগিতাদেশ কার্যকর করা সম্ভব হয়নি।', err: true });
+    } finally {
+      setFreezeLoading(false);
+    }
+  };
+
   useEffect(() => {
     refreshAll();
+    const timer = setInterval(() => {
+      refreshAll();
+    }, 8000);
+    const onFocus = () => refreshAll();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', onFocus);
+    };
   }, []);
 
   useEffect(() => {
-    if (subTab === 'dev_outbox') {
+    if (subTab === 'dev_outbox' || (subTab === 'settings' && settingsSubSegment === 'diagnostics')) {
       fetchOutbox();
     }
-  }, [subTab]);
+    if (subTab === 'deeds' || (subTab === 'plots_control' && plotsSubSegment === 'deeds')) {
+      fetchDeeds();
+    }
+    if (subTab === 'hierarchy' || (subTab === 'plots_control' && plotsSubSegment === 'hierarchy')) {
+      fetchHierarchyTree();
+    }
+    if (subTab === 'tickets' || (subTab === 'settings' && settingsSubSegment === 'tickets')) {
+      fetchTickets();
+    }
+    if (subTab === 'content_editor' || subTab === 'content_approver') {
+      fetchManagedContent(contentKind);
+    }
+    if (subTab === 'marketplace_moderation') {
+      fetchModerationList();
+    }
+  }, [subTab, plotsSubSegment, settingsSubSegment, contentKind]);
 
   useEffect(() => {
-    setSubTab(getValidTab(activeSubTab));
+    const { pillar, segment } = mapLegacyToPillar(activeSubTab);
+    setSubTab(pillar);
+    if (pillar === 'users' && segment) setUsersSubSegment(segment as any);
+    if (pillar === 'plots_control' && segment) setPlotsSubSegment(segment as any);
+    if (pillar === 'ledger' && segment) setLedgerSubSegment(segment as any);
+    if (pillar === 'settings' && segment) setSettingsSubSegment(segment as any);
   }, [activeSubTab, role]);
 
   useEffect(() => {
@@ -327,21 +939,177 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     setActiveSubTab(target);
   };
 
+  const fetchTickets = async () => {
+    setTicketsLoading(true);
+    try {
+      const res = await BhumiApi.listTickets();
+      const items = Array.isArray(res) ? res : (res?.items || []);
+      setTicketsList(items);
+      if (items.length > 0 && !selectedTicketCode) {
+        setSelectedTicketCode(items[0].ticket_code || items[0].id);
+      }
+    } catch (e) {
+      console.error('Failed to list tickets', e);
+    } finally {
+      setTicketsLoading(false);
+    }
+  };
+
+  const fetchTicketDetail = async (code: string | number) => {
+    setTicketDetailLoading(true);
+    try {
+      const res = await BhumiApi.getTicket(code);
+      setSelectedTicketDetail(res);
+    } catch (e) {
+      console.error('Failed to get ticket detail', e);
+    } finally {
+      setTicketDetailLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedTicketCode) {
+      fetchTicketDetail(selectedTicketCode);
+    }
+  }, [selectedTicketCode]);
+
+  const handleSendTicketReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTicketCode || !ticketReplyMsg.trim()) return;
+    try {
+      const updated = await BhumiApi.replyTicket(selectedTicketCode, {
+        message: ticketReplyMsg.trim(),
+        status: ticketReplyStatus,
+        internal_note: ticketIsInternal,
+      });
+      setSelectedTicketDetail(updated);
+      setTicketReplyMsg('');
+      setTicketIsInternal(false);
+      setTicketActionNotice({
+        msg: lang === 'bn' ? 'উত্তর ও স্ট্যাটাস সফলভাবে আপডেট করা হয়েছে।' : 'Reply and status updated successfully.',
+      });
+      fetchTickets();
+      setTimeout(() => setTicketActionNotice(null), 4000);
+    } catch (err: any) {
+      setTicketActionNotice({
+        msg: err?.response?.data?.message_bn || err?.message || 'টিকেট উত্তর পাঠাতে ত্রুটি হয়েছে।',
+        err: true,
+      });
+      setTimeout(() => setTicketActionNotice(null), 4000);
+    }
+  };
+
+  const fetchManagedContent = async (kind: 'blog' | 'notice' = contentKind) => {
+    setManagedContentLoading(true);
+    try {
+      const res = await BhumiApi.listManagedContent({ kind });
+      setManagedContent(res?.items || []);
+    } catch (e) {
+      console.error('Failed to list managed content', e);
+    } finally {
+      setManagedContentLoading(false);
+    }
+  };
+
+  const handleSaveContent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await BhumiApi.saveManagedContent(contentForm, contentForm.id);
+      setIsCreateContentOpen(false);
+      setContentForm({ kind: contentKind, title_bn: '', title_en: '', body_bn: '', body_en: '' });
+      setContentActionNotice({
+        msg: lang === 'bn' ? 'খসড়া সফলভাবে সংরক্ষিত হয়েছে।' : 'Draft saved successfully.',
+      });
+      fetchManagedContent(contentKind);
+      setTimeout(() => setContentActionNotice(null), 4000);
+    } catch (err: any) {
+      setContentActionNotice({
+        msg: err?.response?.data?.message_bn || err?.message || 'খসড়া সংরক্ষণে ত্রুটি হয়েছে।',
+        err: true,
+      });
+      setTimeout(() => setContentActionNotice(null), 4000);
+    }
+  };
+
+  const handleTransitionContent = async (id: number, kind: 'blog' | 'notice', status: string) => {
+    try {
+      await BhumiApi.transitionManagedContent(id, { kind, status });
+      setContentActionNotice({
+        msg: lang === 'bn'
+          ? (status === 'SUBMITTED' ? 'পর্যালোচনার জন্য দাখিল করা হয়েছে।' : status === 'PUBLISHED' ? 'সফলভাবে প্রকাশিত হয়েছে।' : 'প্রত্যাখ্যাত হয়েছে।')
+          : `Status changed to ${status}.`,
+      });
+      fetchManagedContent(kind);
+      setSelectedContentPreview(null);
+      setTimeout(() => setContentActionNotice(null), 4000);
+    } catch (err: any) {
+      setContentActionNotice({
+        msg: err?.response?.data?.message_bn || err?.message || 'স্ট্যাটাস পরিবর্তনে ত্রুটি হয়েছে।',
+        err: true,
+      });
+      setTimeout(() => setContentActionNotice(null), 5000);
+    }
+  };
+
+  const fetchModerationList = async () => {
+    setModerationLoading(true);
+    try {
+      const res = await BhumiApi.listManagedContent({ kind: 'listing' });
+      setModerationList(res?.items || []);
+    } catch (e) {
+      console.error('Failed to list listings for moderation', e);
+    } finally {
+      setModerationLoading(false);
+    }
+  };
+
+  const handleTransitionListing = async (id: number, status: 'ACTIVE' | 'SUSPENDED') => {
+    try {
+      await BhumiApi.transitionManagedContent(id, { kind: 'listing', status });
+      setModerationActionNotice({
+        msg: lang === 'bn'
+          ? (status === 'ACTIVE' ? 'লিস্টিংটি সফলভাবে সক্রিয় করা হয়েছে।' : 'লিস্টিংটি সাময়িক স্থগিত করা হয়েছে।')
+          : `Listing status updated to ${status}.`,
+      });
+      fetchModerationList();
+      setTimeout(() => setModerationActionNotice(null), 4000);
+    } catch (err: any) {
+      setModerationActionNotice({
+        msg: err?.response?.data?.message_bn || err?.message || 'লিস্টিং স্ট্যাটাস পরিবর্তন ব্যর্থ হয়েছে।',
+        err: true,
+      });
+      setTimeout(() => setModerationActionNotice(null), 4000);
+    }
+  };
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const officeRequired = !['citizen', 'admin', 'system_admin', 'auditor', 'support_agent', 'content_editor', 'content_approver', 'platform_moderator'].includes(newRole);
+      if (officeRequired && (!newOfficeId || newOfficeId <= 0)) {
+        setUserActionNotice({
+          msg: lang === 'bn' ? 'কর্মকর্তার কার্যালয় নির্বাচন করুন।' : 'Please select an active office for this officer.',
+          err: true,
+        });
+        return;
+      }
+
+      const selOffice = officesList.find((o) => Number(o.id) === Number(newOfficeId));
+      const officeBn = selOffice ? selOffice.name_bn : newOffice.trim();
+      const officeEn = selOffice ? (selOffice.name_en || selOffice.name_bn) : newOffice.trim();
+
       await BhumiApi.createUser({
         username: newUsername.trim(),
-        password: 'demo123',
+        password: newPassword,
         full_name_bn: newNameBn.trim(),
         full_name_en: newNameEn.trim() || newNameBn.trim(),
         role: newRole,
         nid: newNid.trim(),
         phone_dummy: newPhone.trim(),
-        email: newEmail.trim() || `${newUsername.trim()}@bhumishield.gov.bd`,
-        office_bn: newOffice.trim(),
-        office_en: newOffice.trim(),
+        email: newEmail.trim() || undefined,
+        office_id: officeRequired && newOfficeId > 0 ? Number(newOfficeId) : undefined,
+        office_bn: officeBn,
+        office_en: officeEn,
       });
       setUserActionNotice({
         msg: lang === 'bn'
@@ -352,12 +1120,15 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       setNewNameBn('');
       setNewNameEn('');
       setNewEmail('');
+      setNewPhone('');
+      setNewNid('');
+      setNewPassword('');
       setIsCreateUserOpen(false);
       refreshAll();
       setTimeout(() => setUserActionNotice(null), 5000);
     } catch (err: any) {
       setUserActionNotice({
-        msg: err?.response?.data?.detail?.message_bn || err?.response?.data?.message_bn || 'ব্যবহারকারী তৈরি করতে ত্রুটি হয়েছে।',
+        msg: err?.response?.data?.detail?.message_bn || err?.response?.data?.message_bn || err?.message || 'ব্যবহারকারী তৈরি করতে ত্রুটি হয়েছে।',
         err: true,
       });
       setTimeout(() => setUserActionNotice(null), 5000);
@@ -558,8 +1329,860 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     setTimeout(() => setSaveMsg(''), 3000);
   };
 
+  // Computed administrative hierarchy data
+  const allDivisions = Array.isArray(hierarchyTree) ? hierarchyTree : [];
+  const allDistricts = allDivisions.flatMap((div) =>
+    (div.districts || []).map((d) => ({ ...d, division_bn: div.division_bn, division_en: div.division_en }))
+  );
+  const allUpazilas = allDistricts.flatMap((dist) =>
+    (dist.upazilas || []).map((u) => ({
+      ...u,
+      district_bn: dist.district_bn,
+      district_en: dist.district_en,
+      division_bn: dist.division_bn,
+      division_en: dist.division_en,
+    }))
+  );
+  const allMouzas = allUpazilas.flatMap((up) =>
+    (up.mouzas || []).map((m) => ({
+      ...m,
+      upazila_bn: up.upazila_bn,
+      upazila_en: up.upazila_en,
+      district_bn: up.district_bn,
+      district_en: up.district_en,
+      division_bn: up.division_bn,
+      division_en: up.division_en,
+    }))
+  );
+  const totalPlotsInHierarchy = allMouzas.reduce((sum, m) => sum + (Number(m.plots_count) || 0), 0);
+
+  const filteredMouzas = allMouzas.filter((m) => {
+    if (hierarchyDivisionFilter && m.division_bn !== hierarchyDivisionFilter) return false;
+    if (hierarchyDistrictFilter && m.district_bn !== hierarchyDistrictFilter) return false;
+    if (hierarchyUpazilaFilter && m.upazila_bn !== hierarchyUpazilaFilter) return false;
+    if (hierarchySearch.trim()) {
+      const q = hierarchySearch.toLowerCase();
+      const matchNameBn = (m.mouza_bn || '').toLowerCase().includes(q);
+      const matchNameEn = (m.mouza_en || '').toLowerCase().includes(q);
+      const matchJl = (m.jl_no || '').toLowerCase().includes(q);
+      if (!matchNameBn && !matchNameEn && !matchJl) return false;
+    }
+    return true;
+  });
+
+  const filteredUpazilas = allUpazilas.filter((u) => {
+    if (hierarchyDivisionFilter && u.division_bn !== hierarchyDivisionFilter) return false;
+    if (hierarchyDistrictFilter && u.district_bn !== hierarchyDistrictFilter) return false;
+    if (hierarchySearch.trim()) {
+      const q = hierarchySearch.toLowerCase();
+      const matchBn = (u.upazila_bn || '').toLowerCase().includes(q);
+      const matchEn = (u.upazila_en || '').toLowerCase().includes(q);
+      if (!matchBn && !matchEn) return false;
+    }
+    return true;
+  });
+
+  const filteredDistricts = allDistricts.filter((d) => {
+    if (hierarchyDivisionFilter && d.division_bn !== hierarchyDivisionFilter) return false;
+    if (hierarchySearch.trim()) {
+      const q = hierarchySearch.toLowerCase();
+      const matchBn = (d.district_bn || '').toLowerCase().includes(q);
+      const matchEn = (d.district_en || '').toLowerCase().includes(q);
+      if (!matchBn && !matchEn) return false;
+    }
+    return true;
+  });
+
+  const filteredDivisions = allDivisions.filter((v) => {
+    if (hierarchySearch.trim()) {
+      const q = hierarchySearch.toLowerCase();
+      const matchBn = (v.division_bn || '').toLowerCase().includes(q);
+      const matchEn = (v.division_en || '').toLowerCase().includes(q);
+      if (!matchBn && !matchEn) return false;
+    }
+    return true;
+  });
+
+  const handleOpenAddMouza = () => {
+    setEditingMouza(null);
+    setMouzaForm({
+      division_bn: hierarchyDivisionFilter || 'ঢাকা',
+      division_en: 'Dhaka',
+      district_bn: hierarchyDistrictFilter || 'ঢাকা',
+      district_en: 'Dhaka',
+      upazila_bn: hierarchyUpazilaFilter || 'সাভার',
+      upazila_en: 'Savar',
+      mouza_bn: '',
+      mouza_en: '',
+      jl_no: '',
+      latitude: '',
+      longitude: '',
+    });
+    setIsAddMouzaOpen(true);
+  };
+
+  const handleOpenEditMouza = (mouza: HierarchyMouzaItem) => {
+    setEditingMouza(mouza);
+    setMouzaForm({
+      division_bn: mouza.division_bn || '',
+      division_en: mouza.division_en || '',
+      district_bn: mouza.district_bn || '',
+      district_en: mouza.district_en || '',
+      upazila_bn: mouza.upazila_bn || '',
+      upazila_en: mouza.upazila_en || '',
+      mouza_bn: mouza.mouza_bn,
+      mouza_en: mouza.mouza_en || '',
+      jl_no: mouza.jl_no || '',
+      latitude: mouza.latitude != null ? String(mouza.latitude) : '',
+      longitude: mouza.longitude != null ? String(mouza.longitude) : '',
+    });
+    setIsAddMouzaOpen(true);
+  };
+
+
+  // =========================================================================
+  // PILLAR 2: IDENTITY & ACCESS GOVERNANCE (নাগরিক ও কর্মকর্তা প্রশাসন)
+  // =========================================================================
+  const renderPillar2Nav = () => (
+    <div className="panel p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6 bg-white border border-slate-200 rounded-xl shadow-xs">
+      <div>
+        <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1">
+          <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+            {t('কন্ট্রোল প্যানেল', 'Control Panel')}
+          </button>
+          <span>/</span>
+          <span className="text-[#006A4E] font-extrabold">{t('পিলার ২: নাগরিক ও এক্সেস প্রশাসন', 'Pillar 2: Identity & Governance')}</span>
+        </div>
+        <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
+          <Users className="w-5 h-5 text-[#006A4E]" />
+          <span>{t('নাগরিক, কর্মকর্তা ও এক্সেস নিয়ন্ত্রণ কেন্দ্র', 'Identity & Access Governance Center')}</span>
+        </h2>
+      </div>
+
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
+        <button
+          onClick={() => { setSubTab('users'); setUsersSubSegment('directory'); }}
+          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            subTab === 'users' && usersSubSegment === 'directory'
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>{t('ইউজার ডিরেক্টরি', 'User Directory')}</span>
+        </button>
+
+        <button
+          onClick={() => { setSubTab('users'); setUsersSubSegment('transfer'); }}
+          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            subTab === 'users' && usersSubSegment === 'transfer'
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Building2 className="w-4 h-4" />
+          <span>{t('কর্মকর্তা বদলি ডেস্ক', 'Officer Transfer Desk')}</span>
+          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-400 text-slate-900">POWER</span>
+        </button>
+
+        <button
+          onClick={() => { setSubTab('users'); setUsersSubSegment('onboarding_appeals'); }}
+          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            (subTab === 'onboarding_appeals' || (subTab === 'users' && usersSubSegment === 'onboarding_appeals'))
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <UserCheck className="w-4 h-4" />
+          <span>{t('অনবোর্ডিং ও আপিল', 'Onboarding & Appeals')}</span>
+        </button>
+
+        <button
+          onClick={() => { setSubTab('users'); setUsersSubSegment('rbac'); }}
+          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            (subTab === 'rbac' || (subTab === 'users' && usersSubSegment === 'rbac'))
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <KeyRound className="w-4 h-4" />
+          <span>{t('অনুমতি ও আরবিক (RBAC)', 'RBAC & Permissions')}</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderOfficerTransferDesk = () => {
+    const officers = usersList.filter((u) =>
+      ['sub_registrar', 'ac_land', 'bank_officer', 'field_verification_officer', 'support_agent', 'admin', 'system_admin'].includes(u.role)
+    );
+    const selectedOfficer = transferOfficerUser || officers[0] || null;
+
+    return (
+      <div className="space-y-6">
+        {transferNotice && (
+          <div
+            className={`p-4 rounded-xl border flex items-center justify-between text-xs font-bold animate-fadeIn ${
+              transferNotice.err
+                ? 'bg-rose-50 border-rose-300 text-rose-800'
+                : 'bg-emerald-50 border-emerald-300 text-emerald-800'
+            }`}
+          >
+            <span>{transferNotice.msg}</span>
+            <button onClick={() => setTransferNotice(null)} className="text-slate-500 hover:text-slate-800 cursor-pointer">
+              ✕
+            </button>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column: Select Officer & Current Profile */}
+          <div className="lg:col-span-5 panel p-5 space-y-4 bg-white border border-slate-200 rounded-xl shadow-xs">
+            <div className="border-b border-slate-200 pb-3">
+              <span className="text-xs font-black text-[#006A4E] uppercase tracking-wider">১. বদলির জন্য কর্মকর্তা নির্বাচন</span>
+              <h3 className="font-extrabold text-base text-slate-900 mt-0.5">কর্মকর্তার বর্তমান পদায়ন ও তথ্য</h3>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">কর্মকর্তা নির্বাচন করুন:</label>
+              <select
+                value={selectedOfficer?.id || ''}
+                onChange={(e) => {
+                  const found = usersList.find((u) => String(u.id) === e.target.value);
+                  setTransferOfficerUser(found || null);
+                }}
+                className="w-full text-xs font-medium border border-slate-300 rounded-lg p-2.5 bg-white text-slate-800 focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
+              >
+                <option value="">-- কর্মকর্তা বাছাই করুন ({officers.length} জন সক্রিয়) --</option>
+                {officers.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name_bn || o.name_en || o.username} ({o.role}) — {o.office?.title_bn || o.office?.title_en || o.office_name || 'অফিস তথ্য নেই'}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedOfficer && (
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-500">নাম:</span>
+                  <span className="font-extrabold text-slate-900">{selectedOfficer.name_bn || selectedOfficer.name_en || selectedOfficer.username}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-500">ইউজারনেম:</span>
+                  <span className="font-mono text-slate-700">{selectedOfficer.username}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-500">বর্তমান ভূমিকা (Role):</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 uppercase">
+                    {selectedOfficer.role}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-500">ফোন নম্বর:</span>
+                  <span className="font-mono text-slate-700">{selectedOfficer.phone || 'N/A'}</span>
+                </div>
+                <div className="pt-2 border-t border-slate-200">
+                  <span className="block text-[11px] font-bold text-slate-500 mb-1">বর্তমান কর্মস্থল / অফিস:</span>
+                  <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 font-bold">
+                    <Building2 className="w-4 h-4 inline-block mr-1 text-[#006A4E]" />
+                    {selectedOfficer.office?.title_bn || selectedOfficer.office?.title_en || selectedOfficer.office_name || 'কেন্দ্রীয় কার্যালয় / কোনো অফিস নির্ধারিত নেই'}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-800 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <span>
+                <strong>নিরাপত্তা নীতি:</strong> বদলি আদেশ কার্যকর করার সাথে সাথে কর্মকর্তার বর্তমান অ্যাক্টিভ সেশন ও Bearer টোকেন অবিলম্বে বাতিল হয়ে যাবে। নতুন কর্মস্থলে যোগদানের জন্য পুনরায় লগইন করতে হবে।
+              </span>
+            </div>
+          </div>
+
+          {/* Right Column: Destination Office & Order Memo */}
+          <div className="lg:col-span-7 panel p-5 space-y-4 bg-white border border-slate-200 rounded-xl shadow-xs">
+            <div className="border-b border-slate-200 pb-3">
+              <span className="text-xs font-black text-[#006A4E] uppercase tracking-wider">২. নতুন পদায়ন ও সরকারি আদেশ</span>
+              <h3 className="font-extrabold text-base text-slate-900 mt-0.5">গন্তব্য কার্যালয় ও বদলি স্মারক</h3>
+            </div>
+
+            <div className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  নতুন গন্তব্য কার্যালয় নির্বাচন করুন <span className="text-rose-500">*</span>:
+                </label>
+                <select
+                  value={transferTargetOfficeId}
+                  onChange={(e) => setTransferTargetOfficeId(Number(e.target.value))}
+                  className="w-full text-xs font-medium border border-slate-300 rounded-lg p-2.5 bg-white text-slate-800 focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
+                >
+                  <option value={0}>-- গন্তব্য অফিস নির্বাচন করুন ({officesList.length} টি উপলব্ধ) --</option>
+                  {officesList.map((off) => (
+                    <option key={off.id} value={off.id}>
+                      {off.title_bn || off.title_en} — {off.upazila_bn || off.upazila_en}, {off.district_bn || off.district_en}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  সরকারি বদলি আদেশ স্মারক নম্বর (Order Reference / Memo No.) <span className="text-rose-500">*</span>:
+                </label>
+                <input
+                  type="text"
+                  value={transferOrderRef}
+                  onChange={(e) => setTransferOrderRef(e.target.value)}
+                  placeholder="উদাঃ স্মারক নং-ভম/প্রশা-১/বদলি-২০২৬/১০৯"
+                  className="w-full text-xs border border-slate-300 rounded-lg p-2.5 text-slate-800 focus:ring-2 focus:ring-[#006A4E] focus:outline-none font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  প্রশাসনিক নির্দেশনা ও বিশেষ নোট (ঐচ্ছিক):
+                </label>
+                <textarea
+                  rows={3}
+                  value={transferNotes}
+                  onChange={(e) => setTransferNotes(e.target.value)}
+                  placeholder="উদাঃ জনস্বার্থে অবিলম্বে বর্তমান দায়িত্ব হস্তান্তর করে নতুন কর্মস্থলে যোগদানের নির্দেশ প্রদান করা হলো..."
+                  className="w-full text-xs border border-slate-300 rounded-lg p-2.5 text-slate-800 focus:ring-2 focus:ring-[#006A4E] focus:outline-none font-medium"
+                />
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={() => {
+                    if (!transferOfficerUser && selectedOfficer) {
+                      setTransferOfficerUser(selectedOfficer);
+                    }
+                    handleExecuteTransfer();
+                  }}
+                  disabled={transferLoading || (!transferOfficerUser && !selectedOfficer) || !transferTargetOfficeId || !transferOrderRef.trim()}
+                  className="w-full py-3 px-4 rounded-xl bg-[#006A4E] hover:bg-[#074f38] text-white font-extrabold text-xs flex items-center justify-center gap-2 cursor-pointer transition shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {transferLoading ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Building2 className="w-4 h-4" />
+                  )}
+                  <span>
+                    {transferLoading
+                      ? t('বদলি আদেশ জারি হচ্ছে...', 'Issuing Transfer Order...')
+                      : t('সরকারি বদলি আদেশ কার্যকর করুন (Execute Transfer)', 'Execute Official Transfer Order')}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Table: Active Field Officers Overview */}
+        <div className="panel p-5 space-y-4 bg-white border border-slate-200 rounded-xl shadow-xs">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+            <div>
+              <h3 className="font-extrabold text-sm text-slate-900">কর্মরত কর্মকর্তাদের তালিকা ও বর্তমান কর্মস্থল</h3>
+              <p className="text-xs text-slate-500 mt-0.5">তালিকা থেকে সরাসরি যে কোনো কর্মকর্তাকে বদলির জন্য নির্বাচন করুন</p>
+            </div>
+            <span className="text-xs font-bold text-[#006A4E] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+              মোট {toBanglaDigits(officers.length, lang)} জন কর্মকর্তা
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
+                  <th className="p-3">কর্মকর্তার নাম</th>
+                  <th className="p-3">ইউজারনেম</th>
+                  <th className="p-3">ভূমিকা (Role)</th>
+                  <th className="p-3">বর্তমান কর্মস্থল (Office)</th>
+                  <th className="p-3">যোগাযোগ</th>
+                  <th className="p-3 text-right">পদক্ষেপ</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {officers.map((o) => (
+                  <tr key={o.id} className="hover:bg-slate-50/80 transition">
+                    <td className="p-3 font-bold text-slate-900">
+                      {o.name_bn || o.name_en || o.username}
+                    </td>
+                    <td className="p-3 font-mono text-slate-600">{o.username}</td>
+                    <td className="p-3">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 uppercase">
+                        {o.role}
+                      </span>
+                    </td>
+                    <td className="p-3 text-slate-700">
+                      <span className="font-semibold text-[#006A4E]">
+                        {o.office?.title_bn || o.office?.title_en || o.office_name || 'অফিস নির্ধারিত নেই'}
+                      </span>
+                    </td>
+                    <td className="p-3 font-mono text-slate-600">{o.phone || o.email || 'N/A'}</td>
+                    <td className="p-3 text-right">
+                      <button
+                        onClick={() => {
+                          setTransferOfficerUser(o);
+                          setTransferTargetOfficeId(0);
+                          window.scrollTo({ top: 300, behavior: 'smooth' });
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#006A4E] font-bold text-[11px] border border-[#006A4E]/30 inline-flex items-center gap-1 cursor-pointer transition"
+                      >
+                        <Building2 className="w-3.5 h-3.5" />
+                        <span>বদলি করুন</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // =========================================================================
+  // PILLAR 3: PLOTS & LAND GOVERNANCE (ভূমি রেকর্ডস ও দাগ নিয়ন্ত্রণ)
+  // =========================================================================
+  const renderPillar3Nav = () => (
+    <div className="panel p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6 bg-white border border-slate-200 rounded-xl shadow-xs">
+      <div>
+        <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1">
+          <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+            {t('কন্ট্রোল প্যানেল', 'Control Panel')}
+          </button>
+          <span>/</span>
+          <span className="text-[#006A4E] font-extrabold">{t('পিলার ৩: ভূমি ও খতিয়ান শাসন', 'Pillar 3: Plots & Land Governance')}</span>
+        </div>
+        <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
+          <Compass className="w-5 h-5 text-[#006A4E]" />
+          <span>{t('ভূমি রেকর্ডস ও দাগ নিয়ন্ত্রণ কেন্দ্র', 'Land Records & Plot Governance')}</span>
+        </h2>
+      </div>
+
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
+        <button
+          onClick={() => { setSubTab('plots_control'); setPlotsSubSegment('plots'); }}
+          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            subTab === 'plots_control' && plotsSubSegment === 'plots'
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Compass className="w-4 h-4" />
+          <span>{t('দাগ ডিরেক্টরি ও স্থগিতাদেশ', 'Plots & Admin Freeze')}</span>
+          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-400 text-slate-900">POWER</span>
+        </button>
+
+        <button
+          onClick={() => { setSubTab('plots_control'); setPlotsSubSegment('deeds'); }}
+          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            (subTab === 'deeds' || (subTab === 'plots_control' && plotsSubSegment === 'deeds'))
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          <span>{t('দলিল রেজিস্ট্রি ও তদারকি', 'Deeds Supervision')}</span>
+        </button>
+
+        <button
+          onClick={() => { setSubTab('plots_control'); setPlotsSubSegment('hierarchy'); }}
+          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            (subTab === 'hierarchy' || (subTab === 'plots_control' && plotsSubSegment === 'hierarchy'))
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          <span>{t('ভৌগোলিক এলাকা কাঠামো', 'Cadastral Hierarchy')}</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderMasterFreezeModal = () => {
+    if (!freezeModalPlot) return null;
+    return (
+      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 p-6 space-y-4 animate-in fade-in duration-150">
+          <div className="flex items-start justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2">
+              <div className={`p-2 rounded-xl ${Number(freezeModalPlot.is_admin_frozen) === 1 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>
+                <ShieldAlert className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  {Number(freezeModalPlot.is_admin_frozen) === 1
+                    ? t('প্রশাসনিক স্থগিতাদেশ প্রত্যাহারের আদেশ', 'Revoke Administrative Plot Freeze')
+                    : t('কেন্দ্রীয় প্রশাসনিক স্থগিতাদেশ (Freeze/Hold) জারি', 'Issue Master Administrative Plot Freeze')}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  দাগ নং: {freezeModalPlot.dag_no_bn || freezeModalPlot.dag_no} • খতিয়ান: {freezeModalPlot.khatian_no_bn || freezeModalPlot.khatian_no || 'N/A'} • মৌজা: {freezeModalPlot.mouza_bn || freezeModalPlot.mouza}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setFreezeModalPlot(null)}
+              className="text-slate-400 hover:text-slate-700 text-lg cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
+            <div className="flex justify-between">
+              <span className="text-slate-500 font-medium">মালিকের নাম:</span>
+              <span className="font-bold text-slate-900">{freezeModalPlot.owner_name_bn || freezeModalPlot.owner_name || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500 font-medium">জমির মোট পরিমাণ:</span>
+              <span className="font-bold text-slate-900">{freezeModalPlot.total_area_decimal} শতাংশ</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500 font-medium">বর্তমান অবস্থা:</span>
+              <span className={`font-bold ${Number(freezeModalPlot.is_admin_frozen) === 1 ? 'text-rose-700' : 'text-emerald-700'}`}>
+                {Number(freezeModalPlot.is_admin_frozen) === 1 ? 'স্থগিতাদেশ কার্যকর (FROZEN)' : 'সাধারণ সক্রিয় (ACTIVE)'}
+              </span>
+            </div>
+          </div>
+
+          {Number(freezeModalPlot.is_admin_frozen) !== 1 ? (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  স্থগিতাদেশ জারির কারণ নির্বাচন করুন <span className="text-rose-500">*</span>:
+                </label>
+                <select
+                  value={freezeReason}
+                  onChange={(e) => setFreezeReason(e.target.value)}
+                  className="w-full text-xs font-medium border border-slate-300 rounded-lg p-2.5 bg-white text-slate-800 focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
+                >
+                  <option value="উচ্চ আদালতের স্থগিতাদেশ (High Court Stay Order)">উচ্চ আদালতের স্থগিতাদেশ (High Court Stay Order)</option>
+                  <option value="দুর্নীতি দমন কমিশন অনুসন্ধান (Anti-Corruption Commission Inquiry)">দুর্নীতি দমন কমিশন অনুসন্ধান (ACC Inquiry)</option>
+                  <option value="মালিকানা ও ওয়ারিশ সংক্রান্ত দেওয়ানি মোকদ্দমা (Title Dispute)">মালিকানা ও ওয়ারিশ সংক্রান্ত দেওয়ানি মোকদ্দমা</option>
+                  <option value="প্রতারণামূলক নামজারি অভিযোগ তদন্তাধীন (Fraudulent Mutation Probe)">প্রতারণামূলক নামজারি অভিযোগ তদন্তাধীন</option>
+                  <option value="বিশেষ প্রশাসনিক আদেশ (Special Administrative Directive)">বিশেষ প্রশাসনিক আদেশ (Special Order)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  মামলা / স্মারক নম্বর ও বিস্তারিত নির্দেশ (ঐচ্ছিক):
+                </label>
+                <textarea
+                  rows={3}
+                  value={freezeCustomReason}
+                  onChange={(e) => setFreezeCustomReason(e.target.value)}
+                  placeholder="উদাঃ রিট পিটিশন নং-১২০৯/২০২৬ আদেশ মোতাবেক আগামী নির্দেশ না দেয়া পর্যন্ত দাগের সকল প্রকার হস্তান্তর নিষিদ্ধ থাকবে..."
+                  className="w-full text-xs border border-slate-300 rounded-lg p-2.5 text-slate-800 focus:ring-2 focus:ring-[#006A4E] focus:outline-none font-medium"
+                />
+              </div>
+
+              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-[11px] text-rose-800">
+                <strong>গুরুত্বপূর্ণ:</strong> এই স্থগিতাদেশ জারির পর কোনো নাগরিক বিক্রয় লক খুলতে পারবেন না এবং কোনো কর্মকর্তা এই দাগে নামজারি বা দলিল রেজিস্ট্রি সম্পাদন করতে পারবেন না।
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
+                <div className="font-bold text-amber-950">বর্তমান স্থগিতাদেশের বিবরণ:</div>
+                <div>{freezeModalPlot.admin_freeze_reason || 'বিশেষ কারণ উল্লেখিত নেই'}</div>
+                {freezeModalPlot.admin_frozen_at && (
+                  <div className="text-[10px] text-amber-700 font-mono mt-1">
+                    স্থগিতাদেশ জারির তারিখ: {new Date(freezeModalPlot.admin_frozen_at).toLocaleString('bn-BD')}
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-slate-600">
+                আপনি কি নিশ্চিত যে এই দাগের ওপর আরোপিত সকল প্রশাসনিক নিষেধাজ্ঞা প্রত্যাহার করে স্বাভাবিক রেকর্ডে ফিরিয়ে নিতে চান?
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+            <button
+              onClick={() => setFreezeModalPlot(null)}
+              className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+            >
+              {t('বাতিল', 'Cancel')}
+            </button>
+            <button
+              onClick={handleExecutePlotFreeze}
+              disabled={freezeLoading}
+              className={`px-4 py-2 rounded-lg text-white text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50 ${
+                Number(freezeModalPlot.is_admin_frozen) === 1
+                  ? 'bg-amber-600 hover:bg-amber-700'
+                  : 'bg-rose-600 hover:bg-rose-700'
+              }`}
+            >
+              {freezeLoading ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <ShieldAlert className="w-3.5 h-3.5" />
+              )}
+              <span>
+                {Number(freezeModalPlot.is_admin_frozen) === 1
+                  ? t('স্থগিতাদেশ প্রত্যাহার নিশ্চিত করুন', 'Confirm Unfreeze')
+                  : t('স্থগিতাদেশ কার্যকর করুন', 'Confirm Freeze')}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // =========================================================================
+  // PILLAR 4: LEDGER & SECURITY AUDIT (লেজার ও সার্বভৌম অডিট ল্যাব)
+  // =========================================================================
+  const renderPillar4Nav = () => (
+    <div className="panel p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6 bg-white border border-slate-200 rounded-xl shadow-xs">
+      <div>
+        <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1">
+          <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+            {t('কন্ট্রোল প্যানেল', 'Control Panel')}
+          </button>
+          <span>/</span>
+          <span className="text-[#006A4E] font-extrabold">{t('পিলার ৪: লেজার ও সার্বভৌম অডিট', 'Pillar 4: Ledger & Security Audit')}</span>
+        </div>
+        <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
+          <Lock className="w-5 h-5 text-[#006A4E]" />
+          <span>{t('ক্রিপ্টোগ্রাফিক লেজার ও নিরাপত্তা নিরীক্ষা', 'Ledger Integrity & Security Audit')}</span>
+        </h2>
+      </div>
+
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
+        <button
+          onClick={() => { setSubTab('ledger'); setLedgerSubSegment('ledger_lab'); }}
+          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            subTab === 'ledger' && ledgerSubSegment === 'ledger_lab'
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Lock className="w-4 h-4" />
+          <span>{t('হ্যাশ-চেইন ও ইন্টিগ্রিটি ল্যাব', 'Ledger Integrity Lab')}</span>
+        </button>
+
+        <button
+          onClick={() => { setSubTab('ledger'); setLedgerSubSegment('audit_trail'); }}
+          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            (subTab === 'audit' || (subTab === 'ledger' && ledgerSubSegment === 'audit_trail'))
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <History className="w-4 h-4" />
+          <span>{t('সার্বভৌম অডিট ট্রেইল', 'Sovereign Audit Log')}</span>
+        </button>
+
+        <button
+          onClick={() => { setSubTab('ledger'); setLedgerSubSegment('database_backup'); }}
+          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            subTab === 'ledger' && ledgerSubSegment === 'database_backup'
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Download className="w-4 h-4" />
+          <span>{t('ডাটাবেজ ব্যাকআপ ও হ্যাশ এক্সপোর্টার', 'Database Backup & Hash')}</span>
+          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-400 text-slate-900">POWER</span>
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderDatabaseBackupCard = () => (
+    <div className="panel p-6 space-y-5 bg-white border border-slate-200 rounded-xl shadow-xs animate-fadeIn">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-emerald-100 text-[#006A4E]">
+              <Download className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-extrabold text-lg text-[#074f38]">
+                {t('সার্বভৌম ডেটাবেজ স্ন্যাপশট ও ক্রিপ্টোগ্রাফিক ব্যাকআপ', 'Sovereign Database Backup & SHA-256 Exporter')}
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {t(
+                  'কোনো ক্লাউড বা থার্ড পার্টি নির্ভরতা ছাড়া সার্বভৌম স্থানীয় সার্ভার ফাইলসিস্টেমে সম্পূর্ণ বাইনারি ব্যাকআপ ও SHA-256 চেকসাম জেনারেট করুন',
+                  'Generate complete sovereign binary database snapshots with SHA-256 integrity checksum directly on local storage'
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={handleExportDatabaseBackup}
+          disabled={backupLoading}
+          className="px-5 py-2.5 rounded-xl bg-[#006A4E] hover:bg-[#074f38] text-white font-extrabold text-xs flex items-center gap-2 cursor-pointer transition shadow-md disabled:opacity-50"
+        >
+          {backupLoading ? (
+            <RefreshCw className="w-4 h-4 animate-spin" />
+          ) : (
+            <Download className="w-4 h-4" />
+          )}
+          <span>{backupLoading ? t('ব্যাকআপ তৈরি হচ্ছে...', 'Generating Backup...') : t('নতুন ব্যাকআপ তৈরি করুন (1-Click)', 'Generate Sovereign Backup')}</span>
+        </button>
+      </div>
+
+      {backupData ? (
+        <div className="space-y-4 animate-fadeIn">
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle2 className="w-5 h-5 text-[#006A4E]" />
+              <span className="font-bold text-xs text-[#006A4E]">
+                {lang === 'bn' ? backupData.message_bn : backupData.message_en}
+              </span>
+            </div>
+            <span className="font-mono text-[11px] text-slate-500">
+              {new Date(backupData.generated_at).toLocaleString('bn-BD')}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="text-[11px] font-bold text-slate-500">{t('ফাইল সাইজ', 'File Size')}</div>
+              <div className="text-xl font-black text-slate-900 mt-1">{backupData.file_size_kb} KB</div>
+              <div className="text-[10px] text-slate-400 font-mono mt-0.5">{backupData.file_size_bytes.toLocaleString()} bytes</div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="text-[11px] font-bold text-slate-500">{t('মোট রেকর্ডকৃত দাগ', 'Total Plots')}</div>
+              <div className="text-xl font-black text-slate-900 mt-1">{toBanglaDigits(backupData.plots_count, lang)}</div>
+              <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">১০০% অক্ষত</div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="text-[11px] font-bold text-slate-500">{t('মোট রেজিস্ট্রিকৃত দলিল', 'Total Deeds')}</div>
+              <div className="text-xl font-black text-slate-900 mt-1">{toBanglaDigits(backupData.deeds_count, lang)}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">লেজার সিঙ্কড</div>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="text-[11px] font-bold text-slate-500">{t('ব্যবহারকারী অ্যাকাউন্ট', 'User Accounts')}</div>
+              <div className="text-xl font-black text-slate-900 mt-1">{toBanglaDigits(backupData.users_count, lang)}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">সকল রোল সমন্বিত</div>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl bg-slate-900 text-white font-mono text-xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400 text-[11px] font-bold">SHA-256 CRYPTOGRAPHIC CHECKSUM:</span>
+              <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 text-[10px] font-bold border border-emerald-800">
+                VERIFIED HASH
+              </span>
+            </div>
+            <div className="p-2.5 rounded bg-slate-950 text-emerald-400 font-mono text-[11px] break-all border border-slate-800 select-all">
+              {backupData.sha256_checksum}
+            </div>
+            <div className="flex items-center justify-between pt-1 text-[11px] text-slate-400">
+              <span>ফাইল নাম: <strong className="text-slate-200">{backupData.backup_filename}</strong></span>
+              <span>পাথ: <strong className="text-slate-200 font-mono">{backupData.backup_path}</strong></span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-xl space-y-3">
+          <Download className="w-10 h-10 text-slate-400 mx-auto" />
+          <div className="font-bold text-slate-700 text-sm">
+            {t('কোনো সাম্প্রতিক ব্যাকআপ রেকর্ড ক্যাশে নেই', 'No recent database backup in current session')}
+          </div>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            {t(
+              'সরাসরি স্থানীয় সার্ভারে সম্পূর্ণ ভূমি রেকর্ড ডেটাবেজের ব্যাকআপ ফাইল তৈরি করতে উপরের "নতুন ব্যাকআপ তৈরি করুন" বাটনে ক্লিক করুন।',
+              'Click the "Generate Sovereign Backup" button above to generate a secure local binary snapshot and cryptographic hash.'
+            )}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
+  // =========================================================================
+  // PILLAR 5: PLATFORM POLICY & CONTROLS (প্ল্যাটফর্ম পলিসি ও নিয়ন্ত্রণ)
+  // =========================================================================
+  const renderPillar5Nav = () => (
+    <div className="panel p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6 bg-white border border-slate-200 rounded-xl shadow-xs">
+      <div>
+        <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1">
+          <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+            {t('কন্ট্রোল প্যানেল', 'Control Panel')}
+          </button>
+          <span>/</span>
+          <span className="text-[#006A4E] font-extrabold">{t('পিলার ৫: প্ল্যাটফর্ম পলিসি ও কন্ট্রোল', 'Pillar 5: Platform Policy & Controls')}</span>
+        </div>
+        <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
+          <Settings className="w-5 h-5 text-[#006A4E]" />
+          <span>{t('প্ল্যাটফর্ম পলিসি, সার্ভিস ক্যাটালগ ও সিস্টেম কন্ট্রোল', 'Platform Policy & System Controls')}</span>
+        </h2>
+      </div>
+
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
+        <button
+          onClick={() => { setSubTab('settings'); setSettingsSubSegment('fraud_policy'); }}
+          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            (subTab === 'risk_protocols' || (subTab === 'settings' && settingsSubSegment === 'fraud_policy'))
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <ShieldAlert className="w-4 h-4" />
+          <span>{t('জালিয়াতি প্রতিরোধ ও ঝুঁকি নীতি', 'Fraud Policy')}</span>
+        </button>
+
+        <button
+          onClick={() => { setSubTab('settings'); setSettingsSubSegment('catalogue'); }}
+          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            (subTab === 'catalogue' || (subTab === 'settings' && settingsSubSegment === 'catalogue'))
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Coins className="w-4 h-4" />
+          <span>{t('সার্ভিস ও ফি ক্যাটালগ', 'Service Catalogue & Fees')}</span>
+        </button>
+
+        <button
+          onClick={() => { setSubTab('settings'); setSettingsSubSegment('tickets'); }}
+          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            (subTab === 'tickets' || (subTab === 'settings' && settingsSubSegment === 'tickets'))
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <MessageSquare className="w-4 h-4" />
+          <span>{t('সাপোর্ট ও বিরোধ টিকিট', 'Dispute Tickets')}</span>
+        </button>
+
+        <button
+          onClick={() => { setSubTab('settings'); setSettingsSubSegment('diagnostics'); }}
+          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+            (subTab === 'dev_outbox' || (subTab === 'settings' && settingsSubSegment === 'diagnostics'))
+              ? 'bg-[#006A4E] text-white shadow-xs'
+              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Activity className="w-4 h-4" />
+          <span>{t('সিস্টেম ডায়াগনস্টিকস ও আউটবক্স', 'Diagnostics & Outbox')}</span>
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
+      {['admin','system_admin'].includes(role) && (
+        <button type="button" onClick={() => onNavigate?.('map?manage=1')} className="px-4 py-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900 font-bold text-sm">
+          {t('মৌজা নকশা: উৎস, আমদানি ও প্রকাশনা নিয়ন্ত্রণ →', 'Mouza maps: sources, import & publication →')}
+        </button>
+      )}
       {loadError && (
         <div role="alert" className="panel p-4 text-red-700 flex items-center justify-between">
           <span>{loadError}</span>
@@ -568,6 +2191,91 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
           </button>
         </div>
       )}
+
+      {/* Role-Allowed Sub-Tab Navigation Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#006A4E]/15 pb-3">
+        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl">
+          {allowedTabs.map((tab) => {
+            const labels: Record<AdminTab, { bn: string; en: string }> = {
+              overview: { bn: 'কমান্ড সেন্টার ও ওভারভিউ', en: 'Command Center & Queues' },
+              users: { bn: 'ইউজার ও পদায়ন', en: 'Users & Roles' },
+              transfers: { bn: 'নাগরিক সেবা ও হস্তান্তর', en: 'Citizen Transfers' },
+              deeds: { bn: 'দলিল ও সাব-রেজিস্ট্রি', en: 'Deeds Registry' },
+              mutations: { bn: 'নামজারি ও খতিয়ান', en: 'e-Mutations & Records' },
+              field_verification: { bn: 'মাঠ তদন্ত ও পরিদর্শন', en: 'Field Verification' },
+              survey_records: { bn: 'জরিপ ও মেকার-চেকার', en: 'Survey Records' },
+              bank_liens: { bn: 'ব্যাংক লিয়েন ও এনওসি', en: 'Bank Liens & NOC' },
+              appeals: { bn: 'আপিল ও আদালত নথি', en: 'Appeals & Court' },
+              acquisitions: { bn: 'ভূমি অধিগ্রহণ (LA)', en: 'Acquisitions (LA)' },
+              marketplace: { bn: 'মার্কেটপ্লেস মডারেশন', en: 'Marketplace Moderation' },
+              tickets: { bn: 'সাপোর্ট ও ১৬১২২', en: 'Support Desk' },
+              notices: { bn: 'বিজ্ঞপ্তি ও প্রকাশনা', en: 'Notices & Publications' },
+              offices_config: { bn: 'অফিস ও সেবা কনফিগ', en: 'Offices & Config' },
+              integrations: { bn: 'ইন্টিগ্রেশন ও আউটবক্স', en: 'Integrations & Outbox' },
+              audit_reports: { bn: 'অডিট লগ ও রিপোর্ট', en: 'Audit Logs & Reports' },
+              // Legacy keys fallback:
+              plots_control: { bn: 'ভূমি রেকর্ড ও দাগ নিয়ন্ত্রণ', en: 'Land Records & Plots' },
+              ledger: { bn: 'লেজার অখণ্ডতা ও নিরাপত্তা অডিট', en: 'Ledger Integrity & Audit' },
+              settings: { bn: 'সিস্টেম পলিসি ও কনফিগারেশন', en: 'Policy & Configuration' },
+              content_editor: { bn: 'কন্টেন্ট এডিটর', en: 'Content Editor' },
+              content_approver: { bn: 'প্রকাশনা কর্তৃপক্ষ', en: 'Content Approver' },
+              marketplace_moderation: { bn: 'মার্কেটপ্লেস মডারেশন', en: 'Listing Moderation' },
+              hierarchy: { bn: 'প্রশাসনিক অধিক্ষেত্র', en: 'Hierarchy' },
+              catalogue: { bn: 'সেবা ও ফি ক্যাটালগ', en: 'Service Catalogue' },
+              onboarding_appeals: { bn: 'স্ট্যাজিং ও আপিল', en: 'Staging & Appeals' },
+              risk_protocols: { bn: 'ঝুঁকি প্রটোকল ও OCR', en: 'Risk Protocols' },
+              audit: { bn: 'সিকিউরিটি অডিট', en: 'Security Audit' },
+              dev_outbox: { bn: 'এসএমএস আউটবক্স', en: 'SMS Outbox' },
+              rbac: { bn: 'আরব্যাক রোল ও পারমিশন', en: 'RBAC Matrix' },
+            };
+            const label = labels[tab] || { bn: tab, en: tab };
+            const isActive = subTab === tab;
+            return (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => handleTabChange(tab)}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  isActive
+                    ? 'bg-[#006A4E] text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
+                }`}
+              >
+                <span>{lang === 'bn' ? label.bn : label.en}</span>
+              </button>
+            );
+          })}
+          {(role === 'admin' || role === 'system_admin') && (
+            <div className="flex items-center gap-1 pl-2 border-l border-slate-300">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">টুলস:</span>
+              {(['content_editor', 'content_approver', 'marketplace_moderation'] as AdminTab[]).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => handleTabChange(tab)}
+                  className={`px-2 py-1 rounded text-[11px] font-semibold transition cursor-pointer ${
+                    subTab === tab
+                      ? 'bg-slate-800 text-white font-bold'
+                      : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/60'
+                  }`}
+                >
+                  {tab === 'content_editor' ? t('এডিটর', 'Editor') : tab === 'content_approver' ? t('অ্যাপ্রুভার', 'Approver') : t('মডারেশন', 'Moderation')}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={refreshAll}
+            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 cursor-pointer transition shadow-2xs"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-[#006A4E]" />
+            <span>{t('রিফ্রেশ', 'Refresh')}</span>
+          </button>
+        </div>
+      </div>
 
       {/* SUBTAB: OVERVIEW (গভর্ন্যান্স সারসংক্ষেপ ও ড্যাশবোর্ড) */}
       {subTab === 'overview' && (
@@ -620,6 +2328,26 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
               </span>
             </div>
           </header>
+
+          {/* Super Admin OS Overview Queues & Workload Breakdown */}
+          {(role === 'admin' || role === 'system_admin') && (
+            <SuperAdminOverviewQueues
+              stats={superAdminStats}
+              onNavigateTab={handleTabChange}
+              onRefresh={refreshAll}
+              onOpenReassign={() => {
+                handleTabChange('transfers');
+              }}
+              onOpenOverride={(type, id, extra) => {
+                setOverrideModal({
+                  isOpen: true,
+                  actionType: type,
+                  targetId: id,
+                  extraContext: extra,
+                });
+              }}
+            />
+          )}
 
           {/* Admin Operational KPI Strip */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -704,225 +2432,408 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
             </div>
           </div>
 
-          {/* Subsystems & Controlling Modules Grid */}
+          {/* Executive Power Widget 1: Live Anomaly & Security Stream */}
+          <div className="panel p-5 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center font-bold">
+                  <ShieldAlert className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                    <span>{t('লাইভ নিরাপত্তা ও অসঙ্গতি স্ট্রিম (Live Anomaly & Security Stream)', 'Live Security & Anomaly Stream')}</span>
+                    {anomaliesData && anomaliesData.total_anomalies > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-black bg-rose-600 text-white animate-pulse">
+                        {toBanglaDigits(anomaliesData.total_anomalies, lang)} {t('টি শনাক্ত', 'Detected')}
+                      </span>
+                    )}
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    {t('দ্বৈত ব্যাংক লিয়েন, স্থগিত দাগ, ক্রিপ্টোগ্রাফিক টেম্পারিং ও অনিষ্পন্ন বিরোধের কেন্দ্রীয় পর্যবেক্ষণ', 'Real-time detection of multiple liens, frozen plots, cryptographic tampering, and title disputes')}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setAnomaliesLoading(true);
+                  BhumiApi.getLiveAnomalies()
+                    .then((a) => setAnomaliesData(a))
+                    .finally(() => setAnomaliesLoading(false));
+                }}
+                disabled={anomaliesLoading}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-[#006A4E] ${anomaliesLoading ? 'animate-spin' : ''}`} />
+                <span>{t('পুনরায় স্ক্যান', 'Rescan')}</span>
+              </button>
+            </div>
+
+            {anomaliesData && anomaliesData.items && anomaliesData.items.length > 0 ? (
+              <div className="space-y-2.5">
+                {anomaliesData.items.map((anom) => (
+                  <div
+                    key={anom.id}
+                    className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                      anom.severity === 'CRITICAL'
+                        ? 'bg-rose-50/60 border-rose-200 text-rose-900'
+                        : anom.severity === 'HIGH'
+                        ? 'bg-amber-50/60 border-amber-200 text-amber-900'
+                        : 'bg-blue-50/60 border-blue-200 text-blue-900'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-black shrink-0 mt-0.5 ${
+                          anom.severity === 'CRITICAL'
+                            ? 'bg-rose-600 text-white'
+                            : anom.severity === 'HIGH'
+                            ? 'bg-amber-600 text-white'
+                            : 'bg-blue-600 text-white'
+                        }`}
+                      >
+                        {anom.severity}
+                      </span>
+                      <div>
+                        <div className="font-extrabold text-xs sm:text-sm">
+                          {lang === 'bn' ? anom.title_bn : anom.title_en}
+                        </div>
+                        <div className="text-xs opacity-90 mt-0.5 font-medium">
+                          {anom.description_bn}
+                        </div>
+                        <div className="text-[10px] opacity-75 mt-1 font-mono">
+                          ID: {anom.id} · {new Date(anom.created_at).toLocaleString(lang === 'bn' ? 'bn-BD' : 'en-US')}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                      {anom.plot_id && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPlotsSubSegment('plots');
+                            handleTabChange('plots_control');
+                            handleInspectPlot(anom.plot_id!);
+                          }}
+                          className="px-2.5 py-1 rounded bg-white text-slate-800 border border-slate-300 text-xs font-bold hover:bg-slate-50 cursor-pointer shadow-2xs"
+                        >
+                          {t('দাগ পরীক্ষা', 'Inspect Plot')}
+                        </button>
+                      )}
+                      {anom.deed_id && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPlotsSubSegment('deeds');
+                            handleTabChange('plots_control');
+                            handleInspectDeed(anom.deed_id!);
+                          }}
+                          className="px-2.5 py-1 rounded bg-white text-slate-800 border border-slate-300 text-xs font-bold hover:bg-slate-50 cursor-pointer shadow-2xs"
+                        >
+                          {t('দলিল স্ক্রুটিনি', 'Audit Deed')}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 rounded-xl bg-emerald-50/50 border border-emerald-200 text-center space-y-1">
+                <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+                <div className="text-sm font-bold text-emerald-950">
+                  {t('কোনো সক্রিয় অসঙ্গতি শনাক্ত হয়নি', 'No Active Security Anomalies Detected')}
+                </div>
+                <div className="text-xs text-emerald-800">
+                  {t('জাতীয় লেজার, দাগ ও ব্যাংক লিয়েন সম্পূর্ণ সংগতিপূর্ণ ও নিরাপদ রয়েছে।', 'All ledger hash blocks, plots, and mortgage records are consistent and healthy.')}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Executive Power Widget 2 & 3: Ledger Health Check & Emergency Broadcast */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Widget 2: 1-Click Cryptographic Ledger Health Check */}
+            <div className="panel p-5 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#006A4E] flex items-center justify-center font-bold">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm text-slate-900">
+                      {t('সার্বভৌম লেজার অখণ্ডতা পরীক্ষা', 'Sovereign Ledger Health Check')}
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      {t('সকল দলিলের SHA-256 ও জেনেসিস চেইন রিয়েল-টাইম নিরীক্ষা', 'Instant verification of all deed hash-chains')}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRunLedgerHealthCheck}
+                  disabled={healthCheckLoading}
+                  className="px-3 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#005a42] text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                >
+                  <Activity className={`w-3.5 h-3.5 ${healthCheckLoading ? 'animate-spin' : ''}`} />
+                  <span>{healthCheckLoading ? t('যাচাই চলছে...', 'Checking...') : t('স্বাস্থ্য পরীক্ষা চালান', 'Run Health Check')}</span>
+                </button>
+              </div>
+
+              {healthCheckData ? (
+                <div className={`p-4 rounded-xl border space-y-3 ${
+                  healthCheckData.is_valid
+                    ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
+                    : 'bg-rose-50/70 border-rose-200 text-rose-950'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold flex items-center gap-1.5">
+                      {healthCheckData.is_valid ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span className="text-emerald-800">{t('লেজার ১০০% অক্ষুণ্ণ ও বৈধ', 'Ledger 100% Healthy & Intact')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <AlertTriangle className="w-4 h-4 text-rose-600" />
+                          <span className="text-rose-800 font-extrabold">{t('সতর্কতা: লেজার টেম্পারিং শনাক্ত!', 'Tampering Detected in Ledger!')}</span>
+                        </>
+                      )}
+                    </span>
+                    <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-white/80 border border-slate-200">
+                      {toBanglaDigits(healthCheckData.verification_time_ms, lang)} ms
+                    </span>
+                  </div>
+
+                  <p className="text-xs font-medium opacity-90">
+                    {lang === 'bn' ? healthCheckData.message_bn : healthCheckData.message_en}
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-200/50">
+                    <div>
+                      <span className="text-slate-500 block">{t('মোট নিরীক্ষিত ব্লক:', 'Blocks Checked:')}</span>
+                      <span className="font-extrabold text-slate-800">{toBanglaDigits(healthCheckData.total_blocks_checked, lang)} {t('টি ব্লক', 'blocks')}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block">{t('জেনেসিস হ্যাশ:', 'Genesis Hash:')}</span>
+                      <span className="font-mono text-[9px] text-slate-700 block truncate" title={healthCheckData.genesis_hash}>
+                        {healthCheckData.genesis_hash.substring(0, 16)}...
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 text-center">
+                  {t('উপরে "স্বাস্থ্য পরীক্ষা চালান" বাটনে ক্লিক করে সমগ্র দলিলের ক্রিপ্টোগ্রাফিক হ্যাশ যাচাই করুন।', 'Click "Run Health Check" above to verify all deeds against cryptographic signatures.')}
+                </div>
+              )}
+            </div>
+
+            {/* Widget 3: Emergency Platform Broadcast Controller */}
+            <div className="panel p-5 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+                    <Megaphone className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm text-slate-900">
+                      {t('জরুরি প্ল্যাটফর্ম ব্রডকাস্ট ব্যানার', 'Emergency Platform Broadcast Banner')}
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      {t('সারাদেশের সকল নাগরিক ও কর্মকর্তা পোর্টালে দৃশ্যমান লাল/হলুদ সতর্কবার্তা', 'Publish emergency banners visible to all citizens and officers')}
+                    </p>
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <span className="text-xs font-bold text-slate-600">
+                    {broadcastForm.is_active ? t('সক্রিয়', 'Active') : t('নিষ্ক্রিয়', 'Disabled')}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={broadcastForm.is_active}
+                    onChange={(e) => setBroadcastForm({ ...broadcastForm, is_active: e.target.checked })}
+                    className="w-4 h-4 accent-[#006A4E] cursor-pointer"
+                  />
+                </label>
+              </div>
+
+              {broadcastNotice && (
+                <div className={`p-2.5 rounded-lg text-xs font-bold ${
+                  broadcastNotice.err ? 'bg-rose-50 text-rose-800 border border-rose-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                }`}>
+                  {broadcastNotice.msg}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-600 shrink-0">{t('সতর্কতার মাত্রা:', 'Severity Level:')}</span>
+                  <div className="flex gap-1.5">
+                    {(['INFO', 'WARNING', 'URGENT'] as const).map((lvl) => (
+                      <button
+                        key={lvl}
+                        type="button"
+                        onClick={() => setBroadcastForm({ ...broadcastForm, level: lvl })}
+                        className={`px-2.5 py-1 rounded text-xs font-bold transition cursor-pointer ${
+                          broadcastForm.level === lvl
+                            ? lvl === 'URGENT'
+                              ? 'bg-rose-600 text-white'
+                              : lvl === 'WARNING'
+                              ? 'bg-amber-500 text-slate-950'
+                              : 'bg-[#006A4E] text-white'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        {lvl === 'URGENT' ? t('জরুরি (লাল)', 'URGENT') : lvl === 'WARNING' ? t('সতর্কতা (হলুদ)', 'WARNING') : t('সাধারণ (সবুজ)', 'INFO')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                    {t('বাংলা বার্তা:', 'Bengali Message:')}
+                  </label>
+                  <input
+                    type="text"
+                    value={broadcastForm.message_bn}
+                    onChange={(e) => setBroadcastForm({ ...broadcastForm, message_bn: e.target.value })}
+                    placeholder="যেমন: জরুরি রক্ষণাবেক্ষণের জন্য আজ রাত ১২টা হতে ২টা পর্যন্ত সাব-রেজিস্ট্রি সেবা সীমিত থাকবে।"
+                    className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                    {t('ইংরেজি বার্তা (ঐচ্ছিক):', 'English Message (Optional):')}
+                  </label>
+                  <input
+                    type="text"
+                    value={broadcastForm.message_en}
+                    onChange={(e) => setBroadcastForm({ ...broadcastForm, message_en: e.target.value })}
+                    placeholder="e.g. Scheduled system maintenance from 12:00 AM to 02:00 AM tonight."
+                    className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none"
+                  />
+                </div>
+
+                <div className="pt-1 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleSaveBroadcast}
+                    disabled={broadcastLoading}
+                    className="px-4 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#005a42] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>{broadcastLoading ? t('প্রচার হচ্ছে...', 'Publishing...') : t('সারাদেশে প্রচার করুন', 'Broadcast Nationwide')}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Core Pillars Direct Launchpad */}
           <div className="space-y-3">
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-500">
-              {t('কন্ট্রোল প্যানেল মডিউল ও অ্যাক্সেস কেন্দ্র', 'Control Panel Modules & Subsystems')}
+              {t("কোর কন্ট্রোল পিলার ও গভর্নেন্স কেন্দ্র (Core Control Pillars)", "Core Control Pillars")}
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Module: User Management */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Pillar 2: Users */}
               <div
-                onClick={() => handleTabChange('users')}
-                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+                onClick={() => {
+                  setUsersSubSegment("directory");
+                  handleTabChange("users");
+                }}
+                className="panel p-4 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group rounded-xl"
               >
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-2.5 group-hover:scale-105 transition">
                     <Users className="w-5 h-5" />
                   </div>
-                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
-                    {t('ইউজার ও কর্মকর্তা ব্যবস্থাপনা', 'User & Officer Directory')}
+                  <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#006A4E] transition">
+                    {t("ইউজার ও কর্মকর্তা প্রশাসন", "User & Officer Administration")}
                   </h3>
-                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
-                    {t('নাগরিক একাউন্ট অনুমোদন, কর্মকর্তা পদায়ন, রোল ফিল্টারিং ও স্ট্যাটাস নিয়ন্ত্রণ।', 'Citizen approvals, officer onboarding, role filters, and status toggles.')}
+                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
+                    {t("কর্মকর্তা বদলি, পদায়ন, মেকার-চেকার স্ট্যাজিং ও ২১টি রোল আরব্যাক ম্যাট্রিক্স।", "Officer transfers, postings, maker-checker batches, and RBAC matrix.")}
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
-                  <span>{toBanglaDigits(usersList.length, lang)} {t('জন ব্যবহারকারী', 'Users')}</span>
-                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
-                    {t('প্রবেশ করুন', 'Manage')} →
-                  </span>
+                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
+                  <span>{toBanglaDigits(usersList.length, lang)} {t("জন ইউজার", "Users")}</span>
+                  <span>→</span>
                 </div>
               </div>
 
-              {/* Module: Cryptographic Ledger */}
+              {/* Pillar 3: Plots Control */}
               <div
-                onClick={() => handleTabChange('ledger')}
-                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+                onClick={() => {
+                  setPlotsSubSegment("plots");
+                  handleTabChange("plots_control");
+                }}
+                className="panel p-4 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group rounded-xl"
               >
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
-                    <Lock className="w-5 h-5" />
-                  </div>
-                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
-                    {t('ক্রিপ্টোগ্রাফিক লেজার ও অখণ্ডতা', 'Cryptographic Ledger Lab')}
-                  </h3>
-                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
-                    {t('SHA-256 হ্যাশ-চেইন স্টেট, জেনেসিস ব্লক ভেরিফিকেশন ও রিয়েল-টাইম টেম্পার ডিটেকশন।', 'SHA-256 hash-chain states, genesis block validation, and real-time tamper auditing.')}
-                  </p>
-                </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
-                  <span>{toBanglaDigits(stats?.kpis?.ledger_integrity_pct ?? 100, lang)}% {t('অখণ্ডতা', 'Integrity')}</span>
-                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
-                    {t('ল্যাব খুলুন', 'Inspect')} →
-                  </span>
-                </div>
-              </div>
-
-              {/* Module: Plots & Land Control */}
-              <div
-                onClick={() => handleTabChange('plots_control')}
-                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-2.5 group-hover:scale-105 transition">
                     <Compass className="w-5 h-5" />
                   </div>
-                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
-                    {t('ভূমি ও দাগ নিয়ন্ত্রণ কেন্দ্র', 'Land Records & Plots Control')}
+                  <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#006A4E] transition">
+                    {t("ভূমি রেকর্ড ও দাগ নিয়ন্ত্রণ", "Plots & Land Governance")}
                   </h3>
-                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
-                    {t('সকল মৌজার দাগের বিক্রয় সুরক্ষা লক, ব্যাংক মর্টগেজ এবং খতিয়ান চেইনের ওভারসাইট।', 'Plot sale locks, mortgage encumbrance inspection, and full khatian lineages.')}
+                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
+                    {t("দাগে কেন্দ্রীয় প্রশাসনিক স্থগিতাদেশ (Freeze), দলিল রেজিস্ট্রি অডিট ও প্রশাসনিক অধিক্ষেত্র।", "Master administrative plot freeze, deed supervision, and mouza hierarchy.")}
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
-                  <span>{toBanglaDigits(plotsList.length, lang)} {t('টি দাগ', 'Plots')}</span>
-                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
-                    {t('নিয়ন্ত্রণ করুন', 'Control')} →
-                  </span>
+                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
+                  <span>{toBanglaDigits(plotsList.length, lang)} {t("টি দাগ", "Plots")}</span>
+                  <span>→</span>
                 </div>
               </div>
 
-              {/* Module: Security Audit */}
+              {/* Pillar 4: Ledger */}
               <div
-                onClick={() => handleTabChange('audit')}
-                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+                onClick={() => {
+                  setLedgerSubSegment("ledger_lab");
+                  handleTabChange("ledger");
+                }}
+                className="panel p-4 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group rounded-xl"
               >
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
-                    <History className="w-5 h-5" />
+                  <div className="w-9 h-9 rounded-lg bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-2.5 group-hover:scale-105 transition">
+                    <ShieldCheck className="w-5 h-5" />
                   </div>
-                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
-                    {t('সিকিউরিটি অডিট ট্রেইল', 'Security Audit Trail')}
+                  <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#006A4E] transition">
+                    {t("লেজার অখণ্ডতা ও নিরাপত্তা অডিট", "Ledger Integrity & Audit")}
                   </h3>
-                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
-                    {t('সিস্টেমের প্রতিটি লগইন, পরিবর্তন ও ব্রেক-গ্লাস এক্সেসের অপরিবর্তনীয় অডিট লগ।', 'Immutable logs of all administrative actions, logins, and break-glass events.')}
+                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
+                    {t("হ্যাশ লেজার ল্যাব, ব্রেক-গ্লাস অডিট ট্রেইল ও ১-ক্লিক সার্বভৌম ডাটাবেজ ব্যাকআপ।", "Hash ledger lab, break-glass security logs, and sovereign DB backup.")}
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
-                  <span>{toBanglaDigits(auditLogs.length, lang)} {t('টি ইভেন্ট', 'Events')}</span>
-                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
-                    {t('পর্যালোচনা', 'Review')} →
-                  </span>
+                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
+                  <span>{toBanglaDigits(auditLogs.length, lang)} {t("টি অডিট লগ", "Logs")}</span>
+                  <span>→</span>
                 </div>
               </div>
 
-              {/* Module: Policy Settings */}
+              {/* Pillar 5: Settings */}
               <div
-                onClick={() => handleTabChange('settings')}
-                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
+                onClick={() => {
+                  setSettingsSubSegment("fraud_policy");
+                  handleTabChange("settings");
+                }}
+                className="panel p-4 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group rounded-xl"
               >
                 <div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-2.5 group-hover:scale-105 transition">
                     <Settings className="w-5 h-5" />
                   </div>
-                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
-                    {t('সিস্টেম পলিসি ও নোটিশ', 'Policy & System Settings')}
+                  <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#006A4E] transition">
+                    {t("সিস্টেম পলিসি ও কনফিগারেশন", "System Policy & Configuration")}
                   </h3>
-                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
-                    {t('স্বয়ংক্রিয় ঝুঁকি ইঞ্জিন প্যারামিটার, সরকারি ফি রুল ও প্ল্যাটফর্ম পলিসি ব্যবস্থাপনা।', 'Risk engine thresholds, tax policies, and global system configuration.')}
+                  <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
+                    {t("জালিয়াতি প্রতিরোধ সংবেদনশীলতা, সার্ভিস ডিরেক্টরি, সাপোর্ট ডেস্ক ও ডায়াগনস্টিকস।", "Fraud engine sensitivity, service directory & fees, citizen tickets, and outbox.")}
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
-                  <span>{t('সক্রিয় সেটিংস', 'Active Configuration')}</span>
-                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
-                    {t('কনফিগার করুন', 'Configure')} →
-                  </span>
-                </div>
-              </div>
-
-              {/* Module: RBAC Matrix */}
-              <div
-                onClick={() => handleTabChange('rbac')}
-                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
-                    <KeyRound className="w-5 h-5" />
-                  </div>
-                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
-                    {t('ভূমিকাভিত্তিক প্রবেশাধিকার (RBAC)', 'RBAC Permission Matrix')}
-                  </h3>
-                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
-                    {t('সিস্টেমের ২১টি ব্যবহারকারী রোলের সুনির্দিষ্ট পারমিশন ও এক্সেস নিয়ন্ত্রণ ম্যাট্রিক্স।', 'Strict role-permission mapping and capability matrix across all 21 roles.')}
-                  </p>
-                </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
-                  <span>২১টি {t('রোল ম্যাট্রিক্স', 'Roles')}</span>
-                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
-                    {t('ম্যাট্রিক্স দেখুন', 'View Matrix')} →
-                  </span>
-                </div>
-              </div>
-
-              {/* Module: Onboarding & Appeals */}
-              <div
-                onClick={() => handleTabChange('onboarding_appeals')}
-                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
-                    <Layers className="w-5 h-5" />
-                  </div>
-                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
-                    {t('অনবোর্ডিং ও আপিল ওভারসাইট', 'Onboarding & Appeals')}
-                  </h3>
-                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
-                    {t('মেকার-চেকার ব্যাচ অনবোর্ডিং প্রক্রিয়া ও অতিরিক্ত জেলা প্রশাসক (রাজস্ব) আপিল ট্রায়াল।', 'Maker-checker staging batches and appellate tribunal hearings.')}
-                  </p>
-                </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
-                  <span>{toBanglaDigits(appealsList.length, lang)} {t('টি আপিল', 'Appeals')}</span>
-                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
-                    {t('ওভারসাইট', 'Oversight')} →
-                  </span>
-                </div>
-              </div>
-
-              {/* Module: Service Catalogue & Fees */}
-              <div
-                onClick={() => handleTabChange('catalogue')}
-                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
-                    <BookOpen className="w-5 h-5" />
-                  </div>
-                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
-                    {t('সার্ভিস ক্যাটালগ ও ফি ডিরেক্টরি', 'Service Directory & Fees')}
-                  </h3>
-                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
-                    {t('সরকারি নাগরিক সেবাসমূহ, আবেদন নির্দেশিকা ও হালনাগাদ সরকারি ফি তালিকা।', 'Official citizen services catalog, fee schedules, and legal guidance.')}
-                  </p>
-                </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
-                  <span>{toBanglaDigits(adminServices.length, lang)} {t('টি সেবা', 'Services')}</span>
-                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
-                    {t('ক্যাটালগ পরিচালনা', 'Directory')} →
-                  </span>
-                </div>
-              </div>
-
-              {/* Module: SMS & OTP Outbox */}
-              <div
-                onClick={() => handleTabChange('dev_outbox')}
-                className="panel p-5 bg-white border border-slate-200 hover:border-[#006A4E]/50 hover:shadow-md transition cursor-pointer flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center mb-3 group-hover:scale-105 transition">
-                    <Smartphone className="w-5 h-5" />
-                  </div>
-                  <h3 className="font-extrabold text-base text-slate-900 group-hover:text-[#006A4E] transition">
-                    {t('এসএমএস ও ওটিপি আউটবক্স', 'SMS & OTP Outbox')}
-                  </h3>
-                  <p className="text-xs text-slate-600 mt-1 line-clamp-2">
-                    {t('সিস্টেম কর্তৃক প্রেরিত সকল ওটিপি কোড ও নিরাপত্তা বার্তার রিয়েল-টাইম আউটবক্স।', 'Real-time inspection of dispatch queue, OTPs, and verification messages.')}
-                  </p>
-                </div>
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
-                  <span>{t('লাইভ আউটবক্স', 'Live Outbox')}</span>
-                  <span className="flex items-center gap-1 group-hover:translate-x-1 transition">
-                    {t('আউটবক্স দেখুন', 'View Outbox')} →
-                  </span>
+                <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
+                  <span>{toBanglaDigits(adminServices.length, lang)} {t("টি সেবা", "Services")}</span>
+                  <span>→</span>
                 </div>
               </div>
             </div>
@@ -964,8 +2875,10 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       )}
 
       {/* TAB 1: RBAC Middleware Permission Matrix */}
-      {subTab === 'rbac' && permissionsData && (
-        <div className="panel p-6 space-y-5">
+      {(subTab === 'rbac' || (subTab === 'users' && usersSubSegment === 'rbac')) && permissionsData && (
+        <div className="space-y-6 animate-fadeIn">
+          {renderPillar2Nav()}
+          <div className="panel p-6 space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
             <div>
               <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
@@ -1055,11 +2968,18 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
             })}
           </div>
         </div>
+        </div>
       )}
 
       {/* TAB 2: Live Hash-Chain & Tamper Detection Lab */}
-      {subTab === 'ledger' && (
-        <div className="panel p-6 space-y-5">
+      {subTab === 'ledger' && (ledgerSubSegment === 'ledger_lab' || ledgerSubSegment === 'database_backup') && (
+        <div className="space-y-6 animate-fadeIn">
+          {renderPillar4Nav()}
+
+          {ledgerSubSegment === 'database_backup' && renderDatabaseBackupCard()}
+
+          {ledgerSubSegment === 'ledger_lab' && (
+            <div className="panel p-6 space-y-5">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
@@ -1140,12 +3060,15 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
               )}
             </div>
           )}
+            </div>
+          )}
         </div>
       )}
 
       {/* TAB: Full Land Records & Plots Control Management System */}
-      {subTab === 'plots_control' && (
-        <div className="space-y-6">
+      {subTab === 'plots_control' && plotsSubSegment === 'plots' && (
+        <div className="space-y-6 animate-fadeIn">
+          {renderPillar3Nav()}
           {/* Header Card */}
           <div className="panel p-6 space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
@@ -1187,7 +3110,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
             </div>
 
             {/* Quick Metrics */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
                 <div className="text-[11px] font-semibold text-slate-500">
                   {t('মোট নিবন্ধিত দাগ', 'Total Registered Plots')}
@@ -1223,6 +3146,16 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                 </div>
                 <div className="text-xl font-extrabold text-blue-900 mt-1">
                   {toBanglaDigits(allMortgages.length, lang)} {t('টি', '')}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-purple-50 border border-purple-200">
+                <div className="text-[11px] font-semibold text-purple-700 flex items-center gap-1">
+                  <ShieldAlert className="w-3 h-3" />
+                  <span>{t('প্রশাসনিক স্থগিতাদেশ', 'Admin Frozen')}</span>
+                </div>
+                <div className="text-xl font-extrabold text-purple-900 mt-1">
+                  {toBanglaDigits(plotsList.filter((p) => Number(p.is_admin_frozen) === 1).length, lang)} {t('টি', '')}
                 </div>
               </div>
             </div>
@@ -1270,6 +3203,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                     { key: 'UNLOCKED', labelBn: 'উন্মুক্ত', labelEn: 'Unlocked' },
                     { key: 'MORTGAGED', labelBn: 'ব্যাংক বন্ধক', labelEn: 'Mortgaged' },
                     { key: 'DISPUTED', labelBn: 'বিরোধযুক্ত', labelEn: 'Disputed' },
+                    { key: 'FROZEN', labelBn: 'স্থগিতাদেশ', labelEn: 'Admin Frozen' },
                   ] as const
                 ).map((f) => (
                   <button
@@ -1320,6 +3254,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                       if (plotFilter === 'UNLOCKED') return !isLocked;
                       if (plotFilter === 'MORTGAGED') return hasMortgage;
                       if (plotFilter === 'DISPUTED') return hasDispute;
+                      if (plotFilter === 'FROZEN') return Number(p.is_admin_frozen) === 1;
                       return true;
                     })
                     .map((plot) => {
@@ -1377,6 +3312,12 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
 
                           <td className="py-2.5 px-3">
                             <div className="flex flex-col gap-1">
+                              {Number(plot.is_admin_frozen) === 1 && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-600 text-white animate-pulse" title={plot.admin_freeze_reason || 'প্রশাসনিক স্থগিতাদেশ'}>
+                                  <ShieldAlert className="w-2.5 h-2.5" />
+                                  <span>{t('স্থগিতাদেশ (FROZEN)', 'FROZEN')}</span>
+                                </span>
+                              )}
                               {hasMortgage && (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                                   <Landmark className="w-2.5 h-2.5" />
@@ -1399,6 +3340,28 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
 
                           <td className="py-2.5 px-3 text-right">
                             <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => {
+                                  setFreezeModalPlot(plot);
+                                  setFreezeReason(plot.admin_freeze_reason || 'উচ্চ আদালতের স্থগিতাদেশ (High Court Stay Order)');
+                                  setFreezeCustomReason('');
+                                }}
+                                disabled={plotsLoading}
+                                className={`px-2.5 py-1 rounded text-[11px] font-bold border transition cursor-pointer min-h-[30px] flex items-center gap-1 ${
+                                  Number(plot.is_admin_frozen) === 1
+                                    ? 'bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200'
+                                    : 'bg-rose-100 text-rose-900 border-rose-300 hover:bg-rose-200'
+                                }`}
+                                title={t('সার্বভৌম প্রশাসনিক স্থগিতাদেশ নিয়ন্ত্রণ', 'Super Admin Plot Freeze Control')}
+                              >
+                                <ShieldAlert className="w-3 h-3" />
+                                <span>
+                                  {Number(plot.is_admin_frozen) === 1
+                                    ? t('স্থগিতাদেশ প্রত্যাহার', 'Release Freeze')
+                                    : t('প্রশাসনিক ফ্রিজ', 'Admin Freeze')}
+                                </span>
+                              </button>
+
                               <button
                                 onClick={() => handleAdminToggleSaleLock(plot)}
                                 disabled={plotsLoading}
@@ -1553,12 +3516,15 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
               </div>
             </div>
           )}
+
+          {renderMasterFreezeModal()}
         </div>
       )}
 
       {/* TAB 3: Automated Risk Protocols & OCR Assist */}
-      {subTab === 'risk_protocols' && (
-        <div className="space-y-6">
+      {(subTab === 'risk_protocols' || (subTab === 'settings' && settingsSubSegment === 'fraud_policy')) && (
+        <div className="space-y-6 animate-fadeIn">
+          {renderPillar5Nav()}
           <div className="panel p-6 space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
@@ -1768,9 +3734,15 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       )}
 
       {/* TAB 4: Users CRUD Management & Role Filter Control System */}
-      {subTab === 'users' && (
+      {subTab === 'users' && (usersSubSegment === 'directory' || usersSubSegment === 'transfer') && (
         <div className="space-y-6 animate-fadeIn">
-          {/* Notification Banner */}
+          {renderPillar2Nav()}
+
+          {usersSubSegment === 'transfer' && renderOfficerTransferDesk()}
+
+          {usersSubSegment === 'directory' && (
+            <>
+              {/* Notification Banner */}
           {userActionNotice && (
             <div
               className={`p-4 rounded-xl border flex items-center justify-between text-xs font-bold animate-fadeIn ${
@@ -2241,6 +4213,21 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                                     </button>
                                   )}
 
+                                  {/* Officer Transfer Quick Button */}
+                                  {u.role !== 'citizen' && (
+                                    <button
+                                      onClick={() => {
+                                        setTransferOfficerUser(u);
+                                        setTransferTargetOfficeId(0);
+                                        setUsersSubSegment('transfer');
+                                      }}
+                                      className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition cursor-pointer"
+                                      title={t('কর্মকর্তা বদলি ও অফিস পরিবর্তন করুন', 'Transfer Officer')}
+                                    >
+                                      <Building2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+
                                   {/* Quick Toggle Active / Disabled */}
                                   <button
                                     onClick={() => handleToggleUserStatus(u)}
@@ -2306,20 +4293,51 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                       <label className="block font-bold text-slate-700 mb-1">{t('ভূমিকা (Role):', 'Role:')} *</label>
                       <select
                         value={newRole}
-                        onChange={(e) => setNewRole(e.target.value as UserRole)}
+                        onChange={(e) => {
+                          const r = e.target.value as UserRole;
+                          setNewRole(r);
+                          const req = !['citizen', 'admin', 'system_admin', 'auditor', 'support_agent', 'content_editor', 'content_approver', 'platform_moderator'].includes(r);
+                          if (req && newOfficeId === 0 && officesList.length > 0) {
+                            setNewOfficeId(officesList[0].id);
+                            setNewOffice(lang === 'bn' ? officesList[0].name_bn : (officesList[0].name_en || officesList[0].name_bn));
+                          }
+                        }}
                         className="w-full p-2.5 rounded-lg border border-slate-300 font-bold bg-white text-xs"
                       >
-                        <option value="citizen">Citizen (সাধারণ নাগরিক)</option>
-                        <option value="sub_registrar">Sub-Registrar (সাব-রেজিস্ট্রার)</option>
-                        <option value="ac_land">AC Land (সহকারী কমিশনার ভূমি)</option>
-                        <option value="bank_officer">Bank Officer (ব্যাংক কর্মকর্তা)</option>
-                        <option value="field_verification_officer">Field Officer (ফিল্ড অফিসার)</option>
-                        <option value="registry_data_officer">Registry Data Officer (রেজিস্ট্রি ডেটা)</option>
-                        <option value="settlement_officer">Settlement Officer (সার্ভেয়ার / সেটেলমেন্ট)</option>
-                        <option value="uno_supervisor">UNO / ADC Supervisor (তত্ত্বাবধায়ক)</option>
-                        <option value="udc_operator">UDC Operator (ইউনিয়ন ডিজিটাল সেন্টার)</option>
-                        <option value="support_agent">Support Agent (সাপোর্ট ডেস্ক)</option>
-                        <option value="admin">Admin (সিস্টেম অ্যাডমিন)</option>
+                        <optgroup label={t('নাগরিক ও সার্ভিস পয়েন্ট', 'Citizen & Service Point')}>
+                          <option value="citizen">Citizen (সাধারণ নাগরিক)</option>
+                          <option value="service_point_operator">Service Point Operator (UDC / ডিজিটাল সেন্টার)</option>
+                        </optgroup>
+                        <optgroup label={t('নিবন্ধন অধিদপ্তর (সাব-রেজিস্ট্রি)', 'Sub-Registry Department')}>
+                          <option value="sub_registrar">Sub-Registrar (সাব-রেজিস্ট্রার)</option>
+                          <option value="registry_data_officer">Registry Data Officer (রেজিস্ট্রি ডাটা মেকার)</option>
+                        </optgroup>
+                        <optgroup label={t('ভূমি প্রশাসন ও এসি ল্যান্ড', 'Land Administration & AC Land')}>
+                          <option value="ac_land">AC Land (সহকারী কমিশনার ভূমি)</option>
+                          <option value="land_office_assistant">Land Office Assistant (উপজেলা ভূমি সহকারী)</option>
+                          <option value="field_verification_officer">Field Verification Officer (মাঠ তদন্ত কর্মকর্তা)</option>
+                          <option value="settlement_records_officer">Settlement Records Officer (জরিপ মেকার)</option>
+                          <option value="settlement_checker">Assistant Settlement Officer (জরিপ চেকার)</option>
+                          <option value="uno_supervisor">UNO Supervisor (উপজেলা নির্বাহী কর্মকর্তা)</option>
+                          <option value="appellate_reviewer">Appellate Reviewer (এডিসি রাজস্ব / আপিল কর্তৃপক্ষ)</option>
+                        </optgroup>
+                        <optgroup label={t('ব্যাংক ও আর্থিক প্রতিষ্ঠান', 'Banks & Financial Institutions')}>
+                          <option value="bank_officer">Bank Officer (ঋণ ও জামানত মেকার)</option>
+                          <option value="bank_manager">Bank Manager (শাখা ব্যবস্থাপক - চেকার)</option>
+                        </optgroup>
+                        <optgroup label={t('প্ল্যাটফর্ম সাপোর্ট ও মডারেশন', 'Platform Support & Moderation')}>
+                          <option value="support_agent">Support Agent (১৬১২২ হেল্পলাইন / জিআরএস)</option>
+                          <option value="platform_moderator">Platform Moderator (মার্কেটপ্লেস মডারেটর)</option>
+                          <option value="content_editor">Content Editor (নোটিশ ও কন্টেন্ট এডিটর)</option>
+                          <option value="content_approver">Content Approver (কন্টেন্ট ও নোটিশ অ্যাপ্রুভার)</option>
+                        </optgroup>
+                        <optgroup label={t('সিস্টেম ও অডিট', 'System & Audit')}>
+                          <option value="system_admin">System Admin (সিস্টেম অ্যাডমিনিস্ট্রেটর)</option>
+                          <option value="admin">Admin (অ্যাডমিন)</option>
+                          <option value="auditor">National Auditor (জাতীয় অডিটর)</option>
+                          <option value="dc_acquisition_officer">DC Acquisition Officer (এলএ কর্মকর্তা)</option>
+                          <option value="lawyer_court_user">Lawyer / Court User (আদালত প্রতিনিধি)</option>
+                        </optgroup>
                       </select>
                     </div>
 
@@ -2329,7 +4347,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono">@</span>
                         <input
                           type="text"
-                          placeholder="registrar_dhamrai"
+                          placeholder="officer_savar"
                           value={newUsername}
                           onChange={(e) => setNewUsername(e.target.value)}
                           className="w-full pl-7 pr-3 py-2 rounded-lg border border-slate-300 font-mono bg-white text-xs"
@@ -2397,23 +4415,47 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                     </div>
 
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">{t('অফিস / অধিক্ষেত্র:', 'Office / Location:')}</label>
-                      <input
-                        type="text"
-                        placeholder="সাভার উপজেলা ভূমি অফিস"
-                        value={newOffice}
-                        onChange={(e) => setNewOffice(e.target.value)}
-                        className="w-full p-2 rounded-lg border border-slate-300 bg-white text-xs"
-                      />
+                      <label className="block font-bold text-slate-700 mb-1">
+                        {t('অফিস / অধিক্ষেত্র:', 'Office / Jurisdiction:')}{!['citizen', 'admin', 'system_admin', 'auditor', 'support_agent', 'content_editor', 'content_approver', 'platform_moderator'].includes(newRole) && ' *'}
+                      </label>
+                      {!['citizen', 'admin', 'system_admin', 'auditor', 'support_agent', 'content_editor', 'content_approver', 'platform_moderator'].includes(newRole) ? (
+                        <select
+                          value={newOfficeId}
+                          onChange={(e) => {
+                            const id = Number(e.target.value);
+                            setNewOfficeId(id);
+                            const match = officesList.find((o) => Number(o.id) === id);
+                            if (match) setNewOffice(lang === 'bn' ? match.name_bn : (match.name_en || match.name_bn));
+                          }}
+                          className="w-full p-2 rounded-lg border border-slate-300 bg-white text-xs font-semibold"
+                          required
+                        >
+                          <option value={0}>{t('-- সক্রিয় কার্যালয় নির্বাচন করুন --', '-- Select Active Office --')}</option>
+                          {officesList.map((off: any) => (
+                            <option key={off.id} value={off.id}>
+                              {lang === 'bn' ? off.name_bn : (off.name_en || off.name_bn)} — {off.district_bn || off.district_en} ({off.office_type || 'OFFICE'})
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          placeholder={t('কেন্দ্রীয় দপ্তর / প্রযোজ্য নয়', 'Central Headquarters / Not applicable')}
+                          value={newOffice}
+                          onChange={(e) => setNewOffice(e.target.value)}
+                          className="w-full p-2 rounded-lg border border-slate-300 bg-slate-50 text-slate-500 text-xs"
+                        />
+                      )}
                     </div>
                   </div>
 
+                  <label htmlFor="new-officer-password">{t('প্রাথমিক পাসওয়ার্ড (অন্তত ৮ অক্ষর)','Initial password (at least 8 characters)')}<input id="new-officer-password" type="password" required minLength={8} autoComplete="new-password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} className="w-full p-2 rounded-lg border border-slate-300"/></label>
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 flex items-center gap-2">
                     <KeyRound className="w-4 h-4 text-slate-400 shrink-0" />
                     <span>
                       {t(
-                        'অ্যাকাউন্টের ডিফল্ট পাসওয়ার্ড হবে "demo123"। ব্যবহারকারী যেকোনো সময় নিজের পাসওয়ার্ড পরিবর্তন করতে পারবেন।',
-                        'Default account password will be "demo123". The user can change password after logging in.'
+                        'এই অ্যাকাউন্টের জন্য পৃথক পাসওয়ার্ড দিন। সবার জন্য একই পাসওয়ার্ড ব্যবহার করবেন না।',
+                        'Set an individual password for this account. Never reuse a shared password.'
                       )}
                     </span>
                   </div>
@@ -2641,12 +4683,1747 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
               </div>
             </div>
           )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* SUBTAB: DEEDS SUPERVISION & AUDIT (জমির দলিল ও অডিট) */}
+      {(subTab === 'deeds' || (subTab === 'plots_control' && plotsSubSegment === 'deeds')) && (
+        <div className="space-y-6 animate-fadeIn">
+          {renderPillar3Nav()}
+          {/* Notification Banner */}
+          {deedActionNotice && (
+            <div
+              className={`p-4 rounded-xl border flex items-center justify-between text-xs font-bold animate-fadeIn ${
+                deedActionNotice.err
+                  ? 'bg-rose-50 border-rose-300 text-rose-800'
+                  : 'bg-emerald-50 border-emerald-300 text-emerald-800'
+              }`}
+            >
+              <span>{deedActionNotice.msg}</span>
+              <button
+                onClick={() => setDeedActionNotice(null)}
+                className="text-slate-500 hover:text-slate-800 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Page Intro Header */}
+          <header className="page-intro">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
+                  <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+                    {t('কন্ট্রোল প্যানেল', 'Control Panel')}
+                  </button>
+                  <span>/</span>
+                  <span className="text-[#006A4E] font-extrabold">{t('জমির দলিল ও লেজার অডিট', 'Deeds Ledger & Supervision')}</span>
+                </div>
+                <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <FileText className="w-6 h-6 text-[#006A4E]" />
+                  <span>{t('কেন্দ্রীয় দলিল রেজিস্ট্রি ও অ্যাকশনেবল সুপারভিশন কনসোল', 'Central Land Deeds Supervision Console')}</span>
+                </h1>
+                <p className="text-xs text-slate-600 mt-1">
+                  {t(
+                    'সকল নিবন্ধিত দলিল, খতিয়ান বায়া রেকর্ড, ক্রিপ্টোগ্রাফিক হ্যাশ চেইন ও সুপার অ্যাডমিন স্থগিতাদেশ (Admin Hold) নিয়ন্ত্রণ।',
+                    'Supervise all registered deeds, title lineage, Ed25519 signatures, and administrative hold flags.'
+                  )}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => fetchDeeds()}
+                  disabled={deedsLoading}
+                  className="px-3 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${deedsLoading ? 'animate-spin' : ''}`} />
+                  <span>{t('রিফ্রেশ', 'Refresh')}</span>
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Top KPI Metrics Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div className="panel p-4 bg-white border border-slate-200 shadow-2xs">
+              <div className="flex items-center justify-between text-slate-500 mb-1">
+                <span className="text-[11px] font-bold uppercase">{t('মোট সম্পাদিত দলিল', 'Total Deeds')}</span>
+                <FileText className="w-4 h-4 text-[#006A4E]" />
+              </div>
+              <div className="text-2xl font-black text-slate-900 mt-1">
+                {toBanglaDigits(deedsData.kpis?.total_deeds ?? deedsData.total, lang)}
+              </div>
+              <span className="text-[10px] text-slate-400">{t('সকল সাব-রেজিস্ট্রি কার্যালয়', 'Across all registries')}</span>
+            </div>
+
+            <div className="panel p-4 bg-white border border-slate-200 shadow-2xs">
+              <div className="flex items-center justify-between text-blue-600 mb-1">
+                <span className="text-[11px] font-bold uppercase">{t('মোট হস্তান্তরিত মূল্য', 'Total Deed Volume')}</span>
+                <Landmark className="w-4 h-4" />
+              </div>
+              <div className="text-2xl font-black text-blue-900 mt-1 font-mono">
+                ৳{toBanglaDigits(Number(deedsData.kpis?.total_volume_bdt || 0).toLocaleString(), lang)}
+              </div>
+              <span className="text-[10px] text-slate-400">{t('ঘোষিত সরকারি রেজিস্ট্রি মূল্য', 'Total declared BDT')}</span>
+            </div>
+
+            <div className="panel p-4 bg-white border border-slate-200 shadow-2xs">
+              <div className="flex items-center justify-between text-emerald-600 mb-1">
+                <span className="text-[11px] font-bold uppercase">{t('নামজারি সম্পন্ন দলিল', 'Mutated Deeds')}</span>
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <div className="text-2xl font-black text-emerald-800 mt-1">
+                {toBanglaDigits(deedsData.kpis?.mutated_deeds ?? 0, lang)}
+              </div>
+              <span className="text-[10px] text-emerald-600 font-semibold">{t('খতিয়ানে নাম জারি কার্যকর', 'Recorded in Khatian')}</span>
+            </div>
+
+            <div className="panel p-4 bg-white border border-slate-200 shadow-2xs">
+              <div className="flex items-center justify-between text-rose-600 mb-1">
+                <span className="text-[11px] font-bold uppercase">{t('স্থগিত / হোল্ডকৃত দলিল', 'Admin Held Deeds')}</span>
+                <Ban className="w-4 h-4" />
+              </div>
+              <div className="text-2xl font-black text-rose-800 mt-1">
+                {toBanglaDigits(deedsData.kpis?.flagged_deeds ?? 0, lang)}
+              </div>
+              <span className="text-[10px] text-rose-600 font-semibold">{t('প্রশাসনিক স্থগিতাদেশ সক্রিয়', 'Under administrative hold')}</span>
+            </div>
+          </div>
+
+          {/* Filter & Search Toolbar */}
+          <div className="panel p-5 bg-white border border-slate-200 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+              {/* Search text */}
+              <div className="md:col-span-5 relative">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  {t('অনুসন্ধান (দাগ নং, দলিল নং, পক্ষ বা এনআইডি):', 'Search Deed, Plot, Party or NID:')}
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={deedSearchQuery}
+                    onChange={(e) => setDeedSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && fetchDeeds()}
+                    placeholder={t('দলিল নং, দাগ নং, ক্রেতা/বিক্রেতার নাম বা এনআইডি...', 'Search by deed no, dag no, party, or NID...')}
+                    className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-300 text-xs focus:border-[#006A4E] focus:ring-1 focus:ring-[#006A4E] bg-white font-medium"
+                  />
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Status Select */}
+              <div className="md:col-span-2">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('স্ট্যাটাস:', 'Status:')}</label>
+                <select
+                  value={deedStatusFilter}
+                  onChange={(e) => {
+                    setDeedStatusFilter(e.target.value);
+                    fetchDeeds({ status: e.target.value, page: 1 });
+                  }}
+                  className="w-full px-2.5 py-2 rounded-lg border border-slate-300 bg-white font-semibold text-xs text-slate-700 focus:border-[#006A4E]"
+                >
+                  <option value="ALL">{t('সকল স্ট্যাটাস', 'All Status')}</option>
+                  <option value="REGISTERED">{t('নিবন্ধিত (REGISTERED)', 'Registered')}</option>
+                  <option value="PENDING_MUTATION">{t('নামজারি অপেক্ষমান', 'Pending Mutation')}</option>
+                  <option value="MUTATED">{t('নামজারি সম্পন্ন (MUTATED)', 'Mutated')}</option>
+                  <option value="CANCELLED">{t('বাতিলকৃত (CANCELLED)', 'Cancelled')}</option>
+                  <option value="FLAGGED">{t('⛔ স্থগিতাদেশ জারি (HOLD)', 'Admin Hold')}</option>
+                </select>
+              </div>
+
+              {/* Deed Type Select */}
+              <div className="md:col-span-2">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('দলিলের ধরন:', 'Deed Type:')}</label>
+                <select
+                  value={deedTypeFilter}
+                  onChange={(e) => {
+                    setDeedTypeFilter(e.target.value);
+                    fetchDeeds({ deed_type: e.target.value, page: 1 });
+                  }}
+                  className="w-full px-2.5 py-2 rounded-lg border border-slate-300 bg-white font-semibold text-xs text-slate-700 focus:border-[#006A4E]"
+                >
+                  <option value="ALL">{t('সকল দলিলের ধরন', 'All Deed Types')}</option>
+                  <option value="SALE">{t('বিক্রয় সাফ-কবলা (SALE)', 'Sale Deed')}</option>
+                  <option value="HEIR">{t('ওয়ারিশান বণ্টন (HEIR)', 'Inheritance')}</option>
+                  <option value="GIFT">{t('হেবা / দানপত্র (GIFT)', 'Gift / Heba')}</option>
+                  <option value="LEASE">{t('লিজ / ইজারা (LEASE)', 'Lease')}</option>
+                </select>
+              </div>
+
+              {/* Date Filters */}
+              <div className="md:col-span-3 flex items-center gap-1.5">
+                <div className="flex-1">
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('তারিখ হতে:', 'From:')}</label>
+                  <input
+                    type="date"
+                    value={deedDateFrom}
+                    onChange={(e) => setDeedDateFrom(e.target.value)}
+                    className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('তারিখ পর্যন্ত:', 'To:')}</label>
+                  <input
+                    type="date"
+                    value={deedDateTo}
+                    onChange={(e) => setDeedDateTo(e.target.value)}
+                    className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Universal Cascading Address Selector row */}
+            <div className="pt-3 border-t border-slate-100 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-600 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-[#006A4E]" />
+                  <span>{t('সার্বজনীন অধিক্ষেত্র ফিল্টারিং (বিভাগ → জেলা → উপজেলা → মৌজা):', 'Universal Address Cascader (Division → District → Upazila → Mouza):')}</span>
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => fetchDeeds({ page: 1 })}
+                    className="px-3 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold cursor-pointer transition flex items-center gap-1 shadow-2xs"
+                  >
+                    <Filter className="w-3.5 h-3.5" />
+                    <span>{t('ফিল্টার প্রয়োগ করুন', 'Apply Filter')}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDeedSearchQuery('');
+                      setDeedStatusFilter('ALL');
+                      setDeedTypeFilter('ALL');
+                      setDeedDateFrom('');
+                      setDeedDateTo('');
+                      setDeedDivision('');
+                      setDeedDistrict('');
+                      setDeedUpazila('');
+                      setDeedMouzaId('');
+                      fetchDeeds({
+                        q: '',
+                        status: 'ALL',
+                        deed_type: 'ALL',
+                        date_from: '',
+                        date_to: '',
+                        division_bn: '',
+                        district_bn: '',
+                        upazila_bn: '',
+                        mouza_id: '',
+                        page: 1,
+                      });
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 text-xs font-bold cursor-pointer transition flex items-center gap-1"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>{t('রিসেট', 'Reset')}</span>
+                  </button>
+                </div>
+              </div>
+
+              <AddressCascader
+                selectedDivision={deedDivision}
+                selectedDistrict={deedDistrict}
+                selectedUpazila={deedUpazila}
+                selectedMouzaId={deedMouzaId}
+                isFilter={true}
+                showMouza={true}
+                lang={lang}
+                onChange={(addr) => {
+                  setDeedDivision(addr.division_bn);
+                  setDeedDistrict(addr.district_bn);
+                  setDeedUpazila(addr.upazila_bn);
+                  setDeedMouzaId(addr.mouza_id || '');
+                  fetchDeeds({
+                    division_bn: addr.division_bn || undefined,
+                    district_bn: addr.district_bn || undefined,
+                    upazila_bn: addr.upazila_bn || undefined,
+                    mouza_id: addr.mouza_id || undefined,
+                    page: 1,
+                  });
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Deeds Table with Horizontal Scroll */}
+          <div className="panel p-5 bg-white border border-slate-200 space-y-3">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+              <span className="flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-[#006A4E]" />
+                <span>{t('নিবন্ধিত দলিলের তালিকা', 'Registered Deeds List')} ({toBanglaDigits(deedsData.total || deedsData.items.length, lang)} {t('টি দলিল পাওয়া গেছে', 'deeds found')})</span>
+              </span>
+              {deedsLoading && (
+                <span className="text-[#006A4E] flex items-center gap-1">
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  <span>{t('লোড হচ্ছে...', 'Loading...')}</span>
+                </span>
+              )}
+            </div>
+
+            {deedsData.items.length === 0 ? (
+              <div className="text-center py-12 text-slate-500 text-xs bg-slate-50 rounded-xl border border-dashed border-slate-300 space-y-2">
+                <FileText className="w-8 h-8 text-slate-400 mx-auto" />
+                <p className="font-semibold">{t('কোনো দলিল পাওয়া যায়নি।', 'No deeds found matching criteria.')}</p>
+                <p className="text-[11px] text-slate-400">
+                  {t('সার্চ কুয়েরি পরিবর্তন করুন অথবা ফিল্টার রিসেট করুন।', 'Try adjusting your search filters.')}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto w-full rounded-xl border border-slate-200">
+                <table className="w-full text-left text-xs whitespace-nowrap min-w-[1050px]">
+                  <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                    <tr>
+                      <th className="py-3 px-3 w-12 text-center">#</th>
+                      <th className="py-3 px-4">{t('দলিল নং ও কোড', 'Deed No & Code')}</th>
+                      <th className="py-3 px-3">{t('দলিলের ধরন', 'Type')}</th>
+                      <th className="py-3 px-3">{t('মৌজা ও দাগ নং', 'Mouza & Dag')}</th>
+                      <th className="py-3 px-3">{t('হস্তান্তরকারী (বিক্রেতা)', 'Seller / Donor')}</th>
+                      <th className="py-3 px-3">{t('গ্রহীতা (ক্রেতা)', 'Buyer / Heir')}</th>
+                      <th className="py-3 px-3">{t('জমির পরিমাণ ও মূল্য', 'Area & Value')}</th>
+                      <th className="py-3 px-3">{t('রেজিস্ট্রি তারিখ', 'Reg Date')}</th>
+                      <th className="py-3 px-3">{t('লেজার ও স্ট্যাটাস', 'Ledger & Status')}</th>
+                      <th className="py-3 px-3 text-right">{t('অ্যাকশন', 'Actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {deedsData.items.map((deed, idx) => {
+                      const isFlagged = Number(deed.is_flagged_admin) === 1;
+                      const isMutated = deed.is_mutated || deed.status === 'MUTATED';
+
+                      return (
+                        <tr
+                          key={deed.id}
+                          className={`hover:bg-slate-50/80 transition ${
+                            isFlagged ? 'bg-rose-50/60' : ''
+                          }`}
+                        >
+                          <td className="py-3 px-3 text-center font-mono text-slate-400">
+                            {toBanglaDigits((deedsData.page - 1) * deedsData.per_page + idx + 1, lang)}
+                          </td>
+
+                          <td className="py-3 px-4">
+                            <div className="font-mono font-bold text-slate-900 flex items-center gap-1.5">
+                              <span>{deed.deed_no}</span>
+                              {isFlagged && (
+                                <span className="w-2 h-2 rounded-full bg-rose-600 shrink-0 animate-ping" title="Under Administrative Hold" />
+                              )}
+                            </div>
+                            <div className="text-[10px] font-mono text-slate-400">
+                              {deed.deed_code}
+                            </div>
+                          </td>
+
+                          <td className="py-3 px-3">
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded font-mono ${
+                                deed.deed_type === 'SALE'
+                                  ? 'bg-emerald-50 text-[#006A4E] border border-emerald-200'
+                                  : deed.deed_type === 'HEIR'
+                                  ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                  : deed.deed_type === 'GIFT'
+                                  ? 'bg-purple-50 text-purple-800 border border-purple-200'
+                                  : 'bg-slate-100 text-slate-700'
+                              }`}
+                            >
+                              {deed.deed_type === 'SALE'
+                                ? t('বিক্রয় কবলা', 'SALE')
+                                : deed.deed_type === 'HEIR'
+                                ? t('ওয়ারিশ বণ্টন', 'HEIR')
+                                : deed.deed_type === 'GIFT'
+                                ? t('হেবা / দান', 'GIFT')
+                                : deed.deed_type}
+                            </span>
+                          </td>
+
+                          <td className="py-3 px-3">
+                            <div className="font-bold text-slate-800">
+                              {t('দাগ নং:', 'Dag:')} {toBanglaDigits(deed.dag_no, lang)}
+                            </div>
+                            <div className="text-[11px] text-slate-500 truncate max-w-[170px]" title={`${deed.mouza_bn}, ${deed.upazila_bn}`}>
+                              {lang === 'bn' ? deed.mouza_bn : (deed.mouza_en || deed.mouza_bn)}
+                              {deed.jl_no ? ` (জে.এল. ${toBanglaDigits(deed.jl_no, lang)})` : ''} • {deed.upazila_bn}
+                            </div>
+                          </td>
+
+                          <td className="py-3 px-3 text-slate-700">
+                            <div className="font-bold text-slate-900">{deed.seller_name_bn || '—'}</div>
+                            <div className="text-[10px] font-mono text-slate-500">NID: {deed.seller_nid || '—'}</div>
+                          </td>
+
+                          <td className="py-3 px-3 text-slate-700">
+                            <div className="font-bold text-slate-900">{deed.buyer_name_bn || '—'}</div>
+                            <div className="text-[10px] font-mono text-slate-500">NID: {deed.buyer_nid || '—'}</div>
+                          </td>
+
+                          <td className="py-3 px-3">
+                            <div className="font-bold text-[#006A4E]">
+                              {toBanglaDigits(deed.area_decimal, lang)} {t('শতক', 'decimals')}
+                            </div>
+                            <div className="text-[11px] font-mono font-semibold text-slate-600">
+                              ৳{toBanglaDigits(Number(deed.price_bdt).toLocaleString(), lang)}
+                            </div>
+                          </td>
+
+                          <td className="py-3 px-3 font-mono text-slate-600 text-[11px]">
+                            {deed.created_at ? formatUserDate(deed.created_at) : '—'}
+                          </td>
+
+                          <td className="py-3 px-3">
+                            <div className="flex flex-col gap-1 items-start">
+                              {isFlagged ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300">
+                                  <Ban className="w-3 h-3" />
+                                  <span>{t('স্থগিত (HOLD)', 'HOLD')}</span>
+                                </span>
+                              ) : isMutated ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                  <Check className="w-3 h-3" />
+                                  <span>{t('নামজারি সম্পন্ন', 'Mutated')}</span>
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200">
+                                  {deed.status}
+                                </span>
+                              )}
+
+                              <span className="text-[9px] font-mono text-slate-400 flex items-center gap-1">
+                                <Lock className="w-2.5 h-2.5 text-emerald-600" />
+                                <span>Chain #{deed.chain_index}</span>
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="py-3 px-3 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* Eye Icon for Deed Docket Modal */}
+                              <button
+                                onClick={() => handleInspectDeed(deed.id)}
+                                className="p-1.5 rounded-lg bg-[#EDF7F4] hover:bg-[#006A4E] text-[#006A4E] hover:text-white transition cursor-pointer"
+                                title={t('দলিলের সম্পূর্ণ ডকেট ও অডিট বিবরণ দেখুন', 'Inspect Deed Docket')}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+
+                              {/* Flag / Hold Button */}
+                              <button
+                                onClick={() =>
+                                  setFlagDeedModal({
+                                    deed,
+                                    action: isFlagged ? 'CLEAR' : 'HOLD',
+                                    reason: isFlagged ? '' : 'তদন্ত ও সত্যতা যাচাই না হওয়া পর্যন্ত সাময়িক স্থগিতাদেশ জারি।',
+                                  })
+                                }
+                                className={`px-2 py-1 rounded text-[11px] font-bold border transition cursor-pointer flex items-center gap-1 ${
+                                  isFlagged
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                                    : 'bg-rose-50 text-rose-800 border-rose-300 hover:bg-rose-100'
+                                }`}
+                                title={isFlagged ? t('স্থগিতাদেশ প্রত্যাহার করুন', 'Clear Hold') : t('প্রশাসনিক স্থগিতাদেশ জারি করুন', 'Place Hold')}
+                              >
+                                {isFlagged ? (
+                                  <>
+                                    <Check className="w-3 h-3" />
+                                    <span>{t('হোল্ড মুক্ত', 'Unhold')}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Ban className="w-3 h-3" />
+                                    <span>{t('হোল্ড', 'Hold')}</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* CENTER POPUP MODAL: Centered Full Deed Docket Modal */}
+          {selectedDeedDocket && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
+              <div className="bg-white rounded-2xl max-w-4xl w-full p-6 shadow-2xl border border-slate-200 space-y-5 my-8 max-h-[90vh] overflow-y-auto">
+                {/* Header */}
+                <div className="flex items-start justify-between pb-3 border-b border-slate-100">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-black px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
+                        {selectedDeedDocket.deed?.deed_no}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400">
+                        {selectedDeedDocket.deed?.deed_code}
+                      </span>
+                      {Number(selectedDeedDocket.deed?.is_flagged_admin) === 1 && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800 border border-rose-300">
+                          ⛔ স্থগিতাদেশ (Admin Hold)
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="font-extrabold text-lg text-slate-900 mt-1 flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-[#006A4E]" />
+                      <span>{t('ডিজিটাল দলিল ডকেট ও ক্রিপ্টোগ্রাফিক ভেরিফিকেশন প্রুফ', 'Digital Deed Docket & Cryptographic Proof')}</span>
+                    </h3>
+                  </div>
+
+                  <button
+                    onClick={() => setSelectedDeedDocket(null)}
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center cursor-pointer transition text-sm"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* If Flagged Alert */}
+                {Number(selectedDeedDocket.deed?.is_flagged_admin) === 1 && (
+                  <div className="p-4 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-xs space-y-1">
+                    <div className="font-extrabold flex items-center gap-1.5">
+                      <Ban className="w-4 h-4 text-rose-600" />
+                      <span>{t('প্রশাসনিক স্থগিতাদেশ কার্যকর রয়েছে (ADMIN HOLD ACTIVE)', 'ADMINISTRATIVE HOLD ACTIVE')}</span>
+                    </div>
+                    <p className="text-[11px] text-rose-800">
+                      <strong>{t('স্থগিতের কারণ:', 'Reason:')}</strong> {selectedDeedDocket.deed?.flag_reason_bn || 'তদন্তের স্বার্থে স্থগিত রাখা হয়েছে।'}
+                    </p>
+                  </div>
+                )}
+
+                {/* Grid 1: Parties (Seller & Buyer) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  {/* Seller */}
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div className="font-bold text-slate-700 uppercase text-[11px] border-b pb-1.5 text-rose-800 flex items-center gap-1">
+                      <Users className="w-3.5 h-3.5" />
+                      <span>{t('হস্তান্তরকারী / দাতা (বিক্রেতা)', 'Transferor / Seller')}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="font-bold text-base text-slate-900">{selectedDeedDocket.seller?.name_bn || '—'}</div>
+                      <div className="text-slate-600"><strong>পিতার নাম:</strong> {selectedDeedDocket.seller?.father_name_bn || '—'}</div>
+                      <div className="font-mono text-slate-700"><strong>NID:</strong> {selectedDeedDocket.seller?.nid || '—'}</div>
+                      <div className="font-mono text-slate-700"><strong>মোবাইল:</strong> {selectedDeedDocket.seller?.phone_mock || selectedDeedDocket.seller?.phone || '—'}</div>
+                      <div className="text-slate-500 text-[11px]"><strong>ঠিকানা:</strong> {selectedDeedDocket.seller?.address_bn || '—'}</div>
+                    </div>
+                  </div>
+
+                  {/* Buyer */}
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div className="font-bold text-slate-700 uppercase text-[11px] border-b pb-1.5 text-emerald-800 flex items-center gap-1">
+                      <Users className="w-3.5 h-3.5" />
+                      <span>{t('গ্রহীতা / ক্রেতা', 'Transferee / Buyer')}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="font-bold text-base text-slate-900">{selectedDeedDocket.buyer?.name_bn || '—'}</div>
+                      <div className="text-slate-600"><strong>পিতার নাম:</strong> {selectedDeedDocket.buyer?.father_name_bn || '—'}</div>
+                      <div className="font-mono text-slate-700"><strong>NID:</strong> {selectedDeedDocket.buyer?.nid || '—'}</div>
+                      <div className="font-mono text-slate-700"><strong>মোবাইল:</strong> {selectedDeedDocket.buyer?.phone_mock || selectedDeedDocket.buyer?.phone || '—'}</div>
+                      <div className="text-slate-500 text-[11px]"><strong>ঠিকানা:</strong> {selectedDeedDocket.buyer?.address_bn || '—'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grid 2: Parcel & Land Attributes */}
+                <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200 space-y-3 text-xs">
+                  <div className="font-bold text-[#006A4E] uppercase text-[11px] flex items-center gap-1.5 border-b border-emerald-200/60 pb-1.5">
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span>{t('জমির তফসিল ও তফসিলভুক্ত বিবরণ (Universal Hierarchy Location)', 'Land Parcel & Location Attributes')}</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                      <span className="text-slate-500 block text-[10px]">{t('বিভাগ', 'Division')}</span>
+                      <span className="font-bold text-slate-800">{selectedDeedDocket.location?.division_bn || 'ঢাকা'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[10px]">{t('জেলা', 'District')}</span>
+                      <span className="font-bold text-slate-800">{selectedDeedDocket.location?.district_bn || 'ঢাকা'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[10px]">{t('উপজেলা / থানা', 'Upazila')}</span>
+                      <span className="font-bold text-slate-800">{selectedDeedDocket.location?.upazila_bn || 'সাভার'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[10px]">{t('মৌজা ও জে.এল.', 'Mouza & JL')}</span>
+                      <span className="font-bold text-slate-800">
+                        {selectedDeedDocket.location?.mouza_bn} (জে.এল. {toBanglaDigits(selectedDeedDocket.location?.jl_no, lang)})
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[10px]">{t('দাগ নম্বর', 'Dag No')}</span>
+                      <span className="font-extrabold text-[#006A4E] font-mono text-sm">
+                        {toBanglaDigits(selectedDeedDocket.plot?.dag_no, lang)}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[10px]">{t('জমির শ্রেণি', 'Land Type')}</span>
+                      <span className="font-semibold text-slate-800">{selectedDeedDocket.plot?.land_type_bn || selectedDeedDocket.plot?.land_type || 'ভিটা'}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[10px]">{t('হস্তান্তরিত অংশ ও আয়তন', 'Transferred Area')}</span>
+                      <span className="font-extrabold text-slate-900 font-mono">
+                        {toBanglaDigits(selectedDeedDocket.deed?.area_decimal, lang)} {t('শতক', 'dec')} ({selectedDeedDocket.deed?.share_fraction || '১/১'})
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[10px]">{t('দলিল মূল্য (টাকা)', 'Deed Value (BDT)')}</span>
+                      <span className="font-extrabold text-blue-900 font-mono">
+                        ৳{toBanglaDigits(Number(selectedDeedDocket.deed?.price_bdt).toLocaleString(), lang)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grid 3: Cryptographic Ledger Proof */}
+                <div className="p-4 rounded-xl bg-slate-900 text-white space-y-3 font-mono text-xs">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                    <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>{t('ক্রিপ্টোগ্রাফিক লেজার অখণ্ডতা প্রুফ (Block #' + selectedDeedDocket.verification?.chain_index + ')', 'Ledger Proof')}</span>
+                    </span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
+                      ✔ Ed25519 Verified
+                    </span>
+                  </div>
+                  <div className="space-y-1.5 text-[11px]">
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-slate-400">Content Hash (SHA-256):</span>
+                      <span className="text-white truncate max-w-sm">{selectedDeedDocket.verification?.stored_hash}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-slate-400">Previous Block Hash:</span>
+                      <span className="text-slate-300 truncate max-w-sm">{selectedDeedDocket.verification?.prev_hash}</span>
+                    </div>
+                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                      <span className="text-slate-400">Ed25519 Digital Signature:</span>
+                      <span className="text-emerald-300 truncate max-w-sm">{selectedDeedDocket.deed?.signature}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Grid 4: Connected History (Mutations, Khatians, Mortgages, Disputes) */}
+                <div className="space-y-3 text-xs">
+                  <h4 className="font-bold text-slate-800 uppercase text-[11px] tracking-wide flex items-center gap-1.5">
+                    <History className="w-3.5 h-3.5 text-[#006A4E]" />
+                    <span>{t('সম্পর্কিত রেকর্ড ও আইনি ইতিহাস', 'Connected Records & Legal History')}</span>
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {/* Mutations */}
+                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                      <span className="font-bold text-slate-700 block mb-1">{t('নামজারি আদেশ', 'Mutation Status')}</span>
+                      {selectedDeedDocket.history?.mutations?.length > 0 ? (
+                        <div className="space-y-1 text-[11px]">
+                          {selectedDeedDocket.history.mutations.map((m: any, i: number) => (
+                            <div key={i} className="text-slate-700 font-mono">
+                              কেস: {m.case_no} ({m.status})
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 text-[11px]">{t('কোনো নামজারি কেস নেই', 'No mutation yet')}</span>
+                      )}
+                    </div>
+
+                    {/* Mortgages */}
+                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                      <span className="font-bold text-slate-700 block mb-1">{t('ব্যাংক বন্ধক / লিয়েন', 'Bank Mortgages')}</span>
+                      {selectedDeedDocket.history?.mortgages?.length > 0 ? (
+                        <div className="space-y-1 text-[11px] text-blue-800">
+                          {selectedDeedDocket.history.mortgages.map((m: any, i: number) => (
+                            <div key={i}>
+                              {m.bank_name_bn} (৳{Number(m.amount_bdt).toLocaleString()})
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-emerald-700 font-semibold text-[11px]">✔ {t('দায়মুক্ত রেকর্ড', 'No Active Liens')}</span>
+                      )}
+                    </div>
+
+                    {/* Disputes */}
+                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                      <span className="font-bold text-slate-700 block mb-1">{t('আদালতের মামলা / বিরোধ', 'Litigation / Disputes')}</span>
+                      {selectedDeedDocket.history?.disputes?.length > 0 ? (
+                        <div className="space-y-1 text-[11px] text-amber-800">
+                          {selectedDeedDocket.history.disputes.map((d: any, i: number) => (
+                            <div key={i}>
+                              {d.dispute_type} ({d.status})
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-emerald-700 font-semibold text-[11px]">✔ {t('নিষ্কণ্টক মালিকানা', 'No Active Disputes')}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Modal Footer Actions */}
+                <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                  <button
+                    onClick={() => {
+                      const isFlagged = Number(selectedDeedDocket.deed?.is_flagged_admin) === 1;
+                      setFlagDeedModal({
+                        deed: selectedDeedDocket.deed,
+                        action: isFlagged ? 'CLEAR' : 'HOLD',
+                        reason: isFlagged ? '' : 'তদন্তের স্বার্থে সাময়িক স্থগিতাদেশ জারি।',
+                      });
+                    }}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition flex items-center gap-1.5 ${
+                      Number(selectedDeedDocket.deed?.is_flagged_admin) === 1
+                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                        : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
+                    }`}
+                  >
+                    {Number(selectedDeedDocket.deed?.is_flagged_admin) === 1 ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span>{t('স্থগিতাদেশ প্রত্যাহার করুন (Clear Hold)', 'Clear Hold')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Ban className="w-4 h-4" />
+                        <span>{t('প্রশাসনিক স্থগিতাদেশ জারি করুন (Admin Hold)', 'Place Hold')}</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => setSelectedDeedDocket(null)}
+                    className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer transition"
+                  >
+                    {t('বন্ধ করুন', 'Close')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* CENTER POPUP MODAL: Flag/Hold Confirmation Modal */}
+          {flagDeedModal && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+              <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                    <Ban className={`w-5 h-5 ${flagDeedModal.action === 'HOLD' ? 'text-rose-600' : 'text-emerald-600'}`} />
+                    <span>
+                      {flagDeedModal.action === 'HOLD'
+                        ? t('দলিল স্থগিতাদেশ (Admin Hold) জারি', 'Place Administrative Hold')
+                        : t('স্থগিতাদেশ প্রত্যাহার ও রেকর্ড অবমুক্তকরণ', 'Clear Administrative Hold')}
+                    </span>
+                  </h3>
+                  <button
+                    onClick={() => setFlagDeedModal(null)}
+                    className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer text-xs"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="text-xs text-slate-600 space-y-1">
+                  <div><strong>দলিল নং:</strong> {flagDeedModal.deed.deed_no}</div>
+                  <div><strong>দাগ নং:</strong> {flagDeedModal.deed.dag_no} • {flagDeedModal.deed.mouza_bn}</div>
+                  <div><strong>ক্রেতা:</strong> {flagDeedModal.deed.buyer_name_bn}</div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    {flagDeedModal.action === 'HOLD'
+                      ? t('স্থগিতাদেশের কারণ ও আইনি ব্যাখ্যা:', 'Reason for Administrative Hold:')
+                      : t('স্থগিতাদেশ প্রত্যাহারের কারণ / মন্তব্য:', 'Reason for Clearing Hold:')}
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={flagDeedModal.reason}
+                    onChange={(e) => setFlagDeedModal({ ...flagDeedModal, reason: e.target.value })}
+                    placeholder={
+                      flagDeedModal.action === 'HOLD'
+                        ? 'জালিয়াতি বা ওয়ারিশান আপত্তির কারণে সহকারী কমিশনার (ভূমি) এর নির্দেশক্রমে স্থগিত...'
+                        : 'তদন্ত সম্পন্ন ও উপযুক্ত বায়া রেকর্ড নিশ্চিত হওয়ায় হোল্ড প্রত্যাহার...'
+                    }
+                    className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setFlagDeedModal(null)}
+                    className="px-4 py-2 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer"
+                  >
+                    {t('বাতিল', 'Cancel')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmFlagDeed}
+                    className={`px-4 py-2 rounded-lg text-white text-xs font-bold cursor-pointer transition shadow-xs ${
+                      flagDeedModal.action === 'HOLD'
+                        ? 'bg-rose-600 hover:bg-rose-700'
+                        : 'bg-emerald-600 hover:bg-emerald-700'
+                    }`}
+                  >
+                    {flagDeedModal.action === 'HOLD'
+                      ? t('স্থগিতাদেশ কার্যকর করুন', 'Confirm Hold')
+                      : t('হোল্ড প্রত্যাহার সম্পন্ন করুন', 'Confirm Release')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB: Administrative Address Hierarchy CRUD (Universal Cascader Management) */}
+      {(subTab === 'offices_config' || subTab === 'hierarchy' || (subTab === 'plots_control' && plotsSubSegment === 'hierarchy')) && (
+        <div className="space-y-6 animate-fadeIn">
+          {renderPillar3Nav()}
+
+          {/* Sub-Segment Switcher for Offices & Service Config */}
+          <div className="flex flex-wrap items-center justify-between gap-3 p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setOfficesSubSegment('offices')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
+                  officesSubSegment === 'offices'
+                    ? 'bg-white text-[#006A4E] shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Building2 className="w-4 h-4" />
+                <span>{t('সারাদেশীয় কার্যালয় ও দায়িত্ব', 'Nationwide Offices & Lifecycle')}</span>
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-emerald-100 text-[#006A4E] font-extrabold">NEW</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setOfficesSubSegment('hierarchy')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
+                  officesSubSegment === 'hierarchy'
+                    ? 'bg-white text-[#006A4E] shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <MapPin className="w-4 h-4" />
+                <span>{t('প্রশাসনিক অধিক্ষেত্র ও মৌজা স্তর', 'Administrative Hierarchy & Mouzas')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setOfficesSubSegment('document_security')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
+                  officesSubSegment === 'document_security'
+                    ? 'bg-white text-[#006A4E] shadow-xs ring-2 ring-emerald-500/20'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4 text-[#006A4E]" />
+                <span>{t('ডিজিটাল ডিসিআর ও পর্চা ওয়াটারমার্ক ও কিউআর কনফিগ', 'Digital DCR & Porcha Watermark/QR Config')}</span>
+              </button>
+            </div>
+
+            <div className="text-[11px] text-slate-500 pr-2 hidden sm:block">
+              {officesSubSegment === 'offices'
+                ? t('সারাদেশের সকল অফিস, কোড ও স্টাফ ব্যবস্থাপনা', 'Manage nationwide offices, codes and staff')
+                : officesSubSegment === 'document_security'
+                ? t('নাগরিক ডকুমেন্টে কাস্টম জলছাপ ও কিউআর সিল নিয়ন্ত্রণ', 'Citizen document watermark and QR seal control')
+                : t('৪-স্তরীয় ভৌগোলিক ম্যাপিং ও জে.এল. নিয়ন্ত্রণ', '4-tier administrative boundary governance')}
+            </div>
+          </div>
+
+          {officesSubSegment === 'offices' ? (
+            <SuperAdminOfficesTab t={t} lang={lang} />
+          ) : officesSubSegment === 'document_security' ? (
+            <SuperAdminDocumentSecurityTab t={t} lang={lang} />
+          ) : (
+            <>
+          {/* Notification Banner */}
+          {hierarchyNotice && (
+            <div
+              className={`p-4 rounded-xl border flex items-center justify-between text-xs font-bold ${
+                hierarchyNotice.err
+                  ? 'bg-rose-50 border-rose-300 text-rose-800'
+                  : 'bg-emerald-50 border-emerald-300 text-emerald-800'
+              }`}
+            >
+              <span>{hierarchyNotice.msg}</span>
+              <button
+                onClick={() => setHierarchyNotice(null)}
+                className="text-slate-500 hover:text-slate-800 cursor-pointer ml-3 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Header Panel */}
+          <div className="panel p-6 bg-white border border-[#006A4E]/20 space-y-4 shadow-xs">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
+              <div>
+                <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
+                  <button
+                    onClick={() => handleTabChange('overview')}
+                    className="hover:text-[#006A4E] transition cursor-pointer"
+                  >
+                    {t('কন্ট্রোল প্যানেল', 'Control Panel')}
+                  </button>
+                  <span>/</span>
+                  <span className="text-[#006A4E] font-extrabold">
+                    {t('প্রশাসনিক অধিক্ষেত্র ও ঠিকানা', 'Administrative Hierarchy & Addresses')}
+                  </span>
+                </div>
+                <h2 className="font-bold text-xl text-[#074f38] flex items-center gap-2">
+                  <MapPin className="w-6 h-6 text-[#006A4E]" />
+                  <span>
+                    {t(
+                      'প্রশাসনিক অধিক্ষেত্র ও ভৌগোলিক স্তর বিন্যাস (Division -> District -> Upazila -> Mouza)',
+                      'Administrative Hierarchy & Geographic Boundary Governance'
+                    )}
+                  </span>
+                </h2>
+                <p className="text-xs text-[#5F7A74] mt-1">
+                  {t(
+                    'সমগ্র ভূমি ব্যবস্থার প্রমিত ঠিকানা অনুক্রম (বিভাগ -> জেলা -> উপজেলা -> মৌজা / জে.এল. নং) নিয়ন্ত্রণ, নতুন মৌজা অন্তর্ভুক্তি ও প্লট সুরক্ষা বিধি।',
+                    'Maintain canonical 4-tier geographic relations, J.L. number indexes, and relational integrity safeguards.'
+                  )}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={fetchHierarchyTree}
+                  disabled={hierarchyLoading}
+                  className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${hierarchyLoading ? 'animate-spin' : ''}`} />
+                  <span>{t('রিফ্রেশ', 'Refresh')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenAddMouza}
+                  className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00523C] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{t('নতুন মৌজা নিবন্ধন', 'Add New Mouza')}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* KPI Summary Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-1">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                <div className="text-[10px] font-bold uppercase text-slate-500">
+                  {t('মোট প্রশাসনিক বিভাগ', 'Total Divisions')}
+                </div>
+                <div className="text-xl font-extrabold text-slate-800 mt-0.5">
+                  {toBanglaDigits(allDivisions.length, lang)}
+                </div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                <div className="text-[10px] font-bold uppercase text-slate-500">
+                  {t('মোট জেলা প্রশাসন', 'Total Districts')}
+                </div>
+                <div className="text-xl font-extrabold text-slate-800 mt-0.5">
+                  {toBanglaDigits(allDistricts.length, lang)}
+                </div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                <div className="text-[10px] font-bold uppercase text-slate-500">
+                  {t('মোট উপজেলা / থানা', 'Total Upazilas')}
+                </div>
+                <div className="text-xl font-extrabold text-slate-800 mt-0.5">
+                  {toBanglaDigits(allUpazilas.length, lang)}
+                </div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                <div className="text-[10px] font-bold uppercase text-emerald-800">
+                  {t('মোট নিবন্ধিত মৌজা (জে.এল.)', 'Total Mouzas (J.L.)')}
+                </div>
+                <div className="text-xl font-extrabold text-[#006A4E] mt-0.5">
+                  {toBanglaDigits(allMouzas.length, lang)}
+                </div>
+              </div>
+              <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 col-span-2 sm:col-span-1">
+                <div className="text-[10px] font-bold uppercase text-blue-800">
+                  {t('সংযুক্ত খতিয়ান/প্লট', 'Attached Plots')}
+                </div>
+                <div className="text-xl font-extrabold text-blue-900 mt-0.5">
+                  {toBanglaDigits(totalPlotsInHierarchy, lang)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tier Switcher Navigation */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-2">
+            <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setActiveHierarchyTier('MOUZAS')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  activeHierarchyTier === 'MOUZAS'
+                    ? 'bg-white text-[#006A4E] shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span>{t('মৌজা ও জে.এল. সূচি', 'Mouzas & J.L.')}</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-[#006A4E]">
+                  {toBanglaDigits(filteredMouzas.length, lang)}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveHierarchyTier('UPAZILAS')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  activeHierarchyTier === 'UPAZILAS'
+                    ? 'bg-white text-[#006A4E] shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span>{t('উপজেলা / থানা', 'Upazilas')}</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700">
+                  {toBanglaDigits(filteredUpazilas.length, lang)}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveHierarchyTier('DISTRICTS')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  activeHierarchyTier === 'DISTRICTS'
+                    ? 'bg-white text-[#006A4E] shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span>{t('জেলা প্রশাসন', 'Districts')}</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700">
+                  {toBanglaDigits(filteredDistricts.length, lang)}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveHierarchyTier('DIVISIONS')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                  activeHierarchyTier === 'DIVISIONS'
+                    ? 'bg-white text-[#006A4E] shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span>{t('বিভাগীয় স্তর', 'Divisions')}</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700">
+                  {toBanglaDigits(filteredDivisions.length, lang)}
+                </span>
+              </button>
+            </div>
+
+            {/* Universal Filter Reset */}
+            {(hierarchyDivisionFilter || hierarchyDistrictFilter || hierarchyUpazilaFilter || hierarchySearch) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setHierarchyDivisionFilter('');
+                  setHierarchyDistrictFilter('');
+                  setHierarchyUpazilaFilter('');
+                  setHierarchySearch('');
+                }}
+                className="text-xs font-bold text-rose-600 hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>{t('ফিল্টার রিসেট করুন', 'Reset Filters')}</span>
+              </button>
+            )}
+          </div>
+
+          {/* Cascading Filter Toolbar */}
+          <div className="panel p-4 bg-white border border-slate-200 shadow-xs space-y-3">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <Filter className="w-3.5 h-3.5 text-[#006A4E]" />
+              <span>{t('প্রমিত ফিল্টারিং ও অনুসন্ধান (বিভাগ -> জেলা -> উপজেলা)', 'Cascading Filter & Search Toolbar')}</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Division Selector */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                  {t('বিভাগ (Division)', 'Division')}
+                </label>
+                <select
+                  value={hierarchyDivisionFilter}
+                  onChange={(e) => {
+                    setHierarchyDivisionFilter(e.target.value);
+                    setHierarchyDistrictFilter('');
+                    setHierarchyUpazilaFilter('');
+                  }}
+                  className="w-full text-xs p-2 rounded-lg border border-slate-300 bg-white font-medium focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                >
+                  <option value="">{t('-- সকল বিভাগ --', '-- All Divisions --')}</option>
+                  {allDivisions.map((div) => (
+                    <option key={div.division_bn} value={div.division_bn}>
+                      {div.division_bn} ({div.division_en})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* District Selector */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                  {t('জেলা (District)', 'District')}
+                </label>
+                <select
+                  value={hierarchyDistrictFilter}
+                  onChange={(e) => {
+                    setHierarchyDistrictFilter(e.target.value);
+                    setHierarchyUpazilaFilter('');
+                  }}
+                  className="w-full text-xs p-2 rounded-lg border border-slate-300 bg-white font-medium focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                >
+                  <option value="">{t('-- সকল জেলা --', '-- All Districts --')}</option>
+                  {allDistricts
+                    .filter((d) => !hierarchyDivisionFilter || d.division_bn === hierarchyDivisionFilter)
+                    .map((d, i) => (
+                      <option key={`${d.district_bn}-${i}`} value={d.district_bn}>
+                        {d.district_bn} ({d.district_en})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              {/* Upazila Selector */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                  {t('উপজেলা / থানা (Upazila)', 'Upazila')}
+                </label>
+                <select
+                  value={hierarchyUpazilaFilter}
+                  onChange={(e) => setHierarchyUpazilaFilter(e.target.value)}
+                  className="w-full text-xs p-2 rounded-lg border border-slate-300 bg-white font-medium focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                >
+                  <option value="">{t('-- সকল উপজেলা --', '-- All Upazilas --')}</option>
+                  {allUpazilas
+                    .filter(
+                      (u) =>
+                        (!hierarchyDivisionFilter || u.division_bn === hierarchyDivisionFilter) &&
+                        (!hierarchyDistrictFilter || u.district_bn === hierarchyDistrictFilter)
+                    )
+                    .map((u, i) => (
+                      <option key={`${u.upazila_bn}-${i}`} value={u.upazila_bn}>
+                        {u.upazila_bn} ({u.upazila_en})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              {/* Keyword / J.L. Search */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                  {t('মৌজা নাম বা জে.এল. নম্বর খুঁজুন', 'Search Mouza / J.L. No')}
+                </label>
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={hierarchySearch}
+                    onChange={(e) => setHierarchySearch(e.target.value)}
+                    placeholder={t('মৌজা নাম বা জে.এল. নং...', 'Search mouza name or J.L...')}
+                    className="w-full text-xs pl-8 pr-2.5 py-2 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* DATA VIEW ACCORDING TO TIER */}
+          {activeHierarchyTier === 'MOUZAS' && (
+            <div className="panel p-0 bg-white border border-slate-200 overflow-hidden shadow-xs">
+              <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <div className="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+                  <Compass className="w-4 h-4 text-[#006A4E]" />
+                  <span>{t('নিবন্ধিত মৌজা ও জে.এল. সূচি তালিকা', 'Registered Mouza & J.L. Index Table')}</span>
+                  <span className="px-2 py-0.5 rounded-full text-xs bg-emerald-100 text-[#006A4E] font-bold">
+                    {toBanglaDigits(filteredMouzas.length, lang)} {t('টি রেকর্ড', 'Records')}
+                  </span>
+                </div>
+                <div className="text-xs text-slate-500 font-medium hidden sm:block">
+                  {t('প্লট বা দাগ সংযুক্ত মৌজা মুছে ফেলা সম্পূর্ণ সুরক্ষিত ও নিষিদ্ধ', 'Plots attached to mouzas are safeguarded against deletion')}
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-100/80 text-slate-600 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold">
+                      <th className="p-3">#</th>
+                      <th className="p-3">{t('মৌজার নাম (বাংলা ও ইংরেজি)', 'Mouza Name')}</th>
+                      <th className="p-3">{t('জে.এল. নম্বর', 'J.L. No')}</th>
+                      <th className="p-3">{t('উপজেলা / থানা', 'Upazila')}</th>
+                      <th className="p-3">{t('জেলা ও বিভাগ', 'District & Division')}</th>
+                      <th className="p-3 text-center">{t('সংযুক্ত প্লট / দাগ', 'Attached Plots')}</th>
+                      <th className="p-3">{t('ভৌগোলিক স্থানাঙ্ক (GPS)', 'GPS Coordinates')}</th>
+                      <th className="p-3 text-right">{t('অ্যাকশন', 'Actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredMouzas.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="p-8 text-center text-slate-500">
+                          {t('কোনো মৌজা খুঁজে পাওয়া যায়নি। অনুসন্ধান ফিল্টার পরিবর্তন করুন।', 'No mouzas match your search criteria.')}
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredMouzas.map((m, idx) => (
+                        <tr key={m.id} className="hover:bg-emerald-50/30 transition">
+                          <td className="p-3 font-mono text-slate-400">
+                            {toBanglaDigits(idx + 1, lang)}
+                          </td>
+                          <td className="p-3">
+                            <div className="font-bold text-slate-900">{m.mouza_bn}</div>
+                            {m.mouza_en && <div className="text-[11px] text-slate-500 font-mono">{m.mouza_en}</div>}
+                          </td>
+                          <td className="p-3">
+                            <span className="px-2 py-0.5 rounded-md font-mono font-bold bg-slate-100 text-slate-800 border border-slate-200">
+                              {toBanglaDigits(m.jl_no, lang)}
+                            </span>
+                          </td>
+                          <td className="p-3 font-medium text-slate-800">
+                            {m.upazila_bn}
+                          </td>
+                          <td className="p-3 text-slate-600">
+                            <div>{m.district_bn}</div>
+                            <div className="text-[10px] text-slate-400">{m.division_bn}</div>
+                          </td>
+                          <td className="p-3 text-center">
+                            {Number(m.plots_count) > 0 ? (
+                              <span
+                                title={t('সক্রিয় প্লট সংযুক্ত রয়েছে', 'Active plots attached')}
+                                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300"
+                              >
+                                <Lock className="w-3 h-3 text-emerald-700" />
+                                <span>{toBanglaDigits(m.plots_count, lang)} {t('টি প্লট', 'Plots')}</span>
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">
+                                {t('০ প্লট', '0 Plots')}
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 font-mono text-[11px] text-slate-500">
+                            {m.latitude && m.longitude ? (
+                              <span>{m.latitude.toFixed(4)}, {m.longitude.toFixed(4)}</span>
+                            ) : (
+                              <span className="text-slate-400">—</span>
+                            )}
+                          </td>
+                          <td className="p-3 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditMouza(m)}
+                                className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-700 transition cursor-pointer"
+                                title={t('সম্পাদনা', 'Edit Mouza')}
+                              >
+                                <Edit2 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteMouza(m)}
+                                className={`p-1.5 rounded-lg border transition cursor-pointer ${
+                                  m.plots_count > 0
+                                    ? 'border-slate-200 text-slate-300 hover:bg-slate-50 hover:text-rose-500'
+                                    : 'border-rose-200 text-rose-600 hover:bg-rose-50'
+                                }`}
+                                title={
+                                  m.plots_count > 0
+                                    ? t('সংযুক্ত দাগ থাকায় ডিলিট নিষিদ্ধ', 'Attached plots prevent deletion')
+                                    : t('মৌজা অপসারণ', 'Delete Mouza')
+                                }
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeHierarchyTier === 'UPAZILAS' && (
+            <div className="panel p-0 bg-white border border-slate-200 overflow-hidden shadow-xs">
+              <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <div className="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-[#006A4E]" />
+                  <span>{t('উপজেলা / থানা অধিক্ষেত্র তালিকা', 'Upazila / Thana Jurisdictions')}</span>
+                </div>
+                <span className="text-xs text-slate-500 font-medium">
+                  {toBanglaDigits(filteredUpazilas.length, lang)} {t('টি উপজেলা', 'Upazilas')}
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-100/80 text-slate-600 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold">
+                      <th className="p-3">#</th>
+                      <th className="p-3">{t('উপজেলা / থানা নাম', 'Upazila Name')}</th>
+                      <th className="p-3">{t('সংশ্লিষ্ট জেলা', 'District')}</th>
+                      <th className="p-3">{t('বিভাগ', 'Division')}</th>
+                      <th className="p-3 text-center">{t('অধীনস্থ মৌজা সংখ্যা', 'Subordinate Mouzas')}</th>
+                      <th className="p-3 text-right">{t('অ্যাকশন', 'Actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredUpazilas.map((u, idx) => (
+                      <tr key={`${u.upazila_bn}-${idx}`} className="hover:bg-slate-50/80 transition">
+                        <td className="p-3 font-mono text-slate-400">{toBanglaDigits(idx + 1, lang)}</td>
+                        <td className="p-3">
+                          <div className="font-bold text-slate-900">{u.upazila_bn}</div>
+                          {u.upazila_en && <div className="text-[11px] text-slate-500 font-mono">{u.upazila_en}</div>}
+                        </td>
+                        <td className="p-3 font-medium text-slate-700">{u.district_bn}</td>
+                        <td className="p-3 text-slate-600">{u.division_bn}</td>
+                        <td className="p-3 text-center font-bold text-[#006A4E]">
+                          {toBanglaDigits(u.mouzas?.length || 0, lang)}
+                        </td>
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setRenamingTierModal({
+                                tier: 'UPAZILA',
+                                old_bn: u.upazila_bn,
+                                new_bn: u.upazila_bn,
+                                new_en: u.upazila_en || '',
+                              })
+                            }
+                            className="px-2.5 py-1 rounded-md text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer"
+                          >
+                            {t('পুনঃনামকরণ', 'Rename')}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeHierarchyTier === 'DISTRICTS' && (
+            <div className="panel p-0 bg-white border border-slate-200 overflow-hidden shadow-xs">
+              <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <div className="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+                  <Landmark className="w-4 h-4 text-[#006A4E]" />
+                  <span>{t('জেলা প্রশাসন কাঠামো তালিকা', 'District Administrative Structures')}</span>
+                </div>
+                <span className="text-xs text-slate-500 font-medium">
+                  {toBanglaDigits(filteredDistricts.length, lang)} {t('টি জেলা', 'Districts')}
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-100/80 text-slate-600 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold">
+                      <th className="p-3">#</th>
+                      <th className="p-3">{t('জেলা নাম', 'District Name')}</th>
+                      <th className="p-3">{t('অন্তর্ভুক্ত বিভাগ', 'Division')}</th>
+                      <th className="p-3 text-center">{t('উপজেলা সংখ্যা', 'Upazilas Count')}</th>
+                      <th className="p-3 text-center">{t('মোট মৌজা সংখ্যা', 'Total Mouzas')}</th>
+                      <th className="p-3 text-right">{t('অ্যাকশন', 'Actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredDistricts.map((d, idx) => (
+                      <tr key={`${d.district_bn}-${idx}`} className="hover:bg-slate-50/80 transition">
+                        <td className="p-3 font-mono text-slate-400">{toBanglaDigits(idx + 1, lang)}</td>
+                        <td className="p-3">
+                          <div className="font-bold text-slate-900">{d.district_bn}</div>
+                          {d.district_en && <div className="text-[11px] text-slate-500 font-mono">{d.district_en}</div>}
+                        </td>
+                        <td className="p-3 font-medium text-slate-700">{d.division_bn}</td>
+                        <td className="p-3 text-center font-bold text-slate-700">
+                          {toBanglaDigits(d.upazilas?.length || 0, lang)}
+                        </td>
+                        <td className="p-3 text-center font-bold text-[#006A4E]">
+                          {toBanglaDigits(
+                            d.upazilas?.reduce((acc, u) => acc + (u.mouzas?.length || 0), 0) || 0,
+                            lang
+                          )}
+                        </td>
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setRenamingTierModal({
+                                tier: 'DISTRICT',
+                                old_bn: d.district_bn,
+                                new_bn: d.district_bn,
+                                new_en: d.district_en || '',
+                              })
+                            }
+                            className="px-2.5 py-1 rounded-md text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer"
+                          >
+                            {t('পুনঃনামকরণ', 'Rename')}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {activeHierarchyTier === 'DIVISIONS' && (
+            <div className="panel p-0 bg-white border border-slate-200 overflow-hidden shadow-xs">
+              <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <div className="font-extrabold text-sm text-slate-800 flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-[#006A4E]" />
+                  <span>{t('বিভাগীয় প্রশাসন স্তর তালিকা', 'Divisional Level Architecture')}</span>
+                </div>
+                <span className="text-xs text-slate-500 font-medium">
+                  {toBanglaDigits(filteredDivisions.length, lang)} {t('টি বিভাগ', 'Divisions')}
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-100/80 text-slate-600 border-b border-slate-200 text-[11px] uppercase tracking-wider font-bold">
+                      <th className="p-3">#</th>
+                      <th className="p-3">{t('বিভাগ নাম', 'Division Name')}</th>
+                      <th className="p-3 text-center">{t('জেলা সংখ্যা', 'Districts Count')}</th>
+                      <th className="p-3 text-center">{t('উপজেলা সংখ্যা', 'Upazilas Count')}</th>
+                      <th className="p-3 text-center">{t('মোট মৌজা', 'Total Mouzas')}</th>
+                      <th className="p-3 text-right">{t('অ্যাকশন', 'Actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredDivisions.map((v, idx) => (
+                      <tr key={`${v.division_bn}-${idx}`} className="hover:bg-slate-50/80 transition">
+                        <td className="p-3 font-mono text-slate-400">{toBanglaDigits(idx + 1, lang)}</td>
+                        <td className="p-3">
+                          <div className="font-bold text-slate-900">{v.division_bn}</div>
+                          {v.division_en && <div className="text-[11px] text-slate-500 font-mono">{v.division_en}</div>}
+                        </td>
+                        <td className="p-3 text-center font-bold text-slate-700">
+                          {toBanglaDigits(v.districts?.length || 0, lang)}
+                        </td>
+                        <td className="p-3 text-center font-bold text-slate-700">
+                          {toBanglaDigits(
+                            v.districts?.reduce((acc, d) => acc + (d.upazilas?.length || 0), 0) || 0,
+                            lang
+                          )}
+                        </td>
+                        <td className="p-3 text-center font-bold text-[#006A4E]">
+                          {toBanglaDigits(
+                            v.districts?.reduce(
+                              (acc, d) =>
+                                acc + (d.upazilas?.reduce((a2, u) => a2 + (u.mouzas?.length || 0), 0) || 0),
+                              0
+                            ) || 0,
+                            lang
+                          )}
+                        </td>
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setRenamingTierModal({
+                                tier: 'DIVISION',
+                                old_bn: v.division_bn,
+                                new_bn: v.division_bn,
+                                new_en: v.division_en || '',
+                              })
+                            }
+                            className="px-2.5 py-1 rounded-md text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 cursor-pointer"
+                          >
+                            {t('পুনঃনামকরণ', 'Rename')}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* CENTER POPUP MODAL: Add / Edit Mouza Modal */}
+          {isAddMouzaOpen && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+              <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-[#006A4E]" />
+                    <span>
+                      {editingMouza
+                        ? t('মৌজা তথ্য সম্পাদনা ও জে.এল. সংশোধন', 'Edit Mouza & J.L. Record')
+                        : t('নতুন মৌজা নিবন্ধন (New Mouza Onboarding)', 'Register New Mouza')}
+                    </span>
+                  </h3>
+                  <button
+                    onClick={() => setIsAddMouzaOpen(false)}
+                    className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer text-xs"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveMouza} className="space-y-4 text-xs">
+                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-[11px] leading-relaxed">
+                    {t(
+                      'নির্দেশনা: বিভাগ -> জেলা -> উপজেলা প্রমিত অনুক্রমে সঠিক তথ্য নির্বাচন করুন। জে.এল. নম্বর মৌজার জন্য অনন্য হওয়া আবশ্যক।',
+                      'Guidelines: Specify Division -> District -> Upazila correctly. J.L. number must be valid for land deeds matching.'
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        {t('বিভাগ (বাংলা)*', 'Division (Bangla)*')}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={mouzaForm.division_bn}
+                        onChange={(e) => setMouzaForm({ ...mouzaForm, division_bn: e.target.value })}
+                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        {t('Division (English)', 'Division (English)')}
+                      </label>
+                      <input
+                        type="text"
+                        value={mouzaForm.division_en}
+                        onChange={(e) => setMouzaForm({ ...mouzaForm, division_en: e.target.value })}
+                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        {t('জেলা (বাংলা)*', 'District (Bangla)*')}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={mouzaForm.district_bn}
+                        onChange={(e) => setMouzaForm({ ...mouzaForm, district_bn: e.target.value })}
+                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        {t('District (English)', 'District (English)')}
+                      </label>
+                      <input
+                        type="text"
+                        value={mouzaForm.district_en}
+                        onChange={(e) => setMouzaForm({ ...mouzaForm, district_en: e.target.value })}
+                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        {t('উপজেলা / থানা (বাংলা)*', 'Upazila (Bangla)*')}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={mouzaForm.upazila_bn}
+                        onChange={(e) => setMouzaForm({ ...mouzaForm, upazila_bn: e.target.value })}
+                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        {t('Upazila (English)', 'Upazila (English)')}
+                      </label>
+                      <input
+                        type="text"
+                        value={mouzaForm.upazila_en}
+                        onChange={(e) => setMouzaForm({ ...mouzaForm, upazila_en: e.target.value })}
+                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="block font-bold text-slate-700 mb-1">
+                        {t('মৌজার নাম (বাংলা)*', 'Mouza Name (Bangla)*')}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={mouzaForm.mouza_bn}
+                        onChange={(e) => setMouzaForm({ ...mouzaForm, mouza_bn: e.target.value })}
+                        placeholder="যেমন: সাভার মৌজা, বাড্ডা, তেজগাঁও..."
+                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        {t('জে.এল. নম্বর*', 'J.L. Number*')}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={mouzaForm.jl_no}
+                        onChange={(e) => setMouzaForm({ ...mouzaForm, jl_no: e.target.value })}
+                        placeholder="যেমন: ১২, ৪৭..."
+                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        {t('অক্ষাংশ (Latitude - ঐচ্ছিক)', 'Latitude (Optional)')}
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={mouzaForm.latitude}
+                        onChange={(e) => setMouzaForm({ ...mouzaForm, latitude: e.target.value })}
+                        placeholder="23.8510"
+                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        {t('দ্রাঘিমাংশ (Longitude - ঐচ্ছিক)', 'Longitude (Optional)')}
+                      </label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={mouzaForm.longitude}
+                        onChange={(e) => setMouzaForm({ ...mouzaForm, longitude: e.target.value })}
+                        placeholder="90.2600"
+                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setIsAddMouzaOpen(false)}
+                      className="px-4 py-2 rounded-lg border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 cursor-pointer"
+                    >
+                      {t('বাতিল', 'Cancel')}
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00523C] text-white font-bold transition shadow-xs cursor-pointer"
+                    >
+                      {editingMouza ? t('হালনাগাদ সংরক্ষণ করুন', 'Save Changes') : t('মৌজা যুক্ত করুন', 'Create Mouza')}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* CENTER POPUP MODAL: Rename Tier Modal */}
+          {renamingTierModal && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+              <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                    <Edit2 className="w-4 h-4 text-[#006A4E]" />
+                    <span>{t('প্রশাসনিক স্তরের নাম পরিবর্তন', 'Rename Administrative Tier')}</span>
+                  </h3>
+                  <button
+                    onClick={() => setRenamingTierModal(null)}
+                    className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer text-xs"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="text-xs text-slate-600 p-2.5 rounded-lg bg-amber-50 border border-amber-200">
+                  <strong>{t('সতর্কতা:', 'Notice:')}</strong>{' '}
+                  {t(
+                    'নাম পরিবর্তনের সাথে সাথে এই স্তরের অধীনস্থ সকল জেলা, উপজেলা ও মৌজার রেকর্ড স্বয়ংক্রিয়ভাবে নতুন নামে হালনাগাদ হবে।',
+                    'Renaming cascades automatically to all subordinate entities in the hierarchy.'
+                  )}
+                </div>
+
+                <form onSubmit={handleSaveRenameTier} className="space-y-3 text-xs">
+                  <div>
+                    <label className="block font-bold text-slate-500 mb-1">
+                      {t('বর্তমান নাম:', 'Current Name:')}
+                    </label>
+                    <div className="font-bold text-slate-800 p-2 bg-slate-100 rounded-lg">
+                      {renamingTierModal.old_bn} ({renamingTierModal.tier})
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      {t('নতুন নাম (বাংলা)*', 'New Name (Bangla)*')}
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={renamingTierModal.new_bn}
+                      onChange={(e) => setRenamingTierModal({ ...renamingTierModal, new_bn: e.target.value })}
+                      className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">
+                      {t('নতুন নাম (English)', 'New Name (English)')}
+                    </label>
+                    <input
+                      type="text"
+                      value={renamingTierModal.new_en}
+                      onChange={(e) => setRenamingTierModal({ ...renamingTierModal, new_en: e.target.value })}
+                      className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setRenamingTierModal(null)}
+                      className="px-4 py-2 rounded-lg border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 cursor-pointer"
+                    >
+                      {t('বাতিল', 'Cancel')}
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00523C] text-white font-bold transition shadow-xs cursor-pointer"
+                    >
+                      {t('পরিবর্তন সংরক্ষণ করুন', 'Confirm Rename')}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+            </>
+          )}
         </div>
       )}
 
       {/* TAB 4.5: Service Catalogue & Fee Registry (Phase 2) */}
-      {subTab === 'catalogue' && (
-        <div className="space-y-6">
+      {(subTab === 'catalogue' || (subTab === 'settings' && settingsSubSegment === 'catalogue')) && (
+        <div className="space-y-6 animate-fadeIn">
+          {renderPillar5Nav()}
           {/* Notification Banner */}
           {catalogueNotice && (
             <div
@@ -3598,24 +7375,36 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       )}
 
       {/* TAB 6: Append-Only Hash-Chained Audit Log */}
-      {subTab === 'audit' && (
-        <div className="panel p-6 space-y-4">
+      {(subTab === 'audit_reports' || subTab === 'audit' || (subTab === 'ledger' && ledgerSubSegment === 'audit_trail')) && (
+        <div className="space-y-6 animate-fadeIn">
+          {renderPillar4Nav()}
+          <div className="panel p-6 space-y-4">
           <div>
             <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
               <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
                 {t('কন্ট্রোল প্যানেল', 'Control Panel')}
               </button>
               <span>/</span>
-              <span className="text-[#006A4E] font-extrabold">{t('সিকিউরিটি অডিট ট্রেইল', 'Security Audit Trail')}</span>
+              <span className="text-[#006A4E] font-extrabold">{t('সিকিউরিটি অডিট ট্রেইল ও রিপোর্ট', 'Security Audit Trail & Reports')}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <History className="w-5 h-5 text-[#006A4E]" />
-              <h2 className="text-lg font-extrabold text-[#0A1F1C]">
-                {t(
-                  'অপরিবর্তনীয় হ্যাশ-চেইন অডিট লগ (Append-Only Cryptographic Audit Trail)',
-                  'Append-Only Hash-Chained Audit Trail'
-                )}
-              </h2>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <History className="w-5 h-5 text-[#006A4E]" />
+                <h2 className="text-lg font-extrabold text-[#0A1F1C]">
+                  {t(
+                    'অপরিবর্তনীয় হ্যাশ-চেইন অডিট লগ (Append-Only Cryptographic Audit Trail)',
+                    'Append-Only Hash-Chained Audit Trail'
+                  )}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOverrideModal({ isOpen: true, actionType: 'ADMINISTRATIVE_OVERRIDE', targetId: 'SYSTEM' })}
+                className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+              >
+                <ShieldAlert className="w-4 h-4" />
+                <span>{t('প্রশাসনিক ওভাররাইড কনসোল', 'Admin Override Console')}</span>
+              </button>
             </div>
           </div>
 
@@ -3635,11 +7424,14 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
             ))}
           </div>
         </div>
+        </div>
       )}
 
       {/* TAB 9: Maker-Checker Staging Onboarding & Appellate Review Mirror (Tier C Sections 8.7 & 8.8) */}
-      {subTab === 'onboarding_appeals' && (
-        <div className="panel p-6 space-y-6">
+      {(subTab === 'survey_records' || subTab === 'onboarding_appeals' || (subTab === 'users' && usersSubSegment === 'onboarding_appeals')) && (
+        <div className="space-y-6 animate-fadeIn">
+          {renderPillar2Nav()}
+          <div className="panel p-6 space-y-6">
           {onbNotice && (
             <div className={`p-4 rounded-xl border flex items-center gap-3 text-sm font-semibold animate-rise ${
               onbNotice.err ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-[#006A4E]'
@@ -4193,11 +7985,14 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
             </div>
           )}
         </div>
+        </div>
       )}
 
       {/* TAB: Simulated SMS & OTP Outbox Viewer (Prompt v3 Section 5 Boundary Simulator) */}
-      {subTab === 'dev_outbox' && (
-        <div className="panel p-6 space-y-5 animate-rise">
+      {(subTab === 'integrations' || subTab === 'dev_outbox' || (subTab === 'settings' && settingsSubSegment === 'diagnostics')) && (
+        <div className="space-y-6 animate-fadeIn">
+          {renderPillar5Nav()}
+          <div className="panel p-6 space-y-5 animate-rise">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#006A4E]/10 pb-4">
             <div>
               <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
@@ -4205,14 +8000,14 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                   {t('কন্ট্রোল প্যানেল', 'Control Panel')}
                 </button>
                 <span>/</span>
-                <span className="text-[#006A4E] font-extrabold">{t('এসএমএস ও ওটিপি আউটবক্স', 'SMS & OTP Outbox')}</span>
+                <span className="text-[#006A4E] font-extrabold">{t('ইন্টিগ্রেশন ও এসএমএস আউটবক্স', 'Integrations & Outbox')}</span>
               </div>
               <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
                 <Smartphone className="w-5 h-5 text-[#006A4E]" />
                 <span>
                   {t(
-                    'সিমুলেটেড এসএমএস ও ওটিপি আউটবক্স ভিউয়ার (/admin/dev/outbox)',
-                    'Simulated SMS & OTP Outbox Viewer (/admin/dev/outbox)'
+                    'ইন্টিগ্রেশন, নোটিফিকেশন ও এসএমএস আউটবক্স ভিউয়ার (/admin/dev/outbox)',
+                    'Integrations, Notifications & SMS Outbox (/admin/dev/outbox)'
                   )}
                 </span>
               </h2>
@@ -4227,6 +8022,22 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
               <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-[#006A4E] border border-[#006A4E]/20">
                 ENV: {outboxEnvironment.toUpperCase()}
               </span>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const res = await BhumiApi.retryFailedDeliveries();
+                    alert(res.message_bn || 'ব্যর্থ ডেলিভারি সফলভাবে পুনরায় প্রসেস করা হয়েছে।');
+                    fetchOutbox();
+                  } catch (e: any) {
+                    alert(e?.message || 'ব্যর্থ ডেলিভারি প্রক্রিয়াকরণে সমস্যা');
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-xs font-bold hover:bg-amber-700 flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>{t('ব্যর্থ ডেলিভারি পুনঃচেষ্টা', 'Retry Failed Deliveries')}</span>
+              </button>
               <button
                 onClick={fetchOutbox}
                 disabled={outboxLoading}
@@ -4358,7 +8169,1198 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
             </div>
           )}
         </div>
+        </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* SUBTAB: TICKETS & SUPPORT DESK (support_agent, admin, system_admin)      */}
+      {/* ========================================================================= */}
+      {(subTab === 'tickets' || (subTab === 'settings' && settingsSubSegment === 'tickets')) && (
+        <div className="space-y-6 animate-fadeIn">
+          {(role === 'admin' || role === 'system_admin') && renderPillar5Nav()}
+          {ticketActionNotice && (
+            <div
+              role="alert"
+              className={`p-3.5 rounded-xl text-xs font-bold border flex items-center justify-between ${
+                ticketActionNotice.err ? 'bg-rose-50 border-rose-300 text-rose-800' : 'bg-emerald-50 border-emerald-300 text-emerald-800'
+              }`}
+            >
+              <span>{ticketActionNotice.msg}</span>
+              <button onClick={() => setTicketActionNotice(null)} className="text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+          )}
+
+          <header className="page-intro">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <MessageSquare className="w-6 h-6 text-[#006A4E]" />
+                  <span>{t('নাগরিক সহায়তা ও জিআরএস টিকিট ট্রায়াজ (১৬১২২)', 'Citizen Support & GRS Ticket Desk (16122)')}</span>
+                </h1>
+                <p className="text-xs text-slate-600 mt-1">
+                  {t(
+                    'অনুপস্থিত দলিল পুনরুদ্ধার, জমি সংক্রান্ত জিজ্ঞাসা ও নাগরিক সাপোর্ট টিকেটের ট্রায়াজ ও দ্রুত সমাধান।',
+                    'Triage and resolve missing document retrieval requests, inquiries, and citizen support tickets.'
+                  )}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1.5 rounded-full text-xs font-bold border border-emerald-300 bg-emerald-50 text-emerald-900 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-[#006A4E]" />
+                  <span>{t('SLA: ৭২ ঘণ্টায় প্রথম প্রতিক্রিয়া', 'SLA: 72h First Reply')}</span>
+                </span>
+              </div>
+            </div>
+          </header>
+
+          {/* Ticket Operational KPI Strip */}
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div className="panel p-3.5 border border-[#006A4E]/15 bg-white shadow-xs">
+              <div className="text-[10px] font-bold uppercase text-slate-500">{t('মোট টিকিট', 'Total Tickets')}</div>
+              <div className="text-xl font-extrabold text-[#0A1F1C] mt-1">{toBanglaDigits(ticketsList.length, lang)}</div>
+            </div>
+            <div className="panel p-3.5 border border-amber-200 bg-amber-50/50 shadow-xs">
+              <div className="text-[10px] font-bold uppercase text-amber-800">{t('নতুন দাখিল', 'New Tickets')}</div>
+              <div className="text-xl font-extrabold text-amber-900 mt-1">
+                {toBanglaDigits(ticketsList.filter((x) => x.status === 'NEW').length, lang)}
+              </div>
+            </div>
+            <div className="panel p-3.5 border border-blue-200 bg-blue-50/50 shadow-xs">
+              <div className="text-[10px] font-bold uppercase text-blue-800">{t('প্রক্রিয়াধীন', 'In Progress')}</div>
+              <div className="text-xl font-extrabold text-blue-900 mt-1">
+                {toBanglaDigits(ticketsList.filter((x) => x.status === 'IN_PROGRESS').length, lang)}
+              </div>
+            </div>
+            <div className="panel p-3.5 border border-purple-200 bg-purple-50/50 shadow-xs">
+              <div className="text-[10px] font-bold uppercase text-purple-800">{t('নাগরিকের অপেক্ষা', 'Waiting Citizen')}</div>
+              <div className="text-xl font-extrabold text-purple-900 mt-1">
+                {toBanglaDigits(ticketsList.filter((x) => x.status === 'WAITING_CITIZEN').length, lang)}
+              </div>
+            </div>
+            <div className="panel p-3.5 border border-emerald-200 bg-emerald-50/50 shadow-xs">
+              <div className="text-[10px] font-bold uppercase text-emerald-800">{t('সমাধানকৃত', 'Resolved')}</div>
+              <div className="text-xl font-extrabold text-[#006A4E] mt-1">
+                {toBanglaDigits(ticketsList.filter((x) => x.status === 'RESOLVED').length, lang)}
+              </div>
+            </div>
+          </div>
+
+          {/* Main Grid: Ticket List + Conversation Thread */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left 5 Cols: Filter + Ticket List */}
+            <div className="lg:col-span-5 space-y-3">
+              <div className="panel p-3 bg-white border border-slate-200 shadow-xs space-y-2.5">
+                <div className="flex flex-wrap gap-1">
+                  {(['ALL', 'NEW', 'IN_PROGRESS', 'WAITING_CITIZEN', 'RESOLVED'] as const).map((st) => (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => setTicketFilter(st)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                        ticketFilter === st
+                          ? 'bg-[#006A4E] text-white shadow-2xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {st === 'ALL'
+                        ? t('সকল', 'All')
+                        : st === 'NEW'
+                        ? t('নতুন', 'New')
+                        : st === 'IN_PROGRESS'
+                        ? t('চলমান', 'Active')
+                        : st === 'WAITING_CITIZEN'
+                        ? t('নাগরিক', 'Citizen')
+                        : t('সমাধান', 'Done')}
+                    </button>
+                  ))}
+                </div>
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={ticketSearch}
+                    onChange={(e) => setTicketSearch(e.target.value)}
+                    placeholder={t('টিকেট কোড, শিরোনাম বা এনআইডি...', 'Search by code, title, or NID...')}
+                    className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 bg-slate-50 text-xs focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2 max-h-[640px] overflow-y-auto pr-1">
+                {ticketsLoading ? (
+                  <div className="p-8 text-center text-slate-400 text-xs flex items-center justify-center gap-2">
+                    <RefreshCw className="w-4 h-4 animate-spin text-[#006A4E]" />
+                    <span>{t('টিকেট লোড হচ্ছে...', 'Loading tickets...')}</span>
+                  </div>
+                ) : ticketsList.filter((tkt) => {
+                    if (ticketFilter !== 'ALL' && tkt.status !== ticketFilter) return false;
+                    if (ticketSearch.trim()) {
+                      const q = ticketSearch.toLowerCase();
+                      const matchCode = (tkt.ticket_code || '').toLowerCase().includes(q);
+                      const matchTitle = (tkt.title_bn || tkt.title_en || '').toLowerCase().includes(q);
+                      const matchNid = (tkt.complainant_nid || '').toLowerCase().includes(q);
+                      if (!matchCode && !matchTitle && !matchNid) return false;
+                    }
+                    return true;
+                  }).length === 0 ? (
+                  <div className="panel p-8 text-center text-slate-500 text-xs bg-white border border-slate-200">
+                    {t('কোনো টিকিট পাওয়া যায়নি।', 'No tickets found matching criteria.')}
+                  </div>
+                ) : (
+                  ticketsList
+                    .filter((tkt) => {
+                      if (ticketFilter !== 'ALL' && tkt.status !== ticketFilter) return false;
+                      if (ticketSearch.trim()) {
+                        const q = ticketSearch.toLowerCase();
+                        const matchCode = (tkt.ticket_code || '').toLowerCase().includes(q);
+                        const matchTitle = (tkt.title_bn || tkt.title_en || '').toLowerCase().includes(q);
+                        const matchNid = (tkt.complainant_nid || '').toLowerCase().includes(q);
+                        if (!matchCode && !matchTitle && !matchNid) return false;
+                      }
+                      return true;
+                    })
+                    .map((tkt) => {
+                      const isSelected = selectedTicketCode === (tkt.ticket_code || tkt.id);
+                      return (
+                        <div
+                          key={tkt.id}
+                          onClick={() => setSelectedTicketCode(tkt.ticket_code || tkt.id)}
+                          className={`panel p-3.5 rounded-xl border transition cursor-pointer text-left space-y-2 ${
+                            isSelected
+                              ? 'bg-emerald-50/70 border-[#006A4E] shadow-xs'
+                              : 'bg-white border-slate-200 hover:border-[#006A4E]/40 hover:bg-slate-50/50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-mono text-[11px] font-extrabold text-[#006A4E]">
+                              {tkt.ticket_code || `#${tkt.id}`}
+                            </span>
+                            <span
+                              className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                                tkt.status === 'NEW'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : tkt.status === 'IN_PROGRESS'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : tkt.status === 'WAITING_CITIZEN'
+                                  ? 'bg-purple-100 text-purple-800'
+                                  : 'bg-emerald-100 text-emerald-800'
+                              }`}
+                            >
+                              {tkt.status}
+                            </span>
+                          </div>
+                          <div className="font-bold text-xs text-slate-900 line-clamp-1">
+                            {lang === 'bn' ? tkt.title_bn : tkt.title_en || tkt.title_bn}
+                          </div>
+                          <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
+                            <span className="font-mono">
+                              {tkt.dag_no ? `${t('দাগ', 'Plot')} ${toBanglaDigits(tkt.dag_no, lang)}` : tkt.category || 'SUPPORT'}
+                            </span>
+                            <span>{tkt.created_at ? toBanglaDigits(tkt.created_at.substring(0, 10), lang) : ''}</span>
+                          </div>
+                        </div>
+                      );
+                    })
+                )}
+              </div>
+            </div>
+
+            {/* Right 7 Cols: Ticket Details Thread & Reply */}
+            <div className="lg:col-span-7 space-y-4">
+              {!selectedTicketCode ? (
+                <div className="panel p-16 bg-white border border-slate-200 rounded-2xl text-center text-slate-400">
+                  <MessageSquare className="w-12 h-12 mx-auto text-slate-300 mb-2" />
+                  <p className="font-bold text-sm text-slate-600">{t('বাম পাশের তালিকা থেকে একটি টিকিট নির্বাচন করুন', 'Select a ticket from the left panel')}</p>
+                </div>
+              ) : ticketDetailLoading && !selectedTicketDetail ? (
+                <div className="panel p-16 bg-white border border-slate-200 rounded-2xl text-center text-slate-400">
+                  <RefreshCw className="w-8 h-8 animate-spin mx-auto text-[#006A4E] mb-2" />
+                  <p className="text-xs font-bold">{t('টিকেটের বিবরণ লোড হচ্ছে...', 'Loading ticket thread...')}</p>
+                </div>
+              ) : (
+                <div className="panel p-5 bg-white border border-slate-200 rounded-2xl space-y-5 shadow-xs">
+                  {/* Selected Ticket Header */}
+                  <div className="border-b border-slate-100 pb-4 space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm font-extrabold px-2.5 py-0.5 rounded-lg bg-emerald-50 text-[#006A4E] border border-emerald-200">
+                          {selectedTicketDetail?.ticket?.ticket_code || selectedTicketCode}
+                        </span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                          {selectedTicketDetail?.ticket?.category || 'SUPPORT'}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-xs font-extrabold px-3 py-1 rounded-full ${
+                          selectedTicketDetail?.ticket?.status === 'NEW'
+                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                            : selectedTicketDetail?.ticket?.status === 'IN_PROGRESS'
+                            ? 'bg-blue-100 text-blue-900 border border-blue-300'
+                            : selectedTicketDetail?.ticket?.status === 'WAITING_CITIZEN'
+                            ? 'bg-purple-100 text-purple-900 border border-purple-300'
+                            : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                        }`}
+                      >
+                        {selectedTicketDetail?.ticket?.status || 'OPEN'}
+                      </span>
+                    </div>
+                    <h3 className="font-extrabold text-base text-slate-900">
+                      {lang === 'bn' ? selectedTicketDetail?.ticket?.title_bn : selectedTicketDetail?.ticket?.title_en || selectedTicketDetail?.ticket?.title_bn}
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] text-slate-600 pt-1">
+                      <div>
+                        <span className="text-slate-400">{t('নাগরিক এনআইডি: ', 'Complainant NID: ')}</span>
+                        <span className="font-mono font-bold text-slate-800">{selectedTicketDetail?.ticket?.complainant_nid || '—'}</span>
+                      </div>
+                      {selectedTicketDetail?.plot && (
+                        <div>
+                          <span className="text-slate-400">{t('দাগ ও মৌজা: ', 'Plot & Mouza: ')}</span>
+                          <span className="font-bold text-slate-800">
+                            {selectedTicketDetail.plot.dag_no} ({selectedTicketDetail.plot.mouza_bn})
+                          </span>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-slate-400">{t('দাখিলের সময়: ', 'Submitted: ')}</span>
+                        <span className="font-mono text-slate-800">
+                          {selectedTicketDetail?.ticket?.created_at?.substring(0, 16).replace('T', ' ') || '—'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Conversation & Internal Notes Thread */}
+                  <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                    {(selectedTicketDetail?.messages || []).map((msg: any) => {
+                      const isInternal = Boolean(msg.is_internal_note);
+                      const isStaff = msg.sender_role && msg.sender_role !== 'citizen';
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`p-3.5 rounded-xl text-xs space-y-1.5 transition ${
+                            isInternal
+                              ? 'bg-amber-50/90 border-2 border-amber-300 text-amber-950 shadow-2xs'
+                              : isStaff
+                              ? 'bg-emerald-50/80 border border-emerald-200 text-emerald-950 ml-4'
+                              : 'bg-slate-50 border border-slate-200 text-slate-800 mr-4'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between text-[11px] border-b pb-1 border-current/10">
+                            <div className="flex items-center gap-1.5 font-bold">
+                              {isInternal && (
+                                <span className="px-1.5 py-0.2 rounded text-[10px] bg-amber-200 text-amber-900 uppercase tracking-wide">
+                                  {t('🔒 অভ্যন্তরীণ স্টাফ নোট', '🔒 Internal Staff Note')}
+                                </span>
+                              )}
+                              <span>@{msg.sender_username || 'user'}</span>
+                              <span className="font-normal opacity-70">({msg.sender_role || 'staff'})</span>
+                            </div>
+                            <span className="font-mono text-[10px] opacity-70">
+                              {msg.created_at ? toBanglaDigits(msg.created_at.substring(0, 16).replace('T', ' '), lang) : ''}
+                            </span>
+                          </div>
+                          <div className="whitespace-pre-wrap leading-relaxed">
+                            {lang === 'bn' ? msg.message_bn || msg.message_en : msg.message_en || msg.message_bn}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Reply Form with Internal Note Checkbox */}
+                  <form onSubmit={handleSendTicketReply} className="border-t border-slate-100 pt-4 space-y-3 text-xs">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">
+                        {t('প্রত্যুত্তর বা অফিস আদেশ নথিভুক্ত করুন:', 'Enter Response or Officer Note:')}
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={ticketReplyMsg}
+                        onChange={(e) => setTicketReplyMsg(e.target.value)}
+                        placeholder={t('নাগরিকের প্রশ্নের উত্তর অথবা দাপ্তরিক অগ্রগতির বিবরণ লিখুন...', 'Write your reply to the citizen or internal staff note...')}
+                        className="w-full p-2.5 rounded-xl border border-slate-300 bg-white focus:ring-2 focus:ring-[#006A4E]/20 focus:border-[#006A4E] text-xs"
+                        required
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <label className="text-[11px] font-bold text-slate-600 block mb-0.5">{t('পরবর্তী স্ট্যাটাস:', 'Update Status:')}</label>
+                          <select
+                            value={ticketReplyStatus}
+                            onChange={(e) => setTicketReplyStatus(e.target.value as any)}
+                            className="p-1.5 rounded-lg border border-slate-300 bg-white font-bold text-xs"
+                          >
+                            <option value="IN_PROGRESS">{t('চলমান (In Progress)', 'In Progress')}</option>
+                            <option value="WAITING_CITIZEN">{t('নাগরিকের উত্তর আবশ্যক (Waiting Citizen)', 'Waiting Citizen')}</option>
+                            <option value="RESOLVED">{t('নিষ্পন্ন / সমাধানকৃত (Resolved)', 'Resolved')}</option>
+                          </select>
+                        </div>
+
+                        <label className="flex items-center gap-1.5 cursor-pointer pt-3">
+                          <input
+                            type="checkbox"
+                            checked={ticketIsInternal}
+                            onChange={(e) => setTicketIsInternal(e.target.checked)}
+                            className="rounded border-slate-300 text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer"
+                          />
+                          <span className="font-bold text-amber-900 text-xs">
+                            {t('গোপন অভ্যন্তরীণ নোট (নাগরিক দেখতে পারবে না)', 'Internal Staff Note (Hidden from citizen)')}
+                          </span>
+                        </label>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="px-5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                        <span>{t('উত্তর প্রেরণ ও আপডেট', 'Send Reply & Update')}</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUBTAB: CONTENT EDITOR (content_editor, admin, system_admin)              */}
+      {/* ========================================================================= */}
+      {subTab === 'content_editor' && (
+        <div className="space-y-6 animate-rise">
+          {contentActionNotice && (
+            <div
+              role="alert"
+              className={`p-3.5 rounded-xl text-xs font-bold border flex items-center justify-between ${
+                contentActionNotice.err ? 'bg-rose-50 border-rose-300 text-rose-800' : 'bg-emerald-50 border-emerald-300 text-emerald-800'
+              }`}
+            >
+              <span>{contentActionNotice.msg}</span>
+              <button onClick={() => setContentActionNotice(null)} className="text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+          )}
+
+          <header className="page-intro">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <Newspaper className="w-6 h-6 text-[#006A4E]" />
+                  <span>{t('কন্টেন্ট এডিটর ও সচেতনতামূলক নির্দেশিকা ওয়ার্কবেঞ্চ', 'Content Editor & Guidelines Workbench')}</span>
+                </h1>
+                <p className="text-xs text-slate-600 mt-1">
+                  {t(
+                    'নাগরিক সচেতনতা নির্দেশিকা, আইনি ব্যাখ্যা ও অফিস নোটিশের খসড়া তৈরি এবং পর্যালোচনার জন্য দাখিল।',
+                    'Draft public legal explainers, guidance blogs, and official notices for editorial approval.'
+                  )}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setContentForm({ kind: contentKind, title_bn: '', title_en: '', body_bn: '', body_en: '' });
+                    setIsCreateContentOpen(true);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{t('নতুন খসড়া লিখুন', 'Draft New Content')}</span>
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Sub Navigation Bar for Editor: Kind Switch & Status Filter */}
+          <div className="panel p-4 bg-white border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-500">{t('কন্টেন্ট ধরন:', 'Kind:')}</span>
+              <div className="flex items-center p-1 bg-slate-100 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setContentKind('blog')}
+                  className={`px-3 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
+                    contentKind === 'blog' ? 'bg-[#006A4E] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {t('সচেতনতামূলক ব্লগ ও নির্দেশিকা', 'Guidance Blog')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setContentKind('notice')}
+                  className={`px-3 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
+                    contentKind === 'notice' ? 'bg-[#006A4E] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {t('অফিসিয়াল নোটিশ ও আদেশ', 'Official Notice')}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              {(['ALL', 'DRAFT', 'SUBMITTED', 'PUBLISHED', 'REJECTED'] as const).map((st) => (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => setContentStatusFilter(st)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                    contentStatusFilter === st
+                      ? 'bg-slate-800 text-white shadow-2xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {st === 'ALL'
+                    ? t('সকল', 'All')
+                    : st === 'DRAFT'
+                    ? t('খসড়া', 'Draft')
+                    : st === 'SUBMITTED'
+                    ? t('বিচারাধীন', 'Submitted')
+                    : st === 'PUBLISHED'
+                    ? t('প্রকাশিত', 'Published')
+                    : t('প্রত্যাখ্যাত', 'Rejected')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Managed Content Table */}
+          <div className="panel p-0 bg-white border border-slate-200 overflow-hidden shadow-xs">
+            {managedContentLoading ? (
+              <div className="p-12 text-center text-slate-400 text-xs flex items-center justify-center gap-2">
+                <RefreshCw className="w-4 h-4 animate-spin text-[#006A4E]" />
+                <span>{t('লোড হচ্ছে...', 'Loading content...')}</span>
+              </div>
+            ) : managedContent.filter((c) => contentStatusFilter === 'ALL' || c.status === contentStatusFilter).length === 0 ? (
+              <div className="p-12 text-center text-slate-500 text-xs">
+                {t('কোনো কন্টেন্ট খসড়া পাওয়া যায়নি। নতুন খসড়া লিখতে উপরের বোতামে ক্লিক করুন।', 'No drafts found. Click Draft New Content to begin.')}
+              </div>
+            ) : (
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                    <th className="p-3 font-bold">#</th>
+                    <th className="p-3 font-bold">{t('শিরোনাম (বাংলা / ইংরেজি)', 'Title')}</th>
+                    <th className="p-3 font-bold">{t('ধরন', 'Kind')}</th>
+                    <th className="p-3 font-bold">{t('স্ট্যাটাস', 'Status')}</th>
+                    <th className="p-3 font-bold">{t('তারিখ', 'Date')}</th>
+                    <th className="p-3 font-bold text-right">{t('কার্যক্রম', 'Actions')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {managedContent
+                    .filter((c) => contentStatusFilter === 'ALL' || c.status === contentStatusFilter)
+                    .map((item, idx) => (
+                      <tr key={item.id || idx} className="hover:bg-slate-50/70 transition">
+                        <td className="p-3 font-mono text-[11px] text-slate-400">#{item.id}</td>
+                        <td className="p-3">
+                          <div className="font-bold text-slate-900">{item.title_bn}</div>
+                          <div className="text-[11px] text-slate-500 font-normal">{item.title_en}</div>
+                        </td>
+                        <td className="p-3 font-semibold text-slate-600">
+                          {contentKind === 'blog' ? t('ব্লগ / গাইড', 'Blog / Guide') : t('নোটিশ', 'Notice')}
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                              item.status === 'PUBLISHED'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : item.status === 'SUBMITTED'
+                                ? 'bg-amber-100 text-amber-800'
+                                : item.status === 'REJECTED'
+                                ? 'bg-rose-100 text-rose-800'
+                                : 'bg-slate-100 text-slate-700'
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-slate-500 text-[11px]">
+                          {item.created_at ? toBanglaDigits(item.created_at.substring(0, 10), lang) : '—'}
+                        </td>
+                        <td className="p-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {(item.status === 'DRAFT' || item.status === 'REJECTED') && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setContentForm({
+                                      id: item.id,
+                                      kind: contentKind,
+                                      title_bn: item.title_bn || '',
+                                      title_en: item.title_en || '',
+                                      body_bn: item.body_bn || '',
+                                      body_en: item.body_en || '',
+                                    });
+                                    setIsCreateContentOpen(true);
+                                  }}
+                                  className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition cursor-pointer"
+                                >
+                                  {t('সম্পাদনা', 'Edit')}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleTransitionContent(item.id, contentKind, 'SUBMITTED')}
+                                  className="px-2.5 py-1 rounded bg-[#006A4E] hover:bg-[#00553e] text-white font-bold transition cursor-pointer flex items-center gap-1"
+                                >
+                                  <Send className="w-3 h-3" />
+                                  <span>{t('দাখিল করুন', 'Submit')}</span>
+                                </button>
+                              </>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedContentPreview(item)}
+                              className="px-2.5 py-1 rounded border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold transition cursor-pointer"
+                            >
+                              {t('প্রিভিউ', 'Preview')}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Modal: Create or Edit Draft */}
+          {isCreateContentOpen && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
+              <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 my-8">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                    <FilePlus className="w-5 h-5 text-[#006A4E]" />
+                    <span>
+                      {contentForm.id
+                        ? t('খসড়া কন্টেন্ট সম্পাদনা করুন', 'Edit Draft Content')
+                        : t('নতুন নির্দেশিকা বা নোটিশের খসড়া তৈরি', 'Draft New Guidance or Notice')}
+                    </span>
+                  </h3>
+                  <button
+                    onClick={() => setIsCreateContentOpen(false)}
+                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center cursor-pointer transition text-sm"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveContent} className="space-y-4 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('শিরোনাম (বাংলায়):', 'Title (Bangla):')} *</label>
+                      <input
+                        type="text"
+                        required
+                        value={contentForm.title_bn}
+                        onChange={(e) => setContentForm({ ...contentForm, title_bn: e.target.value })}
+                        placeholder={t('উদা: ই-নামজারির সহজ ৫টি ধাপ', 'e.g. 5 Simple Steps to e-Mutation')}
+                        className="w-full p-2.5 rounded-lg border border-slate-300 bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-bold text-slate-700 mb-1">{t('শিরোনাম (ইংরেজিতে):', 'Title (English):')} *</label>
+                      <input
+                        type="text"
+                        required
+                        value={contentForm.title_en}
+                        onChange={(e) => setContentForm({ ...contentForm, title_en: e.target.value })}
+                        placeholder="e.g. 5 Easy Steps of e-Mutation Process"
+                        className="w-full p-2.5 rounded-lg border border-slate-300 bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">{t('বিস্তারিত বিষয়বস্তু (বাংলায়):', 'Body Content (Bangla):')} *</label>
+                    <textarea
+                      rows={5}
+                      required
+                      value={contentForm.body_bn}
+                      onChange={(e) => setContentForm({ ...contentForm, body_bn: e.target.value })}
+                      placeholder={t('নাগরিকদের জন্য পূর্ণাঙ্গ নির্দেশিকা ও আইনি ধাপসমূহ লিখুন...', 'Enter comprehensive details in Bangla...')}
+                      className="w-full p-2.5 rounded-lg border border-slate-300 bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">{t('বিস্তারিত বিষয়বস্তু (ইংরেজিতে):', 'Body Content (English):')} *</label>
+                    <textarea
+                      rows={5}
+                      required
+                      value={contentForm.body_en}
+                      onChange={(e) => setContentForm({ ...contentForm, body_en: e.target.value })}
+                      placeholder="Enter comprehensive details in English..."
+                      className="w-full p-2.5 rounded-lg border border-slate-300 bg-white"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setIsCreateContentOpen(false)}
+                      className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer transition text-xs"
+                    >
+                      {t('বাতিল', 'Cancel')}
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold cursor-pointer shadow-xs transition text-xs flex items-center gap-1.5"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>{t('খসড়া সংরক্ষণ করুন', 'Save Draft')}</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Modal: Preview Content */}
+          {selectedContentPreview && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
+              <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 my-8">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <h3 className="font-extrabold text-base text-slate-900">{t('কন্টেন্ট প্রিভিউ', 'Content Preview')}</h3>
+                  <button onClick={() => setSelectedContentPreview(null)} className="text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+                <div className="space-y-3 text-xs">
+                  <div className="p-3 rounded-xl bg-slate-50 space-y-1">
+                    <div className="font-extrabold text-sm text-slate-900">{selectedContentPreview.title_bn}</div>
+                    <div className="text-slate-500 font-medium">{selectedContentPreview.title_en}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="font-bold text-slate-700">{t('বাংলা বিবরণ:', 'Bangla Content:')}</div>
+                    <p className="whitespace-pre-wrap text-slate-800 leading-relaxed bg-white p-3 rounded-lg border border-slate-100">
+                      {selectedContentPreview.body_bn}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="font-bold text-slate-700">{t('ইংরেজি বিবরণ:', 'English Content:')}</div>
+                    <p className="whitespace-pre-wrap text-slate-800 leading-relaxed bg-white p-3 rounded-lg border border-slate-100">
+                      {selectedContentPreview.body_en}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex justify-end pt-3 border-t border-slate-100">
+                  <button
+                    onClick={() => setSelectedContentPreview(null)}
+                    className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs"
+                  >
+                    {t('বন্ধ করুন', 'Close')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUBTAB: CONTENT APPROVER & NOTICES (content_approver, admin, system_admin) */}
+      {/* ========================================================================= */}
+      {(subTab === 'content_approver' || (subTab === 'notices' && role !== 'content_editor')) && (
+        <div className="space-y-6 animate-rise">
+          {contentActionNotice && (
+            <div
+              role="alert"
+              className={`p-3.5 rounded-xl text-xs font-bold border flex items-center justify-between ${
+                contentActionNotice.err ? 'bg-rose-50 border-rose-300 text-rose-800' : 'bg-emerald-50 border-emerald-300 text-emerald-800'
+              }`}
+            >
+              <span>{contentActionNotice.msg}</span>
+              <button onClick={() => setContentActionNotice(null)} className="text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+          )}
+
+          <header className="page-intro">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <ShieldCheck className="w-6 h-6 text-[#006A4E]" />
+                  <span>{t('কন্টেন্ট ও নোটিশ প্রকাশনা কর্তৃপক্ষ (চেকার)', 'Content & Notice Approval Authority (Checker)')}</span>
+                </h1>
+                <p className="text-xs text-slate-600 mt-1">
+                  {t(
+                    'কন্টেন্ট এডিটর কর্তৃক প্রস্তুতকৃত খসড়া পর্যালোচনা, নিরপেক্ষ নিরীক্ষা এবং ডিজিটাল কিউআর সিলসহ গেজেট প্রকাশ।',
+                    'Review submitted guidance and notices, enforce separation of duties, and publish officially.'
+                  )}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1.5 rounded-full text-xs font-bold border border-emerald-300 bg-emerald-50 text-emerald-900">
+                  {t('নিরপেক্ষ নিরীক্ষা সক্রিয় (Maker != Checker)', 'Independent Review Active')}
+                </span>
+              </div>
+            </div>
+          </header>
+
+          {/* Sub Navigation Bar for Approver */}
+          <div className="panel p-4 bg-white border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-500">{t('কন্টেন্ট ধরন:', 'Kind:')}</span>
+              <div className="flex items-center p-1 bg-slate-100 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setContentKind('blog')}
+                  className={`px-3 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
+                    contentKind === 'blog' ? 'bg-[#006A4E] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {t('সচেতনতামূলক ব্লগ ও নির্দেশিকা', 'Guidance Blog')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setContentKind('notice')}
+                  className={`px-3 py-1 rounded-md text-xs font-bold transition cursor-pointer ${
+                    contentKind === 'notice' ? 'bg-[#006A4E] text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {t('অফিসিয়াল নোটিশ ও আদেশ', 'Official Notice')}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              {(['SUBMITTED', 'PUBLISHED', 'REJECTED', 'ALL'] as const).map((st) => (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => setContentStatusFilter(st)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer ${
+                    contentStatusFilter === st
+                      ? 'bg-slate-800 text-white shadow-2xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {st === 'SUBMITTED'
+                    ? t('বিচারাধীন (Awaiting)', 'Awaiting Approval')
+                    : st === 'PUBLISHED'
+                    ? t('প্রকাশিত', 'Published')
+                    : st === 'REJECTED'
+                    ? t('প্রত্যাখ্যাত', 'Rejected')
+                    : t('সকল', 'All')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Reviewable Items Table */}
+          <div className="panel p-0 bg-white border border-slate-200 overflow-hidden shadow-xs">
+            {managedContentLoading ? (
+              <div className="p-12 text-center text-slate-400 text-xs flex items-center justify-center gap-2">
+                <RefreshCw className="w-4 h-4 animate-spin text-[#006A4E]" />
+                <span>{t('লোড হচ্ছে...', 'Loading review queue...')}</span>
+              </div>
+            ) : managedContent.filter((c) => (contentStatusFilter === 'ALL' ? true : c.status === contentStatusFilter)).length === 0 ? (
+              <div className="p-12 text-center text-slate-500 text-xs">
+                {t('বর্তমানে অনুমোদনের জন্য কোনো বিচারাধীন খসড়া নেই।', 'No submitted content awaiting approval.')}
+              </div>
+            ) : (
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                    <th className="p-3 font-bold">#</th>
+                    <th className="p-3 font-bold">{t('শিরোনাম (বাংলা / ইংরেজি)', 'Title')}</th>
+                    <th className="p-3 font-bold">{t('প্রণয়নকারী', 'Author')}</th>
+                    <th className="p-3 font-bold">{t('স্ট্যাটাস', 'Status')}</th>
+                    <th className="p-3 font-bold">{t('তারিখ', 'Date')}</th>
+                    <th className="p-3 font-bold text-right">{t('অনুমোদন কার্যক্রম', 'Decision')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {managedContent
+                    .filter((c) => (contentStatusFilter === 'ALL' ? true : c.status === contentStatusFilter))
+                    .map((item, idx) => (
+                      <tr key={item.id || idx} className="hover:bg-slate-50/70 transition">
+                        <td className="p-3 font-mono text-[11px] text-slate-400">#{item.id}</td>
+                        <td className="p-3">
+                          <div className="font-bold text-slate-900">{item.title_bn}</div>
+                          <div className="text-[11px] text-slate-500 font-normal">{item.title_en}</div>
+                        </td>
+                        <td className="p-3 text-slate-700 font-medium">
+                          {item.author_name_bn || `User #${item.created_by_user_id || '1'}`}
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                              item.status === 'PUBLISHED'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : item.status === 'SUBMITTED'
+                                ? 'bg-amber-100 text-amber-800'
+                                : item.status === 'REJECTED'
+                                ? 'bg-rose-100 text-rose-800'
+                                : 'bg-slate-100 text-slate-700'
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-slate-500 text-[11px]">
+                          {item.created_at ? toBanglaDigits(item.created_at.substring(0, 10), lang) : '—'}
+                        </td>
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedContentPreview(item)}
+                            className="px-3 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold transition cursor-pointer flex items-center gap-1.5 ml-auto text-xs shadow-2xs"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>{t('পর্যালোচনা ও সিদ্ধান্ত', 'Review & Decide')}</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Decision & Inspection Modal */}
+          {selectedContentPreview && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
+              <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 my-8">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-[#006A4E]" />
+                    <span>{t('খসড়া পর্যালোচনা ও প্রকাশনা সিদ্ধান্ত', 'Content Review & Publication Decision')}</span>
+                  </h3>
+                  <button onClick={() => setSelectedContentPreview(null)} className="text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+
+                {/* Self-approval Warning if Author is current user */}
+                {Number(selectedContentPreview.created_by_user_id) === Number(user?.id) && (
+                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>
+                      {t(
+                        'স্ব-অনুমোদন নীতি লঙ্ঘন: আপনি নিজে এই কন্টেন্টের প্রণয়নকারী হওয়ায় এটি অনুমোদন করতে পারবেন না। অন্য কোনো অ্যাপ্রুভার এটি সিদ্ধান্ত নিবেন।',
+                        'Maker cannot check own work. You drafted this item, so another authorized approver must decide.'
+                      )}
+                    </span>
+                  </div>
+                )}
+
+                <div className="space-y-3 text-xs">
+                  <div className="p-3.5 rounded-xl bg-slate-50 space-y-1">
+                    <div className="font-extrabold text-base text-slate-900">{selectedContentPreview.title_bn}</div>
+                    <div className="text-slate-600 font-semibold">{selectedContentPreview.title_en}</div>
+                    <div className="text-[11px] text-slate-400 pt-1 font-mono">
+                      {t('প্রণয়নকারী: ', 'Author: ')} {selectedContentPreview.author_name_bn || `@user_${selectedContentPreview.created_by_user_id}`} · {selectedContentPreview.status}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="font-bold text-slate-700">{t('বিস্তারিত বাংলা বিবরণ:', 'Bangla Content:')}</div>
+                    <p className="whitespace-pre-wrap text-slate-800 leading-relaxed bg-white p-3.5 rounded-xl border border-slate-200 max-h-48 overflow-y-auto">
+                      {selectedContentPreview.body_bn}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="font-bold text-slate-700">{t('বিস্তারিত ইংরেজি বিবরণ:', 'English Content:')}</div>
+                    <p className="whitespace-pre-wrap text-slate-800 leading-relaxed bg-white p-3.5 rounded-xl border border-slate-200 max-h-48 overflow-y-auto">
+                      {selectedContentPreview.body_en}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedContentPreview(null)}
+                    className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 transition"
+                  >
+                    {t('বন্ধ করুন', 'Close')}
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleTransitionContent(selectedContentPreview.id, contentKind, 'REJECTED')}
+                      className="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 font-bold text-xs transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <ThumbsDown className="w-3.5 h-3.5" />
+                      <span>{t('প্রত্যাখ্যান / সংশোধন ফেরত', 'Reject & Remand')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={Number(selectedContentPreview.created_by_user_id) === Number(user?.id)}
+                      onClick={() => handleTransitionContent(selectedContentPreview.id, contentKind, 'PUBLISHED')}
+                      className="px-5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-xs flex items-center gap-1.5"
+                    >
+                      <ThumbsUp className="w-3.5 h-3.5" />
+                      <span>{t('অনুমোদন ও গেজেট প্রকাশ', 'Approve & Publish')}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUBTAB: MARKETPLACE MODERATION (platform_moderator, admin, system_admin) */}
+      {/* ========================================================================= */}
+      {(subTab === 'marketplace' || subTab === 'marketplace_moderation') && (
+        <div className="space-y-6 animate-rise">
+          {moderationActionNotice && (
+            <div
+              role="alert"
+              className={`p-3.5 rounded-xl text-xs font-bold border flex items-center justify-between ${
+                moderationActionNotice.err ? 'bg-rose-50 border-rose-300 text-rose-800' : 'bg-emerald-50 border-emerald-300 text-emerald-800'
+              }`}
+            >
+              <span>{moderationActionNotice.msg}</span>
+              <button onClick={() => setModerationActionNotice(null)} className="text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+          )}
+
+          <header className="page-intro">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <Megaphone className="w-6 h-6 text-[#006A4E]" />
+                  <span>{t('জমি বিক্রয় মার্কেটপ্লেস ও লিস্টিং মডারেশন', 'Land Marketplace & Listing Moderation')}</span>
+                </h1>
+                <p className="text-xs text-slate-600 mt-1">
+                  {t(
+                    'নাগরিকদের প্রস্তাবিত জমি বিক্রয় তালিকার সত্যতা নিরীক্ষা, প্রতারণামূলক বিজ্ঞাপন আনলিস্ট ও মার্কেটপ্লেস সুরক্ষা।',
+                    'Moderate public land sale listings, prevent fraudulent advertisements, and control platform visibility.'
+                  )}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1.5 rounded-full text-xs font-bold border border-emerald-300 bg-emerald-50 text-emerald-900">
+                  {toBanglaDigits(moderationList.length, lang)} {t('টি তালিকাভুক্ত বিজ্ঞাপন', 'Active Listings')}
+                </span>
+              </div>
+            </div>
+          </header>
+
+          {/* Filter Bar */}
+          <div className="panel p-3 bg-white border border-slate-200 shadow-xs flex items-center gap-2">
+            <span className="text-xs font-bold text-slate-500">{t('স্ট্যাটাস ফিল্টার:', 'Status:')}</span>
+            {(['ALL', 'ACTIVE', 'SUSPENDED'] as const).map((st) => (
+              <button
+                key={st}
+                type="button"
+                onClick={() => setModerationFilter(st)}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  moderationFilter === st
+                    ? 'bg-[#006A4E] text-white shadow-2xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {st === 'ALL' ? t('সকল', 'All') : st === 'ACTIVE' ? t('সক্রিয় (Active)', 'Active') : t('স্থগিত (Suspended)', 'Suspended')}
+              </button>
+            ))}
+          </div>
+
+          {/* Listings Table */}
+          <div className="panel p-0 bg-white border border-slate-200 overflow-hidden shadow-xs">
+            {moderationLoading ? (
+              <div className="p-12 text-center text-slate-400 text-xs flex items-center justify-center gap-2">
+                <RefreshCw className="w-4 h-4 animate-spin text-[#006A4E]" />
+                <span>{t('লিস্টিং লোড হচ্ছে...', 'Loading listings...')}</span>
+              </div>
+            ) : moderationList.filter((l) => moderationFilter === 'ALL' || l.status === moderationFilter).length === 0 ? (
+              <div className="p-12 text-center text-slate-500 text-xs">
+                {t('কোনো বিজ্ঞাপন পাওয়া যায়নি।', 'No listings found.')}
+              </div>
+            ) : (
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                    <th className="p-3 font-bold">#</th>
+                    <th className="p-3 font-bold">{t('লিস্টিং কোড', 'Listing Code')}</th>
+                    <th className="p-3 font-bold">{t('দাগ নং', 'Plot Dag')}</th>
+                    <th className="p-3 font-bold">{t('প্রস্তাবিত মূল্য (টাকা)', 'Asking Price (BDT)')}</th>
+                    <th className="p-3 font-bold">{t('বিবরণ', 'Description')}</th>
+                    <th className="p-3 font-bold">{t('স্ট্যাটাস', 'Status')}</th>
+                    <th className="p-3 font-bold text-right">{t('মডারেশন সিদ্ধান্ত', 'Action')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {moderationList
+                    .filter((l) => moderationFilter === 'ALL' || l.status === moderationFilter)
+                    .map((item, idx) => (
+                      <tr key={item.id || idx} className="hover:bg-slate-50/70 transition">
+                        <td className="p-3 font-mono text-[11px] text-slate-400">{item.id}</td>
+                        <td className="p-3 font-mono font-bold text-[#006A4E]">{item.listing_code}</td>
+                        <td className="p-3 font-bold text-slate-800">{toBanglaDigits(item.dag_no, lang)}</td>
+                        <td className="p-3 font-extrabold text-slate-900">
+                          ৳ {toBanglaDigits(Number(item.asking_price_bdt || 0).toLocaleString(), lang)}
+                        </td>
+                        <td className="p-3 text-slate-600 max-w-[260px] truncate" title={item.description_bn || item.description_en}>
+                          {item.description_bn || item.description_en || '—'}
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                              item.status === 'ACTIVE'
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                : 'bg-rose-100 text-rose-800 border border-rose-300'
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right">
+                          {item.status === 'ACTIVE' ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm(lang === 'bn' ? 'বিজ্ঞাপনটি সাময়িক স্থগিত করতে চান?' : 'Suspend listing?')) {
+                                  handleTransitionListing(item.id, 'SUSPENDED');
+                                }
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 font-bold transition cursor-pointer text-xs flex items-center gap-1 ml-auto"
+                            >
+                              <Ban className="w-3.5 h-3.5" />
+                              <span>{t('স্থগিত করুন', 'Suspend')}</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleTransitionListing(item.id, 'ACTIVE')}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#006A4E] border border-emerald-300 font-bold transition cursor-pointer text-xs flex items-center gap-1 ml-auto"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>{t('সক্রিয় করুন', 'Activate')}</span>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUPER ADMIN WORKSPACE: CITIZEN SERVICE APPLICATIONS (TRANSFERS)           */}
+      {/* ========================================================================= */}
+      {subTab === 'transfers' && (
+        <SuperAdminTransfersTab
+          transfers={transfersList}
+          usersList={usersList}
+          officesList={officesList}
+          onRefresh={refreshAll}
+          onOpenOverride={(type: string, id: string | number, extra?: any) => {
+            setOverrideModal({
+              isOpen: true,
+              actionType: type,
+              targetId: id,
+              extraContext: extra,
+            });
+          }}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUPER ADMIN WORKSPACE: e-MUTATION & RECORD RECONCILIATION                 */}
+      {/* ========================================================================= */}
+      {subTab === 'mutations' && (
+        <SuperAdminMutationsTab
+          mutations={mutationsList}
+          onRefresh={refreshAll}
+          onOpenOverride={(type: string, id: string | number, extra?: any) => {
+            setOverrideModal({
+              isOpen: true,
+              actionType: type,
+              targetId: id,
+              extraContext: extra,
+            });
+          }}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUPER ADMIN WORKSPACE: FIELD VERIFICATION & SURVEYOR SLA                  */}
+      {/* ========================================================================= */}
+      {subTab === 'field_verification' && (
+        <SuperAdminFieldVerificationTab
+          fieldReports={fieldReportsList}
+          slaDispatches={slaDispatchesList}
+          onRefresh={refreshAll}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUPER ADMIN WORKSPACE: BANK LIENS, RELEASES & NOC                         */}
+      {/* ========================================================================= */}
+      {subTab === 'bank_liens' && (
+        <SuperAdminBankLiensTab
+          mortgages={allMortgages}
+          onRefresh={refreshAll}
+          onOpenOverride={(type: string, id: string | number, extra?: any) => {
+            setOverrideModal({
+              isOpen: true,
+              actionType: type,
+              targetId: id,
+              extraContext: extra,
+            });
+          }}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUPER ADMIN WORKSPACE: APPEALS & CIVIL COURT DOCUMENTS                    */}
+      {/* ========================================================================= */}
+      {subTab === 'appeals' && (
+        <SuperAdminAppealsTab
+          appeals={appealsList}
+          disputes={allDisputes}
+          onRefresh={refreshAll}
+          onOpenOverride={(type: string, id: string | number, extra?: any) => {
+            setOverrideModal({
+              isOpen: true,
+              actionType: type,
+              targetId: id,
+              extraContext: extra,
+            });
+          }}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* SUPER ADMIN WORKSPACE: DC LAND ACQUISITION (LA)                           */}
+      {/* ========================================================================= */}
+      {subTab === 'acquisitions' && (
+        <SuperAdminAcquisitionsTab
+          acquisitionCases={acquisitionCasesList}
+          onRefresh={refreshAll}
+          onOpenOverride={(type: string, id: string | number, extra?: any) => {
+            setOverrideModal({
+              isOpen: true,
+              actionType: type,
+              targetId: id,
+              extraContext: extra,
+            });
+          }}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* MASTER ADMINISTRATIVE OVERRIDE CONSOLE MODAL                             */}
+      {/* ========================================================================= */}
+      <SuperAdminOverrideModal
+        isOpen={overrideModal.isOpen}
+        actionType={overrideModal.actionType}
+        targetId={overrideModal.targetId}
+        extraContext={overrideModal.extraContext}
+        onClose={() => setOverrideModal((prev) => ({ ...prev, isOpen: false }))}
+        onSuccess={() => {
+          refreshAll();
+        }}
+      />
     </div>
   );
 };

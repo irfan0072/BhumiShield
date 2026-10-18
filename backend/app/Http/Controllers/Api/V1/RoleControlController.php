@@ -52,8 +52,8 @@ final class RoleControlController
                 'role' => $user['role'],
                 'office_bn' => $user['office_bn'],
                 'office_en' => $user['office_en'],
-                'phone_dummy' => $user['phone_dummy'] ?? '01700-001001',
-                'nid' => $user['nid'] ?? '9900001001',
+                'phone_dummy' => $user['phone_dummy'] ?? '',
+                'nid' => $user['nid'] ?? '',
                 'is_active' => (int) ($user['is_active'] ?? 1),
                 'permissions' => $matrix[$user['role']]['permissions'] ?? [],
             ],
@@ -100,8 +100,18 @@ final class RoleControlController
         $isAdmin = ($actor['role'] ?? '') === 'admin';
         $actorNid = (string) ($actor['nid'] ?? '');
 
-        // If not admin, verify that the citizen is verified and owns this plot
+        // If not admin, verify that the plot is not administratively frozen
         if (!$isAdmin) {
+            if (!empty($plot['is_admin_frozen'])) {
+                $reason = $plot['admin_freeze_reason'] ?: 'আদালত বা তদন্ত স্থগিতাদেশ';
+                throw new \RuntimeException(json_encode([
+                    'status' => 403,
+                    'code' => 'PLOT_ADMINISTRATIVELY_FROZEN',
+                    'message_bn' => "এই দাগে কেন্দ্রীয় প্রশাসনিক স্থগিতাদেশ কার্যকর রয়েছে ({$reason})। বিক্রয় লক পরিবর্তন বা লেনদেন সম্ভব নয়।",
+                    'message_en' => 'This plot is under central administrative freeze by Super Admin. Cannot modify sale lock.',
+                ], JSON_UNESCAPED_UNICODE));
+            }
+
             if (((int) ($actor['is_identity_verified'] ?? 1)) === 0) {
                 throw new \RuntimeException(json_encode([
                     'status' => 403,
@@ -215,7 +225,7 @@ final class RoleControlController
     public static function createDispute(array $req, ?array $user = null): array
     {
         $actor = RoleMiddleware::authorize(['citizen', 'sub_registrar', 'ac_land', 'admin'], $user);
-        $plotId = (int) ($req['plot_id'] ?? 1);
+        $plotId = (int) ($req['plot_id'] ?? 0);
         $plot = DB::selectOne('SELECT * FROM plots WHERE id = ?', [$plotId]);
         if (!$plot) {
             throw new \RuntimeException(json_encode([
@@ -230,7 +240,7 @@ final class RoleControlController
         $caseNo = 'DISP-2026-' . (301 + $cnt);
         $nowIso = gmdate('c');
         $nameBn = trim((string) ($req['complainant_name_bn'] ?? ($actor['full_name_bn'] ?? 'নাগরিক অভিযোগকারী')));
-        $nid = trim((string) ($req['complainant_nid'] ?? ($actor['nid'] ?? '9900001001')));
+        $nid = trim((string) ($req['complainant_nid'] ?? ($actor['nid'] ?? '')));
         $dtype = trim((string) ($req['dispute_type'] ?? 'OWNERSHIP_CLAIM'));
         $descBn = trim((string) ($req['description_bn'] ?? 'মালিকানা ও সীমানা সংক্রান্ত আপত্তি দাখিল।'));
         $descEn = trim((string) ($req['description_en'] ?? $descBn));

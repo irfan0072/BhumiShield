@@ -1,0 +1,126 @@
+Browser tab: 5, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:5175/en/acland".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/acland
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা Central Admin OS
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text Central Admin OS
+			8 button Toggle Sidebar
+				9 image
+			10 text Field Verification Officer Union Land Office • Possession & LD Tax Verification
+			11 container Sidebar Navigation
+				12 text MENU
+				13 button Field Possession Inspection
+					14 image
+					15 text Field Possession Inspection
+				16 button Pending Verification Cases
+					17 image
+					18 text Pending Verification Cases
+				19 button Cadastral Boundary Lookup
+					20 image
+					21 text Cadastral Boundary Lookup
+				22 button Verify Deed
+					23 image
+					24 text Verify Deed
+			25 button Public Portal
+				26 image
+				27 text Public Portal
+			28 button Sign Out
+				29 image
+				30 text Sign Out
+		31 container
+			32 button Home
+				33 image
+				34 text Home
+			35 text / Field Verification Officer
+			36 text field (settable)
+			37 image
+			38 button বাং
+			39 button Contrast
+				40 image
+			41 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				42 text ম
+				43 text মো. জাহাঙ্গীর আলম (ফিল্ড ভেরিফিকেশন অফিসার)
+				44 text Field Verification Officer
+				45 image
+		46 container
+			47 text Upazila Land Office / AC Land Tribunal & Mutation Workbench
+			48 heading Assistant Commissioner (Land) Tribunal & e-Mutation Workbench, Value: 1
+				49 image
+				50 text Assistant Commissioner (Land) Tribunal & e-Mutation Workbench
+			51 text Adjudicate e-mutations, reconcile khatian discrepancies, resolve land ownership disputes, and supervise field inspections.
+			52 button Refresh
+				53 image
+				54 text Refresh
+			55 image
+			56 text Field Verification Officer PENDING MUTATIONS
+			57 image
+			58 text 2 Awaiting hearing & order APPROVED MUTATIONS
+			59 image
+			60 text 1 New khatians created FLAGGED KHATIANS
+			61 image
+			62 text 0 Reconciliation needed OWNERSHIP DISPUTES
+			63 image
+			64 text 0 Active objections
+			65 button e-Mutation Workbench 2
+				66 image
+				67 text e-Mutation Workbench
+				68 text 2
+			69 button Record Discrepancies 0
+				70 image
+				71 text Record Discrepancies
+				72 text 0
+			73 button Objections & Court 0
+				74 image
+				75 text Objections & Court
+				76 text 0
+			77 button Field Reports 2
+				78 image
+				79 text Field Reports
+				80 text 2
+			81 button SLA Escalations 3
+				82 image
+				83 text SLA Escalations
+				84 text 3
+			85 button Appeals Tribunal
+				86 image
+				87 text Appeals Tribunal
+			88 button Khatian Explorer
+				89 image
+				90 text Khatian Explorer
+			91 text On-site surveyor and kanungo inspection reports for possession and boundary verification.
+			92 button Submit Inspection Report
+				93 image
+				94 text Submit Inspection Report
+			95 image
+			96 text দাগ নং  106  ·  মৌজা রেকর্ড 10/17/2026
+			97 image
+			98 text দাগ নং  101  ·  মৌজা রেকর্ড 10/17/2026
+		99 container
+			100 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			101 content list
+				102 button Check Before Buy
+				103 button Land Sale Marketplace
+				104 button Cadastral Mouza Map
+				105 button Verify Deed QR Code
+				106 button Official Noticeboard
+				107 button Land Literacy Blog
+				108 button Offices & Service Points
+				109 button Citizen Sale Lock Vault
+			110 text Workspaces
+			111 content list
+				112 button Sub-Registrar Panel
+				113 button AC Land Tribunal
+				114 button Bank Lien & NOC
+				115 button National Ledger & Audit
+			116 text Support & Helpline
+			117 content list
+				118 text Land Service Call Center: 16122
+				119 text Ministry of Land (Official service hours)
+				120 text Check official service hours
+				121 button Frequently Asked Questions
+				122 button Bangladeshi Land Glossary
+			123 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved. Synthetic data environment / সিনথেটিক ডেটা পরিবেশ
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/acland

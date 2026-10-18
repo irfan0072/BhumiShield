@@ -1,0 +1,176 @@
+Browser tab: 5, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://localhost:5175/en/acland".
+1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/acland
+	2 container root
+		3 container
+			4 button ভূ ভূমি সুরক্ষা Central Admin OS
+				5 text ভূ
+				6 text ভূমি সুরক্ষা
+				7 text Central Admin OS
+			8 button Toggle Sidebar
+				9 image
+			10 text AC Land Panel Upazila Land Office • Ministry of Land
+			11 container Sidebar Navigation
+				12 text MENU
+				13 button e-Mutation Queue (Approval)
+					14 image
+					15 text e-Mutation Queue (Approval)
+				16 button Khatian Reconciliation
+					17 image
+					18 text Khatian Reconciliation
+				19 button Dispute Tribunal
+					20 image
+					21 text Dispute Tribunal
+				22 button Approve Staging Batches
+					23 image
+					24 text Approve Staging Batches
+				25 button Khatian Explorer
+					26 image
+					27 text Khatian Explorer
+				28 button Verify Deed
+					29 image
+					30 text Verify Deed
+			31 button Public Portal
+				32 image
+				33 text Public Portal
+			34 button Sign Out
+				35 image
+				36 text Sign Out
+		37 container
+			38 button Home
+				39 image
+				40 text Home
+			41 text / AC Land Panel
+			42 text field (settable)
+			43 image
+			44 button বাং
+			45 button Contrast
+				46 image
+			47 pop up button (collapsed) Description: User profile and settings menu, Secondary Actions: Expand
+				48 text ত
+				49 text তানভীর আহমেদ (সহকারী কমিশনার - ভূমি)
+				50 text AC Land Panel
+				51 image
+		52 container
+			53 text Upazila Land Office / AC Land Tribunal & Mutation Workbench
+			54 heading Assistant Commissioner (Land) Tribunal & e-Mutation Workbench, Value: 1
+				55 image
+				56 text Assistant Commissioner (Land) Tribunal & e-Mutation Workbench
+			57 text Adjudicate e-mutations, reconcile khatian discrepancies, resolve land ownership disputes, and supervise field inspections.
+			58 button (disabled) Refresh
+				59 image
+				60 text Refresh
+			61 image
+			62 text AC Land Magistrate PENDING MUTATIONS
+			63 image
+			64 text 0 Awaiting hearing & order APPROVED MUTATIONS
+			65 image
+			66 text 0 New khatians created FLAGGED KHATIANS
+			67 image
+			68 text 0 Reconciliation needed OWNERSHIP DISPUTES
+			69 image
+			70 text 0 Active objections
+			71 button e-Mutation Workbench 0
+				72 image
+				73 text e-Mutation Workbench
+				74 text 0
+			75 button Record Discrepancies 0
+				76 image
+				77 text Record Discrepancies
+				78 text 0
+			79 button Objections & Court 0
+				80 image
+				81 text Objections & Court
+				82 text 0
+			83 button Field Reports 0
+				84 image
+				85 text Field Reports
+				86 text 0
+			87 button SLA Escalations 0
+				88 image
+				89 text SLA Escalations
+				90 text 0
+			91 button Appeals Tribunal
+				92 image
+				93 text Appeals Tribunal
+			94 button Khatian Explorer
+				95 image
+				96 text Khatian Explorer
+			97 image
+			98 text UNIVERSAL HIERARCHY & CASE FILTER
+			99 image
+			100 text Division
+			101 pop up button (disabled, collapsed, settable) Value: All Divisions, Secondary Actions: Expand
+				102 menu
+					103 (selected) All Divisions
+			104 text District
+			105 pop up button (disabled, collapsed, settable) Value: All Districts, Secondary Actions: Expand
+				106 menu
+					107 (selected) All Districts
+			108 text Upazila / Thana
+			109 pop up button (disabled, collapsed, settable) Value: All Upazilas, Secondary Actions: Expand
+				110 menu
+					111 (selected) All Upazilas
+			112 text Mouza & J.L. No
+			113 pop up button (disabled, collapsed, settable) Value: All Mouzas, Secondary Actions: Expand
+				114 menu
+					115 (disabled) All Mouzas
+			116 text Search Case No, Dag, Applicant, Deed
+			117 image
+			118 text field (settable)
+			119 text Status Filter
+			120 pop up button (collapsed, settable) Value: All Mutations, Secondary Actions: Expand
+				121 menu
+					122 (selected) All Mutations
+					123 Pending Hearing
+					124 Approved
+					125 Rejected
+			126 image
+			127 text e-Mutation Cases Table 0 Cases Click eye icon to inspect docket & order
+			128 table
+				129 row
+					130 cell
+						131 text #
+					132 cell
+						133 text CASE NO & DATE
+					134 cell
+						135 text APPLICANT / BUYER
+					136 cell
+						137 text MOUZA & DAG NO
+					138 cell
+						139 text AREA & SHARE
+					140 cell
+						141 text PROVENANCE DEED
+					142 cell
+						143 text STATUS
+					144 cell
+						145 text ACTION
+				146 row
+					147 cell
+						148 text No mutation records match your search.
+		149 container
+			150 text ভূ BhumiShield Land Registry Trust & Verification Prototype BhumiShield is an independent LandTech 2026 innovation prototype. Official land services are governed by respective government portals. Ed25519 • SHA-256 Hash Chain Services
+			151 content list
+				152 button Check Before Buy
+				153 button Land Sale Marketplace
+				154 button Cadastral Mouza Map
+				155 button Verify Deed QR Code
+				156 button Official Noticeboard
+				157 button Land Literacy Blog
+				158 button Offices & Service Points
+				159 button Citizen Sale Lock Vault
+			160 text Workspaces
+			161 content list
+				162 button Sub-Registrar Panel
+				163 button AC Land Tribunal
+				164 button Bank Lien & NOC
+				165 button National Ledger & Audit
+			166 text Support & Helpline
+			167 content list
+				168 text Land Service Call Center: 16122
+				169 text Ministry of Land (Official service hours)
+				170 text Check official service hours
+				171 button Frequently Asked Questions
+				172 button Bangladeshi Land Glossary
+			173 text © 2026 BhumiShield · LandTech Hackathon Innovation. All rights reserved. Synthetic data environment / সিনথেটিক ডেটা পরিবেশ
+
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: localhost:5175/en/acland

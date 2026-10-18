@@ -174,9 +174,11 @@ final class RbacService
     ];
 
     /**
-     * Permission Matrix defined in Section 4.4.
+     * Permission Matrix defined in Section 4.4 and Super Admin 16-Module 3-Tier Governance.
+     * Enforces explicit role bindings without wildcards.
      */
     public const PERMISSION_MATRIX = [
+        // Statutory core permissions
         'ownership.approve' => ['ac_land'],
         'deed.register' => ['sub_registrar'],
         'transfer.start' => ['citizen'],
@@ -190,14 +192,91 @@ final class RbacService
         'lien.prepare' => ['bank_officer'],
         'lien.approve' => ['bank_manager'],
         'listing.create' => ['citizen'],
-        'listing.moderate' => ['platform_moderator', 'ac_land'],
-        'ticket.triage' => ['support_agent'],
-        'ticket.resolve_general' => ['support_agent'],
+        'listing.moderate' => ['platform_moderator', 'ac_land', 'admin', 'system_admin'],
+        'ticket.triage' => ['support_agent', 'admin', 'system_admin'],
+        'ticket.resolve_general' => ['support_agent', 'admin', 'system_admin'],
         'ticket.resolve_record' => ['sub_registrar', 'ac_land', 'settlement_checker'],
-        'notice.draft' => ['content_editor'],
-        'notice.publish' => ['content_approver'],
+        'notice.draft' => ['content_editor', 'admin', 'system_admin'],
+        'notice.publish' => ['content_approver', 'admin', 'system_admin'],
         'rules.configure' => ['system_admin'],
-        'audit.view' => ['auditor', 'system_admin'],
+        'audit.view' => ['auditor', 'system_admin', 'admin'],
+
+        // Super Admin 16 Modules 3-Tier Granular Permissions (No Wildcards)
+        // 1. Overview & Pending Actions
+        'admin.overview.view' => ['admin', 'system_admin'],
+
+        // 2. Users, Roles & Office Assignments
+        'admin.users.view' => ['admin', 'system_admin', 'auditor'],
+        'admin.users.manage' => ['admin', 'system_admin'],
+        'admin.users.transfer_office' => ['admin', 'system_admin'],
+        'admin.roles.manage' => ['system_admin'],
+
+        // 3. Citizen Service Applications (Transfers)
+        'admin.transfers.view' => ['admin', 'system_admin', 'auditor', 'support_agent'],
+        'admin.transfers.manage' => ['admin', 'system_admin'],
+        'admin.transfers.reassign' => ['admin', 'system_admin'],
+        'admin.transfers.correction_request' => ['admin', 'system_admin'],
+
+        // 4. Registration & Deeds
+        'admin.deeds.view' => ['admin', 'system_admin', 'auditor', 'sub_registrar'],
+        'admin.deeds.hold' => ['admin', 'system_admin'],
+        'admin.deeds.flag' => ['admin', 'system_admin'],
+
+        // 5. Mutation & Ownership Records
+        'admin.mutations.view' => ['admin', 'system_admin', 'auditor', 'uno_supervisor'],
+        'admin.mutations.manage' => ['admin', 'system_admin'],
+        'admin.khatians.reconcile' => ['ac_land', 'admin', 'system_admin'],
+
+        // 6. Field Verification
+        'admin.field_verification.view' => ['admin', 'system_admin', 'auditor', 'ac_land'],
+        'admin.field_verification.assign' => ['admin', 'system_admin', 'ac_land'],
+
+        // 7. Survey Records & Maker/Checker
+        'admin.survey.view' => ['admin', 'system_admin', 'auditor', 'settlement_checker'],
+        'admin.survey.manage' => ['admin', 'system_admin'],
+
+        // 8. Bank Liens & Releases
+        'admin.mortgages.view' => ['admin', 'system_admin', 'auditor', 'bank_manager', 'bank_officer'],
+
+        // 9. Appeals & Court Documents
+        'admin.appeals.view' => ['admin', 'system_admin', 'auditor', 'appellate_reviewer'],
+        'admin.appeals.manage' => ['admin', 'system_admin'],
+        'admin.disputes.view' => ['admin', 'system_admin', 'auditor', 'lawyer_court_user'],
+        'admin.disputes.resolve' => ['ac_land', 'admin', 'system_admin'],
+
+        // 10. Acquisition Cases
+        'admin.acquisition.view' => ['admin', 'system_admin', 'dc_acquisition_officer', 'auditor'],
+        'admin.acquisition.manage' => ['admin', 'system_admin', 'dc_acquisition_officer'],
+
+        // 11. Marketplace Moderation
+        'admin.listings.view' => ['admin', 'system_admin', 'platform_moderator'],
+        'admin.listings.moderate' => ['platform_moderator', 'admin', 'system_admin'],
+
+        // 12. Support Tickets
+        'admin.tickets.view' => ['admin', 'system_admin', 'support_agent'],
+        'admin.tickets.reply' => ['support_agent', 'admin', 'system_admin'],
+        'admin.tickets.assign' => ['admin', 'system_admin', 'support_agent'],
+
+        // 13. Notices & Content Approval
+        'admin.notices.view' => ['admin', 'system_admin', 'content_editor', 'content_approver'],
+        'admin.notices.manage' => ['admin', 'system_admin', 'content_editor'],
+        'admin.notices.publish' => ['content_approver', 'admin', 'system_admin'],
+
+        // 14. Offices & Service Configuration
+        'admin.offices.view' => ['admin', 'system_admin'],
+        'admin.offices.manage' => ['admin', 'system_admin'],
+        'admin.services.manage' => ['admin', 'system_admin'],
+
+        // 15. Integrations & Failed Deliveries
+        'admin.integrations.view' => ['admin', 'system_admin'],
+        'admin.integrations.retry' => ['system_admin', 'admin'],
+
+        // 16. Audit Logs, Reports & Security Overrides
+        'admin.audit.view' => ['auditor', 'system_admin', 'admin'],
+        'admin.audit.export' => ['system_admin', 'admin'],
+        'admin.security.freeze_plot' => ['system_admin', 'admin'],
+        'admin.security.override' => ['system_admin'],
+        'admin.security.backup' => ['system_admin'],
     ];
 
     /**
