@@ -1,0 +1,29 @@
+PASS AC Land can review ownership without editing survey-office geometry
+PASS Reject OWNER_AREA_MISMATCH
+PASS Reject INVALID_OWNER_SHARE
+PASS Reject FORBIDDEN_ROLE
+PASS Reject ALLOCATION_DESIGN_MISMATCH
+PASS Reject ALLOCATION_PENDING
+PASS Reject ADMIN_CANNOT_EDIT_LAND_DATA
+PASS Rejected allocation can be corrected and resubmitted
+PASS Reject MAP_OFFICE_SCOPE
+PASS Review queue masks NIDs and excludes raw evidence
+PASS Owner proposal waits for review
+PASS Reject ALLOCATION_PENDING
+PASS Approval creates land record
+PASS Both co-owners allocated atomically
+PASS Exact shares reconcile with parcel area
+PASS Ownership fractions use simple reduced form
+PASS Owner 1 vault contains correct parcel share
+PASS Owner 2 vault contains correct parcel share
+PASS Approval attaches original evidence to document vault
+PASS Co-owner receives exact reviewed evidence bytes
+PASS Reject FORBIDDEN
+PASS Reject FORBIDDEN_SOURCE
+PASS Reject SOURCE_INTEGRITY_FAILED
+PASS Map linked to authoritative plot
+PASS No fabricated deed created
+PASS Reject ALLOCATION_NOT_AVAILABLE
+PASS Geometry revision preserves owner record link
+PASS Owner allocation audited once
+PARCEL ALLOCATION CHECKS: 28 passed

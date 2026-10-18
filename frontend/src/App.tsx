@@ -22,6 +22,7 @@ const OfficeLocatorPage = React.lazy(() => import('./pages/OfficeLocatorPage').t
 const CadastralMapPage = React.lazy(() => import('./pages/CadastralMapPage').then(m => ({ default: m.CadastralMapPage })));
 const ApplicationsPage = React.lazy(() => import('./pages/ApplicationsPage').then(m => ({ default: m.ApplicationsPage })));
 const SpecialistWorkspacePage = React.lazy(() => import('./pages/SpecialistWorkspacePage').then(m => ({ default: m.SpecialistWorkspacePage })));
+const LawyerCaseFilingPage = React.lazy(() => import('./pages/LawyerCaseFilingPage').then(m => ({ default: m.LawyerCaseFilingPage })));
 const NotFoundPage = React.lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
 const getInitialTab = (): string => {
@@ -60,6 +61,7 @@ const getInitialTab = (): string => {
   if (cleanPath.startsWith('/blog')) return 'blog';
   if (cleanPath.startsWith('/map')) return 'map';
   if (cleanPath.startsWith('/offices')) return 'offices';
+  if (cleanPath.startsWith('/lawyer-case') || cleanPath.startsWith('/lawyercase') || cleanPath.startsWith('/lawyer')) return 'lawyer_case';
   if (cleanPath.startsWith('/help')) return 'help';
   if (cleanPath.startsWith('/home') || cleanPath.startsWith('/portal') || cleanPath.startsWith('/my/land') || cleanPath.startsWith('/my/transfers') || cleanPath.startsWith('/my/tickets')) return 'home';
   if (cleanPath.startsWith('/registrar')) return 'registrar';
@@ -70,7 +72,7 @@ const getInitialTab = (): string => {
   if (cleanPath.startsWith('/profile')) return 'profile';
 
   const tabParam = search.get('tab');
-  if (tabParam && ['landing', 'home', 'applications', 'specialist', 'check', 'qr', 'help', 'auth', 'registrar', 'acland', 'bank', 'admin', 'profile', 'sale', 'notices', 'blog', 'map', 'offices'].includes(tabParam)) return tabParam;
+  if (tabParam && ['landing', 'home', 'applications', 'specialist', 'check', 'qr', 'help', 'auth', 'registrar', 'acland', 'bank', 'admin', 'profile', 'sale', 'notices', 'blog', 'map', 'offices', 'lawyer_case'].includes(tabParam)) return tabParam;
   return 'notfound';
 };
 
@@ -142,6 +144,7 @@ export const AppContent: React.FC = () => {
         {activeTab === 'blog' && <EducationalBlogPage />}
         {activeTab === 'map' && <CadastralMapPage onNavigate={setActiveTab} />}
         {activeTab === 'offices' && <OfficeLocatorPage onNavigate={setActiveTab} />}
+        {activeTab === 'lawyer_case' && <LawyerCaseFilingPage onNavigateHome={() => setActiveTab('home')} />}
         {activeTab === 'help' && <HelpPage onNavigate={setActiveTab} />}
         {activeTab === 'auth' && <AuthPage mode="login" onSuccessNavigate={setActiveTab} />}
 

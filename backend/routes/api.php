@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\PublicMarketplaceAndPortalController;
 use App\Http\Controllers\Api\V1\RoleControlController;
 use App\Http\Controllers\Api\V1\ServiceCatalogueController;
 use App\Http\Controllers\Api\V1\SystemAdminController;
+use App\Http\Controllers\Api\V1\LawyerPortalController;
 use App\Http\Controllers\Api\V1\WorkflowController;
 use App\Http\Middleware\RoleMiddleware;
 use App\Services\JwtAuthService;
@@ -134,6 +135,17 @@ return static function (string $method, string $uri, array $query, array $body):
         return SystemAdminController::completeProfile($body);
     }
 
+    // Office-scoped parcel drawing, allocation and independent review.
+    if ($method === 'GET' && $sub === '/map/parcel-designs') return \App\Http\Controllers\Api\V1\ParcelDesignController::items($query,true);
+    if ($method === 'POST' && $sub === '/map-editor/owners') return \App\Http\Controllers\Api\V1\ParcelDesignController::findOwner($body);
+    if ($method === 'GET' && $sub === '/map-editor/allocations') return \App\Http\Controllers\Api\V1\ParcelDesignController::allocations($query);
+    if ($method === 'POST' && preg_match('#^/map-editor/parcels/(\d+)/allocate$#',$sub,$m)) return \App\Http\Controllers\Api\V1\ParcelDesignController::allocate((int)$m[1],$body);
+    if ($method === 'GET' && $sub === '/map-editor/context') return \App\Http\Controllers\Api\V1\ParcelDesignController::context();
+    if ($method === 'POST' && $sub === '/map-editor/assign') return \App\Http\Controllers\Api\V1\ParcelDesignController::assign($body);
+    if ($method === 'GET' && $sub === '/map-editor/parcels') return \App\Http\Controllers\Api\V1\ParcelDesignController::items($query);
+    if ($method === 'POST' && $sub === '/map-editor/parcels') return \App\Http\Controllers\Api\V1\ParcelDesignController::save($body);
+    if ($method === 'POST' && preg_match('#^/map-editor/parcels/(\d+)/decision$#',$sub,$m)) return \App\Http\Controllers\Api\V1\ParcelDesignController::decide((int)$m[1],$body);
+
     // Geographic evidence: published public layers; controlled admin imports/review.
     if ($method === 'GET' && $sub === '/map/workspace') return \App\Http\Controllers\Api\V1\MapWorkspaceController::workspace($query);
     if ($method === 'GET' && $sub === '/map/layers') return \App\Http\Controllers\Api\V1\MapWorkspaceController::layers($query);
@@ -193,6 +205,14 @@ return static function (string $method, string $uri, array $query, array $body):
     }
     if ($method === 'GET' && preg_match('#^/plots/([^/]+)$#', $sub, $m)) {
         return WorkflowController::getPlotDetails(urldecode($m[1]));
+    }
+
+    // 3a-2. Alternative Lawyer Case Filing Portal & License Verification
+    if ($method === 'POST' && ($sub === '/lawyers/verify' || $sub === '/lawyer/verify')) {
+        return LawyerPortalController::verifyLawyer($body);
+    }
+    if ($method === 'POST' && ($sub === '/lawyers/file-case' || $sub === '/lawyer/file-case')) {
+        return LawyerPortalController::fileCase($body);
     }
 
     // 3b. 13-Step Transfer State Machine Routes (Section 5)
@@ -560,6 +580,23 @@ return static function (string $method, string $uri, array $query, array $body):
     if (($method === 'POST' || $method === 'PUT') && ($sub === '/document-security-config' || $sub === '/admin/document-security-config')) {
         $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
         return SystemAdminController::updateDocumentSecurityConfig($body, $actor);
+    }
+
+    // Admin Authorized Lawyers Directory CRUD
+    if ($method === 'GET' && ($sub === '/admin/lawyers' || $sub === '/lawyers')) {
+        return LawyerPortalController::listAdminLawyers($query);
+    }
+    if ($method === 'POST' && ($sub === '/admin/lawyers' || $sub === '/lawyers')) {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
+        return LawyerPortalController::createAdminLawyer($body, $actor);
+    }
+    if ($method === 'PUT' && preg_match('#^/admin/lawyers/(\d+)$#', $sub, $m)) {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
+        return LawyerPortalController::updateAdminLawyer((int) $m[1], $body, $actor);
+    }
+    if ($method === 'DELETE' && preg_match('#^/admin/lawyers/(\d+)$#', $sub, $m)) {
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
+        return LawyerPortalController::deleteAdminLawyer((int) $m[1], $actor);
     }
 
     if ($method === 'GET' && $sub === '/opening-records') return \App\Http\Controllers\Api\V1\OpeningRecordController::list();

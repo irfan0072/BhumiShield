@@ -1,0 +1,151 @@
+Browser tab: 6, Title: "ভূমি সুরক্ষা (BhumiShield) — LandTech 2026", URL: "http://127.0.0.1:5190/bn/home?section=plots".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+Removed element IDs: 38
++		64 container
++			65 container
++				66 image
++				67 image
++				68 text নাগরিক ভূমি সেবা ও সুরক্ষা ভল্ট
++				69 image
++				70 text এনআইডি যাচাইকৃত
++				71 heading মো. রফিকুল ইসলাম (নাগরিক), Value: 1
++					72 text মো. রফিকুল ইসলাম (নাগরিক)
++				73 text এনআইডি : ৯৯০০০০১০০১ • মোবাইল : ০১৭০০-০০১০০১ •
++				74 image
++				75 text জরুরি কল: ১৬১২২
++				76 button আপনার কী সাহায্য দরকার?
++					77 image
++					78 text আপনার কী সাহায্য দরকার?
++				79 button রিফ্রেশ
++					80 image
++					81 text রিফ্রেশ
++				82 button জমি হস্তান্তরের নতুন আবেদন
++					83 image
++					84 text জমি হস্তান্তরের নতুন আবেদন
++					85 image
++			86 container
++				87 text মোট মালিকানাধীন জমি
++				88 image
++				89 text ৬১৮.৪৩ শতক ৩ টি দালিলিক দাগে বিস্তৃত
++			90 container
++				91 text মালিকানা বিক্রয় লক
++				92 image
++				93 text ০ লক নেই অননুমোদিত বিক্রি বন্ধ রাখুন
++			94 container
++				95 text রেজিস্ট্রিকৃত ডিজিটাল দলিল
++				96 image
++				97 text ১৪ টি দলিল কিউআর ও ক্রিপ্টোগ্রাফিক সিলযুক্ত
++			98 container
++				99 text চলমান হস্তান্তর ও আবেদন
++				100 image
++				101 text ২ টি চলমান ১৩-ধাপের অগ্রগতি ট্র্যাক করুন
++			102 button সারসংক্ষেপ ও সেবা
++				103 image
++				104 text সারসংক্ষেপ ও সেবা
++			105 button আমার জমি ও বিক্রয় লক ৩
++				106 image
++				107 text আমার জমি ও বিক্রয় লক
++				108 text ৩
++			109 button ডিজিটাল কাগজপত্র ভল্ট
++				110 image
++				111 text ডিজিটাল কাগজপত্র ভল্ট
++			112 button রেজিস্ট্রিকৃত মূল দলিল ১৪
++				113 image
++				114 text রেজিস্ট্রিকৃত মূল দলিল
++				115 text ১৪
++			116 button হস্তান্তর ট্র্যাকার ২
++				117 image
++				118 text হস্তান্তর ট্র্যাকার
++				119 text ২
++			120 button আপত্তি ও বিরোধ
++				121 image
++				122 text আপত্তি ও বিরোধ
++			123 button সহায়তা ও সাপোর্ট ৭
++				124 image
++				125 text সহায়তা ও সাপোর্ট
++				126 text ৭
++			127 image
++			128 text অধিক্ষেত্র নির্বাচন করুন (বিভাগ ➔ জেলা ➔ উপজেলা ➔ মৌজা)
++			129 button সব ফিল্টার মুছুন
++			130 image
++			131 text বিভাগ
++			132 pop up button (collapsed, settable) Value: -- বিভাগ নির্বাচন করুন --, Secondary Actions: Expand
++				133 menu
++					134 (selected) -- বিভাগ নির্বাচন করুন --
++					135 চট্টগ্রাম
++					136 ঢাকা
++			137 text জেলা
++			138 pop up button (disabled, collapsed, settable) Value: -- জেলা নির্বাচন করুন --, Secondary Actions: Expand
++				139 menu
++					140 (disabled) -- জেলা নির্বাচন করুন --
++			141 text উপজেলা / থানা
++			142 pop up button (disabled, collapsed, settable) Value: -- উপজেলা নির্বাচন করুন --, Secondary Actions: Expand
++				143 menu
++					144 (disabled) -- উপজেলা নির্বাচন করুন --
++			145 text মৌজা ও জে.এল. নং
++			146 pop up button (disabled, collapsed, settable) Value: -- মৌজা নির্বাচন করুন --, Secondary Actions: Expand
++				147 menu
++					148 (disabled) -- মৌজা নির্বাচন করুন --
++			149 image
++			150 text field (settable)
++			151 image
++			152 heading মালিকানা বিক্রয় লক কী এবং কেন ব্যবহার করবেন?, Value: 3
++				153 text মালিকানা বিক্রয় লক কী এবং কেন ব্যবহার করবেন?
++			154 text বিক্রয় লক চালু থাকলে আপনার অনুমতি ছাড়া সাব-রেজিস্ট্রি অফিসে কোনো দলিলের রেজিস্ট্রেশন সম্পন্ন হতে পারবে না। কোনো প্রতারক চক্র যেন জাল কাগজপত্র তৈরি করে আপনার জমি বিক্রি করতে না পারে, সেজন্য জমি সর্বদা লক রাখা সম্পূর্ণ নিরাপদ। বিক্রয়ের ইচ্ছা হলে কেবল ১-ক্লিকে আনলক করুন। BS খতিয়ান :  ৪১১৩
++			155 image
++			156 text বিক্রয় লক নেই
++			157 heading দাগ নং ১১৩, Value: 3
++				158 text দাগ নং ১১৩
++			159 text বিরুলিয়া ,  সাভার ,  ঢাকা জমির শ্রেণি : ভিটা (আবাসিক) রেকর্ডকৃত আয়তন : ১৩ শতক মালিকানার অংশ : 13/23
++			160 button বিক্রয় লক চালু করুন
++				161 image
++				162 text বিক্রয় লক চালু করুন
++			163 button সম্পূর্ণ বিবরণ
++				164 image
++			165 button কাগজপত্র
++			166 button ফারায়েজ
++				167 image
++				168 text ফারায়েজ
++			169 button পাসপোর্ট
++				170 image
++				171 text পাসপোর্ট
++			172 button হস্তান্তর
++			173 text BS খতিয়ান :  ৪১৩৯
++			174 image
++			175 text বিক্রয় লক নেই
++			176 heading দাগ নং ২১৯, Value: 3
++				177 text দাগ নং ২১৯
++			178 text বাসন ,  গাজীপুর সদর ,  গাজীপুর জমির শ্রেণি : চালা (উঁচু জমি) রেকর্ডকৃত আয়তন : ১৭ শতক মালিকানার অংশ : 1/1
++			179 button বিক্রয় লক চালু করুন
++				180 image
++				181 text বিক্রয় লক চালু করুন
++			182 button সম্পূর্ণ বিবরণ
++				183 image
++			184 button কাগজপত্র
++			185 button ফারায়েজ
++				186 image
++				187 text ফারায়েজ
++			188 button পাসপোর্ট
++				189 image
++				190 text পাসপোর্ট
++			191 button হস্তান্তর
++			192 text BS খতিয়ান :  QA-৯৯৯৮১
++			193 image
++			194 text বিক্রয় লক নেই
++			195 heading দাগ নং ৯৯৯৮১, Value: 3
++				196 text দাগ নং ৯৯৯৮১
++			197 text বিরুলিয়া ,  সাভার ,  ঢাকা জমির শ্রেণি : পরীক্ষার আবাসিক জমি রেকর্ডকৃত আয়তন : ৫৮৮.৪৩৪ শতক মালিকানার অংশ : 5884340/5884340
++			198 button বিক্রয় লক চালু করুন
++				199 image
++				200 text বিক্রয় লক চালু করুন
++			201 button সম্পূর্ণ বিবরণ
++				202 image
++			203 button কাগজপত্র
++			204 button ফারায়েজ
++				205 image
++				206 text ফারায়েজ
++			207 button পাসপোর্ট
++				208 image
++				209 text পাসপোর্ট
++			210 button হস্তান্তর
+The focused UI element is 1 AXWebArea ভূমি সুরক্ষা (BhumiShield) — LandTech 2026, URL: 127.0.0.1:5190/bn/home?section=plots

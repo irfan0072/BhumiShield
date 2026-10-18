@@ -547,6 +547,84 @@ final class DatabaseSeeder
             );
         }
 
+        // 1d. Seed Authorized Lawyers (Bar Council Directory)
+        $authorizedLawyers = [
+            [
+                'BC-DH-14285',
+                'ব্যারিস্টার মো. নাজমুল হুদা',
+                'Barrister Md. Nazmul Huda',
+                'ঢাকা জেলা বার অ্যাসোসিয়েশন',
+                '19852694123456789',
+                '01711-234567',
+                'nazmul.adv@dhakabar.org.bd',
+                'কক্ষ নং ২০৪, আইনজীবী সমিতি ভবন, ঢাকা জজ কোর্ট',
+                'ACTIVE',
+            ],
+            [
+                'BC-CM-09821',
+                'অ্যাডভোকেট কাজী ফারহানা জাহান',
+                'Advocate Kazi Farhana Jahan',
+                'কুমিল্লা জেলা বার অ্যাসোসিয়েশন',
+                '19882694987654321',
+                '01819-345678',
+                'farhana.adv@cumillabar.org.bd',
+                'চেম্বার ৩, নিউ ল’ চেম্বার্স, কান্দিরপাড়, কুমিল্লা',
+                'ACTIVE',
+            ],
+            [
+                'BC-CTG-22104',
+                'অ্যাডভোকেট সৈয়দ রফিকুল ইসলাম',
+                'Advocate Syed Rafiqul Islam',
+                'চট্টগ্রাম জেলা বার অ্যাসোসিয়েশন',
+                '19792694556677889',
+                '01912-456789',
+                'rafiq.law@ctgbar.org.bd',
+                'কোর্ট হিল, কোতোয়ালি, চট্টগ্রাম',
+                'ACTIVE',
+            ],
+            [
+                'BC-SY-07612',
+                'অ্যাডভোকেট রেজওয়ান মাহমুদ চৌধুরী',
+                'Advocate Rezwan Mahmud Chowdhury',
+                'সিলেট জেলা বার অ্যাসোসিয়েশন',
+                '19822694112233445',
+                '01712-987654',
+                'rezwan.adv@sylhetbar.org.bd',
+                'বন্দরবাজার, সিলেট',
+                'ACTIVE',
+            ],
+            [
+                'BC-RAJ-11093',
+                'অ্যাডভোকেট ড. শাহরিয়ার আহমেদ',
+                'Advocate Dr. Shahriar Ahmed',
+                'রাজশাহী জেলা বার অ্যাসোসিয়েশন',
+                '19752694778899001',
+                '01552-334455',
+                'shahriar.law@rajshahibar.org.bd',
+                'কোর্ট রোড, রাজপাড়া, রাজশাহী',
+                'ACTIVE',
+            ],
+            [
+                'BC-SUSP-99999',
+                'অসৎ মিয়া (জালিয়াত চক্র)',
+                'Asat Mia (Suspended/Fraud)',
+                'বগুড়া জেলা বার অ্যাসোসিয়েশন',
+                '19902694000000000',
+                '01300-000000',
+                'fake@suspended.org.bd',
+                'বাতিলকৃত ঠিকানা',
+                'SUSPENDED',
+            ],
+        ];
+
+        $now = gmdate('c');
+        foreach ($authorizedLawyers as $lawyer) {
+            DB::insert(
+                'INSERT INTO authorized_lawyers (bar_council_no, lawyer_name_bn, lawyer_name_en, district_bar, nid, phone, email, chamber_address_bn, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [...$lawyer, $now, $now]
+            );
+        }
+
         // 2. Seed Locations (3 Mouzas)
         $mouzas = [
             ['division_bn' => 'ঢাকা', 'division_en' => 'Dhaka', 'district_bn' => 'ঢাকা', 'district_en' => 'Dhaka', 'upazila_bn' => 'সাভার', 'upazila_en' => 'Savar', 'mouza_bn' => 'বিরুলিয়া', 'mouza_en' => 'Birulia', 'jl_no' => '12', 'lat' => 23.8580, 'lng' => 90.3180],

@@ -19,6 +19,13 @@ final class CitizenVaultAndTicketController
     // CITIZEN DOCUMENTS VAULT (Section 8.1)
     // -------------------------------------------------------------------------
 
+    private static function canReadReviewedSource(array $user, int $plotId): bool
+    {
+        if (in_array($user['role'], ['citizen', 'admin', 'system_admin'], true)) return true;
+        return in_array($user['role'], ['ac_land', 'land_office_assistant', 'settlement_records_officer'], true)
+            && \App\Services\OfficeScopeService::canAccessPlot($plotId, $user);
+    }
+
     public static function listPlotDocuments(string|int $plotCodeOrId, ?array $actor = null): array
     {
         $user = $actor ?? JwtAuthService::getAuthenticatedUser();
@@ -64,6 +71,7 @@ final class CitizenVaultAndTicketController
 
         // 2. Fetch existing uploaded/verified documents for this plot
         $existingDocs = DB::select('SELECT * FROM plot_documents WHERE plot_id = ? ORDER BY id DESC', [$plotId]);
+        $existingDocs = array_values(array_filter($existingDocs, static fn($d) => !str_starts_with((string)($d['file_path'] ?? ''), 'opening-record://') || self::canReadReviewedSource($user, $plotId)));
         $docsByType = [];
         foreach ($existingDocs as $doc) {
             $t = (string) $doc['document_type'];
@@ -404,7 +412,16 @@ final class CitizenVaultAndTicketController
 
         $storagePath = base_path('storage/app/vault_documents/' . $doc['file_hash'] . '.bin');
         $bytes = '';
-        if (file_exists($storagePath)) {
+        if (str_starts_with((string)($doc['file_path'] ?? ''), 'opening-record://')) {
+            if (!self::canReadReviewedSource($user, (int)$plot['id'])) throw new \RuntimeException(json_encode(['status'=>403,'code'=>'FORBIDDEN_SOURCE','message_bn'=>'এই উৎসের ফাইল কেবল মালিক ও দায়িত্বপ্রাপ্ত ভূমি দপ্তর দেখতে পারে।','message_en'=>'Only owners and responsible land-office roles may access this evidence.'], JSON_UNESCAPED_UNICODE));
+            $batchId = (int) substr($doc['file_path'], strlen('opening-record://'));
+            $batch = DB::selectOne("SELECT proof_package_json FROM onboarding_batches WHERE id=? AND record_type='OPENING_RECORD' AND status='APPROVED'", [$batchId]);
+            $proof = $batch ? json_decode($batch['proof_package_json'], true) : null;
+            $bytes = $proof && (int)($proof['plot_id'] ?? 0) === (int)$plot['id'] ? base64_decode((string)($proof['source_base64'] ?? ''), true) : false;
+            if ($bytes === false || $bytes === '' || !hash_equals((string)$doc['file_hash'], hash('sha256', $bytes))) {
+                throw new \RuntimeException(json_encode(['status'=>409,'code'=>'SOURCE_INTEGRITY_FAILED','message_bn'=>'উৎসের ফাইলের অখণ্ডতা যাচাই হয়নি। দপ্তরের সহায়তা নিন।','message_en'=>'Source evidence integrity check failed.'], JSON_UNESCAPED_UNICODE));
+            }
+        } elseif (file_exists($storagePath)) {
             $bytes = file_get_contents($storagePath);
         } else {
             // Minimal synthetic PDF bytes fallback for seeded records

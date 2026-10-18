@@ -34,6 +34,7 @@ import { SuperAdminOverviewQueues } from './admin/SuperAdminOverviewQueues';
 import { SuperAdminOverrideModal } from './admin/SuperAdminOverrideModal';
 import { SuperAdminDocumentSecurityTab } from './admin/SuperAdminDocumentSecurityTab';
 import { SuperAdminOfficesTab } from './admin/SuperAdminOfficesTab';
+import { SuperAdminLawyersTab } from './admin/SuperAdminLawyersTab';
 import {
   Lock,
   Flame,
@@ -473,7 +474,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   const [fieldReportsList, setFieldReportsList] = useState<any[]>([]);
   const [slaDispatchesList, setSlaDispatchesList] = useState<any[]>([]);
   const [acquisitionCasesList, setAcquisitionCasesList] = useState<any[]>([]);
-  const [officesSubSegment, setOfficesSubSegment] = useState<'offices' | 'hierarchy' | 'document_security'>('offices');
+  const [officesSubSegment, setOfficesSubSegment] = useState<'offices' | 'hierarchy' | 'document_security' | 'lawyers'>('offices');
   const [overrideModal, setOverrideModal] = useState<{
     isOpen: boolean;
     actionType: string;
@@ -2179,8 +2180,8 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   return (
     <div className="space-y-6">
       {['admin','system_admin'].includes(role) && (
-        <button type="button" onClick={() => onNavigate?.('map?manage=1')} className="px-4 py-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900 font-bold text-sm">
-          {t('মৌজা নকশা: উৎস, আমদানি ও প্রকাশনা নিয়ন্ত্রণ →', 'Mouza maps: sources, import & publication →')}
+        <button type="button" onClick={() => onNavigate?.('map?design=1')} className="px-4 py-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900 font-bold text-sm">
+          {t('দাগ ডিজাইন, অফিস ও মালিকানা বরাদ্দ →', 'Parcel design, mouza & office allocation →')}
         </button>
       )}
       {loadError && (
@@ -5521,6 +5522,19 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                 <ShieldCheck className="w-4 h-4 text-[#006A4E]" />
                 <span>{t('ডিজিটাল ডিসিআর ও পর্চা ওয়াটারমার্ক ও কিউআর কনফিগ', 'Digital DCR & Porcha Watermark/QR Config')}</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setOfficesSubSegment('lawyers')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 ${
+                  officesSubSegment === 'lawyers'
+                    ? 'bg-white text-indigo-700 shadow-xs ring-2 ring-indigo-500/20'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Scale className="w-4 h-4 text-indigo-600" />
+                <span>{t('আইনজীবী রেজিস্ট্রি (বার কাউন্সিল)', 'Lawyer Registry (Bar Council)')}</span>
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-indigo-100 text-indigo-800 font-extrabold">LEGAL</span>
+              </button>
             </div>
 
             <div className="text-[11px] text-slate-500 pr-2 hidden sm:block">
@@ -5528,6 +5542,8 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                 ? t('সারাদেশের সকল অফিস, কোড ও স্টাফ ব্যবস্থাপনা', 'Manage nationwide offices, codes and staff')
                 : officesSubSegment === 'document_security'
                 ? t('নাগরিক ডকুমেন্টে কাস্টম জলছাপ ও কিউআর সিল নিয়ন্ত্রণ', 'Citizen document watermark and QR seal control')
+                : officesSubSegment === 'lawyers'
+                ? t('বাংলাদেশ বার কাউন্সিল অনুমোদিত আইনজীবী নিবন্ধন ও কেস ফিলিং অনুমোদন', 'Bangladesh Bar Council advocate registry & case filing control')
                 : t('৪-স্তরীয় ভৌগোলিক ম্যাপিং ও জে.এল. নিয়ন্ত্রণ', '4-tier administrative boundary governance')}
             </div>
           </div>
@@ -5536,6 +5552,8 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
             <SuperAdminOfficesTab t={t} lang={lang} />
           ) : officesSubSegment === 'document_security' ? (
             <SuperAdminDocumentSecurityTab t={t} lang={lang} />
+          ) : officesSubSegment === 'lawyers' ? (
+            <SuperAdminLawyersTab t={t} lang={lang} />
           ) : (
             <>
           {/* Notification Banner */}

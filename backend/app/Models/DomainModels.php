@@ -43,3 +43,6 @@ final class AuditLog extends BaseModel { protected static string $table = 'audit
 final class RiskReport extends BaseModel { protected static string $table = 'risk_reports'; }
 final class FieldReport extends BaseModel { protected static string $table = 'field_reports'; }
 final class SlaDispatch extends BaseModel { protected static string $table = 'sla_dispatches'; }
+final class AuthorizedLawyer extends BaseModel { protected static string $table = 'authorized_lawyers'; }
+final class Dispute extends BaseModel { protected static string $table = 'disputes'; }
+

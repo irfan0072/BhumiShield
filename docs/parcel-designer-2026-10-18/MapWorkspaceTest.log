@@ -1,0 +1,22 @@
+PASS Reject FORBIDDEN_ROLE
+PASS Import is draft
+PASS Reject MAP_NOT_FOUND
+PASS Strip private/unapproved properties
+PASS Reject DUPLICATE_MAP
+PASS Reject RIGHTS_REVIEW_REQUIRED
+PASS Published geometry visible
+PASS Reject MAP_STATE_CONFLICT
+PASS Reject MAP_NOT_FOUND
+PASS Admin can inspect archived source
+PASS Reject OPEN_RING
+PASS Reject PLOT_LOCATION_MISMATCH
+PASS Reject DAG_MISMATCH
+PASS Reject INVALID_GEOJSON
+PASS Reject INVALID_DATE
+PASS Reject INVALID_PROPERTIES
+PASS Reject INVALID_COORDINATES
+PASS Bangla dag search preserves identity
+PASS Public records exclude owner identifiers
+PASS Bounded record response
+PASS Import, publish and withdrawal audited
+MAP CHECKS: 21 passed

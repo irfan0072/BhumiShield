@@ -10,4 +10,21 @@ export const mapApi={
  import:(body:unknown)=>api.post('/admin/map/layers',body).then(r=>r.data),
  review:(id:number,body:unknown)=>api.post(`/admin/map/layers/${id}/review`,body).then(r=>r.data),
 };
-export const mapError=(e:any)=>e?.response?.data?.message_bn||e?.message||'অনুরোধ সম্পন্ন হয়নি। আবার চেষ্টা করুন।';
+export const mapError=(e:any)=>e?.response?.data?.code==='PLOT_ALREADY_EXISTS'?'এই দাগের জমির রেকর্ড আছে। নকশায় সেই রেকর্ড যুক্ত করুন; নতুন মালিকানা বরাদ্দের পরিবর্তে প্রয়োজন হলে হস্তান্তর প্রক্রিয়া ব্যবহার করুন।':e?.response?.data?.message_bn||e?.message||'অনুরোধ সম্পন্ন হয়নি। আবার চেষ্টা করুন।';
+
+export interface ParcelDesign {id:number;location_id:number;office_id:number;plot_id:number|null;dag_no:string;survey:string;sheet_no:string;land_use:string;recorded_area:number;geometry:any;area_sqm:number;source_reference:string;status:string;version:number;supersedes_id:number|null;created_by:string;review_note:string;}
+export const parcelApi={
+ context:()=>api.get('/map-editor/context').then(r=>r.data),
+ assign:(body:unknown)=>api.post('/map-editor/assign',body).then(r=>r.data),
+ list:(location:number,publicView=false)=>api.get(publicView?'/map/parcel-designs':'/map-editor/parcels',{params:{location_id:location}}).then(r=>r.data.items as ParcelDesign[]),
+ save:(body:unknown)=>api.post('/map-editor/parcels',body).then(r=>r.data),
+ decide:(id:number,body:unknown)=>api.post(`/map-editor/parcels/${id}/decision`,body).then(r=>r.data),
+};
+
+export const allocationApi={
+ findOwner:(location:number,nid:string)=>api.post('/map-editor/owners',{location_id:location,nid}).then(r=>r.data),
+ list:(location:number)=>api.get('/map-editor/allocations',{params:{location_id:location}}).then(r=>r.data.items),
+ create:(id:number,body:unknown)=>api.post(`/map-editor/parcels/${id}/allocate`,body).then(r=>r.data),
+ decide:(id:number,body:unknown)=>api.post(`/opening-records/${id}/decision`,body).then(r=>r.data),
+ source:(id:number)=>api.get(`/opening-records/${id}/source`,{responseType:'blob'}).then(r=>r.data),
+};

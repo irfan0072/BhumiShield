@@ -208,7 +208,31 @@ CREATE TABLE IF NOT EXISTS disputes (
     resolution_notes_bn TEXT,
     resolved_by TEXT,
     created_at TEXT NOT NULL,
-    resolved_at TEXT
+    resolved_at TEXT,
+    court_name TEXT,
+    suit_no TEXT,
+    case_stage TEXT,
+    lawyer_bar_council_no TEXT,
+    lawyer_name_bn TEXT,
+    lawyer_phone TEXT,
+    disputed_area_decimal REAL,
+    boundaries_json TEXT,
+    source TEXT DEFAULT 'MANUAL'
+);
+
+CREATE TABLE IF NOT EXISTS authorized_lawyers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bar_council_no TEXT UNIQUE NOT NULL,
+    lawyer_name_bn TEXT NOT NULL,
+    lawyer_name_en TEXT NOT NULL,
+    district_bar TEXT NOT NULL,
+    nid TEXT,
+    phone TEXT,
+    email TEXT,
+    chamber_address_bn TEXT,
+    status TEXT NOT NULL DEFAULT 'ACTIVE',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS audit_log (

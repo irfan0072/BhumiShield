@@ -924,7 +924,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
   };
 
   // Public pages accessible directly without officer sidebar layout
-  const isPublicPage = ['landing', 'home', 'check', 'qr', 'help', 'auth', 'sale', 'notices', 'blog', 'map', 'offices'].includes(activeTab);
+  const isPublicPage = ['landing', 'home', 'check', 'qr', 'help', 'auth', 'sale', 'notices', 'blog', 'map', 'offices', 'lawyer_case'].includes(activeTab);
   const currentRoleMeta = ROLE_META[role] || ROLE_META['citizen'];
 
   const getRoleSidebarItems = () => {
@@ -1421,7 +1421,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         </header>
 
         {/* Main Content */}
-        <main className={`flex-1 w-full ${activeTab === 'landing' || activeTab === 'map' || activeTab === 'home' ? '' : 'py-8 px-4 max-w-7xl mx-auto'}`}>{children}</main>
+        <main className={`flex-1 w-full ${activeTab === 'landing' || activeTab === 'map' || activeTab === 'home' || activeTab === 'lawyer_case' ? '' : 'py-8 px-4 max-w-7xl mx-auto'}`}>{children}</main>
 
         {/* Clean Footer (suppressed on map and admin control panel) */}
         {activeTab !== 'map' && activeTab !== 'admin' && <InstitutionalFooter t={t} onNavigate={setActiveTab} />}
@@ -1704,6 +1704,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
           </div>
         )}
         <div className="space-y-1">
+          {['admin','system_admin','ac_land','land_office_assistant','field_verification_officer','settlement_records_officer','settlement_checker'].includes(role)&&<button type="button" onClick={()=>{setActiveTab('map?design=1');onNavigate?.();}} className="w-full px-3 py-2.5 rounded-lg text-xs font-semibold flex items-center gap-2.5 text-emerald-100 bg-white/10 hover:bg-white/20"><Layers className="w-4 h-4"/>{sidebarOpen&&<span>{t('দাগ ডিজাইন ও মালিকানা বরাদ্দ','Parcel design & owner allocation')}</span>}</button>}
           {sidebarItems.map((item, idx) => {
             const isOfficerRole = role !== 'citizen';
             const isUsersItem = item.id === 'users' && (role === 'admin' || role === 'system_admin');
@@ -2183,6 +2184,16 @@ const InstitutionalFooter: React.FC<{
               {t('নাগরিক ভল্ট ও বিক্রয় লক', 'Citizen Sale Lock Vault')}
             </button>
           </li>
+          <li>
+            <button
+              onClick={() => onNavigate('lawyer_case')}
+              className="text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer text-left flex items-center gap-1.5"
+            >
+              <span>⚖️</span>
+              <span>{t('আইনজীবী কেস দাখিল পোর্টাল', 'Advocate Litigation Filing')}</span>
+              <span className="px-1.5 py-0.2 rounded text-[9px] bg-indigo-100 text-indigo-700 font-extrabold">NEW</span>
+            </button>
+          </li>
         </ul>
       </div>
 
@@ -2220,6 +2231,15 @@ const InstitutionalFooter: React.FC<{
               className="text-slate-600 hover:text-[#006A4E] cursor-pointer text-left"
             >
               {t('জাতীয় লেজার ও RBAC অডিট', 'National Ledger & Audit')}
+            </button>
+          </li>
+          <li>
+            <button
+              onClick={() => onNavigate('lawyer_case')}
+              className="text-indigo-600 hover:text-indigo-800 font-bold cursor-pointer text-left flex items-center gap-1.5"
+            >
+              <span>⚖️</span>
+              <span>{t('আইনজীবী মামলা দাখিল (বিকল্প পথ)', 'Advocate Case Hub (Alternative)')}</span>
             </button>
           </li>
         </ul>

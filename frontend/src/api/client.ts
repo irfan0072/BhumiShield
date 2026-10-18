@@ -1430,7 +1430,124 @@ export const BhumiApi = {
   // Genuine Biometric & Identity Readiness (Phase D)
   getIdentityReadiness: (): Promise<any> =>
     api.get('/identity/readiness').then((r) => r.data),
+
+  // Lawyer Portal & Registry
+  verifyLawyer: (bar_council_no: string): Promise<LawyerVerificationResult> =>
+    api.post('/lawyers/verify', { bar_council_no }).then((r) => r.data),
+
+  fileLawyerCase: (payload: LawyerCasePayload): Promise<LawyerCaseDocketResponse> =>
+    api.post('/lawyers/file-case', payload).then((r) => r.data),
+
+  listAdminLawyers: (params?: { search?: string; status?: string }): Promise<LawyerListAdminResponse> =>
+    api.get('/admin/lawyers', { params }).then((r) => r.data),
+
+  createAdminLawyer: (data: Partial<AuthorizedLawyerItem>): Promise<{ status: string; id: number; message_bn: string; message_en: string }> =>
+    api.post('/admin/lawyers', data).then((r) => r.data),
+
+  updateAdminLawyer: (id: number, data: Partial<AuthorizedLawyerItem>): Promise<{ status: string; message_bn: string; message_en: string }> =>
+    api.put(`/admin/lawyers/${id}`, data).then((r) => r.data),
+
+  deleteAdminLawyer: (id: number): Promise<{ status: string; message_bn: string; message_en: string }> =>
+    api.delete(`/admin/lawyers/${id}`).then((r) => r.data),
 };
+
+export interface AuthorizedLawyerItem {
+  id: number;
+  bar_council_no: string;
+  lawyer_name_bn: string;
+  lawyer_name_en: string;
+  district_bar: string;
+  nid?: string;
+  phone?: string;
+  email?: string;
+  chamber_address_bn?: string;
+  status: 'ACTIVE' | 'SUSPENDED';
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface LawyerVerificationResult {
+  status: string;
+  verified: boolean;
+  lawyer: AuthorizedLawyerItem;
+  message_bn: string;
+  message_en: string;
+}
+
+export interface LawyerCasePayload {
+  bar_council_no: string;
+  plot_id: number;
+  court_name: string;
+  suit_no: string;
+  dispute_type?: string;
+  case_stage?: string;
+  plaintiff_name: string;
+  defendant_name: string;
+  plaintiff_nid?: string;
+  disputed_area_decimal?: number;
+  description_bn: string;
+  boundary_north?: string;
+  boundary_south?: string;
+  boundary_east?: string;
+  boundary_west?: string;
+}
+
+export interface LawyerCaseDocketResponse {
+  status: string;
+  case_no: string;
+  dispute_id: number;
+  tracking_code: string;
+  plot: {
+    id: number;
+    dag_no: string;
+    dag_no_bn: string;
+    mouza_bn: string;
+    mouza_en: string;
+    upazila_bn: string;
+    district_bn: string;
+    total_area_decimal: number;
+  };
+  lawyer: {
+    name_bn: string;
+    name_en: string;
+    bar_council_no: string;
+    district_bar: string;
+    phone: string;
+  };
+  court_details: {
+    court_name: string;
+    suit_no: string;
+    case_stage: string;
+    dispute_type: string;
+    plaintiff_name: string;
+    defendant_name: string;
+    disputed_area_decimal: number;
+    boundaries: {
+      north: string;
+      south: string;
+      east: string;
+      west: string;
+    };
+  };
+  verification: {
+    content_hash: string;
+    qr_url: string;
+    filed_at: string;
+  };
+  message_bn: string;
+  message_en: string;
+}
+
+export interface LawyerListAdminResponse {
+  status: string;
+  items: AuthorizedLawyerItem[];
+  metrics: {
+    total: number;
+    active: number;
+    suspended: number;
+    cases_filed: number;
+  };
+}
 
 
 
