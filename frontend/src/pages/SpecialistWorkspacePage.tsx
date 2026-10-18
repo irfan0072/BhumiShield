@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Scale,
   Building2,
@@ -15,6 +15,10 @@ import {
   BookOpen,
   FileCheck,
   Compass,
+  FileSpreadsheet,
+  PlusCircle,
+  Landmark,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAppUI } from '../i18n';
 import { BhumiApi } from '../api/client';
@@ -25,9 +29,27 @@ interface SpecialistWorkspacePageProps {
 }
 
 export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = ({ onNavigate }) => {
-  const { lang, t, role, user } = useAppUI();
+  const { lang, t, role, user, activeSubTab, setActiveSubTab } = useAppUI();
   const isDcRole = role === 'dc_acquisition_officer';
   const isLawyerRole = role === 'lawyer_court_user';
+
+  const [subTab, setSubTab] = useState<string>(() => {
+    if (activeSubTab) return activeSubTab;
+    return isDcRole ? 'la_cases' : 'title_scrutiny';
+  });
+
+  useEffect(() => {
+    if (activeSubTab) {
+      setSubTab(activeSubTab);
+    }
+  }, [activeSubTab]);
+
+  const handleSubTabChange = (tabId: string) => {
+    setSubTab(tabId);
+    if (setActiveSubTab) {
+      setActiveSubTab(tabId);
+    }
+  };
 
   const [plots, setPlots] = useState<any[]>([]);
   const [disputes, setDisputes] = useState<any[]>([]);
@@ -148,16 +170,72 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
     );
   });
 
+  const tabList = useMemo(() => {
+    if (isDcRole) {
+      return [
+        {
+          id: 'la_cases',
+          label: t('ভূমি অধিগ্রহণ কেস ও গেজেট', 'LA Cases & Gazettes'),
+          icon: <Building2 className="w-4 h-4" />,
+          count: toBanglaDigits(acquisitions.length, lang),
+        },
+        {
+          id: 'plot_lookup',
+          label: t('দাগ ও অধিগ্রহণ প্লট অ্যাকশন', 'Plot & Acquisition Action'),
+          icon: <Search className="w-4 h-4" />,
+          count: toBanglaDigits(filteredPlots.length, lang),
+        },
+      ];
+    }
+    if (isLawyerRole) {
+      return [
+        {
+          id: 'title_scrutiny',
+          label: t('টাইটেল ও খতিয়ান স্ক্রুটিনি', 'Title Scrutiny & Injunctions'),
+          icon: <Scale className="w-4 h-4" />,
+          count: toBanglaDigits(filteredPlots.length, lang),
+        },
+        {
+          id: 'disputes',
+          label: t('আদালত আদেশ ও বিরোধ ট্রাইব্যুনাল', 'Disputes & Injunctions Docket'),
+          icon: <FileSpreadsheet className="w-4 h-4" />,
+          count: toBanglaDigits(disputes.length, lang),
+        },
+      ];
+    }
+    // Admin / Supervisor View
+    return [
+      {
+        id: 'la_cases',
+        label: t('ভূমি অধিগ্রহণ কেস ও গেজেট', 'LA Cases & Gazettes'),
+        icon: <Building2 className="w-4 h-4" />,
+        count: toBanglaDigits(acquisitions.length, lang),
+      },
+      {
+        id: 'disputes',
+        label: t('আদালত আদেশ ও বিরোধ ট্রাইব্যুনাল', 'Disputes & Injunctions Docket'),
+        icon: <FileSpreadsheet className="w-4 h-4" />,
+        count: toBanglaDigits(disputes.length, lang),
+      },
+      {
+        id: 'plot_lookup',
+        label: t('দাগ ও স্বত্ব বিশ্লেষণ', 'Plot & Title Docket'),
+        icon: <Search className="w-4 h-4" />,
+        count: toBanglaDigits(filteredPlots.length, lang),
+      },
+    ];
+  }, [isDcRole, isLawyerRole, acquisitions.length, disputes.length, filteredPlots.length, lang, t]);
+
   return (
     <div className="space-y-6 pb-12">
-      {/* Workspace Header */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[#006A4E] shadow-2xs">
+      {/* Modern Executive Workspace Header */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#006A4E] to-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs ring-4 ring-emerald-50">
             {isDcRole ? <Building2 className="w-6 h-6" /> : <Scale className="w-6 h-6" />}
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                 {isDcRole
                   ? t('জেলা প্রশাসক কার্যালয় — ভূমি অধিগ্রহণ (LA) শাখা', 'DC Office — Land Acquisition (LA) Division')
@@ -167,7 +245,7 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
                 {isDcRole ? t('সরকারি অধিক্ষেত্র', 'Official Jurisdiction') : t('আইনি যাচাই', 'Legal Scrutiny')}
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
               {isDcRole
                 ? t(
                     'সরকারি উন্নয়ন প্রকল্প ও জাতীয় অবকাঠামোতে ভূমি অধিগ্রহণ (LA কেস), ধারা ৪/৭/৮ গেজেট ও ক্ষতিপূরণ ব্যবস্থাপনা।',
@@ -181,8 +259,12 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
           </div>
         </div>
 
-        {/* Quick External/Public Nav Action Buttons */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* Cryptographic Ledger Pill & Quick Actions */}
+        <div className="flex flex-wrap items-center gap-2 self-start md:self-center shrink-0">
+          <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-[11px] font-bold text-emerald-800">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>{t('Ed25519 ক্রিপ্টোগ্রাফিক জুডিশিয়াল লেজার', 'Ed25519 Cryptographic Judicial Ledger')}</span>
+          </div>
           {onNavigate && (
             <>
               <button
@@ -208,68 +290,307 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
 
       {/* Operational KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
               {isDcRole ? t('চলমান এলএ কেস', 'Active LA Cases') : t('বিচারাধীন স্বত্ব মামলা', 'Pending Court Cases')}
             </span>
-            <div className="text-2xl font-black text-slate-900 mt-1">
+            <div className="text-2xl font-black text-slate-900 mt-1.5">
               {toBanglaDigits(isDcRole ? acquisitions.length : disputes.length, lang)}
             </div>
             <span className="text-[10px] text-emerald-700 font-semibold">{t('তদন্ত ও প্রজ্ঞাপন চলমান', 'Under Active Review')}</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
-            <Clock className="w-5 h-5" />
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#006A4E] flex items-center justify-center border border-emerald-100">
+            <Clock className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
               {isDcRole ? t('অধিগ্রহণকৃত জমির পরিমাণ', 'Acquired Land Area') : t('স্থগিত দাগসমূহ', 'Injunction Plots')}
             </span>
-            <div className="text-2xl font-black text-[#006A4E] mt-1">
+            <div className="text-2xl font-black text-[#006A4E] mt-1.5">
               {toBanglaDigits(isDcRole ? totalAcquiredDecimal.toFixed(2) : injunctionPlotsCount, lang)} {isDcRole ? t('শতক', 'dec') : t('টি দাগ', 'plots')}
             </div>
             <span className="text-[10px] text-slate-500">{t('ডেটাবেজ রেকর্ড থেকে পরিমাপকৃত', 'Aggregated from DB')}</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
-            <Layers className="w-5 h-5" />
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-100">
+            <Layers className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
               {isDcRole ? t('ধারা ৪ প্রজ্ঞাপন', 'Section 4 Gazettes') : t('আদালতের আদেশ নথিভুক্ত', 'Court Decrees Logged')}
             </span>
-            <div className="text-2xl font-black text-amber-600 mt-1">
+            <div className="text-2xl font-black text-amber-600 mt-1.5">
               {toBanglaDigits(isDcRole ? section4Count : courtDecreesCount, lang)}
             </div>
             <span className="text-[10px] text-amber-700 font-semibold">{t('ডিজিটাল গেজেট সংবলিত', 'Gazetted & Sealed')}</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-            <FileText className="w-5 h-5" />
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-100">
+            <FileText className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
               {isDcRole ? t('অধিগ্রহণাধীন প্লট সংখ্যা', 'Affected Plots') : t('নিষ্পত্তিকৃত বিরোধ', 'Resolved Disputes')}
             </span>
-            <div className="text-2xl font-black text-emerald-700 mt-1">
+            <div className="text-2xl font-black text-emerald-700 mt-1.5">
               {toBanglaDigits(isDcRole ? acquisitions.reduce((acc, a) => acc + (a.plot_ids ? a.plot_ids.length : 1), 0) : disputes.filter((d) => d.status === 'RESOLVED').length, lang)}
             </div>
             <span className="text-[10px] text-emerald-700 font-semibold">{t('বাস্তব কেস রেকর্ড', 'Persisted Records')}</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
-            <QrCode className="w-5 h-5" />
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100">
+            <QrCode className="w-6 h-6" />
           </div>
         </div>
       </div>
 
-      {/* Main Workspace Layout */}
+      {/* Redesigned Sleek Segmented Control Tab Navigation */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-2 shadow-xs">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          {tabList.map((tab) => {
+            const isActive = subTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleSubTabChange(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 cursor-pointer ${
+                  isActive
+                    ? 'bg-[#006A4E] text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                }`}
+              >
+                <span className={isActive ? 'text-white' : 'text-slate-400'}>
+                  {tab.icon}
+                </span>
+                <span>{tab.label}</span>
+                {tab.count !== undefined && (
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      isActive
+                        ? 'bg-white/20 text-white'
+                        : 'bg-slate-200/80 text-slate-700'
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Land Acquisition Cases & Gazettes Table */}
+      {subTab === 'la_cases' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <Building2 className="w-5 h-5 text-[#006A4E]" />
+                <span>{t('ভূমি অধিগ্রহণ কেস ও গেজেট প্রজ্ঞাপন তালিকা', 'Land Acquisition Cases & Gazette Registry')}</span>
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {t('জাতীয় উন্নয়ন অবকাঠামো ও সরকারি অধিগ্রহণ প্রকল্পের ধারা ৪/৭/৮ তালিকা:', 'National infrastructure acquisition cases and gazette notices:')}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleSubTabChange('plot_lookup')}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>{t('নতুন অধিগ্রহণ নোটিশ জারি করুন', 'Issue New LA Notice')}</span>
+            </button>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-slate-200">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-slate-50/80 text-slate-700 font-bold border-b border-slate-200">
+                <tr>
+                  <th className="py-3 px-4">{t('গেজেট ও কেস আইডি', 'Gazette / Case ID')}</th>
+                  <th className="py-3 px-4">{t('প্রকল্পের নাম ও সংস্থা', 'Project & Agency')}</th>
+                  <th className="py-3 px-4">{t('আইনি ধারা', 'Legal Section')}</th>
+                  <th className="py-3 px-4">{t('অধিক্ষেত্র', 'Jurisdiction')}</th>
+                  <th className="py-3 px-4">{t('অধিগ্রহণকৃত জমি', 'Acquired Land')}</th>
+                  <th className="py-3 px-4 text-right">{t('অ্যাকশন', 'Actions')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {acquisitions.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-slate-400">
+                      {t('কোনো অধিগ্রহণ রেকর্ড পাওয়া যায়নি।', 'No land acquisition records found.')}
+                    </td>
+                  </tr>
+                ) : (
+                  acquisitions.map((acq) => (
+                    <tr key={acq.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                        <div>{acq.gazette_no || `LA-${acq.id}`}</div>
+                        <span className="text-[10px] text-emerald-700 font-sans">{t('গেজেট নথিভুক্ত', 'Gazette Persisted')}</span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="font-bold text-slate-900">{lang === 'bn' ? acq.project_name_bn : (acq.project_name_en || acq.project_name_bn)}</div>
+                        <div className="text-[10px] text-slate-500">{acq.acquiring_agency_bn || 'জেলা প্রশাসন এলএ শাখা'}</div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          acq.section_type === 'SECTION_8'
+                            ? 'bg-rose-100 text-rose-800'
+                            : acq.section_type === 'SECTION_7'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {acq.section_type === 'SECTION_8'
+                            ? t('ধারা ৮ (রোয়েদাদ)', 'Section 8 (Award)')
+                            : acq.section_type === 'SECTION_7'
+                            ? t('ধারা ৭ (আপত্তি শুনানি)', 'Section 7 (Hearing)')
+                            : t('ধারা ৪ (প্রাথমিক)', 'Section 4 (Notice)')}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-slate-600">
+                        {acq.mouza_bn ? `${acq.mouza_bn}, ` : ''}{acq.upazila_bn || 'সাভার'}, {acq.district_bn || 'ঢাকা'}
+                      </td>
+                      <td className="py-3 px-4 font-bold text-[#006A4E]">
+                        {toBanglaDigits(acq.total_land_decimal || '০', lang)} {t('শতক', 'dec')}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (acq.plot_ids && acq.plot_ids.length > 0) {
+                              const found = plots.find((p) => p.id === acq.plot_ids[0]);
+                              if (found) setSelectedPlot(found);
+                            }
+                            handleSubTabChange('plot_lookup');
+                          }}
+                          className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 text-[#006A4E] font-bold text-xs transition cursor-pointer"
+                        >
+                          {t('দাগ ও বিবরণ →', 'Inspect Plot →')}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Disputes & Court Injunctions Table */}
+      {subTab === 'disputes' && (
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div>
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <FileSpreadsheet className="w-5 h-5 text-[#006A4E]" />
+                <span>{t('আদালতের আদেশ ও বিরোধ ট্রাইব্যুনাল ডকেট', 'Court Decrees & Dispute Tribunal Docket')}</span>
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {t('দেওয়ানি আদালত কর্তৃক ইস্যুকৃত অন্তর্বর্তীকালীন স্থগিতাদেশ ও স্বত্ব মোকদ্দমা তালিকা:', 'Civil court temporary injunctions and title litigation decrees:')}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleSubTabChange(isLawyerRole ? 'title_scrutiny' : 'plot_lookup')}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>{t('নতুন আদালতের আদেশ দাখিল', 'Log Court Order')}</span>
+            </button>
+          </div>
+
+          <div className="overflow-x-auto rounded-xl border border-slate-200">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-slate-50/80 text-slate-700 font-bold border-b border-slate-200">
+                <tr>
+                  <th className="py-3 px-4">{t('কেস / বিরোধ আইডি', 'Case / Dispute ID')}</th>
+                  <th className="py-3 px-4">{t('বিরোধের ধরন', 'Dispute Type')}</th>
+                  <th className="py-3 px-4">{t('আদালত আদেশ ও বিবরণ', 'Court Order & Details')}</th>
+                  <th className="py-3 px-4">{t('আবেদনকারী / আইনজীবী', 'Complainant / Lawyer')}</th>
+                  <th className="py-3 px-4">{t('স্ট্যাটাস', 'Status')}</th>
+                  <th className="py-3 px-4 text-right">{t('অ্যাকশন', 'Actions')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {disputes.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-slate-400">
+                      {t('কোনো আদালতের মামলা বা বিরোধ রেকর্ড পাওয়া যায়নি।', 'No court dispute records found.')}
+                    </td>
+                  </tr>
+                ) : (
+                  disputes.map((disp) => (
+                    <tr key={disp.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                        #{disp.id}
+                        <div className="text-[10px] text-slate-500 font-sans">
+                          {t('দাগ নং', 'Plot')} {disp.plot_id}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          disp.dispute_type === 'INJUNCTION'
+                            ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                            : disp.dispute_type === 'TITLE_SUIT'
+                            ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                            : 'bg-blue-100 text-blue-800 border border-blue-200'
+                        }`}>
+                          {disp.dispute_type === 'INJUNCTION'
+                            ? t('স্থগিতাদেশ (Injunction)', 'Injunction')
+                            : disp.dispute_type === 'TITLE_SUIT'
+                            ? t('স্বত্ব মামলা (Title Suit)', 'Title Suit')
+                            : t('সীমানা বিরোধ', 'Boundary Dispute')}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-slate-700 max-w-xs truncate">
+                        {disp.description_bn || t('আদালতের অন্তর্বর্তীকালীন স্থগিতাদেশ', 'Court Injunction Decree')}
+                      </td>
+                      <td className="py-3 px-4 text-slate-600 font-medium">
+                        {disp.complainant_name_bn || t('বিজ্ঞ আইনজীবী', 'Advocate')}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          disp.status === 'RESOLVED'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {disp.status === 'RESOLVED' ? t('নিষ্পত্তিকৃত', 'Resolved') : t('বিচারাধীন', 'Pending')}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const found = plots.find((p) => p.id === disp.plot_id);
+                            if (found) setSelectedPlot(found);
+                            handleSubTabChange(isLawyerRole ? 'title_scrutiny' : 'plot_lookup');
+                          }}
+                          className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 text-[#006A4E] font-bold text-xs transition cursor-pointer"
+                        >
+                          {t('নথি পরীক্ষা →', 'Inspect Docket →')}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Main Workspace 2-Column Docket Layout (For Plot Lookup / Title Scrutiny) */}
+      {(subTab === 'plot_lookup' || subTab === 'title_scrutiny') && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Plot & Case Lookup */}
         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-4">
@@ -598,6 +919,7 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
           )}
         </div>
       </div>
+      )}
     </div>
   );
 };

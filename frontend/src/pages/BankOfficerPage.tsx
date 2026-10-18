@@ -273,36 +273,97 @@ export const BankOfficerPage: React.FC = () => {
     });
   }, [mortgages, statusFilter, searchQuery, selectedDivision, selectedDistrict, selectedUpazila]);
 
+  const tabList = useMemo(() => {
+    const list = [
+      {
+        id: 'new_lien' as BankTab,
+        label: role === 'bank_officer'
+          ? t('নতুন লিয়েন আবেদন (মেকার)', 'Prepare Loan Lien (Maker)')
+          : t('নতুন লিয়েন অন্তর্ভুক্তি', 'Register Lien'),
+        icon: <PlusCircle className="w-4 h-4" />,
+      },
+      {
+        id: 'mortgages' as BankTab,
+        label: role === 'bank_manager'
+          ? t('লিয়েন অনুমোদন কিউ (চেকার)', 'Lien Approval Queue (Checker)')
+          : t('লিয়েন রেজিস্টার', 'Mortgages & Liens'),
+        icon: <Building2 className="w-4 h-4" />,
+        count: toBanglaDigits(mortgages.length, lang),
+      },
+      {
+        id: 'noc' as BankTab,
+        label: t('ডিজিটাল ছাড়পত্র (NOC)', 'Release NOCs'),
+        icon: <FileBadge className="w-4 h-4" />,
+        count: toBanglaDigits(mortgages.filter((m) => m.status === 'RELEASED').length, lang),
+      },
+      {
+        id: 'khatian' as BankTab,
+        label: t('জামানত খতিয়ান যাচাই', 'Collateral Khatian Check'),
+        icon: <Search className="w-4 h-4" />,
+      },
+    ];
+    return list;
+  }, [role, mortgages, lang, t]);
+
   return (
     <div className="space-y-6">
-      <header className="page-intro animate-rise">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* Modern Executive Officer Header */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#006A4E] to-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs ring-4 ring-emerald-50">
+            <Building2 className="w-6 h-6" />
+          </div>
           <div>
-            <h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                {role === 'bank_manager'
+                  ? t('ব্যাংক শাখা ব্যবস্থাপক কনসোল (চেকার ও এনওসি কর্তৃপক্ষ)', 'Bank Branch Manager Console (Checker)')
+                  : role === 'bank_officer'
+                  ? t('ব্যাংক ক্রেডিট অফিসার কনসোল (লিয়েন মেকার)', 'Bank Credit Officer Console (Lien Maker)')
+                  : t('ব্যাংক মর্টগেজ ও লিয়েন কনসোল', 'Bank Mortgage & Lien Console')}
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold border border-emerald-300 bg-emerald-50 text-emerald-900">
+                {role === 'bank_manager'
+                  ? t('চেকার ও এনওসি কর্তৃপক্ষ', 'Checker & NOC Authority')
+                  : role === 'bank_officer'
+                  ? t('লিয়েন প্রস্তুতকারী (মেকার)', 'Lien Preparer (Maker)')
+                  : t('ব্যাংক ইউজার', 'Bank User')}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
               {role === 'bank_manager'
-                ? t('ব্যাংক শাখা ব্যবস্থাপক কনসোল (চেকার ও এনওসি কর্তৃপক্ষ)', 'Bank Branch Manager Console (Checker)')
-                : role === 'bank_officer'
-                ? t('ব্যাংক ক্রেডিট অফিসার কনসোল (লিয়েন মেকার)', 'Bank Credit Officer Console (Lien Maker)')
-                : t('ব্যাংক অফিসার কনসোল', 'Bank Officer Console')}
-            </h1>
-            <p>
-              {role === 'bank_manager'
-                ? t('মর্টগেজ লিয়েন অনুমোদন, ঋণ পরিশোধ পরবর্তী ডিজিটাল NOC ক্লিয়ারেন্স এবং ঋণ পোর্টফোলিও তদারকি।', 'Approve mortgage liens, issue digital release NOC certificates, and oversee loan collateral.')
-                : t('জামানত যাচাই, মর্টগেজ লিয়েন ড্রাফট অন্তর্ভুক্তি এবং খতিয়ান সত্যতা যাচাই।', 'Verify collateral, prepare new mortgage lien drafts, and inspect khatian records.')}
+                ? t(
+                    'মর্টগেজ লিয়েন অনুমোদন, ঋণ পরিশোধ পরবর্তী ডিজিটাল NOC ক্লিয়ারেন্স এবং ঋণ পোর্টফোলিও তদারকি।',
+                    'Approve mortgage liens, issue digital release NOC certificates, and oversee loan collateral.'
+                  )
+                : t(
+                    'জামানত যাচাই, মর্টগেজ লিয়েন ড্রাফট অন্তর্ভুক্তি এবং খতিয়ান সত্যতা যাচাই।',
+                    'Verify collateral, prepare new mortgage lien drafts, and inspect khatian records.'
+                  )}
             </p>
           </div>
-          <span className="px-3 py-1.5 rounded-full text-xs font-bold border border-emerald-300 bg-emerald-50 text-emerald-900">
-            {role === 'bank_manager'
-              ? t('চেকার ও এনওসি কর্তৃপক্ষ', 'Checker & NOC Authority')
-              : role === 'bank_officer'
-              ? t('লিয়েন প্রস্তুতকারী (মেকার)', 'Lien Preparer (Maker)')
-              : t('ব্যাংক ইউজার', 'Bank User')}
-          </span>
         </div>
-      </header>
+
+        {/* Cryptographic Trust Badge & Fast Actions */}
+        <div className="flex flex-wrap items-center gap-2 self-start md:self-center shrink-0">
+          <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-[11px] font-bold text-emerald-800">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>{t('Ed25519 ক্রিপ্টোগ্রাফিক লিয়েন লেজার', 'Ed25519 Cryptographic Lien Ledger')}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleTabChange('new_lien')}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold transition shadow-xs cursor-pointer"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>{t('নতুন লিয়েন আবেদন', 'New Lien')}</span>
+          </button>
+        </div>
+      </div>
+
       {/* RBAC Guard Notice if not logged in as bank_officer, bank_manager or admin */}
       {role !== 'bank_officer' && role !== 'bank_manager' && role !== 'admin' && (
-        <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 flex flex-wrap items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-2 text-xs font-bold text-[#0A1F1C]">
             <KeyRound className="w-4 h-4 text-[#C4891A]" />
             <span>
@@ -314,7 +375,7 @@ export const BankOfficerPage: React.FC = () => {
           </div>
           <button
             onClick={() => switchToBankRole('bank_officer')}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-[#074f38] hover:bg-[#053b2a] text-white font-bold text-xs cursor-pointer min-h-[36px] transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-[#074f38] hover:bg-[#053b2a] text-white font-bold text-xs cursor-pointer min-h-[36px] transition-colors shadow-xs"
           >
             {t('ব্যাংক প্যানেলে প্রবেশ করুন →', 'Activate Bank Officer Session →')}
           </button>
@@ -322,35 +383,38 @@ export const BankOfficerPage: React.FC = () => {
       )}
 
       {/* Bank Officer Operational KPI Strip (Role-Specific) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-rise">
-        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Active Mortgages */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-between group">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
               <JargonTooltip term="LIEN">
                 {t('সক্রিয় ব্যাংক লিয়েন', 'Active Mortgages')}
               </JargonTooltip>
             </div>
-            <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
+            <div className="text-2xl font-black text-[#006A4E] mt-1.5">
               {toBanglaDigits(mortgages.filter((m) => m.status === 'ACTIVE').length, lang)}
             </div>
             <button
               onClick={() => handleTabChange('mortgages')}
-              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1.5 flex items-center gap-1 cursor-pointer group-hover:translate-x-0.5 transition-transform"
             >
-              {t('লিয়েন রেজিস্টার দেখুন →', 'View Lien Register →')}
+              <span>{t('লিয়েন রেজিস্টার দেখুন', 'View Lien Register')}</span>
+              <span>→</span>
             </button>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#006A4E] flex items-center justify-center shrink-0 border border-emerald-100">
             <Building2 className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+        {/* Card 2: Total Collateral */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-between group">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
               {t('মোট ঋণকৃত জামানত', 'Total Collateral Value')}
             </div>
-            <div className="text-2xl font-extrabold text-[#0A1F1C] mt-1">
+            <div className="text-2xl font-black text-slate-900 mt-1.5">
               ৳{toBanglaDigits(
                 (
                   mortgages
@@ -359,164 +423,100 @@ export const BankOfficerPage: React.FC = () => {
                 ).toFixed(2),
                 lang
               )}{' '}
-              Cr
+              <span className="text-sm font-semibold text-slate-500">Cr</span>
             </div>
             <button
               onClick={() => handleTabChange('new_lien')}
-              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1.5 flex items-center gap-1 cursor-pointer group-hover:translate-x-0.5 transition-transform"
             >
-              {t('নতুন লিয়েন অন্তর্ভুক্তি →', 'New Mortgage Lien →')}
+              <span>{t('নতুন লিয়েন অন্তর্ভুক্তি', 'New Mortgage Lien')}</span>
+              <span>→</span>
             </button>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 border border-amber-100">
             <Lock className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+        {/* Card 3: Issued NOC Certificates */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-between group">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
               {t('ইস্যুকৃত ডিজিটাল NOC', 'Released NOCs')}
             </div>
-            <div className="text-2xl font-extrabold text-emerald-700 mt-1">
+            <div className="text-2xl font-black text-emerald-700 mt-1.5">
               {toBanglaDigits(mortgages.filter((m) => m.status === 'RELEASED').length, lang)}
             </div>
             <button
               onClick={() => handleTabChange('noc')}
-              className="text-xs text-emerald-700 font-semibold hover:underline mt-1 block cursor-pointer"
+              className="text-xs text-emerald-700 font-semibold hover:underline mt-1.5 flex items-center gap-1 cursor-pointer group-hover:translate-x-0.5 transition-transform"
             >
-              {t('ছাড়পত্র সনদপত্র দেখুন →', 'View Release NOCs →')}
+              <span>{t('ছাড়পত্র সনদপত্র দেখুন', 'View Release NOCs')}</span>
+              <span>→</span>
             </button>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center shrink-0 border border-teal-100">
             <FileBadge className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="panel p-4 border border-[#006A4E]/15 bg-white shadow-xs flex items-center justify-between">
+        {/* Card 4: Double Mortgage Prevention */}
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-between group">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#5F7A74]">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
               {t('দ্বৈত বন্ধক প্রতিরোধ', 'Double Mortgage Block')}
             </div>
-            <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
+            <div className="text-2xl font-black text-[#006A4E] mt-1.5">
               ১০০% {t('সুরক্ষিত', 'Protected')}
             </div>
             <button
               onClick={() => handleTabChange('khatian')}
-              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1 block cursor-pointer"
+              className="text-xs text-[#006A4E] font-semibold hover:underline mt-1.5 flex items-center gap-1 cursor-pointer group-hover:translate-x-0.5 transition-transform"
             >
-              {t('জামানত খতিয়ান যাচাই →', 'Verify Collateral →')}
+              <span>{t('জামানত খতিয়ান যাচাই', 'Verify Collateral')}</span>
+              <span>→</span>
             </button>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 border border-blue-100">
             <ShieldCheck className="w-6 h-6" />
           </div>
         </div>
       </div>
 
-      {/* Control Panel SubTab Switcher */}
-      <div className="panel p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-rise-delay">
-        <div>
-          <h3 className="font-bold text-sm text-[#074f38]">
-            {t('ব্যাংক জামানত ও লিয়েন ওয়ার্কস্পেস', 'Bank Mortgage & Lien Workspace')}
-          </h3>
-          <p className="text-xs text-[#5F7A74]">
-            {t('লিয়েন রেজিস্টার, নতুন বন্ধক ও ডিজিটাল অনাপত্তিপত্র কন্ট্রোল:', 'Lien registry, new mortgage lock, and digital release NOCs:')}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {role === 'bank_officer' ? (
-            <>
+      {/* Redesigned Sleek Segmented Control Tab Navigation */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-2 shadow-xs">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          {tabList.map((tab) => {
+            const isActive = subTab === tab.id;
+            return (
               <button
-                onClick={() => handleTabChange('new_lien')}
-                className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                  subTab === 'new_lien'
+                key={tab.id}
+                type="button"
+                onClick={() => handleTabChange(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 cursor-pointer ${
+                  isActive
                     ? 'bg-[#006A4E] text-white shadow-xs'
-                    : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                 }`}
               >
-                <PlusCircle className="w-4 h-4" />
-                <span>{t('নতুন লিয়েন আবেদন (মেকার)', 'Prepare Loan Lien (Maker)')}</span>
-              </button>
-              <button
-                onClick={() => handleTabChange('mortgages')}
-                className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                  subTab === 'mortgages'
-                    ? 'bg-[#006A4E] text-white shadow-xs'
-                    : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                }`}
-              >
-                <Building2 className="w-4 h-4" />
-                <span>
-                  {t('লিয়েন রেজিস্টার', 'Mortgages & Liens')} ({toBanglaDigits(mortgages.length, lang)})
+                <span className={isActive ? 'text-white' : 'text-slate-400'}>
+                  {tab.icon}
                 </span>
+                <span>{tab.label}</span>
+                {tab.count !== undefined && (
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      isActive
+                        ? 'bg-white/20 text-white'
+                        : 'bg-slate-200/80 text-slate-700'
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                )}
               </button>
-              <button
-                onClick={() => handleTabChange('khatian')}
-                className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                  subTab === 'khatian'
-                    ? 'bg-[#006A4E] text-white shadow-xs'
-                    : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                }`}
-              >
-                <Search className="w-4 h-4" />
-                <span>{t('জামানত খতিয়ান যাচাই', 'Collateral Khatian Check')}</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => handleTabChange('mortgages')}
-                className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                  subTab === 'mortgages'
-                    ? 'bg-[#006A4E] text-white shadow-xs'
-                    : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                }`}
-              >
-                <Building2 className="w-4 h-4" />
-                <span>
-                  {t('লিয়েন অনুমোদন কিউ (চেকার)', 'Lien Approval Queue (Checker)')} ({toBanglaDigits(mortgages.length, lang)})
-                </span>
-              </button>
-              <button
-                onClick={() => handleTabChange('noc')}
-                className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                  subTab === 'noc'
-                    ? 'bg-[#006A4E] text-white shadow-xs'
-                    : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                }`}
-              >
-                <FileBadge className="w-4 h-4" />
-                <span>
-                  {t('ডিজিটাল ছাড়পত্র (NOC)', 'Release NOCs')} (
-                  {toBanglaDigits(mortgages.filter((m) => m.status === 'RELEASED').length, lang)})
-                </span>
-              </button>
-              <button
-                onClick={() => handleTabChange('new_lien')}
-                className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                  subTab === 'new_lien'
-                    ? 'bg-[#006A4E] text-white shadow-xs'
-                    : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                }`}
-              >
-                <PlusCircle className="w-4 h-4" />
-                <span>{t('নতুন লিয়েন অন্তর্ভুক্তি', 'Register Lien')}</span>
-              </button>
-              <button
-                onClick={() => handleTabChange('khatian')}
-                className={`px-3.5 py-2 rounded-lg font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-colors ${
-                  subTab === 'khatian'
-                    ? 'bg-[#006A4E] text-white shadow-xs'
-                    : 'bg-[#EDF7F4] text-[#0A1F1C]/90 hover:bg-[#E4EFEA]'
-                }`}
-              >
-                <Search className="w-4 h-4" />
-                <span>{t('জামানত খতিয়ান যাচাই', 'Collateral Khatian Check')}</span>
-              </button>
-            </>
-          )}
+            );
+          })}
         </div>
       </div>
 
