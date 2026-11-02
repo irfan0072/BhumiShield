@@ -20,21 +20,29 @@ final class DB
             return self::$pdo;
         }
 
+        $testConn = strtolower((string) (getenv('BHUMISHIELD_TEST_DB_CONNECTION') ?: env('DB_CONNECTION', 'sqlite')));
         $testDb = getenv('BHUMISHIELD_TEST_DB');
-        $connType = strtolower((string) env('DB_CONNECTION', 'sqlite'));
-        if (!$testDb && !in_array($connType, ['sqlite', 'pgsql', 'postgres'], true)) {
+        $isPgRequested = in_array($testConn, ['pgsql', 'postgres'], true);
+
+        if (!in_array($testConn, ['sqlite', 'pgsql', 'postgres'], true)) {
             throw new \RuntimeException('Unsupported database driver. Configure sqlite or pgsql explicitly.');
         }
 
-
-        if (!$testDb && ($connType === 'pgsql' || $connType === 'postgres')) {
+        if ($isPgRequested) {
             try {
                 $host = (string) env('DB_HOST', '127.0.0.1');
                 $port = (string) env('DB_PORT', '5432');
-                $dbname = (string) env('DB_DATABASE', 'bhumishield');
+                $dbname = ($testDb && !str_ends_with($testDb, '.sqlite') && !str_contains($testDb, '/'))
+                    ? $testDb
+                    : (string) env('DB_DATABASE', 'bhumishield');
                 $user = (string) env('DB_USERNAME', 'bhumishield');
                 $pass = (string) env('DB_PASSWORD', 'bhumishield_demo_2026');
-                $dsn = "pgsql:host={$host};port={$port};dbname={$dbname};connect_timeout=5";
+
+                $sslMode = (string) env('DB_SSLMODE', 'prefer');
+                if (!in_array($sslMode, ['disable', 'allow', 'prefer', 'require', 'verify-ca', 'verify-full'], true)) {
+                    throw new \RuntimeException('Invalid PostgreSQL SSL mode.');
+                }
+                $dsn = "pgsql:host={$host};port={$port};dbname={$dbname};connect_timeout=5;sslmode={$sslMode}";
                 self::$pdo = new PDO($dsn, $user, $pass, [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -43,10 +51,10 @@ final class DB
                 return self::$pdo;
             } catch (\Throwable $e) {
                 $appEnv = strtolower((string) env('APP_ENV', 'development'));
-                if ($appEnv === 'production') {
-                    throw new \RuntimeException("Production PostgreSQL database unreachable: " . $e->getMessage());
+                if (in_array($appEnv, ['production', 'staging'], true) || getenv('BHUMISHIELD_TEST_DB_CONNECTION') === 'pgsql') {
+                    throw new \RuntimeException("Configured PostgreSQL database unreachable: " . $e->getMessage());
                 }
-                // Fallback to SQLite only in development/local demo mode
+                // Never silently switch hosted staging/production to an empty local SQLite database.
             }
         }
 
@@ -75,6 +83,7 @@ final class DB
     public static function resetConnection(): void
     {
         self::$pdo = null;
+        self::$isPostgres = false;
     }
 
     public static function isPostgres(): bool
@@ -119,6 +128,16 @@ final class DB
         $stmt = self::connection()->prepare($sql);
         $stmt->execute(array_values($bindings));
         return $stmt->rowCount();
+    }
+
+    public static function update(string $sql, array $bindings = []): int
+    {
+        return self::statement($sql, $bindings);
+    }
+
+    public static function delete(string $sql, array $bindings = []): int
+    {
+        return self::statement($sql, $bindings);
     }
 
     public static function execRaw(string $ddl): void

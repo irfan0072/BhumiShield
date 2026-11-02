@@ -25,3 +25,5 @@ backend/database/*.backup*
 scratch/
 output/
 tmp/
+backups/
+.agents/

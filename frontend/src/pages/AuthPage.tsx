@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAppUI, UserRole } from '../i18n';
 import { BhumiApi } from '../api/client';
+import { CitizenVerificationModal } from '../components/CitizenVerificationModal';
 import {
   LogIn,
   UserPlus,
@@ -456,6 +457,72 @@ export const DEMO_CREDENTIALS: DemoCredentialItem[] = [
   },
 ];
 
+export interface FastEvaluatorRole {
+  roleKey: string;
+  username: string;
+  nameBn: string;
+  nameEn: string;
+  titleBn: string;
+  titleEn: string;
+  dot: string;
+}
+
+export const FAST_EVALUATOR_ROLES: FastEvaluatorRole[] = [
+  {
+    roleKey: 'citizen',
+    username: 'citizen',
+    nameBn: 'নাগরিক',
+    nameEn: 'Citizen',
+    titleBn: 'মো. রফিকুল ইসলাম (নাগরিক)',
+    titleEn: 'Md. Rafiqul Islam (Citizen)',
+    dot: 'bg-emerald-500',
+  },
+  {
+    roleKey: 'sub_registrar',
+    username: 'registrar',
+    nameBn: 'সাব-রেজিস্ট্রার',
+    nameEn: 'Sub-Registrar',
+    titleBn: 'ফারহানা ইয়াসমিন (সাব-রেজিস্ট্রার)',
+    titleEn: 'Farhana Yasmin (Sub-Registrar)',
+    dot: 'bg-blue-500',
+  },
+  {
+    roleKey: 'ac_land',
+    username: 'acland',
+    nameBn: 'এসি ল্যান্ড',
+    nameEn: 'AC Land',
+    titleBn: 'তানভীর আহমেদ (এসি ল্যান্ড)',
+    titleEn: 'Tanvir Ahmed (AC Land)',
+    dot: 'bg-amber-500',
+  },
+  {
+    roleKey: 'bank_officer',
+    username: 'bank',
+    nameBn: 'ব্যাংক অফিসার',
+    nameEn: 'Bank Officer',
+    titleBn: 'নাজমুল হাসান (সোনালী ব্যাংক)',
+    titleEn: 'Nazmul Hasan (Sonali Bank)',
+    dot: 'bg-rose-500',
+  },
+  {
+    roleKey: 'lawyer_court_user',
+    username: 'lawyer',
+    nameBn: 'আইনজীবী / আদালত',
+    nameEn: 'Court Lawyer',
+    titleBn: 'এডভোকেট সিরাজুল করিম',
+    titleEn: 'Advocate Sirajul Karim',
+    dot: 'bg-violet-500',
+  },
+  {
+    roleKey: 'admin',
+    username: 'admin',
+    nameBn: 'সুপার অ্যাডমিন',
+    nameEn: 'Super Admin',
+    titleBn: 'ভূমি সুরক্ষা অ্যাডমিন',
+    titleEn: 'BhumiShield Admin',
+    dot: 'bg-red-500',
+  },
+];
 
 export const AuthPage: React.FC<{
   mode?: 'login' | 'profile';
@@ -524,6 +591,8 @@ export const AuthPage: React.FC<{
   const [regEmail, setRegEmail] = useState('');
   const [regOffice, setRegOffice] = useState('ঢাকা, বাংলাদেশ');
   const [regPendingNotice, setRegPendingNotice] = useState<any | null>(null);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [verificationTargetNid, setVerificationTargetNid] = useState('');
 
   // Profile update state
   const [profNameBn, setProfNameBn] = useState(user?.full_name_bn || '');
@@ -711,7 +780,90 @@ export const AuthPage: React.FC<{
 
         {/* 1. Login Tab */}
         {tab === 'login' && (
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+          <div>
+            {/* Evaluator 1-Click Fast Login Deck */}
+            <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-slate-50 to-emerald-50/90 border border-emerald-200/90 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3.5">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-3 w-3 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-600"></span>
+                  </span>
+                  <div>
+                    <span className="text-xs font-extrabold text-emerald-950 uppercase tracking-wider flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                      {t('বিচারক ও মূল্যায়নকারী কুইক লগইন ডেক (Evaluator 1-Click Fast Login)', 'Judge & Evaluator 1-Click Fast Login Deck')}
+                    </span>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      {t(
+                        'নিচের যেকোনো প্রাতিষ্ঠানিক ভূমিকায় ক্লিক করে অবিলম্বে ডেমো সেশনে প্রবেশ করুন (স্ক্রোল করার প্রয়োজন নেই):',
+                        'Click any key institutional role below for instant demo sign-in (no scrolling required):'
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200/70 text-emerald-800 self-start sm:self-center">
+                  {t('লাইভ টেস্ট প্রস্তুত', 'Evaluation Ready')}
+                </span>
+              </div>
+
+              {/* 6 Key Role Badges Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                {FAST_EVALUATOR_ROLES.map((role) => {
+                  const cred = DEMO_CREDENTIALS.find((c) => c.username === role.username);
+                  const isSelected = username === role.username;
+                  return (
+                    <div
+                      key={role.roleKey}
+                      className={`relative flex flex-col justify-between p-2.5 rounded-xl border transition-all ${
+                        isSelected
+                          ? 'border-[#006A4E] bg-white ring-2 ring-[#006A4E]/20 shadow-xs'
+                          : 'border-slate-200 bg-white/80 hover:bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-1 mb-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 truncate">
+                          {lang === 'bn' ? role.nameBn : role.nameEn}
+                        </span>
+                        <span className={`w-2 h-2 rounded-full ${role.dot}`} />
+                      </div>
+                      <div className="text-xs font-bold text-slate-900 truncate mb-1">
+                        {lang === 'bn' ? cred?.nameBn || role.titleBn : cred?.nameEn || role.titleEn}
+                      </div>
+                      <div className="text-[10px] font-mono text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 truncate mb-2">
+                        user: {role.username}
+                      </div>
+                      <div className="flex gap-1 mt-auto">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (cred) fillAndCopy(cred, false);
+                          }}
+                          title={t('ফর্মে ইউজারনেম ও পাসওয়ার্ড বসান', 'Fill credentials into form')}
+                          className="flex-1 py-1 px-1.5 rounded text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer text-center"
+                        >
+                          {t('পূরণ', 'Fill')}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={loading}
+                          onClick={() => {
+                            if (cred) fillAndCopy(cred, true);
+                          }}
+                          title={t('সরাসরি এই ভূমিকায় লগইন করুন', 'Instant 1-click login as this role')}
+                          className="flex-1 py-1 px-1.5 rounded text-[10px] font-bold bg-[#006A4E] hover:bg-[#00553e] text-white transition cursor-pointer flex items-center justify-center gap-0.5 shadow-2xs"
+                        >
+                          <LogIn className="w-2.5 h-2.5 shrink-0" />
+                          <span>{t('লগইন', 'Login')}</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
             {/* Left: Official Login Form */}
             <form
               id="login-form-card"
@@ -748,16 +900,17 @@ export const AuthPage: React.FC<{
               )}
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <label htmlFor="auth-username" className="block text-xs font-bold text-slate-700 mb-1.5">
                   {t('ইউজারনেম / ইমেইল / মোবাইল নম্বর (Username / Email / Mobile):', 'Username / Email / Mobile Phone:')}
                 </label>
                 <div className="relative">
                   <input
+                    id="auth-username"
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder={t('ইউজারনেম, ইমেইল অথবা মোবাইল নম্বর দিন (যেমন: citizen)', 'Username, email or mobile (e.g. citizen)')}
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-lg border border-slate-300 font-mono text-sm focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20 focus:outline-none"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-lg border border-slate-300 font-mono text-sm placeholder:text-slate-500 focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20 focus:outline-none"
                     required
                   />
                   <UserCheck className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -765,22 +918,24 @@ export const AuthPage: React.FC<{
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <label htmlFor="auth-password" className="block text-xs font-bold text-slate-700 mb-1.5">
                   {t('গোপনীয় পাসওয়ার্ড (Password):', 'Password:')}
                 </label>
                 <div className="relative">
                   <input
+                    id="auth-password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-slate-300 font-mono text-sm focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20 focus:outline-none"
+                    className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-slate-300 font-mono text-sm placeholder:text-slate-500 focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20 focus:outline-none"
                     required
                   />
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? t('পাসওয়ার্ড লুকান', 'Hide password') : t('পাসওয়ার্ড দেখুন', 'Show password')}
                     className="absolute right-3 top-3 text-slate-400 hover:text-slate-700 cursor-pointer"
                     title={showPassword ? 'Hide password' : 'Show password'}
                   >
@@ -825,8 +980,14 @@ export const AuthPage: React.FC<{
                 <li className="flex items-start gap-2.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-1.5 shrink-0" />
                   <div>
-                    <span className="font-bold text-slate-800 block">Ed25519 ক্রিপ্টোগ্রাফিক সুরক্ষা</span>
-                    <span>দলিলের জন্য Ed25519 স্বাক্ষর এবং সেশনের জন্য মেয়াদযুক্ত ও প্রত্যাহারযোগ্য টোকেন ব্যবহৃত হয়।</span>
+                    <span className="font-bold text-slate-800 block">ডিজিটাল দলিলের অখণ্ডতা ও নিরাপত্তা</span>
+                    <span>ভূমি দলিলের প্রতিটি স্বাক্ষরে প্রাতিষ্ঠানিক ডিজিটাল সুরক্ষা এবং সেশনে সুরক্ষিত টোকেন ব্যবহৃত হয়।</span>
+                    <details className="mt-1 text-[11px] text-slate-500 cursor-pointer">
+                      <summary className="hover:text-slate-700 font-medium">প্রযুক্তিগত বিস্তারিত (Ed25519 / Token)</summary>
+                      <div className="mt-1 font-mono text-[10px] bg-slate-100 p-1.5 rounded">
+                        Protocol: Ed25519 Asymmetric Digital Signature & Revocable Bearer Tokens.
+                      </div>
+                    </details>
                   </div>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -851,7 +1012,8 @@ export const AuthPage: React.FC<{
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* Evaluator Demo Credentials Directory (All 22+ Roles with Copy & 1-Click Login) */}
         {tab === 'login' && (() => {
@@ -901,13 +1063,15 @@ export const AuthPage: React.FC<{
                     type="text"
                     value={credSearch}
                     onChange={(e) => setCredSearch(e.target.value)}
+                    aria-label={t('পদবি, নাম বা ইউজারনেম খুঁজুন', 'Search role, name or username')}
                     placeholder={t('পদবি, নাম বা ইউজারনেম খুঁজুন...', 'Search role, name or username...')}
-                    className="w-full pl-9 pr-7 py-2 rounded-lg border border-slate-300 text-xs font-medium focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20 focus:outline-none bg-white"
+                    className="w-full pl-9 pr-7 py-2 rounded-lg border border-slate-300 text-xs font-medium placeholder:text-slate-500 focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20 focus:outline-none bg-white"
                   />
                   {credSearch && (
                     <button
                       type="button"
                       onClick={() => setCredSearch('')}
+                      aria-label={t('অনুসন্ধান মুছুন', 'Clear search')}
                       className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
                       ✕
@@ -1141,10 +1305,21 @@ export const AuthPage: React.FC<{
                     <button
                       type="button"
                       onClick={() => {
+                        setVerificationTargetNid(regPendingNotice.nid || '');
+                        setIsVerificationModalOpen(true);
+                      }}
+                      className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-sm transition flex items-center gap-1.5"
+                    >
+                      <ShieldCheck className="w-4 h-4 text-emerald-200" />
+                      <span>{t('এনআইডি ও বায়োমেট্রিক এখনই যাচাই করুন', 'Verify NID & Biometrics Now')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
                         setRegPendingNotice(null);
                         setTab('login');
                       }}
-                      className="px-6 py-2.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs cursor-pointer shadow-sm transition flex items-center gap-2"
+                      className="px-5 py-2.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs cursor-pointer shadow-sm transition flex items-center gap-2"
                     >
                       <LogIn className="w-4 h-4" />
                       <span>{t('লগইন স্ক্রিনে যান (Proceed to Sign In)', 'Go to Sign In')}</span>
@@ -1213,29 +1388,31 @@ export const AuthPage: React.FC<{
                   {/* Primary identifier based on method */}
                   {regMethod === 'phone' ? (
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label htmlFor="reg-primary-phone" className="block text-xs font-bold text-slate-700 mb-1">
                         {t('মোবাইল নম্বর (বাধ্যতামূলক):', 'Mobile Phone Number (Required):')} <span className="text-red-600">*</span>
                       </label>
                       <input
+                        id="reg-primary-phone"
                         type="tel"
                         value={regPhone}
                         onChange={(e) => setRegPhone(e.target.value)}
                         placeholder="01700-000999"
-                        className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs focus:border-[#006A4E] focus:ring-1 focus:ring-[#006A4E]"
+                        className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs placeholder:text-slate-500 focus:border-[#006A4E] focus:ring-1 focus:ring-[#006A4E]"
                         required
                       />
                     </div>
                   ) : (
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label htmlFor="reg-primary-email" className="block text-xs font-bold text-slate-700 mb-1">
                         {t('ইমেইল ঠিকানা (বাধ্যতামূলক):', 'Email Address (Required):')} <span className="text-red-600">*</span>
                       </label>
                       <input
+                        id="reg-primary-email"
                         type="email"
                         value={regEmail}
                         onChange={(e) => setRegEmail(e.target.value)}
                         placeholder="citizen@domain.com"
-                        className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs focus:border-[#006A4E] focus:ring-1 focus:ring-[#006A4E]"
+                        className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs placeholder:text-slate-500 focus:border-[#006A4E] focus:ring-1 focus:ring-[#006A4E]"
                         required
                       />
                     </div>
@@ -1244,42 +1421,45 @@ export const AuthPage: React.FC<{
                   {/* Secondary optional identifier */}
                   {regMethod === 'phone' ? (
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label htmlFor="reg-secondary-email" className="block text-xs font-bold text-slate-700 mb-1">
                         {t('ইমেইল ঠিকানা (ঐচ্ছিক):', 'Email Address (Optional):')}
                       </label>
                       <input
+                        id="reg-secondary-email"
                         type="email"
                         value={regEmail}
                         onChange={(e) => setRegEmail(e.target.value)}
                         placeholder="name@domain.com"
-                        className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs"
+                        className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs placeholder:text-slate-500"
                       />
                     </div>
                   ) : (
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                      <label htmlFor="reg-secondary-phone" className="block text-xs font-bold text-slate-700 mb-1">
                         {t('মোবাইল নম্বর (ঐচ্ছিক):', 'Phone Number (Optional):')}
                       </label>
                       <input
+                        id="reg-secondary-phone"
                         type="tel"
                         value={regPhone}
                         onChange={(e) => setRegPhone(e.target.value)}
                         placeholder="01700-000999"
-                        className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs"
+                        className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs placeholder:text-slate-500"
                       />
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label htmlFor="reg-username" className="block text-xs font-bold text-slate-700 mb-1">
                       {t('ইউজারনেম (Username):', 'Username:')}
                     </label>
                     <input
+                      id="reg-username"
                       type="text"
                       value={regUsername}
                       onChange={(e) => setRegUsername(e.target.value)}
                       placeholder={regMethod === 'email' ? 'e.g. saiful_islam (ঐচ্ছিক)' : 'e.g. saiful_islam'}
-                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono"
+                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono placeholder:text-slate-500"
                     />
                     <span className="text-[10px] text-slate-400">
                       {t('খালি রাখলে স্বয়ংক্রিয়ভাবে তৈরি হবে', 'Auto-generated if left empty')}
@@ -1287,55 +1467,59 @@ export const AuthPage: React.FC<{
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label htmlFor="reg-password" className="block text-xs font-bold text-slate-700 mb-1">
                       {t('গোপনীয় পাসওয়ার্ড (Password):', 'Password:')} <span className="text-red-600">*</span>
                     </label>
                     <input
+                      id="reg-password"
                       type="password"
                       value={regPassword}
                       onChange={(e) => setRegPassword(e.target.value)}
-                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono"
+                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono placeholder:text-slate-500"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label htmlFor="reg-name-bn" className="block text-xs font-bold text-slate-700 mb-1">
                       {t('পূর্ণ নাম (বাংলায়):', 'Full Name (Bangla):')} <span className="text-red-600">*</span>
                     </label>
                     <input
+                      id="reg-name-bn"
                       type="text"
                       value={regNameBn}
                       onChange={(e) => setRegNameBn(e.target.value)}
                       placeholder="মোঃ সাইফুল ইসলাম"
-                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
+                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs placeholder:text-slate-500"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label htmlFor="reg-name-en" className="block text-xs font-bold text-slate-700 mb-1">
                       {t('পূর্ণ নাম (ইংরেজিতে):', 'Full Name (English):')}
                     </label>
                     <input
+                      id="reg-name-en"
                       type="text"
                       value={regNameEn}
                       onChange={(e) => setRegNameEn(e.target.value)}
                       placeholder="Md. Saiful Islam"
-                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
+                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs placeholder:text-slate-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label htmlFor="reg-nid" className="block text-xs font-bold text-slate-700 mb-1">
                       {t('জাতীয় পরিচয়পত্র / এনআইডি নম্বর:', 'NID Number:')}
                     </label>
                     <input
+                      id="reg-nid"
                       type="text"
                       value={regNid}
                       onChange={(e) => setRegNid(e.target.value)}
                       placeholder="9900001099"
-                      className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs"
+                      className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs placeholder:text-slate-500"
                     />
                     <span className="text-[10px] text-slate-400">
                       {t('১০ বা ১৭ ডিজিট (প্রোফাইল সম্পন্নকালেও দেওয়া যাবে)', 'Can also be updated during profile completion')}
@@ -1343,15 +1527,16 @@ export const AuthPage: React.FC<{
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label htmlFor="reg-office" className="block text-xs font-bold text-slate-700 mb-1">
                       {t('ঠিকানা / অবস্থান:', 'Address / Location:')}
                     </label>
                     <input
+                      id="reg-office"
                       type="text"
                       value={regOffice}
                       onChange={(e) => setRegOffice(e.target.value)}
                       placeholder="ঢাকা, বাংলাদেশ"
-                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
+                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs placeholder:text-slate-500"
                     />
                   </div>
                 </div>
@@ -1437,9 +1622,21 @@ export const AuthPage: React.FC<{
                       ✓ {t('যাচাইকৃত', 'Verified')}
                     </span>
                   ) : (
-                    <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                      ⏳ {t('যাচাই অপেক্ষমাণ', 'Pending Verification')}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                        ⏳ {t('যাচাই অপেক্ষমাণ', 'Pending Verification')}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVerificationTargetNid(profNid || user?.nid || '');
+                          setIsVerificationModalOpen(true);
+                        }}
+                        className="text-[10px] font-bold text-white bg-[#006A4E] hover:bg-emerald-800 px-2 py-0.5 rounded shadow-2xs transition cursor-pointer"
+                      >
+                        {t('এখনই যাচাই করুন', 'Verify Now')}
+                      </button>
+                    </div>
                   )}
                 </div>
                 <input
@@ -1503,6 +1700,24 @@ export const AuthPage: React.FC<{
           </form>
         )}
       </div>
+
+      {/* NID Porichoy Verification Modal */}
+      <CitizenVerificationModal
+        isOpen={isVerificationModalOpen}
+        initialNid={verificationTargetNid || profNid || user?.nid || ''}
+        onClose={() => setIsVerificationModalOpen(false)}
+        onSuccess={() => {
+          if (user) {
+            setUser({
+              ...user,
+              is_identity_verified: 1,
+              nid: verificationTargetNid || profNid || user.nid,
+            });
+            setProfNid(verificationTargetNid || profNid || user.nid || '');
+          }
+          setSuccessMsg(t('এনআইডি ও বায়োমেট্রিক পরিচয় সফলভাবে নিশ্চিত করা হয়েছে!', 'NID & Biometrics verified successfully!'));
+        }}
+      />
     </div>
   );
 };

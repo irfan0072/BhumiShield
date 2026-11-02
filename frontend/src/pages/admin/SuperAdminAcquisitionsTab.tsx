@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Building2,
   Search,
@@ -50,6 +50,18 @@ export const SuperAdminAcquisitionsTab: React.FC<SuperAdminAcquisitionsTabProps>
   const [status, setStatus] = useState('PRELIMINARY_NOTICE');
   const [createLoading, setCreateLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState<{ msg: string; err?: boolean } | null>(null);
+
+  useEffect(() => {
+    if (!createModalOpen && !selectedCase) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (createModalOpen) setCreateModalOpen(false);
+        if (selectedCase) setSelectedCase(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [createModalOpen, selectedCase]);
 
   const filteredCases = acquisitionCases.filter((c) => {
     if (statusFilter !== 'ALL' && c.status !== statusFilter) return false;
@@ -285,7 +297,12 @@ export const SuperAdminAcquisitionsTab: React.FC<SuperAdminAcquisitionsTabProps>
 
       {/* Case Details Drawer */}
       {selectedCase && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="la-case-details-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn"
+        >
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-xl w-full overflow-hidden flex flex-col max-h-[90vh]">
             <div className="bg-slate-900 px-6 py-4 flex items-center justify-between text-white border-b border-slate-800">
               <div className="flex items-center gap-3">
@@ -293,11 +310,16 @@ export const SuperAdminAcquisitionsTab: React.FC<SuperAdminAcquisitionsTabProps>
                   <Building2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black tracking-tight">{selectedCase.case_no}</h3>
+                  <h3 id="la-case-details-title" className="text-base font-black tracking-tight">{selectedCase.case_no}</h3>
                   <p className="text-xs text-slate-400">{selectedCase.project_name_bn}</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedCase(null)} className="p-1 rounded-lg text-slate-400 hover:text-white">
+              <button
+                type="button"
+                onClick={() => setSelectedCase(null)}
+                aria-label={t('বন্ধ করুন', 'Close')}
+                className="p-1 rounded-lg text-slate-400 hover:text-white"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -354,7 +376,12 @@ export const SuperAdminAcquisitionsTab: React.FC<SuperAdminAcquisitionsTabProps>
 
       {/* Create Modal */}
       {createModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="la-case-create-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn"
+        >
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden">
             <div className="bg-slate-900 px-6 py-4 flex items-center justify-between text-white border-b border-slate-800">
               <div className="flex items-center gap-3">
@@ -362,98 +389,142 @@ export const SuperAdminAcquisitionsTab: React.FC<SuperAdminAcquisitionsTabProps>
                   <Plus className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black tracking-tight">{t('নতুন ভূমি অধিগ্রহণ কেস এন্ট্রি', 'Register New LA Case')}</h3>
-                  <p className="text-xs text-slate-400">ডিসি কার্যালয় এলএ শাখা</p>
+                  <h3 id="la-case-create-title" className="text-base font-black tracking-tight">{t('নতুন ভূমি অধিগ্রহণ কেস এন্ট্রি', 'Register New LA Case')}</h3>
+                  <p className="text-xs text-slate-400">{t('ডিসি কার্যালয় এলএ শাখা', 'DC Office LA Branch')}</p>
                 </div>
               </div>
-              <button onClick={() => setCreateModalOpen(false)} className="p-1 rounded-lg text-slate-400 hover:text-white">
+              <button
+                type="button"
+                onClick={() => setCreateModalOpen(false)}
+                aria-label={t('বন্ধ করুন', 'Close')}
+                className="p-1 rounded-lg text-slate-400 hover:text-white"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateSubmit} className="p-6 space-y-3.5 text-xs text-slate-700 max-h-[80vh] overflow-y-auto">
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('কেস নম্বর (Case No)', 'Case No')}</label>
+                <label htmlFor="la-case-no" className="block text-[11px] font-bold text-slate-700 mb-1">{t('কেস নম্বর (Case No)', 'Case No')}</label>
                 <input
+                  id="la-case-no"
                   type="text"
-                  placeholder="LA-2026-XXXX (ফাঁকা রাখলে স্বয়ংক্রিয় জেনারেট হবে)"
+                  placeholder={t('LA-2026-XXXX (ফাঁকা রাখলে স্বয়ংক্রিয় জেনারেট হবে)', 'LA-2026-XXXX (Auto-generated if left blank)')}
                   value={caseNo}
                   onChange={(e) => setCaseNo(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden placeholder:text-slate-500"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('প্রকল্পের নাম (বাংলায়)', 'Project Name (BN)')} *</label>
+                <label htmlFor="la-project-name-bn" className="block text-[11px] font-bold text-slate-700 mb-1">{t('প্রকল্পের নাম (বাংলায়)', 'Project Name (BN)')} *</label>
                 <input
+                  id="la-project-name-bn"
                   type="text"
-                  placeholder="যেমন: ঢাকা-আশুলিয়া এলিভেটেড এক্সপ্রেসওয়ে প্রকল্প"
+                  placeholder={t('যেমন: ঢাকা-আশুলিয়া এলিভেটেড এক্সপ্রেসওয়ে প্রকল্প', 'e.g. Dhaka-Ashulia Elevated Expressway Project')}
                   value={projectNameBn}
                   onChange={(e) => setProjectNameBn(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden placeholder:text-slate-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('প্রকল্পের নাম (ইংরেজিতে)', 'Project Name (EN)')}</label>
+                <label htmlFor="la-project-name-en" className="block text-[11px] font-bold text-slate-700 mb-1">{t('প্রকল্পের নাম (ইংরেজিতে)', 'Project Name (EN)')}</label>
                 <input
+                  id="la-project-name-en"
                   type="text"
-                  placeholder="e.g. Dhaka-Ashulia Elevated Expressway"
+                  placeholder={t('e.g. Dhaka-Ashulia Elevated Expressway', 'e.g. Dhaka-Ashulia Elevated Expressway')}
                   value={projectNameEn}
                   onChange={(e) => setProjectNameEn(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden placeholder:text-slate-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('প্রত্যাশী সংস্থা', 'Acquiring Agency')}</label>
+                  <label htmlFor="la-agency-bn" className="block text-[11px] font-bold text-slate-700 mb-1">{t('প্রত্যাশী সংস্থা', 'Acquiring Agency')}</label>
                   <input
+                    id="la-agency-bn"
                     type="text"
                     value={agencyBn}
                     onChange={(e) => setAgencyBn(e.target.value)}
-                    placeholder="যেমন: বাংলাদেশ সেতু কর্তৃপক্ষ"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+                    placeholder={t('যেমন: বাংলাদেশ সেতু কর্তৃপক্ষ', 'e.g. Bangladesh Bridge Authority')}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden placeholder:text-slate-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('আইনি ধারা', 'Section Type')}</label>
+                  <label htmlFor="la-section-type" className="block text-[11px] font-bold text-slate-700 mb-1">{t('আইনি ধারা', 'Section Type')}</label>
                   <select
+                    id="la-section-type"
                     value={sectionType}
                     onChange={(e) => setSectionType(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs font-semibold focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
                   >
-                    <option value="SECTION_4">ধারা ৪ (প্রাথমিক নোটিশ)</option>
-                    <option value="SECTION_7">ধারা ৭ (যৌথ তদন্ত)</option>
-                    <option value="SECTION_8">ধারা ৮ (রোয়েদাদ ও গেজেট)</option>
+                    <option value="SECTION_4">{t('ধারা ৪ (প্রাথমিক নোটিশ)', 'Section 4 (Preliminary Notice)')}</option>
+                    <option value="SECTION_7">{t('ধারা ৭ (যৌথ তদন্ত)', 'Section 7 (Joint Survey)')}</option>
+                    <option value="SECTION_8">{t('ধারা ৮ (রোয়েদাদ ও গেজেট)', 'Section 8 (Award & Gazette)')}</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">জেলা</label>
-                  <input type="text" value={districtBn} onChange={(e) => setDistrictBn(e.target.value)} className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs" />
+                  <label htmlFor="la-district-bn" className="block text-[11px] font-bold text-slate-700 mb-1">{t('জেলা', 'District')}</label>
+                  <input
+                    id="la-district-bn"
+                    type="text"
+                    value={districtBn}
+                    onChange={(e) => setDistrictBn(e.target.value)}
+                    placeholder={t('যেমন: ঢাকা', 'e.g. Dhaka')}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs placeholder:text-slate-500"
+                  />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">উপজেলা</label>
-                  <input type="text" value={upazilaBn} onChange={(e) => setUpazilaBn(e.target.value)} className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs" />
+                  <label htmlFor="la-upazila-bn" className="block text-[11px] font-bold text-slate-700 mb-1">{t('উপজেলা', 'Upazila')}</label>
+                  <input
+                    id="la-upazila-bn"
+                    type="text"
+                    value={upazilaBn}
+                    onChange={(e) => setUpazilaBn(e.target.value)}
+                    placeholder={t('যেমন: সাভার', 'e.g. Savar')}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs placeholder:text-slate-500"
+                  />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">মৌজা</label>
-                  <input type="text" value={mouzaBn} onChange={(e) => setMouzaBn(e.target.value)} className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs" />
+                  <label htmlFor="la-mouza-bn" className="block text-[11px] font-bold text-slate-700 mb-1">{t('মৌজা', 'Mouza')}</label>
+                  <input
+                    id="la-mouza-bn"
+                    type="text"
+                    value={mouzaBn}
+                    onChange={(e) => setMouzaBn(e.target.value)}
+                    placeholder={t('যেমন: বিরুলিয়া', 'e.g. Birulia')}
+                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs placeholder:text-slate-500"
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">মোট জমি (শতাংশ)</label>
-                  <input type="number" step="0.1" value={totalLand} onChange={(e) => setTotalLand(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+                  <label htmlFor="la-total-land" className="block text-[11px] font-bold text-slate-700 mb-1">{t('মোট জমি (শতাংশ)', 'Total Land (Decimals)')}</label>
+                  <input
+                    id="la-total-land"
+                    type="number"
+                    step="0.1"
+                    value={totalLand}
+                    onChange={(e) => setTotalLand(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs placeholder:text-slate-500"
+                  />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">প্রাক্কলিত বাজেট (৳)</label>
-                  <input type="number" value={compensationBdt} onChange={(e) => setCompensationBdt(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs" />
+                  <label htmlFor="la-compensation-bdt" className="block text-[11px] font-bold text-slate-700 mb-1">{t('প্রাক্কলিত বাজেট (৳)', 'Estimated Budget (BDT)')}</label>
+                  <input
+                    id="la-compensation-bdt"
+                    type="number"
+                    value={compensationBdt}
+                    onChange={(e) => setCompensationBdt(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs placeholder:text-slate-500"
+                  />
                 </div>
               </div>
 

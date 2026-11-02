@@ -9,12 +9,15 @@ final class ParcelDesignController {
  private const ROLES=['admin','system_admin','ac_land','land_office_assistant','field_verification_officer','settlement_records_officer','settlement_checker'];
  private static function fail(string $code,string $message,int $status=422):never{throw new \RuntimeException(json_encode(['status'=>$status,'code'=>$code,'message_bn'=>$message,'message_en'=>$message],JSON_UNESCAPED_UNICODE));}
  private static function admin(array $u):bool{return in_array($u['role'],['admin','system_admin'],true);}
+ private static function boundsSql(string $sql):string {
+  return DB::isPostgres()?preg_replace('/\b(xmin|xmax)\b/','bbox_$1',str_replace(' REAL',' DOUBLE PRECISION',$sql)):$sql;
+ }
  public static function migrate():void {
   $id=DB::isPostgres()?'BIGSERIAL PRIMARY KEY':'INTEGER PRIMARY KEY AUTOINCREMENT';
   DB::statement('CREATE TABLE IF NOT EXISTS map_mouza_offices (location_id INTEGER PRIMARY KEY REFERENCES locations(id),office_id INTEGER NOT NULL REFERENCES offices(id),assigned_by TEXT NOT NULL,reason TEXT NOT NULL,updated_at TEXT NOT NULL)');
-  DB::statement("CREATE TABLE IF NOT EXISTS map_parcel_designs (id {$id},location_id INTEGER NOT NULL REFERENCES locations(id),office_id INTEGER NOT NULL REFERENCES offices(id),plot_id INTEGER REFERENCES plots(id),dag_no TEXT NOT NULL,survey TEXT NOT NULL,sheet_no TEXT NOT NULL,land_use TEXT NOT NULL,recorded_area REAL NOT NULL,geometry TEXT NOT NULL,area_sqm REAL NOT NULL,xmin REAL NOT NULL,ymin REAL NOT NULL,xmax REAL NOT NULL,ymax REAL NOT NULL,source_reference TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'DRAFT',version INTEGER NOT NULL DEFAULT 1,supersedes_id INTEGER REFERENCES map_parcel_designs(id),created_by TEXT NOT NULL,reviewed_by TEXT,review_note TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)");
+  DB::statement(self::boundsSql("CREATE TABLE IF NOT EXISTS map_parcel_designs (id {$id},location_id INTEGER NOT NULL REFERENCES locations(id),office_id INTEGER NOT NULL REFERENCES offices(id),plot_id INTEGER REFERENCES plots(id),dag_no TEXT NOT NULL,survey TEXT NOT NULL,sheet_no TEXT NOT NULL,land_use TEXT NOT NULL,recorded_area REAL NOT NULL,geometry TEXT NOT NULL,area_sqm REAL NOT NULL,xmin REAL NOT NULL,ymin REAL NOT NULL,xmax REAL NOT NULL,ymax REAL NOT NULL,source_reference TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'DRAFT',version INTEGER NOT NULL DEFAULT 1,supersedes_id INTEGER REFERENCES map_parcel_designs(id),created_by TEXT NOT NULL,reviewed_by TEXT,review_note TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL)"));
   DB::statement('CREATE TABLE IF NOT EXISTS map_parcel_owner_requests (design_id INTEGER PRIMARY KEY REFERENCES map_parcel_designs(id),batch_id INTEGER NOT NULL UNIQUE REFERENCES onboarding_batches(id))');
-  DB::statement('CREATE INDEX IF NOT EXISTS map_parcel_location_status ON map_parcel_designs(location_id,status,xmin,xmax)');
+  DB::statement(self::boundsSql('CREATE INDEX IF NOT EXISTS map_parcel_location_status ON map_parcel_designs(location_id,status,xmin,xmax)'));
  }
  private static function user(?array $actor):array{return RoleMiddleware::authorize(self::ROLES,$actor);}
  private static function allowed(array $u,int $loc,int $office):bool {
@@ -56,11 +59,11 @@ final class ParcelDesignController {
   $rows=DB::select('SELECT * FROM map_parcel_designs WHERE location_id=?'.($public?" AND status='PUBLISHED'":'').' ORDER BY id DESC LIMIT 501',[$loc]);
   if(!$public)$rows=array_values(array_filter($rows,fn($r)=>self::allowed($u,(int)$r['location_id'],(int)$r['office_id'])));
   if(count($rows)>500)self::fail('NARROW_MAP_SCOPE','এই মৌজায় অনেক দাগ আছে; মানচিত্রের আলাদা spatial service প্রয়োজন।');
-  foreach($rows as &$r){$r['geometry']=json_decode($r['geometry'],true);if($public)foreach(['created_by','reviewed_by','review_note'] as $key)unset($r[$key]);}unset($r);
+  foreach($rows as &$r){if(DB::isPostgres())foreach(['xmin','xmax'] as $key){$r[$key]=$r['bbox_'.$key];unset($r['bbox_'.$key]);}$r['geometry']=json_decode($r['geometry'],true);if($public)foreach(['created_by','reviewed_by','review_note'] as $key)unset($r[$key]);}unset($r);
   return ['items'=>$rows];
  }
  private static function collision(array $r,array $g,int $exclude=0,int $supersedes=0):void {
-  $box=$g['bbox'];$rows=DB::select("SELECT id,dag_no,geometry FROM map_parcel_designs WHERE location_id=? AND survey=? AND status IN ('SUBMITTED','PUBLISHED') AND id<>? AND id<>? AND xmin<=? AND xmax>=? AND ymin<=? AND ymax>=? LIMIT 501",[$r['location_id'],$r['survey'],$exclude,$supersedes,$box[2],$box[0],$box[3],$box[1]]);
+  $box=$g['bbox'];$rows=DB::select(self::boundsSql("SELECT id,dag_no,geometry FROM map_parcel_designs WHERE location_id=? AND survey=? AND status IN ('SUBMITTED','PUBLISHED') AND id<>? AND id<>? AND xmin<=? AND xmax>=? AND ymin<=? AND ymax>=? LIMIT 501"),[$r['location_id'],$r['survey'],$exclude,$supersedes,$box[2],$box[0],$box[3],$box[1]]);
   if(count($rows)>500)self::fail('SPATIAL_REVIEW_REQUIRED','এখানে অত্যধিক সীমানা আছে; বিস্তারিত GIS পরীক্ষা প্রয়োজন।');
   foreach($rows as $other)if(G::overlaps($g['geometry'],json_decode($other['geometry'],true)))self::fail('PARCEL_OVERLAP','সীমানা দাগ '.$other['dag_no'].'-এর সঙ্গে মিলে যাচ্ছে। সীমানা সরিয়ে ঠিক করুন।',409);
  }
@@ -85,8 +88,8 @@ final class ParcelDesignController {
    $parentId=$old?(int)($old['supersedes_id']??0):$supersedes;
    if(DB::selectOne("SELECT id FROM map_parcel_designs WHERE location_id=? AND survey=? AND dag_no=? AND status<>'ARCHIVED' AND id<>? AND id<>?",[$r['location_id'],$r['survey'],$r['dag_no'],$id,$parentId]))self::fail('DUPLICATE_DAG','এই মৌজা ও জরিপে দাগটি আছে। তালিকা থেকে সেটি সংশোধন করুন।',409);
    self::collision($r,$g,$id,$parentId);$now=gmdate('c');$values=[$r['location_id'],$r['office_id'],$r['plot_id'],$r['dag_no'],$r['survey'],$r['sheet_no'],$r['land_use'],$r['recorded_area'],json_encode($g['geometry']),$g['area_sqm'],...$g['bbox'],$r['source_reference'],$now];
-   if($old){$stmt=DB::connection()->prepare("UPDATE map_parcel_designs SET location_id=?,office_id=?,plot_id=?,dag_no=?,survey=?,sheet_no=?,land_use=?,recorded_area=?,geometry=?,area_sqm=?,xmin=?,ymin=?,xmax=?,ymax=?,source_reference=?,updated_at=?,version=version+1,status='DRAFT',created_by=? WHERE id=? AND version=?");$stmt->execute([...$values,$u['username'],$id,$old['version']]);if($stmt->rowCount()!==1)self::fail('DESIGN_CONFLICT','নকশা বদলেছে। আবার খুলুন।',409);$saved=$id;}
-   else $saved=DB::insert('INSERT INTO map_parcel_designs(location_id,office_id,plot_id,dag_no,survey,sheet_no,land_use,recorded_area,geometry,area_sqm,xmin,ymin,xmax,ymax,source_reference,updated_at,created_by,created_at,supersedes_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',[...$values,$u['username'],$now,$parentId?:null]);
+   if($old){$stmt=DB::connection()->prepare(self::boundsSql("UPDATE map_parcel_designs SET location_id=?,office_id=?,plot_id=?,dag_no=?,survey=?,sheet_no=?,land_use=?,recorded_area=?,geometry=?,area_sqm=?,xmin=?,ymin=?,xmax=?,ymax=?,source_reference=?,updated_at=?,version=version+1,status='DRAFT',created_by=? WHERE id=? AND version=?"));$stmt->execute([...$values,$u['username'],$id,$old['version']]);if($stmt->rowCount()!==1)self::fail('DESIGN_CONFLICT','নকশা বদলেছে। আবার খুলুন।',409);$saved=$id;}
+   else $saved=DB::insert(self::boundsSql('INSERT INTO map_parcel_designs(location_id,office_id,plot_id,dag_no,survey,sheet_no,land_use,recorded_area,geometry,area_sqm,xmin,ymin,xmax,ymax,source_reference,updated_at,created_by,created_at,supersedes_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'),[...$values,$u['username'],$now,$parentId?:null]);
    self::audit($u,'PARCEL_DRAFT_SAVED',(string)$saved,['location_id'=>$r['location_id'],'dag_no'=>$r['dag_no']]);return ['id'=>$saved];
   });
  }

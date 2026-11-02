@@ -42,6 +42,7 @@ import {
   CitizenVaultLockVector,
   BankLienNocVector
 } from '../components/landing/LandVectors';
+import { JUDGE_PERSONAS } from '../components/NavbarAndLayout';
 
 const ROLE_ROUTE: Record<string, string> = {
   citizen: 'home',
@@ -62,10 +63,13 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
   const [selectedServiceCat, setSelectedServiceCat] = useState<string>('ALL');
   
   // Track/Search Card state
-  const [searchType, setSearchType] = useState<'deed' | 'plot'>('deed');
+  const [searchType, setSearchType] = useState<'deed' | 'plot' | 'mouza'>('deed');
   const [trackInput, setTrackInput] = useState('DL-2026-1001');
   const [selectedMouza, setSelectedMouza] = useState<number>(1);
   const [selectedPlotId, setSelectedPlotId] = useState<number>(1);
+
+  // 3-Step Interactive Pipeline Walkthrough state
+  const [activePipelineStep, setActivePipelineStep] = useState<1 | 2 | 3>(1);
 
   // Cadastral Interactive Map state
   const [selectedCadastralPlot, setSelectedCadastralPlot] = useState<CadastralPlotData>(CADASTRAL_PLOTS[0]);
@@ -100,7 +104,10 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
 
   useEffect(() => {
     fetchLandingData();
-    const timer = setInterval(fetchLandingData, 8000);
+    const timer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      fetchLandingData();
+    }, 8000);
     const onFocus = () => fetchLandingData();
     window.addEventListener('focus', onFocus);
     return () => {
@@ -109,14 +116,33 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
     };
   }, []);
 
-  const enterRolePortal = (targetRole: UserRole) => {
-    onNavigate(ROLE_ROUTE[targetRole]);
+  const enterRolePortal = async (targetRole: UserRole) => {
+    const persona = JUDGE_PERSONAS.find((p) => p.role === targetRole);
+    if (persona) {
+      setUser(persona.userData);
+      setRole(persona.role);
+      setToken('jwt-token-judge-' + persona.role);
+      onNavigate(ROLE_ROUTE[targetRole]);
+      try {
+        const res = await BhumiApi.login(persona.username, 'demo123');
+        if (res?.access_token && res?.user) {
+          setToken(res.access_token);
+          setUser(res.user);
+        }
+      } catch {
+        // Fallback to local persona state
+      }
+    } else {
+      onNavigate(ROLE_ROUTE[targetRole]);
+    }
   };
 
   const handleHeroSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchType === 'deed') {
       onNavigate('qr');
+    } else if (searchType === 'mouza') {
+      onNavigate('map');
     } else {
       onNavigate('check');
     }
@@ -200,7 +226,7 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
                 onClick={() => {
                   const elem = document.getElementById('cadastral-showcase');
                   if (elem) elem.scrollIntoView({ behavior: 'smooth' });
-                  else onNavigate('cadastral');
+                  else onNavigate('map');
                 }}
                 className="inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-emerald-950/40 px-4 font-semibold text-emerald-200 ring-1 ring-emerald-500/30 hover:bg-emerald-900/50 transition-all cursor-pointer text-xs sm:text-sm"
               >
@@ -234,27 +260,37 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
               </div>
             </div>
 
-            {/* Toggle Search Mode */}
-            <div className="flex gap-1.5 mt-4 p-1 bg-slate-100 rounded-lg">
+            {/* Toggle Search Mode: 3 Visual Search Tabs */}
+            <div className="flex gap-1 mt-4 p-1 bg-slate-100 rounded-xl">
               <button
                 type="button"
                 onClick={() => setSearchType('deed')}
-                className={`flex-1 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer min-h-[34px] flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[34px] flex items-center justify-center gap-1.5 ${
                   searchType === 'deed' ? 'bg-white text-[#074f38] shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <QrCode className="w-3.5 h-3.5 text-emerald-700" />
-                <span>{t('দলিল নম্বর / QR', 'Deed Number / QR')}</span>
+                <QrCode className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                <span className="truncate">{t('দলিল যাচাই / QR', 'Deed QR')}</span>
               </button>
               <button
                 type="button"
                 onClick={() => setSearchType('plot')}
-                className={`flex-1 py-1.5 rounded-md text-xs font-bold transition-all cursor-pointer min-h-[34px] flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[34px] flex items-center justify-center gap-1.5 ${
                   searchType === 'plot' ? 'bg-white text-[#074f38] shadow-xs' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                <Compass className="w-3.5 h-3.5 text-emerald-700" />
-                <span>{t('দাগ নম্বর যাচাই', 'Plot Dag Check')}</span>
+                <Compass className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                <span className="truncate">{t('দাগ যাচাই', 'Plot Check')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSearchType('mouza')}
+                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[34px] flex items-center justify-center gap-1.5 ${
+                  searchType === 'mouza' ? 'bg-white text-[#074f38] shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <MapPin className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                <span className="truncate">{t('মৌজা নকশা', 'Mouza Map')}</span>
               </button>
             </div>
 
@@ -277,12 +313,12 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
                       <span>{t('খুঁজুন', 'Search')}</span>
                     </button>
                   </div>
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 font-mono px-1">
-                    <span>Ed25519 ডিজিটাল সিল যাচাই</span>
-                    <span className="text-emerald-700 font-bold">SHA-256 Chained</span>
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 font-sans px-1">
+                    <span>{t('নিবন্ধন অধিদপ্তর স্বীকৃত ডিজিটাল যাচাই', 'Govt Recognized Digital Verification')}</span>
+                    <span className="text-emerald-700 font-bold">{t('১০৭৭ ফরম সুরক্ষিত লেজার', 'Secure Land Ledger')}</span>
                   </div>
                 </div>
-              ) : (
+              ) : searchType === 'plot' ? (
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <select
@@ -321,6 +357,38 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
                     <Search className="w-4 h-4" />
                     <span>{t('দাগের পূর্ণ বিবরণী ও ঝুঁকি স্ক্যান', 'Scan Plot Risk Report')}</span>
                   </button>
+                </div>
+              ) : (
+                /* 3rd Visual Search Tab: Explore Mouza Map */
+                <div className="space-y-2.5">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                      {t('মৌজা ও এলাকা নির্বাচন করুন', 'Select Mouza & Survey Sheet')}
+                    </label>
+                    <select
+                      value={selectedMouza}
+                      onChange={(e) => setSelectedMouza(Number(e.target.value))}
+                      className="h-10 w-full rounded-lg border border-gray-300 px-2.5 text-xs font-semibold bg-white text-slate-800 focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20"
+                    >
+                      {locations.map((loc) => (
+                        <option key={loc.id} value={loc.id}>
+                          {lang === 'bn' ? loc.mouza_bn : loc.mouza_en} (জে.এল {loc.jl_no}) · {lang === 'bn' ? loc.upazila_bn : loc.upazila_en}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('map')}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-lg font-bold h-10 bg-[#006A4E] hover:bg-[#00553e] text-white transition-colors cursor-pointer text-xs shadow-xs"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    <span>{t('ক্যাডাস্ট্রাল মৌজা নকশা অনুসন্ধান করুন ➔', 'Explore Mouza Cadastral Map ➔')}</span>
+                  </button>
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 font-sans px-1">
+                    <span>{t('ভেক্টর ও স্যাটেলাইট ভিউ', 'Vector & Satellite View')}</span>
+                    <span className="text-emerald-700 font-bold">{t('ট্রাফিক-লাইট দাগ স্ট্যাটাস', 'Traffic Light Status')}</span>
+                  </div>
                 </div>
               )}
             </form>
@@ -492,7 +560,7 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
             </p>
           </div>
           <button
-            onClick={() => onNavigate('cadastral')}
+            onClick={() => onNavigate('map')}
             className="text-xs sm:text-sm font-bold text-[#006A4E] hover:text-[#00553e] flex items-center gap-1.5 cursor-pointer bg-emerald-50 hover:bg-emerald-100 px-4 py-2 rounded-lg transition-colors shrink-0"
           >
             <span>{t('পূর্ণ GIS ক্যাডাস্ট্রাল ম্যাপ খুলুন', 'Open Full GIS Cadastre')}</span>
@@ -509,23 +577,47 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
         />
       </section>
 
-      {/* Trust Pipeline — 3 Simple Steps Connected by Surveyor's Chain */}
+      {/* Trust Pipeline — 3 Simple Steps Connected by Surveyor's Chain & Interactive Walkthrough */}
       <section className="bg-gradient-to-b from-slate-50 to-emerald-50/20 border-y border-slate-200/90 py-14">
         <div className="mx-auto max-w-7xl px-4">
-          <div className="max-w-2xl mb-8">
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 uppercase tracking-wider mb-1">
-              <ShieldCheck className="w-4 h-4" />
-              <span>{t('সম্পূর্ণ ডিজিটাল জমি হস্তান্তর চক্র', 'End-to-End Trust Pipeline')}</span>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+            <div className="max-w-2xl">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 uppercase tracking-wider mb-1">
+                <ShieldCheck className="w-4 h-4" />
+                <span>{t('সম্পূর্ণ ডিজিটাল জমি হস্তান্তর চক্র', 'End-to-End Trust Pipeline')}</span>
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
+                {t('তিন ধাপে সম্পূর্ণ সেবা ও নির্ভুল আস্থা', 'Complete Trust in Three Steps')}
+              </h2>
+              <p className="text-slate-500 text-xs sm:text-sm mt-1">
+                {t(
+                  'বায়না থেকে খতিয়ান হালনাগাদ — প্রতিটি ধাপ ক্যাডাস্ট্রাল ভেক্টর ও ক্রিপ্টোগ্রাফিক চেইনে সুরক্ষিত (ধাপ নির্বাচন করে ইন্টারঅ্যাকটিভ ডেমো দেখুন):',
+                  'From agreement to BS khatian update — select each stage below to explore the interactive visual walkthrough:'
+                )}
+              </p>
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
-              {t('তিন ধাপে সম্পূর্ণ সেবা ও নির্ভুল আস্থা', 'Complete Trust in Three Steps')}
-            </h2>
-            <p className="text-slate-500 text-xs sm:text-sm mt-1">
-              {t(
-                'বায়না থেকে খতিয়ান হালনাগাদ — প্রতিটি ধাপ ক্যাডাস্ট্রাল ভেক্টর ও ক্রিপ্টোগ্রাফিক চেইনে সুরক্ষিত:',
-                'From agreement to BS khatian update — mathematically unbroken continuity across all stages:'
-              )}
-            </p>
+
+            {/* Interactive Step Switcher Tabs */}
+            <div className="inline-flex p-1 bg-white border border-slate-200 rounded-xl shadow-xs self-start md:self-auto shrink-0">
+              {[
+                { step: 1 as const, labelBn: '১. প্রাক-যাচাই', labelEn: '1. Pre-Check' },
+                { step: 2 as const, labelBn: '২. ১১-রুল গেটকিপার', labelEn: '2. 11-Rule Gate' },
+                { step: 3 as const, labelBn: '৩. ডিজিটাল লেজার', labelEn: '3. Signed Ledger' },
+              ].map((s) => (
+                <button
+                  key={s.step}
+                  type="button"
+                  onClick={() => setActivePipelineStep(s.step)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    activePipelineStep === s.step
+                      ? 'bg-[#006A4E] text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
+                >
+                  {t(s.labelBn, s.labelEn)}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Surveyor Chain Vector Line connecting the 3 steps */}
@@ -533,10 +625,19 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
 
           <div className="grid md:grid-cols-3 gap-6">
             {/* Step 1: Citizen Pre-Check & Khatian Lineage */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs space-y-4 hover:border-emerald-300 transition-all flex flex-col justify-between">
+            <div
+              onClick={() => setActivePipelineStep(1)}
+              className={`rounded-2xl border bg-white p-6 shadow-2xs space-y-4 transition-all cursor-pointer flex flex-col justify-between ${
+                activePipelineStep === 1
+                  ? 'border-[#006A4E] ring-2 ring-[#006A4E]/30 shadow-md'
+                  : 'border-slate-200/90 hover:border-emerald-300'
+              }`}
+            >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-lg font-mono">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg font-mono ${
+                    activePipelineStep === 1 ? 'bg-[#006A4E] text-white' : 'bg-emerald-100 text-emerald-800'
+                  }`}>
                     ১
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
@@ -564,10 +665,19 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
             </div>
 
             {/* Step 2: 11-Rule Gatekeeper */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs space-y-4 hover:border-blue-300 transition-all flex flex-col justify-between">
+            <div
+              onClick={() => setActivePipelineStep(2)}
+              className={`rounded-2xl border bg-white p-6 shadow-2xs space-y-4 transition-all cursor-pointer flex flex-col justify-between ${
+                activePipelineStep === 2
+                  ? 'border-blue-600 ring-2 ring-blue-600/30 shadow-md'
+                  : 'border-slate-200/90 hover:border-blue-300'
+              }`}
+            >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-lg font-mono">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg font-mono ${
+                    activePipelineStep === 2 ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'
+                  }`}>
                     ২
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-blue-800 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
@@ -599,11 +709,20 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
               </div>
             </div>
 
-            {/* Step 3: Ed25519 Cryptographic Ledger */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-2xs space-y-4 hover:border-purple-300 transition-all flex flex-col justify-between">
+            {/* Step 3: Signed Ledger & e-Mutation */}
+            <div
+              onClick={() => setActivePipelineStep(3)}
+              className={`rounded-2xl border bg-white p-6 shadow-2xs space-y-4 transition-all cursor-pointer flex flex-col justify-between ${
+                activePipelineStep === 3
+                  ? 'border-purple-600 ring-2 ring-purple-600/30 shadow-md'
+                  : 'border-slate-200/90 hover:border-purple-300'
+              }`}
+            >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold text-lg font-mono">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg font-mono ${
+                    activePipelineStep === 3 ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-800'
+                  }`}>
                     ৩
                   </div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-purple-800 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded-full">
@@ -612,13 +731,13 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
                 </div>
 
                 <h3 className="text-lg font-bold text-slate-900">
-                  {t('Ed25519 লেজার ও স্বয়ংক্রিয় নামজারি', '3. Signed Ledger & e-Mutation')}
+                  {t('ডিজিটাল লেজার ও স্বয়ংক্রিয় নামজারি', '3. Signed Ledger & e-Mutation')}
                 </h3>
                 
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
                   {t(
-                    'দলিল রেজিস্ট্রি মাত্রই Ed25519 ডিজিটাল স্বাক্ষর, অপরিবর্তনীয় SHA-256 হ্যাশ চেইন ও এসি ল্যান্ডের কিউতে তাৎক্ষণিক নামজারি হ্যান্ডঅফ।',
-                    'Instant Ed25519 cryptographic signing, immutable SHA-256 hash chaining, and automated queuing for AC Land mutation.'
+                    'দলিল রেজিস্ট্রি মাত্রই ডিজিটাল সিল ও অপরিবর্তনীয় লেজারে অন্তর্ভুক্ত হয় এবং এসি ল্যান্ডের কিউতে তাৎক্ষণিক নামজারি হ্যান্ডঅফ ঘটে।',
+                    'Instant digital signing, immutable ledger recording, and automated queuing for AC Land mutation.'
                   )}
                 </p>
               </div>
@@ -626,11 +745,125 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
               <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold block">{t('ক্রিপ্টোগ্রাফিক সুরক্ষা', 'Tamper-Proof Assurance')}</span>
-                  <span className="text-xs font-mono font-bold text-[#074f38]">SHA-256 Merkle Block</span>
+                  <span className="text-xs font-semibold text-[#074f38]">{t('অপরিবর্তনীয় ডিজিটাল ব্লক', 'Immutable Trust Block')}</span>
                 </div>
                 <Ed25519WaxSealVector size={44} />
               </div>
             </div>
+          </div>
+
+          {/* Interactive Walkthrough Detail Showcase */}
+          <div className="mt-8 bg-white rounded-2xl border border-slate-200/90 p-6 shadow-sm">
+            {activePipelineStep === 1 && (
+              <div className="space-y-4 animate-fadeIn">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      {t('ধাপ ১ ইন্টারেক্টিভ সিমুলেশন', 'Step 1 Interactive Simulation')}
+                    </span>
+                    <h4 className="text-base font-bold text-slate-900 mt-1">
+                      {t('খতিয়ান ধারাবাহিকতা ও বিক্রেতার অংশ নিরীক্ষা', 'Khatian Provenance & Fractional Share Audit')}
+                    </h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('check')}
+                    className="btn-primary text-xs flex items-center gap-1.5 self-start sm:self-auto py-2 px-3.5 rounded-xl cursor-pointer"
+                  >
+                    <span>{t('লাইভ দাগ যাচাইয়ে যান', 'Try Plot Verification')}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="grid sm:grid-cols-4 gap-3 text-xs">
+                  <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200">
+                    <span className="font-bold text-emerald-900 block">CS ১৮৮৮-১৯৪০</span>
+                    <span className="text-slate-600">আদি স্বত্ব রেকর্ড: ১০৭ নং খতিয়ান (১০০ শতক)</span>
+                  </div>
+                  <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200">
+                    <span className="font-bold text-emerald-900 block">SA ১৯৫৬-১৯৬৩</span>
+                    <span className="text-slate-600">প্রজাস্বত্ব রেকর্ড: মিল নিশ্চিত (১০০ শতক)</span>
+                  </div>
+                  <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200">
+                    <span className="font-bold text-emerald-900 block">RS ১৯৬৫-১৯৯০</span>
+                    <span className="text-slate-600">রিভিশনাল রেকর্ড: মিল নিশ্চিত (১০০ শতক)</span>
+                  </div>
+                  <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200">
+                    <span className="font-bold text-emerald-900 block">BS বর্তমান</span>
+                    <span className="text-slate-600">সর্বশেষ কার্যকর রেকর্ড: ৪০২ নং খতিয়ান</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activePipelineStep === 2 && (
+              <div className="space-y-4 animate-fadeIn">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
+                      {t('ধাপ ২ ইন্টারেক্টিভ সিমুলেশন', 'Step 2 Interactive Simulation')}
+                    </span>
+                    <h4 className="text-base font-bold text-slate-900 mt-1">
+                      {t('সাব-রেজিস্ট্রি ১১-রুল গেটকিপার স্বয়ংক্রিয় পরীক্ষা', 'Sub-Registry 11-Rule Automated Gatekeeper')}
+                    </h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => enterRolePortal('sub_registrar')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 self-start sm:self-auto py-2 px-3.5 rounded-xl cursor-pointer transition shadow-xs"
+                  >
+                    <span>{t('সাব-রেজিস্ট্রার কনসোল দেখুন', 'Explore Registrar Console')}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2.5 text-xs">
+                  {[
+                    { id: 'R1', title: t('বিক্রেতার রেকর্ডীয় সত্যতা', 'Seller Operative Title') },
+                    { id: 'R2', title: t('দ্বৈত বিক্রয় স্বয়ংক্রিয়ভাবে ব্লক', 'Zero Duplicate Registration') },
+                    { id: 'R3', title: t('নাগরিক বিক্রয় লক অনুমতি', 'Citizen Sale Lock Clearance') },
+                    { id: 'R4', title: t('ব্যাংক মর্টগেজ লিয়েন মুক্ততা', 'Zero Active Bank Lien') },
+                    { id: 'R5', title: t('ফারায়েজ ওয়ারিশান অংশ সমন্বয়', 'Faraiz Share Balance Check') },
+                    { id: 'R6', title: t('সরকারি অধিগ্রহণ মুক্ত সনদ', 'Govt Acquisition Clearance') },
+                  ].map((rule) => (
+                    <div key={rule.id} className="p-2.5 rounded-xl bg-blue-50/60 border border-blue-200 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="font-semibold text-slate-800">{rule.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activePipelineStep === 3 && (
+              <div className="space-y-4 animate-fadeIn">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200">
+                      {t('ধাপ ৩ ইন্টারেক্টিভ সিমুলেশন', 'Step 3 Interactive Simulation')}
+                    </span>
+                    <h4 className="text-base font-bold text-slate-900 mt-1">
+                      {t('ডিজিটাল সিল ও এসি ল্যান্ডের কিউতে স্বয়ংক্রিয় নামজারি', 'Digital Seal & Automated AC Land Handover')}
+                    </h4>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => enterRolePortal('ac_land')}
+                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 self-start sm:self-auto py-2 px-3.5 rounded-xl cursor-pointer transition shadow-xs"
+                  >
+                    <span>{t('এসি ল্যান্ড ট্রাইব্যুনাল দেখুন', 'Explore AC Land Tribunal')}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="p-4 bg-purple-50/60 rounded-xl border border-purple-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+                  <div className="space-y-1 text-slate-700">
+                    <div className="font-bold text-slate-900">{t('স্বয়ংক্রিয় মিউটেশন হ্যান্ডঅফ সম্পন্ন', 'Automated Mutation Handover Triggered')}</div>
+                    <div>{t('দলিল অনুমোদিত হওয়ার সাথে সাথেই আবেদনকারীর পক্ষ থেকে আলাদা আবেদন ছাড়াই ই-মিউটেশন কিউতে জমা হয়।', 'No separate application required; deed registration automatically generates mutation docket.')}</div>
+                  </div>
+                  <div className="px-3 py-1.5 rounded-lg bg-white border border-purple-300 font-mono text-[11px] font-bold text-purple-800 shrink-0">
+                    MUT-2026-AUTOMATED ✓
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -924,12 +1157,12 @@ export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ o
                 [
                   t('বন্ধকী জমি গোপনে বিক্রি (Mortgaged Sale)', 'Mortgaged Plot Sale'),
                   t('ব্যাংক ও সাব-রেজিস্ট্রির মধ্যে কোনো সংযোগ নেই; তথ্য লুকানো সহজ', 'No link between commercial banks and registry offices'),
-                  t('কেন্দ্রীয় ডিজিটাল লিয়েন লক ও ঋণ পরিশোধের পর Ed25519 স্বাক্ষরিত NOC', 'Central real-time lien check & cryptographic clearance NOC')
+                  t('কেন্দ্রীয় ডিজিটাল লিয়েন লক ও ঋণ পরিশোধের পর ডিজিটাল যাচাইযোগ্য NOC', 'Central real-time lien check & verifiable digital NOC')
                 ],
                 [
                   t('বালাম বই টেম্পারিং (Record Alteration)', 'Physical Record Tampering'),
                   t('অফিসের বালাম বইয়ের পাতা ছিঁড়ে বা ঘষামাজা করে দলিল পরিবর্তন সম্ভব', 'Physical register books can be altered by corrupt staff'),
-                  t('SHA-256 হ্যাশ চেইন ও Ed25519 ডিজিটাল স্বাক্ষর; ১টি অক্ষর পরিবর্তনও ধরা পড়ে', 'SHA-256 hash chaining; altering 1 byte breaks the chain')
+                  t('গাণিতিক অখণ্ড লেজার ও ডিজিটাল ট্রাস্ট স্বাক্ষর; ১টি অক্ষর পরিবর্তনও সাথে সাথে ধরা পড়ে', 'Immutable mathematical ledger & digital signatures; single character alteration detected')
                 ]
               ].map(([risk, traditional, solution], idx) => (
                 <tr key={idx} className="hover:bg-slate-50/70 transition-colors">

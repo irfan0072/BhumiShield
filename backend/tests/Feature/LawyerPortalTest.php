@@ -183,6 +183,7 @@ final class LawyerPortalTest
         $passed++;
 
         @unlink($tmpDb);
-        return $passed;
+        echo "\n  Lawyer Portal Tests:    {$passed} passed, 0 failed\n\n";
+        return 0;
     }
 }

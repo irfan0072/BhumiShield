@@ -1,0 +1,203 @@
+{
+  "timestamp": "2026-11-02T12:48:58.139Z",
+  "total_tested": 22,
+  "passed": 17,
+  "failed": 5,
+  "uncaught_errors": [],
+  "verdict": "REQUEST_CHANGES",
+  "results": [
+    {
+      "name": "01_LandingPage",
+      "url": "http://localhost:5175/bn",
+      "status": "PASS",
+      "elapsed_ms": 2795,
+      "errors": [],
+      "detail": "H1 Hero: \"ডিজিটাল ক্যাডাস্ট্রে আপনার জমির পূর্ণ নি...\"",
+      "screenshot": "01_landingpage.png"
+    },
+    {
+      "name": "02_CheckBeforeBuyPage",
+      "url": "http://localhost:5175/bn/check",
+      "status": "PASS",
+      "elapsed_ms": 2279,
+      "errors": [],
+      "detail": "Speedometer & Lineage tree loaded",
+      "screenshot": "02_checkbeforebuypage.png"
+    },
+    {
+      "name": "03_VerifyDeedQrPage",
+      "url": "http://localhost:5175/bn/verify",
+      "status": "PASS",
+      "elapsed_ms": 1717,
+      "errors": [],
+      "detail": "Viewfinder loaded",
+      "screenshot": "03_verifydeedqrpage.png"
+    },
+    {
+      "name": "04_CadastralMapPage",
+      "url": "http://localhost:5175/bn/map",
+      "status": "PASS",
+      "elapsed_ms": 3704,
+      "errors": [],
+      "detail": "Cadastral Leaflet engine & cascader mounted",
+      "screenshot": "04_cadastralmappage.png"
+    },
+    {
+      "name": "05_PublicSaleMarketplace",
+      "url": "http://localhost:5175/bn/sale",
+      "status": "PASS",
+      "elapsed_ms": 2094,
+      "errors": [],
+      "detail": "Marketplace elements rendered (158)",
+      "screenshot": "05_publicsalemarketplace.png"
+    },
+    {
+      "name": "06_NoticeboardPage",
+      "url": "http://localhost:5175/bn/notices",
+      "status": "PASS",
+      "elapsed_ms": 2078,
+      "errors": [],
+      "detail": "Noticeboard categories & audio readouts rendered",
+      "screenshot": "06_noticeboardpage.png"
+    },
+    {
+      "name": "07_EducationalBlogPage",
+      "url": "http://localhost:5175/bn/blog",
+      "status": "PASS",
+      "elapsed_ms": 2000,
+      "errors": [],
+      "detail": "Faraiz inheritance & e-mutation guides rendered",
+      "screenshot": "07_educationalblogpage.png"
+    },
+    {
+      "name": "08_OfficeLocatorPage",
+      "url": "http://localhost:5175/bn/offices",
+      "status": "PASS",
+      "elapsed_ms": 2117,
+      "errors": [],
+      "detail": "High-contrast office cards & hotline 16122 rendered",
+      "screenshot": "08_officelocatorpage.png"
+    },
+    {
+      "name": "09_HelpPage",
+      "url": "http://localhost:5175/bn/help",
+      "status": "PASS",
+      "elapsed_ms": 2120,
+      "errors": [],
+      "detail": "Help Desk & Citizen Triage wizard verified",
+      "screenshot": "09_helppage.png"
+    },
+    {
+      "name": "10_AuthPage_1ClickPersonas",
+      "url": "http://localhost:5175/bn/auth",
+      "status": "PASS",
+      "elapsed_ms": 1936,
+      "errors": [],
+      "detail": "22+ Evaluator demo personas with instant 1-click credentials present",
+      "screenshot": "10_authpage_1clickpersonas.png"
+    },
+    {
+      "name": "PersonaDock_Citizen",
+      "url": "http://localhost:5175/bn/auth",
+      "status": "FAIL",
+      "elapsed_ms": 2003,
+      "errors": [],
+      "detail": "Dock switch -> http://localhost:5175/bn/auth (URL matched: false)"
+    },
+    {
+      "name": "PersonaDock_SubRegistrar",
+      "url": "http://localhost:5175/bn/auth",
+      "status": "FAIL",
+      "elapsed_ms": 2003,
+      "errors": [],
+      "detail": "Dock switch -> http://localhost:5175/bn/auth (URL matched: false)"
+    },
+    {
+      "name": "PersonaDock_AcLand",
+      "url": "http://localhost:5175/bn/auth",
+      "status": "FAIL",
+      "elapsed_ms": 2001,
+      "errors": [],
+      "detail": "Dock switch -> http://localhost:5175/bn/auth (URL matched: false)"
+    },
+    {
+      "name": "PersonaDock_BankOfficer",
+      "url": "http://localhost:5175/bn/auth",
+      "status": "FAIL",
+      "elapsed_ms": 2004,
+      "errors": [],
+      "detail": "Dock switch -> http://localhost:5175/bn/auth (URL matched: false)"
+    },
+    {
+      "name": "PersonaDock_Admin",
+      "url": "http://localhost:5175/bn/auth",
+      "status": "FAIL",
+      "elapsed_ms": 2002,
+      "errors": [],
+      "detail": "Dock switch -> http://localhost:5175/bn/auth (URL matched: false)"
+    },
+    {
+      "name": "11_CitizenHome_And_Modals",
+      "url": "http://localhost:5175/bn/home",
+      "status": "PASS",
+      "elapsed_ms": 2139,
+      "errors": [],
+      "detail": "Citizen Vault, Biometric modal, and Form 1077/Porcha modal tested",
+      "screenshot": "11_citizenhome_and_modals.png"
+    },
+    {
+      "name": "12_ApplicationsPage",
+      "url": "http://localhost:5175/bn/applications",
+      "status": "PASS",
+      "elapsed_ms": 1826,
+      "errors": [],
+      "detail": "13-step collapsed to 3-phase citizen stepper rendered",
+      "screenshot": "12_applicationspage.png"
+    },
+    {
+      "name": "13_SubRegistrarPage",
+      "url": "http://localhost:5175/bn/registrar",
+      "status": "PASS",
+      "elapsed_ms": 1937,
+      "errors": [],
+      "detail": "Maker-checker adaptive deck & judicial decision buttons rendered",
+      "screenshot": "13_subregistrarpage.png"
+    },
+    {
+      "name": "14_AcLandPage",
+      "url": "http://localhost:5175/bn/acland",
+      "status": "PASS",
+      "elapsed_ms": 1898,
+      "errors": [],
+      "detail": "3-Card Upazila dashboard & judicial hearing chips rendered",
+      "screenshot": "14_aclandpage.png"
+    },
+    {
+      "name": "15_BankOfficerPage",
+      "url": "http://localhost:5175/bn/bank",
+      "status": "PASS",
+      "elapsed_ms": 1803,
+      "errors": [],
+      "detail": "Collateral privacy notice & Ed25519 NOC generator rendered",
+      "screenshot": "15_bankofficerpage.png"
+    },
+    {
+      "name": "16_LawyerCaseFilingPage",
+      "url": "http://localhost:5175/bn/lawyer_case",
+      "status": "PASS",
+      "elapsed_ms": 1834,
+      "errors": [],
+      "detail": "Bar Council badge, masked NID, 3-step injunction wizard rendered",
+      "screenshot": "16_lawyercasefilingpage.png"
+    },
+    {
+      "name": "17_AdminDashboardPage",
+      "url": "http://localhost:5175/bn/admin",
+      "status": "PASS",
+      "elapsed_ms": 1796,
+      "errors": [],
+      "detail": "Admin dashboard rendered",
+      "screenshot": "17_admindashboardpage.png"
+    }
+  ]
+}

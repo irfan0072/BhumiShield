@@ -59,7 +59,7 @@ const getInitialTab = (): string => {
   if (cleanPath.startsWith('/sale') || cleanPath.startsWith('/marketplace')) return 'sale';
   if (cleanPath.startsWith('/notices') || cleanPath.startsWith('/circulars')) return 'notices';
   if (cleanPath.startsWith('/blog')) return 'blog';
-  if (cleanPath.startsWith('/map')) return 'map';
+  if (cleanPath.startsWith('/map') || cleanPath.startsWith('/cadastral')) return 'map';
   if (cleanPath.startsWith('/offices')) return 'offices';
   if (cleanPath.startsWith('/lawyer-case') || cleanPath.startsWith('/lawyercase') || cleanPath.startsWith('/lawyer')) return 'lawyer_case';
   if (cleanPath.startsWith('/help')) return 'help';
@@ -72,6 +72,7 @@ const getInitialTab = (): string => {
   if (cleanPath.startsWith('/profile')) return 'profile';
 
   const tabParam = search.get('tab');
+  if (tabParam === 'cadastral') return 'map';
   if (tabParam && ['landing', 'home', 'applications', 'specialist', 'check', 'qr', 'help', 'auth', 'registrar', 'acland', 'bank', 'admin', 'profile', 'sale', 'notices', 'blog', 'map', 'offices', 'lawyer_case'].includes(tabParam)) return tabParam;
   return 'notfound';
 };
@@ -105,6 +106,10 @@ export const AppContent: React.FC = () => {
     let tab = target;
     if (target.includes('?')) {
       tab = target.split('?')[0];
+    }
+    if (tab === 'cadastral') {
+      tab = 'map';
+      target = target.replace(/^cadastral/, 'map');
     }
     setActiveTabState(tab);
     syncUrl(target, false);
@@ -142,13 +147,24 @@ export const AppContent: React.FC = () => {
         {activeTab === 'sale' && <PublicSalePage onNavigate={setActiveTab} />}
         {activeTab === 'notices' && <NoticeboardPage />}
         {activeTab === 'blog' && <EducationalBlogPage />}
-        {activeTab === 'map' && <CadastralMapPage onNavigate={setActiveTab} />}
+        {(activeTab === 'map' || activeTab === 'cadastral') && <CadastralMapPage onNavigate={setActiveTab} />}
         {activeTab === 'offices' && <OfficeLocatorPage onNavigate={setActiveTab} />}
-        {activeTab === 'lawyer_case' && <LawyerCaseFilingPage onNavigateHome={() => setActiveTab('home')} />}
         {activeTab === 'help' && <HelpPage onNavigate={setActiveTab} />}
         {activeTab === 'auth' && <AuthPage mode="login" onSuccessNavigate={setActiveTab} />}
 
         {/* 2. Role Protected Workspaces (Guarded by Strict RBAC AuthGuard) */}
+        {activeTab === 'lawyer_case' && (
+          <AuthGuard
+            allowedRoles={['lawyer_court_user', 'admin', 'system_admin']}
+            roleTitleBn="আইনজীবী ও দেওয়ানি আদালত পোর্টাল"
+            roleTitleEn="Lawyer & Civil Court Portal"
+            deptBn="বাংলাদেশ বার কাউন্সিল তালিকাভুক্ত আইনজীবী কনসোল"
+            deptEn="Bar Council Empaneled Advocate Console"
+            onNavigate={setActiveTab}
+          >
+            <LawyerCaseFilingPage onNavigateHome={() => setActiveTab('home')} />
+          </AuthGuard>
+        )}
         {activeTab === 'home' && (
           <AuthGuard
             allowedRoles={['citizen', 'service_point_operator', 'admin', 'system_admin']}

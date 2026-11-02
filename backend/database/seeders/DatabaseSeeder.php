@@ -319,6 +319,123 @@ final class DatabaseSeeder
             'nid' => '9900005004',
             'is_active' => 1,
         ],
+        [
+            'username' => 'dr_dhaka',
+            'email' => 'dr.dhaka@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'আহমেদ উল্লাহ (জেলা রেজিস্ট্রার)',
+            'full_name_en' => 'Ahmed Ullah (District Registrar)',
+            'role' => 'district_registrar',
+            'office_bn' => 'জেলা রেজিস্ট্রি কার্যালয়, ঢাকা',
+            'office_en' => 'District Registry Office, Dhaka',
+            'phone_dummy' => '01700-006001',
+            'nid' => '9900006001',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'div_comm_dhaka',
+            'email' => 'divcomm.dhaka@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'মো. খলিলুর রহমান (বিভাগীয় কমিশনার)',
+            'full_name_en' => 'Md. Khalilur Rahman (Divisional Commissioner)',
+            'role' => 'divisional_commissioner',
+            'office_bn' => 'বিভাগীয় কমিশনারের কার্যালয়, ঢাকা',
+            'office_en' => 'Office of the Divisional Commissioner, Dhaka',
+            'phone_dummy' => '01700-006002',
+            'nid' => '9900006002',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'appeal_board',
+            'email' => 'member.appeal@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'ড. সৈয়দ মোয়াজ্জেম হোসেন (ভূমি আপিল বোর্ড সদস্য)',
+            'full_name_en' => 'Dr. Syed Moazzem Hossain (Land Appeal Board Member)',
+            'role' => 'land_appeal_board',
+            'office_bn' => 'ভূমি আপিল বোর্ড, সেগুনবাগিচা, ঢাকা',
+            'office_en' => 'Land Appeal Board, Segunbagicha, Dhaka',
+            'phone_dummy' => '01700-006003',
+            'nid' => '9900006003',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'reform_board',
+            'email' => 'reform.board@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'মো. ফজলুল হক (ভূমি সংস্কার বোর্ড কর্মকর্তা)',
+            'full_name_en' => 'Md. Fazlul Haque (Land Reform Board Official)',
+            'role' => 'land_reform_board',
+            'office_bn' => 'ভূমি সংস্কার বোর্ড, তেজগাঁও, ঢাকা',
+            'office_en' => 'Land Reform Board, Tejgaon, Dhaka',
+            'phone_dummy' => '01700-006004',
+            'nid' => '9900006004',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'dlrs_surveyor',
+            'email' => 'dlrs.officer@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'প্রকৌশলী মাহমুদুল হাসান (ডিএলআরএস জরিপ কর্মকর্তা)',
+            'full_name_en' => 'Engr. Mahmudul Hasan (DLRS Cartographic Officer)',
+            'role' => 'dlrs_officer',
+            'office_bn' => 'ভূমি রেকর্ড ও জরিপ অধিদপ্তর (ডিএলআরএস), তেজগাঁও, ঢাকা',
+            'office_en' => 'Directorate of Land Records & Surveys, Dhaka',
+            'phone_dummy' => '01700-006005',
+            'nid' => '9900006005',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'jsr_savar',
+            'email' => 'jsr.savar@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'নুসরাত জাহান (যুগ্ম সাব-রেজিস্ট্রার)',
+            'full_name_en' => 'Nusrat Jahan (Joint Sub-Registrar)',
+            'role' => 'joint_sub_registrar',
+            'office_bn' => 'যুগ্ম সাব-রেজিস্ট্রি কার্যালয়, সাভার, ঢাকা',
+            'office_en' => 'Joint Sub-Registry Office, Savar, Dhaka',
+            'phone_dummy' => '01700-006006',
+            'nid' => '9900006006',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'dfo_forest',
+            'email' => 'dfo.dhaka@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'মো. আনিসুর রহমান (বিভাগীয় বন কর্মকর্তা)',
+            'full_name_en' => 'Md. Anisur Rahman (Divisional Forest Officer)',
+            'role' => 'forest_officer',
+            'office_bn' => 'বন ভবন, আগারগাঁও, ঢাকা',
+            'office_en' => 'Forest Department Head Office, Agargaon, Dhaka',
+            'phone_dummy' => '01700-006007',
+            'nid' => '9900006007',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'waqf_admin',
+            'email' => 'waqf.admin@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'মাওলানা আবদুল কুদ্দুস (ওয়াকফ প্রশাসক)',
+            'full_name_en' => 'Mawlana Abdul Quddus (Waqf Administrator)',
+            'role' => 'waqf_administrator',
+            'office_bn' => 'ওয়াকফ প্রশাসকের কার্যালয়, নিউ ইস্কাটন, ঢাকা',
+            'office_en' => 'Office of the Administrator of Waqf, Dhaka',
+            'phone_dummy' => '01700-006008',
+            'nid' => '9900006008',
+            'is_active' => 1,
+        ],
+        [
+            'username' => 'karbari_cht',
+            'email' => 'karbari.cht@demo.bhumishield.gov.bd',
+            'password' => 'demo123',
+            'full_name_bn' => 'মং শৈ প্রু কার্বারি (মৌজা হেডম্যান)',
+            'full_name_en' => 'Mong Shwe Pru Karbari (Mouza Headman)',
+            'role' => 'karbari',
+            'office_bn' => 'বান্দরবান সদর মৌজা হেডম্যান কার্যালয়',
+            'office_en' => 'Bandarban Sadar Mouza Headman Office',
+            'phone_dummy' => '01700-006009',
+            'nid' => '9900006009',
+            'is_active' => 1,
+        ],
     ];
 
     public const DEFAULT_SETTINGS = [
@@ -701,6 +818,41 @@ final class DatabaseSeeder
                 'INSERT INTO persons (name_bn, name_en, father_name_bn, father_name_en, mother_name_bn, nid, phone_dummy, is_deceased, heirs_recorded, address_bn, address_en) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [$nameBn, $nameEn, $fatherBn, $fatherEn, $motherBn, $nid, $phone, $isDeceased, $heirsRecorded, $addrBn, $addrEn]
             );
+
+            // Sync synthetic Election Commission registry (sim_persons)
+            $simDob = '1985-05-15';
+            if (DB::isPostgres()) {
+                DB::insert(
+                    'INSERT INTO sim_persons (nid, full_name_bn, full_name_en, dob, father_name_bn, mother_name_bn, address_bn, is_deceased, created_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     ON CONFLICT (nid) DO NOTHING',
+                    [$nid, $nameBn, $nameEn, $simDob, $fatherBn, $motherBn, $addrBn, $isDeceased, gmdate('c')]
+                );
+            } else {
+                DB::insert(
+                    'INSERT OR IGNORE INTO sim_persons (nid, full_name_bn, full_name_en, dob, father_name_bn, mother_name_bn, address_bn, is_deceased, created_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [$nid, $nameBn, $nameEn, $simDob, $fatherBn, $motherBn, $addrBn, $isDeceased, gmdate('c')]
+                );
+            }
+        }
+
+        // Seed 17-digit legacy NID for Porichoy & 13-digit legacy normalization showcase
+        $legacy17Nid = '19852694123456789';
+        $legacyDob = '1985-05-12';
+        if (DB::isPostgres()) {
+            DB::insert(
+                'INSERT INTO sim_persons (nid, full_name_bn, full_name_en, dob, father_name_bn, mother_name_bn, address_bn, is_deceased, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 ON CONFLICT (nid) DO NOTHING',
+                [$legacy17Nid, 'মো. রফিকুল ইসলাম', 'Md. Rafiqul Islam', $legacyDob, 'মৃত মো. রহিম উদ্দিন', 'মোসা. ফাতেমা বেগম', 'গ্রাম: বিরুলিয়া, থানা: সাভার, জেলা: ঢাকা', 0, gmdate('c')]
+            );
+        } else {
+            DB::insert(
+                'INSERT OR IGNORE INTO sim_persons (nid, full_name_bn, full_name_en, dob, father_name_bn, mother_name_bn, address_bn, is_deceased, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [$legacy17Nid, 'মো. রফিকুল ইসলাম', 'Md. Rafiqul Islam', $legacyDob, 'মৃত মো. রহিম উদ্দিন', 'মোসা. ফাতেমা বেগম', 'গ্রাম: বিরুলিয়া, থানা: সাভার, জেলা: ঢাকা', 0, gmdate('c')]
+            );
         }
 
         // 4. Seed 60 Plots + 240 Khatian Records + Ownerships
@@ -889,6 +1041,27 @@ final class DatabaseSeeder
             [$lien3Id, 'NOC-2026-8801', 'অগ্রণী ব্যাংক পিএলসি', 'Agrani Bank PLC', 'সাভার শাখা', 'মো. রফিকুল ইসলাম', 'Md. Rafiqul Islam', '9900001001', 'বিরুলিয়া', 'Birulia', '101', '১০১', 800000, 'RELEASED', '2025-11-20T15:00:00+06:00', $nocHash, $nocSig, '2025-11-20T15:05:00+06:00']
         );
 
+        // Seed 4th lien on Sonali Bank (RELEASED) for bank_manager tests
+        $lien4Id = DB::insert(
+            "INSERT INTO mortgages_liens (plot_id, borrower_id, bank_name_bn, bank_name_en, branch_bn, amount_bdt, area_mortgaged_decimal, status, created_at, released_at) VALUES (?, ?, 'সোনালী ব্যাংক পিএলসি', 'Sonali Bank PLC', 'সাভার শাখা, ঢাকা', 1200000, 15.0, 'RELEASED', '2024-06-10T10:00:00+06:00', '2025-12-20T15:00:00+06:00')",
+            [$plotIds[1], $personIds[1]]
+        );
+        $nocPayload4 = [
+            'noc_no' => 'NOC-2026-8802',
+            'bank' => 'Sonali Bank PLC',
+            'branch' => 'Savar Branch',
+            'borrower_nid' => '9900001002',
+            'dag_no' => '102',
+            'amount_bdt' => 1200000,
+            'released_at' => '2025-12-20T15:00:00+06:00',
+        ];
+        $nocHash4 = hash('sha256', LedgerService::canonicalJson($nocPayload4));
+        $nocSig4 = LedgerService::signHash($nocHash4);
+        DB::insert(
+            'INSERT INTO noc_certificates (lien_id, noc_no, bank_name_bn, bank_name_en, branch_bn, borrower_name_bn, borrower_name_en, borrower_nid, mouza_bn, mouza_en, dag_no, dag_no_bn, amount_bdt, status, released_at, noc_hash, ed25519_signature, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [$lien4Id, 'NOC-2026-8802', 'সোনালী ব্যাংক পিএলসি', 'Sonali Bank PLC', 'সাভার শাখা, ঢাকা', 'মোসা. রাবেয়া খাতুন', 'Mst. Rabeya Khatun', '9900001002', 'বিরুলিয়া', 'Birulia', '102', '১০২', 1200000, 'RELEASED', '2025-12-20T15:00:00+06:00', $nocHash4, $nocSig4, '2025-12-20T15:05:00+06:00']
+        );
+
         // 7. Seed Mutations
         $mut1Id = DB::insert(
             "INSERT INTO mutations (mutation_code, case_no, deed_id, plot_id, seller_id, buyer_id, area_decimal, status, decision_reason_bn, decision_reason_en, created_at) VALUES ('MUT-2026-000501', 'MUT-2026-501', ?, ?, ?, ?, 15.0, 'PENDING', 'সাব-রেজিস্ট্রি অফিস হতে প্রাপ্ত দলিল নং DL-2026-1002 নামজারির অপেক্ষায়।', 'Awaiting AC Land mutation decision for registered deed DL-2026-1002.', '2026-10-03T09:30:00+06:00')",
@@ -948,6 +1121,9 @@ final class DatabaseSeeder
 
         // 18. Seed F08 Field Inspection Reports & SLA Dispatches
         self::seedFieldOperations($plotIds);
+
+        // 19. Seed DC Land Acquisition Cases (Feature 11)
+        self::seedAcquisitionCases();
 
         return [
             'users' => count(self::DEMO_USERS),
@@ -1127,6 +1303,37 @@ final class DatabaseSeeder
             "INSERT INTO transfer_requests (transfer_code, plot_id, current_step, public_stage, transfer_area_decimal, proposed_price_bdt, deed_type, service_point_id, home_office_id, status, created_by_nid, created_at, updated_at) VALUES ('TR-2026-000103', ?, 1, 'START', 10.0, 1500000, 'SALE', 4, 3, 'DRAFT', '9900001001', ?, ?)",
             [$plotIds[0], $now, $now]
         );
+
+        // Seed transfer parties for TR-2026-000103 (Seller 9900001001, Buyer 9900001002)
+        $pSeller103 = DB::selectOne('SELECT id, phone_dummy FROM persons WHERE nid = ?', ['9900001001']);
+        $pBuyer103 = DB::selectOne('SELECT id, phone_dummy FROM persons WHERE nid = ?', ['9900001002']);
+        if ($pSeller103) {
+            DB::insert(
+                'INSERT INTO transfer_parties (transfer_id, person_id, party_role, share_fraction, phone_dummy, is_verified, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [$t3Id, (int) $pSeller103['id'], 'SELLER', '1/1', $pSeller103['phone_dummy'] ?? '', 1, $now]
+            );
+        }
+        if ($pBuyer103) {
+            DB::insert(
+                'INSERT INTO transfer_parties (transfer_id, person_id, party_role, share_fraction, phone_dummy, is_verified, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [$t3Id, (int) $pBuyer103['id'], 'BUYER', '1/1', $pBuyer103['phone_dummy'] ?? '', 1, $now]
+            );
+        }
+
+        // Seed transfer parties for TR-2026-000101 (Seller 9900001017, Buyer 9900001001)
+        $pSeller101 = DB::selectOne('SELECT id, phone_dummy FROM persons WHERE nid = ?', ['9900001017']);
+        if ($pSeller101) {
+            DB::insert(
+                'INSERT INTO transfer_parties (transfer_id, person_id, party_role, share_fraction, phone_dummy, is_verified, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [$t1Id, (int) $pSeller101['id'], 'SELLER', '1/1', $pSeller101['phone_dummy'] ?? '', 1, $now]
+            );
+        }
+        if ($pSeller103) {
+            DB::insert(
+                'INSERT INTO transfer_parties (transfer_id, person_id, party_role, share_fraction, phone_dummy, is_verified, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [$t1Id, (int) $pSeller103['id'], 'BUYER', '1/1', $pSeller103['phone_dummy'] ?? '', 1, $now]
+            );
+        }
 
         // Seed Biometric verification records (Result only, no template stored!)
         DB::insert(
@@ -1867,6 +2074,109 @@ final class DatabaseSeeder
                 'INSERT INTO service_fees_registry (service_code, title_bn, title_en, components_json, total_bdt, currency, authority_name_bn, authority_name_en, legal_basis_bn, legal_basis_en, circular_no, effective_date, source_url, is_estimate, is_published, version, history_json, created_at, updated_at)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [...$fee, $nowIso, $nowIso]
+            );
+        }
+    }
+
+    public static function seedAcquisitionCases(): void
+    {
+        $cnt = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM acquisition_cases')['c'] ?? 0);
+        if ($cnt > 0) {
+            return;
+        }
+
+        $now = gmdate('c');
+        $cases = [
+            [
+                'case_no' => 'LA-2026-0001',
+                'project_name' => 'ঢাকা-আরিচা মহাসড়ক চার লেন সম্প্রসারণ প্রকল্প',
+                'project_name_bn' => 'ঢাকা-আরিচা মহাসড়ক চার লেন সম্প্রসারণ প্রকল্প',
+                'project_name_en' => 'Dhaka-Aricha Highway 4-Lane Expansion Project',
+                'acquiring_agency_bn' => 'সড়ক ও জনপথ অধিদপ্তর (সওজ)',
+                'section_type' => 'SECTION_4',
+                'district_bn' => 'ঢাকা',
+                'district_en' => 'Dhaka',
+                'upazila_bn' => 'সাভার',
+                'upazila_en' => 'Savar',
+                'mouza_bn' => 'বিরুলিয়া',
+                'mouza_name' => 'Birulia',
+                'plot_ids_json' => '[1, 2, 3]',
+                'total_plots' => 3,
+                'total_land_decimal' => 45.50,
+                'compensation_budget' => 125000000.00,
+                'estimated_compensation_bdt' => 125000000.00,
+                'status' => 'NOTICE_ISSUED',
+                'gazette_no' => 'BG-2026-LA-041',
+                'gazette_published_at' => '2026-01-15T10:00:00+06:00',
+                'created_by_officer' => 'dc_la',
+                'created_at' => '2026-01-10T09:00:00+06:00',
+                'updated_at' => '2026-01-15T10:00:00+06:00',
+            ],
+            [
+                'case_no' => 'LA-2026-0002',
+                'project_name' => 'গাজীপুর হাই-টেক সিটি রেল সংযোগ প্রকল্প',
+                'project_name_bn' => 'গাজীপুর হাই-টেক সিটি রেল সংযোগ প্রকল্প',
+                'project_name_en' => 'Gazipur High-Tech City Rail Link Project',
+                'acquiring_agency_bn' => 'বাংলাদেশ রেলওয়ে',
+                'section_type' => 'SECTION_7',
+                'district_bn' => 'গাজীপুর',
+                'district_en' => 'Gazipur',
+                'upazila_bn' => 'গাজীপুর সদর',
+                'upazila_en' => 'Gazipur Sadar',
+                'mouza_bn' => 'বাসন',
+                'mouza_name' => 'Bason',
+                'plot_ids_json' => '[21, 22]',
+                'total_plots' => 2,
+                'total_land_decimal' => 28.00,
+                'compensation_budget' => 84000000.00,
+                'estimated_compensation_bdt' => 84000000.00,
+                'status' => 'JOINT_VERIFICATION',
+                'gazette_no' => null,
+                'gazette_published_at' => null,
+                'created_by_officer' => 'dc_la',
+                'created_at' => '2026-02-01T09:00:00+06:00',
+                'updated_at' => '2026-02-10T14:30:00+06:00',
+            ],
+            [
+                'case_no' => 'LA-2026-0003',
+                'project_name' => 'মেঘনা অর্থনৈতিক অঞ্চল সংযোগ সড়ক প্রকল্প',
+                'project_name_bn' => 'মেঘনা অর্থনৈতিক অঞ্চল সংযোগ সড়ক প্রকল্প',
+                'project_name_en' => 'Meghna Economic Zone Access Road Project',
+                'acquiring_agency_bn' => 'বাংলাদেশ অর্থনৈতিক অঞ্চল কর্তৃপক্ষ (বেজা)',
+                'section_type' => 'SECTION_11',
+                'district_bn' => 'নারায়ণগঞ্জ',
+                'district_en' => 'Narayanganj',
+                'upazila_bn' => 'সোনারগাঁও',
+                'upazila_en' => 'Sonargaon',
+                'mouza_bn' => 'পানাম',
+                'mouza_name' => 'Panam',
+                'plot_ids_json' => '[31]',
+                'total_plots' => 1,
+                'total_land_decimal' => 15.25,
+                'compensation_budget' => 45000000.00,
+                'estimated_compensation_bdt' => 45000000.00,
+                'status' => 'GAZETTE_PUBLISHED',
+                'gazette_no' => 'BG-2026-LA-089',
+                'gazette_published_at' => '2026-03-01T11:00:00+06:00',
+                'created_by_officer' => 'dc_la',
+                'created_at' => '2026-02-15T09:00:00+06:00',
+                'updated_at' => '2026-03-01T11:00:00+06:00',
+            ],
+        ];
+
+        foreach ($cases as $c) {
+            DB::insert(
+                'INSERT INTO acquisition_cases (case_no, project_name, project_name_bn, project_name_en, acquiring_agency_bn, section_type, district_bn, district_en, upazila_bn, upazila_en, mouza_bn, mouza_name, plot_ids_json, total_plots, total_land_decimal, compensation_budget, estimated_compensation_bdt, status, gazette_no, gazette_published_at, created_by_officer, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [
+                    $c['case_no'], $c['project_name'], $c['project_name_bn'], $c['project_name_en'],
+                    $c['acquiring_agency_bn'], $c['section_type'],
+                    $c['district_bn'], $c['district_en'], $c['upazila_bn'], $c['upazila_en'],
+                    $c['mouza_bn'], $c['mouza_name'],
+                    $c['plot_ids_json'], $c['total_plots'], $c['total_land_decimal'],
+                    $c['compensation_budget'], $c['estimated_compensation_bdt'],
+                    $c['status'], $c['gazette_no'], $c['gazette_published_at'],
+                    $c['created_by_officer'], $c['created_at'], $c['updated_at'],
+                ]
             );
         }
     }

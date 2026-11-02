@@ -104,7 +104,7 @@ final class Audit20261018RegressionTest
 
         @unlink($tmpDb);
         echo "\n=== ALL AUDIT REGRESSION CHECKS PASSED: " . self::$passed . " assertions ===\n\n";
-        return self::$passed;
+        return 0;
     }
 
     private static function test_A01_A02_lawyer_portal_authorization_and_privacy(): void

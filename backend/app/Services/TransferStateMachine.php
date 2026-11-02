@@ -179,14 +179,12 @@ final class TransferStateMachine
         }
 
         $buyerNid = trim((string) ($payload['buyer_nid'] ?? ''));
-        $buyerPerson = null;
-        if ($buyerNid !== '') {
-            $buyerPerson = DB::selectOne('SELECT p.* FROM persons p JOIN users u ON u.nid = p.nid WHERE p.nid = ? AND u.is_active = 1', [$buyerNid]);
-            if (!$buyerPerson || $buyerNid === (string) $user['nid']) {
-                self::fail(422, 'VERIFIED_BUYER_REQUIRED', 'পৃথক যাচাইকৃত ক্রেতার এনআইডি দিন।', 'Enter the national ID of a different, verified buyer.');
-            }
-        } else {
-            $buyerPerson = DB::selectOne('SELECT p.* FROM persons p WHERE p.nid != ? ORDER BY p.id ASC LIMIT 1', [(string) ($user['nid'] ?? '')]);
+        if ($buyerNid === '') {
+            self::fail(422, 'BUYER_NID_REQUIRED', 'ক্রেতার এনআইডি আবশ্যক।', 'Buyer National ID is required.');
+        }
+        $buyerPerson = DB::selectOne('SELECT p.* FROM persons p JOIN users u ON u.nid = p.nid WHERE p.nid = ? AND u.is_active = 1', [$buyerNid]);
+        if (!$buyerPerson || $buyerNid === (string) $user['nid']) {
+            self::fail(422, 'BUYER_NID_NOT_FOUND', 'পৃথক যাচাইকৃত ক্রেতার এনআইডি পাওয়া যায়নি বা বিক্রেতার সাথে মিলে গেছে।', 'Verified buyer NID not found or matches seller.');
         }
 
         $location = DB::selectOne('SELECT l.* FROM locations l JOIN plots p ON p.location_id = l.id WHERE p.id = ?', [(int) $plot['id']]);
@@ -225,16 +223,13 @@ final class TransferStateMachine
             );
         }
 
-        // Associate buyer party if provided
-        if (!empty($payload['buyer_nid'])) {
-            $buyerPerson = DB::selectOne('SELECT * FROM persons WHERE nid = ?', [(string) $payload['buyer_nid']]);
-            if ($buyerPerson) {
-                DB::insert(
-                    'INSERT INTO transfer_parties (transfer_id, person_id, party_role, share_fraction, phone_dummy, is_verified, created_at)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [$transferId, (int) $buyerPerson['id'], 'BUYER', '1/1', $buyerPerson['phone_dummy'] ?? '', 1, $now]
-                );
-            }
+        // Associate buyer party if resolved
+        if ($buyerPerson) {
+            DB::insert(
+                'INSERT INTO transfer_parties (transfer_id, person_id, party_role, share_fraction, phone_dummy, is_verified, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [$transferId, (int) $buyerPerson['id'], 'BUYER', '1/1', $buyerPerson['phone_dummy'] ?? '', 1, $now]
+            );
         }
 
         // Record initial event

@@ -149,6 +149,13 @@ final class RbacService
             'description_bn' => 'ব্যবহারকারী ব্যবস্থাপনা, আরবিক কনফিগারেশন, সিস্টেম প্যারামিটার ও ক্রিপ্টো কী পর্যবেক্ষণ। কোনো জমি ডাটা সম্পাদনা করতে পারে না।',
             'description_en' => 'Platform operations, RBAC, site settings, key monitoring. Cannot edit land data.',
         ],
+        'admin' => [
+            'tier' => 'T3',
+            'label_bn' => 'সিস্টেম অ্যাডমিন (ভূমি সুরক্ষা অ্যাডমিন)',
+            'label_en' => 'System Admin (Platform Administrator)',
+            'description_bn' => 'প্ল্যাটফর্ম পরিচালনা, সিস্টেম কনফিগারেশন, ইউজার নিয়ন্ত্রণ ও ব্যাকআপ প্রশাসন। জমি রেকর্ড পরিবর্তন আইনত নিষিদ্ধ।',
+            'description_en' => 'Platform governance, configuration, user administration and system backups. Prohibited from mutating land records.',
+        ],
         'auditor' => [
             'tier' => 'T3',
             'label_bn' => 'জাতীয় অডিটর (ক্রিপ্টোগ্রাফিক লেজার নিরীক্ষক)',
@@ -171,6 +178,70 @@ final class RbacService
             'description_bn' => 'মালিকানা স্বত্ব মামলা ও নিষেধাজ্ঞার সার্টিফাইড কপি দাখিল ও নিরীক্ষণ।',
             'description_en' => 'Filing certified injunctions and court decrees for case review.',
         ],
+        // Institutional Governance & Specialized Statutory Roles:
+        'district_registrar' => [
+            'tier' => 'T2',
+            'label_bn' => 'জেলা রেজিস্ট্রার (নিবন্ধন অধিদপ্তর)',
+            'label_en' => 'District Registrar',
+            'description_bn' => 'জেলা পর্যায়ের সকল সাব-রেজিস্ট্রি কার্যালয়ের পরিদর্শন, তদারকি ও নিবন্ধন শৃঙ্খলা রক্ষা।',
+            'description_en' => 'District registration supervisory authority, inspecting sub-registry offices and registration discipline.',
+        ],
+        'divisional_commissioner' => [
+            'tier' => 'T2',
+            'label_bn' => 'বিভাগীয় কমিশনার (ভূমি প্রশাসন ও আপিল)',
+            'label_en' => 'Divisional Commissioner',
+            'description_bn' => 'বিভাগীয় পর্যায়ে রাজস্ব প্রশাসন, নামজারি আপিল নিষ্পত্তি ও আন্তঃজেলা ভূমি ব্যবস্থাপনা তদারকি।',
+            'description_en' => 'Divisional revenue administration, senior appellate hearings and cross-district land oversight.',
+        ],
+        'land_appeal_board' => [
+            'tier' => 'T2',
+            'label_bn' => 'ভূমি আপিল বোর্ড (সদস্য / চেয়ারম্যান)',
+            'label_en' => 'Land Appeal Board Member',
+            'description_bn' => 'ভূমি রাজস্ব ও স্বত্ব মামলার জাতীয় সংবিধিবদ্ধ আপিল শুনানি ও চূড়ান্ত প্রশাসনিক আদেশ প্রদান।',
+            'description_en' => 'National statutory appellate tribunal hearing revenue revisions and issuing final administrative decrees.',
+        ],
+        'land_reform_board' => [
+            'tier' => 'T2',
+            'label_bn' => 'ভূমি সংস্কার বোর্ড (সংস্কার ও ব্যবস্থাপনা কর্মকর্তা)',
+            'label_en' => 'Land Reform Board Official',
+            'description_bn' => 'খাস জমি বন্দোবস্ত, ভূমিহীন পুনর্বাসন ও বর্গাদার নীতি সংস্কার তদারকি।',
+            'description_en' => 'Khas land settlement, agrarian tenancy reforms, and rehabilitation policy monitoring.',
+        ],
+        'dlrs_officer' => [
+            'tier' => 'T2',
+            'label_bn' => 'ডিএলআরএস কর্মকর্তা (ভূমি রেকর্ড ও জরিপ অধিদপ্তর)',
+            'label_en' => 'Directorate of Land Records & Survey (DLRS) Officer',
+            'description_bn' => 'জাতীয় ডিজিটাল ক্যাডাস্ট্রাল জরিপ, মৌজা মানচিত্র প্রণয়ন ও জিআইএস সমন্বয়।',
+            'description_en' => 'Cadastral surveying, mouza cartography, and digital GIS spatial boundary administration.',
+        ],
+        'joint_sub_registrar' => [
+            'tier' => 'T2',
+            'label_bn' => 'যুগ্ম সাব-রেজিস্ট্রার (নিবন্ধন অধিদপ্তর)',
+            'label_en' => 'Joint Sub-Registrar',
+            'description_bn' => 'যুগ্ম সাব-রেজিস্ট্রি সার্কেলে দলিল রেজিস্ট্রি, বায়োমেট্রিক নিবেদন ও ডিজিটাল স্ট্যাম্পিং।',
+            'description_en' => 'Joint sub-registry deed registration, counter biometrics, and electronic stamping.',
+        ],
+        'forest_officer' => [
+            'tier' => 'T2',
+            'label_bn' => 'বিভাগীয় বন কর্মকর্তা (বন অধিদপ্তর)',
+            'label_en' => 'Divisional Forest Officer (Forest Department)',
+            'description_bn' => 'সংরক্ষিত ও অর্পিত বনভূমির সীমানা সংরক্ষণ, দখল প্রতিরোধ ও অনাপত্তি (NOC) যাচাই।',
+            'description_en' => 'Reserved forest boundary protection, encroachment prevention, and land NOC clearance vetting.',
+        ],
+        'waqf_administrator' => [
+            'tier' => 'T2',
+            'label_bn' => 'ওয়াকফ ও দেবোত্তর এস্টেট প্রশাসক',
+            'label_en' => 'Waqf & Religious Estate Administrator',
+            'description_bn' => 'ওয়াকফ সম্পত্তি, দেবোত্তর এস্টেট ও ধর্মীয় ট্রাস্টের ভূমি সুরক্ষা ও অননুমোদিত হস্তান্তর রোধ।',
+            'description_en' => 'Custody and title defense of waqf endowments, debottar estates, and religious trusts.',
+        ],
+        'karbari' => [
+            'tier' => 'T2',
+            'label_bn' => 'কার্বারি / হেডম্যান (পার্বত্য জেলা প্রথাগত ভূমি প্রধান)',
+            'label_en' => 'Karbari / Mouza Headman (CHT Customary Land Head)',
+            'description_bn' => 'পার্বত্য চট্টগ্রাম প্রথাগত ভূমি ব্যবস্থাপনা, মৌজা কর যাচাই ও আদিবাসী মালিকানা প্রত্যায়ন।',
+            'description_en' => 'Customary land rights adjudication, mouza tax endorsement, and indigenous land certification.',
+        ],
     ];
 
     /**
@@ -180,15 +251,15 @@ final class RbacService
     public const PERMISSION_MATRIX = [
         // Statutory core permissions
         'ownership.approve' => ['ac_land'],
-        'deed.register' => ['sub_registrar'],
+        'deed.register' => ['sub_registrar', 'joint_sub_registrar'],
         'transfer.start' => ['citizen'],
-        'biometric.capture' => ['service_point_operator', 'sub_registrar'],
+        'biometric.capture' => ['service_point_operator', 'sub_registrar', 'joint_sub_registrar'],
         'khatian.enter' => ['settlement_records_officer'],
-        'khatian.verify' => ['settlement_checker'],
+        'khatian.verify' => ['settlement_checker', 'dlrs_officer'],
         'deed_record.enter' => ['registry_data_officer'],
-        'deed_record.verify' => ['sub_registrar'],
+        'deed_record.verify' => ['sub_registrar', 'joint_sub_registrar'],
         'document.upload' => ['citizen', 'service_point_operator'],
-        'document.verify' => ['sub_registrar', 'ac_land', 'field_verification_officer', 'bank_officer'],
+        'document.verify' => ['sub_registrar', 'ac_land', 'field_verification_officer', 'bank_officer', 'district_registrar', 'forest_officer', 'waqf_administrator', 'karbari'],
         'lien.prepare' => ['bank_officer'],
         'lien.approve' => ['bank_manager'],
         'listing.create' => ['citizen'],
@@ -198,7 +269,7 @@ final class RbacService
         'ticket.resolve_record' => ['sub_registrar', 'ac_land', 'settlement_checker'],
         'notice.draft' => ['content_editor', 'admin', 'system_admin'],
         'notice.publish' => ['content_approver', 'admin', 'system_admin'],
-        'rules.configure' => ['system_admin'],
+        'rules.configure' => ['system_admin', 'admin'],
         'audit.view' => ['auditor', 'system_admin', 'admin'],
 
         // Super Admin 16 Modules 3-Tier Granular Permissions (No Wildcards)
@@ -209,7 +280,7 @@ final class RbacService
         'admin.users.view' => ['admin', 'system_admin', 'auditor'],
         'admin.users.manage' => ['admin', 'system_admin'],
         'admin.users.transfer_office' => ['admin', 'system_admin'],
-        'admin.roles.manage' => ['system_admin'],
+        'admin.roles.manage' => ['system_admin', 'admin'],
 
         // 3. Citizen Service Applications (Transfers)
         'admin.transfers.view' => ['admin', 'system_admin', 'auditor', 'support_agent'],
@@ -218,29 +289,29 @@ final class RbacService
         'admin.transfers.correction_request' => ['admin', 'system_admin'],
 
         // 4. Registration & Deeds
-        'admin.deeds.view' => ['admin', 'system_admin', 'auditor', 'sub_registrar'],
+        'admin.deeds.view' => ['admin', 'system_admin', 'auditor', 'sub_registrar', 'district_registrar', 'joint_sub_registrar'],
         'admin.deeds.hold' => ['admin', 'system_admin'],
         'admin.deeds.flag' => ['admin', 'system_admin'],
 
         // 5. Mutation & Ownership Records
-        'admin.mutations.view' => ['admin', 'system_admin', 'auditor', 'uno_supervisor'],
+        'admin.mutations.view' => ['admin', 'system_admin', 'auditor', 'uno_supervisor', 'divisional_commissioner'],
         'admin.mutations.manage' => ['admin', 'system_admin'],
-        'admin.khatians.reconcile' => ['ac_land', 'admin', 'system_admin'],
+        'admin.khatians.reconcile' => ['ac_land', 'admin', 'system_admin', 'land_reform_board'],
 
         // 6. Field Verification
         'admin.field_verification.view' => ['admin', 'system_admin', 'auditor', 'ac_land'],
         'admin.field_verification.assign' => ['admin', 'system_admin', 'ac_land'],
 
         // 7. Survey Records & Maker/Checker
-        'admin.survey.view' => ['admin', 'system_admin', 'auditor', 'settlement_checker'],
-        'admin.survey.manage' => ['admin', 'system_admin'],
+        'admin.survey.view' => ['admin', 'system_admin', 'auditor', 'settlement_checker', 'dlrs_officer'],
+        'admin.survey.manage' => ['admin', 'system_admin', 'dlrs_officer'],
 
         // 8. Bank Liens & Releases
         'admin.mortgages.view' => ['admin', 'system_admin', 'auditor', 'bank_manager', 'bank_officer'],
 
         // 9. Appeals & Court Documents
-        'admin.appeals.view' => ['admin', 'system_admin', 'auditor', 'appellate_reviewer'],
-        'admin.appeals.manage' => ['admin', 'system_admin'],
+        'admin.appeals.view' => ['admin', 'system_admin', 'auditor', 'appellate_reviewer', 'divisional_commissioner', 'land_appeal_board'],
+        'admin.appeals.manage' => ['admin', 'system_admin', 'land_appeal_board'],
         'admin.disputes.view' => ['admin', 'system_admin', 'auditor', 'lawyer_court_user'],
         'admin.disputes.resolve' => ['ac_land', 'admin', 'system_admin'],
 

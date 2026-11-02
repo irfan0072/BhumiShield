@@ -254,11 +254,11 @@ final class WorkflowController
                  ORDER BY p.id ASC',
                 [$plotId]
             );
-            $canUnmask = $isFullDirectoryOfficial || ($role === 'bank_officer');
+            $canUnmask = $isFullDirectoryOfficial;
         } elseif ($nidQuery !== null) {
             // Exact NID query: authorized for officers
             $rows = DB::select('SELECT * FROM persons WHERE nid = ? LIMIT 1', [$nidQuery]);
-            $canUnmask = $isFullDirectoryOfficial || ($role === 'bank_officer');
+            $canUnmask = $isFullDirectoryOfficial;
         } elseif ($isFullDirectoryOfficial) {
             // Full directory permitted only for competent registrar/AC Land/admin roles
             $rows = DB::select('SELECT * FROM persons ORDER BY id ASC');
@@ -273,7 +273,7 @@ final class WorkflowController
         foreach ($rows as &$p) {
             $raw = (string) ($p['nid'] ?? '');
             if (!$canUnmask) {
-                $masked = strlen($raw) >= 6 ? (substr($raw, 0, 4) . '****' . substr($raw, -2)) : '****';
+                $masked = \App\Services\PublicRecordService::maskNid($raw);
                 $p['nid'] = $masked;
                 $p['nid_mock'] = $masked;
                 $p['phone_mock'] = '';
@@ -308,6 +308,20 @@ final class WorkflowController
                 'message_en' => 'Plot not found.',
             ], JSON_UNESCAPED_UNICODE));
         }
+
+        $user = \App\Services\JwtAuthService::getAuthenticatedUser();
+        if ($user && in_array($user['role'] ?? '', ['bank_officer', 'bank_manager'], true)) {
+            $hasLien = DB::selectOne("SELECT 1 FROM mortgages_liens WHERE plot_id = ? AND status = 'ACTIVE'", [(int) $plot['id']]);
+            if (!$hasLien) {
+                throw new \RuntimeException(json_encode([
+                    'status' => 403,
+                    'code' => 'UNENCUMBERED_PLOT_RESTRICTED',
+                    'message_bn' => 'ব্যাংক কর্মকর্তা শুধুমাত্র বন্ধকযুক্ত জমির রেকর্ড পরিদর্শন করতে পারবেন।',
+                    'message_en' => 'Commercial bank officers are restricted to mortgaged plots only.',
+                ], JSON_UNESCAPED_UNICODE));
+            }
+        }
+
         $bundle = self::loadPlotBundle((int) $plot['id']);
         return \App\Services\PublicRecordService::forViewer([
             'plot' => $bundle['plot'],
@@ -318,7 +332,7 @@ final class WorkflowController
             'deeds' => $bundle['deeds'],
             'mortgages' => $bundle['mortgages'],
             'disputes' => $bundle['disputes'],
-        ]);
+        ], $user);
     }
 
     public static function citizenCheckBeforeYouBuy(int|string $plotId, ?float $requestedAreaDecimal = null, ?int $sellerId = null): array
@@ -382,9 +396,14 @@ final class WorkflowController
 
 
 
-    public static function subRegistrarPreCheck(array $req): array
+    public static function subRegistrarPreCheck(array $req, ?array $actor = null): array
     {
         $plotId = (int) ($req['plot_id'] ?? 0);
+        $user = $actor ?? \App\Services\JwtAuthService::getAuthenticatedUser();
+        if ($user) {
+            \App\Services\OfficeScopeService::requirePlot($plotId, $user);
+        }
+
         $sellerId = (int) ($req['seller_id'] ?? ($req['seller_person_id'] ?? 0));
         $buyerId = (int) ($req['buyer_id'] ?? ($req['buyer_person_id'] ?? 2));
         $requestedArea = (float) ($req['requested_area_decimal'] ?? ($req['area_decimal'] ?? 10.0));
@@ -662,11 +681,11 @@ final class WorkflowController
                 'seller_id' => (int) $row['seller_id'],
                 'seller_name_bn' => $row['seller_name_bn'],
                 'seller_name_en' => $row['seller_name_en'],
-                'seller_nid' => $row['seller_nid'],
+                'seller_nid' => \App\Services\PublicRecordService::maskNid((string) $row['seller_nid']),
                 'buyer_id' => (int) $row['buyer_id'],
                 'buyer_name_bn' => $row['buyer_name_bn'],
                 'buyer_name_en' => $row['buyer_name_en'],
-                'buyer_nid' => $row['buyer_nid'],
+                'buyer_nid' => \App\Services\PublicRecordService::maskNid((string) $row['buyer_nid']),
                 'share_fraction' => $row['share_fraction'],
                 'area_decimal' => (float) $row['area_decimal'],
                 'status' => $row['status'],
@@ -1081,6 +1100,12 @@ final class WorkflowController
                 catch (\RuntimeException) { return false; }
             }));
         }
+        foreach ($rows as &$r) {
+            if (!empty($r['borrower_nid'])) {
+                $r['borrower_nid'] = \App\Services\PublicRecordService::maskNid((string) $r['borrower_nid']);
+            }
+        }
+        unset($r);
         return ['items' => $rows, 'total' => count($rows)];
     }
 

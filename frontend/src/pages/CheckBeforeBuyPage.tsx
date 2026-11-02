@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAppUI } from '../i18n';
 import { BhumiApi, RiskReportResponse } from '../api/client';
-import { toBanglaDigits } from '../theme/tokens';
+import { toBanglaDigits, maskNid } from '../theme/tokens';
 import { ResultHeroBanner } from '../components/ResultHeroBanner';
 import { KhatianChainTimeline } from '../components/KhatianChainTimeline';
 import {
@@ -579,13 +579,15 @@ export const CheckBeforeBuyPage: React.FC = () => {
                     'দাগ নম্বর লিখুন (যেমন: ১০১, ১০২, ২০৫)...',
                     'Search plot number (e.g. 101, 102)...'
                   )}
-                  className="field pl-8 font-semibold text-xs bg-[#F5FAF8] py-1.5"
+                  aria-label={t('দাগ নম্বর অনুসন্ধান', 'Search plot number')}
+                  className="field pl-8 font-semibold text-xs bg-[#F5FAF8] py-1.5 placeholder:text-slate-500"
                 />
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
                 {plotSearchQuery && (
                   <button
                     type="button"
                     onClick={() => setPlotSearchQuery('')}
+                    aria-label={t('অনুসন্ধান মুছুন', 'Clear search')}
                     className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -811,13 +813,15 @@ export const CheckBeforeBuyPage: React.FC = () => {
                     'বিক্রেতার নাম বা NID নম্বর লিখে খুঁজুন...',
                     'Search seller by name or NID...'
                   )}
-                  className="field pl-8 font-semibold text-xs bg-[#F5FAF8] py-1.5"
+                  aria-label={t('বিক্রেতা অনুসন্ধান', 'Search seller by name or NID')}
+                  className="field pl-8 font-semibold text-xs bg-[#F5FAF8] py-1.5 placeholder:text-slate-500"
                 />
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
                 {sellerSearchQuery && (
                   <button
                     type="button"
                     onClick={() => setSellerSearchQuery('')}
+                    aria-label={t('অনুসন্ধান মুছুন', 'Clear search')}
                     className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -857,7 +861,7 @@ export const CheckBeforeBuyPage: React.FC = () => {
                           )}
                         </div>
                         <div className="text-[10px] font-mono text-slate-500 truncate mt-0.5">
-                          NID: {per.nid_mock}
+                          NID: {maskNid(per.nid_mock, lang)}
                         </div>
                       </div>
                       {isSelected && (
@@ -879,7 +883,7 @@ export const CheckBeforeBuyPage: React.FC = () => {
                 >
                   {persons.map((per) => (
                     <option key={per.id} value={per.id}>
-                      {lang === 'bn' ? per.name_bn : per.name_en} — NID: {per.nid_mock}
+                      {lang === 'bn' ? per.name_bn : per.name_en} — NID: {maskNid(per.nid_mock, lang)}
                     </option>
                   ))}
                 </select>
@@ -901,17 +905,18 @@ export const CheckBeforeBuyPage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
                 <div>
-                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  <label htmlFor="proposed-purchase-area" className="text-[11px] font-bold text-slate-700 block mb-1">
                     {t('ক্রয়ের পরিমাণ (শতক / Decimal):', 'Purchase Area (Decimal):')}
                   </label>
                   <div className="relative">
                     <input
+                      id="proposed-purchase-area"
                       type="number"
                       step="0.01"
                       min="0.1"
                       value={proposedArea}
                       onChange={(e) => setProposedArea(e.target.value)}
-                      className="field font-extrabold text-sm pr-14 py-1.5"
+                      className="field font-extrabold text-sm pr-14 py-1.5 placeholder:text-slate-500"
                     />
                     <span className="absolute right-2.5 top-2 text-xs font-bold text-slate-500">
                       {t('শতক', 'Dec')}
@@ -921,9 +926,9 @@ export const CheckBeforeBuyPage: React.FC = () => {
 
                 {/* Quick Preset Buttons */}
                 <div>
-                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  <span className="text-[11px] font-bold text-slate-700 block mb-1">
                     {t('দ্রুত প্রিসেট:', 'Presets:')}
-                  </label>
+                  </span>
                   <div className="flex flex-wrap gap-1.5">
                     {['5', '10', '15'].map((amt) => (
                       <button
@@ -1029,7 +1034,7 @@ export const CheckBeforeBuyPage: React.FC = () => {
                     {lang === 'bn' ? currentSeller?.name_bn : currentSeller?.name_en}
                   </div>
                   <div className="text-[10px] font-mono text-slate-500 truncate">
-                    NID: {currentSeller?.nid_mock}
+                    NID: {maskNid(currentSeller?.nid_mock, lang)}
                   </div>
                 </div>
               </div>
@@ -1140,7 +1145,7 @@ export const CheckBeforeBuyPage: React.FC = () => {
             <div className="panel p-5 bg-white border border-slate-200/80 rounded-2xl shadow-xs">
               <h3 className="text-base font-bold text-[#0A1F1C] mb-3 flex items-center gap-2">
                 <Layers className="w-4 h-4 text-[#006A4E]" />
-                <span>{t('পূর্ববর্তী নিবন্ধিত দলিলের ইতিহাস (হ্যাশ লেজার)', 'Registered Deed History (Hash Ledger)')}</span>
+                <span>{t('পূর্ববর্তী নিবন্ধিত দলিলের ইতিহাস (ডিজিটাল লেজার)', 'Registered Deed History (Digital Ledger)')}</span>
               </h3>
               {report.deed_history && report.deed_history.length > 0 ? (
                 <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -1164,9 +1169,14 @@ export const CheckBeforeBuyPage: React.FC = () => {
                         {d.seller_name_bn} → {d.buyer_name_bn} ({toBanglaDigits(d.area_decimal, lang)}{' '}
                         {t('শতাংশ', 'dec')})
                       </div>
-                      <div className="mt-1 font-mono text-[10px] text-[#5F7A74]/80 truncate">
-                        SHA256: {d.content_hash}
-                      </div>
+                      <details className="mt-1 text-[10px] text-[#5F7A74]">
+                        <summary className="cursor-pointer text-emerald-700 hover:underline">
+                          {t('ডিজিটাল অখণ্ডতা প্রমাণ (হ্যাশ)', 'Digital Proof Hash')}
+                        </summary>
+                        <div className="font-mono bg-white/80 p-1 rounded border border-slate-200 mt-0.5 truncate">
+                          {d.content_hash}
+                        </div>
+                      </details>
                     </div>
                   ))}
                 </div>
@@ -1182,10 +1192,17 @@ export const CheckBeforeBuyPage: React.FC = () => {
 
       {/* Official Land Verification Certificate Modal */}
       {showCertModal && report && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="land-cert-modal-title"
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+        >
           <div className="bg-white rounded-2xl max-w-2xl w-full p-6 md:p-8 shadow-2xl border-2 border-[#006A4E] space-y-5 relative max-h-[90vh] overflow-y-auto">
             <button
+              type="button"
               onClick={() => setShowCertModal(false)}
+              aria-label={t('বন্ধ করুন', 'Close')}
               className="absolute top-4 right-4 p-2 rounded-full bg-[#EDF7F4] hover:bg-[#E4EFEA] cursor-pointer"
             >
               <X className="w-5 h-5" />
@@ -1200,7 +1217,7 @@ export const CheckBeforeBuyPage: React.FC = () => {
                   <div className="text-[10px] font-extrabold uppercase tracking-widest text-[#006A4E]">
                     {t('স্বাধীন ভূমি সুরক্ষা মূল্যায়ন', 'Independent BhumiShield Assessment')}
                   </div>
-                  <h3 className="text-lg md:text-xl font-extrabold text-[#0A1F1C] mt-0.5">
+                  <h3 id="land-cert-modal-title" className="text-lg md:text-xl font-extrabold text-[#0A1F1C] mt-0.5">
                     {t('উপলব্ধ রেকর্ডের ঝুঁকি মূল্যায়ন', 'Available-Record Risk Assessment')}
                   </h3>
                   <p className="text-[11px] text-[#5F7A74]">
@@ -1260,7 +1277,7 @@ export const CheckBeforeBuyPage: React.FC = () => {
                 {lang === 'bn' ? currentSeller?.name_bn : currentSeller?.name_en}
               </div>
               <div>
-                <strong>{t('এনআইডি:', 'Seller NID:')}</strong> {currentSeller?.nid_mock}
+                <strong>{t('এনআইডি:', 'Seller NID:')}</strong> {maskNid(currentSeller?.nid_mock, lang)}
               </div>
               <div>
                 <strong>{t('প্রস্তাবিত জমি:', 'Evaluated Area:')}</strong>{' '}

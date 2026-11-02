@@ -13,8 +13,10 @@ import {
   ShieldCheck,
   Calendar,
   Landmark,
+  HelpCircle,
   X
 } from 'lucide-react';
+import { CitizenProblemTriageModal } from '../components/CitizenProblemTriageModal';
 
 interface OfficeItem {
   id: number;
@@ -63,6 +65,7 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
   const [bookingError, setBookingError] = useState('');
   const [bookingResult, setBookingResult] = useState<any | null>(null);
   const [mapNotice, setMapNotice] = useState<string | null>(null);
+  const [triageModalOpen, setTriageModalOpen] = useState(false);
 
   const fetchOffices = () => {
     setLoading(true);
@@ -86,6 +89,20 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
   useEffect(() => {
     fetchOffices();
   }, [typeFilter, districtFilter, upazilaFilter, linkedOfficeId]);
+
+  useEffect(() => {
+    if (!bookingOffice) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setBookingOffice(null);
+        setBookingSuccess(false);
+        setBookingResult(null);
+        setBookingError('');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [bookingOffice]);
 
   const getOfficeTypeBadge = (type: string) => {
     switch (type) {
@@ -228,6 +245,33 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
           </p>
         </div>
 
+        {/* Citizen Problem Triage Launch Banner */}
+        <div className="bg-gradient-to-r from-emerald-950 via-[#074f38] to-[#006A4E] text-white p-5 sm:p-6 rounded-2xl border border-emerald-500/30 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-800/80 text-emerald-100 text-xs font-bold border border-emerald-500/40">
+              <HelpCircle className="w-3.5 h-3.5" />
+              {t('নাগরিক সমস্যা নিরসন ও দিকনির্দেশনা উইজার্ড', 'Citizen Problem Resolution Wizard')}
+            </span>
+            <h3 className="text-base sm:text-lg font-black text-white">
+              {t('বুঝতে পারছেন না কোন অফিসে যাবেন বা কার কাছে আবেদন করবেন?', 'Not sure which office to visit or where to apply?')}
+            </h3>
+            <p className="text-xs text-emerald-100/90 leading-relaxed max-w-2xl">
+              {t(
+                'নামজারি সমস্যা, দাগের ভুল, বালাম অনুসন্ধান, ক্ষতিপূরণ বা খারিজ সংক্রান্ত সমস্যার তাৎক্ষণিক সমাধান ও প্রয়োজনীয় দলিলের তালিকা জানতে উইজার্ডটি চালু করুন।',
+                'Find your exact competent officer, required documents, statutory fees, and physical attendance rules in 3 clicks.'
+              )}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setTriageModalOpen(true)}
+            className="px-5 py-3 rounded-xl bg-white hover:bg-emerald-50 text-[#006A4E] font-extrabold text-xs sm:text-sm shadow-md transition-all shrink-0 cursor-pointer flex items-center justify-center gap-2"
+          >
+            <HelpCircle className="w-4 h-4 text-[#006A4E]" />
+            <span>{t('সমস্যার সঠিক সমাধান খুঁজুন', 'Launch Problem Wizard')}</span>
+          </button>
+        </div>
+
         {/* F18: Inline map-unavailable notice (replaces alert()). */}
         {mapNotice && (
           <div className="bg-amber-50 border border-amber-300 text-amber-900 rounded-xl px-4 py-3 flex items-start justify-between gap-3">
@@ -346,7 +390,7 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
               {onNavigate && (
                 <button
                   type="button"
-                  onClick={() => onNavigate('tickets?new=1')}
+                  onClick={() => onNavigate('home?section=tickets&new=1')}
                   className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold transition cursor-pointer"
                 >
                   {t('নতুন অঞ্চল অনবোর্ডিং আবেদন', 'Request Jurisdiction Onboarding')}
@@ -391,11 +435,19 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
                         <span>{lang === 'bn' ? off.address_bn : off.address_en}</span>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-4 h-4 text-slate-400 shrink-0" />
-                        <span>
-                          {t('যোগাযোগ:', 'Contact:')} <strong className="text-slate-800">{off.contact_phone}</strong>
-                        </span>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-slate-400 shrink-0" />
+                          <span>
+                            {t('যোগাযোগ:', 'Contact:')} <strong className="text-slate-800">{off.contact_phone}</strong>
+                          </span>
+                        </div>
+                        <a
+                          href="tel:16122"
+                          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#006A4E] text-[11px] font-bold border border-emerald-200 hover:bg-emerald-100 transition-colors shadow-2xs"
+                        >
+                          <span>📞 ১৬১২২ হটলাইন</span>
+                        </a>
                       </div>
 
                       <div className="flex items-center gap-2">
@@ -455,13 +507,18 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
 
         {/* Appointment Booking Modal */}
         {bookingOffice && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="office-booking-modal-title"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
+          >
             <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-[#006A4E]" />
                   <div>
-                    <h3 className="font-bold text-slate-900 text-base leading-tight">
+                    <h3 id="office-booking-modal-title" className="font-bold text-slate-900 text-base leading-tight">
                       {t('স্থানীয় সেবা অ্যাপয়েন্টমেন্ট অনুরোধ', 'Local Service Appointment Request')}
                     </h3>
                     <p className="text-[11px] text-slate-500">
@@ -470,12 +527,14 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
                   </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => {
                     setBookingOffice(null);
                     setBookingSuccess(false);
                     setBookingResult(null);
                     setBookingError('');
                   }}
+                  aria-label={t('বন্ধ করুন', 'Close')}
                   className="text-slate-400 hover:text-slate-600 transition p-1 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
@@ -651,6 +710,13 @@ export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate
             </div>
           </div>
         )}
+
+        {/* Citizen Problem Triage Modal */}
+        <CitizenProblemTriageModal
+          isOpen={triageModalOpen}
+          onClose={() => setTriageModalOpen(false)}
+          onNavigate={onNavigate}
+        />
       </div>
     </div>
   );

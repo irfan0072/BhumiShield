@@ -99,7 +99,7 @@ final class AppointmentBookingTest
             'office_id' => (int) $office['id'],
             'citizen_name_bn' => 'মো. টেস্ট ইউজার',
             'citizen_phone' => '01700000000',
-            'slot_date' => '2026-10-25',
+            'slot_date' => date('Y-m-d', strtotime('+3 days')),
             'slot_time' => '11:00 AM',
             'service_type' => 'GENERAL_INQUIRY',
         ]);
@@ -125,7 +125,7 @@ final class AppointmentBookingTest
             'office_id' => 999999,
             'citizen_name_bn' => 'মো. টেস্ট',
             'citizen_phone' => '01700000000',
-            'slot_date' => '2026-10-25',
+            'slot_date' => date('Y-m-d', strtotime('+3 days')),
         ]);
         self::assertEqual(404, $res['status']);
         self::assertEqual('OFFICE_NOT_FOUND', $res['body']['code'] ?? '');
@@ -141,7 +141,7 @@ final class AppointmentBookingTest
             'office_id' => (int) $office['id'],
             'citizen_name_bn' => '',
             'citizen_phone' => '01700000000',
-            'slot_date' => '2026-10-26',
+            'slot_date' => date('Y-m-d', strtotime('+4 days')),
         ]);
         self::assertEqual(422, $res['status']);
         self::assertEqual('NAME_REQUIRED', $res['body']['code'] ?? '');
@@ -157,7 +157,7 @@ final class AppointmentBookingTest
             'office_id' => (int) $office['id'],
             'citizen_name_bn' => 'মো. টেস্ট',
             'citizen_phone' => '',
-            'slot_date' => '2026-10-27',
+            'slot_date' => date('Y-m-d', strtotime('+5 days')),
         ]);
         self::assertEqual(422, $res['status']);
         self::assertEqual('PHONE_REQUIRED', $res['body']['code'] ?? '');

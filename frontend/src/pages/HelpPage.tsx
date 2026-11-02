@@ -19,14 +19,15 @@ import {
   Building2,
   ExternalLink,
   Coins,
-  CheckCircle2
 } from 'lucide-react';
+import { CitizenProblemTriageModal } from '../components/CitizenProblemTriageModal';
 
 export const HelpPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNavigate }) => {
   const { t, lang } = useAppUI();
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [feesList, setFeesList] = useState<ServiceFeeItem[]>([]);
   const [feesLoading, setFeesLoading] = useState(true);
+  const [triageModalOpen, setTriageModalOpen] = useState(false);
 
   useEffect(() => {
     BhumiApi.listPublicFees()
@@ -130,6 +131,34 @@ export const HelpPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNa
   return (
     <div className="space-y-6">
       <NextStepsGuide />
+
+      {/* Citizen Problem Triage Launch Banner */}
+      <div className="bg-gradient-to-r from-emerald-950 via-[#074f38] to-[#006A4E] text-white p-5 sm:p-6 rounded-2xl border border-emerald-500/30 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-800/80 text-emerald-100 text-xs font-bold border border-emerald-500/40">
+            <Sparkles className="w-3.5 h-3.5" />
+            {t('নাগরিক সমস্যা নিরসন ও দিকনির্দেশনা উইজার্ড', 'Citizen Problem Triage Wizard')}
+          </span>
+          <h2 className="text-base sm:text-lg font-black text-white">
+            {t('আপনার জমি সংক্রান্ত সমস্যা কোন নিয়মে সমাধান হবে?', 'Which land rule applies to your specific problem?')}
+          </h2>
+          <p className="text-xs text-emerald-100/90 leading-relaxed max-w-2xl">
+            {t(
+              'প্রোফাইলে জমি না দেখা, ওয়ারিশি বণ্টন জটিলতা, দাগের ভুল রেকর্ড সংশোধন, কিংবা নামজারি আটকে যাওয়ার মতো যেকোনো সমস্যার সহজ আইনি সমাধান ও করণীয় ৩টি ক্লিকে জেনে নিন।',
+              'Get instant guidance on missing lands, inheritance shares, dag record errors, or delayed mutations with competent officer details and required documents.'
+            )}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setTriageModalOpen(true)}
+          className="px-5 py-3 rounded-xl bg-white hover:bg-emerald-50 text-[#006A4E] font-extrabold text-xs sm:text-sm shadow-md transition-all shrink-0 cursor-pointer flex items-center justify-center gap-2"
+        >
+          <HelpCircle className="w-4 h-4 text-[#006A4E]" />
+          <span>{t('সমস্যার সঠিক সমাধান খুঁজুন', 'Launch Problem Wizard')}</span>
+        </button>
+      </div>
+
       {/* Top Banner */}
       <div className="bg-white rounded-xl p-6 md:p-8 border border-slate-200/90 shadow-2xs space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -459,6 +488,13 @@ export const HelpPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNa
           <span>{t('RBAC রোল ও নিরাপত্তা নিয়ন্ত্রণ ম্যাট্রিক্স দেখুন', 'Open RBAC Matrix & Security Controls')}</span>
         </button>
       </div>
+
+      {/* Citizen Problem Triage Modal */}
+      <CitizenProblemTriageModal
+        isOpen={triageModalOpen}
+        onClose={() => setTriageModalOpen(false)}
+        onNavigate={onNavigate}
+      />
     </div>
   );
 };

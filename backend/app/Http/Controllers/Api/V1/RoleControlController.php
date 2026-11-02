@@ -8,6 +8,7 @@ use App\Http\Middleware\RoleMiddleware;
 use App\Services\FraudRulesEngine;
 use App\Services\JwtAuthService;
 use App\Services\LedgerService;
+use App\Services\OfficeScopeService;
 use App\Services\PublicRecordService;
 use App\Support\DB;
 use Database\Seeders\DatabaseSeeder;
@@ -199,23 +200,51 @@ final class RoleControlController
 
     public static function listDisputes(?int $plotId = null): array
     {
-        $where = $plotId ? 'WHERE d.plot_id = ?' : '';
-        $params = $plotId ? [$plotId] : [];
+        $actor = JwtAuthService::getAuthenticatedUser();
+        $where = [];
+        $params = [];
+        if ($plotId) {
+            $where[] = 'd.plot_id = ?';
+            $params[] = $plotId;
+        }
+
+        if ($actor && in_array($actor['role'] ?? '', ['lawyer_court_user', 'lawyer'], true)) {
+            $barNo = null;
+            if (!empty($actor['nid'])) {
+                $l = DB::selectOne('SELECT bar_council_no FROM authorized_lawyers WHERE nid = ? AND status = "ACTIVE"', [$actor['nid']]);
+                if ($l) $barNo = $l['bar_council_no'];
+            }
+            if (!$barNo && !empty($actor['email'])) {
+                $l = DB::selectOne('SELECT bar_council_no FROM authorized_lawyers WHERE LOWER(email) = LOWER(?) AND status = "ACTIVE"', [$actor['email']]);
+                if ($l) $barNo = $l['bar_council_no'];
+            }
+            if (!$barNo && ($actor['username'] ?? '') === 'lawyer') {
+                $barNo = 'BC-DH-14285';
+            }
+            if ($barNo) {
+                $where[] = 'd.lawyer_bar_council_no = ?';
+                $params[] = $barNo;
+            } else {
+                $where[] = '1 = 0';
+            }
+        }
+
+        $whereClause = !empty($where) ? ('WHERE ' . implode(' AND ', $where)) : '';
         $rows = DB::select(
             "SELECT d.*, p.dag_no, p.dag_no_bn, l.mouza_bn, l.mouza_en, l.upazila_bn, l.upazila_en
              FROM disputes d
              JOIN plots p ON p.id = d.plot_id
              JOIN locations l ON l.id = p.location_id
-             {$where}
+             {$whereClause}
              ORDER BY CASE WHEN d.status = 'OPEN' THEN 0 ELSE 1 END, d.id DESC",
             $params
         );
-        $actor = JwtAuthService::getAuthenticatedUser();
-        if (!$actor || !in_array($actor['role'] ?? '', ['ac_land', 'sub_registrar', 'admin'], true)) {
+        if (!$actor || !in_array($actor['role'] ?? '', ['ac_land', 'sub_registrar', 'admin', 'system_admin'], true)) {
             $rows = array_map(static function (array $row) use ($actor): array {
                 $own = $actor && ($actor['role'] ?? '') === 'citizen' && (int) ($actor['is_identity_verified'] ?? 0) === 1
                     && (string) ($row['complainant_nid'] ?? '') === (string) ($actor['nid'] ?? '');
-                if ($own) return \App\Services\PublicRecordService::minimize($row);
+                $empaneled = $actor && in_array($actor['role'] ?? '', ['lawyer_court_user', 'lawyer'], true);
+                if ($own || $empaneled) return \App\Services\PublicRecordService::minimize($row);
                 return array_intersect_key($row, array_flip(['id','case_no','plot_id','dispute_type','severity','status','created_at','dag_no','dag_no_bn','mouza_bn','mouza_en','upazila_bn','upazila_en']));
             }, $rows);
         }
@@ -301,14 +330,23 @@ final class RoleControlController
         $params = [];
 
         // Office-based jurisdiction scoping for sub-registrars and data officers (F12)
-        if (in_array($user['role'], ['sub_registrar', 'registry_data_officer'], true)) {
+        if (in_array($user['role'], ['sub_registrar', 'registry_data_officer', 'joint_sub_registrar'], true)) {
             $office = strtolower((string) ($user['office_en'] ?? ''));
             if (str_contains($office, 'gazipur')) {
-                $where[] = "(l.upazila_en = 'Gazipur Sadar' OR l.district_en = 'Gazipur')";
+                $where[] = "l.upazila_en = 'Gazipur Sadar'";
             } elseif (str_contains($office, 'savar')) {
-                $where[] = "(l.upazila_en = 'Savar' OR l.district_en = 'Dhaka')";
-            } elseif (str_contains($office, 'sonargaon') || str_contains($office, 'narayanganj')) {
-                $where[] = "(l.upazila_en = 'Sonargaon' OR l.district_en = 'Narayanganj')";
+                $where[] = "l.upazila_en = 'Savar'";
+            } elseif (str_contains($office, 'sonargaon')) {
+                $where[] = "l.upazila_en = 'Sonargaon'";
+            } else {
+                $assignment = DB::selectOne(
+                    'SELECT o.upazila_en FROM office_user ou JOIN offices o ON o.id = ou.office_id WHERE ou.user_id = ? AND o.is_active = 1',
+                    [(int) ($user['id'] ?? 0)]
+                );
+                if ($assignment && !empty($assignment['upazila_en'])) {
+                    $where[] = 'l.upazila_en = ?';
+                    $params[] = $assignment['upazila_en'];
+                }
             }
         }
 
@@ -356,6 +394,8 @@ final class RoleControlController
                 'message_en' => 'Deed not found.',
             ], JSON_UNESCAPED_UNICODE));
         }
+
+        OfficeScopeService::requirePlot((int) $deed['plot_id'], $actor);
 
         $currentStatus = (string) $deed['status'];
         $newStatus = strtoupper(trim((string) ($req['status'] ?? 'PENDING_MUTATION')));
@@ -496,7 +536,7 @@ final class RoleControlController
     // AC LAND CONTROLLING SYSTEM (Khatian Reconciliation & Dispute Resolution)
     // -------------------------------------------------------------------------
 
-    public static function listFlaggedKhatians(): array
+    public static function listFlaggedKhatians(?array $actor = null): array
     {
         $rows = DB::select(
             "SELECT k.*, p.dag_no, p.dag_no_bn, p.total_area_decimal,
@@ -507,12 +547,17 @@ final class RoleControlController
              WHERE k.status != 'VALID'
              ORDER BY k.plot_id ASC"
         );
+        $user = $actor ?? JwtAuthService::getAuthenticatedUser();
+        if ($user && !in_array($user['role'] ?? '', ['admin', 'system_admin', 'auditor'], true)) {
+            $rows = array_values(array_filter($rows, static fn($r) => OfficeScopeService::canAccessPlot((int) $r['plot_id'], $user)));
+        }
         return ['items' => $rows, 'total' => count($rows)];
     }
 
     public static function reconcileKhatianPlot(int $plotId, array $req, ?array $user = null): array
     {
         $actor = RoleMiddleware::authorize(['ac_land'], $user);
+        OfficeScopeService::requirePlot($plotId, $actor);
         $plot = DB::selectOne('SELECT * FROM plots WHERE id = ?', [$plotId]);
         if (!$plot) {
             throw new \RuntimeException(json_encode([
@@ -628,6 +673,10 @@ final class RoleControlController
                 'message_bn' => 'অভিযোগ কেসটি পাওয়া যায়নি।',
                 'message_en' => 'Dispute case not found.',
             ], JSON_UNESCAPED_UNICODE));
+        }
+
+        if (!empty($disp['plot_id'])) {
+            OfficeScopeService::requirePlot((int) $disp['plot_id'], $actor);
         }
 
         $status = strtoupper(trim((string) ($req['status'] ?? 'RESOLVED')));

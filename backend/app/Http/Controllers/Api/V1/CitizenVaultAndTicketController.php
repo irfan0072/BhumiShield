@@ -66,6 +66,18 @@ final class CitizenVaultAndTicketController
             }
         }
 
+        if (in_array($user['role'] ?? '', ['bank_officer', 'bank_manager'], true)) {
+            $hasLien = DB::selectOne("SELECT 1 FROM mortgages_liens WHERE plot_id = ? AND status = 'ACTIVE'", [$plotId]);
+            if (!$hasLien) {
+                throw new \RuntimeException(json_encode([
+                    'status' => 403,
+                    'code' => 'UNENCUMBERED_PLOT_RESTRICTED',
+                    'message_bn' => 'ব্যাংক কর্মকর্তা শুধুমাত্র বন্ধকযুক্ত জমির রেকর্ড পরিদর্শন করতে পারবেন।',
+                    'message_en' => 'Commercial bank officers are restricted to mortgaged plots only.',
+                ], JSON_UNESCAPED_UNICODE));
+            }
+        }
+
         // 1. Fetch official document templates
         $templates = DB::select('SELECT * FROM document_templates ORDER BY display_order ASC');
 
@@ -408,6 +420,24 @@ final class CitizenVaultAndTicketController
                 'message_bn' => 'অনুরোধকৃত দলিলটি পাওয়া যায়নি।',
                 'message_en' => 'Requested document not found.',
             ], JSON_UNESCAPED_UNICODE));
+        }
+
+        if (str_starts_with((string)($doc['file_path'] ?? ''), 'opening-record://')) {
+            if (!self::canReadReviewedSource($user, (int)$plot['id'])) {
+                throw new \RuntimeException(json_encode(['status'=>403,'code'=>'FORBIDDEN_SOURCE','message_bn'=>'এই উৎসের ফাইল কেবল মালিক ও দায়িত্বপ্রাপ্ত ভূমি দপ্তর দেখতে পারে।','message_en'=>'Only owners and responsible land-office roles may access this evidence.'], JSON_UNESCAPED_UNICODE));
+            }
+        }
+
+        if (in_array($user['role'] ?? '', ['bank_officer', 'bank_manager'], true)) {
+            $hasLien = DB::selectOne("SELECT 1 FROM mortgages_liens WHERE plot_id = ? AND status = 'ACTIVE'", [(int) $plot['id']]);
+            if (!$hasLien) {
+                throw new \RuntimeException(json_encode([
+                    'status' => 403,
+                    'code' => 'UNENCUMBERED_PLOT_RESTRICTED',
+                    'message_bn' => 'ব্যাংক কর্মকর্তা শুধুমাত্র বন্ধকযুক্ত জমির রেকর্ড পরিদর্শন করতে পারবেন।',
+                    'message_en' => 'Commercial bank officers are restricted to mortgaged plots only.',
+                ], JSON_UNESCAPED_UNICODE));
+            }
         }
 
         $storagePath = base_path('storage/app/vault_documents/' . $doc['file_hash'] . '.bin');

@@ -17,7 +17,11 @@ import {
   ExternalLink,
   ShieldAlert,
   Building,
-  Scale
+  Scale,
+  Volume2,
+  VolumeX,
+  Square,
+  Play
 } from 'lucide-react';
 
 interface NoticeAttachment {
@@ -62,6 +66,45 @@ export const NoticeboardPage: React.FC = () => {
   // QR Modal
   const [selectedAttachment, setSelectedAttachment] = useState<NoticeAttachment | null>(null);
 
+  // Web Speech API Text-to-Speech State
+  const [playingNoticeId, setPlayingNoticeId] = useState<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const handleToggleAudio = (notice: NoticeItem) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      alert(t('আপনার ব্রাউজারে অডিও স্পিচ ফিচার সমর্থিত নয়।', 'Text-to-speech is not supported by your browser.'));
+      return;
+    }
+
+    if (playingNoticeId === notice.id) {
+      window.speechSynthesis.cancel();
+      setPlayingNoticeId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const titleText = lang === 'bn' ? notice.title_bn : notice.title_en;
+    const bodyText = lang === 'bn' ? notice.body_bn : notice.body_en;
+    const textToRead = `${titleText}। ${bodyText}`;
+
+    const utterance = new SpeechSynthesisUtterance(textToRead);
+    utterance.lang = lang === 'bn' ? 'bn-BD' : 'en-US';
+    utterance.rate = 0.95;
+
+    utterance.onend = () => setPlayingNoticeId(null);
+    utterance.onerror = () => setPlayingNoticeId(null);
+
+    setPlayingNoticeId(notice.id);
+    window.speechSynthesis.speak(utterance);
+  };
+
   const fetchNotices = () => {
     setLoading(true);
     const params: any = {};
@@ -82,6 +125,17 @@ export const NoticeboardPage: React.FC = () => {
   useEffect(() => {
     fetchNotices();
   }, [categoryFilter, scopeFilter]);
+
+  useEffect(() => {
+    if (!selectedAttachment) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedAttachment(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedAttachment]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,13 +164,13 @@ export const NoticeboardPage: React.FC = () => {
         };
       case 'FRAUD_WARNING':
         return {
-          bg: 'bg-rose-50 text-[#F42A41] border-rose-200',
+          bg: 'bg-rose-100 text-rose-800 border-rose-300 font-bold',
           labelBn: 'সতর্কবার্তা ও জালিয়াতি প্রতিরোধ',
           labelEn: 'Fraud Alert',
         };
       case 'GAZETTE':
         return {
-          bg: 'bg-purple-50 text-purple-800 border-purple-200',
+          bg: 'bg-teal-50 text-teal-800 border-teal-200 font-semibold',
           labelBn: 'অফিসিয়াল গেজেট',
           labelEn: 'Official Gazette',
         };
@@ -307,10 +361,37 @@ export const NoticeboardPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Attachments / QR Download Pill */}
-                    {n.attachments && n.attachments.length > 0 && (
-                      <div className="sm:text-right shrink-0 flex flex-col gap-2">
-                        {n.attachments.map((att) => (
+                    {/* Actions: Audio Listen Helper & Attachments */}
+                    <div className="sm:text-right shrink-0 flex flex-col sm:items-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleAudio(n)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer border min-h-[44px] ${
+                          playingNoticeId === n.id
+                            ? 'bg-rose-50 text-rose-700 border-rose-300 shadow-xs'
+                            : 'bg-emerald-50 text-[#006A4E] border-emerald-200 hover:bg-emerald-100'
+                        }`}
+                        title={t('নোটিশটি অডিওতে শুনুন', 'Listen to this notice')}
+                      >
+                        {playingNoticeId === n.id ? (
+                          <>
+                            <Square className="w-3.5 h-3.5 text-rose-600 fill-current" />
+                            <span>{t('অডিও থামান', 'Stop Audio')}</span>
+                            <span className="flex h-2 w-2 relative">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 className="w-3.5 h-3.5 text-[#006A4E]" />
+                            <span>{t('অডিও শুনুন', 'Listen Audio')}</span>
+                          </>
+                        )}
+                      </button>
+
+                      {n.attachments && n.attachments.length > 0 && (
+                        n.attachments.map((att) => (
                           <button
                             key={att.id}
                             type="button"
@@ -321,9 +402,9 @@ export const NoticeboardPage: React.FC = () => {
                             <span>{t('পিডিএফ ও QR সিল', 'PDF & QR Seal')}</span>
                             <QrCode className="w-4 h-4 text-emerald-800 ml-1" />
                           </button>
-                        ))}
-                      </div>
-                    )}
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -333,17 +414,24 @@ export const NoticeboardPage: React.FC = () => {
 
         {/* Attachment QR & Cryptographic Seal Modal */}
         {selectedAttachment && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="noticeboard-attachment-title"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
+          >
             <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
                   <QrCode className="w-5 h-5 text-[#006A4E]" />
-                  <h3 className="font-bold text-slate-900 text-base">
+                  <h3 id="noticeboard-attachment-title" className="font-bold text-slate-900 text-base">
                     {t('ডিজিটাল বিজ্ঞপ্তি ও কিউআর সিল', 'Digital Notice QR Seal')}
                   </h3>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setSelectedAttachment(null)}
+                  aria-label={t('বন্ধ করুন', 'Close')}
                   className="text-slate-400 hover:text-slate-600 transition p-1 cursor-pointer"
                 >
                   <X className="w-5 h-5" />

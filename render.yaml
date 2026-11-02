@@ -13,9 +13,21 @@ services:
       - key: APP_DEBUG
         value: "false"
       - key: DB_CONNECTION
-        value: sqlite
+        value: pgsql
       - key: DB_DATABASE
-        value: /data/bhumishield.sqlite
+        value: bhumishield
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_SSLMODE
+        value: require
+      - key: INIT_SYNTHETIC_SEED
+        value: "false"
       - key: JWT_SECRET
         generateValue: true
       - key: REGISTRAR_ED25519_SEED_HEX

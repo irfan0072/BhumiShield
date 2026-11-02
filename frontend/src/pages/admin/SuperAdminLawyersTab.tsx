@@ -23,7 +23,7 @@ import {
   Building,
 } from 'lucide-react';
 import { BhumiApi, AuthorizedLawyerItem } from '../../api/client';
-import { toBanglaDigits } from '../../theme/tokens';
+import { toBanglaDigits, maskPhone } from '../../theme/tokens';
 
 export const SuperAdminLawyersTab: React.FC<{
   t: (bn: string, en: string) => string;
@@ -406,7 +406,7 @@ export const SuperAdminLawyersTab: React.FC<{
                       {item.phone && (
                         <div className="text-slate-700 flex items-center gap-1 font-mono">
                           <Phone className="w-3 h-3 text-slate-400" />
-                          <span>{item.phone}</span>
+                          <span>{maskPhone(item.phone)}</span>
                         </div>
                       )}
                       {item.email && (

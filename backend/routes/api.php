@@ -31,7 +31,7 @@ return static function (string $method, string $uri, array $query, array $body):
     $testEnvironment = strtolower((string) env('APP_ENV', 'development')) !== 'production' && (strtolower((string) env('APP_ENV', '')) === 'testing' || (bool)getenv('BHUMISHIELD_TEST_DB'));
     if (!$testEnvironment) {
         $demoOnly = preg_match('#^/ledger/(tamper|restore)/#', $sub)
-            || in_array($sub, ['/auth/switch-demo-role', '/auth/demo-users', '/ocr/khatian-demo', '/ocr-assist/sample', '/scenarios', '/demo-scenarios'], true);
+            || in_array($sub, ['/auth/switch-demo-role', '/auth/demo-users', '/ocr/khatian-demo', '/ocr-assist/sample'], true);
         if ($demoOnly) {
             throw new \RuntimeException(json_encode([
                 'status' => 404, 'code' => 'DEMO_FEATURE_DISABLED',
@@ -157,6 +157,26 @@ return static function (string $method, string $uri, array $query, array $body):
     if ($method === 'POST' && $sub === '/map-editor/parcels') return \App\Http\Controllers\Api\V1\ParcelDesignController::save($body);
     if ($method === 'POST' && preg_match('#^/map-editor/parcels/(\d+)/decision$#',$sub,$m)) return \App\Http\Controllers\Api\V1\ParcelDesignController::decide((int)$m[1],$body);
 
+    // Cadastral Vector Drawing Features (Polygons, Lines, Points) REST APIs
+    if ($method === 'GET' && $sub === '/map/features') {
+        if (isset($query['zoom']) && !isset($query['location_id']) && !isset($query['feature_type'])) {
+            return PublicMarketplaceAndPortalController::getMapFeatures($query);
+        }
+        return \App\Http\Controllers\Api\V1\MapFeatureController::list($query);
+    }
+    if ($method === 'POST' && $sub === '/map/features') return \App\Http\Controllers\Api\V1\MapFeatureController::create($body);
+    if ($method === 'GET' && preg_match('#^/map/features/(\d+)$#', $sub, $m)) return \App\Http\Controllers\Api\V1\MapFeatureController::get((int)$m[1]);
+    if ($method === 'PUT' && preg_match('#^/map/features/(\d+)$#', $sub, $m)) return \App\Http\Controllers\Api\V1\MapFeatureController::update((int)$m[1], $body);
+    if ($method === 'DELETE' && preg_match('#^/map/features/(\d+)$#', $sub, $m)) return \App\Http\Controllers\Api\V1\MapFeatureController::delete((int)$m[1]);
+
+    // Cadastral User Task Assignments & Workflow REST APIs
+    if ($method === 'POST' && $sub === '/map/assignments') return \App\Http\Controllers\Api\V1\MapAssignmentController::create($body);
+    if ($method === 'GET' && $sub === '/map/assignments') return \App\Http\Controllers\Api\V1\MapAssignmentController::list($query);
+    if ($method === 'GET' && $sub === '/map/my-assignments') return \App\Http\Controllers\Api\V1\MapAssignmentController::myAssignments($query);
+    if (in_array($method, ['PATCH', 'POST', 'PUT'], true) && preg_match('#^/map/assignments/(\d+)/status$#', $sub, $m)) {
+        return \App\Http\Controllers\Api\V1\MapAssignmentController::updateStatus((int)$m[1], $body);
+    }
+
     // Geographic evidence: published public layers; controlled admin imports/review.
     if ($method === 'GET' && $sub === '/map/workspace') return \App\Http\Controllers\Api\V1\MapWorkspaceController::workspace($query);
     if ($method === 'GET' && $sub === '/map/layers') return \App\Http\Controllers\Api\V1\MapWorkspaceController::layers($query);
@@ -224,6 +244,10 @@ return static function (string $method, string $uri, array $query, array $body):
     }
     if ($method === 'POST' && ($sub === '/lawyers/file-case' || $sub === '/lawyer/file-case')) {
         return LawyerPortalController::fileCase($body);
+    }
+    if ($method === 'GET' && ($sub === '/lawyers/my-cases' || $sub === '/lawyer/my-cases')) {
+        $actor = RoleMiddleware::authorize(['lawyer_court_user', 'lawyer', 'admin', 'system_admin']);
+        return LawyerPortalController::listMyCases($actor);
     }
 
     // 3b. 13-Step Transfer State Machine Routes (Section 5)
@@ -307,7 +331,7 @@ return static function (string $method, string $uri, array $query, array $body):
     if ($method === 'POST' && $sub === '/appointments') {
         return PublicMarketplaceAndPortalController::createAppointment($body);
     }
-    if ($method === 'GET' && ($sub === '/public/map/features' || $sub === '/map/features')) {
+    if ($method === 'GET' && $sub === '/public/map/features') {
         return PublicMarketplaceAndPortalController::getMapFeatures($query);
     }
 
@@ -355,6 +379,13 @@ return static function (string $method, string $uri, array $query, array $body):
     }
 
     // 3f. Provider Boundary Endpoints (Prompt v3 Section 5)
+    if ($method === 'POST' && ($sub === '/nid/verify' || $sub === '/adapters/nid/verify')) {
+        return \App\Http\Controllers\Api\V1\NidVerificationController::verify($body);
+    }
+    if ($method === 'POST' && ($sub === '/nid/verify-otp' || $sub === '/adapters/nid/verify-otp')) {
+        return \App\Http\Controllers\Api\V1\NidVerificationController::verifyOtp($body);
+    }
+
     if ($method === 'GET' && ($sub === '/dev/outbox' || $sub === '/admin/dev/outbox')) {
         if (strtolower((string) env('APP_ENV', 'development')) === 'production') {
             throw new \RuntimeException(json_encode([
@@ -421,8 +452,8 @@ return static function (string $method, string $uri, array $query, array $body):
 
     // 4. Sub-Registrar Controlling Routes (Protected by RoleMiddleware)
     if ($method === 'POST' && $sub === '/registrar/pre-check') {
-        RoleMiddleware::authorize(['sub_registrar', 'admin']);
-        return WorkflowController::subRegistrarPreCheck($body);
+        $actor = RoleMiddleware::authorize(['sub_registrar', 'admin']);
+        return WorkflowController::subRegistrarPreCheck($body, $actor);
     }
     if ($method === 'POST' && $sub === '/registrar/register-deed') {
         $actor = RoleMiddleware::authorize(['sub_registrar', 'admin']);
@@ -461,16 +492,16 @@ return static function (string $method, string $uri, array $query, array $body):
         return WorkflowController::decideMutationCase((int) $m[1], $body, $actor);
     }
     if ($method === 'GET' && $sub === '/acland/flagged-khatians') {
-        RoleMiddleware::authorize(['ac_land', 'land_office_assistant', 'settlement_records_officer', 'admin', 'auditor']);
-        return RoleControlController::listFlaggedKhatians();
+        $actor = RoleMiddleware::authorize(['ac_land', 'land_office_assistant', 'settlement_records_officer', 'admin', 'auditor']);
+        return RoleControlController::listFlaggedKhatians($actor);
     }
     if ($method === 'POST' && preg_match('#^/acland/khatians/(\d+)/reconcile$#', $sub, $m)) {
-        RoleMiddleware::authorize(['ac_land', 'admin']);
-        return RoleControlController::reconcileKhatianPlot((int) $m[1], $body);
+        $actor = RoleMiddleware::authorize(['ac_land', 'admin']);
+        return RoleControlController::reconcileKhatianPlot((int) $m[1], $body, $actor);
     }
     if ($method === 'POST' && preg_match('#^/acland/disputes/(\d+)/resolve$#', $sub, $m)) {
-        RoleMiddleware::authorize(['ac_land', 'admin']);
-        return RoleControlController::resolveDispute((int) $m[1], $body);
+        $actor = RoleMiddleware::authorize(['ac_land', 'admin']);
+        return RoleControlController::resolveDispute((int) $m[1], $body, $actor);
     }
 
     // 6. Bank Officer Controlling Routes (Protected by RoleMiddleware)

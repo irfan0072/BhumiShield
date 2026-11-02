@@ -506,7 +506,7 @@ export const CadastralMouzaMapWidget: React.FC<{
             </button>
             <button
               type="button"
-              onClick={() => onNavigate?.('cadastral')}
+              onClick={() => onNavigate?.('map')}
               className="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
             >
               <span>{lang === 'bn' ? 'ম্যাপে দেখুন' : 'GIS View'}</span>

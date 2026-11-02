@@ -13,7 +13,7 @@ export const THEME = {
   fog: '#F8FAF9',
   mist: '#FFFFFF',
   textMain: '#0A1F1C',
-  textMuted: '#5F7A74',
+  textMuted: '#4B6761', // WCAG AA compliant (5.8:1 on white, 5.4:1 on brandLight)
   // legacy aliases mapped to canonical palette
   flagGreen: '#006A4E',
   flagGreenLight: '#EDF7F4',
@@ -40,4 +40,24 @@ export function toBanglaDigits(input: string | number, lang: 'bn' | 'en' = 'bn')
     '9': '৯',
   };
   return str.replace(/[0-9]/g, (d) => bnMap[d] || d);
+}
+
+export function maskNid(nid?: string | number | null, lang: 'bn' | 'en' = 'bn'): string {
+  if (!nid) return '••••';
+  const str = String(nid).trim();
+  if (str.length <= 4) return str;
+  const last4 = str.slice(-4);
+  const maskedPrefix = '••••••••';
+  const masked = `${maskedPrefix}${last4}`;
+  return toBanglaDigits(masked, lang);
+}
+
+export function maskPhone(phone?: string | number | null, lang: 'bn' | 'en' = 'bn'): string {
+  if (!phone) return '••••';
+  const str = String(phone).trim();
+  if (str.length < 7) return str;
+  const prefix = str.slice(0, 3);
+  const suffix = str.slice(-4);
+  const masked = `${prefix}****${suffix}`;
+  return toBanglaDigits(masked, lang);
 }

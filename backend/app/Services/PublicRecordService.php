@@ -10,7 +10,6 @@ final class PublicRecordService
             'ac_land', 'land_office_assistant', 'field_verification_officer', 'kanungo',
             'settlement_records_officer', 'settlement_checker',
             'uno_supervisor', 'appellate_reviewer',
-            'bank_officer', 'bank_manager',
             'admin', 'system_admin', 'auditor'
         ];
         if ($actor && in_array($actor['role'] ?? '', $officerRoles, true)) return $data;
@@ -23,7 +22,7 @@ final class PublicRecordService
             if (in_array($key, ['content_json','original_content_json','canonical_payload','canonical_json'], true)) { unset($data[$key]); continue; }
             if (is_string($key) && preg_match('/^(?:[a-z_]+_)?nid(?:_mock)?$/i', $key)) {
                 $raw = (string) $value;
-                $masked = strpos($raw, '*') !== false ? $raw : (strlen($raw) >= 6 ? substr($raw,0,4).'****'.substr($raw,-2) : '****');
+                $masked = self::maskNid($raw);
                 $value = $masked;
                 $data[$key . '_masked'] = $masked;
             } elseif (is_array($value)) $value = self::minimize($value);
@@ -32,10 +31,25 @@ final class PublicRecordService
         return $data;
     }
 
-    public static function maskNid(string $raw): string
+    public static function maskNid(?string $raw): string
     {
+        if ($raw === null || $raw === '') return '';
         $raw = trim($raw);
         if (strpos($raw, '*') !== false) return $raw;
         return strlen($raw) >= 6 ? substr($raw, 0, 4) . '****' . substr($raw, -2) : '****';
+    }
+
+    public static function maskPhone(?string $raw): string
+    {
+        if ($raw === null || $raw === '') return '';
+        $clean = trim($raw);
+        if (strpos($clean, '*') !== false) return $clean;
+        $digits = preg_replace('/\D/', '', $clean);
+        if (strlen($digits) >= 11) {
+            $prefix = substr($digits, 0, 3);
+            $suffix = substr($digits, -4);
+            return "{$prefix}****{$suffix}";
+        }
+        return strlen($clean) > 4 ? substr($clean, 0, 2) . '****' . substr($clean, -2) : '****';
     }
 }

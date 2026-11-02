@@ -72,34 +72,65 @@ class WorldSeedService
         // 1. Sync Persons to sim_persons and sim_biometric_enrollments
         $persons = DB::select('SELECT * FROM persons LIMIT 250');
         foreach ($persons as $p) {
-            $nid = (string) $p['nid'];
-            DB::insert(
-                'INSERT OR IGNORE INTO sim_persons (nid, full_name_bn, full_name_en, dob, father_name_bn, mother_name_bn, address_bn, is_deceased, created_at)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [
-                    $nid,
-                    $p['name_bn'],
-                    $p['name_en'],
-                    $p['dob'] ?? '1985-05-15',
-                    $p['father_name_bn'] ?? '',
-                    $p['mother_name_bn'] ?? '',
-                    $p['address_bn'] ?? 'বিরুলিয়া, সাভার, ঢাকা',
-                    (int) ($p['is_deceased'] ?? 0),
-                    Clock::iso(),
-                ]
-            );
+            if (DB::isPostgres()) {
+                DB::insert(
+                    'INSERT INTO sim_persons (nid, full_name_bn, full_name_en, dob, father_name_bn, mother_name_bn, address_bn, is_deceased, created_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     ON CONFLICT (nid) DO NOTHING',
+                    [
+                        $nid,
+                        $p['name_bn'],
+                        $p['name_en'],
+                        $p['dob'] ?? '1985-05-15',
+                        $p['father_name_bn'] ?? '',
+                        $p['mother_name_bn'] ?? '',
+                        $p['address_bn'] ?? 'বিরুলিয়া, সাভার, ঢাকা',
+                        (int) ($p['is_deceased'] ?? 0),
+                        Clock::iso(),
+                    ]
+                );
 
-            DB::insert(
-                'INSERT OR IGNORE INTO sim_biometric_enrollments (nid, enrollment_hash, default_match_score, has_defect, created_at)
-                 VALUES (?, ?, ?, ?, ?)',
-                [
-                    $nid,
-                    hash('sha256', "BIO:{$nid}:ENROLLMENT"),
-                    94.5,
-                    0,
-                    Clock::iso(),
-                ]
-            );
+                DB::insert(
+                    'INSERT INTO sim_biometric_enrollments (nid, enrollment_hash, default_match_score, has_defect, created_at)
+                     VALUES (?, ?, ?, ?, ?)
+                     ON CONFLICT (nid) DO NOTHING',
+                    [
+                        $nid,
+                        hash('sha256', "BIO:{$nid}:ENROLLMENT"),
+                        94.5,
+                        0,
+                        Clock::iso(),
+                    ]
+                );
+            } else {
+                DB::insert(
+                    'INSERT OR IGNORE INTO sim_persons (nid, full_name_bn, full_name_en, dob, father_name_bn, mother_name_bn, address_bn, is_deceased, created_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                    [
+                        $nid,
+                        $p['name_bn'],
+                        $p['name_en'],
+                        $p['dob'] ?? '1985-05-15',
+                        $p['father_name_bn'] ?? '',
+                        $p['mother_name_bn'] ?? '',
+                        $p['address_bn'] ?? 'বিরুলিয়া, সাভার, ঢাকা',
+                        (int) ($p['is_deceased'] ?? 0),
+                        Clock::iso(),
+                    ]
+                );
+
+                DB::insert(
+                    'INSERT OR IGNORE INTO sim_biometric_enrollments (nid, enrollment_hash, default_match_score, has_defect, created_at)
+                     VALUES (?, ?, ?, ?, ?)',
+                    [
+                        $nid,
+                        hash('sha256', "BIO:{$nid}:ENROLLMENT"),
+                        94.5,
+                        0,
+                        Clock::iso(),
+                    ]
+                );
+            }
         }
 
         // 2. Populate sim_sms_outbox with baseline OTPs and notices

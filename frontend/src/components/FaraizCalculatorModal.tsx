@@ -49,6 +49,17 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
 }) => {
   const { lang, t, role, user } = useAppUI();
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   // Inputs
   const [deceasedGender, setDeceasedGender] = useState<'MALE' | 'FEMALE'>('MALE');
   const [deceasedName, setDeceasedName] = useState('প্রয়াত জমির মালিক');
@@ -321,7 +332,12 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 sm:p-4 backdrop-blur-xs animate-in fade-in duration-150">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="faraiz-calculator-modal-title"
+      className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 sm:p-4 backdrop-blur-xs animate-in fade-in duration-150"
+    >
       <div className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-3xl bg-white shadow-2xl border border-slate-200 text-slate-800">
         {/* Modal Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/95 px-6 py-4 backdrop-blur-md">
@@ -331,7 +347,7 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
             </span>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                <h3 id="faraiz-calculator-modal-title" className="text-base sm:text-lg font-bold text-slate-900">
                   {t('ইসলামিক ফারায়েজ ও ওয়ারিশান বণ্টন ক্যালকুলেটর', 'Islamic Faraiz & Inheritance Engine')}
                 </h3>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
@@ -349,6 +365,7 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
           <button
             type="button"
             onClick={onClose}
+            aria-label={t('বন্ধ করুন', 'Close')}
             className="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
           >
             <X className="w-5 h-5" />

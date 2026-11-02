@@ -108,6 +108,9 @@ CREATE TABLE IF NOT EXISTS sim_gateway_khatians (
 );
 SQL;
 
+        if (DB::isPostgres()) {
+            $ddl = str_replace(['INTEGER PRIMARY KEY AUTOINCREMENT', ' REAL'], ['SERIAL PRIMARY KEY', ' DOUBLE PRECISION'], $ddl);
+        }
         DB::execRaw($ddl);
     }
 
@@ -118,6 +121,7 @@ SQL;
             'sim_gateway_holdings',
             'sim_mfs_transactions',
             'sim_sms_outbox',
+            'sim_otp_challenges',
             'sim_biometric_sessions',
             'sim_biometric_enrollments',
             'sim_persons',

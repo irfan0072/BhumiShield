@@ -228,6 +228,132 @@ const ROLE_META: Record<
   },
 };
 
+export interface JudgePersona {
+  role: UserRole;
+  username: string;
+  badgeBn: string;
+  badgeEn: string;
+  nameBn: string;
+  nameEn: string;
+  icon: string;
+  route: string;
+  color: string;
+  userData: AuthUser;
+}
+
+export const JUDGE_PERSONAS: JudgePersona[] = [
+  {
+    role: 'citizen',
+    username: 'citizen',
+    badgeBn: 'নাগরিক',
+    badgeEn: 'Citizen',
+    nameBn: 'মো. রফিকুল ইসলাম',
+    nameEn: 'Md. Rafiqul Islam',
+    icon: '👤',
+    route: 'home',
+    color: 'bg-emerald-600 hover:bg-emerald-700 text-white',
+    userData: {
+      id: 1,
+      username: 'citizen',
+      full_name_bn: 'মো. রফিকুল ইসলাম',
+      full_name_en: 'Md. Rafiqul Islam',
+      role: 'citizen',
+      nid: '9900001001',
+      office_bn: 'নাগরিক পোর্টাল — সাভার, ঢাকা',
+      is_active: 1,
+      is_identity_verified: 1,
+      is_profile_complete: 1,
+    },
+  },
+  {
+    role: 'sub_registrar',
+    username: 'registrar',
+    badgeBn: 'সাব-রেজিস্ট্রার',
+    badgeEn: 'Sub-Registrar',
+    nameBn: 'ফারহানা ইয়াসমিন',
+    nameEn: 'Farhana Yasmin',
+    icon: '📜',
+    route: 'registrar',
+    color: 'bg-blue-600 hover:bg-blue-700 text-white',
+    userData: {
+      id: 4,
+      username: 'registrar',
+      full_name_bn: 'ফারহানা ইয়াসমিন',
+      full_name_en: 'Farhana Yasmin',
+      role: 'sub_registrar',
+      office_name: 'সাব-রেজিস্ট্রি কার্যালয়, সাভার',
+      office_bn: 'সাব-রেজিস্ট্রি কার্যালয়, সাভার, ঢাকা',
+      is_active: 1,
+      is_identity_verified: 1,
+    },
+  },
+  {
+    role: 'ac_land',
+    username: 'acland',
+    badgeBn: 'এসি ল্যান্ড',
+    badgeEn: 'AC Land',
+    nameBn: 'তানভীর আহমেদ',
+    nameEn: 'Tanvir Ahmed',
+    icon: '🏛️',
+    route: 'acland',
+    color: 'bg-amber-600 hover:bg-amber-700 text-white',
+    userData: {
+      id: 6,
+      username: 'acland',
+      full_name_bn: 'তানভীর আহমেদ',
+      full_name_en: 'Tanvir Ahmed',
+      role: 'ac_land',
+      office_name: 'উপজেলা ভূমি অফিস, সাভার',
+      office_bn: 'উপজেলা ভূমি অফিস, সাভার, ঢাকা',
+      is_active: 1,
+      is_identity_verified: 1,
+    },
+  },
+  {
+    role: 'bank_officer',
+    username: 'bank',
+    badgeBn: 'ব্যাংক অফিসার',
+    badgeEn: 'Bank Officer',
+    nameBn: 'নাজমুল হাসান',
+    nameEn: 'Nazmul Hasan',
+    icon: '🏦',
+    route: 'bank',
+    color: 'bg-rose-600 hover:bg-rose-700 text-white',
+    userData: {
+      id: 13,
+      username: 'bank',
+      full_name_bn: 'নাজমুল হাসান',
+      full_name_en: 'Nazmul Hasan',
+      role: 'bank_officer',
+      office_name: 'সোনালী ব্যাংক পিএলসি, সাভার শাখা',
+      office_bn: 'সোনালী ব্যাংক পিএলসি, সাভার শাখা',
+      is_active: 1,
+      is_identity_verified: 1,
+    },
+  },
+  {
+    role: 'admin',
+    username: 'admin',
+    badgeBn: 'সুপার অ্যাডমিন',
+    badgeEn: 'Super Admin',
+    nameBn: 'ভূমি সুরক্ষা অ্যাডমিন',
+    nameEn: 'BhumiShield System Admin',
+    icon: '🛡️',
+    route: 'admin',
+    color: 'bg-purple-600 hover:bg-purple-700 text-white',
+    userData: {
+      id: 19,
+      username: 'admin',
+      full_name_bn: 'ভূমি সুরক্ষা অ্যাডমিন',
+      full_name_en: 'BhumiShield System Admin',
+      role: 'admin',
+      office_name: 'কেন্দ্রীয় সিস্টেম গভর্ন্যান্স ও কনফিগারেশন সেল',
+      office_bn: 'কেন্দ্রীয় সিস্টেম গভর্ন্যান্স ও কনফিগারেশন সেল',
+      is_active: 1,
+      is_identity_verified: 1,
+    },
+  },
+];
 
 interface UserProfileMenuProps {
   user: AuthUser;
@@ -740,6 +866,24 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
     message_en: string;
     level: 'URGENT' | 'WARNING' | 'INFO';
   } | null>(null);
+
+  // 1-Click Judge Role Switcher handler
+  const handleJudgeRoleSwitch = async (persona: JudgePersona) => {
+    setUser(persona.userData);
+    setRole(persona.role);
+    setToken('jwt-token-judge-' + persona.role);
+    setActiveTab(persona.route);
+
+    try {
+      const res = await BhumiApi.login(persona.username, 'demo123');
+      if (res?.access_token && res?.user) {
+        setToken(res.access_token);
+        setUser(res.user);
+      }
+    } catch {
+      // Offline fallback: keep mock credentials
+    }
+  };
 
   // Global Keyboard Shortcuts (Ctrl+K for Search, Ctrl+B for Sidebar)
   useEffect(() => {
@@ -1458,7 +1602,7 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
         </header>
 
         {/* Main Content */}
-        <main className={`flex-1 w-full ${activeTab === 'landing' || activeTab === 'map' || activeTab === 'home' || activeTab === 'lawyer_case' ? '' : 'py-4 sm:py-5 px-3 sm:px-4 max-w-7xl mx-auto'}`}>{children}</main>
+        <main className={`flex-1 w-full pb-20 lg:pb-0 ${activeTab === 'landing' || activeTab === 'map' || activeTab === 'home' || activeTab === 'lawyer_case' ? '' : 'py-4 sm:py-5 px-3 sm:px-4 max-w-7xl mx-auto'}`}>{children}</main>
 
         {/* Clean Footer (suppressed on map and admin control panel) */}
         {activeTab !== 'map' && activeTab !== 'admin' && <InstitutionalFooter t={t} onNavigate={setActiveTab} />}
@@ -2431,6 +2575,13 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
       {/* Mobile Bottom Navigation Dock */}
       <MobileBottomDock activeTab={activeTab} setActiveTab={setActiveTab} role={role} t={t} />
 
+      {/* Persistent Desktop Judge Role Switcher Dock */}
+      <DesktopJudgeDock
+        currentRole={role}
+        onSwitch={handleJudgeRoleSwitch}
+        t={t}
+      />
+
       {/* Islamic Faraiz Calculator Modal */}
       <FaraizCalculatorModal
         isOpen={faraizModalOpen}
@@ -2479,8 +2630,9 @@ const InstitutionalFooter: React.FC<{
           )}
         </p>
         <div className="pt-1">
-          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
-            Ed25519 • SHA-256 Hash Chain
+          <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 inline-flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>{t('ডিজিটাল সুরক্ষা সিল ও অখণ্ড লেজার', 'Digital Trust Seal & Immutable Ledger')}</span>
           </span>
         </div>
       </div>
@@ -2736,3 +2888,67 @@ const MobileBottomDock: React.FC<{
     </div>
   </nav>
 );
+
+// Desktop Persistent Bottom Dock for Judge Role Switching (Bypasses Auth Barriers)
+const DesktopJudgeDock: React.FC<{
+  currentRole: UserRole;
+  onSwitch: (persona: JudgePersona) => void;
+  t: (bn: string, en: string) => string;
+}> = ({ currentRole, onSwitch, t }) => {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <aside
+      aria-label="বিচারক ও মূল্যায়ন ডক"
+      className="fixed bottom-4 right-6 z-40 hidden lg:flex flex-col items-end print:hidden transition-all duration-300 pointer-events-auto"
+    >
+      <div className="bg-slate-900/95 backdrop-blur-md text-white border border-slate-700/80 rounded-2xl shadow-2xl p-2.5 flex items-center gap-2">
+        <div className="flex items-center gap-2 px-2.5 border-r border-slate-700">
+          <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="text-left">
+            <span className="block text-[11px] font-extrabold uppercase tracking-wider text-emerald-400">
+              {t('বিচারক ডক', 'Judge Dock')}
+            </span>
+            <span className="block text-[10px] text-slate-400">
+              {t('১-ক্লিক রোল মূল্যায়ন', '1-Click Persona')}
+            </span>
+          </div>
+        </div>
+
+        {!collapsed && (
+          <div className="flex items-center gap-1.5 transition-all">
+            {JUDGE_PERSONAS.map((p) => {
+              const isActive = currentRole === p.role;
+              return (
+                <button
+                  key={p.role}
+                  type="button"
+                  onClick={() => onSwitch(p)}
+                  title={`${p.nameBn} (${p.badgeEn})`}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                    isActive
+                      ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-900 ' + p.color
+                      : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+                  }`}
+                >
+                  <span className="text-sm">{p.icon}</span>
+                  <span>{t(p.badgeBn, p.badgeEn)}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setCollapsed(!collapsed)}
+          className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+          title={collapsed ? t('প্রসারিত করুন', 'Expand') : t('সংকুচিত করুন', 'Collapse')}
+        >
+          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+      </div>
+    </aside>
+  );
+};
+

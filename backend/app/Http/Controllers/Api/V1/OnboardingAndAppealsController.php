@@ -445,15 +445,10 @@ final class OnboardingAndAppealsController
 
     public static function listAppeals(array $query = [], ?array $actor = null): array
     {
-        $user = $actor ?? JwtAuthService::getAuthenticatedUser();
-        if (!$user) {
-            throw new \RuntimeException(json_encode([
-                'status' => 401,
-                'code' => 'UNAUTHENTICATED',
-                'message_bn' => 'অনুমোদিত লগইন আবশ্যক।',
-                'message_en' => 'Authentication required.',
-            ], JSON_UNESCAPED_UNICODE));
-        }
+        $user = RoleMiddleware::authorize(
+            ['citizen', 'appellate_reviewer', 'uno_supervisor', 'ac_land', 'sub_registrar', 'divisional_commissioner', 'land_appeal_board', 'admin', 'system_admin', 'auditor'],
+            $actor
+        );
 
         $sql = 'SELECT a.*, p.plot_code, p.dag_no, p.dag_no_bn,
                        m.case_no, m.status AS mutation_status
@@ -485,15 +480,10 @@ final class OnboardingAndAppealsController
 
     public static function getAppeal(string|int $idOrCode, ?array $actor = null): array
     {
-        $user = $actor ?? JwtAuthService::getAuthenticatedUser();
-        if (!$user) {
-            throw new \RuntimeException(json_encode([
-                'status' => 401,
-                'code' => 'UNAUTHENTICATED',
-                'message_bn' => 'অনুমোদিত লগইন আবশ্যক।',
-                'message_en' => 'Authentication required.',
-            ], JSON_UNESCAPED_UNICODE));
-        }
+        $user = RoleMiddleware::authorize(
+            ['citizen', 'appellate_reviewer', 'uno_supervisor', 'ac_land', 'sub_registrar', 'divisional_commissioner', 'land_appeal_board', 'admin', 'system_admin', 'auditor'],
+            $actor
+        );
 
         $appeal = null;
         if (is_numeric($idOrCode)) {

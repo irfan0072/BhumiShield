@@ -786,7 +786,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_active_mortgage_per_plot ON mortgages_lien
 SQL;
 
         if (DB::isPostgres()) {
-            $pgDdl = str_replace('INTEGER PRIMARY KEY AUTOINCREMENT', 'SERIAL PRIMARY KEY', $ddl);
+            $pgDdl = str_replace(['INTEGER PRIMARY KEY AUTOINCREMENT', ' REAL'], ['SERIAL PRIMARY KEY', ' DOUBLE PRECISION'], $ddl);
             foreach (array_filter(array_map('trim', explode(';', $pgDdl))) as $stmt) {
                 DB::execRaw($stmt . ';');
             }
@@ -843,6 +843,24 @@ SQL,
             foreach ($triggers as $trg) {
                 $pdo->exec($trg);
             }
+        } else {
+            // Preserve the database-level ownership guard after a PostgreSQL migration.
+            DB::execRaw(<<<'SQL'
+CREATE OR REPLACE FUNCTION bhumi_guard_ownership_write() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    IF COALESCE((SELECT is_authorized FROM ownership_write_lock WHERE id = 1), 0) <> 1 THEN
+        RAISE EXCEPTION 'VIOLATION_M3_OWNERSHIP_GUARD: Ownership writes require an authorized mutation context.';
+    END IF;
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS trg_guard_ownership_write ON ownerships;
+CREATE TRIGGER trg_guard_ownership_write
+BEFORE INSERT OR UPDATE OR DELETE ON ownerships
+FOR EACH ROW EXECUTE FUNCTION bhumi_guard_ownership_write();
+SQL);
         }
 
         // Idempotent column migrations for existing databases
@@ -871,12 +889,23 @@ SQL,
             }
         }
         (new CreateSimulatorTables())->up($fresh);
+        require_once __DIR__ . '/2026_11_01_000001_create_sim_otp_challenges_table.php';
+        (new CreateSimOtpChallengesTable())->up($fresh);
+        require_once __DIR__ . '/2026_11_02_000001_create_acquisition_cases_table.php';
+        (new CreateAcquisitionCasesTable())->up($fresh);
     }
 
     public function down(): void
     {
+        require_once __DIR__ . '/2026_11_02_000001_create_acquisition_cases_table.php';
+        (new CreateAcquisitionCasesTable())->down();
+        require_once __DIR__ . '/2026_11_01_000001_create_sim_otp_challenges_table.php';
+        (new CreateSimOtpChallengesTable())->down();
         (new CreateSimulatorTables())->down();
         $tables = [
+            'map_parcel_owner_requests',
+            'map_parcel_designs',
+            'map_mouza_offices',
             'sla_dispatches',
             'field_reports',
             'appeals',
@@ -927,12 +956,18 @@ SQL,
             'site_settings',
             'users',
         ];
+        if (!DB::isPostgres()) {
+            DB::execRaw("PRAGMA foreign_keys = OFF;");
+        }
         foreach ($tables as $tbl) {
             if (DB::isPostgres()) {
                 DB::execRaw("DROP TABLE IF EXISTS {$tbl} CASCADE;");
             } else {
                 DB::execRaw("DROP TABLE IF EXISTS {$tbl};");
             }
+        }
+        if (!DB::isPostgres()) {
+            DB::execRaw("PRAGMA foreign_keys = ON;");
         }
     }
 }

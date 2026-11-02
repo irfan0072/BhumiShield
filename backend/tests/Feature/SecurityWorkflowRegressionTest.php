@@ -123,15 +123,28 @@ final class SecurityWorkflowRegressionTest
 
     public static function test_03_wrong_citizen_cannot_view_or_advance_other_citizens_transfer_403(): void
     {
-        $loginRes = self::callRoute('POST', '/api/v1/auth/login', ['username' => 'rabeya', 'password' => 'demo123']);
-        $jwt = $loginRes['body']['access_token'] ?? ($loginRes['body']['token'] ?? '');
-        self::assertTrue(!empty($jwt), 'Rabeya login must succeed');
+        $reg = self::callRoute('POST', '/api/v1/auth/register', [
+            'username' => 'unrelated_citizen',
+            'email' => 'unrelated@demo.bhumishield.gov.bd',
+            'password' => 'demo1234',
+            'full_name_bn' => 'অসম্পর্কিত নাগরিক',
+            'full_name_en' => 'Unrelated Citizen',
+            'nid' => '9900001098',
+            'phone' => '01712345678',
+            'role' => 'citizen',
+        ]);
+        $jwt = $reg['body']['access_token'] ?? '';
+        if (empty($jwt)) {
+            $loginRes = self::callRoute('POST', '/api/v1/auth/login', ['username' => 'unrelated_citizen', 'password' => 'demo1234']);
+            $jwt = $loginRes['body']['access_token'] ?? '';
+        }
+        self::assertTrue(!empty($jwt), 'Unrelated citizen login must succeed');
 
-        // Rabeya tries to GET transfer created by 'citizen'
+        // Unrelated citizen tries to GET transfer created by 'citizen'
         $getRes = self::callRoute('GET', '/api/v1/transfers/TR-2026-000103', [], $jwt);
         self::assertEqual(403, $getRes['status'], 'Citizen cannot view another citizen transfer');
 
-        // Rabeya tries to advance transfer created by 'citizen'
+        // Unrelated citizen tries to advance transfer created by 'citizen'
         $advRes = self::callRoute('POST', '/api/v1/transfers/TR-2026-000103/advance', ['target_step' => 2], $jwt);
         self::assertEqual(403, $advRes['status'], 'Citizen cannot advance another citizen transfer');
     }
@@ -140,10 +153,13 @@ final class SecurityWorkflowRegressionTest
     {
         $loginRes = self::callRoute('POST', '/api/v1/auth/login', ['username' => 'citizen', 'password' => 'demo123']);
         $citizenJwt = $loginRes['body']['access_token'] ?? '';
+        $rabeyaLogin = self::callRoute('POST', '/api/v1/auth/login', ['username' => 'rabeya', 'password' => 'demo123']);
+        $buyerJwt = $rabeyaLogin['body']['access_token'] ?? '';
 
         // Advance 1->2->3->4->5->6->7->8
         for ($s = 2; $s <= 8; $s++) {
-            $r = self::callRoute('POST', '/api/v1/transfers/TR-2026-000103/advance', ['target_step' => $s], $citizenJwt);
+            $jwt = ($s === 4) ? $buyerJwt : $citizenJwt;
+            $r = self::callRoute('POST', '/api/v1/transfers/TR-2026-000103/advance', ['target_step' => $s], $jwt);
             self::assertEqual(200, $r['status'], "Step {$s} advance must succeed for citizen");
         }
 
@@ -337,20 +353,23 @@ final class SecurityWorkflowRegressionTest
 
     public static function test_13_appointments_creation_and_listing_scoped(): void
     {
+        $citLogin = self::callRoute('POST', '/api/v1/auth/login', ['username' => 'citizen', 'password' => 'demo123']);
+        $citJwt = $citLogin['body']['access_token'] ?? '';
+        self::assertTrue(!empty($citJwt), 'Citizen login must succeed');
+
         $res = self::callRoute('POST', '/api/v1/appointments', [
             'office_id' => 1,
             'citizen_name_bn' => 'মো. শফিকুল ইসলাম',
             'citizen_phone' => '01711-223344',
-            'slot_date' => '2026-10-25',
+            'citizen_nid' => '9900001001',
+            'slot_date' => date('Y-m-d', strtotime('+3 days')),
             'slot_time' => '11:00 AM',
             'service_type' => 'DEED_REGISTRATION',
-        ]);
+        ], $citJwt);
         self::assertEqual(200, $res['status'], 'Appointment creation must return 200');
         $code = $res['body']['appointment']['appointment_code'] ?? '';
         self::assertTrue(str_starts_with($code, 'APT-2026-'), "Code must start with APT-2026-, got {$code}");
 
-        $citLogin = self::callRoute('POST', '/api/v1/auth/login', ['username' => 'citizen', 'password' => 'demo123']);
-        $citJwt = $citLogin['body']['access_token'] ?? '';
         $list = self::callRoute('GET', '/api/v1/appointments', [], $citJwt, ['office_id' => 1]);
         self::assertEqual(200, $list['status'], 'Appointment list must return 200');
         self::assertTrue(count($list['body']['items'] ?? []) > 0, 'Appointments list must contain created appointment');

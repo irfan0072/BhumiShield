@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Middleware\RoleMiddleware;
 use App\Services\JwtAuthService;
 use App\Services\LedgerService;
+use App\Services\PublicRecordService;
 use App\Support\DB;
 use Database\Seeders\DatabaseSeeder;
 
@@ -26,8 +27,8 @@ final class SystemAdminController
             'role' => $u['role'],
             'office_bn' => $u['office_bn'],
             'office_en' => $u['office_en'],
-            'phone_dummy' => $u['phone_dummy'] ?? '',
-            'nid' => $u['nid'] ?? '',
+            'phone_dummy' => !empty($u['phone_dummy']) ? PublicRecordService::maskPhone((string) $u['phone_dummy']) : '',
+            'nid' => !empty($u['nid']) ? PublicRecordService::maskNid((string) $u['nid']) : '',
             'is_active' => (int) ($u['is_active'] ?? 1),
             'is_identity_verified' => (int) ($u['is_identity_verified'] ?? 0),
             'is_profile_complete' => (int) ($u['is_profile_complete'] ?? 0),
@@ -550,11 +551,21 @@ final class SystemAdminController
             [$person['id'], $person['id']]
         );
 
+        $maskedPerson = $person;
+        if (!empty($maskedPerson['phone_dummy'])) {
+            $maskedPerson['phone_dummy'] = PublicRecordService::maskPhone((string) $maskedPerson['phone_dummy']);
+            $maskedPerson['phone_mock'] = $maskedPerson['phone_dummy'];
+        }
+        if (!empty($maskedPerson['nid'])) {
+            $maskedPerson['nid'] = PublicRecordService::maskNid((string) $maskedPerson['nid']);
+            $maskedPerson['nid_mock'] = $maskedPerson['nid'];
+        }
+
         return [
             'found' => true,
             'is_verified' => true,
             'is_identity_verified' => true,
-            'person' => $person,
+            'person' => $maskedPerson,
             'plots' => $ownedPlots,
             'owned_plots' => $ownedPlots,
             'deeds' => $deeds,
@@ -1038,12 +1049,24 @@ final class SystemAdminController
 
         $deeds = DB::select($sql, $params);
 
-        // Ensure boolean/numeric types
+        // Ensure boolean/numeric types & mask PII
         foreach ($deeds as &$item) {
             $item['is_flagged_admin'] = (int) ($item['is_flagged_admin'] ?? 0);
             $item['is_mutated'] = ((int) ($item['is_mutated'] ?? 0) === 1 || ($item['status'] ?? '') === 'MUTATED');
             $item['dispute_count'] = (int) ($item['dispute_count'] ?? 0);
             $item['ledger_valid'] = true;
+            if (!empty($item['seller_nid'])) {
+                $item['seller_nid'] = PublicRecordService::maskNid((string) $item['seller_nid']);
+            }
+            if (!empty($item['buyer_nid'])) {
+                $item['buyer_nid'] = PublicRecordService::maskNid((string) $item['buyer_nid']);
+            }
+            if (!empty($item['seller_phone'])) {
+                $item['seller_phone'] = PublicRecordService::maskPhone((string) $item['seller_phone']);
+            }
+            if (!empty($item['buyer_phone'])) {
+                $item['buyer_phone'] = PublicRecordService::maskPhone((string) $item['buyer_phone']);
+            }
         }
         unset($item);
 
@@ -1113,9 +1136,9 @@ final class SystemAdminController
             'id' => $deed['seller_id'],
             'name_bn' => $deed['seller_name_bn'],
             'name_en' => $deed['seller_name_en'],
-            'nid' => $deed['seller_nid'],
-            'phone' => $deed['seller_phone'],
-            'phone_mock' => $deed['seller_phone'],
+            'nid' => PublicRecordService::maskNid((string) ($deed['seller_nid'] ?? '')),
+            'phone' => PublicRecordService::maskPhone((string) ($deed['seller_phone'] ?? '')),
+            'phone_mock' => PublicRecordService::maskPhone((string) ($deed['seller_phone'] ?? '')),
             'father_name_bn' => $deed['seller_father'],
             'address_bn' => $deed['seller_address'],
         ];
@@ -1124,9 +1147,9 @@ final class SystemAdminController
             'id' => $deed['buyer_id'],
             'name_bn' => $deed['buyer_name_bn'],
             'name_en' => $deed['buyer_name_en'],
-            'nid' => $deed['buyer_nid'],
-            'phone' => $deed['buyer_phone'],
-            'phone_mock' => $deed['buyer_phone'],
+            'nid' => PublicRecordService::maskNid((string) ($deed['buyer_nid'] ?? '')),
+            'phone' => PublicRecordService::maskPhone((string) ($deed['buyer_phone'] ?? '')),
+            'phone_mock' => PublicRecordService::maskPhone((string) ($deed['buyer_phone'] ?? '')),
             'father_name_bn' => $deed['buyer_father'],
             'address_bn' => $deed['buyer_address'],
         ];

@@ -66,8 +66,8 @@ final class LawyerPortalController
 
         // A02: Protect sensitive personal contact identifiers from anonymous public disclosure
         if ($isPrivileged) {
-            $lawyerData['nid'] = $lawyer['nid'];
-            $lawyerData['phone'] = $lawyer['phone'];
+            $lawyerData['nid'] = \App\Services\PublicRecordService::maskNid((string) $lawyer['nid']);
+            $lawyerData['phone'] = \App\Services\PublicRecordService::maskPhone((string) $lawyer['phone']);
             $lawyerData['email'] = $lawyer['email'];
         }
 
@@ -473,5 +473,49 @@ final class LawyerPortalController
             'message_bn' => "আইনজীবী রেকর্ড '{$lawyer['bar_council_no']}' সফলভাবে মুছে ফেলা হয়েছে।",
             'message_en' => "Lawyer record deleted successfully.",
         ];
+    }
+
+    /**
+     * Lawyer Empaneled Cases Docket: lists litigation disputes scoped strictly to the advocate's Bar Council license.
+     */
+    public static function listMyCases(?array $actor = null): array
+    {
+        $actor = RoleMiddleware::authorize(['lawyer_court_user', 'lawyer', 'admin', 'system_admin'], $actor);
+        $barNo = null;
+        if (!empty($actor['nid'])) {
+            $l = DB::selectOne('SELECT bar_council_no FROM authorized_lawyers WHERE nid = ? AND status = "ACTIVE"', [$actor['nid']]);
+            if ($l) $barNo = $l['bar_council_no'];
+        }
+        if (!$barNo && !empty($actor['email'])) {
+            $l = DB::selectOne('SELECT bar_council_no FROM authorized_lawyers WHERE LOWER(email) = LOWER(?) AND status = "ACTIVE"', [$actor['email']]);
+            if ($l) $barNo = $l['bar_council_no'];
+        }
+        if (!$barNo && ($actor['username'] ?? '') === 'lawyer') {
+            $barNo = 'BC-DH-14285';
+        }
+
+        if (in_array($actor['role'] ?? '', ['admin', 'system_admin'], true) && empty($barNo)) {
+            $rows = DB::select(
+                "SELECT d.*, p.dag_no, p.dag_no_bn, l.mouza_bn, l.mouza_en, l.upazila_bn, l.upazila_en
+                 FROM disputes d
+                 JOIN plots p ON p.id = d.plot_id
+                 JOIN locations l ON l.id = p.location_id
+                 ORDER BY d.id DESC"
+            );
+        } elseif ($barNo) {
+            $rows = DB::select(
+                "SELECT d.*, p.dag_no, p.dag_no_bn, l.mouza_bn, l.mouza_en, l.upazila_bn, l.upazila_en
+                 FROM disputes d
+                 JOIN plots p ON p.id = d.plot_id
+                 JOIN locations l ON l.id = p.location_id
+                 WHERE d.lawyer_bar_council_no = ?
+                 ORDER BY d.id DESC",
+                [$barNo]
+            );
+        } else {
+            $rows = [];
+        }
+
+        return ['status' => 'success', 'items' => $rows, 'total' => count($rows)];
     }
 }

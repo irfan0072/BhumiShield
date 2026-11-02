@@ -8,15 +8,25 @@ require_once __DIR__ . '/vendor/autoload.php';
 use Database\Migrations\CreateBhumishieldTables;
 use Database\Seeders\DatabaseSeeder;
 use Tests\Feature\AppointmentBookingTest;
+use Tests\Feature\Audit20261018RegressionTest;
 use Tests\Feature\CheckBeforeBuyRouteTest;
 use Tests\Feature\FieldOperationsAndSlaTest;
+use Tests\Feature\LawyerPortalTest;
 use Tests\Feature\ListingBadgeDerivationTest;
+use Tests\Feature\MapWorkspaceTest;
+use Tests\Feature\Milestone2SecurityTest;
+use Tests\Feature\NidValidationAndSimulationTest;
+use Tests\Feature\ParcelAllocationTest;
+use Tests\Feature\ParcelDesignTest;
+use Tests\Feature\PostgresRecoveryTest;
 use Tests\Feature\ProviderBoundariesTest;
 use Tests\Feature\RoleAuditRegressionTest;
 use Tests\Feature\RoleRoutingAndSubtabTest;
 use Tests\Feature\RulesAndLedgerTest;
 use Tests\Feature\SecurityWorkflowRegressionTest;
 use Tests\Feature\SignedNoticePdfTest;
+use Tests\Feature\SourceCollectionControlTest;
+use Tests\Feature\SourceIntelligenceTest;
 use Tests\Feature\TierBPortalAndMarketplaceTest;
 use Tests\Feature\TierCOnboardingAndAppealsTest;
 use Tests\Feature\UiEnvelopeAdapterTest;
@@ -154,20 +164,40 @@ switch ($command) {
         exit(0);
 
     case 'test':
-        $c1 = RulesAndLedgerTest::runAll();
-        $c2 = RoleAuditRegressionTest::runAll();
-        $c3 = TierBPortalAndMarketplaceTest::runAll();
-        $c4 = TierCOnboardingAndAppealsTest::runAll();
-        $c5 = SecurityWorkflowRegressionTest::runAll();
-        $c6 = UiEnvelopeAdapterTest::runAll();
-        $c7 = CheckBeforeBuyRouteTest::runAll();
-        $c8 = AppointmentBookingTest::runAll();
-        $c9 = FieldOperationsAndSlaTest::runAll();
-        $c10 = RoleRoutingAndSubtabTest::runAll();
-        $c11 = SignedNoticePdfTest::runAll();
-        $c12 = ListingBadgeDerivationTest::runAll();
-        $c13 = ProviderBoundariesTest::runAll();
-        exit(($c1 === 0 && $c2 === 0 && $c3 === 0 && $c4 === 0 && $c5 === 0 && $c6 === 0 && $c7 === 0 && $c8 === 0 && $c9 === 0 && $c10 === 0 && $c11 === 0 && $c12 === 0 && $c13 === 0) ? 0 : 1);
+        $results = [
+            'RulesAndLedgerTest' => RulesAndLedgerTest::runAll(),
+            'RoleAuditRegressionTest' => RoleAuditRegressionTest::runAll(),
+            'TierBPortalAndMarketplaceTest' => TierBPortalAndMarketplaceTest::runAll(),
+            'TierCOnboardingAndAppealsTest' => TierCOnboardingAndAppealsTest::runAll(),
+            'SecurityWorkflowRegressionTest' => SecurityWorkflowRegressionTest::runAll(),
+            'UiEnvelopeAdapterTest' => UiEnvelopeAdapterTest::runAll(),
+            'CheckBeforeBuyRouteTest' => CheckBeforeBuyRouteTest::runAll(),
+            'AppointmentBookingTest' => AppointmentBookingTest::runAll(),
+            'FieldOperationsAndSlaTest' => FieldOperationsAndSlaTest::runAll(),
+            'RoleRoutingAndSubtabTest' => RoleRoutingAndSubtabTest::runAll(),
+            'SignedNoticePdfTest' => SignedNoticePdfTest::runAll(),
+            'ListingBadgeDerivationTest' => ListingBadgeDerivationTest::runAll(),
+            'ProviderBoundariesTest' => ProviderBoundariesTest::runAll(),
+            'NidValidationAndSimulationTest' => NidValidationAndSimulationTest::runAll(),
+            'Milestone2SecurityTest' => Milestone2SecurityTest::runAll(),
+            'Audit20261018RegressionTest' => Audit20261018RegressionTest::runAll(),
+            'LawyerPortalTest' => LawyerPortalTest::runAll(),
+            'MapWorkspaceTest' => MapWorkspaceTest::runAll(),
+            'ParcelDesignTest' => ParcelDesignTest::runAll(),
+            'ParcelAllocationTest' => ParcelAllocationTest::runAll(),
+            'SourceIntelligenceTest' => SourceIntelligenceTest::runAll(),
+            'SourceCollectionControlTest' => SourceCollectionControlTest::runAll(),
+            'PostgresRecoveryTest' => PostgresRecoveryTest::runAll(),
+        ];
+        $allPassed = true;
+        foreach ($results as $name => $code) {
+            if ($code !== 0) {
+                $allPassed = false;
+                fwrite(STDERR, "SUITE FAILED: {$name} returned exit code {$code}\n");
+            }
+        }
+        echo "\n" . ($allPassed ? "ALL 21 FEATURE TEST SUITES PASSED SUCCESSFULLY." : "TEST SUITE RUN FAILED.") . "\n";
+        exit($allPassed ? 0 : 1);
 
     case 'bhumi:drill:tamper':
         if ($currentEnv === 'production') {

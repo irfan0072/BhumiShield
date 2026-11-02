@@ -49,6 +49,17 @@ export const SuperAdminOverrideModal: React.FC<SuperAdminOverrideModalProps> = (
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,7 +103,12 @@ export const SuperAdminOverrideModal: React.FC<SuperAdminOverrideModalProps> = (
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="super-admin-override-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn"
+    >
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xl max-w-xl w-full overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-900 to-[#0A1F1C] px-6 py-4 flex items-center justify-between text-white border-b border-slate-800">
@@ -101,7 +117,7 @@ export const SuperAdminOverrideModal: React.FC<SuperAdminOverrideModalProps> = (
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-black tracking-tight flex items-center gap-2">
+              <h2 id="super-admin-override-modal-title" className="text-base font-black tracking-tight flex items-center gap-2">
                 <span>{t('প্রশাসনিক ওভাররাইড কনসোল', 'Administrative Override Console')}</span>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-slate-900">
                   SUPER ADMIN
@@ -113,7 +129,9 @@ export const SuperAdminOverrideModal: React.FC<SuperAdminOverrideModalProps> = (
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
+            aria-label={t('বন্ধ করুন', 'Close')}
             className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
           >
             <X className="w-5 h-5" />

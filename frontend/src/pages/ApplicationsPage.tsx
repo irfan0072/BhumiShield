@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { BhumiApi } from '../api/client';
 import { useAppUI } from '../i18n';
-import { toBanglaDigits } from '../theme/tokens';
+import { toBanglaDigits, maskNid } from '../theme/tokens';
 import { triggerAppNotification } from '../components/NotificationCenter';
 import { CitizenDcrPorchaModal } from '../components/CitizenDcrPorchaModal';
 import { JargonTooltip } from '../components/JargonTooltip';
@@ -421,6 +421,39 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
     { step: 13, stage: 'DONE', nameBn: 'মালিকানা হস্তান্তর সম্পন্ন', nameEn: 'Transfer Completed' },
   ];
 
+  const MAJOR_PHASES = [
+    {
+      id: 1,
+      phaseNo: '১',
+      nameBn: '১. আবেদন ও সরেজমিন যাচাই',
+      nameEn: 'Phase 1: Application & Verification',
+      subtitleBn: 'বিক্রেতার প্রস্তাব, ক্রেতার সম্মতি, সহ-মালিক যাচাই ও সরকারি ফি নির্ধারণ (ধাপ ১-৬)',
+      subtitleEn: 'Seller proposal, buyer consent, co-owner check & statutory fees (Steps 1-6)',
+      steps: [1, 2, 3, 4, 5, 6],
+      icon: Users,
+    },
+    {
+      id: 2,
+      phaseNo: '২',
+      nameBn: '২. সাব-রেজিস্ট্রি দলিল নিবন্ধন',
+      nameEn: 'Phase 2: Sub-Registry Deed Registration',
+      subtitleBn: 'তারিখ বুকিং, বায়োমেট্রিক উপস্থিতি ও সরকারি সিল সম্পাদন (ধাপ ৭-১০)',
+      subtitleEn: 'Appointment booking, biometric attendance & official deed execution (Steps 7-10)',
+      steps: [7, 8, 9, 10],
+      icon: Building2,
+    },
+    {
+      id: 3,
+      phaseNo: '৩',
+      nameBn: '৩. ই-নামজারি ও খতিয়ান পর্চা',
+      nameEn: 'Phase 3: e-Mutation & Porcha Delivery',
+      subtitleBn: 'সহকারী কমিশনার (ভূমি) শুনানী, নামজারি অনুমোদন ও ডিজিটাল ডিসিআর হস্তান্তর (ধাপ ১১-১৩)',
+      subtitleEn: 'AC Land hearing, mutation order & digital DCR/Porcha delivery (Steps 11-13)',
+      steps: [11, 12, 13],
+      icon: FileCheck2,
+    },
+  ];
+
   return (
     <div className="space-y-6 pb-12">
       {/* Top Header Card */}
@@ -435,7 +468,7 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
                 {t('১৩-ধাপের নিরাপদ জমি হস্তান্তর সেবা', '13-Step Secure Land Transfer Service')}
               </h1>
               <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-[#006A4E] text-[11px] font-bold">
-                {t('ক্রিপ্টোগ্রাফিক সুরক্ষা', 'Cryptographic Proof')}
+                {t('সরকারি ডিজিটাল সুরক্ষা', 'Govt Digital Security')}
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -756,8 +789,8 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
                 </div>
                 <p className="text-xs text-emerald-100/90 leading-relaxed max-w-2xl">
                   {t(
-                    'সাব-রেজিস্ট্রি দলিলের ক্রিপ্টোগ্রাফিক সুরক্ষা সিল এবং সহকারী কমিশনার (ভূমি) কর্তৃক অনুমোদিত নবায়নকৃত বিএস খতিয়ান ও সরকারি ডিসিআর রসিদ প্রস্তুত রয়েছে। নিচের বোতাম থেকে সরাসরি ডাউনলোড করুন।',
-                    'Cryptographic deed seal, updated BS Khatian Porcha, and official DCR receipt are verified and ready for 1-click download.'
+                    'সাব-রেজিস্ট্রি দলিলের সরকারি ডিজিটাল নিরাপত্তা সিল এবং সহকারী কমিশনার (ভূমি) কর্তৃক অনুমোদিত নবায়নকৃত বিএস খতিয়ান ও সরকারি ডিসিআর রসিদ প্রস্তুত রয়েছে। নিচের বোতাম থেকে সরাসরি ডাউনলোড করুন।',
+                    'Government digital security seal, updated BS Khatian Porcha, and official DCR receipt are verified and ready for 1-click download.'
                   )}
                 </p>
               </div>
@@ -863,276 +896,493 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
               </div>
             </div>
 
-            {/* DYNAMIC 13-STEP ROLE-AWARE WORKFLOW CONTROLS */}
-            {selectedTransfer.status !== 'COMPLETED' && selectedTransfer.current_step < 13 && (
-              <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-start gap-2.5">
-                    <Info className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
-                    <div>
-                      <h4 className="font-bold text-slate-900">
-                        {t(
-                          `ধাপ ${toBanglaDigits(selectedTransfer.current_step, lang)}: ${selectedTransfer.step_name_bn || 'কার্যক্রম'}`,
-                          `Step ${selectedTransfer.current_step}: ${selectedTransfer.step_name_en || 'Action'}`
+            {/* HERO: WHAT NEEDS ACTION / CURRENT STATUS CARD */}
+            {(() => {
+              const currentStep = Number(selectedTransfer.current_step || 1);
+              const isBuyer = Boolean(
+                selectedTransfer.viewer_is_buyer ||
+                (selectedTransfer.parties || []).some((p: any) => p.party_role === 'BUYER' && p.nid === user?.nid)
+              );
+              const isSeller = Boolean(
+                (selectedTransfer.parties || []).some((p: any) => p.party_role === 'SELLER' && p.nid === user?.nid) ||
+                selectedTransfer.seller_nid === user?.nid ||
+                selectedTransfer.created_by_nid === user?.nid
+              );
+              const isSubRegistrarRole = ['sub_registrar', 'admin', 'system_admin'].includes(role);
+              const isRegistryOfficer = ['sub_registrar', 'registry_data_officer', 'admin', 'system_admin'].includes(role);
+              const isAcLandRole = ['ac_land', 'admin', 'system_admin'].includes(role);
+              const isAcLandOffice = ['ac_land', 'land_office_assistant', 'field_verification_officer', 'admin', 'system_admin'].includes(role);
+
+              // Determine if action is currently waiting for the logged-in user
+              const isMyAction =
+                (currentStep === 1 && isSeller) ||
+                (currentStep === 2 && isSeller) ||
+                (currentStep === 3 && isBuyer) ||
+                (currentStep === 5 && (isSeller || !isRegistryOfficer)) ||
+                (currentStep === 7 && (isSeller || isBuyer)) ||
+                (currentStep === 8 && isRegistryOfficer) ||
+                (currentStep === 9 && isSubRegistrarRole) ||
+                (currentStep === 10 && isRegistryOfficer) ||
+                (currentStep === 11 && isAcLandOffice) ||
+                (currentStep === 12 && isAcLandRole);
+
+              if (selectedTransfer.status === 'COMPLETED' || currentStep >= 13) {
+                return null;
+              }
+
+              return (
+                <div
+                  className={`mt-4 rounded-2xl p-4 sm:p-5 transition shadow-xs border ${
+                    isMyAction
+                      ? 'bg-gradient-to-r from-emerald-50 via-teal-50/70 to-emerald-100/50 border-emerald-300 ring-2 ring-emerald-500/25'
+                      : currentStep === 8
+                      ? 'bg-purple-50/70 border-purple-200'
+                      : 'bg-slate-50 border-slate-200'
+                  }`}
+                >
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3.5">
+                      <div className="relative mt-0.5 shrink-0">
+                        {isMyAction ? (
+                          <span className="flex h-3.5 w-3.5 relative">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-600"></span>
+                          </span>
+                        ) : (
+                          <Clock className="w-5 h-5 text-amber-600 animate-pulse" />
                         )}
-                      </h4>
-                      <p className="text-slate-600 text-[11px] mt-0.5 leading-relaxed">
-                        {selectedTransfer.current_step === 1 && t('বিক্রেতা কর্তৃক জমির প্রাথমিক হস্তান্তর আবেদন নিশ্চিতকরণ।', 'Seller confirmation of transfer intent.')}
-                        {selectedTransfer.current_step === 2 && t('পক্ষসমূহের বিবরণ, এনআইডি ও জাতীয় পরিচয় যাচাই নিশ্চিতকরণ।', 'Confirmation of parties specifications and identity records.')}
-                        {selectedTransfer.current_step === 3 && (
-                          selectedTransfer.viewer_is_buyer || ((selectedTransfer.parties || []).some((p: any) => p.party_role === 'BUYER' && p.nid === user?.nid))
-                            ? t('ক্রেতা জমি হস্তান্তর শর্ত, পরিমাণ ও প্রস্তাবিত মূল্য খতিয়ান রেকর্ডের সাথে যাচাই করে অনুমোদন করবেন।', 'Buyer must confirm plot area, terms, and proposed price.')
-                            : t('ক্রেতার সম্মতির অপেক্ষায় রয়েছে — ক্রেতা লগইন করে জমির পরিমাণ ও শর্ত অনুমোদন করবেন।', 'Awaiting buyer confirmation from their account.')
-                        )}
-                        {selectedTransfer.current_step === 4 && t('ক্রেতা সম্মতি দিয়েছেন। জমির কোনো দেওয়ানি বিরোধ বা প্রশাসনিক স্থগিতাদেশ আছে কিনা তা স্বয়ংক্রিয় স্ক্যান করা হবে।', 'Buyer confirmed. Automated fraud and administrative scan will be performed.')}
-                        {selectedTransfer.current_step === 5 && t('যৌথ মালিকানাধীন জমির ক্ষেত্রে সহ-মালিকানা ও ওয়ারিশ সম্মতি নিশ্চিতকরণ প্রয়োজন।', 'Co-owner and heir consent check for jointly owned plots.')}
-                        {selectedTransfer.current_step === 6 && t('সাব-রেজিস্ট্রি দলিলের স্ট্যাম্প শুল্ক ও রেজিস্ট্রেশন ফি পর্যালোচনা সম্পন্ন।', 'Stamp duty assessment and registration readiness review.')}
-                        {selectedTransfer.current_step === 7 && t('সাব-রেজিস্ট্রি অফিসে সশরীরে উপস্থিতির জন্য সুবিধাজনক তারিখ নির্বাচন করুন।', 'Schedule registry office appointment date.')}
-                        {selectedTransfer.current_step === 8 && t('🏛️ সাব-রেজিস্ট্রি কাউন্টারে সশরীরে উপস্থিতি ও বায়োমেট্রিক লাইভনেস যাচাই আবশ্যক।', 'Counter biometric match required at sub-registry.')}
-                        {selectedTransfer.current_step === 9 && t('সাব-রেজিস্ট্রার কর্তৃক দলিল সম্পাদন ও Ed25519 ক্রিপ্টোগ্রাফিক ডিজিটাল স্বাক্ষর প্রদান।', 'Deed execution with Ed25519 digital signature by Sub-Registrar.')}
-                        {selectedTransfer.current_step === 10 && t('দলিল নিবন্ধিত হয়েছে। সহকারী কমিশনার (ভূমি) দপ্তরে নামজারি কেস প্রেরণ করা হবে।', 'Deed registered. Queueing mutation to AC Land office.')}
-                        {selectedTransfer.current_step === 11 && t('সহকারী কমিশনার (ভূমি) দপ্তরে সরেজমিন মাঠ প্রতিবেদন ও শুনানির নোটিশ প্রস্তুত।', 'Field verification and hearing preparation at AC Land office.')}
-                        {selectedTransfer.current_step === 12 && t('চূড়ান্ত নামজারি অনুমোদন, সাবেক খতিয়ান কর্তন ও ডিজিটাল ডিসিআর প্রদান।', 'Final mutation approval and digital DCR issuance.')}
-                      </p>
-                      {advanceError && <p className="text-red-700 font-bold mt-1 text-[11px]">{advanceError}</p>}
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wide ${
+                              isMyAction
+                                ? 'bg-[#006A4E] text-white shadow-2xs'
+                                : currentStep === 8
+                                ? 'bg-purple-100 text-purple-900 border border-purple-300'
+                                : 'bg-amber-100 text-amber-900 border border-amber-300'
+                            }`}
+                          >
+                            {currentStep === 1 && (isSeller ? t('আপনার পদক্ষেপ প্রয়োজন (বিক্রেতা)', 'Your Action Required (Seller)') : t('বিক্রেতার পদক্ষেপের অপেক্ষায়', 'Awaiting Seller Confirmation'))}
+                            {currentStep === 2 && (isSeller ? t('আপনার পদক্ষেপ প্রয়োজন (বিক্রেতা)', 'Your Action Required (Seller)') : t('উভয় পক্ষের বিবরণ যাচাই প্রক্রিয়াধীন', 'Parties Verification in Progress'))}
+                            {currentStep === 3 && (isBuyer ? t('⚡ আপনার জরুরি পদক্ষেপ প্রয়োজন (ক্রেতা)', '⚡ Urgent Action Required (Buyer)') : t('ক্রেতার সম্মতির অপেক্ষায় (অ্যাকশন পেন্ডিং)', 'Awaiting Buyer Confirmation'))}
+                            {currentStep === 4 && t('স্বয়ংক্রিয় ভূমি রেকর্ড স্ক্যান ও প্রি-চেক', 'Automated Record Scan & Fraud Pre-Check')}
+                            {currentStep === 5 && t('সহ-মালিক ও ওয়ারিশ সম্মতি যাচাই', 'Co-owner & Heir Consent Verification')}
+                            {currentStep === 6 && t('সরকারি স্ট্যাম্প শুল্ক ও রেজিস্ট্রি ফি নির্ধারণ', 'Statutory Stamp Duty & Fee Assessment')}
+                            {currentStep === 7 && t('সাব-রেজিস্ট্রি অ্যাপয়েন্টমেন্ট তারিখ নির্ধারণ', 'Registry Appointment Date Selection')}
+                            {currentStep === 8 && (isRegistryOfficer ? t('কাউন্টার বায়োমেট্রিক ম্যাচ ও অনুমোদন', 'Approve Biometrics at Counter') : t('🏛️ সাব-রেজিস্ট্রি কাউন্টারে সশরীরে উপস্থিতি আবশ্যক', 'In-Person Attendance Required at Registry'))}
+                            {currentStep === 9 && (isSubRegistrarRole ? t('সাব-রেজিস্ট্রারের অনুমোদন ও ডিজিটাল সিল সম্পাদন', 'Sub-Registrar Approval & Digital Seal') : t('সাব-রেজিস্ট্রারের স্বাক্ষরের অপেক্ষায়', 'Awaiting Sub-Registrar Signature'))}
+                            {currentStep === 10 && (isRegistryOfficer ? t('সহকারী কমিশনার (ভূমি) দপ্তরে নামজারি কেস প্রেরণ', 'Queue Mutation to AC Land Office') : t('আন্তঃদাপ্তরিক নামজারি কিউতে প্রেরণের অপেক্ষায়', 'Awaiting Mutation Queueing'))}
+                            {currentStep === 11 && (isAcLandOffice ? t('উপজেলা ভূমি অফিসে শুনানি ও সরেজমিন প্রতিবেদন', 'Hearing & Field Inspection Review') : t('ভূমি অফিসে শুনানি ও প্রতিবেদন চলমান', 'Hearing in Progress'))}
+                            {currentStep === 12 && (isAcLandRole ? t('চূড়ান্ত নামজারি অনুমোদন ও ডিজিটাল ডিসিআর আদেশ', 'Final Mutation Order & DCR Issuance') : t('চূড়ান্ত নামজারি আদেশের অপেক্ষায়', 'Awaiting AC Land Final Order'))}
+                          </span>
+
+                          <span className="text-[11px] font-bold text-slate-600 bg-white px-2 py-0.5 rounded-md border border-slate-200">
+                            {t(`ধাপ ${toBanglaDigits(currentStep, lang)} / ১৩`, `Step ${currentStep} of 13`)}: {lang === 'bn' ? selectedTransfer.step_name_bn : selectedTransfer.step_name_en}
+                          </span>
+                        </div>
+
+                        <h4 className="text-sm font-bold text-slate-900">
+                          {currentStep === 1 && t('বিক্রেতা কর্তৃক জমির প্রাথমিক হস্তান্তর আবেদন নিশ্চিতকরণ', 'Seller confirmation of transfer proposal')}
+                          {currentStep === 2 && t('পক্ষসমূহের বিবরণ, এনআইডি ও জাতীয় পরিচয় রেকর্ড অনুমোদন', 'Confirmation of parties specifications and identity records')}
+                          {currentStep === 3 && (isBuyer ? t('জমির তফসিল, শতক পরিমাণ ও প্রস্তাবিত বিক্রয় মূল্য অনুমোদন করুন', 'Verify land schedule, area and proposed sale price') : t('ক্রেতার সম্মতির অপেক্ষায় — ক্রেতা লগইন করে জমির বিবরণ ও মূল্য অনুমোদন করবেন', 'Awaiting buyer confirmation from their account'))}
+                          {currentStep === 4 && t('জালিয়াতি রোধ ও স্বত্ব বিরোধ স্ক্যান চালান', 'Run anti-fraud and dispute record scan')}
+                          {currentStep === 5 && t('যৌথ মালিকানাধীন জমির ক্ষেত্রে সহ-মালিকানা ও ওয়ারিশ সম্মতি নিশ্চিতকরণ', 'Co-owner and heir consent check for jointly owned plots')}
+                          {currentStep === 6 && t('সাব-রেজিস্ট্রি দলিলের স্ট্যাম্প শুল্ক ও রেজিস্ট্রেশন ফি পর্যালোচনা সম্পন্ন', 'Stamp duty assessment and registration readiness review')}
+                          {currentStep === 7 && t('সাব-রেজিস্ট্রি অফিসে সশরীরে উপস্থিতির জন্য সুবিধাজনক তারিখ নির্বাচন করুন', 'Schedule registry office appointment date')}
+                          {currentStep === 8 && t('🏛️ সাব-রেজিস্ট্রি কাউন্টারে সশরীরে উপস্থিতি ও বায়োমেট্রিক লাইভনেস যাচাই আবশ্যক', 'Counter biometric match required at sub-registry')}
+                          {currentStep === 9 && t('সাব-রেজিস্ট্রার কর্তৃক দলিল অনুমোদন ও ডিজিটাল সরকারি সিল সম্পাদন', 'Deed approval and official digital seal execution by Sub-Registrar')}
+                          {currentStep === 10 && t('দলিল নিবন্ধিত হয়েছে — সহকারী কমিশনার (ভূমি) দপ্তরে স্বয়ংক্রিয় নামজারি কেস প্রেরণ', 'Deed registered. Queueing mutation to AC Land office')}
+                          {currentStep === 11 && t('সহকারী কমিশনার (ভূমি) দপ্তরে সরেজমিন মাঠ প্রতিবেদন ও শুনানির নোটিশ প্রস্তুত', 'Field verification and hearing preparation at AC Land office')}
+                          {currentStep === 12 && t('চূড়ান্ত নামজারি অনুমোদন, সাবেক খতিয়ান কর্তন ও ডিজিটাল ডিসিআর প্রদান', 'Final mutation approval and digital DCR issuance')}
+                        </h4>
+
+                        <p className="text-[11px] text-slate-600 leading-relaxed max-w-2xl">
+                          {currentStep === 1 && t('বিক্রেতা হিসেবে প্রস্তাবিত জমির বিবরণ যাচাই করে প্রাথমিক আবেদনটি অনুমোদন নিশ্চিত করুন।', 'Seller confirms transfer intent and plot details to initiate.')}
+                          {currentStep === 2 && t('উভয় পক্ষের এনআইডি ও জাতীয় পরিচয় তথ্য রেকর্ড নিশ্চিত করে ক্রেতার অনুমোদনের জন্য প্রেরণ করুন।', 'Confirm parties identity verification before forwarding.')}
+                          {currentStep === 3 && (isBuyer ? t('ক্রেতা জমি হস্তান্তর শর্ত, পরিমাণ ও প্রস্তাবিত মূল্য খতিয়ান রেকর্ডের সাথে যাচাই করে অনুমোদন করবেন।', 'Buyer must confirm plot area, terms, and proposed price.') : t('ক্রেতার সম্মতির অপেক্ষায় রয়েছে — ক্রেতা লগইন করে জমির পরিমাণ ও শর্ত অনুমোদন করবেন।', 'Awaiting buyer confirmation from their account.'))}
+                          {currentStep === 4 && t('ক্রেতা সম্মতি দিয়েছেন। জমির কোনো দেওয়ানি বিরোধ বা প্রশাসনিক স্থগিতাদেশ আছে কিনা তা স্বয়ংক্রিয় স্ক্যান করা হবে।', 'Buyer confirmed. Automated fraud and administrative scan will be performed.')}
+                          {currentStep === 5 && t('যৌথ মালিকানাধীন জমির ক্ষেত্রে অন্যান্য অংশীদারদের কোনো আপত্তি নেই মর্মে প্রত্যয়ন নিশ্চিত করুন।', 'Confirm that all heirs and co-owners have consented.')}
+                          {currentStep === 6 && t('আইনানুযায়ী স্ট্যাম্প শুল্ক ও রেজিস্ট্রি ফি নির্ধারণ শেষ করে সাব-রেজিস্ট্রি অ্যাপয়েন্টমেন্ট প্রস্তুত করুন।', 'Statutory fee review completed; ready for registry booking.')}
+                          {currentStep === 7 && t('উভয় পক্ষ উপস্থিত থেকে দলিল সম্পাদন সম্পন্ন করার জন্য সুবিধাজনক একটি তারিখ বুকিং করুন।', 'Select a suitable date for in-person appearance at the Sub-Registry office.')}
+                          {currentStep === 8 && t('জালিয়াতি রোধে সাব-রেজিস্ট্রি কাউন্টারে উভয় পক্ষের সরাসরি বায়োমেট্রিক ফিঙ্গারপ্রিন্ট ও এনআইডি যাচাই সম্পন্ন করতে হবে।', 'Both parties must be present at sub-registry counter for biometric matching.')}
+                          {currentStep === 9 && t('সাব-রেজিস্ট্রার মহোদয়ের ডিজিটাল সরকারি সিল সম্পাদন দ্বারা দলিল নিবন্ধিত হবে।', 'Official digital deed execution by the Sub-Registrar.')}
+                          {currentStep === 10 && t('রেজিস্ট্রিকৃত দলিলের তথ্যের ভিত্তিতে সহকারী কমিশনার (ভূমি) দপ্তরে স্বয়ংক্রিয় নামজারি ফাইল প্রেরণ করা হচ্ছে।', 'Forwarding registered deed records to AC Land office.')}
+                          {currentStep === 11 && t('সহকারী কমিশনার (ভূমি) দপ্তরে তহশিলদারের সরেজমিন প্রতিবেদন ও শুনানি পর্যালোচনা প্রক্রিয়াধীন।', 'AC Land office reviewing field inspection report and hearing records.')}
+                          {currentStep === 12 && t('এসি ল্যান্ড মহোদয়ের চূড়ান্ত আদেশে সাবেক খতিয়ান কর্তন এবং নতুন বিএস খতিয়ান ও ডিসিআর দাখিলা জারি হবে।', 'Final order issuing new BS Khatian and digital DCR receipt.')}
+                        </p>
+                        {advanceError && <p className="text-red-700 font-bold mt-1 text-[11px]">{advanceError}</p>}
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Actions according to step and role */}
-                  <div className="shrink-0 flex items-center gap-2">
-                    {/* Step 3 -> 4: Buyer Confirm */}
-                    {selectedTransfer.current_step === 3 && (selectedTransfer.viewer_is_buyer || ((selectedTransfer.parties || []).some((p: any) => p.party_role === 'BUYER' && p.nid === user?.nid))) && (
-                      <button
-                        type="button"
-                        onClick={handleBuyerConfirm}
-                        disabled={advancing}
-                        className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
-                      >
-                        {advancing ? t('নিশ্চিত করা হচ্ছে...', 'Confirming...') : t('শর্তাবলী অনুমোদন করুন (ক্রেতা)', 'Confirm Terms & Area')}
-                      </button>
-                    )}
-
-                    {/* Step 1 -> 2: Seller confirm */}
-                    {selectedTransfer.current_step === 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleAdvanceStep()}
-                        disabled={advancing}
-                        className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
-                      >
-                        {advancing ? t('অগ্রসর হচ্ছে...', 'Advancing...') : t('আবেদন নিশ্চিত করুন', 'Confirm Intent')}
-                      </button>
-                    )}
-
-                    {/* Step 2 -> 3: Parties confirm */}
-                    {selectedTransfer.current_step === 2 && (
-                      <button
-                        type="button"
-                        onClick={() => handleAdvanceStep()}
-                        disabled={advancing}
-                        className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
-                      >
-                        {advancing ? t('অগ্রসর হচ্ছে...', 'Advancing...') : t('পক্ষসমূহ নিশ্চিত করুন', 'Confirm Parties')}
-                      </button>
-                    )}
-
-                    {/* Step 4 -> 5: Run Pre-Check */}
-                    {selectedTransfer.current_step === 4 && (
-                      <button
-                        type="button"
-                        onClick={() => handleAdvanceStep()}
-                        disabled={advancing}
-                        className="px-4 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
-                      >
-                        {advancing ? t('যাচাই চলছে...', 'Checking...') : t('প্রি-চেক স্ক্যান চালান', 'Run Pre-Check Scan')}
-                      </button>
-                    )}
-
-                    {/* Step 5 -> 6: Co-owner consent */}
-                    {selectedTransfer.current_step === 5 && (
-                      <div className="flex items-center gap-2">
-                        <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={consentConfirmed}
-                            onChange={(e) => setConsentConfirmed(e.target.checked)}
-                            className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                          />
-                          <span>{t('ওয়ারিশ/সহ-মালিক সম্মতি প্রাপ্ত', 'Consent verified')}</span>
-                        </label>
+                    {/* Action Controls right here in the hero card */}
+                    <div className="shrink-0 flex items-center gap-2 self-start md:self-center">
+                      {/* Step 3: Buyer Confirm */}
+                      {currentStep === 3 && (isBuyer ? (
                         <button
                           type="button"
-                          onClick={() => handleAdvanceStep({ consent_confirmed: true })}
+                          onClick={handleBuyerConfirm}
                           disabled={advancing}
-                          className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
+                          className="px-4 py-2.5 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
                         >
-                          {advancing ? t('সংরক্ষণ হচ্ছে...', 'Saving...') : t('সম্মতি অনুমোদন করুন', 'Confirm Consent')}
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Step 6 -> 7: Fee review */}
-                    {selectedTransfer.current_step === 6 && (
-                      <button
-                        type="button"
-                        onClick={() => handleAdvanceStep()}
-                        disabled={advancing}
-                        className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
-                      >
-                        {advancing ? t('প্রস্তুত করা হচ্ছে...', 'Processing...') : t('নিবন্ধন প্রস্তুতি সম্পন্ন করুন', 'Mark Ready for Registry')}
-                      </button>
-                    )}
-
-                    {/* Step 7 -> 8: Appointment Booking */}
-                    {selectedTransfer.current_step === 7 && (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="date"
-                          value={appointmentDate}
-                          onChange={(e) => setAppointmentDate(e.target.value)}
-                          className="p-1.5 rounded-lg border border-slate-300 text-xs bg-white"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleAdvanceStep({ appointment_date: appointmentDate })}
-                          disabled={advancing}
-                          className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
-                        >
-                          {advancing ? t('বুকিং হচ্ছে...', 'Booking...') : t('অ্যাপয়েন্টমেন্ট বুক করুন', 'Book Appointment')}
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Step 8 -> 9: Counter Biometrics */}
-                    {selectedTransfer.current_step === 8 && (
-                      ['sub_registrar', 'registry_data_officer', 'admin', 'system_admin'].includes(role) ? (
-                        <button
-                          type="button"
-                          onClick={() => handleAdvanceStep({ notes_bn: 'সাব-রেজিস্ট্রি কাউন্টারে বিক্রেতা ও ক্রেতার বায়োমেট্রিক ও এনআইডি সফলভাবে যাচাই করা হয়েছে।' })}
-                          disabled={advancing}
-                          className="px-4 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
-                        >
-                          {advancing ? t('যাচাই হচ্ছে...', 'Verifying...') : t('কাউন্টার বায়োমেট্রিক অনুমোদন', 'Approve Biometrics')}
+                          {advancing ? t('নিশ্চিত করা হচ্ছে...', 'Confirming...') : t('শর্তাবলী অনুমোদন করুন (ক্রেতা)', 'Confirm Terms & Area')}
                         </button>
                       ) : (
                         <span className="px-3 py-1.5 rounded-lg bg-amber-100 text-amber-900 font-bold text-[11px]">
-                          {t('🏛️ অফিসে সশরীরে উপস্থিতির নোটিশ সক্রিয়', 'Attendance Required at Registry')}
+                          {t('ক্রেতার সম্মতির অপেক্ষায়', 'Awaiting Buyer')}
                         </span>
-                      )
-                    )}
+                      ))}
 
-                    {/* Step 9 -> 10: Sub-Registrar Deed Execution */}
-                    {selectedTransfer.current_step === 9 && (
-                      ['sub_registrar', 'admin', 'system_admin'].includes(role) ? (
+                      {/* Step 1: Seller confirm */}
+                      {currentStep === 1 && (
                         <button
                           type="button"
-                          onClick={() => handleAdvanceStep({ notes_bn: 'দলিল সম্পাদন এবং সাব-রেজিস্ট্রার কর্তৃক Ed25519 ক্রিপ্টোগ্রাফিক ডিজিটাল স্বাক্ষর সম্পন্ন।' })}
-                          disabled={advancing}
-                          className="px-4 py-2 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
-                        >
-                          {advancing ? t('স্বাক্ষরিত হচ্ছে...', 'Signing...') : t('দলিল স্বাক্ষর ও নিবন্ধন', 'Sign & Register Deed')}
-                        </button>
-                      ) : (
-                        <span className="px-3 py-1.5 rounded-lg bg-blue-100 text-blue-900 font-bold text-[11px]">
-                          {t('সাব-রেজিস্ট্রারের স্বাক্ষরের অপেক্ষায়', 'Awaiting Sub-Registrar Signature')}
-                        </span>
-                      )
-                    )}
-
-                    {/* Step 10 -> 11: Queue e-Mutation */}
-                    {selectedTransfer.current_step === 10 && (
-                      <button
-                        type="button"
-                        onClick={() => handleAdvanceStep()}
-                        disabled={advancing}
-                        className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
-                      >
-                        {advancing ? t('প্রেরণ হচ্ছে...', 'Sending...') : t('নামজারি কেস প্রেরণ করুন', 'Queue e-Mutation')}
-                      </button>
-                    )}
-
-                    {/* Step 11 -> 12: Field Verification & Hearing */}
-                    {selectedTransfer.current_step === 11 && (
-                      ['ac_land', 'land_office_assistant', 'field_verification_officer', 'admin', 'system_admin'].includes(role) ? (
-                        <button
-                          type="button"
-                          onClick={() => handleAdvanceStep({ notes_bn: 'সহকারী কমিশনার (ভূমি) দপ্তরে সরেজমিন মাঠ প্রতিবেদন ও শুনানি পর্যালোচনা অনুমোদন।' })}
+                          onClick={() => handleAdvanceStep()}
                           disabled={advancing}
                           className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
                         >
-                          {advancing ? t('অনুমোদন হচ্ছে...', 'Approving...') : t('শুনানি ও প্রতিবেদন অনুমোদন', 'Approve Hearing & Report')}
+                          {advancing ? t('অগ্রসর হচ্ছে...', 'Advancing...') : t('আবেদন নিশ্চিত করুন', 'Confirm Intent')}
                         </button>
-                      ) : (
-                        <span className="px-3 py-1.5 rounded-lg bg-slate-200 text-slate-800 font-bold text-[11px]">
-                          {t('ভূমি অফিসে শুনানি ও প্রতিবেদন চলমান', 'Hearing in Progress')}
-                        </span>
-                      )
-                    )}
+                      )}
 
-                    {/* Step 12 -> 13: Final AC Land Mutation Approval */}
-                    {selectedTransfer.current_step === 12 && (
-                      ['ac_land', 'admin', 'system_admin'].includes(role) ? (
+                      {/* Step 2: Parties confirm */}
+                      {currentStep === 2 && (
                         <button
                           type="button"
-                          onClick={() => handleAdvanceStep({ notes_bn: 'সহকারী কমিশনার (ভূমি) কর্তৃক চূড়ান্ত নামজারি খতিয়ান অনুমোদন ও ডিজিটাল ডিসিআর প্রদান সম্পন্ন।' })}
+                          onClick={() => handleAdvanceStep()}
                           disabled={advancing}
-                          className="px-5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
+                          className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
                         >
-                          {advancing ? t('অনুমোদন হচ্ছে...', 'Approving...') : t('চূড়ান্ত নামজারি অনুমোদন করুন', 'Final Approve Mutation')}
+                          {advancing ? t('অগ্রসর হচ্ছে...', 'Advancing...') : t('পক্ষসমূহ নিশ্চিত করুন', 'Confirm Parties')}
                         </button>
-                      ) : (
-                        <span className="px-3 py-1.5 rounded-lg bg-amber-100 text-amber-900 font-bold text-[11px]">
-                          {t('চূড়ান্ত নামজারি আদেশের অপেক্ষায়', 'Awaiting AC Land Final Order')}
-                        </span>
-                      )
-                    )}
+                      )}
+
+                      {/* Step 4: Pre-Check Scan */}
+                      {currentStep === 4 && (
+                        <button
+                          type="button"
+                          onClick={() => handleAdvanceStep()}
+                          disabled={advancing}
+                          className="px-4 py-2 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
+                        >
+                          {advancing ? t('যাচাই চলছে...', 'Checking...') : t('প্রি-চেক স্ক্যান চালান', 'Run Pre-Check Scan')}
+                        </button>
+                      )}
+
+                      {/* Step 5: Co-owner consent */}
+                      {currentStep === 5 && (
+                        <div className="flex items-center gap-2">
+                          <label className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={consentConfirmed}
+                              onChange={(e) => setConsentConfirmed(e.target.checked)}
+                              className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                            />
+                            <span>{t('ওয়ারিশ/সহ-মালিক সম্মতি প্রাপ্ত', 'Consent verified')}</span>
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => handleAdvanceStep({ consent_confirmed: true })}
+                            disabled={advancing}
+                            className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
+                          >
+                            {advancing ? t('সংরক্ষণ হচ্ছে...', 'Saving...') : t('সম্মতি অনুমোদন করুন', 'Confirm Consent')}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Step 6: Fee review */}
+                      {currentStep === 6 && (
+                        <button
+                          type="button"
+                          onClick={() => handleAdvanceStep()}
+                          disabled={advancing}
+                          className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
+                        >
+                          {advancing ? t('প্রস্তুত করা হচ্ছে...', 'Processing...') : t('নিবন্ধন প্রস্তুতি সম্পন্ন করুন', 'Mark Ready for Registry')}
+                        </button>
+                      )}
+
+                      {/* Step 7: Appointment Booking */}
+                      {currentStep === 7 && (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="date"
+                            value={appointmentDate}
+                            onChange={(e) => setAppointmentDate(e.target.value)}
+                            className="p-1.5 rounded-lg border border-slate-300 text-xs bg-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleAdvanceStep({ appointment_date: appointmentDate })}
+                            disabled={advancing}
+                            className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
+                          >
+                            {advancing ? t('বুকিং হচ্ছে...', 'Booking...') : t('অ্যাপয়েন্টমেন্ট বুক করুন', 'Book Appointment')}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Step 8: Counter Biometrics */}
+                      {currentStep === 8 && (
+                        isRegistryOfficer ? (
+                          <button
+                            type="button"
+                            onClick={() => handleAdvanceStep({ notes_bn: 'সাব-রেজিস্ট্রি কাউন্টারে বিক্রেতা ও ক্রেতার বায়োমেট্রিক ও এনআইডি সফলভাবে যাচাই করা হয়েছে।' })}
+                            disabled={advancing}
+                            className="px-4 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
+                          >
+                            {advancing ? t('যাচাই হচ্ছে...', 'Verifying...') : t('কাউন্টার বায়োমেট্রিক অনুমোদন', 'Approve Biometrics')}
+                          </button>
+                        ) : (
+                          <span className="px-3 py-1.5 rounded-lg bg-amber-100 text-amber-900 font-bold text-[11px]">
+                            {t('🏛️ অফিসে সশরীরে উপস্থিতির নোটিশ সক্রিয়', 'Attendance Required at Registry')}
+                          </span>
+                        )
+                      )}
+
+                      {/* Step 9: Sub-Registrar Deed Execution */}
+                      {currentStep === 9 && (
+                        isSubRegistrarRole ? (
+                          <button
+                            type="button"
+                            onClick={() => handleAdvanceStep({ notes_bn: 'দলিল সম্পাদন এবং সাব-রেজিস্ট্রার কর্তৃক ডিজিটাল সরকারি সিল সম্পাদন সম্পন্ন।' })}
+                            disabled={advancing}
+                            className="px-4 py-2 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
+                          >
+                            {advancing ? t('অনুমোদন হচ্ছে...', 'Approving...') : t('দলিল অনুমোদন ও ডিজিটাল সিল প্রদান', 'Approve & Affix Official Seal')}
+                          </button>
+                        ) : (
+                          <span className="px-3 py-1.5 rounded-lg bg-blue-100 text-blue-900 font-bold text-[11px]">
+                            {t('সাব-রেজিস্ট্রারের স্বাক্ষরের অপেক্ষায়', 'Awaiting Sub-Registrar Signature')}
+                          </span>
+                        )
+                      )}
+
+                      {/* Step 10: Queue e-Mutation */}
+                      {currentStep === 10 && (
+                        isRegistryOfficer ? (
+                          <button
+                            type="button"
+                            onClick={() => handleAdvanceStep()}
+                            disabled={advancing}
+                            className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
+                          >
+                            {advancing ? t('প্রেরণ হচ্ছে...', 'Sending...') : t('নামজারি কেস প্রেরণ করুন', 'Queue e-Mutation')}
+                          </button>
+                        ) : (
+                          <span className="px-3 py-1.5 rounded-lg bg-slate-200 text-slate-800 font-bold text-[11px]">
+                            {t('সাব-রেজিস্ট্রি থেকে নামজারি কিউতে প্রেরণের অপেক্ষায়', 'Pending Sub-Registry Queueing')}
+                          </span>
+                        )
+                      )}
+
+                      {/* Step 11: Field Verification & Hearing */}
+                      {currentStep === 11 && (
+                        isAcLandOffice ? (
+                          <button
+                            type="button"
+                            onClick={() => handleAdvanceStep({ notes_bn: 'সহকারী কমিশনার (ভূমি) দপ্তরে সরেজমিন মাঠ প্রতিবেদন ও শুনানি পর্যালোচনা অনুমোদন।' })}
+                            disabled={advancing}
+                            className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
+                          >
+                            {advancing ? t('অনুমোদন হচ্ছে...', 'Approving...') : t('শুনানি ও প্রতিবেদন অনুমোদন', 'Approve Hearing & Report')}
+                          </button>
+                        ) : (
+                          <span className="px-3 py-1.5 rounded-lg bg-slate-200 text-slate-800 font-bold text-[11px]">
+                            {t('ভূমি অফিসে শুনানি ও প্রতিবেদন চলমান', 'Hearing in Progress')}
+                          </span>
+                        )
+                      )}
+
+                      {/* Step 12: Final AC Land Mutation Approval */}
+                      {currentStep === 12 && (
+                        isAcLandRole ? (
+                          <button
+                            type="button"
+                            onClick={() => handleAdvanceStep({ notes_bn: 'সহকারী কমিশনার (ভূমি) কর্তৃক চূড়ান্ত নামজারি খতিয়ান অনুমোদন ও ডিজিটাল ডিসিআর প্রদান সম্পন্ন।' })}
+                            disabled={advancing}
+                            className="px-5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs transition shadow-xs cursor-pointer disabled:bg-slate-400"
+                          >
+                            {advancing ? t('অনুমোদন হচ্ছে...', 'Approving...') : t('চূড়ান্ত নামজারি অনুমোদন করুন', 'Final Approve Mutation')}
+                          </button>
+                        ) : (
+                          <span className="px-3 py-1.5 rounded-lg bg-amber-100 text-amber-900 font-bold text-[11px]">
+                            {t('চূড়ান্ত নামজারি আদেশের অপেক্ষায়', 'Awaiting AC Land Final Order')}
+                          </span>
+                        )
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
-            {/* 13-STEP STAGE PROGRESS BAR */}
-            <div className="mt-6 pt-4 border-t border-slate-100">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  {t('১৩-ধাপের অগ্রগতির বিবরণ', '13-Step Progress Tracker')}
-                </h3>
-                <span className="text-xs font-bold text-[#006A4E]">
+            {/* 3-PHASE CITIZEN JOURNEY STEPPER WITH EXPANDABLE 13-STEP AUDIT DETAILS */}
+            <div className="mt-6 pt-5 border-t border-slate-100 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#006A4E]" />
+                    <span>{t('নাগরিক ভূমি হস্তান্তর যাত্রা (৩টি মূল পর্যায়)', 'Citizen Land Transfer Journey (3 Core Phases)')}</span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    {t('১৩টি প্রশাসনিক ধাপকে ৩টি প্রধান নাগরিক ধাপে সহজীকরণ করা হয়েছে।', '13 administrative steps simplified into 3 clear citizen phases.')}
+                  </p>
+                </div>
+                <span className="text-xs font-bold text-[#006A4E] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                   {t(`ধাপ ${toBanglaDigits(selectedTransfer.current_step, lang)} / ${toBanglaDigits(13, lang)}`, `Step ${selectedTransfer.current_step} of 13`)}
                 </span>
               </div>
 
-              {/* Stepper nodes */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-                {STAGES_MAP.map((st) => {
-                  const isDone = selectedTransfer.current_step > st.step;
-                  const isCurrent = selectedTransfer.current_step === st.step;
+              {/* 3 Major Phase Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {MAJOR_PHASES.map((phase) => {
+                  const isDone = selectedTransfer.status === 'COMPLETED' || selectedTransfer.current_step > Math.max(...phase.steps);
+                  const isCurrent = !isDone && phase.steps.includes(selectedTransfer.current_step);
+
+                  const completedInPhase = phase.steps.filter(
+                    (s) => selectedTransfer.current_step > s || (s === 13 && (selectedTransfer.current_step >= 13 || selectedTransfer.status === 'COMPLETED'))
+                  ).length;
+                  const totalInPhase = phase.steps.length;
+                  const progressPercent = Math.round((completedInPhase / totalInPhase) * 100);
+                  const PhaseIcon = phase.icon;
+
                   return (
                     <div
-                      key={st.step}
-                      className={`p-2.5 rounded-xl border text-left transition ${
+                      key={phase.id}
+                      className={`p-4 rounded-2xl border transition relative overflow-hidden flex flex-col justify-between ${
                         isDone
-                          ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
+                          ? 'bg-emerald-50/50 border-emerald-200 shadow-2xs'
                           : isCurrent
-                          ? 'bg-white border-[#006A4E] ring-2 ring-emerald-500/20 text-[#006A4E] shadow-2xs font-bold'
-                          : 'bg-slate-50/50 border-slate-200 text-slate-400'
+                          ? 'bg-white border-[#006A4E] ring-2 ring-emerald-500/25 shadow-xs'
+                          : 'bg-slate-50/70 border-slate-200 text-slate-400'
                       }`}
                     >
-                      <div className="flex items-center justify-between text-[10px] mb-1">
-                        <span>{t(`ধাপ ${toBanglaDigits(st.step, lang)}`, `Step ${st.step}`)}</span>
-                        {isDone ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        ) : isCurrent ? (
-                          <Clock className="w-3.5 h-3.5 text-emerald-700 animate-pulse" />
-                        ) : null}
+                      {isCurrent && (
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl -mr-6 -mt-6 pointer-events-none" />
+                      )}
+
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black ${
+                                isDone
+                                  ? 'bg-emerald-100 text-[#006A4E]'
+                                  : isCurrent
+                                  ? 'bg-[#006A4E] text-white shadow-2xs'
+                                  : 'bg-slate-200 text-slate-600'
+                              }`}
+                            >
+                              <PhaseIcon className="w-3.5 h-3.5" />
+                            </div>
+                            <span className="text-[11px] font-bold text-slate-500">
+                              {t(`পর্যায় ${toBanglaDigits(phase.id, lang)}`, `Phase ${phase.id}`)}
+                            </span>
+                          </div>
+
+                          {isDone ? (
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-[#006A4E] text-[10px] font-bold flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>{t('সম্পন্ন', 'Completed')}</span>
+                            </span>
+                          ) : isCurrent ? (
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-700 text-white text-[10px] font-bold flex items-center gap-1 shadow-2xs">
+                              <Clock className="w-3 h-3 animate-pulse" />
+                              <span>{t('চলমান', 'In Progress')}</span>
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-medium">
+                              {t('অপেক্ষমাণ', 'Pending')}
+                            </span>
+                          )}
+                        </div>
+
+                        <h4
+                          className={`text-xs font-bold leading-snug ${
+                            isDone ? 'text-emerald-950' : isCurrent ? 'text-slate-900 font-black' : 'text-slate-600'
+                          }`}
+                        >
+                          {lang === 'bn' ? phase.nameBn : phase.nameEn}
+                        </h4>
+
+                        <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                          {lang === 'bn' ? phase.subtitleBn : phase.subtitleEn}
+                        </p>
                       </div>
-                      <div className="text-[11px] font-semibold truncate leading-tight">
-                        {lang === 'bn' ? st.nameBn : st.nameEn}
+
+                      <div className="mt-3 pt-3 border-t border-slate-100">
+                        <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
+                          <span>{t('অগ্রগতি', 'Progress')}</span>
+                          <span className="font-bold text-slate-700">
+                            {toBanglaDigits(completedInPhase, lang)}/{toBanglaDigits(totalInPhase, lang)} {t('উপ-ধাপ', 'steps')} ({toBanglaDigits(progressPercent, lang)}%)
+                          </span>
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all duration-500 rounded-full ${
+                              isDone ? 'bg-emerald-600' : isCurrent ? 'bg-[#006A4E]' : 'bg-slate-300'
+                            }`}
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
                   );
                 })}
               </div>
+
+              {/* Expandable 13-Sub-Step Accordion for Judicial & Audit View */}
+              <details className="group mt-3 bg-slate-50/80 rounded-xl border border-slate-200 overflow-hidden">
+                <summary className="px-4 py-2.5 text-xs font-bold text-slate-700 cursor-pointer flex items-center justify-between hover:bg-slate-100/80 transition select-none">
+                  <div className="flex items-center gap-2">
+                    <FileSpreadsheet className="w-4 h-4 text-[#006A4E]" />
+                    <span>{t('১৩টি প্রশাসনিক উপ-ধাপ বিস্তারিত দেখুন (প্রশাসনিক ও অডিট ভিউ)', 'View 13 Administrative Sub-Steps (Audit & Officer View)')}</span>
+                    <span className="px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600 text-[10px] font-semibold">
+                      {t('অফিসিয়াল রেকর্ড', 'Official Records')}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                    <span>{t('উপ-ধাপ বিস্তারিত', 'Sub-steps details')}</span>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-open:rotate-90 transition-transform" />
+                  </div>
+                </summary>
+                <div className="p-3 sm:p-4 bg-white border-t border-slate-200">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+                    {STAGES_MAP.map((st) => {
+                      const isDone = selectedTransfer.current_step > st.step;
+                      const isCurrent = selectedTransfer.current_step === st.step;
+                      return (
+                        <div
+                          key={st.step}
+                          className={`p-2.5 rounded-xl border text-left transition ${
+                            isDone
+                              ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
+                              : isCurrent
+                              ? 'bg-white border-[#006A4E] ring-2 ring-emerald-500/20 text-[#006A4E] shadow-2xs font-bold'
+                              : 'bg-slate-50/50 border-slate-200 text-slate-400'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between text-[10px] mb-1">
+                            <span>{t(`ধাপ ${toBanglaDigits(st.step, lang)}`, `Step ${st.step}`)}</span>
+                            {isDone ? (
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            ) : isCurrent ? (
+                              <Clock className="w-3.5 h-3.5 text-emerald-700 animate-pulse" />
+                            ) : null}
+                          </div>
+                          <div className="text-[11px] font-semibold truncate leading-tight">
+                            {lang === 'bn' ? st.nameBn : st.nameEn}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </details>
             </div>
           </div>
 
@@ -1165,7 +1415,7 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
                           </span>
                         </div>
                         <div className="text-[11px] text-slate-500 mt-0.5 font-mono">
-                          {t('এনআইডি:', 'NID:')} {sellerNid}
+                          {t('এনআইডি:', 'NID:')} {maskNid(sellerNid, lang)}
                         </div>
                       </div>
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -1187,7 +1437,7 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
                           </span>
                         </div>
                         <div className="text-[11px] text-slate-500 mt-0.5 font-mono">
-                          {t('এনআইডি:', 'NID:')} {buyerNid}
+                          {t('এনআইডি:', 'NID:')} {maskNid(buyerNid, lang)}
                         </div>
                       </div>
                       {selectedTransfer.current_step >= 4 ? (
@@ -1207,7 +1457,10 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
                   <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 text-xs flex items-center justify-between">
                     <div>
                       <span className="font-bold text-emerald-900">{t('দলিল আইডি:', 'Deed ID:')} #{selectedTransfer.deed_id}</span>
-                      <p className="text-[11px] text-emerald-700">{t('Ed25519 ক্রিপ্টোগ্রাফিক ডিজিটাল সিল সংরক্ষিত', 'Ed25519 digital seal attached')}</p>
+                      <p className="text-[11px] text-emerald-700 flex items-center gap-1 mt-0.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-[#006A4E] shrink-0" />
+                        <span>{t('গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের ডিজিটাল সিল ও কিউআর দ্বারা সংরক্ষিত', 'Official Bangladesh Government digital seal & QR secured')}</span>
+                      </p>
                     </div>
                     {onNavigate && (
                       <button
@@ -1237,8 +1490,8 @@ export const ApplicationsPage: React.FC<ApplicationsPageProps> = ({ onNavigate }
                   <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200 text-xs space-y-2.5">
                     <p className="text-[11px] text-emerald-900 leading-relaxed">
                       {t(
-                        'মালিকানা হস্তান্তর সম্পন্ন হওয়ায় সরকারি দাখিলা ও ডিসিআর (DCR) রসিদ এবং নবায়নকৃত বিএস খতিয়ান পর্চা ক্রিপ্টোগ্রাফিক সুরক্ষা সিলসহ তৈরি হয়েছে।',
-                        'Transfer completed. Official DCR receipt and updated BS Porcha are generated with cryptographic security seals.'
+                        'মালিকানা হস্তান্তর সম্পন্ন হওয়ায় সরকারি দাখিলা ও ডিসিআর (DCR) রসিদ এবং নবায়নকৃত বিএস খতিয়ান পর্চা সরকারি ডিজিটাল নিরাপত্তা সিলসহ প্রস্তুত হয়েছে।',
+                        'Transfer completed. Official DCR receipt and updated BS Porcha are generated with official government digital security seals.'
                       )}
                     </p>
 

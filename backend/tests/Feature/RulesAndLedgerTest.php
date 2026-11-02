@@ -518,6 +518,7 @@ final class RulesAndLedgerTest
             'transfer_area_decimal' => 5.0,
             'proposed_price_bdt' => 1200000,
             'deed_type' => 'SALE',
+            'buyer_nid' => '9900001002',
         ], ['username' => 'citizen', 'role' => 'citizen', 'nid' => '9900001001']);
         self::assertTrue(str_starts_with($trRes['transfer_code'], 'TR-2026-'));
         self::assertTrue((int) $trRes['current_step'] === 1);
@@ -525,10 +526,13 @@ final class RulesAndLedgerTest
 
         // Sequential step transitions to step 8
         for ($s = 2; $s <= 8; $s++) {
+            $actor = ($s === 4)
+                ? ['username' => 'rabeya', 'role' => 'citizen', 'nid' => '9900001002']
+                : ['username' => 'citizen', 'role' => 'citizen', 'nid' => '9900001001'];
             $advRes = \App\Services\TransferStateMachine::advanceStep($trRes['transfer_code'], [
                 'target_step' => $s,
                 'notes_bn' => 'ধাপ ' . $s,
-            ], ['username' => 'citizen', 'role' => 'citizen', 'nid' => '9900001001']);
+            ], $actor);
         }
         self::assertTrue((int) $advRes['current_step'] === 8);
         self::assertTrue($advRes['public_stage'] === 'REGISTER');

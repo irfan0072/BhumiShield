@@ -794,6 +794,8 @@ final class RoleAuditRegressionTest
         $first = $officerPersons['items'][0];
         self::assertTrue(!str_contains($first['nid_mock'], '****'), 'Officer must receive unmasked NID');
         self::assertTrue(!empty($first['address_bn']), 'Officer must receive address');
+        unset($_SERVER['HTTP_AUTHORIZATION']);
+        putenv('HTTP_AUTHORIZATION=');
     }
 
     public static function test_i07_seller_fraction_conserved_and_buyer_consolidated(): void

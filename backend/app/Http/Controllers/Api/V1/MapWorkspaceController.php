@@ -45,12 +45,16 @@ final class MapWorkspaceController
             CASE WHEN EXISTS(SELECT 1 FROM mortgages_liens m WHERE m.plot_id=p.id AND m.status=\'ACTIVE\') THEN 1 ELSE 0 END AS has_active_lien
             FROM plots p'.$where.' ORDER BY p.id LIMIT 60 OFFSET '.(($page-1)*60),$bindings);
         $officeBindings=[]; $officeWhere=' WHERE is_active=1';
+        $offices = [];
         if ($locationId) {
             $location=DB::selectOne('SELECT * FROM locations WHERE id=?',[$locationId]);
-            if (!$location) self::fail('LOCATION_NOT_FOUND','মৌজাটি পাওয়া যায়নি।',404);
-            $officeWhere.=' AND district_en=? AND upazila_en=?'; $officeBindings=[$location['district_en'],$location['upazila_en']];
+            if ($location) {
+                $officeWhere.=' AND district_en=? AND upazila_en=?'; $officeBindings=[$location['district_en'],$location['upazila_en']];
+                $offices=DB::select('SELECT id,name_bn,name_en,office_type,district_en,upazila_en,latitude,longitude,address_bn,address_en FROM offices'.$officeWhere.' ORDER BY id LIMIT 100',$officeBindings);
+            }
+        } else {
+            $offices=DB::select('SELECT id,name_bn,name_en,office_type,district_en,upazila_en,latitude,longitude,address_bn,address_en FROM offices'.$officeWhere.' ORDER BY id LIMIT 100',$officeBindings);
         }
-        $offices=DB::select('SELECT id,name_bn,name_en,office_type,district_en,upazila_en,latitude,longitude,address_bn,address_en FROM offices'.$officeWhere.' ORDER BY id LIMIT 100',$officeBindings);
         return ['locations'=>$locations,'locations_truncated'=>count($locations)===2000,'plots'=>$plots,'total'=>$total,'page'=>$page,'page_size'=>60,'offices'=>$offices,
             'office_match'=>'AREA_REFERENCE_ONLY','geometry_notice'=>'মৌজার কেন্দ্রবিন্দু সীমানা নয়। প্রকাশিত উৎসসহ নকশা ছাড়া দাগের সীমানা দেখানো হয় না।'];
     }
@@ -62,7 +66,7 @@ final class MapWorkspaceController
         $where=$admin?' WHERE 1=1':" WHERE status='PUBLISHED'"; $bind=[];
         if (!empty($query['location_id'])) { $where.=' AND location_id=?';$bind[]=(int)$query['location_id']; }
         $rows=DB::select('SELECT id,title,location_id,layer_kind,source_url,rights_note,observed_at,sha256,feature_count,status,created_by,reviewed_by,review_note,created_at,updated_at FROM map_datasets'.$where.' ORDER BY id DESC LIMIT 100',$bind);
-        return ['items'=>$rows,'limit'=>100];
+        return ['items'=>$rows,'layers'=>$rows,'limit'=>100];
     }
 
     public static function geometry(int $id, bool $admin=false, ?array $actor=null): array

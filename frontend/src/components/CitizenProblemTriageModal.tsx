@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   HelpCircle,
   X,
@@ -351,6 +351,17 @@ export const CitizenProblemTriageModal: React.FC<CitizenProblemTriageModalProps>
   const [submittingClaim, setSubmittingClaim] = useState(false);
   const [claimSuccess, setClaimSuccess] = useState<{ ticketCode: string; message: string } | null>(null);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   // Resolve Competent Office from Property Jurisdiction
@@ -504,7 +515,12 @@ export const CitizenProblemTriageModal: React.FC<CitizenProblemTriageModalProps>
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-fadeIn">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="citizen-problem-triage-modal-title"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-fadeIn"
+    >
       <div className="bg-white rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Header */}
         <div className="bg-[#006A4E] text-white p-5 sm:p-6 flex items-center justify-between shrink-0">
@@ -522,7 +538,7 @@ export const CitizenProblemTriageModal: React.FC<CitizenProblemTriageModalProps>
                   ধাপ {toBanglaDigits(step, lang)} / {toBanglaDigits(3, lang)}
                 </span>
               </div>
-              <h2 className="text-lg sm:text-xl font-black text-white mt-0.5">
+              <h2 id="citizen-problem-triage-modal-title" className="text-lg sm:text-xl font-black text-white mt-0.5">
                 {t('আপনার কী সাহায্য দরকার? — সমস্যা ভিত্তিক ডিজিটাল ভূমি গাইড', 'What help do you need? — Guided Land Service')}
               </h2>
             </div>
@@ -530,6 +546,7 @@ export const CitizenProblemTriageModal: React.FC<CitizenProblemTriageModalProps>
           <button
             type="button"
             onClick={onClose}
+            aria-label={t('বন্ধ করুন', 'Close')}
             className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer"
           >
             <X className="w-5 h-5" />

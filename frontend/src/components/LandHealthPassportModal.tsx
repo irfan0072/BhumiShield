@@ -47,6 +47,16 @@ export const LandHealthPassportModal: React.FC<LandHealthPassportModalProps> = (
   });
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  useEffect(() => {
     let isMounted = true;
     const fetchAudit = async () => {
       try {
@@ -118,7 +128,12 @@ export const LandHealthPassportModal: React.FC<LandHealthPassportModalProps> = (
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fadeIn">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="land-health-passport-modal-title"
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fadeIn"
+    >
       {/* Container */}
       <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
         {/* Top Control Bar (Screen Only) */}
@@ -126,7 +141,7 @@ export const LandHealthPassportModal: React.FC<LandHealthPassportModalProps> = (
           <div className="flex items-center gap-2.5">
             <Award className="w-5 h-5 text-amber-400" />
             <div>
-              <h3 className="font-extrabold text-sm sm:text-base leading-tight">
+              <h3 id="land-health-passport-modal-title" className="font-extrabold text-sm sm:text-base leading-tight">
                 {t('স্মার্ট ভূমি স্বাস্থ্য পাসপোর্ট (Land Health Passport)', 'Smart Land Health Passport')}
               </h3>
               <p className="text-[11px] text-slate-400">
@@ -155,6 +170,7 @@ export const LandHealthPassportModal: React.FC<LandHealthPassportModalProps> = (
             <button
               type="button"
               onClick={onClose}
+              aria-label={t('বন্ধ করুন', 'Close')}
               className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-rose-900/60 text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer text-sm"
               title={t('বন্ধ করুন', 'Close')}
             >

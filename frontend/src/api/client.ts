@@ -1248,6 +1248,42 @@ export const BhumiApi = {
     supervisor_user_id?: number;
   }): Promise<{ verified: boolean; score: number; match_status: string; attempts_count: number; session_id: string; message_bn: string; message_en: string }> =>
     api.post('/biometrics/verify', data).then((r) => r.data),
+
+  // NID Porichoy Verification & OTP (Requirement R1, Features 7-9)
+  verifyNid: (data: { nid: string; dob: string; name?: string; channel?: string; phone?: string }): Promise<{
+    status: number;
+    success: boolean;
+    code: string;
+    transaction_id: string;
+    session_token: string;
+    otp_sent: boolean;
+    masked_phone: string;
+    expires_in: number;
+    latency_ms: number;
+    identity?: {
+      nid_masked: string;
+      full_name_bn: string;
+      full_name_en: string;
+      dob: string;
+      status: string;
+      verification_score: number;
+    };
+    message_bn: string;
+    message_en: string;
+  }> => api.post('/nid/verify', data).then((r) => r.data),
+
+  verifyNidOtp: (data: { session_token: string; otp_code: string; username?: string; user_id?: number }): Promise<{
+    status: number;
+    success: boolean;
+    verified: boolean;
+    is_identity_verified: number;
+    nid: string;
+    citizen_name_bn: string;
+    citizen_name_en: string;
+    message_bn: string;
+    message_en: string;
+  }> => api.post('/nid/verify-otp', data).then((r) => r.data),
+
   initiatePayment: (data: {
     payable_type: string;
     payable_id: string | number;
@@ -1437,6 +1473,9 @@ export const BhumiApi = {
   // Lawyer Portal & Registry
   verifyLawyer: (bar_council_no: string): Promise<LawyerVerificationResult> =>
     api.post('/lawyers/verify', { bar_council_no }).then((r) => r.data),
+
+  getMyLawyerCases: (): Promise<{ status: string; items: any[]; total: number }> =>
+    api.get('/lawyers/my-cases').then((r) => r.data),
 
   fileLawyerCase: (payload: LawyerCasePayload): Promise<LawyerCaseDocketResponse> =>
     api.post('/lawyers/file-case', payload).then((r) => r.data),

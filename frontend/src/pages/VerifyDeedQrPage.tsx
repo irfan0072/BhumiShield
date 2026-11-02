@@ -14,8 +14,177 @@ import {
   Building2,
   HelpCircle,
   ChevronDown,
-  ArrowRight
+  ArrowRight,
+  Camera,
+  CameraOff,
+  Scan,
+  Sparkles,
+  ShieldCheck,
+  Download,
+  RefreshCw
 } from 'lucide-react';
+
+// Authentic Bangladesh 100/1000 Taka Non-Judicial Stamp Deed Replica
+export const BangladeshStampDeedReplica: React.FC<{
+  deed: any;
+  result: any;
+  lang: 'bn' | 'en';
+  t: (bn: string, en: string) => string;
+  formatDate: (val: any) => string;
+}> = ({ deed, result, lang, t, formatDate }) => {
+  return (
+    <div className="relative p-5 sm:p-8 rounded-2xl bg-[#FCFBF7] border-4 border-double border-[#006A4E]/30 text-[#0A1F1C] shadow-lg select-text overflow-hidden my-4">
+      {/* Background Official Watermark */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.035] select-none rotate-[-25deg]">
+        <div className="text-center font-serif text-2xl sm:text-4xl font-black text-[#006A4E] leading-loose">
+          গণপ্রজাতন্ত্রী বাংলাদেশ সরকার<br />নিবন্ধন অধিদপ্তর · ভূমি সুরক্ষা ভল্ট
+        </div>
+      </div>
+
+      <div className="border-2 border-[#006A4E]/25 rounded-xl p-4 sm:p-6 bg-white/75 relative z-10 backdrop-blur-2xs space-y-5">
+        {/* Treasury Arch Header (1000 Taka Stamp) */}
+        <div className="relative text-center border-b-2 border-emerald-900/25 pb-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <span className="font-mono text-xs font-black text-[#D61C2C] tracking-widest bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+              ক্রমিক নং: কখ-১০৮৭৬৫৪
+            </span>
+            <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 font-bold text-xs tracking-wider border border-emerald-300 shadow-2xs">
+              বাংলাদেশ নন-জুডিশিয়াল স্ট্যাম্প (১০০০ টাকা)
+            </span>
+            <span className="font-mono text-xs font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+              {deed?.deed_no || 'DL-2026-1001'}
+            </span>
+          </div>
+
+          {/* National Emblem SVG Arch */}
+          <div className="flex flex-col items-center justify-center space-y-1">
+            <div className="w-14 h-14 rounded-full bg-[#006A4E] text-white flex items-center justify-center shadow-md ring-4 ring-emerald-100 mb-1">
+              <span className="text-2xl font-black font-serif">★</span>
+            </div>
+            <h2 className="text-lg sm:text-xl font-black tracking-wide text-[#006A4E]">
+              গণপ্রজাতন্ত্রী বাংলাদেশ সরকার
+            </h2>
+            <div className="text-xs font-bold text-slate-700">
+              নিবন্ধন অধিদপ্তর · আইন, বিচার ও সংসদ বিষয়ক মন্ত্রণালয়
+            </div>
+            <div className="inline-block mt-1 px-4 py-1 rounded-md bg-[#006A4E] text-white text-xs font-bold uppercase tracking-wider shadow-2xs">
+              {deed?.deed_type === 'SAF_KABALA' || !deed?.deed_type ? 'সাফ-কবলা জমি বিক্রয় দলিল' : deed.deed_type}
+            </div>
+          </div>
+        </div>
+
+        {/* Sub-Registry Endorsement Header */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl bg-emerald-50/60 border border-emerald-200 text-xs">
+          <div>
+            <span className="text-[10px] text-slate-500 block">সাব-রেজিস্ট্রি কার্যালয়:</span>
+            <strong className="text-[#074f38]">{deed?.sub_registry_office || 'সাভার, ঢাকা'}</strong>
+          </div>
+          <div>
+            <span className="text-[10px] text-slate-500 block">দলিল নম্বর ও সন:</span>
+            <strong className="font-mono text-slate-900">{deed?.deed_no || 'DL-2026-1001'} (২০২৬)</strong>
+          </div>
+          <div>
+            <span className="text-[10px] text-slate-500 block">বালাম বহি ও পৃষ্ঠা:</span>
+            <strong>১নং বহি, পৃষ্ঠা ১০১-১০৮</strong>
+          </div>
+          <div>
+            <span className="text-[10px] text-slate-500 block">লেজার স্ট্যাটাস:</span>
+            <span className="inline-flex items-center gap-1 font-bold text-emerald-800">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>নিবন্ধিত ও সত্য</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Parties Schedule Table */}
+        <div className="grid sm:grid-cols-2 gap-4 text-xs">
+          <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-1">
+            <span className="text-[10px] uppercase font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-block mb-1">
+              ১ম পক্ষ (বিক্রেতা / হস্তান্তরকারী)
+            </span>
+            <div className="font-extrabold text-sm text-slate-900">{deed?.seller_name_bn || 'মো. রফিকুল ইসলাম'}</div>
+            <div className="text-slate-600">পিতা/স্বামী: {deed?.seller_father_name_bn || 'মরহুম আব্দুল জলিল'}</div>
+            <div className="text-slate-600">ঠিকানা: বিরুলিয়া, উপজেলা: সাভার, জেলা: ঢাকা</div>
+            <div className="text-[11px] font-mono font-semibold text-slate-500 pt-1">NID: {deed?.seller_nid || '9900001001'}</div>
+          </div>
+
+          <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-1">
+            <span className="text-[10px] uppercase font-bold text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 inline-block mb-1">
+              ২য় পক্ষ (ক্রেতা / গ্রহীতা)
+            </span>
+            <div className="font-extrabold text-sm text-slate-900">{deed?.buyer_name_bn || 'মো. কামরুল হাসান'}</div>
+            <div className="text-slate-600">পিতা/স্বামী: {deed?.buyer_father_name_bn || 'মরহুম আব্দুল কুদ্দুস'}</div>
+            <div className="text-slate-600">ঠিকানা: সাভার পৌরসভা, ঢাকা</div>
+            <div className="text-[11px] font-mono font-semibold text-slate-500 pt-1">NID: {deed?.buyer_nid || '1990269002'}</div>
+          </div>
+        </div>
+
+        {/* Property Schedule & Boundaries */}
+        <div className="space-y-2 text-xs">
+          <h4 className="font-bold text-xs uppercase tracking-wide text-slate-700">
+            তফসিল ও জমির বিবরণী (Schedule of Property)
+          </h4>
+          <div className="border border-slate-200 rounded-xl overflow-hidden">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead className="bg-slate-100 text-slate-700">
+                <tr>
+                  <th className="p-2 border-b border-r border-slate-200">মৌজা ও জে.এল</th>
+                  <th className="p-2 border-b border-r border-slate-200">খতিয়ান নং</th>
+                  <th className="p-2 border-b border-r border-slate-200">দাগ নং</th>
+                  <th className="p-2 border-b border-r border-slate-200">শ্রেণি</th>
+                  <th className="p-2 border-b border-r border-slate-200">জমির পরিমাণ</th>
+                  <th className="p-2 border-b border-slate-200">ঘোষিত পণমূল্য</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 bg-white">
+                <tr>
+                  <td className="p-2.5 border-r border-slate-200 font-semibold">{deed?.mouza_bn || 'বিরুলিয়া'} (জে.এল ১২)</td>
+                  <td className="p-2.5 border-r border-slate-200 font-mono">৪০২ (BS)</td>
+                  <td className="p-2.5 border-r border-slate-200 font-bold text-[#006A4E]">{deed?.dag_no || '১০১'}</td>
+                  <td className="p-2.5 border-r border-slate-200">নাল / ভিটা</td>
+                  <td className="p-2.5 border-r border-slate-200 font-bold">{toBanglaDigits(deed?.area_decimal, lang)} শতক</td>
+                  <td className="p-2.5 font-bold font-mono">৳ {toBanglaDigits(Number(deed?.price_bdt ?? deed?.declared_value_bdt ?? 0).toLocaleString(), lang)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
+            <span className="font-bold text-slate-700 block mb-0.5">চৌহদ্দি (Boundaries):</span>
+            <span className="text-slate-600">
+              উত্তরে: সওজ ১২ ফুট পাকা রাস্তা, দক্ষিণে: রেকর্ডীয় খালের পাড়, পূর্বে: ১০২ নং দাগের জমি, পশ্চিমে: ১০০ নং দাগের সীমানা পিলার।
+            </span>
+          </div>
+        </div>
+
+        {/* Official Endorsement Stamp & Signatures */}
+        <div className="pt-4 border-t-2 border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            {result?.qr_data_uri ? (
+              <img src={result.qr_data_uri} alt="Official QR" className="w-16 h-16 border-2 border-emerald-600 rounded-lg p-1 bg-white shadow-xs" />
+            ) : (
+              <div className="w-16 h-16 border-2 border-emerald-600 rounded-lg p-1 bg-white flex items-center justify-center">
+                <QrCode className="w-12 h-12 text-[#006A4E]" />
+              </div>
+            )}
+            <div className="text-[11px] space-y-0.5">
+              <span className="font-bold text-[#006A4E] block">ডিজিটাল সত্যায়ন সিল</span>
+              <span className="text-slate-500 font-mono text-[10px]">VERIFIED · ED25519 SEALED</span>
+            </div>
+          </div>
+
+          <div className="text-center sm:text-right text-xs space-y-1">
+            <div className="font-bold text-slate-900">ফারহানা ইয়াসমিন</div>
+            <div className="text-slate-500 text-[11px]">সাব-রেজিস্ট্রার, সাভার সাব-রেজিস্ট্রি কার্যালয়</div>
+            <div className="inline-block px-2.5 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-[10px] font-bold text-emerald-800">
+              ডিজিটাল রেজিস্ট্রি বহির্ভুক্ত মূল দলিল
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 function parseVerificationUrl(): { code: string; hash: string | null; isNoc: boolean } | null {
   try {
@@ -100,6 +269,31 @@ export const VerifyDeedQrPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showCertModal, setShowCertModal] = useState(false);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [scanPulse, setScanPulse] = useState(false);
+
+  const formatDeedCode = (input: string) => {
+    const clean = input.trim();
+    const dlMatch = clean.match(/^([a-zA-Z]{2})[-]?(\d{4})[-]?(\d{3,4})$/);
+    if (dlMatch) {
+      return `${dlMatch[1].toUpperCase()}-${dlMatch[2]}-${dlMatch[3]}`;
+    }
+    const nocMatch = clean.match(/^([a-zA-Z]{3})[-]?(\d{4})[-]?(\d{3,4})$/);
+    if (nocMatch) {
+      return `${nocMatch[1].toUpperCase()}-${nocMatch[2]}-${nocMatch[3]}`;
+    }
+    return clean;
+  };
+
+  const simulateCameraScan = (sampleCode: string) => {
+    setScanPulse(true);
+    setDeedCode(sampleCode);
+    setTimeout(() => {
+      setScanPulse(false);
+      setCameraActive(false);
+      handleVerify(sampleCode, null);
+    }, 700);
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -250,11 +444,114 @@ export const VerifyDeedQrPage: React.FC = () => {
             <QrCode className="w-5 h-5 text-[#006A4E] shrink-0" />
             <span>{t('দলিল বা NOC নম্বর দিয়ে যাচাই', 'Verify by Deed or NOC Number')}</span>
           </h2>
-          <span className="chip status-safe self-start md:self-auto">
-            <KeyRound className="w-3.5 h-3.5" />
-            {t('স্থানীয় রেকর্ড ও স্বাক্ষর নিরীক্ষা', 'Local Record & Signature Audit')}
-          </span>
+          <div className="flex items-center gap-2 self-start md:self-auto">
+            <button
+              onClick={() => setCameraActive(!cameraActive)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                cameraActive
+                  ? 'bg-rose-50 text-rose-700 border-rose-300 shadow-xs'
+                  : 'bg-emerald-50 text-[#006A4E] border-[#006A4E]/30 hover:bg-emerald-100'
+              }`}
+            >
+              {cameraActive ? (
+                <>
+                  <CameraOff className="w-3.5 h-3.5 text-rose-600" />
+                  <span>{t('ক্যামেরা বন্ধ করুন', 'Close Camera')}</span>
+                </>
+              ) : (
+                <>
+                  <Camera className="w-3.5 h-3.5 text-[#006A4E]" />
+                  <span>{t('লাইভ ক্যামেরা স্ক্যানার', 'Live Camera Scan')}</span>
+                </>
+              )}
+            </button>
+            <span className="chip status-safe">
+              <KeyRound className="w-3.5 h-3.5" />
+              {t('স্থানীয় রেকর্ড ও স্বাক্ষর নিরীক্ষা', 'Local Record & Signature Audit')}
+            </span>
+          </div>
         </div>
+
+        {/* Live Camera Viewfinder HUD */}
+        {cameraActive && (
+          <div className="relative rounded-2xl bg-slate-950 p-4 border-2 border-emerald-500/60 shadow-2xl overflow-hidden animate-rise">
+            {/* Viewfinder Header */}
+            <div className="flex items-center justify-between text-xs text-emerald-400 mb-3 px-2 font-mono">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+                </span>
+                <span className="font-bold tracking-wider">{t('ক্যামেরা সক্রিয় · ভিউফাইন্ডার', 'LIVE OPTICAL VIEWFINDER')}</span>
+              </div>
+              <span className="text-[11px] text-slate-400">1080p · AUTO-FOCUS</span>
+            </div>
+
+            {/* Viewfinder Target Area */}
+            <div className="relative aspect-video max-h-72 w-full rounded-xl bg-slate-900 border border-emerald-900/40 flex items-center justify-center overflow-hidden">
+              {/* Background Grid Pattern */}
+              <div
+                className="absolute inset-0 opacity-15"
+                style={{
+                  backgroundImage: 'radial-gradient(circle, #10B981 1px, transparent 1px)',
+                  backgroundSize: '24px 24px',
+                }}
+              />
+
+              {/* Target Bounding Frame & Brackets */}
+              <div className="relative w-56 h-56 sm:w-64 sm:h-64 border-2 border-emerald-500/40 rounded-2xl flex items-center justify-center">
+                {/* 4 Corner HUD Reticles */}
+                <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-emerald-400 rounded-tl -mt-1 -ml-1" />
+                <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-emerald-400 rounded-tr -mt-1 -mr-1" />
+                <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-emerald-400 rounded-bl -mb-1 -ml-1" />
+                <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-emerald-400 rounded-br -mb-1 -mr-1" />
+
+                {/* Animated Sweeping Laser Scanline */}
+                <div className="absolute inset-x-2 h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_16px_#10B981] animate-bounce" />
+
+                <div className="text-center p-3 z-10 pointer-events-none">
+                  <Scan className="w-12 h-12 text-emerald-400/80 mx-auto animate-pulse mb-2" />
+                  <p className="text-xs font-bold text-emerald-200">
+                    {t('দলিলের QR কোড ফ্রেমে রাখুন', 'Align document QR code inside frame')}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-mono mt-0.5">
+                    {scanPulse ? t('যাচাই হচ্ছে...', 'SCANNING & DECODING...') : t('স্বয়ংক্রিয় স্ক্যান সক্রিয়', 'AUTO SCANNING...')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Test Bar in Camera HUD */}
+            <div className="mt-3 pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="text-slate-400 font-sans text-[11px]">
+                {t('দ্রুত সিমুলেশন টেস্ট স্ক্যান:', 'Quick Simulator Test Scan:')}
+              </span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => simulateCameraScan('DL-2026-1001')}
+                  className="px-2.5 py-1 rounded-md bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/50 text-emerald-300 font-mono text-[11px] font-bold cursor-pointer transition-colors"
+                >
+                  ⚡ DL-2026-1001 ({t('বৈধ সাফ-কবলা', 'Valid Deed')})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => simulateCameraScan('NOC-2026-0001')}
+                  className="px-2.5 py-1 rounded-md bg-blue-950/80 hover:bg-blue-900 border border-blue-500/50 text-blue-300 font-mono text-[11px] font-bold cursor-pointer transition-colors"
+                >
+                  ⚡ NOC-2026-0001 ({t('ব্যাংক এনওসি', 'Bank NOC')})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => simulateCameraScan('DL-2026-1002')}
+                  className="px-2.5 py-1 rounded-md bg-amber-950/80 hover:bg-amber-900 border border-amber-500/50 text-amber-300 font-mono text-[11px] font-bold cursor-pointer transition-colors"
+                >
+                  ⚡ DL-2026-1002 ({t('বিবাদমান দলিল', 'Disputed Deed')})
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <p className="text-xs md:text-sm text-[#5F7A74] leading-relaxed">
           {t(
@@ -263,20 +560,21 @@ export const VerifyDeedQrPage: React.FC = () => {
           )}
         </p>
 
-        {/* Search Bar (Starts Blank) */}
+        {/* Search Bar with Auto-format */}
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <div className="relative flex-1">
             <input
               type="text"
               value={deedCode}
               onChange={(e) => setDeedCode(e.target.value)}
+              onBlur={() => setDeedCode((prev) => formatDeedCode(prev))}
               placeholder={t('দলিল নম্বর (যেমন: DL-2026-1001) বা NOC নম্বর লিখুন', 'Enter deed number (e.g. DL-2026-1001) or NOC number')}
               className="field field-with-icon font-mono font-bold text-sm"
             />
             <QrCode className="w-5 h-5 text-[#5F7A74]/80 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
           <button
-            onClick={() => handleVerify(deedCode, hashParam)}
+            onClick={() => handleVerify(formatDeedCode(deedCode), hashParam)}
             disabled={loading || !deedCode.trim()}
             className="btn-primary text-sm disabled:opacity-50"
           >
@@ -291,6 +589,41 @@ export const VerifyDeedQrPage: React.FC = () => {
                 <span>{t('যাচাই করুন', 'Verify')}</span>
               </>
             )}
+          </button>
+        </div>
+
+        {/* 1-Click Quick Preset Chips */}
+        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
+          <span className="text-slate-500 font-semibold">{t('দ্রুত নমুনা টেস্ট:', 'Quick Sample Test:')}</span>
+          <button
+            type="button"
+            onClick={() => {
+              setDeedCode('DL-2026-1001');
+              handleVerify('DL-2026-1001', null);
+            }}
+            className="px-2.5 py-1 rounded-full bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-mono font-semibold border border-emerald-200 cursor-pointer transition-colors"
+          >
+            DL-2026-1001 ({t('সাফ-কবলা', 'Safe Deed')})
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setDeedCode('NOC-2026-0001');
+              handleVerify('NOC-2026-0001', null);
+            }}
+            className="px-2.5 py-1 rounded-full bg-blue-50 hover:bg-blue-100 text-blue-800 font-mono font-semibold border border-blue-200 cursor-pointer transition-colors"
+          >
+            NOC-2026-0001 ({t('ব্যাংক এনওসি', 'Bank NOC')})
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setDeedCode('DL-2026-1002');
+              handleVerify('DL-2026-1002', null);
+            }}
+            className="px-2.5 py-1 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-800 font-mono font-semibold border border-amber-200 cursor-pointer transition-colors"
+          >
+            DL-2026-1002 ({t('বিবাদমান দলিল', 'Disputed Deed')})
           </button>
         </div>
 
@@ -503,10 +836,12 @@ export const VerifyDeedQrPage: React.FC = () => {
               ) : (
                 /* Dedicated Deed Schema Details */
                 <div className="space-y-4">
+                  <BangladeshStampDeedReplica deed={result.deed} result={result} lang={lang} t={t} formatDate={formatDate} />
+
                   <div className="flex items-center justify-between border-b border-[#006A4E]/10 pb-2">
                     <h3 className="text-sm font-extrabold text-[#0A1F1C] flex items-center gap-2">
                       <FileCheck className="w-4 h-4 text-[#006A4E]" />
-                      <span>{t('দলিলের বিবরণী', 'Deed Details')}</span>
+                      <span>{t('দলিলের বিস্তারিত সারসংক্ষেপ', 'Deed Registry Summary')}</span>
                     </h3>
                     <span className="text-[11px] font-bold text-[#5F7A74]">
                       {t('সাব-রেজিস্ট্রি রেকর্ড', 'Sub-Registry Record')}

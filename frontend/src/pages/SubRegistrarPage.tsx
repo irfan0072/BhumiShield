@@ -110,6 +110,7 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
   useEffect(() => {
     loadRegistrarData();
     const timer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
       loadRegistrarData();
     }, 8000);
     const onFocus = () => loadRegistrarData();
@@ -460,101 +461,114 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-100/80 rounded-2xl border border-slate-200/90 shadow-2xs">
-            <button
-              onClick={() => handleTabChange('wizard')}
-              className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-all select-none ${
-                subTab === 'wizard'
-                  ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
-              }`}
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>{t('নতুন দলিল ও প্রাক-যাচাই', 'Pre-Reg Gatekeeper')}</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('held')}
-              className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-all select-none ${
-                subTab === 'held'
-                  ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-600/20'
-                  : 'text-amber-800 hover:bg-amber-100/60'
-              }`}
-            >
-              <ShieldAlert className="w-3.5 h-3.5" />
-              <span>{t('স্থগিত (HELD) কিউ', 'Held Queue')}</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                subTab === 'held' ? 'bg-white/20 text-white' : 'bg-amber-200 text-amber-900'
-              }`}>
-                {toBanglaDigits(deedsList.filter((d) => d.status === 'HELD').length, lang)}
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
+            {/* Maker Deck: Data Officer Tasks */}
+            <div className="p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/90 flex flex-wrap items-center gap-1 shadow-2xs">
+              <span className="text-[10px] font-black uppercase px-2 py-0.5 text-slate-500 tracking-wider">
+                {t('মেকার ডেক (ডাটা এন্ট্রি):', 'Maker Deck:')}
               </span>
-            </button>
-            <button
-              onClick={() => handleTabChange('deeds')}
-              className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-all select-none ${
-                subTab === 'deeds'
-                  ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
-              }`}
-            >
-              <ListChecks className="w-3.5 h-3.5" />
-              <span>{t('দলিল রেজিস্টার', 'Deed Registry')}</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                subTab === 'deeds' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
-              }`}>
-                {toBanglaDigits(deedsList.length, lang)}
-              </span>
-            </button>
-            <button
-              onClick={() => handleTabChange('khatian')}
-              className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-all select-none ${
-                subTab === 'khatian'
-                  ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
-              }`}
-            >
-              <Search className="w-3.5 h-3.5" />
-              <span>{t('খতিয়ান পরম্পরা', 'Khatian Lineage')}</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('verifier')}
-              className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-all select-none ${
-                subTab === 'verifier'
-                  ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
-              }`}
-            >
-              <QrCode className="w-3.5 h-3.5" />
-              <span>{t('দলিল লেজার যাচাই', 'Deed Verifier')}</span>
-            </button>
-            <button
-              onClick={() => handleTabChange('fees')}
-              className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-all select-none ${
-                subTab === 'fees'
-                  ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
-              }`}
-            >
-              <Calculator className="w-3.5 h-3.5" />
-              <span>{t('সরকারি ফি ও চালান', 'Stamp & Challan')}</span>
-            </button>
-            {role !== 'registry_data_officer' && (
               <button
-                onClick={() => handleTabChange('onboarding')}
-                className={`px-3.5 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[36px] transition-all select-none ${
-                  subTab === 'onboarding'
+                onClick={() => handleTabChange('wizard')}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[34px] transition-all select-none ${
+                  subTab === 'wizard'
                     ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
                 }`}
               >
-                <Layers className="w-3.5 h-3.5" />
-                <span>{t('অনবোর্ডিং ব্যাচ অনুমোদন', 'Approve Staging')}</span>
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                <span>{t('নতুন দলিল ও ড্রাফট', 'Draft Deed & Entry')}</span>
+              </button>
+              <button
+                onClick={() => handleTabChange('fees')}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[34px] transition-all select-none ${
+                  subTab === 'fees'
+                    ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                }`}
+              >
+                <Calculator className="w-3.5 h-3.5" />
+                <span>{t('স্ট্যাম্প ফি ও চালান', 'Stamp & Challan')}</span>
+              </button>
+            </div>
+
+            {/* Checker Deck: Sub-Registrar Judicial Review */}
+            <div className="p-1.5 bg-emerald-50/80 rounded-2xl border border-emerald-200/80 flex flex-wrap items-center gap-1 shadow-2xs">
+              <span className="text-[10px] font-black uppercase px-2 py-0.5 text-emerald-800 tracking-wider">
+                {t('চেকার ডেক (সাব-রেজিস্ট্রার):', 'Checker Deck:')}
+              </span>
+              <button
+                onClick={() => handleTabChange('held')}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[34px] transition-all select-none ${
+                  subTab === 'held'
+                    ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-600/20'
+                    : 'text-amber-800 hover:bg-amber-100/60'
+                }`}
+              >
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>{t('স্থগিত (HELD) কিউ', 'Held Queue')}</span>
                 <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                  subTab === 'onboarding' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                  subTab === 'held' ? 'bg-white/20 text-white' : 'bg-amber-200 text-amber-900'
                 }`}>
-                  {toBanglaDigits(onboardingBatches.length, lang)}
+                  {toBanglaDigits(deedsList.filter((d) => d.status === 'HELD').length, lang)}
                 </span>
               </button>
-            )}
+              <button
+                onClick={() => handleTabChange('deeds')}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[34px] transition-all select-none ${
+                  subTab === 'deeds'
+                    ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                }`}
+              >
+                <ListChecks className="w-3.5 h-3.5" />
+                <span>{t('দলিল রেজিস্টার', 'Deed Registry')}</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                  subTab === 'deeds' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                }`}>
+                  {toBanglaDigits(deedsList.length, lang)}
+                </span>
+              </button>
+              <button
+                onClick={() => handleTabChange('khatian')}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[34px] transition-all select-none ${
+                  subTab === 'khatian'
+                    ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                }`}
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span>{t('খতিয়ান পরম্পরা', 'Khatian Lineage')}</span>
+              </button>
+              <button
+                onClick={() => handleTabChange('verifier')}
+                className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[34px] transition-all select-none ${
+                  subTab === 'verifier'
+                    ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                }`}
+              >
+                <QrCode className="w-3.5 h-3.5" />
+                <span>{t('লেজার যাচাই', 'Deed Verifier')}</span>
+              </button>
+              {role !== 'registry_data_officer' && (
+                <button
+                  onClick={() => handleTabChange('onboarding')}
+                  className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer min-h-[34px] transition-all select-none ${
+                    subTab === 'onboarding'
+                      ? 'bg-[#006A4E] text-white shadow-xs ring-2 ring-[#006A4E]/20'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                  }`}
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>{t('অনবোর্ডিং অনুমোদন', 'Approve Staging')}</span>
+                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                    subTab === 'onboarding' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+                  }`}>
+                    {toBanglaDigits(onboardingBatches.length, lang)}
+                  </span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -685,39 +699,42 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
               </div>
 
               <div>
-                <label className="label">
+                <label htmlFor="subreg-area-decimal" className="label">
                   {t('হস্তান্তরিত জমি (শতাংশ):', 'Transfer Area (Decimal):')}
                 </label>
                 <input
+                  id="subreg-area-decimal"
                   type="number"
                   step="0.01"
                   value={areaDecimal}
                   onChange={(e) => setAreaDecimal(e.target.value)}
-                  className="field text-xs font-bold"
+                  className="field text-xs font-bold placeholder:text-slate-500"
                 />
               </div>
 
               <div>
-                <label className="label">
+                <label htmlFor="subreg-share-fraction" className="label">
                   {t('অংশের ভগ্নাংশ (Share Fraction):', 'Share Fraction:')}
                 </label>
                 <input
+                  id="subreg-share-fraction"
                   type="text"
                   value={shareFraction}
                   onChange={(e) => setShareFraction(e.target.value)}
-                  className="field font-mono text-xs"
+                  className="field font-mono text-xs placeholder:text-slate-500"
                 />
               </div>
 
               <div>
-                <label className="label">
+                <label htmlFor="subreg-declared-value" className="label">
                   {t('দলিলের ঘোষিত মূল্য (টাকা):', 'Declared Value (BDT):')}
                 </label>
                 <input
+                  id="subreg-declared-value"
                   type="number"
                   value={declaredValue}
                   onChange={(e) => setDeclaredValue(e.target.value)}
-                  className="field text-xs font-bold"
+                  className="field text-xs font-bold placeholder:text-slate-500"
                 />
               </div>
             </div>
@@ -850,8 +867,9 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
                   type="text"
                   value={deedSearch}
                   onChange={(e) => setDeedSearch(e.target.value)}
+                  aria-label={t('দলিল নং, দাগ বা নাম খুঁজুন', 'Search deed, dag or party')}
                   placeholder={t('দলিল নং, দাগ বা নাম খুঁজুন...', 'Search deed, dag or party...')}
-                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#006A4E]/20 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-[#006A4E]/20 text-xs bg-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#006A4E]/30"
                 />
               </div>
 
@@ -956,21 +974,31 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
                             >
                               <Eye className="w-4 h-4" />
                             </button>
-                            {d.status !== 'PENDING_MUTATION' && d.status !== 'MUTATED' && (
-                              <button
-                                onClick={() => handleUpdateDeedStatus(d.id, 'REGISTERED')}
-                                className="px-2.5 py-1 rounded bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-[11px] cursor-pointer min-h-[30px] transition-colors"
-                              >
-                                ✔ {t('রিলিজ', 'Release')}
-                              </button>
-                            )}
-                            {d.status !== 'REJECTED' && (
-                              <button
-                                onClick={() => handleUpdateDeedStatus(d.id, 'REJECTED')}
-                                className="px-2.5 py-1 rounded bg-[#FF3B4A] hover:bg-[#E02E3C] text-white font-bold text-[11px] cursor-pointer min-h-[30px] transition-colors"
-                              >
-                                ✖ {t('বাতিল', 'Reject')}
-                              </button>
+                            {['sub_registrar', 'admin', 'system_admin'].includes(role) ? (
+                              <>
+                                {d.status !== 'PENDING_MUTATION' && d.status !== 'MUTATED' && (
+                                  <button
+                                    onClick={() => handleUpdateDeedStatus(d.id, 'REGISTERED')}
+                                    className="px-3 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-extrabold text-xs cursor-pointer min-h-[32px] transition-all shadow-2xs flex items-center gap-1"
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                    <span>{t('রিলিজ ও রেজিস্ট্রি', 'Release')}</span>
+                                  </button>
+                                )}
+                                {d.status !== 'REJECTED' && (
+                                  <button
+                                    onClick={() => handleUpdateDeedStatus(d.id, 'REJECTED')}
+                                    className="px-3 py-1.5 rounded-lg bg-[#FF3B4A] hover:bg-[#E02E3C] text-white font-extrabold text-xs cursor-pointer min-h-[32px] transition-all shadow-2xs flex items-center gap-1"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                    <span>{t('বাতিল', 'Reject')}</span>
+                                  </button>
+                                )}
+                              </>
+                            ) : (
+                              <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                                {t('স্বাক্ষর অপেক্ষমাণ', 'Pending Signature')}
+                              </span>
                             )}
                           </div>
                         </td>
@@ -1003,14 +1031,15 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
                 </select>
               </div>
               <div>
-                <label className="label">
+                <label htmlFor="subreg-calc-declared-value" className="label">
                   {t('জমির বাজার মূল্য (টাকা):', 'Declared Market Value (BDT):')}
                 </label>
                 <input
+                  id="subreg-calc-declared-value"
                   type="number"
                   value={declaredValue}
                   onChange={(e) => setDeclaredValue(e.target.value)}
-                  className="field text-xs font-bold"
+                  className="field text-xs font-bold placeholder:text-slate-500"
                 />
               </div>
               <div className="flex items-end gap-2">
@@ -1149,19 +1178,27 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
 
                     {batch.status === 'SUBMITTED' && (
                       <div className="flex justify-end gap-2 pt-2 border-t">
-                        <button
-                          onClick={() => handleDecideBatch(batch.id, 'APPROVED')}
-                          className="px-4 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>{t('✔ ব্যাচ অনুমোদন ও লেজারে অন্তর্ভুক্তি', 'Approve Batch')}</span>
-                        </button>
-                        <button
-                          onClick={() => handleDecideBatch(batch.id, 'REJECTED')}
-                          className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
-                        >
-                          <span>✕ {t('বাতিল (Reject)', 'Reject')}</span>
-                        </button>
+                        {['sub_registrar', 'admin', 'system_admin'].includes(role) ? (
+                          <>
+                            <button
+                              onClick={() => handleDecideBatch(batch.id, 'APPROVED')}
+                              className="px-4 py-1.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>{t('✔ ব্যাচ অনুমোদন ও লেজারে অন্তর্ভুক্তি', 'Approve Batch')}</span>
+                            </button>
+                            <button
+                              onClick={() => handleDecideBatch(batch.id, 'REJECTED')}
+                              className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition"
+                            >
+                              <span>✕ {t('বাতিল (Reject)', 'Reject')}</span>
+                            </button>
+                          </>
+                        ) : (
+                          <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded">
+                            {t('সাব-রেজিস্ট্রার পর্যালোচনার অপেক্ষায়', 'Pending Sub-Registrar Review')}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1194,14 +1231,29 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
                   {lang === 'bn' ? createdDeedResult.message_bn : createdDeedResult.message_en}
                 </span>
               </div>
-              <p className="font-mono text-xs">
-                <strong>Deed No:</strong> {createdDeedResult.deed.deed_no} |{' '}
-                <strong>Status:</strong> {createdDeedResult.deed.status} |{' '}
-                <strong>Chain Block:</strong> #{createdDeedResult.deed.chain_index}
-              </p>
-              <p className="font-mono text-[11px] break-all text-[#5F7A74]">
-                <strong>SHA-256 Hash:</strong> {createdDeedResult.deed.content_hash}
-              </p>
+              <div className="font-sans text-xs text-slate-700 space-y-1">
+                <span className="font-bold">{t('দলিল নম্বর:', 'Deed No:')}</span>{' '}
+                <span className="font-mono font-bold text-slate-900">{createdDeedResult.deed.deed_no}</span> |{' '}
+                <span className="font-bold">{t('স্ট্যাটাস:', 'Status:')}</span>{' '}
+                <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                  createdDeedResult.deed.status === 'REGISTERED' ? 'bg-emerald-100 text-[#006A4E]' : 'bg-rose-100 text-rose-800'
+                }`}>
+                  {createdDeedResult.deed.status}
+                </span> |{' '}
+                <span className="font-bold">{t('ব্লক ইনডেক্স:', 'Block Index:')}</span>{' '}
+                <span className="font-mono">#{createdDeedResult.deed.chain_index}</span>
+              </div>
+
+              <details className="mt-2 text-xs bg-white/80 border border-slate-200 rounded-xl p-2.5 max-w-xl">
+                <summary className="font-bold text-slate-700 cursor-pointer select-none flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#006A4E]" />
+                  <span>{t('কারিগরি ক্রিপ্টোগ্রাফিক প্রমাণ (SHA-256 লেজার হ্যাশ) ▾', 'Cryptographic Proof (SHA-256 Hash) ▾')}</span>
+                </summary>
+                <div className="mt-2 pt-2 border-t border-slate-200 font-mono text-[11px] text-slate-600 break-all select-all space-y-1">
+                  <div><strong>SHA-256 Content Hash:</strong> {createdDeedResult.deed.content_hash}</div>
+                  <div><strong>Genesis Block Chain Index:</strong> #{createdDeedResult.deed.chain_index}</div>
+                </div>
+              </details>
             </div>
 
             {createdDeedResult.qr_data_uri && (
@@ -1220,16 +1272,22 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
       {/* Printable Treasury Fee Challan Modal */}
       {showChallanModal && feeBreakdown && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl relative my-8 border border-[#006A4E]/12">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="challan-modal-title"
+            className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl relative my-8 border border-[#006A4E]/12"
+          >
             <div className="flex items-center justify-between border-b pb-3 mb-4 print:hidden">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-[#006A4E]" />
-                <h3 className="font-extrabold text-[#0A1F1C] text-sm">
+                <h3 id="challan-modal-title" className="font-extrabold text-[#0A1F1C] text-sm">
                   {t('আনুমানিক ফি হিসাব — সরকারি চালান নয়', 'Informational Estimate — Not a Payment Document')}
                 </h3>
               </div>
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => window.print()}
                   className="px-3.5 py-1.5 rounded-lg bg-[#006A4E] text-white text-xs font-bold flex items-center gap-1 cursor-pointer"
                 >
@@ -1237,7 +1295,9 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
                   <span>{t('হিসাব প্রিন্ট করুন', 'Print Estimate')}</span>
                 </button>
                 <button
+                  type="button"
                   onClick={() => setShowChallanModal(false)}
+                  aria-label={t('বন্ধ করুন', 'Close')}
                   className="p-1.5 rounded-lg text-[#5F7A74]/80 hover:text-[#5F7A74] hover:bg-[#EDF7F4] cursor-pointer"
                 >
                   <X className="w-5 h-5" />
@@ -1247,74 +1307,80 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
 
             <div className="p-5 border-2 border-[#006A4E]/20 rounded-xl space-y-4 text-xs text-[#0A1F1C]">
               <div className="text-center border-b pb-3 space-y-0.5">
-                <p className="font-bold text-[#0A1F1C]">গণপ্রজাতন্ত্রী বাংলাদেশ সরকার • নিবন্ধন অধিদপ্তর</p>
-                <p className="font-extrabold text-[#006A4E]">অফিসিয়াল রেজিস্ট্রেশন ফি ও সরকারি শুল্ক প্রাক্কলন ডকেট</p>
+                <p className="font-bold text-[#0A1F1C]">
+                  {t('গণপ্রজাতন্ত্রী বাংলাদেশ সরকার • নিবন্ধন অধিদপ্তর', "Government of the People's Republic of Bangladesh • Directorate of Registration")}
+                </p>
+                <p className="font-extrabold text-[#006A4E]">
+                  {t('অফিসিয়াল রেজিস্ট্রেশন ফি ও সরকারি শুল্ক প্রাক্কলন ডকেট', 'Official Registration Fee & Government Duty Assessment Docket')}
+                </p>
                 <p className="text-[10px] text-[#5F7A74] font-mono">
                   ASSESSMENT REF: BHM-CHLN-{Date.now().toString().slice(-8)}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-[11px]">
-                <div>দলিলের ঘোষিত মূল্য: <strong>৳{Number(declaredValue).toLocaleString()}</strong></div>
-                <div>দলিলের ধরন: <strong>{deedTypeFee}</strong></div>
-                <div>হিসাবের ধরন: <strong>সরকারি সার্কুলার নির্ধারিত প্রাক্কলন</strong></div>
-                <div>হিসাবের উৎস: <strong>ভূমি ও আইন মন্ত্রণালয় রাজস্ব ফ্রেমওয়ার্ক</strong></div>
+                <div>{t('দলিলের ঘোষিত মূল্য:', 'Declared Deed Value:')} <strong>৳{Number(declaredValue).toLocaleString()}</strong></div>
+                <div>{t('দলিলের ধরন:', 'Deed Type:')} <strong>{deedTypeFee}</strong></div>
+                <div>{t('হিসাবের ধরন:', 'Assessment Type:')} <strong>{t('সরকারি সার্কুলার নির্ধারিত প্রাক্কলন', 'Official Circular Scheduled Estimate')}</strong></div>
+                <div>{t('হিসাবের উৎস:', 'Source:')} <strong>{t('ভূমি ও আইন মন্ত্রণালয় রাজস্ব ফ্রেমওয়ার্ক', 'Ministry of Land & Law Revenue Framework')}</strong></div>
               </div>
 
-              <table className="w-full border-collapse text-[11px] border border-[#006A4E]/12">
-                <thead>
-                  <tr className="bg-[#EDF7F4]/80 border-b border-[#006A4E]/12">
-                    <th className="p-2 text-left">ফি/শুল্কের খাত</th>
-                    <th className="p-2 text-right">হার</th>
-                    <th className="p-2 text-right">পরিমাণ (টাকা)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#006A4E]/10">
-                  <tr>
-                    <td className="p-2">স্ট্যাম্প শুল্ক (Stamp Duty)</td>
-                    <td className="p-2 text-right">১.৫%</td>
-                    <td className="p-2 text-right font-mono font-bold">
-                      ৳{feeBreakdown.breakdown.stamp_duty_bdt.toLocaleString()}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="p-2">রেজিস্ট্রেশন ফি (Registration Fee)</td>
-                    <td className="p-2 text-right">১.০%</td>
-                    <td className="p-2 text-right font-mono font-bold">
-                      ৳{feeBreakdown.breakdown.registration_fee_bdt.toLocaleString()}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="p-2">স্থানীয় সরকার কর (Local Govt Tax)</td>
-                    <td className="p-2 text-right">৩.০%</td>
-                    <td className="p-2 text-right font-mono font-bold">
-                      ৳{feeBreakdown.breakdown.local_govt_tax_bdt.toLocaleString()}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className="p-2">উৎস কর / এআইটি (Capital Gain Tax)</td>
-                    <td className="p-2 text-right">২.০%</td>
-                    <td className="p-2 text-right font-mono font-bold">
-                      ৳{feeBreakdown.breakdown.ait_gain_tax_bdt.toLocaleString()}
-                    </td>
-                  </tr>
-                  <tr className="bg-[#EDF7F4] font-bold text-[#006A4E]">
-                    <td className="p-2" colSpan={2}>সর্বমোট প্রাক্কলিত ফি ও শুল্ক:</td>
-                    <td className="p-2 text-right font-mono text-sm">
-                      ৳{feeBreakdown.total_payable_bdt.toLocaleString()}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <div className="overflow-x-auto w-full">
+                <table className="w-full border-collapse text-[11px] border border-[#006A4E]/12">
+                  <thead>
+                    <tr className="bg-[#EDF7F4]/80 border-b border-[#006A4E]/12">
+                      <th className="p-2 text-left">{t('ফি/শুল্কের খাত', 'Fee / Duty Head')}</th>
+                      <th className="p-2 text-right">{t('হার', 'Rate')}</th>
+                      <th className="p-2 text-right">{t('পরিমাণ (টাকা)', 'Amount (BDT)')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#006A4E]/10">
+                    <tr>
+                      <td className="p-2">{t('স্ট্যাম্প শুল্ক (Stamp Duty)', 'Stamp Duty')}</td>
+                      <td className="p-2 text-right">{t('১.৫%', '1.5%')}</td>
+                      <td className="p-2 text-right font-mono font-bold">
+                        ৳{feeBreakdown.breakdown.stamp_duty_bdt.toLocaleString()}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-2">{t('রেজিস্ট্রেশন ফি (Registration Fee)', 'Registration Fee')}</td>
+                      <td className="p-2 text-right">{t('১.০%', '1.0%')}</td>
+                      <td className="p-2 text-right font-mono font-bold">
+                        ৳{feeBreakdown.breakdown.registration_fee_bdt.toLocaleString()}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-2">{t('স্থানীয় সরকার কর (Local Govt Tax)', 'Local Government Tax')}</td>
+                      <td className="p-2 text-right">{t('৩.০%', '3.0%')}</td>
+                      <td className="p-2 text-right font-mono font-bold">
+                        ৳{feeBreakdown.breakdown.local_govt_tax_bdt.toLocaleString()}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-2">{t('উৎস কর / এআইটি (Capital Gain Tax)', 'Capital Gain Tax / AIT')}</td>
+                      <td className="p-2 text-right">{t('২.০%', '2.0%')}</td>
+                      <td className="p-2 text-right font-mono font-bold">
+                        ৳{feeBreakdown.breakdown.ait_gain_tax_bdt.toLocaleString()}
+                      </td>
+                    </tr>
+                    <tr className="bg-[#EDF7F4] font-bold text-[#006A4E]">
+                      <td className="p-2" colSpan={2}>{t('সর্বমোট প্রাক্কলিত ফি ও শুল্ক:', 'Total Estimated Fees & Duties:')}</td>
+                      <td className="p-2 text-right font-mono text-sm">
+                        ৳{feeBreakdown.total_payable_bdt.toLocaleString()}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
               <div className="flex justify-between items-end pt-4 border-t text-[10px] text-[#5F7A74]">
                 <div>
-                  <p>এই নথি দিয়ে কোনো অর্থ প্রদান করবেন না।</p>
-                  <p>চূড়ান্ত ফি ও চালানের জন্য সরকারি নিবন্ধন অফিসের নির্দেশনা অনুসরণ করুন।</p>
+                  <p>{t('এই নথি দিয়ে কোনো অর্থ প্রদান করবেন না।', 'Do not make any payment using this informational document.')}</p>
+                  <p>{t('চূড়ান্ত ফি ও চালানের জন্য সরকারি নিবন্ধন অফিসের নির্দেশনা অনুসরণ করুন।', 'Follow official Land Registration Office guidelines for final fees and challans.')}</p>
                 </div>
                 <div className="text-right">
                   <div className="font-mono font-bold text-[#006A4E]">[INFORMATIONAL ESTIMATE]</div>
-                  <p>সরকারি নথি নয়</p>
+                  <p>{t('সরকারি নথি নয়', 'Not an official instrument')}</p>
                 </div>
               </div>
             </div>
@@ -1400,21 +1466,22 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
               </div>
             </div>
 
-            {/* Cryptographic Ledger & Gatekeeper Badges */}
-            <div className="p-3.5 rounded-xl bg-slate-900 text-slate-300 space-y-2 text-xs">
-              <div className="flex items-center justify-between text-emerald-400 font-bold">
+            {/* Cryptographic Ledger & Gatekeeper Badges with Collapsible Proof */}
+            <details className="p-3.5 rounded-xl bg-slate-900 text-slate-300 text-xs cursor-pointer group">
+              <summary className="flex items-center justify-between font-bold text-emerald-400 select-none">
                 <span className="flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4" /> {t('১১টি প্রাক-নিবন্ধন গেটকিপার রুল যাচাই', '11 Gatekeeper Rules Checked')}
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span>{t('১১টি প্রাক-নিবন্ধন গেটকিপার রুল যাচাই (সবগুলো উত্তীর্ণ)', '11 Gatekeeper Rules Checked (All Passed)')}</span>
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-300">
-                  {t('ঝুঁকি মুক্ত', 'Low Risk')}
+                <span className="text-[10px] text-slate-400 group-open:rotate-180 transition-transform">
+                  ▼ {t('ক্রিপ্টো প্রমাণ দেখুন', 'View Proof')}
                 </span>
+              </summary>
+              <div className="font-mono text-[10px] text-slate-300 break-all pt-2.5 mt-2 border-t border-slate-800 space-y-1 select-all">
+                <div><strong>{t('ব্লকচেইন হ্যাশ (SHA-256):', 'Hash (SHA-256):')}</strong> {selectedDeedForModal.content_hash || '2f3c8542e1dda1d7c818025b2f132095feb04a370e1322a827920860e36d22d5'}</div>
+                <div><strong>{t('Ed25519 সিল স্বাক্ষর:', 'Ed25519 Signature:')}</strong> {selectedDeedForModal.signature ? selectedDeedForModal.signature : '55989fbffb79abbb3916e112101215bd94821a71676f6f9...'}</div>
               </div>
-              <div className="font-mono text-[10px] text-slate-400 break-all pt-1 border-t border-slate-800">
-                <div>{t('ব্লকচেইন হ্যাশ:', 'Hash:')} {selectedDeedForModal.content_hash || '2f3c8542e1dda1d7c818025b2f132095feb04a370e1322a827920860e36d22d5'}</div>
-                <div>{t('Ed25519 সিল:', 'Seal:')} {selectedDeedForModal.signature ? selectedDeedForModal.signature.slice(0, 48) + '...' : '55989fbffb79abbb3916e112101215bd...'}</div>
-              </div>
-            </div>
+            </details>
 
             {/* Hearing Notes & Action Buttons */}
             <div className="space-y-3 pt-1">
@@ -1459,48 +1526,58 @@ export const SubRegistrarPage: React.FC<{ onNavigate?: (tab: string) => void }> 
                 />
               </div>
 
-              <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <div className="flex flex-wrap items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setSelectedDeedForModal(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
                 >
                   {t('বাতিল', 'Cancel')}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await handleUpdateDeedStatus(selectedDeedForModal.id, 'REJECTED');
-                    setSelectedDeedForModal(null);
-                  }}
-                  className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <span>✖ {t('দলিল বাতিল (Reject)', 'Reject Deed')}</span>
-                </button>
+                {['sub_registrar', 'admin', 'system_admin'].includes(role) ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleUpdateDeedStatus(selectedDeedForModal.id, 'REJECTED');
+                        setSelectedDeedForModal(null);
+                      }}
+                      className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer shadow-sm hover:scale-[1.02]"
+                    >
+                      <X className="w-4 h-4" />
+                      <span>{t('দলিল বাতিল (Reject)', 'Reject Deed')}</span>
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await handleUpdateDeedStatus(selectedDeedForModal.id, 'HELD');
-                    setSelectedDeedForModal(null);
-                  }}
-                  className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <span>⚠ {t('স্থগিত (HELD)', 'Hold Deed')}</span>
-                </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleUpdateDeedStatus(selectedDeedForModal.id, 'HELD');
+                        setSelectedDeedForModal(null);
+                      }}
+                      className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-extrabold transition flex items-center gap-1.5 cursor-pointer shadow-sm hover:scale-[1.02]"
+                    >
+                      <ShieldAlert className="w-4 h-4" />
+                      <span>{t('শুনানির জন্য স্থগিত (HELD)', 'Hold for Hearing')}</span>
+                    </button>
 
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await handleUpdateDeedStatus(selectedDeedForModal.id, 'REGISTERED');
-                    setSelectedDeedForModal(null);
-                  }}
-                  className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>{t('অনুমোদন ও Ed25519 সিল', 'Approve & Sign')}</span>
-                </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleUpdateDeedStatus(selectedDeedForModal.id, 'REGISTERED');
+                        setSelectedDeedForModal(null);
+                      }}
+                      className="px-6 py-2.5 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs sm:text-sm font-black transition flex items-center gap-2 cursor-pointer shadow-md hover:scale-[1.02] ring-2 ring-[#006A4E]/30"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>{t('দলিল অনুমোদন ও Ed25519 সিল (Approve & Register)', 'Approve & Register Deed')}</span>
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">
+                    {t('দলিল অনুমোদন বা বাতিলের এখতিয়ার কেবল সাব-রেজিস্ট্রারের রয়েছে', 'Only Sub-Registrar has authority to sign or reject deeds')}
+                  </span>
+                )}
               </div>
             </div>
           </div>

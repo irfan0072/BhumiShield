@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useAppUI } from '../i18n';
 import { BhumiApi } from '../api/client';
-import { toBanglaDigits } from '../theme/tokens';
+import { toBanglaDigits, maskNid, maskPhone } from '../theme/tokens';
 
 interface SpecialistWorkspacePageProps {
   onNavigate?: (tab: string) => void;
@@ -72,9 +72,13 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
 
   const loadData = () => {
     setLoading(true);
+    const disputesPromise = isLawyerRole
+      ? BhumiApi.getMyLawyerCases().then((res) => (Array.isArray(res) ? res : res.items || [])).catch(() => [])
+      : BhumiApi.listDisputes().catch(() => []);
+
     Promise.all([
       BhumiApi.getPlots().catch(() => []),
-      BhumiApi.listDisputes().catch(() => []),
+      disputesPromise,
       BhumiApi.listAcquisitionCases().catch(() => ({ items: [] })),
     ])
       .then(([plotsRes, dispRes, acqRes]) => {
@@ -244,6 +248,11 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#006A4E] text-[11px] font-bold">
                 {isDcRole ? t('সরকারি অধিক্ষেত্র', 'Official Jurisdiction') : t('আইনি যাচাই', 'Legal Scrutiny')}
               </span>
+              {!isDcRole && (
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#006A4E] text-[11px] font-bold border border-emerald-300 flex items-center gap-1">
+                  ✓ {t('বাংলাদেশ বার কাউন্সিল সনদপ্রাপ্ত প্যানেল আইনজীবী', 'Bar Council Verified Advocate')}
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
               {isDcRole
@@ -556,7 +565,17 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
                         {disp.description_bn || t('আদালতের অন্তর্বর্তীকালীন স্থগিতাদেশ', 'Court Injunction Decree')}
                       </td>
                       <td className="py-3 px-4 text-slate-600 font-medium">
-                        {disp.complainant_name_bn || t('বিজ্ঞ আইনজীবী', 'Advocate')}
+                        <div className="font-semibold text-slate-800">{disp.complainant_name_bn || disp.plaintiff_name || t('বিজ্ঞ আইনজীবী', 'Advocate')}</div>
+                        {(disp.complainant_nid || disp.plaintiff_nid) && (
+                          <div className="text-[10px] font-mono text-slate-500 mt-0.5">
+                            এনআইডি: {maskNid(disp.complainant_nid || disp.plaintiff_nid, lang)}
+                          </div>
+                        )}
+                        {(disp.phone || disp.complainant_phone) && (
+                          <div className="text-[10px] text-slate-500 mt-0.5">
+                            মোবাইল: {maskPhone(disp.phone || disp.complainant_phone, lang)}
+                          </div>
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${

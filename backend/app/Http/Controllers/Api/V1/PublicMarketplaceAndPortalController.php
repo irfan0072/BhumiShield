@@ -856,6 +856,7 @@ final class PublicMarketplaceAndPortalController
         $serviceType = trim((string) ($payload['service_type'] ?? 'GENERAL_INQUIRY'));
         $allowedServices = [
             'GENERAL_INQUIRY',
+            'DEED_REGISTRATION',
             'DEED_REGISTRATION_COUNTER',
             'MUTATION_HEARING',
             'RECORD_CORRECTION_HEARING',

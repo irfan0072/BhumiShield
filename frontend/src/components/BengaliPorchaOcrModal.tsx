@@ -40,6 +40,17 @@ export const BengaliPorchaOcrModal: React.FC<BengaliPorchaOcrModalProps> = ({
   const [dbVerification, setDbVerification] = useState<any>(null);
   const [dbLoading, setDbLoading] = useState<boolean>(false);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   // Listen for custom open event
   useEffect(() => {
     const handleOpen = (e: any) => {
@@ -133,7 +144,12 @@ export const BengaliPorchaOcrModal: React.FC<BengaliPorchaOcrModalProps> = ({
   const areaVal = ocrResult?.structured?.area_decimal?.value || '20.00';
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fadeIn">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="bengali-porcha-ocr-modal-title"
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fadeIn"
+    >
       {/* Modal Dialog */}
       <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
         {/* Modal Top Header */}
@@ -144,7 +160,7 @@ export const BengaliPorchaOcrModal: React.FC<BengaliPorchaOcrModalProps> = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-extrabold text-sm sm:text-base leading-tight">
+                <h3 id="bengali-porcha-ocr-modal-title" className="font-extrabold text-sm sm:text-base leading-tight">
                   {t('বাংলা পর্চা ও খতিয়ান ডকুমেন্ট এআই স্ক্যানার', 'Document AI / Bengali Porcha Scanner')}
                 </h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-900">
@@ -162,6 +178,7 @@ export const BengaliPorchaOcrModal: React.FC<BengaliPorchaOcrModalProps> = ({
           <button
             type="button"
             onClick={onClose}
+            aria-label={t('বন্ধ করুন', 'Close')}
             className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer text-sm"
             title={t('বন্ধ করুন', 'Close')}
           >

@@ -310,6 +310,7 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
   useEffect(() => {
     loadAcLandData();
     const timer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
       loadAcLandData();
     }, 8000);
     const onFocus = () => loadAcLandData();
@@ -744,48 +745,112 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
               </div>
             </>
           ) : (
-            <>
-              <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200">
-                <div className="text-[10px] font-bold uppercase text-amber-800 flex items-center justify-between">
-                  <span>{t('বিচারাধীন নামজারি কেস', 'Pending Mutations')}</span>
-                  <Clock className="w-3.5 h-3.5 text-amber-700" />
+            <div className="col-span-2 sm:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-3.5">
+              {/* Card 1: Pending e-Mutations & Auto LT Notices */}
+              <div className="p-4 rounded-2xl bg-amber-50/90 border-2 border-amber-300 shadow-xs flex flex-col justify-between transition-all hover:shadow-sm">
+                <div>
+                  <div className="flex items-center justify-between text-amber-900">
+                    <span className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-amber-700" />
+                      <span>{t('বিচারাধীন ই-নামজারি ও অটো এলটি নোটিশ', 'Pending e-Mutations & Auto LT')}</span>
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-200 text-amber-950">
+                      {t('শুনানি অপেক্ষমাণ', 'Action Needed')}
+                    </span>
+                  </div>
+                  <div className="text-3xl font-black text-amber-950 mt-2">
+                    {toBanglaDigits(pendingMutationsCount, lang)}
+                    <span className="text-xs font-semibold text-amber-800 ml-1.5">{t('টি কেস', 'cases')}</span>
+                  </div>
+                  <p className="text-xs text-amber-800 mt-1">
+                    {t('সাব-রেজিস্ট্রি থেকে প্রাপ্ত অটো এলটি নোটিশ ও নাগরিক আবেদন', 'Auto LT notices & direct citizen mutation filings')}
+                  </p>
                 </div>
-                <div className="text-2xl font-extrabold text-amber-900 mt-1">
-                  {toBanglaDigits(pendingMutationsCount, lang)}
+                <div className="pt-3 mt-2 border-t border-amber-200/80 flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-amber-900">
+                    {t('অনুমোদিত:', 'Approved:')} {toBanglaDigits(approvedMutationsCount, lang)} {t('টি', '')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('mutations')}
+                    className="text-xs font-black text-amber-900 hover:text-amber-950 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>{t('নামজারি এজলাস খুলুন', 'Open Mutation Docket')}</span>
+                    <span>→</span>
+                  </button>
                 </div>
-                <div className="text-[11px] text-amber-700 mt-0.5">{t('শুনানি ও অনুমোদনের অপেক্ষায়', 'Awaiting hearing & order')}</div>
               </div>
-              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200">
-                <div className="text-[10px] font-bold uppercase text-emerald-800 flex items-center justify-between">
-                  <span>{t('অনুমোদিত নামজারি', 'Approved Mutations')}</span>
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#006A4E]" />
+
+              {/* Card 2: Flagged Khatians & Record Discrepancies */}
+              <div className="p-4 rounded-2xl bg-rose-50/90 border-2 border-rose-300 shadow-xs flex flex-col justify-between transition-all hover:shadow-sm">
+                <div>
+                  <div className="flex items-center justify-between text-rose-900">
+                    <span className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+                      <ShieldAlert className="w-4 h-4 text-rose-600" />
+                      <span>{t('রেকর্ডের অমিল ও খতিয়ান শুদ্ধিপত্র', 'Flagged Khatians & Discrepancies')}</span>
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-200 text-rose-950">
+                      {t('নিরীক্ষা আবশ্যক', 'Audit Alert')}
+                    </span>
+                  </div>
+                  <div className="text-3xl font-black text-rose-950 mt-2">
+                    {toBanglaDigits(flaggedKhatiansCount, lang)}
+                    <span className="text-xs font-semibold text-rose-800 ml-1.5">{t('টি খতিয়ান', 'records')}</span>
+                  </div>
+                  <p className="text-xs text-rose-800 mt-1">
+                    {t('সিএস/আরএস/বিএস রেকর্ডের ক্ষেত্রফল অমিল ও প্রিন্টিং ত্রুটি', 'CS/RS/BS survey area anomalies & mismatch reports')}
+                  </p>
                 </div>
-                <div className="text-2xl font-extrabold text-[#006A4E] mt-1">
-                  {toBanglaDigits(approvedMutationsCount, lang)}
+                <div className="pt-3 mt-2 border-t border-rose-200/80 flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-rose-900">
+                    {t('শুদ্ধিপত্র প্রয়োজনীয়', 'Correction Pending')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('khatians')}
+                    className="text-xs font-black text-rose-900 hover:text-rose-950 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>{t('শুদ্ধিপত্র এজলাসে যান', 'Open Reconciliation')}</span>
+                    <span>→</span>
+                  </button>
                 </div>
-                <div className="text-[11px] text-emerald-700 mt-0.5">{t('সৃজিত নতুন খতিয়ান', 'New khatians created')}</div>
               </div>
-              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200">
-                <div className="text-[10px] font-bold uppercase text-rose-800 flex items-center justify-between">
-                  <span>{t('রেকর্ডের অমিল / ফ্ল্যাগ', 'Flagged Khatians')}</span>
-                  <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+
+              {/* Card 3: Active Tribunal Disputes & Objections */}
+              <div className="p-4 rounded-2xl bg-blue-50/90 border-2 border-blue-300 shadow-xs flex flex-col justify-between transition-all hover:shadow-sm">
+                <div>
+                  <div className="flex items-center justify-between text-blue-900">
+                    <span className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+                      <Scale className="w-4 h-4 text-blue-700" />
+                      <span>{t('আপত্তি ও মিস-কেস আদালত', 'Active Disputes & Objections')}</span>
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-200 text-blue-950">
+                      {t('ম্যাজিস্ট্রিয়াল ট্রাইব্যুনাল', 'Tribunal')}
+                    </span>
+                  </div>
+                  <div className="text-3xl font-black text-blue-950 mt-2">
+                    {toBanglaDigits(activeDisputesCount, lang)}
+                    <span className="text-xs font-semibold text-blue-800 ml-1.5">{t('টি মোকদ্দমা', 'cases')}</span>
+                  </div>
+                  <p className="text-xs text-blue-800 mt-1">
+                    {t('দেওয়ানি নিষেধাজ্ঞা, ওয়ারিশান দাবি ও সীমানা আপত্তি', 'Court injunctions, heir disputes & boundary objections')}
+                  </p>
                 </div>
-                <div className="text-2xl font-extrabold text-rose-800 mt-1">
-                  {toBanglaDigits(flaggedKhatiansCount, lang)}
+                <div className="pt-3 mt-2 border-t border-blue-200/80 flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-blue-900">
+                    {t('বিচারিক নিষ্পত্তি চলমান', 'Hearings Active')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('disputes')}
+                    className="text-xs font-black text-blue-900 hover:text-blue-950 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>{t('ট্রাইব্যুনাল এজলাসে যান', 'Open Disputes')}</span>
+                    <span>→</span>
+                  </button>
                 </div>
-                <div className="text-[11px] text-rose-600 mt-0.5">{t('শুদ্ধিপত্র প্রয়োজন', 'Reconciliation needed')}</div>
               </div>
-              <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200">
-                <div className="text-[10px] font-bold uppercase text-blue-800 flex items-center justify-between">
-                  <span>{t('নাগরিক আপত্তি ও বিরোধ', 'Ownership Disputes')}</span>
-                  <Scale className="w-3.5 h-3.5 text-blue-700" />
-                </div>
-                <div className="text-2xl font-extrabold text-blue-900 mt-1">
-                  {toBanglaDigits(activeDisputesCount, lang)}
-                </div>
-                <div className="text-[11px] text-blue-700 mt-0.5">{t('মিস-কেস ও ট্রাইব্যুনাল', 'Active objections')}</div>
-              </div>
-            </>
+            </div>
           )}
         </div>
       </div>
@@ -2314,24 +2379,32 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
               </button>
 
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  disabled={decisionLoading}
-                  onClick={() => handleDecideMutation('REJECTED')}
-                  className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
-                >
-                  <XCircle className="w-4 h-4" />
-                  <span>{t('নামজারি নামঞ্জুর', 'Reject Mutation')}</span>
-                </button>
-                <button
-                  type="button"
-                  disabled={decisionLoading}
-                  onClick={() => handleDecideMutation('APPROVED')}
-                  className="px-5 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00523C] text-white text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>{t('অনুমোদন ও নতুন খতিয়ান সৃজন', 'Approve & Issue Khatian')}</span>
-                </button>
+                {['ac_land', 'admin', 'system_admin'].includes(role) ? (
+                  <>
+                    <button
+                      type="button"
+                      disabled={decisionLoading}
+                      onClick={() => handleDecideMutation('REJECTED')}
+                      className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                    >
+                      <XCircle className="w-4 h-4" />
+                      <span>{t('নামজারি নামঞ্জুর', 'Reject Mutation')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={decisionLoading}
+                      onClick={() => handleDecideMutation('APPROVED')}
+                      className="px-5 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00523C] text-white text-xs font-bold transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>{t('অনুমোদন ও নতুন খতিয়ান সৃজন', 'Approve & Issue Khatian')}</span>
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">
+                    {t('সহকারী কমিশনার (ভূমি)-এর ম্যাজিস্ট্রিয়াল আদেশের অপেক্ষায়', 'Pending AC Land Magistrate Order')}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -2378,9 +2451,37 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  {t('সহকারী কমিশনার (ভূমি) এর শুদ্ধিপত্র আদেশ নোট:*', 'Magistrate Order & Correction Rationale:*')}
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block font-bold text-slate-700">
+                    {t('সহকারী কমিশনার (ভূমি) এর শুদ্ধিপত্র আদেশ নোট:*', 'Magistrate Order & Correction Rationale:*')}
+                  </label>
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    {t('ক্লিক করে দ্রুত আদেশ যুক্ত করুন:', 'Quick remarks:')}
+                  </span>
+                </div>
+
+                {/* Predefined 1-Click Judicial Remark Chips for Khatians */}
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {[
+                    { text: 'জরিপ নকশা ও বায়া রেকর্ড পর্যালোচনায় আরএস দাগের ১৮ শতক বহাল রেখে শুদ্ধিপত্র প্রদান করা হলো।', label: '✓ বায়া ও আরএস অনুসারে বহাল' },
+                    { text: 'বিএস জরিপের মাঠ পর্চা ও চূড়ান্ত মুদ্রণে করণিক ভুল পরিলক্ষিত হওয়ায় রেকর্ড সংশোধন মঞ্জুর।', label: '✓ বিএস মুদ্রণ ত্রুটি সংশোধন' },
+                    { text: 'সরেজমিন সীমানা পরিদর্শন ও কানুনগোর তদন্ত প্রতিবেদনে দখলদারিত্বের ভিত্তিতে খতিয়ান শুদ্ধকরণ।', label: '✓ সরেজমিন তদন্তে শুদ্ধকরণ' },
+                    { text: 'সাবেক রেকর্ডের হিস্যায় গরমিল থাকায় সংশ্লিষ্ট পক্ষগণকে শুনানিতে মূল দলিল দাখিলের নির্দেশ।', label: '⚠ মূল দলিল তলব ও শুনানি' },
+                    { text: 'সহকারী সেটেলমেন্ট অফিসার ও উপজেলা সার্ভেয়ারকে যৌথ পরিমাপের নির্দেশ প্রদান করা হলো।', label: '⚠ যৌথ পরিমাপের নির্দেশ' },
+                  ].map((chip, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setKhatianReconcileNotes((prev) => (prev ? `${prev} ${chip.text}` : chip.text));
+                      }}
+                      className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 border border-slate-200 text-[11px] font-semibold text-slate-700 transition cursor-pointer"
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+
                 <textarea
                   rows={3}
                   required
@@ -2399,13 +2500,19 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
                 >
                   {t('বাতিল', 'Cancel')}
                 </button>
-                <button
-                  type="submit"
-                  disabled={decisionLoading}
-                  className="px-5 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00523C] text-white font-bold transition shadow-xs cursor-pointer"
-                >
-                  {t('শুদ্ধিপত্র কার্যকর করুন', 'Issue Correction Order')}
-                </button>
+                {['ac_land', 'admin', 'system_admin'].includes(role) ? (
+                  <button
+                    type="submit"
+                    disabled={decisionLoading}
+                    className="px-5 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00523C] text-white font-bold transition shadow-xs cursor-pointer"
+                  >
+                    {t('শুদ্ধিপত্র কার্যকর করুন', 'Issue Correction Order')}
+                  </button>
+                ) : (
+                  <span className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">
+                    {t('শুদ্ধিপত্র কার্যকরে এসি ল্যান্ডের অনুমোদন প্রয়োজন', 'AC Land approval required to execute correction')}
+                  </span>
+                )}
               </div>
             </form>
           </div>
@@ -2455,6 +2562,7 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
                   { text: 'বিজ্ঞ সিনিয়র সহকারী জজ আদালতে স্বত্ব মোকদ্দমা চলমান থাকায় বিক্রয় ও নামজারি সাময়িক স্থগিতাদেশ বহাল রাখা হলো।', label: '⚠ দেওয়ানি মোকদ্দমায় স্থগিতাদেশ' },
                   { text: 'আপত্তিকারী স্বত্ব প্রমাণের পর্যাপ্ত বায়া দলিল দাখিল করতে ব্যর্থ হয়েছেন।', label: '⚠ প্রমাণকের ঘাটতি' },
                   { text: 'সরেজমিন সীমানা পরিদর্শনে আবেদনকারী ও প্রতিপক্ষের শান্তিপূর্ণ সহাবস্থান প্রমাণিত হয়েছে।', label: '✓ শান্তিপূর্ণ সহাবস্থান' },
+                  { text: 'উভয় পক্ষের উপস্থিতিতে স্থানীয় প্রতিনিধির উপস্থিতিতে সীমানা বিরোধ আপস নিষ্পত্তিপূর্বক খারিজ।', label: '✓ সীমানা বিরোধ আপস নিষ্পত্তি' },
                 ].map((chip, idx) => (
                   <button
                     key={idx}
@@ -2487,22 +2595,30 @@ export const AcLandPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ o
                 {t('বাতিল', 'Cancel')}
               </button>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  disabled={decisionLoading}
-                  onClick={() => handleResolveDispute('RESOLVED')}
-                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-xs cursor-pointer"
-                >
-                  {t('আপত্তি নিষ্পত্তি', 'Dismiss / Resolve')}
-                </button>
-                <button
-                  type="button"
-                  disabled={decisionLoading}
-                  onClick={() => handleResolveDispute('RESOLVED_FROZEN')}
-                  className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold transition shadow-xs cursor-pointer"
-                >
-                  {t('বিক্রয় স্থগিতাদেশ বহাল', 'Freeze Plot Sale')}
-                </button>
+                {['ac_land', 'admin', 'system_admin'].includes(role) ? (
+                  <>
+                    <button
+                      type="button"
+                      disabled={decisionLoading}
+                      onClick={() => handleResolveDispute('RESOLVED')}
+                      className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-xs cursor-pointer"
+                    >
+                      {t('আপত্তি নিষ্পত্তি', 'Dismiss / Resolve')}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={decisionLoading}
+                      onClick={() => handleResolveDispute('RESOLVED_FROZEN')}
+                      className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold transition shadow-xs cursor-pointer"
+                    >
+                      {t('বিক্রয় স্থগিতাদেশ বহাল', 'Freeze Plot Sale')}
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">
+                    {t('শুনানি রায় ও আদেশ প্রদানে এসি ল্যান্ডের এখতিয়ার প্রযোজ্য', 'Only AC Land can issue dispute hearing orders')}
+                  </span>
+                )}
               </div>
             </div>
           </div>

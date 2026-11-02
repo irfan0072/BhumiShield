@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { BhumiApi, LawyerVerificationResult, LawyerCaseDocketResponse } from '../api/client';
 import { AddressCascader, AddressSelection } from '../components/AddressCascader';
-import { toBanglaDigits } from '../theme/tokens';
+import { toBanglaDigits, maskPhone, maskNid } from '../theme/tokens';
 import { useAppUI } from '../i18n';
 
 export const LawyerCaseFilingPage: React.FC<{
@@ -35,8 +35,11 @@ export const LawyerCaseFilingPage: React.FC<{
 }> = ({ onNavigateHome }) => {
   const { t, lang } = useAppUI();
 
-  // Step state (1: Jurisdiction & Plot, 2: Advocate Verification, 3: Case & Dispute Details, 4: Review & Docket)
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
+  // Streamlined 3-Step Wizard:
+  // Step 1: Advocate Bar Council Verification
+  // Step 2: Disputed Plot & Court Suit Particulars
+  // Step 3: Injunction Grounds, Affidavit & Digital Docket
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
   // --- Step 1: Land Jurisdiction & Plot ---
   const [address, setAddress] = useState<AddressSelection>({
@@ -198,7 +201,7 @@ export const LawyerCaseFilingPage: React.FC<{
 
       const res = await BhumiApi.fileLawyerCase(payload);
       setDocketResponse(res);
-      setCurrentStep(4);
+      setCurrentStep(3);
     } catch (err: any) {
       setSubmitError(
         err.response?.data?.message_bn ||
@@ -243,18 +246,25 @@ export const LawyerCaseFilingPage: React.FC<{
 
           <div className="grid grid-cols-2 gap-4 text-xs mb-4 p-3 bg-slate-50 border border-slate-300">
             <div>
-              <div className="font-bold text-slate-700">বিজ্ঞ আইনজীবী (দাখিলকারী):</div>
-              <div className="text-sm font-bold">{docketResponse.lawyer.name_bn}</div>
+              <div className="font-bold text-slate-700 flex items-center gap-1.5">
+                <span>বিজ্ঞ আইনজীবী (দাখিলকারী):</span>
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-[#006A4E] border border-emerald-300">
+                  ✓ বার কাউন্সিল সনদপ্রাপ্ত
+                </span>
+              </div>
+              <div className="text-sm font-bold mt-0.5">{docketResponse.lawyer.name_bn}</div>
               <div>বার কাউন্সিল সনদ নং: <span className="font-mono font-bold">{docketResponse.lawyer.bar_council_no}</span></div>
               <div>সদস্য: {docketResponse.lawyer.district_bar}</div>
-              <div>মোবাইল: {docketResponse.lawyer.phone}</div>
+              <div>মোবাইল: {maskPhone(docketResponse.lawyer.phone, lang)}</div>
             </div>
             <div>
               <div className="font-bold text-slate-700">আদালত ও মোকদ্দমার বিবরণ:</div>
-              <div className="text-sm font-bold">{docketResponse.court_details.court_name}</div>
+              <div className="text-sm font-bold mt-0.5">{docketResponse.court_details.court_name}</div>
               <div>মোকদ্দমা নম্বর: <span className="font-bold text-slate-900">{docketResponse.court_details.suit_no}</span></div>
               <div>মোকদ্দমার পর্যায়: {docketResponse.court_details.case_stage}</div>
-              <div>বাদী: {docketResponse.court_details.plaintiff_name} বনাম বিবাদী: {docketResponse.court_details.defendant_name}</div>
+              <div>
+                বাদী: <span className="font-bold">{docketResponse.court_details.plaintiff_name}</span> (এনআইডি: <span className="font-mono">{maskNid((docketResponse.court_details as any)?.plaintiff_nid || plaintiffNid, lang)}</span>) বনাম বিবাদী: <span className="font-bold">{docketResponse.court_details.defendant_name}</span>
+              </div>
             </div>
           </div>
 
@@ -285,9 +295,15 @@ export const LawyerCaseFilingPage: React.FC<{
 
           <div className="pt-4 border-t-2 border-slate-900 flex justify-between items-end text-[10px]">
             <div>
-              <div>ডিজিটাল প্রমাণীকরণ হ্যাশ (SHA-256):</div>
-              <div className="font-mono text-[9px] break-all max-w-sm">{docketResponse.verification.content_hash}</div>
-              <div className="mt-1">সিস্টেম অডিট ট্রেইল: Appended to Ledger via Advocate Portal</div>
+              <details className="text-[9px] bg-slate-100 border border-slate-300 rounded p-1.5 max-w-sm">
+                <summary className="font-bold text-slate-800 cursor-pointer select-none">
+                  ডিজিটাল প্রমাণীকরণ হ্যাশ (SHA-256) ▾
+                </summary>
+                <div className="font-mono text-[8px] break-all pt-1 mt-1 border-t border-slate-200">
+                  {docketResponse.verification.content_hash}
+                </div>
+              </details>
+              <div className="mt-1 text-[9px] text-slate-500">সিস্টেম অডিট ট্রেইল: Appended to Ledger via Advocate Portal</div>
             </div>
             <div className="text-center">
               <div className="w-20 h-20 border border-slate-400 mx-auto flex items-center justify-center font-mono text-[9px] bg-slate-100">
@@ -341,7 +357,7 @@ export const LawyerCaseFilingPage: React.FC<{
 
         {/* Stepper Wizard Bar (Dense Bangladeshi Navigation) */}
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-4 gap-1.5 bg-slate-100/90 p-1 rounded-xl border border-slate-200 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-100/90 p-1.5 rounded-xl border border-slate-200 text-xs">
             <button
               onClick={() => setCurrentStep(1)}
               className={`flex items-center gap-2 p-1.5 sm:p-2 rounded-lg text-left transition cursor-pointer ${
@@ -352,14 +368,14 @@ export const LawyerCaseFilingPage: React.FC<{
             >
               <div
                 className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
-                  currentStep === 1 ? 'bg-indigo-600 text-white' : 'bg-slate-300 text-slate-700'
+                  currentStep === 1 ? 'bg-indigo-600 text-white' : verifiedLawyer ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
                 }`}
               >
-                ১
+                {verifiedLawyer ? '✓' : toBanglaDigits(1, lang)}
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-slate-400 uppercase tracking-wider leading-none">ধাপ ১</div>
-                <div className="text-[11px] font-bold truncate">অধিক্ষেত্র ও দাগ</div>
+                <div className="text-[9px] text-slate-400 uppercase tracking-wider leading-none">{t('ধাপ ১', 'Step 1')}</div>
+                <div className="text-[11px] font-bold truncate">{t('আইনজীবী বার সনদ যাচাই', 'Advocate Bar License')}</div>
               </div>
             </button>
 
@@ -373,14 +389,14 @@ export const LawyerCaseFilingPage: React.FC<{
             >
               <div
                 className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
-                  currentStep === 2 ? 'bg-indigo-600 text-white' : verifiedLawyer ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
+                  currentStep === 2 ? 'bg-indigo-600 text-white' : selectedPlot ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
                 }`}
               >
-                {verifiedLawyer ? '✓' : '২'}
+                {selectedPlot ? '✓' : toBanglaDigits(2, lang)}
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-slate-400 uppercase tracking-wider leading-none">ধাপ ২</div>
-                <div className="text-[11px] font-bold truncate">আইনজীবী সনদ</div>
+                <div className="text-[9px] text-slate-400 uppercase tracking-wider leading-none">{t('ধাপ ২', 'Step 2')}</div>
+                <div className="text-[11px] font-bold truncate">{t('নালিশি জমি ও মোকদ্দমা', 'Disputed Plot & Suit')}</div>
               </div>
             </button>
 
@@ -389,43 +405,21 @@ export const LawyerCaseFilingPage: React.FC<{
               className={`flex items-center gap-2 p-1.5 sm:p-2 rounded-lg text-left transition cursor-pointer ${
                 currentStep === 3
                   ? 'bg-white text-indigo-900 font-bold shadow-xs border border-indigo-200'
+                  : docketResponse
+                  ? 'bg-emerald-50 text-emerald-800 cursor-pointer font-bold'
                   : 'text-slate-600 hover:bg-white/50'
               }`}
             >
               <div
                 className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
-                  currentStep === 3 ? 'bg-indigo-600 text-white' : 'bg-slate-300 text-slate-700'
+                  currentStep === 3 ? 'bg-indigo-600 text-white' : docketResponse ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
                 }`}
               >
-                ৩
+                {docketResponse ? '✓' : toBanglaDigits(3, lang)}
               </div>
               <div className="min-w-0">
-                <div className="text-[9px] text-slate-400 uppercase tracking-wider leading-none">ধাপ ৩</div>
-                <div className="text-[11px] font-bold truncate">মোকদ্দমা আরজি</div>
-              </div>
-            </button>
-
-            <button
-              disabled={!docketResponse}
-              onClick={() => setCurrentStep(4)}
-              className={`flex items-center gap-2 p-1.5 sm:p-2 rounded-lg text-left transition ${
-                currentStep === 4
-                  ? 'bg-white text-indigo-900 font-bold shadow-xs border border-indigo-200'
-                  : docketResponse
-                  ? 'bg-emerald-50 text-emerald-800 cursor-pointer font-bold'
-                  : 'text-slate-400 opacity-60 cursor-not-allowed'
-              }`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] shrink-0 ${
-                  currentStep === 4 ? 'bg-indigo-600 text-white' : docketResponse ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-500'
-                }`}
-              >
-                ৪
-              </div>
-              <div className="min-w-0">
-                <div className="text-[9px] text-slate-400 uppercase tracking-wider leading-none">ধাপ ৪</div>
-                <div className="text-[11px] font-bold truncate">ডিজিটাল ডকেট</div>
+                <div className="text-[9px] text-slate-400 uppercase tracking-wider leading-none">{t('ধাপ ৩', 'Step 3')}</div>
+                <div className="text-[11px] font-bold truncate">{docketResponse ? t('ডিজিটাল ডকেট', 'Digital Docket') : t('নিষেধাজ্ঞা আরজি ও ডকেট', 'Injunction Grounds & Docket')}</div>
               </div>
             </button>
           </div>
@@ -447,20 +441,185 @@ export const LawyerCaseFilingPage: React.FC<{
         )}
 
         {/* Cockpit Layout: Steps 1 to 3 in Dual Pane */}
-        {currentStep < 4 ? (
+        {!(currentStep === 3 && docketResponse) ? (
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
             {/* Left 7 Columns: Form Workspace */}
             <div className="lg:col-span-7 space-y-3">
-              {/* STEP 1: Jurisdiction & Plot Selection */}
+              {/* STEP 1: Lawyer Bar Council Verification */}
               {currentStep === 1 && (
                 <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs space-y-3.5">
                   <div className="border-b border-slate-100 pb-2.5">
                     <div className="flex items-center gap-2 text-indigo-700 font-bold text-xs">
-                      <MapPin className="w-4 h-4" />
-                      <span>ধাপ ১: ভৌগোলিক অধিক্ষেত্র ও নালিশি দাগ নির্বাচন</span>
+                      <Scale className="w-4 h-4" />
+                      <span>{t('ধাপ ১: বিজ্ঞ আইনজীবীর বার কাউন্সিল সনদ যাচাই', 'Step 1: Advocate Bar Council License Verification')}</span>
                     </div>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      বিভাগ, জেলা, উপজেলা এবং মৌজা নির্বাচন করার পর সংশ্লিষ্ট মৌজার সকল সক্রিয় দাগ নম্বরের তালিকা প্রদর্শিত হবে।
+                      {t(
+                        'জাল বা অননুমোদিত মামলা রোধকল্পে সিস্টেমে সংরক্ষিত বার কাউন্সিল রেজিস্ট্রি থেকে আইনজীবী সনদ রিয়েল-টাইমে ভেরিফাই করা হয়।',
+                        'Lawyer certificates are verified against Bangladesh Bar Council registry to prevent fraudulent suits.'
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Verification Search Box */}
+                  <div>
+                    <label htmlFor="lawyer-bar-council-no" className="block text-xs font-bold text-slate-800 mb-1">
+                      {t('বার কাউন্সিল সনদ / এনরোলমেন্ট নম্বর লিখুন *', 'Enter Bar Council License / Enrollment No *')}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <Scale className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          id="lawyer-bar-council-no"
+                          type="text"
+                          value={barCouncilNo}
+                          onChange={(e) => {
+                            setBarCouncilNo(e.target.value.toUpperCase());
+                            setVerifyError(null);
+                          }}
+                          placeholder={t('যেমন: BC-DH-14285', 'e.g. BC-DH-14285')}
+                          className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono font-bold uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 placeholder:text-slate-500"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleVerifyLawyer()}
+                        disabled={verifyLoading}
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+                      >
+                        {verifyLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                        <span>{t('যাচাই করুন', 'Verify')}</span>
+                      </button>
+                    </div>
+
+                    {/* Quick Demo Credentials Helpers */}
+                    <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                      <span className="text-[10px] text-slate-400 font-semibold">ডেমো সনদ ক্লিক করুন:</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBarCouncilNo('BC-DH-14285');
+                          handleVerifyLawyer('BC-DH-14285');
+                        }}
+                        className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono font-bold transition cursor-pointer"
+                      >
+                        BC-DH-14285 (ঢাকা)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBarCouncilNo('BC-CM-09821');
+                          handleVerifyLawyer('BC-CM-09821');
+                        }}
+                        className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono font-bold transition cursor-pointer"
+                      >
+                        BC-CM-09821 (কুমিল্লা)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBarCouncilNo('BC-CTG-22104');
+                          handleVerifyLawyer('BC-CTG-22104');
+                        }}
+                        className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono font-bold transition cursor-pointer"
+                      >
+                        BC-CTG-22104 (চট্টগ্রাম)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBarCouncilNo('BC-SUSP-99999');
+                          handleVerifyLawyer('BC-SUSP-99999');
+                        }}
+                        className="px-2 py-0.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-mono font-bold transition cursor-pointer"
+                      >
+                        BC-SUSP-99999 (স্থগিত টেস্ট)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Verification Result Card */}
+                  {verifyError && (
+                    <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 flex items-start gap-2.5">
+                      <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                      <div>
+                        <div className="text-xs font-bold text-rose-800">যাচাইকরণ ব্যর্থ হয়েছে</div>
+                        <div className="text-xs text-rose-700 mt-0.5 leading-relaxed">{verifyError}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {verifiedLawyer && (
+                    <div className="p-3.5 rounded-xl bg-gradient-to-br from-emerald-50/80 to-teal-50/50 border border-emerald-300 space-y-2.5">
+                      <div className="flex items-center justify-between border-b border-emerald-200/60 pb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center">
+                            <CheckCircle2 className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                              <span>বার কাউন্সিল অনুমোদিত আইনজীবী</span>
+                              <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-emerald-200 text-emerald-900 font-extrabold">
+                                ✓ বার কাউন্সিল সনদপ্রাপ্ত
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-emerald-700">ডিজিটাল কেস দাখিল করার বৈধ অনুমোদন রয়েছে</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                        <div>
+                          <div className="text-[9px] text-slate-500 font-semibold uppercase">আইনজীবীর নাম</div>
+                          <div className="font-bold text-slate-900 text-xs mt-0.5">{verifiedLawyer.lawyer_name_bn}</div>
+                          {verifiedLawyer.lawyer_name_en && (
+                            <div className="text-[10px] text-slate-500 font-medium">{verifiedLawyer.lawyer_name_en}</div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-[9px] text-slate-500 font-semibold uppercase">লাইসেন্স নং ও সমিতি</div>
+                          <div className="font-mono font-bold text-indigo-900 text-xs mt-0.5">
+                            {verifiedLawyer.bar_council_no}
+                          </div>
+                          <div className="text-[10px] text-slate-500">{verifiedLawyer.district_bar}</div>
+                        </div>
+                        <div>
+                          <div className="text-[9px] text-slate-500 font-semibold uppercase">যোগাযোগ</div>
+                          <div className="font-semibold text-slate-800 text-xs mt-0.5">{maskPhone(verifiedLawyer.phone, lang)}</div>
+                          <div className="text-[10px] text-slate-500 truncate">{verifiedLawyer.chamber_address_bn || 'কোর্ট চেম্বার'}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Navigation Button */}
+                  <div className="pt-2 border-t border-slate-100 flex justify-end">
+                    <button
+                      type="button"
+                      disabled={!verifiedLawyer}
+                      onClick={() => setCurrentStep(2)}
+                      className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <span>{t('পরবর্তী: নালিশি জমি ও মোকদ্দমা বিবরণ', 'Next: Disputed Plot & Suit Details')}</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2: Disputed Plot & Court Suit Particulars */}
+              {currentStep === 2 && (
+                <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs space-y-4">
+                  <div className="border-b border-slate-100 pb-2.5">
+                    <div className="flex items-center gap-2 text-indigo-700 font-bold text-xs">
+                      <MapPin className="w-4 h-4" />
+                      <span>{t('ধাপ ২: ভৌগোলিক অধিক্ষেত্র, নালিশি দাগ ও মোকদ্দমার বিবরণ', 'Step 2: Jurisdiction, Disputed Plot & Court Suit Particulars')}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      {t(
+                        'বিভাগ, জেলা, উপজেলা এবং মৌজা নির্বাচন করার পর সংশ্লিষ্ট মৌজার সকল সক্রিয় দাগ নম্বরের তালিকা ও মোকদ্দমার তথ্য দিন।',
+                        'Select division, district, upazila, and mouza to view active plots and provide court suit details.'
+                      )}
                     </p>
                   </div>
 
@@ -557,163 +716,153 @@ export const LawyerCaseFilingPage: React.FC<{
                     </div>
                   )}
 
-                  {/* Navigation Button */}
-                  <div className="pt-2 border-t border-slate-100 flex justify-end">
-                    <button
-                      type="button"
-                      disabled={!selectedPlotId}
-                      onClick={() => setCurrentStep(2)}
-                      className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-                    >
-                      <span>পরবর্তী: আইনজীবী লাইসেন্স যাচাই</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
+                  {/* Court Suit Particulars Sub-Form */}
+                  <div className="pt-2 border-t border-slate-100 space-y-2.5">
+                    <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <Scale className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>{t('বিজ্ঞ আদালতের মোকদ্দমার মূল বিবরণ', 'Court Suit Core Particulars')}</span>
+                    </div>
+
+                    {/* Form Fields Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {/* Court Name */}
+                    <div>
+                      <label htmlFor="filing-court-name" className="block text-xs font-bold text-slate-800 mb-0.5">
+                        {t('বিজ্ঞ আদালতের পূর্ণ নাম *', 'Full Court Name *')}
+                      </label>
+                      <input
+                        id="filing-court-name"
+                        type="text"
+                        required
+                        value={courtName}
+                        onChange={(e) => setCourtName(e.target.value)}
+                        placeholder={t('বিজ্ঞ সিনিয়র সহকারী জজ আদালত, সাভার', 'Senior Assistant Judge Court, Savar')}
+                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
+
+                    {/* Suit No */}
+                    <div>
+                      <label htmlFor="filing-suit-no" className="block text-xs font-bold text-slate-800 mb-0.5">
+                        {t('মোকদ্দমা নম্বর ও সন *', 'Suit Number & Year *')}
+                      </label>
+                      <input
+                        id="filing-suit-no"
+                        type="text"
+                        required
+                        value={suitNo}
+                        onChange={(e) => setSuitNo(e.target.value)}
+                        placeholder={t('যেমন: দেওয়ানি মোকদ্দমা নং ৪৫/২০২৬', 'e.g., Civil Suit No. 45/2026')}
+                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
+
+                    {/* Dispute / Suit Type */}
+                    <div>
+                      <label htmlFor="filing-dispute-type" className="block text-xs font-bold text-slate-800 mb-0.5">
+                        {t('মোকদ্দমার প্রকারভেদ *', 'Suit Type *')}
+                      </label>
+                      <select
+                        id="filing-dispute-type"
+                        value={disputeType}
+                        onChange={(e) => setDisputeType(e.target.value)}
+                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      >
+                        <option value="INJUNCTION">{t('অন্তর্বর্তীকালীন নিষেধাজ্ঞা আবেদন (Temporary Injunction)', 'Temporary Injunction Application')}</option>
+                        <option value="TITLE_DECLARATION">{t('স্বত্ব ঘোষণা ও চিরতরে নিষেধাজ্ঞা (Declaration of Title)', 'Declaration of Title & Permanent Injunction')}</option>
+                        <option value="PARTITION_SUIT">{t('বণ্টন / বাটোয়ারা মোকদ্দমা (Partition Suit)', 'Partition Suit')}</option>
+                        <option value="SPECIFIC_PERFORMANCE">{t('চুক্তি বলবৎকরণ মোকদ্দমা (Specific Performance)', 'Specific Performance Suit')}</option>
+                        <option value="POSSESSION_RECOVERY">{t('বেদখল পুনরুদ্ধার মামলা (Recovery of Possession)', 'Recovery of Possession Suit')}</option>
+                        <option value="RECORD_CORRECTION">{t('রেকর্ড সংশোধনের মামলা (Record Correction)', 'Record Correction Suit')}</option>
+                        <option value="EVICTION">{t('উচ্ছেদ মোকদ্দমা (Eviction Suit)', 'Eviction Suit')}</option>
+                      </select>
+                    </div>
+
+                    {/* Case Stage */}
+                    <div>
+                      <label htmlFor="filing-case-stage" className="block text-xs font-bold text-slate-800 mb-0.5">
+                        {t('বর্তমান পর্যায় *', 'Current Stage *')}
+                      </label>
+                      <select
+                        id="filing-case-stage"
+                        value={caseStage}
+                        onChange={(e) => setCaseStage(e.target.value)}
+                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      >
+                        <option value="STATUS_QUO_ISSUED">{t('স্থিতাবস্থা জারি (Status Quo Order Issued)', 'Status Quo Order Issued')}</option>
+                        <option value="INJUNCTION_GRANTED">{t('অস্থায়ী নিষেধাজ্ঞা মঞ্জুর (Injunction Granted)', 'Injunction Granted')}</option>
+                        <option value="PLAINT_ADMITTED">{t('আরজি গৃহীত ও সমন জারি (Plaint Admitted)', 'Plaint Admitted & Summons Issued')}</option>
+                        <option value="WRITTEN_STATEMENT">{t('লিখিত জবাব দাখিল পর্যায়ে (Written Statement)', 'Written Statement Stage')}</option>
+                        <option value="TRIAL_HEARING">{t('সাক্ষ্য ও চূড়ান্ত শুনানি চলমান (Trial / Hearing)', 'Trial / Hearing Stage')}</option>
+                        <option value="APPEAL_PENDING">{t('আপিল বিচারাধীন (Appeal Pending)', 'Appeal Pending')}</option>
+                      </select>
+                    </div>
+
+                    {/* Plaintiff */}
+                    <div>
+                      <label htmlFor="filing-plaintiff-name" className="block text-xs font-bold text-slate-800 mb-0.5">
+                        {t('বাদী পক্ষের নাম *', 'Plaintiff Name *')}
+                      </label>
+                      <input
+                        id="filing-plaintiff-name"
+                        type="text"
+                        required
+                        value={plaintiffName}
+                        onChange={(e) => setPlaintiffName(e.target.value)}
+                        placeholder={t('মো. রফিকুল ইসলাম', 'Md. Rafiqul Islam')}
+                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
+
+                    {/* Defendant */}
+                    <div>
+                      <label htmlFor="filing-defendant-name" className="block text-xs font-bold text-slate-800 mb-0.5">
+                        {t('বিবাদী পক্ষের নাম *', 'Defendant Name *')}
+                      </label>
+                      <input
+                        id="filing-defendant-name"
+                        type="text"
+                        required
+                        value={defendantName}
+                        onChange={(e) => setDefendantName(e.target.value)}
+                        placeholder={t('আব্দুল মজিদ ও অন্যান্য', 'Abdul Majid & Others')}
+                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
+
+                    {/* Plaintiff NID */}
+                    <div>
+                      <label htmlFor="filing-plaintiff-nid" className="block text-xs font-bold text-slate-800 mb-0.5">
+                        {t('বাদী পক্ষের এনআইডি', 'Plaintiff NID')}
+                      </label>
+                      <input
+                        id="filing-plaintiff-nid"
+                        type="text"
+                        value={plaintiffNid}
+                        onChange={(e) => setPlaintiffNid(e.target.value)}
+                        placeholder="19852694123456789"
+                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono font-medium placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
+
+                    {/* Disputed Area */}
+                    <div>
+                      <label htmlFor="filing-disputed-area" className="block text-xs font-bold text-slate-800 mb-0.5">
+                        {t('নালিশি ভূমির পরিমাণ (শতক) *', 'Disputed Land Area (Decimals) *')}
+                      </label>
+                      <input
+                        id="filing-disputed-area"
+                        type="number"
+                        step="0.01"
+                        required
+                        value={disputedArea}
+                        onChange={(e) => setDisputedArea(e.target.value)}
+                        placeholder="12.5"
+                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
                   </div>
                 </div>
-              )}
-
-              {/* STEP 2: Lawyer Bar Council Verification */}
-              {currentStep === 2 && (
-                <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs space-y-3.5">
-                  <div className="border-b border-slate-100 pb-2.5">
-                    <div className="flex items-center gap-2 text-indigo-700 font-bold text-xs">
-                      <Scale className="w-4 h-4" />
-                      <span>ধাপ ২: বিজ্ঞ আইনজীবীর বার কাউন্সিল সনদ যাচাই</span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      জাল বা অননুমোদিত মামলা রোধকল্পে সিস্টেমে সংরক্ষিত বার কাউন্সিল রেজিস্ট্রি থেকে আইনজীবী সনদ রিয়েল-টাইমে ভেরিফাই করা হয়।
-                    </p>
-                  </div>
-
-                  {/* Verification Search Box */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1">
-                      বার কাউন্সিল সনদ / এনরোলমেন্ট নম্বর লিখুন *
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <div className="relative flex-1">
-                        <Scale className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input
-                          type="text"
-                          value={barCouncilNo}
-                          onChange={(e) => {
-                            setBarCouncilNo(e.target.value.toUpperCase());
-                            setVerifyError(null);
-                          }}
-                          placeholder="যেমন: BC-DH-14285"
-                          className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono font-bold uppercase focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleVerifyLawyer()}
-                        disabled={verifyLoading}
-                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0"
-                      >
-                        {verifyLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-                        <span>যাচাই করুন</span>
-                      </button>
-                    </div>
-
-                    {/* Quick Demo Credentials Helpers */}
-                    <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                      <span className="text-[10px] text-slate-400 font-semibold">ডেমো সনদ ক্লিক করুন:</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBarCouncilNo('BC-DH-14285');
-                          handleVerifyLawyer('BC-DH-14285');
-                        }}
-                        className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono font-bold transition cursor-pointer"
-                      >
-                        BC-DH-14285 (ঢাকা)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBarCouncilNo('BC-CM-09821');
-                          handleVerifyLawyer('BC-CM-09821');
-                        }}
-                        className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono font-bold transition cursor-pointer"
-                      >
-                        BC-CM-09821 (কুমিল্লা)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBarCouncilNo('BC-CTG-22104');
-                          handleVerifyLawyer('BC-CTG-22104');
-                        }}
-                        className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono font-bold transition cursor-pointer"
-                      >
-                        BC-CTG-22104 (চট্টগ্রাম)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBarCouncilNo('BC-SUSP-99999');
-                          handleVerifyLawyer('BC-SUSP-99999');
-                        }}
-                        className="px-2 py-0.5 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-mono font-bold transition cursor-pointer"
-                      >
-                        BC-SUSP-99999 (স্থগিত টেস্ট)
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Verification Result Card */}
-                  {verifyError && (
-                    <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 flex items-start gap-2.5">
-                      <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                      <div>
-                        <div className="text-xs font-bold text-rose-800">যাচাইকরণ ব্যর্থ হয়েছে</div>
-                        <div className="text-xs text-rose-700 mt-0.5 leading-relaxed">{verifyError}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {verifiedLawyer && (
-                    <div className="p-3.5 rounded-xl bg-gradient-to-br from-emerald-50/80 to-teal-50/50 border border-emerald-300 space-y-2.5">
-                      <div className="flex items-center justify-between border-b border-emerald-200/60 pb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center">
-                            <CheckCircle2 className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <div className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
-                              <span>বার কাউন্সিল অনুমোদিত আইনজীবী</span>
-                              <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-emerald-200 text-emerald-900 font-extrabold">
-                                VERIFIED ACTIVE
-                              </span>
-                            </div>
-                            <div className="text-[10px] text-emerald-700">ডিজিটাল কেস দাখিল করার বৈধ অনুমোদন রয়েছে</div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-                        <div>
-                          <div className="text-[9px] text-slate-500 font-semibold uppercase">আইনজীবীর নাম</div>
-                          <div className="font-bold text-slate-900 text-xs mt-0.5">{verifiedLawyer.lawyer_name_bn}</div>
-                          {verifiedLawyer.lawyer_name_en && (
-                            <div className="text-[10px] text-slate-500 font-medium">{verifiedLawyer.lawyer_name_en}</div>
-                          )}
-                        </div>
-                        <div>
-                          <div className="text-[9px] text-slate-500 font-semibold uppercase">লাইসেন্স নং ও সমিতি</div>
-                          <div className="font-mono font-bold text-indigo-900 text-xs mt-0.5">
-                            {verifiedLawyer.bar_council_no}
-                          </div>
-                          <div className="text-[10px] text-slate-500">{verifiedLawyer.district_bar}</div>
-                        </div>
-                        <div>
-                          <div className="text-[9px] text-slate-500 font-semibold uppercase">যোগাযোগ</div>
-                          <div className="font-semibold text-slate-800 text-xs mt-0.5">{verifiedLawyer.phone || '01711-XXXXXX'}</div>
-                          <div className="text-[10px] text-slate-500 truncate">{verifiedLawyer.chamber_address_bn || 'কোর্ট চেম্বার'}</div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Navigation Buttons */}
                   <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
@@ -722,210 +871,93 @@ export const LawyerCaseFilingPage: React.FC<{
                       onClick={() => setCurrentStep(1)}
                       className="px-4 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
                     >
-                      পূর্ববর্তী ধাপ
+                      {t('পূর্ববর্তী: আইনজীবী সনদ', 'Previous step')}
                     </button>
                     <button
                       type="button"
-                      disabled={!verifiedLawyer}
+                      disabled={!selectedPlotId || !suitNo.trim()}
                       onClick={() => setCurrentStep(3)}
                       className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                     >
-                      <span>পরবর্তী: মোকদ্দমা ও আরজির বিবরণ</span>
+                      <span>{t('পরবর্তী: নিষেধাজ্ঞা আরজি ও ডকেট', 'Next: Injunction Grounds & Docket')}</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* STEP 3: Case & Plaint Details */}
+              {/* STEP 3: Injunction Grounds, Boundaries & Affidavit */}
               {currentStep === 3 && (
                 <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-xs space-y-3.5">
                   <div className="border-b border-slate-100 pb-2.5">
                     <div className="flex items-center gap-2 text-indigo-700 font-bold text-xs">
                       <FileText className="w-4 h-4" />
-                      <span>ধাপ ৩: বিজ্ঞ আদালতের মোকদ্দমা, আরজি ও চৌহদ্দির বিবরণ</span>
+                      <span>{t('ধাপ ৩: নালিশি চৌহদ্দি, নিষেধাজ্ঞার কারণ ও ডিজিটাল ডকেট ইস্যু', 'Step 3: Boundaries, Injunction Grounds & Docket Generation')}</span>
                     </div>
                     <p className="text-[11px] text-slate-500 mt-0.5">
-                      আদালতের নথি অনুযায়ী সঠিক মোকদ্দমা নম্বর, পক্ষগণ, নালিশি জমির পরিমাণ এবং চারদিকের সীমানা উল্লেখ করুন।
+                      {t(
+                        'নালিশি ভূমির চারদিকের সীমানা, নিষেধাজ্ঞার কারণ উল্লেখ করুন এবং আইনি হলফনামায় সম্মতি দিয়ে ডিজিটাল ডকেট সম্পন্ন করুন।',
+                        'Specify four boundaries, grounds of injunction, and agree to the statutory affidavit to issue the digital docket.'
+                      )}
                     </p>
-                  </div>
-
-                  {/* Form Fields Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {/* Court Name */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-800 mb-0.5">
-                        বিজ্ঞ আদালতের পূর্ণ নাম *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={courtName}
-                        onChange={(e) => setCourtName(e.target.value)}
-                        placeholder="বিজ্ঞ সিনিয়র সহকারী জজ আদালত, সাভার"
-                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                      />
-                    </div>
-
-                    {/* Suit No */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-800 mb-0.5">
-                        মোকদ্দমা নম্বর ও সন *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={suitNo}
-                        onChange={(e) => setSuitNo(e.target.value)}
-                        placeholder="যেমন: দেওয়ানি মোকদ্দমা নং ৪৫/২০২৬"
-                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                      />
-                    </div>
-
-                    {/* Dispute / Suit Type */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-800 mb-0.5">
-                        মোকদ্দমার প্রকারভেদ *
-                      </label>
-                      <select
-                        value={disputeType}
-                        onChange={(e) => setDisputeType(e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                      >
-                        <option value="INJUNCTION">অন্তর্বর্তীকালীন নিষেধাজ্ঞা আবেদন (Temporary Injunction)</option>
-                        <option value="TITLE_DECLARATION">স্বত্ব ঘোষণা ও চিরতরে নিষেধাজ্ঞা (Declaration of Title)</option>
-                        <option value="PARTITION_SUIT">বণ্টন / বাটোয়ারা মোকদ্দমা (Partition Suit)</option>
-                        <option value="SPECIFIC_PERFORMANCE">চুক্তি বলবৎকরণ মোকদ্দমা (Specific Performance)</option>
-                        <option value="POSSESSION_RECOVERY">বেদখল পুনরুদ্ধার মামলা (Recovery of Possession)</option>
-                        <option value="RECORD_CORRECTION">রেকর্ড সংশোধনের মামলা (Record Correction)</option>
-                        <option value="EVICTION">উচ্ছেদ মোকদ্দমা (Eviction Suit)</option>
-                      </select>
-                    </div>
-
-                    {/* Case Stage */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-800 mb-0.5">
-                        বর্তমান পর্যায় *
-                      </label>
-                      <select
-                        value={caseStage}
-                        onChange={(e) => setCaseStage(e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                      >
-                        <option value="STATUS_QUO_ISSUED">স্থিতাবস্থা জারি (Status Quo Order Issued)</option>
-                        <option value="INJUNCTION_GRANTED">অস্থায়ী নিষেধাজ্ঞা মঞ্জুর (Injunction Granted)</option>
-                        <option value="PLAINT_ADMITTED">আরজি গৃহীত ও সমন জারি (Plaint Admitted)</option>
-                        <option value="WRITTEN_STATEMENT">লিখিত জবাব দাখিল পর্যায়ে (Written Statement)</option>
-                        <option value="TRIAL_HEARING">সাক্ষ্য ও চূড়ান্ত শুনানি চলমান (Trial / Hearing)</option>
-                        <option value="APPEAL_PENDING">আপিল বিচারাধীন (Appeal Pending)</option>
-                      </select>
-                    </div>
-
-                    {/* Plaintiff */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-800 mb-0.5">
-                        বাদী পক্ষের নাম *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={plaintiffName}
-                        onChange={(e) => setPlaintiffName(e.target.value)}
-                        placeholder="মো. রফিকুল ইসলাম"
-                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                      />
-                    </div>
-
-                    {/* Defendant */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-800 mb-0.5">
-                        বিবাদী পক্ষের নাম *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={defendantName}
-                        onChange={(e) => setDefendantName(e.target.value)}
-                        placeholder="আব্দুল মজিদ ও অন্যান্য"
-                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                      />
-                    </div>
-
-                    {/* Plaintiff NID */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-800 mb-0.5">
-                        বাদী পক্ষের এনআইডি
-                      </label>
-                      <input
-                        type="text"
-                        value={plaintiffNid}
-                        onChange={(e) => setPlaintiffNid(e.target.value)}
-                        placeholder="19852694123456789"
-                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-mono font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                      />
-                    </div>
-
-                    {/* Disputed Area */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-800 mb-0.5">
-                        নালিশি ভূমির পরিমাণ (শতক) *
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        required
-                        value={disputedArea}
-                        onChange={(e) => setDisputedArea(e.target.value)}
-                        placeholder="12.5"
-                        className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                      />
-                    </div>
                   </div>
 
                   {/* Boundaries Grid (চৌহদ্দি) */}
                   <div className="pt-1">
-                    <label className="block text-xs font-bold text-slate-800 mb-1">
-                      নালিশি ভূমির চারদিকের সীমানা ও চৌহদ্দি (Boundaries)
-                    </label>
+                    <span className="block text-xs font-bold text-slate-800 mb-1">
+                      {t('নালিশি ভূমির চারদিকের সীমানা ও চৌহদ্দি (Boundaries)', 'Disputed Land Boundaries (Chowhaddi)')}
+                    </span>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       <div>
-                        <span className="text-[10px] font-bold text-slate-500 block mb-0.5">উত্তরে (North):</span>
+                        <label htmlFor="filing-boundary-north" className="text-[10px] font-bold text-slate-500 block mb-0.5">
+                          {t('উত্তরে (North):', 'North:')}
+                        </label>
                         <input
+                          id="filing-boundary-north"
                           type="text"
                           value={boundaryNorth}
                           onChange={(e) => setBoundaryNorth(e.target.value)}
-                          placeholder="সরকারি রাস্তা"
-                          className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-indigo-500"
+                          placeholder={t('সরকারি রাস্তা', 'Government Road')}
+                          className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] font-bold text-slate-500 block mb-0.5">দক্ষিণে (South):</span>
+                        <label htmlFor="filing-boundary-south" className="text-[10px] font-bold text-slate-500 block mb-0.5">
+                          {t('দক্ষিণে (South):', 'South:')}
+                        </label>
                         <input
+                          id="filing-boundary-south"
                           type="text"
                           value={boundarySouth}
                           onChange={(e) => setBoundarySouth(e.target.value)}
-                          placeholder="রহিম মোল্লার জমি"
-                          className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-indigo-500"
+                          placeholder={t('রহিম মোল্লার জমি', "Rahim Molla's Land")}
+                          className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] font-bold text-slate-500 block mb-0.5">পূর্বে (East):</span>
+                        <label htmlFor="filing-boundary-east" className="text-[10px] font-bold text-slate-500 block mb-0.5">
+                          {t('পূর্বে (East):', 'East:')}
+                        </label>
                         <input
+                          id="filing-boundary-east"
                           type="text"
                           value={boundaryEast}
                           onChange={(e) => setBoundaryEast(e.target.value)}
-                          placeholder="দাগ নং ১০২"
-                          className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-indigo-500"
+                          placeholder={t('দাগ নং ১০২', 'Plot No. 102')}
+                          className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] font-bold text-slate-500 block mb-0.5">পশ্চিমে (West):</span>
+                        <label htmlFor="filing-boundary-west" className="text-[10px] font-bold text-slate-500 block mb-0.5">
+                          {t('পশ্চিমে (West):', 'West:')}
+                        </label>
                         <input
+                          id="filing-boundary-west"
                           type="text"
                           value={boundaryWest}
                           onChange={(e) => setBoundaryWest(e.target.value)}
-                          placeholder="খাস খাল"
-                          className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:border-indigo-500"
+                          placeholder={t('খাস খাল', 'Khas Canal')}
+                          className="w-full px-2 py-1 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
                         />
                       </div>
                     </div>
@@ -933,16 +965,20 @@ export const LawyerCaseFilingPage: React.FC<{
 
                   {/* Description & Cause of Action */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1">
-                      মোকদ্দমার কারণ ও আরজির সংক্ষিপ্ত সারসংক্ষেপ *
+                    <label htmlFor="filing-description-bn" className="block text-xs font-bold text-slate-800 mb-1">
+                      {t('মোকদ্দমার কারণ ও আরজির সংক্ষিপ্ত সারসংক্ষেপ *', 'Cause of Action & Plaint Summary *')}
                     </label>
                     <textarea
+                      id="filing-description-bn"
                       rows={2}
                       required
                       value={descriptionBn}
                       onChange={(e) => setDescriptionBn(e.target.value)}
-                      placeholder="নালিশি জমিতে জোরপূর্বক জবরদখল ও প্রাচীর নির্মাণের অপচেষ্টার প্রেক্ষিতে স্বত্ব ঘোষণা ও অন্তর্বর্তীকালীন নিষেধাজ্ঞা প্রার্থনা।"
-                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      placeholder={t(
+                        'নালিশি জমিতে জোরপূর্বক জবরদখল ও প্রাচীর নির্মাণের অপচেষ্টার প্রেক্ষিতে স্বত্ব ঘোষণা ও অন্তর্বর্তীকালীন নিষেধাজ্ঞা প্রার্থনা।',
+                        'Seeking declaration of title and temporary injunction against forced illegal encroachment and wall construction attempts.'
+                      )}
+                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                   </div>
 
@@ -956,9 +992,13 @@ export const LawyerCaseFilingPage: React.FC<{
                       className="w-4 h-4 mt-0.5 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                     />
                     <label htmlFor="affidavit_check" className="text-[11px] text-slate-700 leading-snug cursor-pointer">
-                      <span className="font-bold text-amber-900 block mb-0.5">বিজ্ঞ আইনজীবীর প্রত্যয়ন ও আইনি অঙ্গীকারনামা:</span>
-                      আমি বিজ্ঞ আইনজীবী হিসেবে প্রত্যয়ন করছি যে, উল্লেখিত নালিশি দাগের ভূমির স্বত্ব ও সীমানা সংক্রান্ত মোকদ্দমা বিজ্ঞ আদালতে
-                      দাখিলকৃত হয়েছে। এই ডকেট জারির মাধ্যমে সংশ্লিষ্ট দাগে সিস্টেমে লিটিগেশন লক কার্যকর হওয়ার বিষয়ে আমি অবগত।
+                      <span className="font-bold text-amber-900 block mb-0.5">
+                        {t('বিজ্ঞ আইনজীবীর প্রত্যয়ন ও আইনি অঙ্গীকারনামা:', 'Advocate Certification & Legal Undertaking:')}
+                      </span>
+                      {t(
+                        'আমি বিজ্ঞ আইনজীবী হিসেবে প্রত্যয়ন করছি যে, উল্লেখিত নালিশি দাগের ভূমির স্বত্ব ও সীমানা সংক্রান্ত মোকদ্দমা বিজ্ঞ আদালতে দাখিলকৃত হয়েছে। এই ডকেট জারির মাধ্যমে সংশ্লিষ্ট দাগে সিস্টেমে লিটিগেশন লক কার্যকর হওয়ার বিষয়ে আমি অবগত।',
+                        'I, as an advocate, certify that a suit regarding the title and boundaries of the specified disputed plot has been filed in the honorable court. I acknowledge that issuing this docket will activate a system litigation lock on the respective plot.'
+                      )}
                     </label>
                   </div>
 
@@ -969,16 +1009,16 @@ export const LawyerCaseFilingPage: React.FC<{
                       onClick={() => setCurrentStep(2)}
                       className="px-4 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
                     >
-                      পূর্ববর্তী ধাপ
+                      {t('পূর্ববর্তী ধাপ', 'Previous step')}
                     </button>
                     <button
                       type="button"
-                      disabled={submitting || !affidavitAgreed}
+                      disabled={submitting || !affidavitAgreed || !suitNo.trim()}
                       onClick={handleSubmitCase}
-                      className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg text-xs font-black transition flex items-center gap-1.5 cursor-pointer shadow-md"
                     >
-                      {submitting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
-                      <span>আইনজীবী মোকদ্দমা সিস্টেমে নথিভুক্ত করুন</span>
+                      {submitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                      <span>{t('মোকদ্দমা দাখিল ও ডিজিটাল ডকেট ইস্যু', 'File Suit & Issue Digital Docket')}</span>
                     </button>
                   </div>
                 </div>
@@ -1022,7 +1062,7 @@ export const LawyerCaseFilingPage: React.FC<{
                     </div>
                   ) : (
                     <div className="text-[11px] text-rose-600 font-semibold">
-                      দাগ নির্বাচন বাকি (ধাপ ১)
+                      দাগ নির্বাচন বাকি (ধাপ ২)
                     </div>
                   )}
                 </div>
@@ -1050,7 +1090,7 @@ export const LawyerCaseFilingPage: React.FC<{
                     </div>
                   ) : (
                     <div className="text-[10px] text-slate-500">
-                      ধাপ ২ এ বার কাউন্সিল সনদ যাচাই করুন
+                      ধাপ ১ এ বার কাউন্সিল সনদ যাচাই করুন
                     </div>
                   )}
                 </div>
@@ -1075,22 +1115,22 @@ export const LawyerCaseFilingPage: React.FC<{
                   {currentStep === 1 && (
                     <button
                       type="button"
-                      disabled={!selectedPlotId}
+                      disabled={!verifiedLawyer}
                       onClick={() => setCurrentStep(2)}
                       className="w-full py-2 px-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                     >
-                      <span>পরবর্তী: আইনজীবী যাচাই ➔</span>
+                      <span>পরবর্তী: জমি ও মোকদ্দমা বিবরণ ➔</span>
                     </button>
                   )}
                   {currentStep === 2 && (
                     <div className="space-y-1">
                       <button
                         type="button"
-                        disabled={!verifiedLawyer}
+                        disabled={!selectedPlotId || !suitNo.trim()}
                         onClick={() => setCurrentStep(3)}
                         className="w-full py-2 px-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                       >
-                        <span>পরবর্তী: আরজির বিবরণ ➔</span>
+                        <span>পরবর্তী: নিষেধাজ্ঞা আরজি ও ডকেট ➔</span>
                       </button>
                       <button
                         type="button"
@@ -1107,10 +1147,10 @@ export const LawyerCaseFilingPage: React.FC<{
                         type="button"
                         disabled={submitting || !affidavitAgreed || !suitNo.trim()}
                         onClick={handleSubmitCase}
-                        className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                        className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                       >
                         {submitting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
-                        <span>মোকদ্দমা দাখিল ও লক নিশ্চিত করুন</span>
+                        <span>মোকদ্দমা দাখিল ও ডিজিটাল ডকেট ইস্যু</span>
                       </button>
                       <button
                         type="button"
@@ -1185,9 +1225,14 @@ export const LawyerCaseFilingPage: React.FC<{
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
                   {/* Col 1: Advocate Info */}
                   <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2">
-                    <div className="font-bold text-indigo-900 border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
-                      <UserCheck className="w-4 h-4 text-indigo-600" />
-                      <span>বিজ্ঞ আইনজীবী (দাখিলকারী)</span>
+                    <div className="font-bold text-indigo-900 border-b border-slate-100 pb-1.5 flex items-center justify-between gap-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <UserCheck className="w-4 h-4 text-indigo-600" />
+                        <span>বিজ্ঞ আইনজীবী (দাখিলকারী)</span>
+                      </div>
+                      <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-[#006A4E] border border-emerald-300">
+                        ✓ বার কাউন্সিল সনদপ্রাপ্ত
+                      </span>
                     </div>
                     <div>
                       <div className="font-bold text-slate-900 text-sm">{docketResponse.lawyer.name_bn}</div>
@@ -1196,7 +1241,7 @@ export const LawyerCaseFilingPage: React.FC<{
                     <div className="text-[11px] text-slate-600 space-y-0.5 pt-1">
                       <div>বার সনদ: <span className="font-mono font-bold">{docketResponse.lawyer.bar_council_no}</span></div>
                       <div>বার সমিতি: {docketResponse.lawyer.district_bar}</div>
-                      <div>মোবাইল: {docketResponse.lawyer.phone}</div>
+                      <div>মোবাইল: {maskPhone(docketResponse.lawyer.phone, lang)}</div>
                     </div>
                   </div>
 
@@ -1228,8 +1273,13 @@ export const LawyerCaseFilingPage: React.FC<{
                     </div>
                     <div className="text-[11px] text-slate-600 space-y-0.5 pt-1">
                       <div>পর্যায়: <span className="font-semibold">{docketResponse.court_details.case_stage}</span></div>
-                      <div>বাদী: {docketResponse.court_details.plaintiff_name}</div>
-                      <div>বিবাদী: {docketResponse.court_details.defendant_name}</div>
+                      <div>
+                        বাদী: <span className="font-bold">{docketResponse.court_details.plaintiff_name}</span>{' '}
+                        <span className="text-[10px] text-slate-500">
+                          (এনআইডি: <span className="font-mono font-bold text-slate-700">{maskNid((docketResponse.court_details as any)?.plaintiff_nid || plaintiffNid, lang)}</span>)
+                        </span>
+                      </div>
+                      <div>বিবাদী: <span className="font-bold">{docketResponse.court_details.defendant_name}</span></div>
                     </div>
                   </div>
                 </div>
@@ -1248,12 +1298,15 @@ export const LawyerCaseFilingPage: React.FC<{
                     </div>
                   </div>
                   <div>
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                      ক্রিপ্টোগ্রাফিক ভ্যালিডেশন সিল (SHA-256 HASH)
-                    </div>
-                    <div className="font-mono text-[10px] text-slate-600 break-all bg-slate-50 p-2 rounded-lg border border-slate-200 mt-1 select-all">
-                      {docketResponse.verification.content_hash}
-                    </div>
+                    <details className="mt-1 text-xs bg-slate-50 border border-slate-200 rounded-lg p-2.5">
+                      <summary className="font-bold text-slate-700 cursor-pointer select-none flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>{t('কারিগরি ক্রিপ্টোগ্রাফিক ভ্যালিডেশন সিল (SHA-256) ▾', 'Cryptographic Proof (SHA-256) ▾')}</span>
+                      </summary>
+                      <div className="mt-2 pt-2 border-t border-slate-200 font-mono text-[10px] text-slate-600 break-all select-all">
+                        {docketResponse.verification.content_hash}
+                      </div>
+                    </details>
                   </div>
                 </div>
 

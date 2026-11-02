@@ -101,6 +101,18 @@ export const PublicSalePage: React.FC<PublicSalePageProps> = ({ onNavigate }) =>
     fetchListings();
   }, [districtFilter, upazilaFilter]);
 
+  useEffect(() => {
+    if (!enquiryListing && !selectedListingDetail) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setEnquiryListing(null);
+        setSelectedListingDetail(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [enquiryListing, selectedListingDetail]);
+
   const handleOpenDetail = (listing: ListingItem) => {
     setDetailLoading(true);
     setSelectedListingDetail(null);
@@ -289,6 +301,104 @@ export const PublicSalePage: React.FC<PublicSalePageProps> = ({ onNavigate }) =>
           </div>
         </div>
 
+        {/* 1-Click Quick Preset Filter Pills */}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 text-xs">
+          {/* District Quick Pills */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-slate-500 font-bold mr-1 flex items-center gap-1">
+              <MapPin className="w-3.5 h-3.5 text-slate-400" />
+              {t('জেলা:', 'District:')}
+            </span>
+            {[
+              { id: '', bn: 'সকল', en: 'All' },
+              { id: 'ঢাকা', bn: 'ঢাকা', en: 'Dhaka' },
+              { id: 'গাজীপুর', bn: 'গাজীপুর', en: 'Gazipur' },
+              { id: 'নারায়ণগঞ্জ', bn: 'নারায়ণগঞ্জ', en: 'Narayanganj' }
+            ].map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => setDistrictFilter(d.id)}
+                className={`px-2.5 py-1 rounded-full font-semibold transition-all cursor-pointer border ${
+                  districtFilter === d.id
+                    ? 'bg-[#006A4E] text-white border-[#006A4E] shadow-2xs'
+                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                }`}
+              >
+                {lang === 'bn' ? d.bn : d.en}
+              </button>
+            ))}
+          </div>
+
+          {/* Budget Presets */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-slate-500 font-bold mr-1 flex items-center gap-1">
+              <Tag className="w-3.5 h-3.5 text-slate-400" />
+              {t('বাজেট:', 'Budget:')}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setMinPrice('');
+                setMaxPrice('');
+                setTimeout(fetchListings, 50);
+              }}
+              className={`px-2.5 py-1 rounded-full font-semibold transition-all cursor-pointer border ${
+                !minPrice && !maxPrice
+                  ? 'bg-emerald-800 text-white border-emerald-800'
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              {t('সকল বাজেট', 'All')}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMinPrice('');
+                setMaxPrice('2500000');
+                setTimeout(fetchListings, 50);
+              }}
+              className={`px-2.5 py-1 rounded-full font-semibold transition-all cursor-pointer border ${
+                maxPrice === '2500000' && !minPrice
+                  ? 'bg-emerald-800 text-white border-emerald-800'
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              {t('< ২৫ লক্ষ', '< 2.5M')}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMinPrice('2500000');
+                setMaxPrice('5000000');
+                setTimeout(fetchListings, 50);
+              }}
+              className={`px-2.5 py-1 rounded-full font-semibold transition-all cursor-pointer border ${
+                minPrice === '2500000' && maxPrice === '5000000'
+                  ? 'bg-emerald-800 text-white border-emerald-800'
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              {t('২৫ - ৫০ লক্ষ', '2.5M - 5M')}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMinPrice('5000000');
+                setMaxPrice('10000000');
+                setTimeout(fetchListings, 50);
+              }}
+              className={`px-2.5 py-1 rounded-full font-semibold transition-all cursor-pointer border ${
+                minPrice === '5000000' && maxPrice === '10000000'
+                  ? 'bg-emerald-800 text-white border-emerald-800'
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              {t('৫০ লক্ষ - ১ কোটি', '5M - 10M')}
+            </button>
+          </div>
+        </div>
+
         {/* Listings Grid */}
         {loading ? (
           <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500">
@@ -338,9 +448,9 @@ export const PublicSalePage: React.FC<PublicSalePageProps> = ({ onNavigate }) =>
                           );
                         }
                         return (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 border border-emerald-200 text-[#006A4E] mb-1.5">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>{t('নিষ্কণ্টক মালিকানা', 'Verified Clear')}</span>
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-50 border border-emerald-300 text-[#006A4E] shadow-2xs mb-1.5">
+                            <ShieldCheck className="w-4 h-4 text-[#006A4E]" />
+                            <span>{t('সরকারি ভল্ট ভেরিফায়েড', 'Govt Vault Verified')}</span>
                           </div>
                         );
                       })()}
@@ -360,6 +470,23 @@ export const PublicSalePage: React.FC<PublicSalePageProps> = ({ onNavigate }) =>
 
                   {/* Card Body */}
                   <div className="p-5 space-y-3">
+                    {/* Visual Land Metric Chips: Decimals, Katha, Price/Dec */}
+                    <div className="grid grid-cols-3 gap-2 text-center p-2 rounded-xl bg-emerald-50/60 border border-emerald-200/70 text-xs">
+                      <div className="p-1">
+                        <span className="text-[10px] text-slate-500 block">{t('শতক', 'Decimals')}</span>
+                        <span className="font-bold text-slate-900">{formatNumber(item.area_decimal)}</span>
+                      </div>
+                      <div className="p-1 border-x border-emerald-200/70">
+                        <span className="text-[10px] text-slate-500 block">{t('কাঠা', 'Katha')}</span>
+                        <span className="font-bold text-slate-900">{formatNumber((item.area_decimal / 1.65).toFixed(1))}</span>
+                      </div>
+                      <div className="p-1">
+                        <span className="text-[10px] text-slate-500 block">{t('দর/শতক', 'Price/Dec')}</span>
+                        <span className="font-bold text-[#006A4E]">
+                          ৳ {formatNumber(Math.round(item.asking_price_bdt / (item.area_decimal || 1)))}
+                        </span>
+                      </div>
+                    </div>
                     <div className="flex items-center gap-2 text-xs text-slate-600">
                       <MapPin className="w-4 h-4 text-emerald-700 shrink-0" />
                       <span>
@@ -432,17 +559,24 @@ export const PublicSalePage: React.FC<PublicSalePageProps> = ({ onNavigate }) =>
 
         {/* In-App Enquiry Modal */}
         {enquiryListing && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="public-sale-enquiry-title"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
+          >
             <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
                   <Send className="w-5 h-5 text-[#006A4E]" />
-                  <h3 className="font-bold text-slate-900 text-base">
+                  <h3 id="public-sale-enquiry-title" className="font-bold text-slate-900 text-base">
                     {t('জমির প্রতি আগ্রহ প্রকাশ করুন', 'Express Buyer Interest')}
                   </h3>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setEnquiryListing(null)}
+                  aria-label={t('বন্ধ করুন', 'Close')}
                   className="text-slate-400 hover:text-slate-600 transition p-1 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
@@ -568,17 +702,24 @@ export const PublicSalePage: React.FC<PublicSalePageProps> = ({ onNavigate }) =>
 
         {/* Listing Details & Vault Summary Modal */}
         {selectedListingDetail && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="public-sale-detail-title"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
+          >
             <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div className="flex items-center gap-2">
                   <FileCheck className="w-5 h-5 text-[#006A4E]" />
-                  <h3 className="font-bold text-slate-900 text-base">
+                  <h3 id="public-sale-detail-title" className="font-bold text-slate-900 text-base">
                     {t('জমির পূর্ণ বিবরণ ও ভল্ট স্ট্যাটাস', 'Plot Profile & Vault Status')}
                   </h3>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setSelectedListingDetail(null)}
+                  aria-label={t('বন্ধ করুন', 'Close')}
                   className="text-slate-400 hover:text-slate-600 transition p-1 cursor-pointer"
                 >
                   <X className="w-5 h-5" />
