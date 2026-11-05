@@ -38,6 +38,22 @@ import {
 import { useAppUI } from '../../i18n';
 import './ParcelDesigner.css';
 import { ParcelAllocationPanel } from './ParcelAllocationPanel';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 export type XY = [number, number]; // [lng, lat]
 
@@ -999,61 +1015,78 @@ export function ParcelDesigner({ onExit }: { onExit: (location?: number) => void
       {/* Header */}
       <header className="parcel-heading">
         <div>
-          <p className="map-eyebrow">BHUMISHIELD / CADASTRAL VECTOR WORKSPACE</p>
-          <h1>{t('ইন-ম্যাপ ভেক্টর ড্রয়িং ও দাগ ডিজাইন', 'In-Map Vector Drawing & Parcel Designer')}</h1>
-          <p>
+          <p className="map-eyebrow font-mono text-emerald-800 tracking-wider">BHUMISHIELD / CADASTRAL VECTOR WORKSPACE</p>
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{t('ইন-ম্যাপ ভেক্টর ড্রয়িং ও দাগ ডিজাইন', 'In-Map Vector Drawing & Parcel Designer')}</h1>
+          <p className="text-sm text-slate-600">
             {t(
               'বহুভুজ, রেখা ও সার্ভে মার্কার আঁকুন → ভূমি শ্রেণি ও খতিয়ান ট্যাগ করুন → ক্যাডাস্ট্রাল আয়তন রূপান্তর → সংরক্ষণ',
               'Draw polygons, lines & survey markers → tag land categories & dag → calculate cadastral units → persist to database'
             )}
           </p>
         </div>
-        <button
-          className="map-secondary"
+        <Button
+          variant="outline"
+          className="gap-2 font-medium border-slate-300 hover:bg-slate-100"
           onClick={() => {
             if (safeChange()) onExit(location);
           }}
         >
           <ArrowLeft size={16} />
           {t('নাগরিকের ম্যাপে ফিরুন', 'Back to public map')}
-        </button>
+        </Button>
       </header>
 
       {/* RBAC Warning Banner for Unauthorized Users */}
       {!canDraw && (
-        <div className="parcel-rbac-banner" role="alert">
-          <ShieldAlert size={20} />
+        <Alert className="parcel-rbac-banner border-amber-300 bg-amber-50 text-amber-900 mb-4 flex items-start gap-3 p-3.5 rounded-lg" role="alert">
+          <ShieldAlert className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
           <div>
-            <strong>{t('পঠনযোগ্য মোড (Read-Only Mode):', 'Read-Only Mode:')}</strong>{' '}
-            {t(
-              'শুধুমাত্র অনুমোদিত ভূমি/জরিপ কর্মকর্তা এবং অ্যাডমিনগণ নকশা আঁকতে ও সম্পাদনা করতে পারেন। নাগরিক ও অননুমোদিত ব্যবহারকারীরা শুধুমাত্র প্রস্তুতকৃত ফিচারসমূহ পর্যবেক্ষণ করতে পারবেন।',
-              'Only authorized land/survey officers and administrators can draw and edit vector features. Citizens and viewers can only inspect existing features.'
-            )}
+            <AlertTitle className="text-amber-900 font-bold mb-1">
+              {t('পঠনযোগ্য মোড (Read-Only Mode):', 'Read-Only Mode:')}
+            </AlertTitle>
+            <AlertDescription className="text-xs text-amber-800 leading-relaxed">
+              {t(
+                'শুধুমাত্র অনুমোদিত ভূমি/জরিপ কর্মকর্তা এবং অ্যাডমিনগণ নকশা আঁকতে ও সম্পাদনা করতে পারেন। নাগরিক ও অননুমোদিত ব্যবহারকারীরা শুধুমাত্র প্রস্তুতকৃত ফিচারসমূহ পর্যবেক্ষণ করতে পারবেন।',
+                'Only authorized land/survey officers and administrators can draw and edit vector features. Citizens and viewers can only inspect existing features.'
+              )}
+            </AlertDescription>
           </div>
-        </div>
+        </Alert>
       )}
 
       {/* Error & Success Notices */}
       {error && (
-        <div className="map-error" role="alert">
-          <AlertTriangle size={16} />
-          {error}
-        </div>
+        <Alert variant="destructive" className="mb-4 flex items-center justify-between p-3.5 shadow-sm" role="alert">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <AlertDescription className="text-sm font-medium">{error}</AlertDescription>
+          </div>
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-700 hover:bg-red-100" onClick={() => setError('')}>
+            <X className="h-4 w-4" />
+          </Button>
+        </Alert>
       )}
       {notice && (
-        <div className="map-success" role="status">
-          <CheckCircle2 size={16} />
-          {notice}
-          <button onClick={() => setNotice('')}>×</button>
-        </div>
+        <Alert className="mb-4 bg-emerald-50 border-emerald-300 text-emerald-900 flex items-center justify-between p-3.5 shadow-sm" role="status">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+            <AlertDescription className="text-sm font-medium">{notice}</AlertDescription>
+          </div>
+          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-emerald-800 hover:bg-emerald-100" onClick={() => setNotice('')}>
+            <X className="h-4 w-4" />
+          </Button>
+        </Alert>
       )}
 
       {/* Mouza Jurisdiction Scope Selector */}
-      <div className="parcel-scope map-card">
-        <label>
-          {t('কাজের মৌজা / অফিসের অধিক্ষেত্র', 'Work mouza / office jurisdiction')}
+      <Card className="parcel-scope map-card border-slate-200 shadow-sm mb-4">
+        <CardContent className="p-4 space-y-2">
+          <Label className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
+            {t('কাজের মৌজা / অফিসের অধিক্ষেত্র', 'Work mouza / office jurisdiction')}
+          </Label>
           <select
             aria-label="কাজের মৌজা"
+            className="w-full h-10 px-3 rounded-md border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 font-medium text-slate-800"
             value={location || ''}
             onChange={(e) => {
               if (safeChange()) {
@@ -1072,37 +1105,62 @@ export function ParcelDesigner({ onExit }: { onExit: (location?: number) => void
               </option>
             ))}
           </select>
-        </label>
-        <p>
-          {loc?.office_id
-            ? t('দায়িত্বপ্রাপ্ত অফিস: ', 'Responsible office: ') + (loc.office_name_bn || loc.office_id)
-            : t('Admin আগে মৌজার দায়িত্বপ্রাপ্ত ভূমি/জরিপ অফিস বরাদ্দ করবেন।', 'Admin must first assign the responsible land/survey office.')}
-        </p>
-      </div>
+          <p className="text-xs text-slate-600">
+            {loc?.office_id
+              ? t('দায়িত্বপ্রাপ্ত অফিস: ', 'Responsible office: ') + (loc.office_name_bn || loc.office_id)
+              : t('Admin আগে মৌজার দায়িত্বপ্রাপ্ত ভূমি/জরিপ অফিস বরাদ্দ করবেন।', 'Admin must first assign the responsible land/survey office.')}
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Admin Office Allocation Form */}
       {context?.is_admin && location > 0 && (
-        <form className="parcel-assignment map-card" onSubmit={assign}>
-          <h2>{t('এই মৌজার দায়িত্বপ্রাপ্ত অফিস', 'Responsible office for this mouza')}</h2>
-          <label>
-            {t('ভূমি / জরিপ অফিস', 'Land / survey office')}
-            <select required value={office} onChange={(e) => setOffice(e.target.value)}>
-              <option value="">{t('অফিস নির্বাচন করুন', 'Choose office')}</option>
-              {offices.map((o: any) => (
-                <option key={o.id} value={o.id}>
-                  {o.name_bn} · {o.office_type}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            {t('বরাদ্দ বা বদলির কারণ', 'Allocation / reassignment reason')}
-            <input required minLength={12} value={assignReason} onChange={(e) => setAssignReason(e.target.value)} />
-          </label>
-          <button disabled={busy} className="map-secondary">
-            {t('এই অফিসে মৌজা বরাদ্দ করুন', 'Allocate mouza to this office')}
-          </button>
-        </form>
+        <Card className="parcel-assignment map-card border-emerald-200 bg-emerald-50/30 shadow-sm mb-4">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-base font-bold text-emerald-950 flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-emerald-700" />
+              {t('এই মৌজার দায়িত্বপ্রাপ্ত অফিস', 'Responsible office for this mouza')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-1">
+            <form onSubmit={assign} className="flex flex-wrap items-end gap-3.5">
+              <div className="flex-1 min-w-[220px] space-y-1">
+                <Label className="text-xs font-semibold text-slate-700">
+                  {t('ভূমি / জরিপ অফিস', 'Land / survey office')}
+                </Label>
+                <select
+                  required
+                  className="w-full h-10 px-3 rounded-md border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  value={office}
+                  onChange={(e) => setOffice(e.target.value)}
+                >
+                  <option value="">{t('অফিস নির্বাচন করুন', 'Choose office')}</option>
+                  {offices.map((o: any) => (
+                    <option key={o.id} value={o.id}>
+                      {o.name_bn} · {o.office_type}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-1 min-w-[240px] space-y-1">
+                <Label className="text-xs font-semibold text-slate-700">
+                  {t('বরাদ্দ বা বদলির কারণ (ন্যূনতম ১২ অক্ষর)', 'Allocation / reassignment reason (min 12 chars)')}
+                </Label>
+                <Input
+                  required
+                  minLength={12}
+                  className="h-10 bg-white"
+                  placeholder={t('অফিস বরাদ্দের কারণ লিখুন…', 'Enter reason for allocation…')}
+                  value={assignReason}
+                  onChange={(e) => setAssignReason(e.target.value)}
+                />
+              </div>
+              <Button disabled={busy} variant="secondary" className="h-10 bg-emerald-700 hover:bg-emerald-800 text-white font-medium">
+                {t('এই অফিসে মৌজা বরাদ্দ করুন', 'Allocate mouza to this office')}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
       {/* Main Workspace Editor Grid */}
@@ -1112,12 +1170,14 @@ export function ParcelDesigner({ onExit }: { onExit: (location?: number) => void
           <div className="parcel-map" ref={host} />
 
           {/* In-Map Drawing & Vector Toolstrip */}
-          <div className="parcel-draw-tools">
+          <div className="parcel-draw-tools bg-white/95 backdrop-blur shadow-md border border-slate-200 rounded-lg p-1.5 flex flex-wrap items-center gap-1.5">
             {/* Primitives Selector */}
-            <div className="parcel-tool-group">
-              <button
+            <div className="parcel-tool-group flex items-center gap-1">
+              <Button
                 type="button"
-                className={drawMode === 'polygon' ? 'active' : ''}
+                variant={drawMode === 'polygon' ? 'default' : 'secondary'}
+                size="sm"
+                className={`h-8 gap-1.5 text-xs font-medium ${drawMode === 'polygon' ? 'bg-emerald-700 text-white hover:bg-emerald-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
                 disabled={readonly || busy}
                 title={t('বহুভুজ / দাগ / মৌজা সীমানা', 'Polygon / Plot Boundary')}
                 onClick={() => {
@@ -1127,12 +1187,14 @@ export function ParcelDesigner({ onExit }: { onExit: (location?: number) => void
                   }
                 }}
               >
-                <Hexagon size={14} />
+                <Hexagon size={13} />
                 {t('বহুভুজ (Polygon)', 'Polygon')}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className={drawMode === 'line' ? 'active' : ''}
+                variant={drawMode === 'line' ? 'default' : 'secondary'}
+                size="sm"
+                className={`h-8 gap-1.5 text-xs font-medium ${drawMode === 'line' ? 'bg-amber-600 text-white hover:bg-amber-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
                 disabled={readonly || busy}
                 title={t('রেখা / রাস্তা / খাল / নদী', 'LineString / Road / Canal')}
                 onClick={() => {
@@ -1142,12 +1204,14 @@ export function ParcelDesigner({ onExit }: { onExit: (location?: number) => void
                   }
                 }}
               >
-                <Spline size={14} />
+                <Spline size={13} />
                 {t('রেখা (Line)', 'Line')}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className={drawMode === 'point' ? 'active' : ''}
+                variant={drawMode === 'point' ? 'default' : 'secondary'}
+                size="sm"
+                className={`h-8 gap-1.5 text-xs font-medium ${drawMode === 'point' ? 'bg-rose-600 text-white hover:bg-rose-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
                 disabled={readonly || busy}
                 title={t('বিন্দু / সার্ভে পিলার / বেঞ্চমার্ক / ল্যান্ডমার্ক', 'Point / Benchmark')}
                 onClick={() => {
@@ -1157,32 +1221,39 @@ export function ParcelDesigner({ onExit }: { onExit: (location?: number) => void
                   }
                 }}
               >
-                <MapPin size={14} />
+                <MapPin size={13} />
                 {t('বিন্দু (Point)', 'Point')}
-              </button>
+              </Button>
             </div>
 
-            <div className="parcel-tool-divider" />
+            <div className="parcel-tool-divider h-5 w-px bg-slate-200 mx-1" />
 
             {/* Drawing Actions */}
-            <div className="parcel-tool-group">
-              <button
+            <div className="parcel-tool-group flex items-center gap-1">
+              <Button
                 type="button"
-                className={`map-primary ${drawing ? 'active' : ''}`}
+                size="sm"
+                className={`h-8 gap-1.5 text-xs font-semibold ${
+                  drawing
+                    ? 'bg-amber-500 hover:bg-amber-600 text-white animate-pulse'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                }`}
                 disabled={!loc?.office_id || readonly || busy}
                 onClick={() => {
                   setDrawing(!drawing);
                   setDirty(true);
                 }}
               >
-                <Plus size={14} />
+                <Plus size={13} />
                 {drawing ? t('ক্লিক করে বিন্দু যোগ করুন…', 'Click on map…') : t('অঙ্কন শুরু', 'Start Drawing')}
-              </button>
+              </Button>
 
               {drawing && (
-                <button
+                <Button
                   type="button"
-                  className="map-secondary"
+                  size="sm"
+                  variant="outline"
+                  className="h-8 gap-1.5 text-xs font-semibold bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
                   disabled={
                     (drawMode === 'polygon' && points.length < 3) ||
                     (drawMode === 'line' && points.length < 2) ||
@@ -1193,63 +1264,74 @@ export function ParcelDesigner({ onExit }: { onExit: (location?: number) => void
                     setDirty(true);
                   }}
                 >
-                  <CheckCircle2 size={14} />
+                  <CheckCircle2 size={13} />
                   {t('সম্পূর্ণ', 'Finish')}
-                </button>
+                </Button>
               )}
             </div>
 
-            <div className="parcel-tool-divider" />
+            <div className="parcel-tool-divider h-5 w-px bg-slate-200 mx-1" />
 
             {/* Undo / Redo & Vertex Controls */}
-            <div className="parcel-tool-group">
-              <button
+            <div className="parcel-tool-group flex items-center gap-1">
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1 text-xs px-2 text-slate-700 hover:bg-slate-100"
                 disabled={historyStack.length === 0 || readonly}
                 onClick={undo}
                 title={t('পূর্বাবস্থা (Ctrl+Z)', 'Undo (Ctrl+Z)')}
               >
-                <Undo2 size={14} />
+                <Undo2 size={13} />
                 {t('পূর্বাবস্থা', 'Undo')}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1 text-xs px-2 text-slate-700 hover:bg-slate-100"
                 disabled={futureStack.length === 0 || readonly}
                 onClick={redo}
                 title={t('পুনরাবৃত্তি (Ctrl+Y)', 'Redo (Ctrl+Y)')}
               >
-                <Redo2 size={14} />
+                <Redo2 size={13} />
                 {t('পুনরাবৃত্তি', 'Redo')}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
-                className="tool-btn-danger"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1 text-xs px-2 text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700"
                 disabled={!points.length || readonly}
                 onClick={() => {
                   pushState(points.slice(0, -1));
                 }}
                 title={t('শেষ বিন্দু বাতিল', 'Remove last point')}
               >
-                <Trash2 size={14} />
+                <Trash2 size={13} />
                 {t('শেষ বিন্দু বাদ', 'Delete Point')}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1 text-xs px-2 text-slate-700 hover:bg-slate-100"
                 onClick={() => {
                   if (safeChange()) clear();
                 }}
               >
-                <RefreshCw size={14} />
+                <RefreshCw size={13} />
                 {t('নতুন', 'New')}
-              </button>
+              </Button>
             </div>
 
             {/* Snapping Feedback */}
             {snappedNotice && (
-              <span className="parcel-snap-badge">
+              <Badge variant="outline" className="parcel-snap-badge bg-emerald-50 text-emerald-800 border-emerald-300 gap-1 font-medium animate-bounce py-1">
                 <Compass size={12} />
                 {t('কোণে স্ন্যাপ হয়েছে (12px)', 'Snapped to vertex')}
-              </span>
+              </Badge>
             )}
           </div>
 
@@ -1294,489 +1376,525 @@ export function ParcelDesigner({ onExit }: { onExit: (location?: number) => void
         </div>
 
         {/* Right Panel: Cadastral Measurements Engine & Attribute Form */}
-        <form className="map-card parcel-form" onSubmit={save}>
-          <h2>
-            {editingFeature
-              ? `${editingFeature.attributes?.name || editingFeature.feature_type} · #${editingFeature.id}`
-              : editingDesign
-              ? `${statuses[editingDesign.status]} · #${editingDesign.id}`
-              : parent
-              ? t('প্রকাশিত দাগের নতুন সংশোধন', 'Revision of published parcel')
-              : t('নতুন ভেক্টর ড্রয়িং ও বৈশিষ্ট্য', 'New Vector Feature & Attributes')}
-          </h2>
-
-          {/* Real-time Cadastral Measurements Engine HUD */}
-          {measurements && (
-            <div className="parcel-measurements-panel">
-              <h4>
-                <span>
-                  <Ruler size={14} style={{ display: 'inline', marginRight: 4 }} />
-                  {t('ক্যাডাস্ট্রাল পরিমাপ ইঞ্জিন', 'Cadastral Measurements Engine')}
-                </span>
-                <small>{t('রিয়েল-টাইম হিসাব', 'Real-time calculation')}</small>
-              </h4>
-
-              {measurements.type === 'polygon' && (
-                <div className="measurement-grid">
-                  <div className="measurement-item">
-                    <span>{t('শতক / ডেসিমাল', 'Decimals')}</span>
-                    <strong>{toBnDigits(measurements.decimals.toFixed(3))} শতক</strong>
-                    <small>{measurements.decimals.toFixed(3)} decimals</small>
-                  </div>
-                  <div className="measurement-item">
-                    <span>{t('একর', 'Acres')}</span>
-                    <strong>{toBnDigits(measurements.acres.toFixed(4))} একর</strong>
-                    <small>{measurements.acres.toFixed(4)} acres</small>
-                  </div>
-                  <div className="measurement-item">
-                    <span>{t('কাঠা', 'Katha')}</span>
-                    <strong>{toBnDigits(measurements.katha.toFixed(3))} কাঠা</strong>
-                    <small>{measurements.katha.toFixed(3)} katha</small>
-                  </div>
-                  <div className="measurement-item">
-                    <span>{t('বিঘা', 'Bigha')}</span>
-                    <strong>{toBnDigits(measurements.bigha.toFixed(3))} বিঘা</strong>
-                    <small>{measurements.bigha.toFixed(3)} bigha</small>
-                  </div>
-                  <div className="measurement-item">
-                    <span>{t('বর্গমিটার', 'Square Meters')}</span>
-                    <strong>{toBnDigits(measurements.areaSqm.toFixed(1))} m²</strong>
-                    <small>{measurements.areaSqm.toFixed(1)} sqm</small>
-                  </div>
-                  <div className="measurement-item">
-                    <span>{t('বর্গফুট', 'Square Feet')}</span>
-                    <strong>{toBnDigits(measurements.sqft.toFixed(1))} ft²</strong>
-                    <small>{measurements.sqft.toFixed(1)} sq ft</small>
-                  </div>
-                  <div className="measurement-item measurement-full-row">
-                    <span>{t('সীমানার দৈর্ঘ্য / পরিসীমা', 'Perimeter')}</span>
-                    <strong>
-                      {toBnDigits(measurements.perimeterMeters.toFixed(1))} মিটার ·{' '}
-                      {toBnDigits(measurements.perimeterFeet.toFixed(1))} ফুট ·{' '}
-                      {toBnDigits(measurements.perimeterChains.toFixed(2))} শিকল (Chains)
-                    </strong>
-                    <small>১ শিকল = ৬৬ ফুট = ১০০ লিংক = ২০.১১৮ মিটার</small>
-                  </div>
-                </div>
+        <Card className="map-card parcel-form border-slate-200 shadow-sm overflow-hidden">
+          <CardHeader className="p-4 pb-2 bg-slate-50/80 border-b border-slate-100">
+            <CardTitle className="text-base font-bold text-slate-900 flex items-center justify-between">
+              <span>
+                {editingFeature
+                  ? `${editingFeature.attributes?.name || editingFeature.feature_type} · #${editingFeature.id}`
+                  : editingDesign
+                  ? `${statuses[editingDesign.status]} · #${editingDesign.id}`
+                  : parent
+                  ? t('প্রকাশিত দাগের নতুন সংশোধন', 'Revision of published parcel')
+                  : t('নতুন ভেক্টর ড্রয়িং ও বৈশিষ্ট্য', 'New Vector Feature & Attributes')}
+              </span>
+              {editingDesign && (
+                <Badge variant={editingDesign.status === 'PUBLISHED' ? 'default' : 'secondary'} className={editingDesign.status === 'PUBLISHED' ? 'bg-emerald-700 text-white' : ''}>
+                  {statuses[editingDesign.status]}
+                </Badge>
               )}
+            </CardTitle>
+          </CardHeader>
 
-              {measurements.type === 'line' && (
-                <div className="measurement-grid">
-                  <div className="measurement-item">
-                    <span>{t('দৈর্ঘ্য (মিটার)', 'Length (Meters)')}</span>
-                    <strong>{toBnDigits(measurements.lengthMeters.toFixed(1))} মিটার</strong>
-                    <small>{measurements.lengthMeters.toFixed(1)} m</small>
-                  </div>
-                  <div className="measurement-item">
-                    <span>{t('দৈর্ঘ্য (ফুট)', 'Length (Feet)')}</span>
-                    <strong>{toBnDigits(measurements.lengthFeet.toFixed(1))} ফুট</strong>
-                    <small>{measurements.lengthFeet.toFixed(1)} ft</small>
-                  </div>
-                  <div className="measurement-item measurement-full-row">
-                    <span>{t('শিকল / চেইন পরিমাপ (Gunter Chain)', 'Chains & Links')}</span>
-                    <strong>{toBnDigits(measurements.lengthChains.toFixed(2))} শিকল ({toBnDigits((measurements.lengthChains * 100).toFixed(0))} লিংক)</strong>
-                    <small>১ জরিপ শিকল = ৬৬ ফুট = ১০০ লিংক</small>
-                  </div>
-                </div>
-              )}
+          <CardContent className="p-4 pt-3">
+            <form onSubmit={save}>
+              {/* Real-time Cadastral Measurements Engine HUD */}
+              {measurements && (
+                <div className="parcel-measurements-panel rounded-lg border border-emerald-200 bg-emerald-50/40 p-3 mb-4">
+                  <h4 className="flex items-center justify-between text-xs font-bold text-emerald-950 uppercase tracking-wider mb-2">
+                    <span className="flex items-center gap-1.5">
+                      <Ruler size={14} className="text-emerald-700" />
+                      {t('ক্যাডাস্ট্রাল পরিমাপ ইঞ্জিন', 'Cadastral Measurements Engine')}
+                    </span>
+                    <Badge variant="outline" className="text-[10px] font-semibold bg-white border-emerald-300 text-emerald-800">
+                      {t('রিয়েল-টাইম হিসাব', 'Real-time calculation')}
+                    </Badge>
+                  </h4>
 
-              {measurements.type === 'point' && (
-                <div className="measurement-grid">
-                  <div className="measurement-item">
-                    <span>{t('অক্ষাংশ (Latitude)', 'Latitude')}</span>
-                    <strong>{measurements.lat.toFixed(7)}° N</strong>
-                  </div>
-                  <div className="measurement-item">
-                    <span>{t('দ্রাঘিমাংশ (Longitude)', 'Longitude')}</span>
-                    <strong>{measurements.lng.toFixed(7)}° E</strong>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+                  {measurements.type === 'polygon' && (
+                    <div className="measurement-grid grid grid-cols-2 gap-2 text-xs">
+                      <div className="measurement-item bg-white p-2 rounded border border-emerald-100">
+                        <span className="text-slate-500 block text-[11px]">{t('শতক / ডেসিমাল', 'Decimals')}</span>
+                        <strong className="text-sm text-emerald-900 font-bold">{toBnDigits(measurements.decimals.toFixed(3))} শতক</strong>
+                        <small className="text-slate-400 block text-[10px]">{measurements.decimals.toFixed(3)} decimals</small>
+                      </div>
+                      <div className="measurement-item bg-white p-2 rounded border border-emerald-100">
+                        <span className="text-slate-500 block text-[11px]">{t('একর', 'Acres')}</span>
+                        <strong className="text-sm text-emerald-900 font-bold">{toBnDigits(measurements.acres.toFixed(4))} একর</strong>
+                        <small className="text-slate-400 block text-[10px]">{measurements.acres.toFixed(4)} acres</small>
+                      </div>
+                      <div className="measurement-item bg-white p-2 rounded border border-emerald-100">
+                        <span className="text-slate-500 block text-[11px]">{t('কাঠা', 'Katha')}</span>
+                        <strong className="text-sm text-emerald-900 font-bold">{toBnDigits(measurements.katha.toFixed(3))} কাঠা</strong>
+                        <small className="text-slate-400 block text-[10px]">{measurements.katha.toFixed(3)} katha</small>
+                      </div>
+                      <div className="measurement-item bg-white p-2 rounded border border-emerald-100">
+                        <span className="text-slate-500 block text-[11px]">{t('বিঘা', 'Bigha')}</span>
+                        <strong className="text-sm text-emerald-900 font-bold">{toBnDigits(measurements.bigha.toFixed(3))} বিঘা</strong>
+                        <small className="text-slate-400 block text-[10px]">{measurements.bigha.toFixed(3)} bigha</small>
+                      </div>
+                      <div className="measurement-item bg-white p-2 rounded border border-emerald-100">
+                        <span className="text-slate-500 block text-[11px]">{t('বর্গমিটার', 'Square Meters')}</span>
+                        <strong className="text-sm text-slate-800 font-bold">{toBnDigits(measurements.areaSqm.toFixed(1))} m²</strong>
+                        <small className="text-slate-400 block text-[10px]">{measurements.areaSqm.toFixed(1)} sqm</small>
+                      </div>
+                      <div className="measurement-item bg-white p-2 rounded border border-emerald-100">
+                        <span className="text-slate-500 block text-[11px]">{t('বর্গফুট', 'Square Feet')}</span>
+                        <strong className="text-sm text-slate-800 font-bold">{toBnDigits(measurements.sqft.toFixed(1))} ft²</strong>
+                        <small className="text-slate-400 block text-[10px]">{measurements.sqft.toFixed(1)} sq ft</small>
+                      </div>
+                      <div className="measurement-item measurement-full-row col-span-2 bg-white p-2 rounded border border-emerald-100">
+                        <span className="text-slate-500 block text-[11px]">{t('সীমানার দৈর্ঘ্য / পরিসীমা', 'Perimeter')}</span>
+                        <strong className="text-xs text-emerald-950 font-bold">
+                          {toBnDigits(measurements.perimeterMeters.toFixed(1))} মিটার ·{' '}
+                          {toBnDigits(measurements.perimeterFeet.toFixed(1))} ফুট ·{' '}
+                          {toBnDigits(measurements.perimeterChains.toFixed(2))} শিকল (Chains)
+                        </strong>
+                        <small className="text-slate-500 block text-[10px]">১ শিকল = ৬৬ ফুট = ১০০ লিংক = ২০.১১৮ মিটার</small>
+                      </div>
+                    </div>
+                  )}
 
-          {/* Area Discrepancy Reconciliation Warning */}
-          {Number(fields.recorded_area) > 0 &&
-            measurements?.type === 'polygon' &&
-            Math.abs(measurements.decimals - Number(fields.recorded_area)) / Number(fields.recorded_area) > 0.1 && (
-              <p className="parcel-review-note">
-                {t(
-                  'আঁকা সীমানা ও রেকর্ডের আয়তনে ১০%-এর বেশি পার্থক্য রয়েছে। সিএস/আরএস/বিএস নকশা মিলিয়ে সীমানা পুনর্নিরূপণ করুন।',
-                  'Drawn and recorded areas differ by >10%. Reconcile against source survey.'
-                )}
-              </p>
-            )}
+                  {measurements.type === 'line' && (
+                    <div className="measurement-grid grid grid-cols-2 gap-2 text-xs">
+                      <div className="measurement-item bg-white p-2 rounded border border-amber-100">
+                        <span className="text-slate-500 block text-[11px]">{t('দৈর্ঘ্য (মিটার)', 'Length (Meters)')}</span>
+                        <strong className="text-sm text-amber-900 font-bold">{toBnDigits(measurements.lengthMeters.toFixed(1))} মিটার</strong>
+                        <small className="text-slate-400 block text-[10px]">{measurements.lengthMeters.toFixed(1)} m</small>
+                      </div>
+                      <div className="measurement-item bg-white p-2 rounded border border-amber-100">
+                        <span className="text-slate-500 block text-[11px]">{t('দৈর্ঘ্য (ফুট)', 'Length (Feet)')}</span>
+                        <strong className="text-sm text-amber-900 font-bold">{toBnDigits(measurements.lengthFeet.toFixed(1))} ফুট</strong>
+                        <small className="text-slate-400 block text-[10px]">{measurements.lengthFeet.toFixed(1)} ft</small>
+                      </div>
+                      <div className="measurement-item measurement-full-row col-span-2 bg-white p-2 rounded border border-amber-100">
+                        <span className="text-slate-500 block text-[11px]">{t('শিকল / চেইন পরিমাপ (Gunter Chain)', 'Chains & Links')}</span>
+                        <strong className="text-xs text-amber-950 font-bold">
+                          {toBnDigits(measurements.lengthChains.toFixed(2))} শিকল ({toBnDigits((measurements.lengthChains * 100).toFixed(0))} লিংক)
+                        </strong>
+                        <small className="text-slate-500 block text-[10px]">১ জরিপ শিকল = ৬৬ ফুট = ১০০ লিংক</small>
+                      </div>
+                    </div>
+                  )}
 
-          {dirty && <p className="parcel-unsaved">{t('● অসংরক্ষিত পরিবর্তন আছে', '● Unsaved changes')}</p>}
-
-          <fieldset disabled={!loc?.office_id || readonly || busy}>
-            <div className="parcel-field-grid">
-              {/* Feature Category */}
-              <label>
-                {t('ফিচার শ্রেণি', 'Feature Category')}
-                <select
-                  value={fields.category}
-                  onChange={(e) => {
-                    const cat = e.target.value;
-                    field('category', cat);
-                    if (cat === 'road' || cat === 'waterbody') {
-                      if (drawMode === 'point') setDrawMode('line');
-                    } else if (cat === 'control_point' || cat === 'landmark') {
-                      if (drawMode === 'line') setDrawMode('point');
-                    }
-                  }}
-                >
-                  {FEATURE_CATEGORIES.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {lang === 'bn' ? c.labelBn : c.labelEn}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              {/* Official Bangladesh Land Classification */}
-              <label>
-                {t('জমির সরকারি শ্রেণি', 'Land Class (Official BD)')}
-                <select value={fields.land_class} onChange={(e) => field('land_class', e.target.value)}>
-                  {BD_LAND_CLASSES.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {lang === 'bn' ? c.labelBn : c.labelEn}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              {/* Dag Number */}
-              <label>
-                {t('দাগ নম্বর', 'Dag Number')}
-                <input
-                  required={fields.category === 'plot'}
-                  value={fields.dag_no}
-                  onChange={(e) => field('dag_no', e.target.value)}
-                  placeholder="যেমন: ১০২"
-                />
-              </label>
-
-              {/* Survey Type */}
-              <label>
-                {t('জরিপ', 'Survey Type')}
-                <select value={fields.survey} onChange={(e) => field('survey', e.target.value)}>
-                  {['CS', 'SA', 'RS', 'BS', 'BDS'].map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              {/* Khatian Number */}
-              <label>
-                {t('খতিয়ান নম্বর', 'Khatian Number')}
-                <input
-                  value={fields.khatian_no}
-                  onChange={(e) => field('khatian_no', e.target.value)}
-                  placeholder="যেমন: ৪৫"
-                />
-              </label>
-
-              {/* Sheet Number */}
-              <label>
-                {t('নকশা শিট নম্বর', 'Sheet Number')}
-                <input
-                  required
-                  value={fields.sheet_no}
-                  onChange={(e) => field('sheet_no', e.target.value)}
-                  placeholder="যেমন: ১"
-                />
-              </label>
-            </div>
-
-            {/* Feature Name / Title */}
-            <label>
-              {t('ফিচারের শিরোনাম / বিবরণ', 'Feature Title / Label')}
-              <input
-                value={fields.name}
-                onChange={(e) => field('name', e.target.value)}
-                placeholder={t('যেমন: উত্তর পাশের সরকারি খাল বা প্লট ১০২', 'e.g. North Side Public Canal')}
-              />
-            </label>
-
-            {/* Recorded Area */}
-            {drawMode === 'polygon' && (
-              <label>
-                {t('রেকর্ড অনুযায়ী আয়তন (শতক)', 'Recorded area (decimals)')}
-                <input
-                  type="number"
-                  step="0.001"
-                  min="0.001"
-                  value={fields.recorded_area}
-                  onChange={(e) => field('recorded_area', e.target.value)}
-                  placeholder="যেমন: ১২.৫০"
-                />
-              </label>
-            )}
-
-            {/* Link Existing Land Record */}
-            <label>
-              {t('আগের জমির রেকর্ড থাকলে যুক্ত করুন', 'Link an existing land record (optional)')}
-              <select
-                value={fields.plot_id}
-                onChange={(e) => {
-                  const p = plots.find((p) => p.id === Number(e.target.value));
-                  setFields((f) => ({
-                    ...f,
-                    plot_id: e.target.value,
-                    ...(p ? { dag_no: p.dag_no, recorded_area: String(p.total_area_decimal), land_class: p.land_type_bn } : {}),
-                  }));
-                  setDirty(true);
-                }}
-              >
-                <option value="">নতুন দাগ — মালিকানা পরে যুক্ত করব</option>
-                {fields.plot_id && !plots.some((p) => p.id === Number(fields.plot_id)) && (
-                  <option value={fields.plot_id}>সংযুক্ত রেকর্ড #{fields.plot_id}</option>
-                )}
-                {plots.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    দাগ {toBnDigits(p.dag_no)} · {p.plot_code}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            {/* Surveyor Notes / Inspection Remarks */}
-            <label>
-              {t('সার্ভেয়ারের মন্তব্য / জরিপের ভিত্তি', 'Surveyor Notes / Basis')}
-              <textarea
-                required
-                maxLength={500}
-                value={fields.notes || fields.source_reference}
-                onChange={(e) => {
-                  field('notes', e.target.value);
-                  field('source_reference', e.target.value);
-                }}
-                placeholder={t('জরিপ রেফারেন্স, পিলারের বিবরণ বা পরিদর্শনের মন্তব্য লিখুন…', 'Inspection remarks or survey reference…')}
-              />
-            </label>
-
-            {/* Detailed Coordinates Editor Collapsible */}
-            <details>
-              <summary>
-                {t('কোণের স্থানাঙ্ক সূক্ষ্ম সম্পাদনা', 'Fine Coordinate Editor')} · {toBnDigits(points.length)} টি পয়েন্ট
-              </summary>
-              {points.map((p, i) => (
-                <div key={i} className="parcel-coordinates">
-                  <span>{i + 1}</span>
-                  <input
-                    aria-label={`কোণ ${i + 1} longitude`}
-                    type="number"
-                    step="0.00000001"
-                    value={p[0]}
-                    onChange={(e) => {
-                      const newPts = points.map((v, j) => (j === i ? ([Number(e.target.value), v[1]] as XY) : v));
-                      pushState(newPts);
-                    }}
-                  />
-                  <input
-                    aria-label={`কোণ ${i + 1} latitude`}
-                    type="number"
-                    step="0.00000001"
-                    value={p[1]}
-                    onChange={(e) => {
-                      const newPts = points.map((v, j) => (j === i ? ([v[0], Number(e.target.value)] as XY) : v));
-                      pushState(newPts);
-                    }}
-                  />
-                  {points.length > (drawMode === 'polygon' ? 3 : 2) && (
-                    <button
-                      type="button"
-                      style={{ padding: '2px 6px', fontSize: 10, background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', borderRadius: 4 }}
-                      onClick={() => pushState(points.filter((_, j) => j !== i))}
-                      title={t('কোণ মুছুন', 'Delete point')}
-                    >
-                      ×
-                    </button>
+                  {measurements.type === 'point' && (
+                    <div className="measurement-grid grid grid-cols-2 gap-2 text-xs">
+                      <div className="measurement-item bg-white p-2 rounded border border-rose-100">
+                        <span className="text-slate-500 block text-[11px]">{t('অক্ষাংশ (Latitude)', 'Latitude')}</span>
+                        <strong className="text-sm text-rose-900 font-bold">{measurements.lat.toFixed(7)}° N</strong>
+                      </div>
+                      <div className="measurement-item bg-white p-2 rounded border border-rose-100">
+                        <span className="text-slate-500 block text-[11px]">{t('দ্রাঘিমাংশ (Longitude)', 'Longitude')}</span>
+                        <strong className="text-sm text-rose-900 font-bold">{measurements.lng.toFixed(7)}° E</strong>
+                      </div>
+                    </div>
                   )}
                 </div>
-              ))}
-            </details>
-
-            {/* Action Buttons */}
-            <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
-              <button
-                className="map-primary map-wide"
-                disabled={
-                  busy ||
-                  drawing ||
-                  (drawMode === 'polygon' && points.length < 3) ||
-                  (drawMode === 'line' && points.length < 2) ||
-                  (drawMode === 'point' && points.length < 1)
-                }
-              >
-                <Save size={16} />
-                {busy ? t('সংরক্ষণ হচ্ছে…', 'Saving…') : t('ডাটাবেজে সংরক্ষণ করুন', 'Save to Database')}
-              </button>
-
-              {editingFeature && (
-                <button
-                  type="button"
-                  className="map-secondary"
-                  style={{ color: '#b91c1c', borderColor: '#fca5a5' }}
-                  disabled={busy}
-                  onClick={deleteCurrentFeature}
-                >
-                  <Trash2 size={16} />
-                  {t('মুছুন', 'Delete')}
-                </button>
               )}
-            </div>
-          </fieldset>
-        </form>
-      </div>
 
-      {/* Register & Feature Registry Tabs */}
-      <section className="map-card parcel-register">
-        <div className="parcel-tab-bar">
-          <button
-            type="button"
-            className={`parcel-tab-btn ${activeTab === 'features' ? 'active' : ''}`}
-            onClick={() => setActiveTab('features')}
-          >
-            <Layers size={16} />
-            {t('ভেক্টর ফিচার তালিকা (Polygon, Line, Point)', 'Vector Features')} ({toBnDigits(features.length)})
-          </button>
-          <button
-            type="button"
-            className={`parcel-tab-btn ${activeTab === 'parcels' ? 'active' : ''}`}
-            onClick={() => setActiveTab('parcels')}
-          >
-            <Hexagon size={16} />
-            {t('মৌজার দাগ ও পর্যালোচনা তালিকা', 'Mouza Parcels & Review')} ({toBnDigits(items.length)})
-          </button>
-        </div>
-
-        {/* Tab 1: Vector Features Registry */}
-        {activeTab === 'features' && (
-          <div className="parcel-register-grid">
-            {!features.length && (
-              <p>{t('এই মৌজায় এখনো কোনো ভেক্টর ফিচার সংরক্ষিত হয়নি। টুলবার থেকে বহুভুজ, রেখা বা পয়েন্ট আঁকুন।', 'No vector features drawn in this mouza yet.')}</p>
-            )}
-            {features.map((f) => (
-              <article key={f.id} style={{ borderLeft: `4px solid ${f.feature_type === 'polygon' ? '#087f5b' : f.feature_type === 'line' ? '#d97706' : '#dc2626'}` }}>
-                <div className="map-row">
-                  <strong>{f.attributes?.name || `${f.feature_type.toUpperCase()} #${f.id}`}</strong>
-                  <span className="map-badge">
-                    {f.feature_type === 'polygon' ? 'বহুভুজ' : f.feature_type === 'line' ? 'রেখা' : 'পয়েন্ট'}
-                  </span>
-                </div>
-                <p>
-                  {f.attributes?.category && `শ্রেণি: ${f.attributes.category} · `}
-                  {f.attributes?.land_class && `জমি: ${f.attributes.land_class} · `}
-                  {f.attributes?.dag_no && `দাগ ${toBnDigits(f.attributes.dag_no)}`}
-                </p>
-                {f.area_decimal && (
-                  <p>
-                    <strong>{toBnDigits(f.area_decimal.toFixed(3))} {t('শতক', 'decimals')}</strong> ({f.area_sqm?.toFixed(1)} m²)
+              {/* Area Discrepancy Reconciliation Warning */}
+              {Number(fields.recorded_area) > 0 &&
+                measurements?.type === 'polygon' &&
+                Math.abs(measurements.decimals - Number(fields.recorded_area)) / Number(fields.recorded_area) > 0.1 && (
+                  <p className="parcel-review-note text-xs text-amber-900 bg-amber-50 p-2.5 rounded border border-amber-200 mb-3">
+                    {t(
+                      'আঁকা সীমানা ও রেকর্ডের আয়তনে ১০%-এর বেশি পার্থক্য রয়েছে। সিএস/আরএস/বিএস নকশা মিলিয়ে সীমানা পুনর্নিরূপণ করুন।',
+                      'Drawn and recorded areas differ by >10%. Reconcile against source survey.'
+                    )}
                   </p>
                 )}
-                {f.length_meters && (
-                  <p>
-                    <strong>{toBnDigits(f.length_meters.toFixed(1))} {t('মিটার', 'meters')}</strong> ({(f.length_meters / 20.1168).toFixed(2)} শিকল)
-                  </p>
-                )}
-                <div className="map-row parcel-actions">
-                  <button type="button" className="map-secondary" onClick={() => selectFeature(f)}>
-                    {t('সম্পাদনা / দেখুন', 'View / Edit')}
-                  </button>
-                  {canDraw && (
-                    <button
-                      type="button"
-                      className="map-secondary"
-                      style={{ color: '#b91c1c' }}
-                      onClick={async () => {
-                        if (window.confirm(t('মুছে ফেলতে নিশ্চিত?', 'Confirm delete?'))) {
-                          await mapFeaturesApi.delete(f.id);
-                          await loadLocationData(location);
+
+              {dirty && <p className="parcel-unsaved text-xs font-semibold text-amber-700 mb-2">{t('● অসংরক্ষিত পরিবর্তন আছে', '● Unsaved changes')}</p>}
+
+              <fieldset disabled={!loc?.office_id || readonly || busy} className="space-y-3">
+                <div className="parcel-field-grid grid grid-cols-2 gap-2.5">
+                  {/* Feature Category */}
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-700">{t('ফিচার শ্রেণি', 'Feature Category')}</Label>
+                    <select
+                      className="w-full h-9 px-2.5 rounded-md border border-slate-300 bg-white text-xs font-medium focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                      value={fields.category}
+                      onChange={(e) => {
+                        const cat = e.target.value;
+                        field('category', cat);
+                        if (cat === 'road' || cat === 'waterbody') {
+                          if (drawMode === 'point') setDrawMode('line');
+                        } else if (cat === 'control_point' || cat === 'landmark') {
+                          if (drawMode === 'line') setDrawMode('point');
                         }
                       }}
                     >
-                      <Trash2 size={13} />
-                    </button>
-                  )}
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
+                      {FEATURE_CATEGORIES.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {lang === 'bn' ? c.labelBn : c.labelEn}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-        {/* Tab 2: Mouza Parcels & Review Registry */}
-        {activeTab === 'parcels' && (
-          <div className="parcel-register-grid">
-            {!items.length && (
-              <p>{t('এই মৌজায় কোনো দাগের নকশা নেই। প্রথম সীমানা আঁকুন।', 'No parcel designs yet. Draw the first boundary.')}</p>
-            )}
-            {items.map((r) => (
-              <article key={r.id}>
-                <div className="map-row">
-                  <strong>
-                    {r.survey} · {t('দাগ', 'Dag')} {toBnDigits(r.dag_no)}
-                  </strong>
-                  <span className={`map-badge ${r.status === 'PUBLISHED' ? 'published' : ''}`}>
-                    {statuses[r.status]}
-                  </span>
+                  {/* Official Bangladesh Land Classification */}
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-700">{t('জমির সরকারি শ্রেণি', 'Land Class (Official BD)')}</Label>
+                    <select
+                      className="w-full h-9 px-2.5 rounded-md border border-slate-300 bg-white text-xs font-medium focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                      value={fields.land_class}
+                      onChange={(e) => field('land_class', e.target.value)}
+                    >
+                      {BD_LAND_CLASSES.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {lang === 'bn' ? c.labelBn : c.labelEn}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Dag Number */}
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-700">{t('দাগ নম্বর', 'Dag Number')}</Label>
+                    <Input
+                      required={fields.category === 'plot'}
+                      className="h-9 text-xs"
+                      value={fields.dag_no}
+                      onChange={(e) => field('dag_no', e.target.value)}
+                      placeholder="যেমন: ১০২"
+                    />
+                  </div>
+
+                  {/* Survey Type */}
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-700">{t('জরিপ', 'Survey Type')}</Label>
+                    <select
+                      className="w-full h-9 px-2.5 rounded-md border border-slate-300 bg-white text-xs font-medium focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                      value={fields.survey}
+                      onChange={(e) => field('survey', e.target.value)}
+                    >
+                      {['CS', 'SA', 'RS', 'BS', 'BDS'].map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Khatian Number */}
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-700">{t('খতিয়ান নম্বর', 'Khatian Number')}</Label>
+                    <Input
+                      className="h-9 text-xs"
+                      value={fields.khatian_no}
+                      onChange={(e) => field('khatian_no', e.target.value)}
+                      placeholder="যেমন: ৪৫"
+                    />
+                  </div>
+
+                  {/* Sheet Number */}
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-700">{t('নকশা শিট নম্বর', 'Sheet Number')}</Label>
+                    <Input
+                      required
+                      className="h-9 text-xs"
+                      value={fields.sheet_no}
+                      onChange={(e) => field('sheet_no', e.target.value)}
+                      placeholder="যেমন: ১"
+                    />
+                  </div>
                 </div>
-                <p>
-                  Sheet {toBnDigits(r.sheet_no)} · {toBnDigits(r.recorded_area)} {t('শতক', 'decimals')} · v{r.version}
-                </p>
-                <p>{r.plot_id ? `রেকর্ড #${r.plot_id}` : t('মালিকানার রেকর্ড যুক্ত হয়নি', 'Ownership record not linked')}</p>
-                {r.review_note && <p className="parcel-review-note">{r.review_note}</p>}
-                <div className="map-row parcel-actions">
-                  <button type="button" className="map-secondary" onClick={() => selectDesign(r)}>
-                    {['DRAFT', 'RETURNED'].includes(r.status) ? t('খুলুন / সংশোধন', 'Open / edit') : t('নকশা দেখুন', 'View')}
-                  </button>
-                  {['DRAFT', 'RETURNED'].includes(r.status) && loc?.can_edit && canDraw && (
-                    <button type="button" className="map-primary" disabled={busy || dirty} onClick={() => action(r, 'submit')}>
-                      {t('পর্যালোচনায় পাঠান', 'Submit')}
-                    </button>
-                  )}
-                  {r.status === 'SUBMITTED' && context?.can_review && loc?.can_edit && canDraw && (
-                    <>
-                      <button type="button" className="map-primary" disabled={busy || dirty} onClick={() => action(r, 'publish')}>
-                        {t('পর্যালোচনা ও প্রকাশ', 'Review & publish')}
-                      </button>
-                      <button type="button" className="map-secondary" disabled={busy || dirty} onClick={() => action(r, 'return')}>
-                        {t('ফেরত দিন', 'Return')}
-                      </button>
-                    </>
-                  )}
-                  {r.status === 'PUBLISHED' && loc?.can_edit && canDraw && (
-                    <>
-                      {context?.can_allocate && !r.plot_id && (
-                        <button
-                          type="button"
-                          className="map-primary"
-                          onClick={() => {
-                            setAllocationTarget(r.id);
-                            document.getElementById('parcel-ownership-allocation')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                {/* Feature Name / Title */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-slate-700">{t('ফিচারের শিরোনাম / বিবরণ', 'Feature Title / Label')}</Label>
+                  <Input
+                    className="h-9 text-xs"
+                    value={fields.name}
+                    onChange={(e) => field('name', e.target.value)}
+                    placeholder={t('যেমন: উত্তর পাশের সরকারি খাল বা প্লট ১০২', 'e.g. North Side Public Canal')}
+                  />
+                </div>
+
+                {/* Recorded Area */}
+                {drawMode === 'polygon' && (
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-700">{t('রেকর্ড অনুযায়ী আয়তন (শতক)', 'Recorded area (decimals)')}</Label>
+                    <Input
+                      type="number"
+                      step="0.001"
+                      min="0.001"
+                      className="h-9 text-xs"
+                      value={fields.recorded_area}
+                      onChange={(e) => field('recorded_area', e.target.value)}
+                      placeholder="যেমন: ১২.৫০"
+                    />
+                  </div>
+                )}
+
+                {/* Link Existing Land Record */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-slate-700">{t('আগের জমির রেকর্ড থাকলে যুক্ত করুন', 'Link an existing land record (optional)')}</Label>
+                  <select
+                    className="w-full h-9 px-2.5 rounded-md border border-slate-300 bg-white text-xs font-medium focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                    value={fields.plot_id}
+                    onChange={(e) => {
+                      const p = plots.find((p) => p.id === Number(e.target.value));
+                      setFields((f) => ({
+                        ...f,
+                        plot_id: e.target.value,
+                        ...(p ? { dag_no: p.dag_no, recorded_area: String(p.total_area_decimal), land_class: p.land_type_bn } : {}),
+                      }));
+                      setDirty(true);
+                    }}
+                  >
+                    <option value="">নতুন দাগ — মালিকানা পরে যুক্ত করব</option>
+                    {fields.plot_id && !plots.some((p) => p.id === Number(fields.plot_id)) && (
+                      <option value={fields.plot_id}>সংযুক্ত রেকর্ড #{fields.plot_id}</option>
+                    )}
+                    {plots.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        দাগ {toBnDigits(p.dag_no)} · {p.plot_code}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Surveyor Notes / Inspection Remarks */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-slate-700">{t('সার্ভেয়ারের মন্তব্য / জরিপের ভিত্তি', 'Surveyor Notes / Basis')}</Label>
+                  <Textarea
+                    required
+                    maxLength={500}
+                    rows={2}
+                    className="text-xs resize-none"
+                    value={fields.notes || fields.source_reference}
+                    onChange={(e) => {
+                      field('notes', e.target.value);
+                      field('source_reference', e.target.value);
+                    }}
+                    placeholder={t('জরিপ রেফারেন্স, পিলারের বিবরণ বা পরিদর্শনের মন্তব্য লিখুন…', 'Inspection remarks or survey reference…')}
+                  />
+                </div>
+
+                {/* Detailed Coordinates Editor Collapsible */}
+                <details className="text-xs bg-slate-50 p-2.5 rounded-md border border-slate-200">
+                  <summary className="font-semibold text-slate-700 cursor-pointer">
+                    {t('কোণের স্থানাঙ্ক সূক্ষ্ম সম্পাদনা', 'Fine Coordinate Editor')} · {toBnDigits(points.length)} টি পয়েন্ট
+                  </summary>
+                  <div className="mt-2 space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                    {points.map((p, i) => (
+                      <div key={i} className="parcel-coordinates flex items-center gap-1.5">
+                        <span className="w-5 text-center text-[11px] font-bold text-slate-600">{i + 1}</span>
+                        <input
+                          aria-label={`কোণ ${i + 1} longitude`}
+                          type="number"
+                          step="0.00000001"
+                          className="flex-1 h-7 px-1.5 text-[11px] font-mono rounded border border-slate-300 bg-white"
+                          value={p[0]}
+                          onChange={(e) => {
+                            const newPts = points.map((v, j) => (j === i ? ([Number(e.target.value), v[1]] as XY) : v));
+                            pushState(newPts);
                           }}
-                        >
-                          {t('এই দাগে মালিক যুক্ত করুন', 'Allocate owners to this parcel')}
-                        </button>
-                      )}
-                      <button type="button" className="map-secondary" onClick={() => selectDesign(r, true)}>
-                        {t('নতুন সংশোধন', 'Create revision')}
-                      </button>
-                      {context?.can_review && (
-                        <button type="button" className="map-secondary" disabled={busy || dirty} onClick={() => action(r, 'archive')}>
-                          {t('প্রত্যাহার', 'Withdraw')}
-                        </button>
-                      )}
-                    </>
+                        />
+                        <input
+                          aria-label={`কোণ ${i + 1} latitude`}
+                          type="number"
+                          step="0.00000001"
+                          className="flex-1 h-7 px-1.5 text-[11px] font-mono rounded border border-slate-300 bg-white"
+                          value={p[1]}
+                          onChange={(e) => {
+                            const newPts = points.map((v, j) => (j === i ? ([v[0], Number(e.target.value)] as XY) : v));
+                            pushState(newPts);
+                          }}
+                        />
+                        {points.length > (drawMode === 'polygon' ? 3 : 2) && (
+                          <button
+                            type="button"
+                            style={{ padding: '2px 6px', fontSize: 10, background: '#fee2e2', color: '#b91c1c', border: '1px solid #fca5a5', borderRadius: 4 }}
+                            onClick={() => pushState(points.filter((_, j) => j !== i))}
+                            title={t('কোণ মুছুন', 'Delete point')}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </details>
+
+                {/* Action Buttons */}
+                <div className="pt-2 flex gap-2">
+                  <Button
+                    className="flex-1 h-10 gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-medium"
+                    disabled={
+                      busy ||
+                      drawing ||
+                      (drawMode === 'polygon' && points.length < 3) ||
+                      (drawMode === 'line' && points.length < 2) ||
+                      (drawMode === 'point' && points.length < 1)
+                    }
+                  >
+                    <Save size={15} />
+                    {busy ? t('সংরক্ষণ হচ্ছে…', 'Saving…') : t('ডাটাবেজে সংরক্ষণ করুন', 'Save to Database')}
+                  </Button>
+
+                  {editingFeature && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="h-10 text-rose-600 border-rose-300 hover:bg-rose-50 hover:text-rose-700"
+                      disabled={busy}
+                      onClick={deleteCurrentFeature}
+                    >
+                      <Trash2 size={15} />
+                      {t('মুছুন', 'Delete')}
+                    </Button>
                   )}
                 </div>
-              </article>
-            ))}
-          </div>
-        )}
+              </fieldset>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Register & Feature Registry Tabs */}
+      <section className="map-card parcel-register mt-6">
+        <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'features' | 'parcels')}>
+          <TabsList className="grid w-full grid-cols-2 max-w-lg mb-4 bg-slate-100 p-1">
+            <TabsTrigger value="features" className="gap-2 font-medium">
+              <Layers size={14} />
+              {t('ভেক্টর ফিচার তালিকা', 'Vector Features')}
+              <Badge variant="secondary" className="ml-1 text-xs">{toBnDigits(features.length)}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="parcels" className="gap-2 font-medium">
+              <Hexagon size={14} />
+              {t('মৌজার দাগ ও পর্যালোচনা', 'Parcels & Review')}
+              <Badge variant="secondary" className="ml-1 text-xs">{toBnDigits(items.length)}</Badge>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Tab 1: Vector Features Registry */}
+          <TabsContent value="features">
+            <div className="parcel-register-grid">
+              {!features.length && (
+                <p className="text-sm text-slate-500 py-6 text-center">{t('এই মৌজায় এখনো কোনো ভেক্টর ফিচার সংরক্ষিত হয়নি। টুলবার থেকে বহুভুজ, রেখা বা পয়েন্ট আঁকুন।', 'No vector features drawn in this mouza yet.')}</p>
+              )}
+              {features.map((f) => (
+                <article key={f.id} style={{ borderLeft: `4px solid ${f.feature_type === 'polygon' ? '#087f5b' : f.feature_type === 'line' ? '#d97706' : '#dc2626'}` }}>
+                  <div className="map-row flex items-center justify-between">
+                    <strong>{f.attributes?.name || `${f.feature_type.toUpperCase()} #${f.id}`}</strong>
+                    <Badge variant="outline" className="text-xs">
+                      {f.feature_type === 'polygon' ? 'বহুভুজ' : f.feature_type === 'line' ? 'রেখা' : 'পয়েন্ট'}
+                    </Badge>
+                  </div>
+                  <p>
+                    {f.attributes?.category && `শ্রেণি: ${f.attributes.category} · `}
+                    {f.attributes?.land_class && `জমি: ${f.attributes.land_class} · `}
+                    {f.attributes?.dag_no && `দাগ ${toBnDigits(f.attributes.dag_no)}`}
+                  </p>
+                  {f.area_decimal && (
+                    <p>
+                      <strong>{toBnDigits(f.area_decimal.toFixed(3))} {t('শতক', 'decimals')}</strong> ({f.area_sqm?.toFixed(1)} m²)
+                    </p>
+                  )}
+                  {f.length_meters && (
+                    <p>
+                      <strong>{toBnDigits(f.length_meters.toFixed(1))} {t('মিটার', 'meters')}</strong> ({(f.length_meters / 20.1168).toFixed(2)} শিকল)
+                    </p>
+                  )}
+                  <div className="map-row parcel-actions flex items-center gap-2 mt-3">
+                    <Button type="button" size="sm" variant="outline" onClick={() => selectFeature(f)}>
+                      {t('সম্পাদনা / দেখুন', 'View / Edit')}
+                    </Button>
+                    {canDraw && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="text-rose-600 hover:bg-rose-50"
+                        onClick={async () => {
+                          if (window.confirm(t('মুছে ফেলতে নিশ্চিত?', 'Confirm delete?'))) {
+                            await mapFeaturesApi.delete(f.id);
+                            await loadLocationData(location);
+                          }
+                        }}
+                      >
+                        <Trash2 size={13} />
+                      </Button>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Tab 2: Mouza Parcels & Review Registry */}
+          <TabsContent value="parcels">
+            <div className="parcel-register-grid">
+              {!items.length && (
+                <p className="text-sm text-slate-500 py-6 text-center">{t('এই মৌজায় কোনো দাগের নকশা নেই। প্রথম সীমানা আঁকুন।', 'No parcel designs yet. Draw the first boundary.')}</p>
+              )}
+              {items.map((r) => (
+                <article key={r.id}>
+                  <div className="map-row flex items-center justify-between">
+                    <strong>
+                      {r.survey} · {t('দাগ', 'Dag')} {toBnDigits(r.dag_no)}
+                    </strong>
+                    <Badge variant={r.status === 'PUBLISHED' ? 'default' : 'secondary'} className={r.status === 'PUBLISHED' ? 'bg-emerald-700 text-white' : ''}>
+                      {statuses[r.status]}
+                    </Badge>
+                  </div>
+                  <p>
+                    Sheet {toBnDigits(r.sheet_no)} · {toBnDigits(r.recorded_area)} {t('শতক', 'decimals')} · v{r.version}
+                  </p>
+                  <p>{r.plot_id ? `রেকর্ড #${r.plot_id}` : t('মালিকানার রেকর্ড যুক্ত হয়নি', 'Ownership record not linked')}</p>
+                  {r.review_note && <p className="parcel-review-note">{r.review_note}</p>}
+                  <div className="map-row parcel-actions flex flex-wrap items-center gap-1.5 mt-3">
+                    <Button type="button" size="sm" variant="outline" onClick={() => selectDesign(r)}>
+                      {['DRAFT', 'RETURNED'].includes(r.status) ? t('খুলুন / সংশোধন', 'Open / edit') : t('নকশা দেখুন', 'View')}
+                    </Button>
+                    {['DRAFT', 'RETURNED'].includes(r.status) && loc?.can_edit && canDraw && (
+                      <Button type="button" size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white" disabled={busy || dirty} onClick={() => action(r, 'submit')}>
+                        {t('পর্যালোচনায় পাঠান', 'Submit')}
+                      </Button>
+                    )}
+                    {r.status === 'SUBMITTED' && context?.can_review && loc?.can_edit && canDraw && (
+                      <>
+                        <Button type="button" size="sm" className="bg-emerald-700 hover:bg-emerald-800 text-white" disabled={busy || dirty} onClick={() => action(r, 'publish')}>
+                          {t('পর্যালোচনা ও প্রকাশ', 'Review & publish')}
+                        </Button>
+                        <Button type="button" size="sm" variant="secondary" disabled={busy || dirty} onClick={() => action(r, 'return')}>
+                          {t('ফেরত দিন', 'Return')}
+                        </Button>
+                      </>
+                    )}
+                    {r.status === 'PUBLISHED' && loc?.can_edit && canDraw && (
+                      <>
+                        {context?.can_allocate && !r.plot_id && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="bg-emerald-700 hover:bg-emerald-800 text-white"
+                            onClick={() => {
+                              setAllocationTarget(r.id);
+                              document.getElementById('parcel-ownership-allocation')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }}
+                          >
+                            {t('এই দাগে মালিক যুক্ত করুন', 'Allocate owners to this parcel')}
+                          </Button>
+                        )}
+                        <Button type="button" size="sm" variant="secondary" onClick={() => selectDesign(r, true)}>
+                          {t('নতুন সংশোধন', 'Create revision')}
+                        </Button>
+                        {context?.can_review && (
+                          <Button type="button" size="sm" variant="outline" disabled={busy || dirty} onClick={() => action(r, 'archive')}>
+                            {t('প্রত্যাহার', 'Withdraw')}
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
       </section>
 
       {/* Parcel Owner Allocation Panel */}
@@ -1793,41 +1911,80 @@ export function ParcelDesigner({ onExit }: { onExit: (location?: number) => void
         />
       )}
 
-      {/* Review Decision Modal */}
-      {decision && (
-        <div className="map-modal-backdrop">
-          <section className="map-card map-review" role="dialog" aria-modal="true" aria-label="দাগের সিদ্ধান্ত">
-            <h2>
-              {decision.item.survey} · দাগ {toBnDigits(decision.item.dag_no)} · {actionLabels[decision.action]}
-            </h2>
-            <label>
-              {t('সিদ্ধান্তের কারণ', 'Decision reason')}
-              <textarea autoFocus value={reason} onChange={(e) => setReason(e.target.value)} />
-            </label>
-            {decision.action === 'publish' && (
-              <label className="map-check">
-                <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
-                {t(
-                  'মৌজা, দায়িত্বপ্রাপ্ত অফিস, দাগের উৎস, সীমানা ও রেকর্ডের সংযোগ পর্যালোচনা করেছি।',
-                  'I reviewed the mouza, office, source, boundaries and record link.'
-                )}
+      {/* Canonical shadcn Review Decision Modal */}
+      <Dialog open={!!decision} onOpenChange={(open) => { if (!open) setDecision(null); }}>
+        <DialogContent className="sm:max-w-md bg-white border border-slate-200 shadow-xl">
+          <DialogHeader>
+            <DialogTitle className="text-emerald-950 font-bold flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-emerald-600" />
+              {decision && (
+                <span>
+                  {decision.item.survey} · দাগ {toBnDigits(decision.item.dag_no)} · {actionLabels[decision.action]}
+                </span>
+              )}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-600 leading-relaxed">
+              {t(
+                'মৌজা অধিক্ষেত্র, সিএস/আরএস/বিএস জরিপ নকশা ও ভেক্টর সীমানা যাচাই করে সিদ্ধান্ত ও কারণ লিপিবদ্ধ করুন।',
+                'Review mouza jurisdiction, survey map, and vector boundary before recording official decision.'
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="decision-reason" className="text-xs font-semibold text-slate-700">
+                {t('সিদ্ধান্তের কারণ / যাচাই নোট (কমপক্ষে ১২ অক্ষর)', 'Decision reason / verification notes (min 12 chars)')}
+              </Label>
+              <Textarea
+                id="decision-reason"
+                autoFocus
+                rows={3}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder={t('সিদ্ধান্তের যৌক্তিক কারণ ও জরিপ রেফারেন্স লিখুন…', 'Enter justification and survey reference…')}
+                className="text-xs border-slate-300 focus:border-emerald-600 focus:ring-emerald-600 resize-none"
+              />
+              {reason.length > 0 && reason.trim().length < 12 && (
+                <p className="text-[11px] text-amber-600 font-medium">
+                  {t(`আরও ${12 - reason.trim().length} অক্ষর লিখুন`, `Enter ${12 - reason.trim().length} more characters`)}
+                </p>
+              )}
+            </div>
+
+            {decision?.action === 'publish' && (
+              <label className="flex items-start gap-2.5 p-3 rounded-lg bg-emerald-50/70 border border-emerald-200 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                  checked={confirmed}
+                  onChange={(e) => setConfirmed(e.target.checked)}
+                />
+                <span className="text-xs text-emerald-900 leading-relaxed">
+                  {t(
+                    'মৌজা, দায়িত্বপ্রাপ্ত অফিস, দাগের উৎস, সীমানা ও রেকর্ডের সংযোগ যথাযথভাবে পর্যালোচনা করেছি এবং জনস্বার্থে প্রকাশের প্রত্যয়ন করছি।',
+                    'I have verified the mouza, responsible office, boundary geometry and record link for official publication.'
+                  )}
+                </span>
               </label>
             )}
-            <div className="map-row">
-              <button className="map-secondary" onClick={() => setDecision(null)}>
-                {t('বাতিল', 'Cancel')}
-              </button>
-              <button
-                className="map-primary"
-                disabled={busy || reason.trim().length < 12 || (decision.action === 'publish' && !confirmed)}
-                onClick={decide}
-              >
-                {t('সিদ্ধান্ত সংরক্ষণ', 'Save decision')}
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-slate-100">
+            <Button variant="outline" size="sm" onClick={() => setDecision(null)}>
+              {t('বাতিল', 'Cancel')}
+            </Button>
+            <Button
+              size="sm"
+              className="bg-emerald-700 hover:bg-emerald-800 text-white font-medium"
+              disabled={busy || reason.trim().length < 12 || (decision?.action === 'publish' && !confirmed)}
+              onClick={decide}
+            >
+              {busy ? t('সংরক্ষণ হচ্ছে…', 'Saving…') : t('সিদ্ধান্ত সংরক্ষণ', 'Save decision')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

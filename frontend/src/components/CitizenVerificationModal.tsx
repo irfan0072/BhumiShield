@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  X,
   Camera,
   ShieldCheck,
   CheckCircle2,
@@ -18,6 +17,18 @@ import {
 import { BhumiApi } from '../api/client';
 import { useAppUI } from '../i18n';
 import { toBanglaDigits } from '../theme/tokens';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 
 interface CitizenVerificationModalProps {
   isOpen: boolean;
@@ -45,12 +56,12 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
   const [nid, setNid] = useState(initialNid || user?.nid || '');
   const [dob, setDob] = useState(initialDob || user?.date_of_birth || '1985-05-15');
   const [fullName, setFullName] = useState(initialName || (lang === 'bn' ? user?.full_name_bn : user?.full_name_en) || '');
-  
+
   // Workflow states
   const [step, setStep] = useState<VerificationStep>('input');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  
+
   // Camera & reticle states
   const [cameraStatus, setCameraStatus] = useState<CameraStatus>('idle');
   const [useFallbackMock, setUseFallbackMock] = useState(false);
@@ -123,21 +134,19 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
     return () => clearInterval(timer);
   }, [step, secondsRemaining]);
 
-  if (!isOpen) return null;
-
   // Format helper & real-time badge
   const cleanNid = nid.replace(/\s+/g, '');
   const getNidFormatLabel = () => {
     if (/^[0-9]{10}$/.test(cleanNid)) {
-      return { text: t('স্মার্ট এনআইডি (১০ ডিজিট)', 'Smart NID (10 Digits)'), color: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
+      return { text: t('স্মার্ট এনআইডি (১০ ডিজিট)', 'Smart NID (10 Digits)'), variant: 'safe' as const };
     }
     if (/^[0-9]{13}$/.test(cleanNid)) {
-      return { text: t('পুরাতন এনআইডি (১৩ ডিজিট - জন্মসাল যুক্ত হবে)', 'Legacy NID (13 Digits - Year prefixed)'), color: 'text-blue-700 bg-blue-50 border-blue-200' };
+      return { text: t('পুরাতন এনআইডি (১৩ ডিজিট - জন্মসাল যুক্ত হবে)', 'Legacy NID (13 Digits - Year prefixed)'), variant: 'secondary' as const };
     }
     if (/^[0-9]{17}$/.test(cleanNid)) {
-      return { text: t('পূর্ণাঙ্গ এনআইডি (১৭ ডিজিট)', 'Full NID (17 Digits)'), color: 'text-purple-700 bg-purple-50 border-purple-200' };
+      return { text: t('পূর্ণাঙ্গ এনআইডি (১৭ ডিজিট)', 'Full NID (17 Digits)'), variant: 'default' as const };
     }
-    return { text: t('১০, ১৩ বা ১৭ ডিজিট দিন', 'Must be 10, 13, or 17 digits'), color: 'text-amber-700 bg-amber-50 border-amber-200' };
+    return { text: t('১০, ১৩ বা ১৭ ডিজিট দিন', 'Must be 10, 13, or 17 digits'), variant: 'warn' as const };
   };
 
   // Step 1 -> Step 2: Camera Initializer
@@ -350,52 +359,55 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  const stepProgress = step === 'input' ? 25 : step === 'biometric' ? 50 : step === 'otp' ? 75 : 100;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          stopCamera();
+          onClose();
+        }
+      }}
+    >
+      <DialogContent className="max-w-lg max-h-[92vh] overflow-hidden flex flex-col p-6 rounded-2xl bg-white shadow-2xl border border-slate-200">
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-[#006A4E] to-[#0B5345] px-5 py-4 text-white flex items-center justify-between shrink-0">
+        <DialogHeader className="pb-3 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-white/15 border border-white/20 backdrop-blur-md flex items-center justify-center text-emerald-200 shadow-inner">
-              <ShieldCheck className="w-5 h-5 text-emerald-300" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#006A4E] shrink-0 shadow-xs">
+              <ShieldCheck className="w-6 h-6 text-[#006A4E]" />
             </div>
             <div>
-              <h2 className="text-base font-black tracking-tight">
+              <DialogTitle className="text-base sm:text-lg font-black tracking-tight text-slate-900">
                 {t('নাগরিক এনআইডি ও বায়োমেট্রিক যাচাই', 'Citizen NID & Biometric Verification')}
-              </h2>
-              <p className="text-[11px] text-emerald-100/80 font-sans">
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500 font-sans mt-0.5">
                 {t('নির্বাচন কমিশন ও পরিচয় (Porichoy) গেটওয়ে সমন্বয়', 'Election Commission & Porichoy Gateway Integration')}
-              </p>
+              </DialogDescription>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              stopCamera();
-              onClose();
-            }}
-            className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+        </DialogHeader>
 
         {/* Modal Body */}
-        <div className="p-5 overflow-y-auto space-y-4">
-          {/* Progress Tracker */}
-          <div className="grid grid-cols-4 gap-1.5 text-center text-[11px] font-bold pb-2 border-b border-slate-100">
-            <div className={`p-1.5 rounded-lg ${step === 'input' ? 'bg-[#006A4E] text-white' : 'bg-slate-100 text-slate-500'}`}>
-              ১. {t('এনআইডি তথ্য', 'NID Info')}
+        <div className="overflow-y-auto space-y-4 pr-1 py-1 flex-1">
+          {/* Progress Tracker with shadcn Progress */}
+          <div className="space-y-2 pb-1 border-b border-slate-100">
+            <div className="grid grid-cols-4 gap-1.5 text-center text-[11px] font-bold">
+              <div className={`p-1.5 rounded-lg transition-colors ${step === 'input' ? 'bg-[#006A4E] text-white shadow-xs' : 'bg-slate-100 text-slate-500'}`}>
+                ১. {t('এনআইডি তথ্য', 'NID Info')}
+              </div>
+              <div className={`p-1.5 rounded-lg transition-colors ${step === 'biometric' ? 'bg-[#006A4E] text-white shadow-xs' : 'bg-slate-100 text-slate-500'}`}>
+                ২. {t('বায়োমেট্রিক স্ক্যান', 'Biometrics')}
+              </div>
+              <div className={`p-1.5 rounded-lg transition-colors ${step === 'otp' ? 'bg-[#006A4E] text-white shadow-xs' : 'bg-slate-100 text-slate-500'}`}>
+                ৩. {t('ওটিপি যাচাই', 'OTP Code')}
+              </div>
+              <div className={`p-1.5 rounded-lg transition-colors ${step === 'success' ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 text-slate-500'}`}>
+                ৪. {t('সম্পন্ন', 'Done')}
+              </div>
             </div>
-            <div className={`p-1.5 rounded-lg ${step === 'biometric' ? 'bg-[#006A4E] text-white' : 'bg-slate-100 text-slate-500'}`}>
-              ২. {t('বায়োমেট্রিক স্ক্যান', 'Biometrics')}
-            </div>
-            <div className={`p-1.5 rounded-lg ${step === 'otp' ? 'bg-[#006A4E] text-white' : 'bg-slate-100 text-slate-500'}`}>
-              ৩. {t('ওটিপি যাচাই', 'OTP Code')}
-            </div>
-            <div className={`p-1.5 rounded-lg ${step === 'success' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
-              ৪. {t('সম্পন্ন', 'Done')}
-            </div>
+            <Progress value={stepProgress} className="h-1.5" />
           </div>
 
           {/* STEP 1: NID & DOB Input */}
@@ -419,23 +431,23 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
               )}
 
               <div className="space-y-3">
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-bold text-slate-700">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold text-slate-700">
                       {t('জাতীয় পরিচয়পত্র নম্বর (NID)', 'National ID Number (NID)')} <span className="text-rose-500">*</span>
-                    </label>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getNidFormatLabel().color}`}>
+                    </Label>
+                    <Badge variant={getNidFormatLabel().variant} className="text-[10px] font-bold">
                       {getNidFormatLabel().text}
-                    </span>
+                    </Badge>
                   </div>
-                  <input
+                  <Input
                     type="text"
                     value={nid}
                     onChange={(e) => setNid(e.target.value)}
                     placeholder="e.g. 9900001001 / 19852694123456789"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 font-mono text-sm text-slate-900 focus:outline-none focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20"
+                    className="font-mono text-sm h-10"
                   />
-                  <div className="flex items-center justify-between mt-1 text-[11px] text-slate-400">
+                  <div className="flex items-center justify-between text-[11px] text-slate-400">
                     <span>{t('১০ স্মার্ট বা ১৭ ডিজিট (অথবা ১৩ ডিজিট)', '10 Smart, 13 Legacy, or 17 digits')}</span>
                     <button
                       type="button"
@@ -451,43 +463,43 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-700">
                     {t('জন্ম তারিখ (Date of Birth)', 'Date of Birth')} <span className="text-rose-500">*</span>
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="date"
                     value={dob}
                     onChange={(e) => setDob(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-none focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20"
+                    className="text-sm h-10"
                   />
-                  <span className="text-[10px] text-slate-400 mt-0.5 block">
+                  <span className="text-[10px] text-slate-400 block">
                     {t('এনআইডি কার্ড অনুযায়ী বছর-মাস-দিন', 'YYYY-MM-DD as registered on NID card')}
                   </span>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-700">
                     {t('পূর্ণ নাম (ঐচ্ছিক)', 'Full Name (Optional)')}
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="text"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="e.g. Md. Rafiqul Islam / মো. রফিকুল ইসলাম"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm text-slate-900 focus:outline-none focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20"
+                    className="text-sm h-10"
                   />
                 </div>
               </div>
 
-              <button
+              <Button
                 type="button"
                 onClick={handleProceedToCamera}
-                className="w-full mt-2 py-3 rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white font-bold text-sm transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full min-h-[48px] rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2"
               >
                 <Camera className="w-4 h-4" />
                 <span>{t('বায়োমেট্রিক ফেস স্ক্যানে এগিয়ে যান', 'Proceed to Biometric Face Scan')}</span>
-              </button>
+              </Button>
             </div>
           )}
 
@@ -517,15 +529,16 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
                   </div>
                 </div>
 
-                <button
+                <Button
                   type="button"
+                  size="sm"
                   disabled={loading}
                   onClick={() => triggerPorichoyVerification(true)}
-                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer shrink-0 animate-pulse"
+                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs shadow-xs flex items-center justify-center gap-1.5 shrink-0 animate-pulse h-9 rounded-xl"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>{t('⚡ ১-ক্লিক টেস্ট ক্যাপচার', '⚡ 1-Click Test Capture')}</span>
-                </button>
+                </Button>
               </div>
 
               {/* Dedicated Circular Biometric Viewfinder with Animated Avatar Guide */}
@@ -580,7 +593,6 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
 
                     {/* Friendly Biometric Face Guide Silhouette */}
                     <g transform="translate(150, 140)">
-                      {/* Head oval */}
                       <ellipse
                         cx="0"
                         cy="0"
@@ -592,12 +604,8 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
                         className={cameraStatus === 'scanning' ? 'animate-pulse' : ''}
                         fill="none"
                       />
-
-                      {/* Blinking eyes guide */}
                       <ellipse cx="-18" cy="-10" rx="4.5" ry="3" fill="#38BDF8" className="animate-pulse" />
                       <ellipse cx="18" cy="-10" rx="4.5" ry="3" fill="#38BDF8" className="animate-pulse" />
-
-                      {/* Gentle smile guide */}
                       <path
                         d="M -16,22 Q 0,36 16,22"
                         stroke={cameraStatus === 'aligned' ? '#10B981' : '#94A3B8'}
@@ -637,8 +645,10 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
 
               {/* Viewfinder Toggle Bar */}
               <div className="flex items-center justify-center gap-2 pt-1">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     if (useFallbackMock) {
                       setUseFallbackMock(false);
@@ -650,31 +660,32 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
                       setLivenessStage(t('সিমুলেটেড বায়োমেট্রিক ফ্রেম সক্রিয়', 'Simulated biometric frame active'));
                     }
                   }}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1 rounded-lg border border-slate-300 text-xs transition cursor-pointer flex items-center gap-1.5"
+                  className="h-8 text-xs flex items-center gap-1.5 rounded-lg"
                 >
                   <Camera className="w-3.5 h-3.5 text-slate-600" />
                   <span>{useFallbackMock ? t('ওয়েবক্যাম মোডে স্যুইচ করুন', 'Switch to Webcam') : t('সিমুলেটেড মোড ব্যবহার করুন', 'Use Simulated Mode')}</span>
-                </button>
+                </Button>
               </div>
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2.5 pt-1">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => {
                     stopCamera();
                     setStep('input');
                   }}
-                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-100 transition cursor-pointer"
+                  className="min-h-[44px] px-4 rounded-xl text-xs font-bold"
                 >
                   {t('পেছনে যান', 'Back')}
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="button"
                   disabled={loading}
                   onClick={() => triggerPorichoyVerification()}
-                  className="flex-1 py-3 rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white font-bold text-sm transition shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="flex-1 min-h-[48px] rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {loading ? (
                     <>
@@ -687,7 +698,7 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
                       <span>{t('ছবি ধারণ ও পরিচয় নিশ্চিত করুন', 'Capture & Verify Identity')}</span>
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -718,9 +729,9 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
               {/* 6-Digit Individual Big OTP Digit Boxes */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs">
-                  <label className="font-bold text-slate-700">
+                  <Label className="font-bold text-slate-700">
                     {t('৬-সংখ্যার ওটিপি কোড দিন', 'Enter 6-Digit OTP Code')}
-                  </label>
+                  </Label>
                   <div className={`font-mono font-bold flex items-center gap-1 ${secondsRemaining < 30 ? 'text-rose-600' : 'text-slate-600'}`}>
                     <span>{t('মেয়াদ', 'Expires in')}:</span>
                     <span>{formatCountdown(secondsRemaining)}</span>
@@ -767,24 +778,34 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                    {/* Guaranteed 123456 test chip */}
-                    <button
+                    <Button
                       type="button"
-                      onClick={() => handleApplyOtp('123456')}
-                      className="px-3 py-1.5 rounded-lg bg-white border border-emerald-300 hover:bg-emerald-50 text-[#006A4E] font-mono font-black text-xs shadow-2xs flex items-center gap-1.5 cursor-pointer transition"
+                      size="sm"
+                      onClick={() => handleApplyOtp('999999')}
+                      className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-mono font-black text-xs shadow-2xs rounded-lg"
                     >
-                      <span>⚡ {t('স্ট্যান্ডার্ড টেস্ট কোড: ১২৩৪৫৬', 'Standard Code: 123456')}</span>
-                    </button>
+                      <span>⚡ {t('টেস্ট ওটিপি: ৯৯৯৯৯৯', 'Test OTP: 999999')}</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleApplyOtp('123456')}
+                      className="h-8 bg-white border-emerald-300 hover:bg-emerald-50 text-[#006A4E] font-mono font-black text-xs shadow-2xs rounded-lg"
+                    >
+                      <span>⚡ {t('স্ট্যান্ডার্ড কোড: ১২৩৪৫৬', 'Standard Code: 123456')}</span>
+                    </Button>
 
-                    {/* Outbox code chip if present and different */}
                     {demoOtpHint && demoOtpHint !== '123456' && (
-                      <button
+                      <Button
                         type="button"
+                        size="sm"
+                        variant="secondary"
                         onClick={() => handleApplyOtp(demoOtpHint)}
-                        className="px-3 py-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-950 font-mono font-black text-xs shadow-2xs flex items-center gap-1.5 cursor-pointer transition"
+                        className="h-8 bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-950 font-mono font-black text-xs shadow-2xs rounded-lg"
                       >
                         <span>📨 {t('আউটবক্স কোড:', 'Outbox:')} {demoOtpHint}</span>
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -792,11 +813,11 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
 
               {/* Action Buttons */}
               <div className="space-y-2 pt-1">
-                <button
+                <Button
                   type="button"
                   disabled={loading || otpCode.length !== 6 || secondsRemaining <= 0}
                   onClick={handleVerifyOtp}
-                  className="w-full py-3 rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white font-bold text-sm transition shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="w-full min-h-[48px] rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white font-bold text-sm shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {loading ? (
                     <>
@@ -809,16 +830,17 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
                       <span>{t('ওটিপি নিশ্চিত ও অ্যাকাউন্ট আনলক করুন', 'Confirm OTP & Unlock Account')}</span>
                     </>
                   )}
-                </button>
+                </Button>
 
                 {secondsRemaining <= 0 && (
-                  <button
+                  <Button
                     type="button"
+                    variant="link"
                     onClick={() => triggerPorichoyVerification()}
-                    className="w-full py-2 text-center text-xs font-bold text-emerald-800 hover:underline cursor-pointer"
+                    className="w-full text-center text-xs font-bold text-emerald-800"
                   >
                     {t('নতুন ওটিপি কোড পুনরায় পাঠান', 'Resend New OTP Code')}
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -844,7 +866,7 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
               </div>
 
               {/* Summary Card */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-left text-xs space-y-1.5 font-mono">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-left text-xs space-y-2 font-mono">
                 <div className="flex justify-between text-slate-600">
                   <span>{t('নাগরিকের নাম', 'Citizen Name')}:</span>
                   <span className="font-bold text-slate-900 font-sans">
@@ -861,28 +883,28 @@ export const CitizenVerificationModal: React.FC<CitizenVerificationModalProps> =
                     <span className="font-bold text-emerald-700">{transactionId}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-slate-600">
+                <div className="flex justify-between text-slate-600 items-center">
                   <span>{t('স্ট্যাটাস', 'Status')}:</span>
-                  <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-sans">
+                  <Badge variant="safe" className="font-bold text-[11px]">
                     ✓ {t('সক্রিয় ভোটার ও যাচাইকৃত নাগরিক', 'ACTIVE_VOTER & VERIFIED')}
-                  </span>
+                  </Badge>
                 </div>
               </div>
 
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   stopCamera();
                   onClose();
                 }}
-                className="w-full py-3 rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white font-bold text-sm transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full min-h-[48px] rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white font-bold text-sm shadow-md"
               >
                 <span>{t('ডিজিটাল জমির ভল্টে প্রবেশ করুন', 'Enter Digital Property Vault')}</span>
-              </button>
+              </Button>
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

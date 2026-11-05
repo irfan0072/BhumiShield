@@ -1,0 +1,921 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Building2,
+  Plus,
+  Search,
+  CheckCircle2,
+  XCircle,
+  Edit2,
+  Users,
+  MapPin,
+  Phone,
+  Layers,
+  RotateCcw,
+  AlertTriangle,
+  X,
+  Sparkles,
+} from 'lucide-react';
+import { useAppUI } from '@/i18n';
+import { BhumiApi } from '@/api/client';
+import { toBanglaDigits } from '@/theme/tokens';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
+export interface OfficeRecord {
+  id: number;
+  office_code: string;
+  name_bn: string;
+  name_en: string;
+  office_type: string;
+  division_bn: string;
+  division_en: string;
+  district_bn: string;
+  district_en: string;
+  upazila_bn: string;
+  upazila_en: string;
+  mouzas_served_json?: string;
+  address_bn?: string;
+  address_en?: string;
+  contact_phone?: string;
+  is_active: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface StaffRecord {
+  id: number;
+  user_id: number;
+  office_id: number;
+  designation_bn?: string;
+  is_primary?: number;
+  username: string;
+  full_name_bn: string;
+  role: string;
+}
+
+export const AdminOfficesPage: React.FC = () => {
+  const { lang, t } = useAppUI();
+
+  const [offices, setOffices] = useState<OfficeRecord[]>([]);
+  const [validTypes, setValidTypes] = useState<string[]>([]);
+  const [rolesMap, setRolesMap] = useState<any>({});
+  const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState<{ msg: string; err?: boolean } | null>(null);
+
+  // Filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('ALL');
+  const [districtFilter, setDistrictFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
+
+  // Staff Inspection Modal
+  const [inspectOffice, setInspectOffice] = useState<OfficeRecord | null>(null);
+  const [inspectStaff, setInspectStaff] = useState<StaffRecord[]>([]);
+  const [inspectLoading, setInspectLoading] = useState(false);
+
+  // Edit Office Modal
+  const [editOffice, setEditOffice] = useState<OfficeRecord | null>(null);
+  const [editForm, setEditForm] = useState({
+    name_bn: '',
+    name_en: '',
+    office_type: '',
+    address_bn: '',
+    address_en: '',
+    contact_phone: '',
+    mouzas_served_json: '',
+  });
+  const [editLoading, setEditLoading] = useState(false);
+
+  // Create Office Modal
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    office_code: '',
+    name_bn: '',
+    name_en: '',
+    office_type: 'registry',
+    division_bn: 'ঢাকা',
+    division_en: 'Dhaka',
+    district_bn: 'ঢাকা',
+    district_en: 'Dhaka',
+    upazila_bn: '',
+    upazila_en: '',
+    address_bn: '',
+    address_en: '',
+    contact_phone: '',
+    mouzas_served_json: '[]',
+  });
+  const [createLoading, setCreateLoading] = useState(false);
+
+  // Fetch offices from API
+  const fetchOffices = async () => {
+    setLoading(true);
+    try {
+      const res = await BhumiApi.listSetupOffices();
+      setOffices(res.offices || []);
+      setValidTypes(res.valid_office_types || []);
+      setRolesMap(res.roles || {});
+    } catch (err: any) {
+      setNotice({
+        msg: err?.response?.data?.message_bn || err?.message || 'অফিস তালিকা লোড করতে ব্যর্থ হয়েছে।',
+        err: true,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOffices();
+  }, []);
+
+  // Inspect Staff
+  const handleInspectStaff = async (off: OfficeRecord) => {
+    setInspectOffice(off);
+    setInspectLoading(true);
+    try {
+      const res = await BhumiApi.getSetupOffice(off.id);
+      setInspectStaff(res.staff || []);
+    } catch (err: any) {
+      setNotice({
+        msg: err?.response?.data?.message_bn || 'কর্মকর্তা বিবরণী পাওয়া যায়নি।',
+        err: true,
+      });
+    } finally {
+      setInspectLoading(false);
+    }
+  };
+
+  // Toggle Active
+  const handleToggleActive = async (off: OfficeRecord) => {
+    const isAct = Number(off.is_active) === 1;
+    const confirmMsg = isAct
+      ? `আপনি কি নিশ্চিতভাবে "${off.name_bn}" কার্যালয়টি নিষ্ক্রিয় করতে চান? (ইতিহাস সুরক্ষিত থাকবে)`
+      : `আপনি কি "${off.name_bn}" কার্যালয়টি পুনরায় সক্রিয় করতে চান?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      const res = await BhumiApi.toggleSetupOfficeActive(off.id);
+      setNotice({ msg: res.message_bn || 'স্ট্যাটাস পরিবর্তিত হয়েছে।', err: false });
+      setOffices((prev) =>
+        prev.map((o) => (o.id === off.id ? { ...o, is_active: res.is_active } : o))
+      );
+    } catch (err: any) {
+      setNotice({
+        msg: err?.response?.data?.message_bn || 'স্ট্যাটাস পরিবর্তনে ত্রুটি হয়েছে।',
+        err: true,
+      });
+    }
+  };
+
+  // Open Edit Modal
+  const handleOpenEdit = (off: OfficeRecord) => {
+    setEditOffice(off);
+    setEditForm({
+      name_bn: off.name_bn || '',
+      name_en: off.name_en || '',
+      office_type: off.office_type || 'registry',
+      address_bn: off.address_bn || '',
+      address_en: off.address_en || '',
+      contact_phone: off.contact_phone || '',
+      mouzas_served_json: off.mouzas_served_json || '[]',
+    });
+  };
+
+  // Submit Edit
+  const handleSubmitEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editOffice) return;
+    setEditLoading(true);
+    try {
+      const res = await BhumiApi.updateSetupOffice(editOffice.id, editForm);
+      setNotice({ msg: res.message_bn || 'কার্যালয়ের তথ্য সংরক্ষিত হয়েছে।', err: false });
+      setOffices((prev) => prev.map((o) => (o.id === editOffice.id ? res.office : o)));
+      setEditOffice(null);
+    } catch (err: any) {
+      setNotice({
+        msg: err?.response?.data?.message_bn || err?.message || 'তথ্য হালনাগাদে ব্যর্থ হয়েছে।',
+        err: true,
+      });
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  // Submit Create
+  const handleSubmitCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateLoading(true);
+    try {
+      const res = await BhumiApi.createSetupOffice(createForm);
+      setNotice({ msg: res.message_bn || 'নতুন কার্যালয় নিবন্ধিত হয়েছে।', err: false });
+      setOffices((prev) => [...prev, res.office]);
+      setCreateModalOpen(false);
+      setCreateForm({
+        office_code: '',
+        name_bn: '',
+        name_en: '',
+        office_type: 'registry',
+        division_bn: 'ঢাকা',
+        division_en: 'Dhaka',
+        district_bn: 'ঢাকা',
+        district_en: 'Dhaka',
+        upazila_bn: '',
+        upazila_en: '',
+        address_bn: '',
+        address_en: '',
+        contact_phone: '',
+        mouzas_served_json: '[]',
+      });
+    } catch (err: any) {
+      setNotice({
+        msg: err?.response?.data?.message_bn || err?.message || 'নতুন অফিস যুক্ত করতে ব্যর্থ।',
+        err: true,
+      });
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  // Filtered Offices
+  const filteredOffices = offices.filter((off) => {
+    if (typeFilter !== 'ALL' && off.office_type !== typeFilter) return false;
+    if (districtFilter !== 'ALL' && off.district_bn !== districtFilter && off.district_en !== districtFilter)
+      return false;
+    if (statusFilter === 'ACTIVE' && Number(off.is_active) !== 1) return false;
+    if (statusFilter === 'INACTIVE' && Number(off.is_active) === 1) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const match =
+        (off.office_code || '').toLowerCase().includes(q) ||
+        (off.name_bn || '').toLowerCase().includes(q) ||
+        (off.name_en || '').toLowerCase().includes(q) ||
+        (off.upazila_bn && off.upazila_bn.toLowerCase().includes(q)) ||
+        (off.district_bn && off.district_bn.toLowerCase().includes(q));
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  const uniqueDistricts = Array.from(new Set(offices.map((o) => o.district_bn))).filter(Boolean);
+  const activeCount = offices.filter((o) => Number(o.is_active) === 1).length;
+
+  return (
+    <div className="h-full min-h-0 flex flex-col gap-2.5 p-3 sm:p-4 max-w-7xl mx-auto w-full overflow-hidden">
+      {/* Notice Banner */}
+      {notice && (
+        <Alert
+          className={`shrink-0 flex items-center justify-between text-xs font-bold rounded-xl border py-2 px-3 ${
+            notice.err
+              ? 'bg-rose-50 border-rose-300 text-rose-800'
+              : 'bg-emerald-50 border-emerald-300 text-emerald-800'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {notice.err ? (
+              <AlertTriangle className="size-4 text-rose-600 shrink-0" />
+            ) : (
+              <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
+            )}
+            <AlertDescription className="text-xs font-bold">{notice.msg}</AlertDescription>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setNotice(null)}
+            className="size-6 p-0 text-slate-500 hover:text-slate-800"
+          >
+            <X className="size-4" />
+          </Button>
+        </Alert>
+      )}
+
+      {/* Search & Filter Toolbar */}
+      <Card className="border border-border/80 shadow-2xs bg-card p-2 sm:p-2.5 rounded-xl shrink-0">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-2">
+          <div className="flex flex-1 items-center gap-2 w-full flex-wrap sm:flex-nowrap">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[180px]">
+              <Search className="size-3.5 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('নাম, কোড বা উপজেলা দিয়ে খুঁজুন...', 'Search by name or code...')}
+                className="pl-8 h-8 text-xs rounded-lg border-border"
+              />
+            </div>
+
+            {/* Type Filter */}
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-[130px] h-8 text-xs rounded-lg border-border">
+                <SelectValue placeholder={t('সকল ধরন', 'All Types')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL" className="text-xs">{t('সকল ধরন (All Types)', 'All Types')}</SelectItem>
+                {validTypes.map((vt) => (
+                  <SelectItem key={vt} value={vt} className="text-xs">
+                    {vt.toUpperCase()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* District Filter */}
+            <Select value={districtFilter} onValueChange={setDistrictFilter}>
+              <SelectTrigger className="w-[130px] h-8 text-xs rounded-lg border-border">
+                <SelectValue placeholder={t('সকল জেলা', 'All Districts')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL" className="text-xs">{t('সকল জেলা (All Districts)', 'All Districts')}</SelectItem>
+                {uniqueDistricts.map((d) => (
+                  <SelectItem key={d} value={d} className="text-xs">
+                    {d}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Status Filter */}
+            <Select value={statusFilter} onValueChange={(val: any) => setStatusFilter(val)}>
+              <SelectTrigger className="w-[120px] h-8 text-xs rounded-lg border-border">
+                <SelectValue placeholder={t('সকল স্ট্যাটাস', 'All Statuses')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL" className="text-xs">{t('সকল স্ট্যাটাস (All)', 'All Statuses')}</SelectItem>
+                <SelectItem value="ACTIVE" className="text-xs">{t('সক্রিয় (Active)', 'Active')}</SelectItem>
+                <SelectItem value="INACTIVE" className="text-xs">{t('নিষ্ক্রিয় (Inactive)', 'Inactive')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-2 w-full lg:w-auto shrink-0 justify-end flex-wrap">
+            <Badge variant="outline" className="text-xs font-semibold px-2.5 py-1 text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800 shrink-0">
+              {t('মোট:', 'Total:')} {toBanglaDigits(filteredOffices.length, lang)} {t('টি অফিস', 'Offices')}
+            </Badge>
+
+            <Button
+              size="sm"
+              onClick={() => setCreateModalOpen(true)}
+              className="h-8 gap-1 px-3 text-xs font-bold bg-[#006A4E] hover:bg-[#00553e] text-white cursor-pointer rounded-lg shadow-2xs shrink-0"
+            >
+              <Plus className="size-3.5" />
+              <span>{t('নতুন অফিস', 'New Office')}</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchOffices}
+              disabled={loading}
+              className="h-8 px-2.5 gap-1 text-xs font-semibold cursor-pointer rounded-lg border-border shrink-0"
+            >
+              <RotateCcw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <span>{t('রিফ্রেশ', 'Refresh')}</span>
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* 3. Offices Table with Single-Screen Scroll */}
+      <Card className="flex-1 min-h-0 border border-border/80 shadow-2xs bg-card rounded-xl overflow-hidden flex flex-col">
+        <div className="flex-1 min-h-0 overflow-auto scrollbar-thin">
+          <Table>
+            <TableHeader className="sticky top-0 bg-muted/95 backdrop-blur-xs z-20 border-b border-border shadow-xs">
+              <TableRow className="text-xs hover:bg-transparent">
+                <TableHead className="h-9 py-1.5 font-bold text-foreground bg-muted/95">{t('কোড ও নাম', 'Code & Name')}</TableHead>
+                <TableHead className="h-9 py-1.5 font-bold text-foreground bg-muted/95">{t('ধরন', 'Type')}</TableHead>
+                <TableHead className="h-9 py-1.5 font-bold text-foreground bg-muted/95">{t('এলাকা (জেলা/উপজেলা)', 'Area')}</TableHead>
+                <TableHead className="h-9 py-1.5 font-bold text-foreground bg-muted/95">{t('মৌজা', 'Mouzas')}</TableHead>
+                <TableHead className="h-9 py-1.5 font-bold text-foreground bg-muted/95">{t('স্ট্যাটাস', 'Status')}</TableHead>
+                <TableHead className="h-9 py-1.5 font-bold text-foreground text-right bg-muted/95">{t('অ্যাকশন', 'Actions')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-border/60 text-xs font-medium">
+              {filteredOffices.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                    {t('কোনো অফিস পাওয়া যায়নি।', 'No offices found.')}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredOffices.map((off) => {
+                  let mouzaCount = 0;
+                  try {
+                    const parsed = JSON.parse(off.mouzas_served_json || '[]');
+                    mouzaCount = Array.isArray(parsed) ? parsed.length : 0;
+                  } catch {
+                    mouzaCount = 0;
+                  }
+                  const isAct = Number(off.is_active) === 1;
+
+                  return (
+                    <TableRow key={off.id} className="hover:bg-muted/40 transition">
+                      <TableCell className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="font-mono text-[10px] font-bold px-1.5 py-0 bg-muted">
+                            {off.office_code}
+                          </Badge>
+                        </div>
+                        <div className="font-bold text-foreground mt-1">{off.name_bn}</div>
+                        <div className="text-[11px] text-muted-foreground">{off.name_en}</div>
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3">
+                        <Badge
+                          variant="outline"
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            off.office_type === 'registry' || off.office_type === 'sub_registry'
+                              ? 'bg-purple-50 text-purple-800 border-purple-200'
+                              : off.office_type === 'ac_land'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              : off.office_type === 'settlement'
+                              ? 'bg-blue-50 text-blue-800 border-blue-200'
+                              : off.office_type === 'service_point'
+                              ? 'bg-amber-50 text-amber-800 border-amber-200'
+                              : off.office_type === 'bank' || off.office_type === 'bank_branch'
+                              ? 'bg-cyan-50 text-cyan-800 border-cyan-200'
+                              : 'bg-muted text-foreground'
+                          }`}
+                        >
+                          {off.office_type.toUpperCase()}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3">
+                        <div className="text-foreground font-bold">
+                          {off.district_bn}, {off.upazila_bn}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {off.district_en}, {off.upazila_en}
+                        </div>
+                        {off.contact_phone && (
+                          <div className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <Phone className="size-3" />
+                            <span>{off.contact_phone}</span>
+                          </div>
+                        )}
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3">
+                        <Badge variant="secondary" className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5">
+                          <Layers className="size-3 text-muted-foreground" />
+                          <span>
+                            {mouzaCount > 0
+                              ? `${toBanglaDigits(mouzaCount, lang)} টি মৌজা`
+                              : t('উপজেলা-ব্যাপী', 'Upazila-wide')}
+                          </span>
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3">
+                        <Badge
+                          variant="outline"
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                            isAct
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-rose-50 text-rose-700 border-rose-200'
+                          }`}
+                        >
+                          <span
+                            className={`size-1.5 rounded-full ${isAct ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}
+                          />
+                          {isAct ? t('সক্রিয়', 'Active') : t('নিষ্ক্রিয়', 'Inactive')}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell className="px-4 py-3 text-right space-x-1.5 whitespace-nowrap">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleInspectStaff(off)}
+                          title={t('কর্মকর্তা তালিকা', 'View Staff')}
+                          className="h-8 px-2.5 text-[11px] font-bold inline-flex items-center gap-1"
+                        >
+                          <Users className="size-3.5" />
+                          <span>{t('স্টাফ', 'Staff')}</span>
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenEdit(off)}
+                          title={t('সম্পাদনা', 'Edit Office')}
+                          className="h-8 px-2.5 text-[11px] font-bold inline-flex items-center gap-1"
+                        >
+                          <Edit2 className="size-3.5 text-muted-foreground" />
+                          <span>{t('সম্পাদনা', 'Edit')}</span>
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleActive(off)}
+                          title={isAct ? t('নিষ্ক্রিয় করুন', 'Deactivate') : t('সক্রিয় করুন', 'Activate')}
+                          className={`h-8 px-2.5 text-[11px] font-bold inline-flex items-center gap-1 ${
+                            isAct
+                              ? 'border-rose-200 text-rose-700 hover:bg-rose-50'
+                              : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
+                          }`}
+                        >
+                          {isAct ? (
+                            <>
+                              <XCircle className="size-3.5" />
+                              <span>{t('বন্ধ', 'Disable')}</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle2 className="size-3.5" />
+                              <span>{t('চালু', 'Enable')}</span>
+                            </>
+                          )}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
+
+      {/* MODAL: Inspect Staff */}
+      <Dialog open={!!inspectOffice} onOpenChange={(open) => !open && setInspectOffice(null)}>
+        <DialogContent className="sm:max-w-lg p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold text-foreground">
+              <Users className="size-5 text-[#006A4E]" />
+              <span>{inspectOffice?.name_bn} - {t('কর্মকর্তা ও কর্মচারী তালিকা', 'Staff Roster')}</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              {t('কার্যালয়ে পদায়নকৃত সকল কর্মকর্তা ও কর্মচারীর তালিকা।', 'Roster of all officers and personnel deployed to this office.')}
+            </DialogDescription>
+          </DialogHeader>
+
+          {inspectLoading ? (
+            <div className="py-8 text-center text-muted-foreground text-xs">
+              <RotateCcw className="size-5 animate-spin mx-auto text-[#006A4E] mb-2" />
+              {t('লোড হচ্ছে...', 'Loading staff...')}
+            </div>
+          ) : inspectStaff.length === 0 ? (
+            <div className="py-6 text-center text-muted-foreground text-xs bg-muted/40 rounded-xl">
+              {t(
+                'এই কার্যালয়ে এখনো কোনো কর্মকর্তা বা কর্মচারীকে পদায়ন করা হয়নি।',
+                'No staff members assigned to this office yet.'
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+              {inspectStaff.map((st) => (
+                <div
+                  key={st.id}
+                  className="p-3 rounded-xl border border-border bg-card flex items-center justify-between text-xs"
+                >
+                  <div>
+                    <div className="font-bold text-foreground">{st.full_name_bn}</div>
+                    <div className="text-[11px] text-muted-foreground font-mono">@{st.username}</div>
+                    {st.designation_bn && (
+                      <div className="text-[11px] text-[#006A4E] font-medium">{st.designation_bn}</div>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <Badge variant="outline" className="px-2 py-0.5 text-[10px] font-bold">
+                      {rolesMap[st.role]?.label_bn || st.role}
+                    </Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setInspectOffice(null)}
+            >
+              {t('বন্ধ করুন', 'Close')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL: Edit Office */}
+      <Dialog open={!!editOffice} onOpenChange={(open) => !open && setEditOffice(null)}>
+        <DialogContent className="sm:max-w-xl p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold text-foreground">
+              <Edit2 className="size-5 text-[#006A4E]" />
+              <span>{t('কার্যালয় সম্পাদনা', 'Edit Office')} ({editOffice?.office_code})</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              {t('কার্যালয়ের নাম, ধরণ এবং তথ্য হালনাগাদ করুন।', 'Update office name, type, and jurisdictional configuration.')}
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmitEdit} className="space-y-3 text-xs">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="font-bold block mb-1">
+                  {t('কার্যালয়ের নাম (বাংলা)', 'Name (Bangla)')} *
+                </Label>
+                <Input
+                  type="text"
+                  required
+                  value={editForm.name_bn}
+                  onChange={(e) => setEditForm({ ...editForm, name_bn: e.target.value })}
+                  className="h-9 text-xs"
+                />
+              </div>
+              <div>
+                <Label className="font-bold block mb-1">
+                  {t('কার্যালয়ের নাম (ইংরেজি)', 'Name (English)')} *
+                </Label>
+                <Input
+                  type="text"
+                  required
+                  value={editForm.name_en}
+                  onChange={(e) => setEditForm({ ...editForm, name_en: e.target.value })}
+                  className="h-9 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="font-bold block mb-1">
+                  {t('অফিসের ধরণ', 'Office Type')} *
+                </Label>
+                <Select
+                  value={editForm.office_type}
+                  onValueChange={(val) => setEditForm({ ...editForm, office_type: val })}
+                >
+                  <SelectTrigger className="h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {validTypes.map((vt) => (
+                      <SelectItem key={vt} value={vt} className="text-xs">
+                        {vt.toUpperCase()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="font-bold block mb-1">
+                  {t('যোগাযোগের নম্বর', 'Contact Phone')}
+                </Label>
+                <Input
+                  type="text"
+                  value={editForm.contact_phone}
+                  onChange={(e) => setEditForm({ ...editForm, contact_phone: e.target.value })}
+                  className="h-9 text-xs"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="font-bold block mb-1">
+                {t('ঠিকানা (বাংলা)', 'Address (Bangla)')}
+              </Label>
+              <Input
+                type="text"
+                value={editForm.address_bn}
+                onChange={(e) => setEditForm({ ...editForm, address_bn: e.target.value })}
+                className="h-9 text-xs"
+              />
+            </div>
+
+            <div>
+              <Label className="font-bold block mb-1">
+                {t('আওতাভুক্ত মৌজা আইডি (JSON Array)', 'Mouzas Served (JSON Array)')}
+              </Label>
+              <Input
+                type="text"
+                value={editForm.mouzas_served_json}
+                onChange={(e) => setEditForm({ ...editForm, mouzas_served_json: e.target.value })}
+                placeholder="[42, 101, 102]"
+                className="h-9 font-mono text-[11px]"
+              />
+            </div>
+
+            <DialogFooter className="pt-3 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setEditOffice(null)}
+              >
+                {t('বাতিল', 'Cancel')}
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={editLoading}
+                className="bg-[#006A4E] hover:bg-[#005a42] text-white"
+              >
+                {editLoading && <RotateCcw className="size-3.5 animate-spin mr-1.5" />}
+                <span>{t('হালনাগাদ করুন', 'Save Changes')}</span>
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL: Create Office */}
+      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+        <DialogContent className="sm:max-w-xl p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold text-foreground">
+              <Plus className="size-5 text-[#006A4E]" />
+              <span>{t('নতুন কার্যালয় নিবন্ধন', 'Register New Office')}</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              {t('সিস্টেমে একটি নতুন ভূমি প্রশাসন কার্যালয় নিবন্ধন করুন।', 'Register a new land administration office in the system.')}
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmitCreate} className="space-y-3 text-xs">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="font-bold block mb-1">
+                  {t('কার্যালয় কোড (Unique)', 'Office Code')} *
+                </Label>
+                <Input
+                  type="text"
+                  required
+                  placeholder="OFF-ACL-CUM-CHANDINA"
+                  value={createForm.office_code}
+                  onChange={(e) => setCreateForm({ ...createForm, office_code: e.target.value })}
+                  className="h-9 font-mono text-[11px]"
+                />
+              </div>
+              <div>
+                <Label className="font-bold block mb-1">
+                  {t('অফিসের ধরণ', 'Office Type')} *
+                </Label>
+                <Select
+                  value={createForm.office_type}
+                  onValueChange={(val) => setCreateForm({ ...createForm, office_type: val })}
+                >
+                  <SelectTrigger className="h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {validTypes.map((vt) => (
+                      <SelectItem key={vt} value={vt} className="text-xs">
+                        {vt.toUpperCase()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="font-bold block mb-1">
+                  {t('কার্যালয়ের নাম (বাংলা)', 'Name (Bangla)')} *
+                </Label>
+                <Input
+                  type="text"
+                  required
+                  placeholder="উপজেলা ভূমি অফিস..."
+                  value={createForm.name_bn}
+                  onChange={(e) => setCreateForm({ ...createForm, name_bn: e.target.value })}
+                  className="h-9 text-xs"
+                />
+              </div>
+              <div>
+                <Label className="font-bold block mb-1">
+                  {t('কার্যালয়ের নাম (ইংরেজি)', 'Name (English)')} *
+                </Label>
+                <Input
+                  type="text"
+                  required
+                  placeholder="Upazila Land Office..."
+                  value={createForm.name_en}
+                  onChange={(e) => setCreateForm({ ...createForm, name_en: e.target.value })}
+                  className="h-9 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="font-bold block mb-1">
+                  {t('জেলা (বাংলা)', 'District (Bangla)')} *
+                </Label>
+                <Input
+                  type="text"
+                  required
+                  value={createForm.district_bn}
+                  onChange={(e) => setCreateForm({ ...createForm, district_bn: e.target.value })}
+                  className="h-9 text-xs"
+                />
+              </div>
+              <div>
+                <Label className="font-bold block mb-1">
+                  {t('উপজেলা (বাংলা)', 'Upazila (Bangla)')} *
+                </Label>
+                <Input
+                  type="text"
+                  required
+                  placeholder="দাউদকান্দি"
+                  value={createForm.upazila_bn}
+                  onChange={(e) => setCreateForm({ ...createForm, upazila_bn: e.target.value })}
+                  className="h-9 text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="font-bold block mb-1">
+                  {t('যোগাযোগের নম্বর', 'Contact Phone')}
+                </Label>
+                <Input
+                  type="text"
+                  value={createForm.contact_phone}
+                  onChange={(e) => setCreateForm({ ...createForm, contact_phone: e.target.value })}
+                  className="h-9 text-xs"
+                />
+              </div>
+              <div>
+                <Label className="font-bold block mb-1">
+                  {t('আওতাভুক্ত মৌজা আইডি (JSON)', 'Mouzas Served (JSON)')}
+                </Label>
+                <Input
+                  type="text"
+                  value={createForm.mouzas_served_json}
+                  onChange={(e) => setCreateForm({ ...createForm, mouzas_served_json: e.target.value })}
+                  className="h-9 font-mono text-[11px]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="font-bold block mb-1">
+                {t('ঠিকানা (বাংলা)', 'Address (Bangla)')}
+              </Label>
+              <Input
+                type="text"
+                value={createForm.address_bn}
+                onChange={(e) => setCreateForm({ ...createForm, address_bn: e.target.value })}
+                className="h-9 text-xs"
+              />
+            </div>
+
+            <DialogFooter className="pt-3 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCreateModalOpen(false)}
+              >
+                {t('বাতিল', 'Cancel')}
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={createLoading}
+                className="bg-[#006A4E] hover:bg-[#005a42] text-white"
+              >
+                {createLoading && <RotateCcw className="size-3.5 animate-spin mr-1.5" />}
+                <span>{t('অফিস সংরক্ষণ করুন', 'Create Office')}</span>
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};

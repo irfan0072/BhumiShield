@@ -1,6 +1,10 @@
-import React from 'react';
-import { Compass, Home, Search, QrCode, HelpCircle, ArrowLeft } from 'lucide-react';
+import React, { useState } from 'react';
+import { Compass, Home, Search, QrCode, HelpCircle, ArrowLeft, PhoneCall } from 'lucide-react';
 import { useAppUI } from '../i18n';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface NotFoundPageProps {
   onNavigate?: (tab: string) => void;
@@ -8,6 +12,7 @@ interface NotFoundPageProps {
 
 export const NotFoundPage: React.FC<NotFoundPageProps> = ({ onNavigate }) => {
   const { t } = useAppUI();
+  const [quickSearch, setQuickSearch] = useState('');
 
   const handleNav = (tab: string) => {
     if (onNavigate) {
@@ -18,105 +23,157 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ onNavigate }) => {
   };
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4 py-16 bg-slate-50/50">
-      <div className="max-w-xl w-full text-center space-y-6 bg-white p-8 sm:p-12 rounded-3xl border border-slate-200/80 shadow-sm">
+    <div className="min-h-[75vh] flex items-center justify-center px-4 py-16 bg-[#FAFAFA]">
+      <Card className="max-w-xl w-full text-center p-8 sm:p-12 rounded-3xl border border-slate-200/90 shadow-md bg-white space-y-6">
         <div className="mx-auto w-20 h-20 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[#006A4E] shadow-xs">
           <Compass className="w-10 h-10 animate-pulse text-[#006A4E]" />
         </div>
 
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/70 text-[#006A4E] text-xs font-bold uppercase tracking-wider">
+          <Badge className="bg-rose-100 text-rose-800 border-rose-200 text-xs font-bold uppercase tracking-wider px-3 py-1">
             {t('৪০৪ ত্রুটি', '404 Error')}
-          </div>
+          </Badge>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             {t('কাঙ্ক্ষিত পৃষ্ঠাটি পাওয়া যায়নি', 'Page Not Found')}
           </h1>
           <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
             {t(
-              'আপনি যে ঠিকানাটি অনুসন্ধান করছেন তা পরিবর্তিত হয়েছে অথবা বিদ্যমান নেই। অনুগ্রহ করে সঠিক লিংক ব্যবহার করুন অথবা নিচের প্রধান সেবাসমূহে ফিরে যান।',
-              'The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.'
+              'আপনি যে ওয়েব ঠিকানাটি অনুসন্ধান করছেন তা পরিবর্তিত হয়েছে অথবা বিদ্যমান নেই। চিন্তা করবেন না, নিচের যেকোনো প্রধান সেবা নির্বাচন করে সহজে প্রয়োজনীয় তথ্য খুঁজে নিন।',
+              'The page you are looking for might have been moved or does not exist. Choose one of the core services below to get back on track.'
             )}
           </p>
         </div>
 
-        {/* Quick Nav Suggestions */}
+        {/* Quick Service Search */}
+        <div className="relative max-w-md mx-auto w-full">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Input
+            type="text"
+            value={quickSearch}
+            onChange={(e) => setQuickSearch(e.target.value)}
+            placeholder={t('খতিয়ান, দাগ, নামজারি বা সেবা অনুসন্ধান করুন...', 'Search khatian, dag, mutation or service...')}
+            className="w-full pl-10 pr-4 h-10 text-xs bg-slate-50 border-slate-200"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleNav('check');
+              }
+            }}
+          />
+        </div>
+
+        {/* 4 Quick Recovery Cards (48px+ tap targets) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-left">
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => handleNav('landing')}
-            className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500/50 hover:bg-emerald-50/50 transition cursor-pointer group"
+            className="h-auto justify-start p-4 rounded-2xl border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/60 transition cursor-pointer group min-h-[56px] text-left"
           >
-            <div className="w-9 h-9 rounded-lg bg-emerald-100/60 text-[#006A4E] flex items-center justify-center shrink-0 group-hover:scale-105 transition">
-              <Home className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-[#006A4E] flex items-center justify-center shrink-0 group-hover:scale-105 transition shadow-2xs mr-3.5">
+              <Home className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-900 group-hover:text-[#006A4E] transition">
+              <div className="text-sm font-bold text-slate-900 group-hover:text-[#006A4E] transition whitespace-normal">
                 {t('মূল পাতা', 'Homepage')}
               </div>
-              <div className="text-[11px] text-slate-500">{t('সকল সেবা ও ড্যাশবোর্ড', 'All services & portal')}</div>
+              <div className="text-xs text-slate-500 font-normal whitespace-normal">
+                {t('সকল সেবা ও ড্যাশবোর্ড', 'All services & portal')}
+              </div>
             </div>
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => handleNav('check')}
-            className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500/50 hover:bg-emerald-50/50 transition cursor-pointer group"
+            className="h-auto justify-start p-4 rounded-2xl border-slate-200 hover:border-blue-500 hover:bg-blue-50/60 transition cursor-pointer group min-h-[56px] text-left"
           >
-            <div className="w-9 h-9 rounded-lg bg-blue-100/60 text-blue-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
-              <Search className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition shadow-2xs mr-3.5">
+              <Search className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-900 group-hover:text-blue-700 transition">
+              <div className="text-sm font-bold text-slate-900 group-hover:text-blue-700 transition whitespace-normal">
                 {t('জমি কেনার আগে যাচাই', 'Check Before Buy')}
               </div>
-              <div className="text-[11px] text-slate-500">{t('মালিকানা ও খতিয়ান পরীক্ষা', 'Verify title & khatian')}</div>
+              <div className="text-xs text-slate-500 font-normal whitespace-normal">
+                {t('মালিকানা ও খতিয়ান পরীক্ষা', 'Verify title & khatian')}
+              </div>
             </div>
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => handleNav('qr')}
-            className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500/50 hover:bg-emerald-50/50 transition cursor-pointer group"
+            className="h-auto justify-start p-4 rounded-2xl border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/60 transition cursor-pointer group min-h-[56px] text-left"
           >
-            <div className="w-9 h-9 rounded-lg bg-indigo-100/60 text-indigo-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
-              <QrCode className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition shadow-2xs mr-3.5">
+              <QrCode className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-900 group-hover:text-indigo-700 transition">
+              <div className="text-sm font-bold text-slate-900 group-hover:text-indigo-700 transition whitespace-normal">
                 {t('দলিল QR কোড যাচাই', 'Verify Deed QR')}
               </div>
-              <div className="text-[11px] text-slate-500">{t('ডিজিটাল সিল ও ক্রিপ্টো লেজার', 'Digital seal verification')}</div>
+              <div className="text-xs text-slate-500 font-normal whitespace-normal">
+                {t('ডিজিটাল সিল ও সত্যতা', 'Digital seal & ledger')}
+              </div>
             </div>
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={() => handleNav('help')}
-            className="flex items-center gap-3 p-3.5 rounded-xl border border-slate-200 hover:border-emerald-500/50 hover:bg-emerald-50/50 transition cursor-pointer group"
+            className="h-auto justify-start p-4 rounded-2xl border-slate-200 hover:border-purple-500 hover:bg-purple-50/60 transition cursor-pointer group min-h-[56px] text-left"
           >
-            <div className="w-9 h-9 rounded-lg bg-purple-100/60 text-purple-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
-              <HelpCircle className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition shadow-2xs mr-3.5">
+              <HelpCircle className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-slate-900 group-hover:text-purple-700 transition">
+              <div className="text-sm font-bold text-slate-900 group-hover:text-purple-700 transition whitespace-normal">
                 {t('সাহায্য ও ১৬১২২ হেল্পলাইন', 'Help & Hotline 16122')}
               </div>
-              <div className="text-[11px] text-slate-500">{t('পরামর্শ ও সহায়তা ডিরেক্টরি', 'Guides & contact')}</div>
+              <div className="text-xs text-slate-500 font-normal whitespace-normal">
+                {t('পরামর্শ ও অভিযোগ সেল', 'Guides & assistance')}
+              </div>
             </div>
-          </button>
+          </Button>
+        </div>
+
+        {/* Dedicated Click-to-Call Hotline 16122 */}
+        <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#006A4E] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <PhoneCall className="w-5 h-5 text-emerald-200" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-emerald-950">
+                {t('জাতীয় ভূমি সেবা ও নাগরিক অভিযোগ হেল্পলাইন', 'National Land Helpline & Citizen Desk')}
+              </div>
+              <div className="text-[11px] text-emerald-800">
+                {t('সরাসরি কথা বলুন ভূমি সেবা কর্মকর্তার সাথে (টোল ফ্রি)', 'Speak directly with land service officer (Toll-free)')}
+              </div>
+            </div>
+          </div>
+          <a
+            href="tel:16122"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold shadow-xs transition shrink-0"
+          >
+            <PhoneCall className="w-4 h-4" />
+            <span>১৬১২২ কল করুন (Call 16122)</span>
+          </a>
         </div>
 
         <div className="pt-2">
-          <button
-            type="button"
+          <Button
             onClick={() => handleNav('landing')}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold transition shadow-xs cursor-pointer"
+            className="bg-[#006A4E] hover:bg-[#00553e] text-white font-bold h-11 px-6 rounded-xl shadow-xs cursor-pointer inline-flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>{t('মূল পাতায় ফিরে যান', 'Back to Homepage')}</span>
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

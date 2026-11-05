@@ -24,8 +24,8 @@ final class DatabaseSeeder
             'username' => 'citizen',
             'email' => 'rafiqul.citizen@demo.bhumishield.gov.bd',
             'password' => 'demo123',
-            'full_name_bn' => 'মো. রফিকুল ইসলাম (নাগরিক)',
-            'full_name_en' => 'Md. Rafiqul Islam (Citizen)',
+            'full_name_bn' => 'মো. রফিকুল ইসলাম',
+            'full_name_en' => 'Md. Rafiqul Islam',
             'role' => 'citizen',
             'office_bn' => 'নাগরিক পোর্টাল — সাভার, ঢাকা',
             'office_en' => 'Citizen Portal — Savar, Dhaka',
@@ -493,6 +493,36 @@ final class DatabaseSeeder
             'description_bn' => 'কার্যালয়ের সময়সূচি',
             'description_en' => 'Official Service Hours',
         ],
+        [
+            'setting_key' => 'govt_logo_url',
+            'setting_value_json' => '"/assets/bd-govt-seal.svg"',
+            'description_bn' => 'বাংলাদেশ সরকারের অফিসিয়াল সিল / লোগো',
+            'description_en' => 'Government of Bangladesh official seal / logo',
+        ],
+        [
+            'setting_key' => 'ministry_title_bn',
+            'setting_value_json' => '"ভূমি মন্ত্রণালয়"',
+            'description_bn' => 'মন্ত্রণালয়ের নাম (বাংলা)',
+            'description_en' => 'Ministry name (Bangla)',
+        ],
+        [
+            'setting_key' => 'ministry_title_en',
+            'setting_value_json' => '"Ministry of Land"',
+            'description_bn' => 'মন্ত্রণালয়ের নাম (ইংরেজি)',
+            'description_en' => 'Ministry name (English)',
+        ],
+        [
+            'setting_key' => 'govt_title_bn',
+            'setting_value_json' => '"গণপ্রজাতন্ত্রী বাংলাদেশ সরকার"',
+            'description_bn' => 'সরকারের নাম (বাংলা)',
+            'description_en' => 'Government title (Bangla)',
+        ],
+        [
+            'setting_key' => 'govt_title_en',
+            'setting_value_json' => '"PEOPLE\'S REPUBLIC OF BANGLADESH"',
+            'description_bn' => 'সরকারের নাম (ইংরেজি)',
+            'description_en' => 'Government title (English)',
+        ],
     ];
 
     public static function appendAuditEntry(
@@ -742,12 +772,29 @@ final class DatabaseSeeder
             );
         }
 
-        // 2. Seed Locations (3 Mouzas)
+        // 2. Seed Locations (Nationwide 8 Divisions, Districts, Upazilas & Mouzas)
         $mouzas = [
             ['division_bn' => 'ঢাকা', 'division_en' => 'Dhaka', 'district_bn' => 'ঢাকা', 'district_en' => 'Dhaka', 'upazila_bn' => 'সাভার', 'upazila_en' => 'Savar', 'mouza_bn' => 'বিরুলিয়া', 'mouza_en' => 'Birulia', 'jl_no' => '12', 'lat' => 23.8580, 'lng' => 90.3180],
+            ['division_bn' => 'ঢাকা', 'division_en' => 'Dhaka', 'district_bn' => 'ঢাকা', 'district_en' => 'Dhaka', 'upazila_bn' => 'ধামরাই', 'upazila_en' => 'Dhamrai', 'mouza_bn' => 'ধামরাই', 'mouza_en' => 'Dhamrai', 'jl_no' => '101', 'lat' => 23.9180, 'lng' => 90.2100],
+            ['division_bn' => 'ঢাকা', 'division_en' => 'Dhaka', 'district_bn' => 'ঢাকা', 'district_en' => 'Dhaka', 'upazila_bn' => 'কেরানীগঞ্জ', 'upazila_en' => 'Keraniganj', 'mouza_bn' => 'জিনজিরা', 'mouza_en' => 'Jinjira', 'jl_no' => '24', 'lat' => 23.6980, 'lng' => 90.3700],
+            ['division_bn' => 'ঢাকা', 'division_en' => 'Dhaka', 'district_bn' => 'ঢাকা', 'district_en' => 'Dhaka', 'upazila_bn' => 'মিরপুর', 'upazila_en' => 'Mirpur', 'mouza_bn' => 'মিরপুর', 'mouza_en' => 'Mirpur', 'jl_no' => '105', 'lat' => 23.8050, 'lng' => 90.3650],
             ['division_bn' => 'ঢাকা', 'division_en' => 'Dhaka', 'district_bn' => 'গাজীপুর', 'district_en' => 'Gazipur', 'upazila_bn' => 'গাজীপুর সদর', 'upazila_en' => 'Gazipur Sadar', 'mouza_bn' => 'বাসন', 'mouza_en' => 'Bason', 'jl_no' => '08', 'lat' => 23.9980, 'lng' => 90.4200],
+            ['division_bn' => 'ঢাকা', 'division_en' => 'Dhaka', 'district_bn' => 'গাজীপুর', 'district_en' => 'Gazipur', 'upazila_bn' => 'কালিয়াকৈর', 'upazila_en' => 'Kaliakair', 'mouza_bn' => 'মৌচাক', 'mouza_en' => 'Mouchak', 'jl_no' => '33', 'lat' => 24.0720, 'lng' => 90.2250],
             ['division_bn' => 'ঢাকা', 'division_en' => 'Dhaka', 'district_bn' => 'নারায়ণগঞ্জ', 'district_en' => 'Narayanganj', 'upazila_bn' => 'সোনারগাঁও', 'upazila_en' => 'Sonargaon', 'mouza_bn' => 'পানাম', 'mouza_en' => 'Panam', 'jl_no' => '15', 'lat' => 23.6450, 'lng' => 90.6010],
+            ['division_bn' => 'ঢাকা', 'division_en' => 'Dhaka', 'district_bn' => 'নরসিংদী', 'district_en' => 'Narsingdi', 'upazila_bn' => 'নরসিংদী সদর', 'upazila_en' => 'Narsingdi Sadar', 'mouza_bn' => 'শেলহালোয়া', 'mouza_en' => 'Shelhalowa', 'jl_no' => '19', 'lat' => 23.9210, 'lng' => 90.7200],
             ['division_bn' => 'চট্টগ্রাম', 'division_en' => 'Chattogram', 'district_bn' => 'কুমিল্লা', 'district_en' => 'Cumilla', 'upazila_bn' => 'দাউদকান্দি', 'upazila_en' => 'Daudkandi', 'mouza_bn' => 'সুন্দরপুর', 'mouza_en' => 'Sundarpur', 'jl_no' => '42', 'lat' => 23.5350, 'lng' => 90.7180],
+            ['division_bn' => 'চট্টগ্রাম', 'division_en' => 'Chattogram', 'district_bn' => 'চট্টগ্রাম', 'district_en' => 'Chattogram', 'upazila_bn' => 'পাঁচলাইশ', 'upazila_en' => 'Panchlaish', 'mouza_bn' => 'মুরাদপুর', 'mouza_en' => 'Muradpur', 'jl_no' => '05', 'lat' => 22.3680, 'lng' => 91.8310],
+            ['division_bn' => 'চট্টগ্রাম', 'division_en' => 'Chattogram', 'district_bn' => 'চট্টগ্রাম', 'district_en' => 'Chattogram', 'upazila_bn' => 'সীতাকুণ্ড', 'upazila_en' => 'Sitakunda', 'mouza_bn' => 'কুমিরা', 'mouza_en' => 'Kumira', 'jl_no' => '18', 'lat' => 22.5200, 'lng' => 91.7000],
+            ['division_bn' => 'চট্টগ্রাম', 'division_en' => 'Chattogram', 'district_bn' => 'কক্সবাজার', 'district_en' => 'Cox\'s Bazar', 'upazila_bn' => 'কক্সবাজার সদর', 'upazila_en' => 'Cox\'s Bazar Sadar', 'mouza_bn' => 'ঝিলংজা', 'mouza_en' => 'Jhilongja', 'jl_no' => '11', 'lat' => 21.4350, 'lng' => 91.9800],
+            ['division_bn' => 'রাজশাহী', 'division_en' => 'Rajshahi', 'district_bn' => 'রাজশাহী', 'district_en' => 'Rajshahi', 'upazila_bn' => 'পবা', 'upazila_en' => 'Paba', 'mouza_bn' => 'হরিপুর', 'mouza_en' => 'Haripur', 'jl_no' => '22', 'lat' => 24.4100, 'lng' => 88.5800],
+            ['division_bn' => 'রাজশাহী', 'division_en' => 'Rajshahi', 'district_bn' => 'বগুড়া', 'district_en' => 'Bogura', 'upazila_bn' => 'বগুড়া সদর', 'upazila_en' => 'Bogura Sadar', 'mouza_bn' => 'মালতিনগর', 'mouza_en' => 'Maltinagar', 'jl_no' => '14', 'lat' => 24.8450, 'lng' => 89.3700],
+            ['division_bn' => 'সিলেট', 'division_en' => 'Sylhet', 'district_bn' => 'সিলেট', 'district_en' => 'Sylhet', 'upazila_bn' => 'সিলেট সদর', 'upazila_en' => 'Sylhet Sadar', 'mouza_bn' => 'জালালাবাদ', 'mouza_en' => 'Jalalabad', 'jl_no' => '09', 'lat' => 24.8980, 'lng' => 91.8700],
+            ['division_bn' => 'সিলেট', 'division_en' => 'Sylhet', 'district_bn' => 'মৌলভীবাজার', 'district_en' => 'Moulvibazar', 'upazila_bn' => 'শ্রীমঙ্গল', 'upazila_en' => 'Sreemangal', 'mouza_bn' => 'রাধানগর', 'mouza_en' => 'Radhanagar', 'jl_no' => '27', 'lat' => 24.3050, 'lng' => 91.7350],
+            ['division_bn' => 'খুলনা', 'division_en' => 'Khulna', 'district_bn' => 'খুলনা', 'district_en' => 'Khulna', 'upazila_bn' => 'রূপসা', 'upazila_en' => 'Rupsha', 'mouza_bn' => 'নৈহাটী', 'mouza_en' => 'Naihati', 'jl_no' => '16', 'lat' => 22.8100, 'lng' => 89.5900],
+            ['division_bn' => 'খুলনা', 'division_en' => 'Khulna', 'district_bn' => 'যশোর', 'district_en' => 'Jashore', 'upazila_bn' => 'যশোর সদর', 'upazila_en' => 'Jashore Sadar', 'mouza_bn' => 'উপশহর', 'mouza_en' => 'Uposhahar', 'jl_no' => '03', 'lat' => 23.1700, 'lng' => 89.2100],
+            ['division_bn' => 'বরিশাল', 'division_en' => 'Barishal', 'district_bn' => 'বরিশাল', 'district_en' => 'Barishal', 'upazila_bn' => 'বরিশাল সদর', 'upazila_en' => 'Barishal Sadar', 'mouza_bn' => 'চানপুরা', 'mouza_en' => 'Chanpura', 'jl_no' => '31', 'lat' => 22.7000, 'lng' => 90.3700],
+            ['division_bn' => 'রংপুর', 'division_en' => 'Rangpur', 'district_bn' => 'রংপুর', 'district_en' => 'Rangpur', 'upazila_bn' => 'রংপুর সদর', 'upazila_en' => 'Rangpur Sadar', 'mouza_bn' => 'তাজহাট', 'mouza_en' => 'Tajhat', 'jl_no' => '07', 'lat' => 25.7450, 'lng' => 89.2600],
+            ['division_bn' => 'ময়মনসিংহ', 'division_en' => 'Mymensingh', 'district_bn' => 'ময়মনসিংহ', 'district_en' => 'Mymensingh', 'upazila_bn' => 'ময়মনসিংহ সদর', 'upazila_en' => 'Mymensingh Sadar', 'mouza_bn' => 'খাগডহর', 'mouza_en' => 'Khagdahar', 'jl_no' => '12', 'lat' => 24.7550, 'lng' => 90.3950],
         ];
         $locationIds = [];
         foreach ($mouzas as $m) {

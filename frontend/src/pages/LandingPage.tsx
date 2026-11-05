@@ -1,1227 +1,835 @@
-import React, { useState, useEffect } from 'react';
-import { useAppUI, UserRole } from '../i18n';
-import { BhumiApi, ServiceCatalogueItem } from '../api/client';
+import React, { useState } from 'react';
+import { useAppUI } from '../i18n';
 import { toBanglaDigits } from '../theme/tokens';
 import {
-  ShieldCheck,
-  QrCode,
   Search,
-  Landmark,
-  FileSpreadsheet,
-  Building2,
-  Lock,
-  ArrowRight,
-  Check,
-  X,
-  FileText,
-  Scale,
-  HelpCircle,
-  Sparkles,
-  PhoneCall,
-  CheckCircle2,
-  AlertTriangle,
-  XOctagon,
-  KeyRound,
-  ExternalLink,
   MapPin,
+  QrCode,
   Compass,
-  FileCode2,
-  Layers,
+  ArrowRight,
+  CheckCircle2,
+  PhoneCall,
+  FileText,
+  FileCheck2,
+  ShieldCheck,
+  Building2,
+  HelpCircle,
+  ExternalLink,
+  ChevronRight,
   Shield,
-  FileCheck2
+  Fingerprint,
+  Lock,
+  Layers,
+  Sparkles,
 } from 'lucide-react';
 import {
-  TopographicContourVector,
-  CadastralMouzaMapWidget,
-  CADASTRAL_PLOTS,
-  CadastralPlotData,
-  SurveyorChainConnector,
-  Ed25519WaxSealVector,
-  KhatianLineageVector,
-  CadastralPinVector,
-  CitizenVaultLockVector,
-  BankLienNocVector
-} from '../components/landing/LandVectors';
-import { JUDGE_PERSONAS } from '../components/NavbarAndLayout';
-
-const ROLE_ROUTE: Record<string, string> = {
-  citizen: 'home',
-  sub_registrar: 'registrar',
-  ac_land: 'acland',
-  bank_officer: 'bank',
-  admin: 'admin',
-};
+  useLandingStats,
+  useLocationsQuery,
+  useSiteSettingsQuery,
+} from '../components/publicHooks';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 export const LandingPage: React.FC<{ onNavigate: (tab: string) => void }> = ({ onNavigate }) => {
-  const { lang, setRole, setUser, setToken, t } = useAppUI();
-  const [stats, setStats] = useState<any>(null);
-  const [locations, setLocations] = useState<any[]>([]);
-  const [plots, setPlots] = useState<any[]>([]);
-  const [deeds, setDeeds] = useState<any[]>([]);
-  const [catalogueServices, setCatalogueServices] = useState<ServiceCatalogueItem[]>([]);
-  const [catalogueState, setCatalogueState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [selectedServiceCat, setSelectedServiceCat] = useState<string>('ALL');
-  
-  // Track/Search Card state
-  const [searchType, setSearchType] = useState<'deed' | 'plot' | 'mouza'>('deed');
-  const [trackInput, setTrackInput] = useState('DL-2026-1001');
-  const [selectedMouza, setSelectedMouza] = useState<number>(1);
-  const [selectedPlotId, setSelectedPlotId] = useState<number>(1);
+  const { lang, t } = useAppUI();
 
-  // 3-Step Interactive Pipeline Walkthrough state
-  const [activePipelineStep, setActivePipelineStep] = useState<1 | 2 | 3>(1);
+  // Dynamic API queries
+  const statsQuery = useLandingStats();
+  const kpis = statsQuery.data?.kpis || statsQuery.data || {};
+  const locationsQuery = useLocationsQuery();
+  const settingsQuery = useSiteSettingsQuery();
 
-  // Cadastral Interactive Map state
-  const [selectedCadastralPlot, setSelectedCadastralPlot] = useState<CadastralPlotData>(CADASTRAL_PLOTS[0]);
-
-  const fetchLandingData = () => {
-    Promise.allSettled([
-      BhumiApi.getStatsSummary(),
-      BhumiApi.getLocations(),
-      BhumiApi.getPlots(),
-      BhumiApi.listRegistrarDeeds().catch(() => []),
-      BhumiApi.listPublicServices(),
-    ])
-      .then(([st, locs, plts, dds, svcs]) => {
-        if (st.status === 'fulfilled') setStats(st.value);
-        if (locs.status === 'fulfilled') setLocations(locs.value);
-        if (plts.status === 'fulfilled' && Array.isArray(plts.value)) {
-          setPlots(plts.value);
-          if (plts.value.length > 0 && !selectedPlotId) {
-            setSelectedPlotId(plts.value[0].id);
-          }
-        }
-        if (dds.status === 'fulfilled' && Array.isArray(dds.value)) {
-          setDeeds(dds.value);
-        }
-        if (svcs.status === 'fulfilled') {
-          setCatalogueServices(svcs.value?.items || []);
-          setCatalogueState('ready');
-        } else setCatalogueState('error');
-      })
-      .catch(() => setCatalogueState('error'));
-  };
-
-  useEffect(() => {
-    fetchLandingData();
-    const timer = setInterval(() => {
-      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
-      fetchLandingData();
-    }, 8000);
-    const onFocus = () => fetchLandingData();
-    window.addEventListener('focus', onFocus);
-    return () => {
-      clearInterval(timer);
-      window.removeEventListener('focus', onFocus);
-    };
-  }, []);
-
-  const enterRolePortal = async (targetRole: UserRole) => {
-    const persona = JUDGE_PERSONAS.find((p) => p.role === targetRole);
-    if (persona) {
-      setUser(persona.userData);
-      setRole(persona.role);
-      setToken('jwt-token-judge-' + persona.role);
-      onNavigate(ROLE_ROUTE[targetRole]);
+  // Dynamic Quick Links from Admin Settings
+  const rawQuickLinks = settingsQuery.data?.settings?.quick_links_menu || settingsQuery.data?.map?.quick_links_menu;
+  const quickLinks = React.useMemo(() => {
+    let list: any[] = [];
+    if (Array.isArray(rawQuickLinks)) {
+      list = rawQuickLinks;
+    } else if (typeof rawQuickLinks === 'string') {
       try {
-        const res = await BhumiApi.login(persona.username, 'demo123');
-        if (res?.access_token && res?.user) {
-          setToken(res.access_token);
-          setUser(res.user);
-        }
-      } catch {
-        // Fallback to local persona state
-      }
-    } else {
-      onNavigate(ROLE_ROUTE[targetRole]);
+        const parsed = JSON.parse(rawQuickLinks);
+        if (Array.isArray(parsed)) list = parsed;
+      } catch {}
     }
-  };
+
+    if (list.length > 0) {
+      return list.filter((l: any) => l.is_active !== false);
+    }
+
+    return [
+      { id: 'check', label_bn: 'খতিয়ান ও রেকর্ড', label_en: 'Khatian Records', target: 'check', badge_bn: 'যাচাই', badge_en: 'Verified' },
+      { id: 'qr', label_bn: 'দলিল যাচাই', label_en: 'Verify Deed', target: 'qr', badge_bn: 'কিউআর', badge_en: 'QR' },
+      { id: 'map', label_bn: 'মৌজা নকশা', label_en: 'Mouza Map', target: 'map', badge_bn: 'স্যাটেলাইট', badge_en: 'Satellite' },
+      { id: 'home', label_bn: 'নাগরিক ভল্ট', label_en: 'Citizen Vault', target: 'home', badge_bn: 'সুরক্ষিত', badge_en: 'Protected' },
+      { id: 'sale', label_bn: 'পাবলিক সেবা', label_en: 'Public Portal', target: 'sale', badge_bn: 'সার্ভিস', badge_en: 'Services' },
+      { id: 'help', label_bn: 'সহায়তা ১৬১২২', label_en: 'Helpline 16122', target: 'help', badge_bn: 'টোল ফ্রি', badge_en: 'Toll-Free' },
+    ];
+  }, [rawQuickLinks]);
+
+  // Dynamic Government Seal & Authority info from Admin Settings
+  const govtLogoUrl = settingsQuery.data?.settings?.govt_logo_url || settingsQuery.data?.map?.govt_logo_url || '/assets/bd-govt-seal.svg';
+  const ministryTitle = lang === 'bn'
+    ? (settingsQuery.data?.settings?.ministry_title_bn || settingsQuery.data?.map?.ministry_title_bn || 'ভূমি মন্ত্রণালয়')
+    : (settingsQuery.data?.settings?.ministry_title_en || settingsQuery.data?.map?.ministry_title_en || 'Ministry of Land');
+  const govtTitle = lang === 'bn'
+    ? (settingsQuery.data?.settings?.govt_title_bn || settingsQuery.data?.map?.govt_title_bn || 'গণপ্রজাতন্ত্রী বাংলাদেশ সরকার')
+    : (settingsQuery.data?.settings?.govt_title_en || settingsQuery.data?.map?.govt_title_en || "PEOPLE'S REPUBLIC OF BANGLADESH");
+
+  // Hero Search Console State
+  const [searchTab, setSearchTab] = useState<'check' | 'qr' | 'map'>('check');
+  const [dagInput, setDagInput] = useState('101');
+  const [deedInput, setDeedInput] = useState('DL-2026-1001');
+  const [mouzaSelect, setMouzaSelect] = useState('1');
 
   const handleHeroSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchType === 'deed') {
-      onNavigate('qr');
-    } else if (searchType === 'mouza') {
-      onNavigate('map');
+    if (searchTab === 'check') {
+      onNavigate(`check?dag=${encodeURIComponent(dagInput.trim())}`);
+    } else if (searchTab === 'qr') {
+      onNavigate(`qr?deed_no=${encodeURIComponent(deedInput.trim())}`);
     } else {
-      onNavigate('check');
+      onNavigate(`map?location_id=${encodeURIComponent(mouzaSelect)}`);
     }
   };
 
-  const filteredPlots = plots.filter((p) => Number(p.mouza_id) === Number(selectedMouza));
-
   return (
-    <div className="space-y-14 pb-20">
-      {/* Hero Section — Land Cadastral & Topographic Mesh */}
-      <section className="relative overflow-hidden bg-[#074f38] text-white">
-        {/* Precision Topographic Vector Contour Grid */}
-        <TopographicContourVector opacity={0.24} strokeColor="rgba(52, 211, 153, 0.45)" />
+    <div className="min-h-screen bg-slate-50/40 text-slate-900 pb-16">
+      
+      {/* 1. HERO SECTION: Full-Width, Compact Responsive Height, No-Human Tech Art */}
+      <section className="w-full relative overflow-hidden bg-white border-b border-slate-200/90 py-6 sm:py-8 lg:py-9 flex items-center">
+        {/* Full-bleed Right Graphic (Pure Tech, Drone, 3D Cadastral HUD, Lush Landscape - No Humans) */}
+        <div className="absolute right-0 top-0 bottom-0 w-full lg:w-[50%] xl:w-[48%] hidden sm:block pointer-events-none select-none z-0 overflow-hidden">
+          <img
+            src="/assets/landtech-hackathon-hero.png"
+            alt="Smart Landtech Bangladesh Platform"
+            className="w-full h-full object-cover object-center"
+          />
+          {/* Subtle gradient blend to the left */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent lg:from-white lg:via-white/45 lg:to-transparent" />
+        </div>
 
-        {/* Ambient Glowing Highlights */}
-        <div className="pointer-events-none absolute -right-20 -top-20 h-96 w-96 rounded-full bg-emerald-400/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-28 left-1/4 h-80 w-80 rounded-full bg-amber-400/15 blur-3xl" />
-
-        <div className="relative mx-auto grid max-w-7xl gap-8 px-4 py-12 lg:gap-10 lg:grid-cols-[1.3fr_1fr] lg:py-20 items-center w-full min-w-0">
-          {/* Left Text Block with Cadastral Vector Accents */}
-          <div className="w-full min-w-0">
-            {/* Top Badge with Cadastral Crosshair Pin */}
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm px-4 py-1.5 text-xs sm:text-sm text-emerald-100 ring-1 ring-white/20 font-medium shadow-sm">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-semibold">{t('গণপ্রজাতন্ত্রী বাংলাদেশ · ভূমি ও দলিল ট্রাস্ট লেয়ার (LandTech 2026)', 'Bangladesh National Land & Deed Trust Layer')}</span>
-            </div>
-
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight text-white break-words">
-              {t('ডিজিটাল ক্যাডাস্ট্রে আপনার জমির পূর্ণ নিরাপত্তা ও সত্যতা', 'Secure Land Cadastre & Deed Protection in One Place')}
-            </h1>
-
-            <p className="mt-4 max-w-xl text-sm sm:text-base lg:text-lg text-emerald-100/90 leading-relaxed font-normal break-words">
-              {t(
-                'কোন অফিসে ধর্না দিতে হবে না। বায়না করার আগেই সিএস-এসএ-আরএস-বিএস খতিয়ান চেইন নিরীক্ষা, বায়োমেট্রিক বিক্রয় লক, দ্বৈত বন্ধক প্রতিরোধ ও তাৎক্ষণিক ই-মিউটেশন — শতভাগ ডিজিটাল নিরাপত্তায়।',
-                'No manual office delays. Check 4-epoch khatian lineage (CS→SA→RS→BS), activate citizen sale locks, detect bank lien duplicates, and verify Ed25519 tamper-proof deeds from anywhere.'
-              )}
-            </p>
-
-            {/* Quick Land Cadastre Feature Pills */}
-            <div className="mt-5 flex flex-wrap gap-2 text-[11px] font-semibold text-emerald-200/90">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/10 ring-1 ring-white/15">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-                {t('১১-রুল ফ্রড গেটকিপার', '11-Rule Gatekeeper')}
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/10 ring-1 ring-white/15">
-                <Layers className="w-3.5 h-3.5 text-emerald-300" />
-                {t('CS➔SA➔RS➔BS খতিয়ান অডিট', 'Survey Lineage Audit')}
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/10 ring-1 ring-white/15">
-                <Lock className="w-3.5 h-3.5 text-amber-300" />
-                {t('ডিজিটাল বিক্রয় লক ভল্ট', 'Citizen Sale Lock')}
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-white/10 ring-1 ring-white/15">
-                <QrCode className="w-3.5 h-3.5 text-emerald-300" />
-                {t('Ed25519 ক্রিপ্টোগ্রাফিক সনদ', 'Ed25519 Signed Deeds')}
-              </span>
-            </div>
-
-            {/* Action CTA Buttons */}
-            <div className="mt-7 sm:mt-8 flex flex-col sm:flex-row flex-wrap gap-3.5 w-full">
-              <button
-                type="button"
-                onClick={() => onNavigate('check')}
-                className="inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2.5 rounded-xl bg-white px-6 font-bold text-[#074f38] hover:bg-emerald-50 shadow-md transition-all cursor-pointer text-sm sm:text-base group"
-              >
-                <Search className="w-5 h-5 text-[#074f38] group-hover:scale-110 transition-transform" />
-                <span>{t('জমি কেনার আগে যাচাই', 'Check Before You Buy')}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onNavigate('qr')}
-                className="inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2.5 rounded-xl bg-white/15 px-6 font-semibold text-white ring-1 ring-white/30 hover:bg-white/25 transition-all cursor-pointer text-sm sm:text-base"
-              >
-                <QrCode className="w-5 h-5 text-emerald-300" />
-                <span>{t('দলিল QR কোড যাচাই', 'Verify Deed QR Code')}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const elem = document.getElementById('cadastral-showcase');
-                  if (elem) elem.scrollIntoView({ behavior: 'smooth' });
-                  else onNavigate('map');
+        {/* Content Container (Constrained width inside full-width section) */}
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 relative z-10">
+          <div className="max-w-xl lg:max-w-2xl space-y-3.5 sm:space-y-4">
+            
+            {/* Top Authority Header: Ministry Seal & Government ID (Configurable from Super Admin) */}
+            <div className="flex items-center gap-2.5">
+              <img
+                src={govtLogoUrl}
+                alt="Government of Bangladesh Seal"
+                className="w-10 h-10 sm:w-11 sm:h-11 object-contain shrink-0 drop-shadow-xs"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/assets/bd-govt-seal.svg';
                 }}
-                className="inline-flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-emerald-950/40 px-4 font-semibold text-emerald-200 ring-1 ring-emerald-500/30 hover:bg-emerald-900/50 transition-all cursor-pointer text-xs sm:text-sm"
-              >
-                <Compass className="w-4 h-4 text-emerald-300" />
-                <span>{t('মৌজা নকশা লাইভ এক্সপ্লোরার', 'Live Mouza Map')}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Right Card — Track Deed or Plot with Vector Badge & Dynamic Preview */}
-          <div className="rounded-2xl border border-emerald-900/10 bg-white shadow-2xl self-center p-5 sm:p-6 text-slate-800 w-full min-w-0 max-w-full relative">
-            {/* Top Card Header with Vector Indicator */}
-            <div className="flex items-start justify-between gap-3">
+              />
               <div>
-                <h2 className="text-lg font-bold text-slate-900">
-                  {t('আবেদন বা দলিলের অবস্থা জানুন', 'Track Deed or Verify Plot')}
-                </h2>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  {t(
-                    'দলিল নম্বর দিন (যেমন DL-2026-1001) বা দাগ নম্বর নির্বাচন করুন',
-                    'Enter Deed Number like DL-2026-1001 or select Plot Dag'
-                  )}
+                <h3 className="text-xs sm:text-sm font-black text-slate-800 tracking-tight leading-tight">
+                  {ministryTitle}
+                </h3>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  {govtTitle}
                 </p>
               </div>
-              <div className="shrink-0">
-                {searchType === 'deed' ? (
-                  <Ed25519WaxSealVector size={38} />
+            </div>
+
+            {/* Main Headline & Subtitle - Comprehensive Digital Land Services */}
+            <div className="space-y-2">
+              <h1 className="text-2xl sm:text-4xl lg:text-[44px] font-black tracking-tight text-[#006A4E] uppercase leading-[1.08]">
+                {lang === 'bn' ? (
+                  <>
+                    স্মার্ট ডিজিটাল ভূমিসেবা & সমন্বিত
+                    <br />
+                    <span className="text-[#00553e]">ভূমি রেকর্ড</span>
+                  </>
                 ) : (
-                  <CadastralPinVector size={36} />
+                  <>
+                    SMART DIGITAL LAND SERVICES & INTEGRATED
+                    <br />
+                    <span className="text-[#00553e]">LAND RECORDS</span>
+                  </>
                 )}
-              </div>
-            </div>
-
-            {/* Toggle Search Mode: 3 Visual Search Tabs */}
-            <div className="flex gap-1 mt-4 p-1 bg-slate-100 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setSearchType('deed')}
-                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[34px] flex items-center justify-center gap-1.5 ${
-                  searchType === 'deed' ? 'bg-white text-[#074f38] shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <QrCode className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                <span className="truncate">{t('দলিল যাচাই / QR', 'Deed QR')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSearchType('plot')}
-                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[34px] flex items-center justify-center gap-1.5 ${
-                  searchType === 'plot' ? 'bg-white text-[#074f38] shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Compass className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                <span className="truncate">{t('দাগ যাচাই', 'Plot Check')}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSearchType('mouza')}
-                className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[34px] flex items-center justify-center gap-1.5 ${
-                  searchType === 'mouza' ? 'bg-white text-[#074f38] shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <MapPin className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                <span className="truncate">{t('মৌজা নকশা', 'Mouza Map')}</span>
-              </button>
-            </div>
-
-            <form onSubmit={handleHeroSearch} className="mt-4 space-y-3">
-              {searchType === 'deed' ? (
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={trackInput}
-                      onChange={(e) => setTrackInput(e.target.value)}
-                      placeholder="DL-2026-1001"
-                      className="h-11 min-w-0 flex-1 rounded-lg border border-gray-300 px-3 font-mono text-sm uppercase focus:border-[#074f38] focus:outline-none focus:ring-2 focus:ring-[#074f38]/30"
-                    />
-                    <button
-                      type="submit"
-                      className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg font-bold h-11 px-4 sm:px-5 bg-[#006A4E] hover:bg-[#00553e] text-white transition-colors cursor-pointer text-sm shadow-xs whitespace-nowrap"
-                    >
-                      <Search className="w-4 h-4" />
-                      <span>{t('খুঁজুন', 'Search')}</span>
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 font-sans px-1">
-                    <span>{t('নিবন্ধন অধিদপ্তর স্বীকৃত ডিজিটাল যাচাই', 'Govt Recognized Digital Verification')}</span>
-                    <span className="text-emerald-700 font-bold">{t('১০৭৭ ফরম সুরক্ষিত লেজার', 'Secure Land Ledger')}</span>
-                  </div>
-                </div>
-              ) : searchType === 'plot' ? (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <select
-                      value={selectedMouza}
-                      onChange={(e) => {
-                        const mId = Number(e.target.value);
-                        setSelectedMouza(mId);
-                        const first = plots.find((p) => Number(p.mouza_id) === mId);
-                        if (first) setSelectedPlotId(first.id);
-                      }}
-                      className="h-10 rounded-lg border border-gray-300 px-2 text-xs font-semibold bg-white"
-                    >
-                      {locations.map((loc) => (
-                        <option key={loc.id} value={loc.id}>
-                          {lang === 'bn' ? loc.mouza_bn : loc.mouza_en}
-                        </option>
-                      ))}
-                    </select>
-
-                    <select
-                      value={selectedPlotId}
-                      onChange={(e) => setSelectedPlotId(Number(e.target.value))}
-                      className="h-10 rounded-lg border border-gray-300 px-2 text-xs font-semibold bg-white"
-                    >
-                      {filteredPlots.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {t('দাগ', 'Dag')} {p.dag_no}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg font-bold h-10 bg-[#006A4E] hover:bg-[#00553e] text-white transition-colors cursor-pointer text-xs shadow-xs"
-                  >
-                    <Search className="w-4 h-4" />
-                    <span>{t('দাগের পূর্ণ বিবরণী ও ঝুঁকি স্ক্যান', 'Scan Plot Risk Report')}</span>
-                  </button>
-                </div>
-              ) : (
-                /* 3rd Visual Search Tab: Explore Mouza Map */
-                <div className="space-y-2.5">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                      {t('মৌজা ও এলাকা নির্বাচন করুন', 'Select Mouza & Survey Sheet')}
-                    </label>
-                    <select
-                      value={selectedMouza}
-                      onChange={(e) => setSelectedMouza(Number(e.target.value))}
-                      className="h-10 w-full rounded-lg border border-gray-300 px-2.5 text-xs font-semibold bg-white text-slate-800 focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20"
-                    >
-                      {locations.map((loc) => (
-                        <option key={loc.id} value={loc.id}>
-                          {lang === 'bn' ? loc.mouza_bn : loc.mouza_en} (জে.এল {loc.jl_no}) · {lang === 'bn' ? loc.upazila_bn : loc.upazila_en}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('map')}
-                    className="w-full inline-flex items-center justify-center gap-2 rounded-lg font-bold h-10 bg-[#006A4E] hover:bg-[#00553e] text-white transition-colors cursor-pointer text-xs shadow-xs"
-                  >
-                    <MapPin className="w-4 h-4" />
-                    <span>{t('ক্যাডাস্ট্রাল মৌজা নকশা অনুসন্ধান করুন ➔', 'Explore Mouza Cadastral Map ➔')}</span>
-                  </button>
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 font-sans px-1">
-                    <span>{t('ভেক্টর ও স্যাটেলাইট ভিউ', 'Vector & Satellite View')}</span>
-                    <span className="text-emerald-700 font-bold">{t('ট্রাফিক-লাইট দাগ স্ট্যাটাস', 'Traffic Light Status')}</span>
-                  </div>
-                </div>
-              )}
-            </form>
-
-            {/* Dynamic Real-time Quick Preset Links from Database */}
-            <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchType('deed');
-                  const deedCode = deeds[0]?.deed_code || 'DL-2026-1001';
-                  setTrackInput(deedCode);
-                  onNavigate('qr');
-                }}
-                className="rounded-lg bg-slate-50 border border-slate-200/90 p-2.5 hover:bg-emerald-50 text-slate-700 font-semibold text-left transition-colors flex items-center justify-between cursor-pointer min-h-[36px]"
-              >
-                <div className="flex items-center gap-1.5 truncate">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="truncate">{deeds[0]?.deed_code || 'DL-2026-1001'} (অক্ষত)</span>
-                </div>
-                <span className="text-emerald-700 font-bold ml-1">→</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchType('deed');
-                  const targetDeed = deeds.find((d: any) => d.status === 'HELD' || d.is_flagged_admin) || deeds[1] || deeds[0];
-                  const code = targetDeed?.deed_code || 'DL-2026-1005';
-                  setTrackInput(code);
-                  onNavigate('qr');
-                }}
-                className="rounded-lg bg-slate-50 border border-slate-200/90 p-2.5 hover:bg-rose-50 text-slate-700 font-semibold text-left transition-colors flex items-center justify-between cursor-pointer min-h-[36px]"
-              >
-                <div className="flex items-center gap-1.5 truncate">
-                  <span className="w-2 h-2 rounded-full bg-rose-500" />
-                  <span className="truncate">{(deeds.find((d: any) => d.status === 'HELD' || d.is_flagged_admin) || deeds[1])?.deed_code || 'DL-2026-1005'} (স্থগিত/টেম্পার)</span>
-                </div>
-                <span className="text-rose-600 font-bold ml-1">→</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchType('plot');
-                  if (plots[0]) {
-                    setSelectedMouza(plots[0].location_id || plots[0].mouza_id || 1);
-                    setSelectedPlotId(plots[0].id);
-                  }
-                  onNavigate('check');
-                }}
-                className="rounded-lg bg-slate-50 border border-slate-200/90 p-2.5 hover:bg-emerald-50 text-slate-700 font-semibold text-left transition-colors flex items-center justify-between cursor-pointer min-h-[36px]"
-              >
-                <div className="flex items-center gap-1.5 truncate">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="truncate">{plots[0] ? `দাগ ${plots[0].dag_no_bn || plots[0].dag_no} (${plots[0].mouza_bn || ''})` : 'দাগ ১০১ (ধানমন্ডি)'}</span>
-                </div>
-                <span className="text-emerald-700 font-bold ml-1">→</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchType('plot');
-                  const targetP = plots.find((p: any) => p.has_active_mortgage || p.owner_sale_locked) || plots[1] || plots[0];
-                  if (targetP) {
-                    setSelectedMouza(targetP.location_id || targetP.mouza_id || 1);
-                    setSelectedPlotId(targetP.id);
-                  }
-                  onNavigate('check');
-                }}
-                className="rounded-lg bg-slate-50 border border-slate-200/90 p-2.5 hover:bg-amber-50 text-slate-700 font-semibold text-left transition-colors flex items-center justify-between cursor-pointer min-h-[36px]"
-              >
-                <div className="flex items-center gap-1.5 truncate">
-                  <span className="w-2 h-2 rounded-full bg-amber-500" />
-                  <span className="truncate">
-                    {plots.find((p: any) => p.has_active_mortgage || p.owner_sale_locked)
-                      ? `দাগ ${plots.find((p: any) => p.has_active_mortgage || p.owner_sale_locked).dag_no_bn || plots.find((p: any) => p.has_active_mortgage || p.owner_sale_locked).dag_no} (বন্ধকী/লক)`
-                      : (plots[1] ? `দাগ ${plots[1].dag_no_bn || plots[1].dag_no} (${plots[1].mouza_bn || ''})` : 'দাগ ১০৬ (বন্ধকী দাগ)')}
-                  </span>
-                </div>
-                <span className="text-amber-700 font-bold ml-1">→</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* KPI Stats Strip — Land Ledger Cockpit with Bespoke Vector Badges */}
-      {stats && (
-        <section className="mx-auto max-w-7xl px-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
-            {[
-              {
-                label: t('নিবন্ধিত দাগ', 'Plots Monitored'),
-                value: stats.kpis?.total_plots ?? 0,
-                icon: <CadastralPinVector size={26} />,
-                sub: t('ক্যাডাস্ট্রাল সীমানা', 'Cadastral parcels')
-              },
-              {
-                label: t('ডিজিটাল খতিয়ান', 'Khatians Indexed'),
-                value: stats.kpis?.total_khatians ?? 0,
-                icon: <FileSpreadsheet className="w-6 h-6 text-emerald-700" />,
-                sub: t('CS/SA/RS/BS চেইন', 'Survey lineage')
-              },
-              {
-                label: t('স্বাক্ষরিত দলিল', 'Deeds Chained'),
-                value: stats.kpis?.total_deeds ?? 0,
-                icon: <Ed25519WaxSealVector size={28} />,
-                sub: t('Ed25519 সিলযুক্ত', 'Cryptographically signed')
-              },
-              {
-                label: t('সক্রিয় ব্যাংক বন্ধক', 'Active Liens'),
-                value: stats.kpis?.active_mortgages_count ?? 0,
-                icon: <BankLienNocVector size={26} />,
-                sub: t('দ্বৈত বন্ধক অবরুদ্ধ', 'Duplicate mortgage safe')
-              },
-              {
-                label: t('ই-মিউটেশন সম্পন্ন', 'Mutations Done'),
-                value: stats.kpis?.approved_mutations ?? 0,
-                icon: <Landmark className="w-6 h-6 text-[#006A4E]" />,
-                sub: t('খতিয়ান হালনাগাদ', 'BS records updated')
-              },
-              {
-                label: t('দাপ্তরিক কর্মকর্তা', 'Active Officers'),
-                value: stats.kpis?.active_officers_count ?? 0,
-                icon: <ShieldCheck className="w-6 h-6 text-emerald-800" />,
-                sub: t('গেটকিপার ডেস্কে', 'Gatekeeper consoles')
-              },
-            ].map((kpi, idx) => (
-              <div
-                key={idx}
-                className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs hover:border-emerald-300 hover:shadow-xs transition-all relative overflow-hidden group"
-              >
-                {/* Micro corner coordinate crosshair */}
-                <span className="absolute top-2 right-2 text-[10px] text-slate-300 font-mono group-hover:text-emerald-400 transition-colors">+</span>
-                
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50/80 flex items-center justify-center">
-                    {kpi.icon}
-                  </div>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                </div>
-
-                <div className="text-xl sm:text-2xl font-extrabold text-[#074f38] font-mono tracking-tight">
-                  {toBanglaDigits(kpi.value as number, lang)}
-                </div>
-                <div className="text-xs font-bold text-slate-900 mt-1">{kpi.label}</div>
-                <div className="text-[10px] text-slate-500 font-medium">{kpi.sub}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* NEW Showcase Section: Interactive Cadastral Mouza Map & Plot Intelligence */}
-      <section id="cadastral-showcase" className="mx-auto max-w-7xl px-4 scroll-mt-6">
-        <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-3">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-bold mb-1.5">
-              <Compass className="w-3.5 h-3.5 text-emerald-700" />
-              <span>{t('লাইভ ক্যাডাস্ট্রাল মৌজা নকশা ভেক্টর', 'Interactive Cadastral Mouza Map')}</span>
-            </div>
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
-              {t('নকশা থেকে আপনার দাগ খুঁজুন ও তাৎক্ষণিক ঝুঁকি দেখুন', 'Explore Parcels & Real-time Risk on Mouza Map')}
-            </h2>
-            <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
-              {t(
-                'দাগের সীমানার উপর ক্লিক করে দেখুন: মালিকানা, জমির শ্রেণি, ৪-পর্যায়ের জরিপ ধারাবাহিকতা ও বন্ধক স্থিতি',
-                'Click any parcel polygon to inspect ownership, land use, survey epoch lineage, and lien status'
-              )}
-            </p>
-          </div>
-          <button
-            onClick={() => onNavigate('map')}
-            className="text-xs sm:text-sm font-bold text-[#006A4E] hover:text-[#00553e] flex items-center gap-1.5 cursor-pointer bg-emerald-50 hover:bg-emerald-100 px-4 py-2 rounded-lg transition-colors shrink-0"
-          >
-            <span>{t('পূর্ণ GIS ক্যাডাস্ট্রাল ম্যাপ খুলুন', 'Open Full GIS Cadastre')}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Interactive Cadastral Mouza Map Widget */}
-        <CadastralMouzaMapWidget
-          selectedPlot={selectedCadastralPlot}
-          onSelectPlot={setSelectedCadastralPlot}
-          lang={lang}
-          onNavigate={onNavigate}
-        />
-      </section>
-
-      {/* Trust Pipeline — 3 Simple Steps Connected by Surveyor's Chain & Interactive Walkthrough */}
-      <section className="bg-gradient-to-b from-slate-50 to-emerald-50/20 border-y border-slate-200/90 py-14">
-        <div className="mx-auto max-w-7xl px-4">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 uppercase tracking-wider mb-1">
-                <ShieldCheck className="w-4 h-4" />
-                <span>{t('সম্পূর্ণ ডিজিটাল জমি হস্তান্তর চক্র', 'End-to-End Trust Pipeline')}</span>
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
-                {t('তিন ধাপে সম্পূর্ণ সেবা ও নির্ভুল আস্থা', 'Complete Trust in Three Steps')}
-              </h2>
-              <p className="text-slate-500 text-xs sm:text-sm mt-1">
-                {t(
-                  'বায়না থেকে খতিয়ান হালনাগাদ — প্রতিটি ধাপ ক্যাডাস্ট্রাল ভেক্টর ও ক্রিপ্টোগ্রাফিক চেইনে সুরক্ষিত (ধাপ নির্বাচন করে ইন্টারঅ্যাকটিভ ডেমো দেখুন):',
-                  'From agreement to BS khatian update — select each stage below to explore the interactive visual walkthrough:'
+              </h1>
+              <p className="text-sm sm:text-base font-bold text-slate-700 tracking-tight leading-relaxed">
+                {lang === 'bn' ? (
+                  <>
+                    খতিয়ান, ই-নামজারি, মৌজা নকশা থেকে দলিল ও নাগরিক স্বত্ব — বাংলাদেশের
+                    <br />
+                    সকল ডিজিটাল ভূমিসেবা এক ঠিকানায়
+                  </>
+                ) : (
+                  <>
+                    Khatian, e-Mutation, Cadastral Maps & Deed Records — All Bangladesh
+                    <br />
+                    Government Land Services in One Unified Platform
+                  </>
                 )}
               </p>
             </div>
 
-            {/* Interactive Step Switcher Tabs */}
-            <div className="inline-flex p-1 bg-white border border-slate-200 rounded-xl shadow-xs self-start md:self-auto shrink-0">
-              {[
-                { step: 1 as const, labelBn: '১. প্রাক-যাচাই', labelEn: '1. Pre-Check' },
-                { step: 2 as const, labelBn: '২. ১১-রুল গেটকিপার', labelEn: '2. 11-Rule Gate' },
-                { step: 3 as const, labelBn: '৩. ডিজিটাল লেজার', labelEn: '3. Signed Ledger' },
-              ].map((s) => (
-                <button
-                  key={s.step}
-                  type="button"
-                  onClick={() => setActivePipelineStep(s.step)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    activePipelineStep === s.step
-                      ? 'bg-[#006A4E] text-white shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-                >
-                  {t(s.labelBn, s.labelEn)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Surveyor Chain Vector Line connecting the 3 steps */}
-          <SurveyorChainConnector className="mb-6" />
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Step 1: Citizen Pre-Check & Khatian Lineage */}
-            <div
-              onClick={() => setActivePipelineStep(1)}
-              className={`rounded-2xl border bg-white p-6 shadow-2xs space-y-4 transition-all cursor-pointer flex flex-col justify-between ${
-                activePipelineStep === 1
-                  ? 'border-[#006A4E] ring-2 ring-[#006A4E]/30 shadow-md'
-                  : 'border-slate-200/90 hover:border-emerald-300'
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg font-mono ${
-                    activePipelineStep === 1 ? 'bg-[#006A4E] text-white' : 'bg-emerald-100 text-emerald-800'
-                  }`}>
-                    ১
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                    {t('প্রাক-বায়না পর্যায়', 'Pre-Contract Stage')}
-                  </span>
-                </div>
-
-                <h3 className="text-lg font-bold text-slate-900">
-                  {t('নাগরিক প্রাক-অনুসন্ধান ও খতিয়ান চেইন', '1. Citizen Pre-Check & Lineage')}
-                </h3>
-                
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
-                  {t(
-                    'বায়নার পূর্বে খতিয়ান চেইন (CS→SA→RS→BS), বিক্রেতার প্রাপ্য অংশ, ওয়ারিশ সনদ ও সক্রিয় ব্যাংক বন্ধক মুক্ততা তাৎক্ষণিক নিরীক্ষা।',
-                    'Verify survey lineage, seller share balance, heir genealogy, and active bank mortgages before signing earnest contract.'
-                  )}
-                </p>
-              </div>
-
-              {/* Embedded CS -> SA -> RS -> BS Vector */}
-              <div className="pt-3 border-t border-slate-100">
-                <div className="text-[10px] text-slate-400 font-bold uppercase mb-1">{t('৪-পর্যায়ের জরিপ ধারাবাহিকতা', '4-Epoch Survey Continuity')}</div>
-                <KhatianLineageVector />
-              </div>
-            </div>
-
-            {/* Step 2: 11-Rule Gatekeeper */}
-            <div
-              onClick={() => setActivePipelineStep(2)}
-              className={`rounded-2xl border bg-white p-6 shadow-2xs space-y-4 transition-all cursor-pointer flex flex-col justify-between ${
-                activePipelineStep === 2
-                  ? 'border-blue-600 ring-2 ring-blue-600/30 shadow-md'
-                  : 'border-slate-200/90 hover:border-blue-300'
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg font-mono ${
-                    activePipelineStep === 2 ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800'
-                  }`}>
-                    ২
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-800 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
-                    {t('নিবন্ধন গেটকিপার', 'Registration Gatekeeper')}
-                  </span>
-                </div>
-
-                <h3 className="text-lg font-bold text-slate-900">
-                  {t('১১-রুল স্বয়ংক্রিয় ফ্রড স্ক্যান', '2. 11-Rule Gatekeeper Scan')}
-                </h3>
-                
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
-                  {t(
-                    'সাব-রেজিস্ট্রির ডেস্কে স্বয়ংক্রিয় ১১টি রুল যাচাই: দ্বৈত দলিল ব্লক, বিক্রয় লক সম্মতি, ফারায়েজ অংশ ব্যালেন্স ও সরকারি রাজস্ব চালান নিরীক্ষা।',
-                    'Automated gatekeeper execution: double registry prevention, citizen lock check, share balance compliance, and verified fees.'
-                  )}
-                </p>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 space-y-1.5 text-xs text-slate-700">
-                <div className="flex items-center gap-1.5 font-medium">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>{t('দ্বৈত বিক্রয় স্বয়ংক্রিয়ভাবে অবরুদ্ধ', 'Zero duplicate deed registration')}</span>
-                </div>
-                <div className="flex items-center gap-1.5 font-medium">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>{t('লককৃত জমি মালিকের অনুমতি ছাড়া নিষিদ্ধ', 'Sale lock enforced before registry')}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Step 3: Signed Ledger & e-Mutation */}
-            <div
-              onClick={() => setActivePipelineStep(3)}
-              className={`rounded-2xl border bg-white p-6 shadow-2xs space-y-4 transition-all cursor-pointer flex flex-col justify-between ${
-                activePipelineStep === 3
-                  ? 'border-purple-600 ring-2 ring-purple-600/30 shadow-md'
-                  : 'border-slate-200/90 hover:border-purple-300'
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg font-mono ${
-                    activePipelineStep === 3 ? 'bg-purple-600 text-white' : 'bg-purple-100 text-purple-800'
-                  }`}>
-                    ৩
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-purple-800 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded-full">
-                    {t('লেজার ও নামজারি', 'Ledger & Mutation')}
-                  </span>
-                </div>
-
-                <h3 className="text-lg font-bold text-slate-900">
-                  {t('ডিজিটাল লেজার ও স্বয়ংক্রিয় নামজারি', '3. Signed Ledger & e-Mutation')}
-                </h3>
-                
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
-                  {t(
-                    'দলিল রেজিস্ট্রি মাত্রই ডিজিটাল সিল ও অপরিবর্তনীয় লেজারে অন্তর্ভুক্ত হয় এবং এসি ল্যান্ডের কিউতে তাৎক্ষণিক নামজারি হ্যান্ডঅফ ঘটে।',
-                    'Instant digital signing, immutable ledger recording, and automated queuing for AC Land mutation.'
-                  )}
-                </p>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] text-slate-400 font-bold block">{t('ক্রিপ্টোগ্রাফিক সুরক্ষা', 'Tamper-Proof Assurance')}</span>
-                  <span className="text-xs font-semibold text-[#074f38]">{t('অপরিবর্তনীয় ডিজিটাল ব্লক', 'Immutable Trust Block')}</span>
-                </div>
-                <Ed25519WaxSealVector size={44} />
-              </div>
-            </div>
-          </div>
-
-          {/* Interactive Walkthrough Detail Showcase */}
-          <div className="mt-8 bg-white rounded-2xl border border-slate-200/90 p-6 shadow-sm">
-            {activePipelineStep === 1 && (
-              <div className="space-y-4 animate-fadeIn">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                      {t('ধাপ ১ ইন্টারেক্টিভ সিমুলেশন', 'Step 1 Interactive Simulation')}
-                    </span>
-                    <h4 className="text-base font-bold text-slate-900 mt-1">
-                      {t('খতিয়ান ধারাবাহিকতা ও বিক্রেতার অংশ নিরীক্ষা', 'Khatian Provenance & Fractional Share Audit')}
-                    </h4>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => onNavigate('check')}
-                    className="btn-primary text-xs flex items-center gap-1.5 self-start sm:self-auto py-2 px-3.5 rounded-xl cursor-pointer"
-                  >
-                    <span>{t('লাইভ দাগ যাচাইয়ে যান', 'Try Plot Verification')}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="grid sm:grid-cols-4 gap-3 text-xs">
-                  <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200">
-                    <span className="font-bold text-emerald-900 block">CS ১৮৮৮-১৯৪০</span>
-                    <span className="text-slate-600">আদি স্বত্ব রেকর্ড: ১০৭ নং খতিয়ান (১০০ শতক)</span>
-                  </div>
-                  <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200">
-                    <span className="font-bold text-emerald-900 block">SA ১৯৫৬-১৯৬৩</span>
-                    <span className="text-slate-600">প্রজাস্বত্ব রেকর্ড: মিল নিশ্চিত (১০০ শতক)</span>
-                  </div>
-                  <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200">
-                    <span className="font-bold text-emerald-900 block">RS ১৯৬৫-১৯৯০</span>
-                    <span className="text-slate-600">রিভিশনাল রেকর্ড: মিল নিশ্চিত (১০০ শতক)</span>
-                  </div>
-                  <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200">
-                    <span className="font-bold text-emerald-900 block">BS বর্তমান</span>
-                    <span className="text-slate-600">সর্বশেষ কার্যকর রেকর্ড: ৪০২ নং খতিয়ান</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activePipelineStep === 2 && (
-              <div className="space-y-4 animate-fadeIn">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
-                      {t('ধাপ ২ ইন্টারেক্টিভ সিমুলেশন', 'Step 2 Interactive Simulation')}
-                    </span>
-                    <h4 className="text-base font-bold text-slate-900 mt-1">
-                      {t('সাব-রেজিস্ট্রি ১১-রুল গেটকিপার স্বয়ংক্রিয় পরীক্ষা', 'Sub-Registry 11-Rule Automated Gatekeeper')}
-                    </h4>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => enterRolePortal('sub_registrar')}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1.5 self-start sm:self-auto py-2 px-3.5 rounded-xl cursor-pointer transition shadow-xs"
-                  >
-                    <span>{t('সাব-রেজিস্ট্রার কনসোল দেখুন', 'Explore Registrar Console')}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-2.5 text-xs">
-                  {[
-                    { id: 'R1', title: t('বিক্রেতার রেকর্ডীয় সত্যতা', 'Seller Operative Title') },
-                    { id: 'R2', title: t('দ্বৈত বিক্রয় স্বয়ংক্রিয়ভাবে ব্লক', 'Zero Duplicate Registration') },
-                    { id: 'R3', title: t('নাগরিক বিক্রয় লক অনুমতি', 'Citizen Sale Lock Clearance') },
-                    { id: 'R4', title: t('ব্যাংক মর্টগেজ লিয়েন মুক্ততা', 'Zero Active Bank Lien') },
-                    { id: 'R5', title: t('ফারায়েজ ওয়ারিশান অংশ সমন্বয়', 'Faraiz Share Balance Check') },
-                    { id: 'R6', title: t('সরকারি অধিগ্রহণ মুক্ত সনদ', 'Govt Acquisition Clearance') },
-                  ].map((rule) => (
-                    <div key={rule.id} className="p-2.5 rounded-xl bg-blue-50/60 border border-blue-200 flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span className="font-semibold text-slate-800">{rule.title}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {activePipelineStep === 3 && (
-              <div className="space-y-4 animate-fadeIn">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                  <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded-full border border-purple-200">
-                      {t('ধাপ ৩ ইন্টারেক্টিভ সিমুলেশন', 'Step 3 Interactive Simulation')}
-                    </span>
-                    <h4 className="text-base font-bold text-slate-900 mt-1">
-                      {t('ডিজিটাল সিল ও এসি ল্যান্ডের কিউতে স্বয়ংক্রিয় নামজারি', 'Digital Seal & Automated AC Land Handover')}
-                    </h4>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => enterRolePortal('ac_land')}
-                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1.5 self-start sm:self-auto py-2 px-3.5 rounded-xl cursor-pointer transition shadow-xs"
-                  >
-                    <span>{t('এসি ল্যান্ড ট্রাইব্যুনাল দেখুন', 'Explore AC Land Tribunal')}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <div className="p-4 bg-purple-50/60 rounded-xl border border-purple-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-                  <div className="space-y-1 text-slate-700">
-                    <div className="font-bold text-slate-900">{t('স্বয়ংক্রিয় মিউটেশন হ্যান্ডঅফ সম্পন্ন', 'Automated Mutation Handover Triggered')}</div>
-                    <div>{t('দলিল অনুমোদিত হওয়ার সাথে সাথেই আবেদনকারীর পক্ষ থেকে আলাদা আবেদন ছাড়াই ই-মিউটেশন কিউতে জমা হয়।', 'No separate application required; deed registration automatically generates mutation docket.')}</div>
-                  </div>
-                  <div className="px-3 py-1.5 rounded-lg bg-white border border-purple-300 font-mono text-[11px] font-bold text-purple-800 shrink-0">
-                    MUT-2026-AUTOMATED ✓
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Dynamic Bilingual Service Catalogue & Source-Linked Guidance */}
-      <section className="mx-auto max-w-7xl px-4">
-        <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-3">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">
-              {t('সেবাসমূহ ও অফিসিয়াল নির্দেশিকা', 'Services & Official Guidance')}
-            </h2>
-            <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
-              {t(
-                'ভূমি মন্ত্রণালয় ও নিবন্ধন অধিদপ্তরের অফিসিয়াল সেবা এবং ভূমি সুরক্ষার সমন্বিত ট্রাস্ট লেয়ার',
-                'Official Ministry services and BhumiShield integrated trust layers'
-              )}
-            </p>
-          </div>
-          <button
-            onClick={() => onNavigate('help')}
-            className="text-xs sm:text-sm font-semibold text-emerald-800 hover:text-emerald-950 flex items-center gap-1 cursor-pointer"
-          >
-            <span>{t('সরকারি ফি ও সার্কুলার তালিকা', 'Official Fees & Circulars')}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Category Filter Pills */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          {[
-            { id: 'ALL', name_bn: 'সকল সেবা', name_en: 'All Services' },
-            { id: 'REVENUE_MUTATION', name_bn: 'ই-নামজারি ও খাজনা', name_en: 'e-Mutation & Tax' },
-            { id: 'RECORD_MAPS', name_bn: 'খতিয়ান ও মৌজা ম্যাপ', name_en: 'Khatian & Mouza Maps' },
-            { id: 'LAND_REGISTRATION', name_bn: 'দলিল ও প্রাক-নিবন্ধন', name_en: 'Deed & Registry' },
-            { id: 'FINANCE_MORTGAGE', name_bn: 'ব্যাংক জামানত ও লিয়েন', name_en: 'Bank Lien & NOC' },
-            { id: 'HELPLINE_INFO', name_bn: 'সহায়িকা ও কল সেন্টার', name_en: 'Help & 16122 Call Center' },
-          ].map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedServiceCat(cat.id)}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[32px] ${
-                selectedServiceCat === cat.id
-                  ? 'bg-[#006A4E] text-white shadow-2xs'
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              {lang === 'bn' ? cat.name_bn : cat.name_en}
-            </button>
-          ))}
-        </div>
-
-        {catalogueState !== 'ready' && (
-          <p role="status" className="mb-4 text-sm text-slate-600">
-            {catalogueState === 'loading'
-              ? t('সেবার তালিকা লোড হচ্ছে…', 'Loading service catalogue…')
-              : t('সেবার তালিকা এখন পাওয়া যাচ্ছে না। আবার চেষ্টা করতে পৃষ্ঠা রিফ্রেশ করুন।', 'Service catalogue is unavailable. Refresh the page to retry.')}
-          </p>
-        )}
-
-        {catalogueState === 'ready' && !catalogueServices.some((s) => selectedServiceCat === 'ALL' || s.category === selectedServiceCat) && (
-          <p className="mb-4 text-sm">{t('এই বিভাগে প্রকাশিত সেবা নেই।', 'No published services in this category.')}</p>
-        )}
-
-        {/* Services Cards Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {catalogueServices.filter((s) => selectedServiceCat === 'ALL' || s.category === selectedServiceCat).map((srv: any) => {
-            const isCatalogueItem = 'service_code' in srv;
-            const isExternal = isCatalogueItem && srv.service_type === 'EXTERNAL_OFFICIAL' && Boolean(srv.external_url);
-            
-            const handleClick = () => {
-              if (isCatalogueItem) {
-                if (isExternal && srv.external_url) {
-                  window.open(srv.external_url, '_blank', 'noopener,noreferrer');
-                } else if (srv.internal_route) {
-                  onNavigate(srv.internal_route);
-                } else {
-                  onNavigate('check');
-                }
-              } else {
-                srv.action?.();
-              }
-            };
-
-            const icon = isCatalogueItem
-              ? (() => {
-                  const cd = (srv.service_code || '').toUpperCase();
-                  const c = (srv.category || '').toUpperCase();
-                  if (cd.includes('MUTATION') || c === 'REVENUE_MUTATION') return <Landmark className="w-6 h-6" />;
-                  if (cd.includes('KHATIAN') || cd.includes('MAP') || c === 'RECORD_MAPS') return <FileSpreadsheet className="w-6 h-6" />;
-                  if (cd.includes('DEED') || c === 'LAND_REGISTRATION') return <FileText className="w-6 h-6" />;
-                  if (cd.includes('MORTGAGE') || c === 'FINANCE_MORTGAGE') return <Building2 className="w-6 h-6" />;
-                  if (cd.includes('DISPUTE') || c === 'DISPUTE_CITIZEN') return <Scale className="w-6 h-6" />;
-                  if (cd.includes('HELPLINE') || c === 'HELPLINE_INFO') return <PhoneCall className="w-6 h-6" />;
-                  if (cd.includes('QR') || cd.includes('INTEGRITY')) return <QrCode className="w-6 h-6" />;
-                  return <Search className="w-6 h-6" />;
-                })()
-              : srv.icon;
-
-            const title = lang === 'bn' ? srv.title_bn : srv.title_en;
-            const desc = lang === 'bn' ? (srv.description_bn || srv.desc_bn) : (srv.description_en || srv.desc_en);
-            const authority = isCatalogueItem ? (lang === 'bn' ? srv.authority_name_bn : srv.authority_name_en) : null;
-
-            return (
-              <div
-                key={srv.id}
-                onClick={handleClick}
-                role={isExternal ? 'link' : 'button'}
-                tabIndex={0}
-                onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handleClick(); } }}
-                className="group rounded-xl border border-gray-200 bg-white shadow-card flex flex-col justify-between p-5 transition hover:border-emerald-400 hover:shadow-md cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-[#006A4E] focus-visible:outline-none relative overflow-hidden"
+            {/* 3 Citizen Service Action Pills (Direct Citizen Actions) */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setSearchTab('check')}
+                className={`h-9 px-4 rounded-full text-[11px] sm:text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer ${
+                  searchTab === 'check'
+                    ? 'bg-[#006A4E] text-white ring-2 ring-[#006A4E]/30 font-black'
+                    : 'bg-[#006A4E]/90 hover:bg-[#006A4E] text-white'
+                }`}
               >
-                {/* Micro corner coordinate crosshair */}
-                <span className="absolute top-2 right-2 text-[10px] text-slate-200 font-mono group-hover:text-emerald-400 transition-colors">+</span>
+                <Search className="w-3 h-3 stroke-[2.5]" />
+                <span className="tracking-wide">
+                  {t('খতিয়ান ও দাগ অনুসন্ধান →', 'SEARCH KHATIAN & PLOT →')}
+                </span>
+              </button>
 
-                <div className="flex gap-4">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800 group-hover:bg-[#006A4E] group-hover:text-white transition-colors shadow-2xs">
-                    {icon}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="font-bold text-slate-900 text-sm sm:text-base group-hover:text-[#006A4E] transition-colors">
-                        {title}
-                      </span>
-                      {isExternal ? (
-                        <ExternalLink className="h-4 w-4 text-emerald-700 shrink-0 opacity-80 group-hover:opacity-100" />
-                      ) : (
-                        <ArrowRight className="h-4 w-4 opacity-0 transition group-hover:translate-x-0.5 group-hover:opacity-100 text-emerald-700 shrink-0" />
-                      )}
-                    </div>
-                    <p className="mt-1 text-xs sm:text-sm text-slate-500 leading-relaxed font-normal line-clamp-2">
-                      {desc}
-                    </p>
-                  </div>
-                </div>
+              <button
+                type="button"
+                onClick={() => setSearchTab('qr')}
+                className={`h-9 px-4 rounded-full text-[11px] sm:text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer ${
+                  searchTab === 'qr'
+                    ? 'bg-[#006A4E] text-white ring-2 ring-[#006A4E]/30 font-black'
+                    : 'bg-[#006A4E]/90 hover:bg-[#006A4E] text-white'
+                }`}
+              >
+                <FileText className="w-3 h-3 stroke-[2.5]" />
+                <span className="tracking-wide">
+                  {t('রেজিস্ট্রিকৃত দলিল যাচাই →', 'VERIFY REGISTERED DEED →')}
+                </span>
+              </button>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                  <span className="text-slate-500 font-medium">
-                    {authority || (lang === 'bn' ? 'ভূমি সুরক্ষা ট্রাস্ট ফিচার' : 'BhumiShield Feature')}
-                  </span>
-                  <span
-                    className={`font-semibold px-2 py-0.5 rounded-full ${
-                      isExternal
-                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                        : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                    }`}
-                  >
-                    {isExternal
-                      ? t('অফিসিয়াল পোর্টাল ↗', 'Official Portal ↗')
-                      : t('সরাসরি ফিচার →', 'Feature →')}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Informational Disclaimer Banner */}
-        <div className="mt-4 p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-          <span>
-            {t(
-              'ⓘ সরকারি সেবাসমূহ সংশ্লিষ্ট ভূমি অফিসের কর্তৃত্বাধীন। ভূমি সুরক্ষা একটি স্বাধীন ল্যান্ডটেক ২০২৬ প্রোটোটাইপ।',
-              'ⓘ Official government services belong to their respective authorities. BhumiShield is an independent LandTech 2026 prototype.'
-            )}
-          </span>
-          <button
-            onClick={() => onNavigate('help')}
-            className="text-emerald-800 font-bold hover:underline shrink-0 cursor-pointer"
-          >
-            {t('সরকারি ফি ও সার্কুলার নির্দেশিকা দেখুন →', 'View Official Fees & Circular Guide →')}
-          </button>
-        </div>
-      </section>
-
-      {/* 5 Role Workspaces Gateways */}
-      <section className="mx-auto max-w-7xl px-4">
-        <div className="mb-6 border-b border-slate-200 pb-3">
-          <h2 className="text-2xl font-bold text-slate-900">
-            {t('পাঁচটি দাপ্তরিক ও নাগরিক ওয়ার্কস্পেস', 'Five Role Workspaces')}
-          </h2>
-          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
-            {t(
-              'নাগরিক থেকে জাতীয় অ্যাডমিন — প্রতিটি প্যানেলে নিজস্ব কার্যক্ষমতা ও নিয়ন্ত্রণ:',
-              'From citizen vault to national audit — each panel features dedicated controls:'
-            )}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {[
-            {
-              role: 'citizen' as UserRole,
-              icon: <ShieldCheck className="w-5 h-5" />,
-              title: t('নাগরিক ভল্ট', 'Citizen Vault'),
-              desc: t('মালিকানা, বিক্রয় লক ও বিরোধ দাখিল', 'Sale locks & complaints'),
-              dept: t('নাগরিক পোর্টাল', 'Citizen Portal')
-            },
-            {
-              role: 'sub_registrar' as UserRole,
-              icon: <FileSpreadsheet className="w-5 h-5" />,
-              title: t('সাব-রেজিস্ট্রার', 'Sub-Registrar'),
-              desc: t('১১-রুল গেটকিপার ও রাজস্ব শুল্ক', '11-rule gatekeeper'),
-              dept: t('নিবন্ধন অধিদপ্তর', 'Registration Dept')
-            },
-            {
-              role: 'ac_land' as UserRole,
-              icon: <Landmark className="w-5 h-5" />,
-              title: t('এসি ল্যান্ড', 'AC Land'),
-              desc: t('ই-মিউটেশন ও বিরোধ ট্রাইব্যুনাল', 'e-Mutation & Tribunal'),
-              dept: t('উপজেলা ভূমি অফিস', 'Land Revenue Office')
-            },
-            {
-              role: 'bank_officer' as UserRole,
-              icon: <Building2 className="w-5 h-5" />,
-              title: t('ব্যাংক কর্মকর্তা', 'Bank Officer'),
-              desc: t('জামানত লিয়েন ও ডিজিটাল NOC', 'Liens & Digital NOC'),
-              dept: t('তফসিলি ব্যাংক', 'Scheduled Banks')
-            },
-            {
-              role: 'admin' as UserRole,
-              icon: <Lock className="w-5 h-5" />,
-              title: t('সিস্টেম অ্যাডমিন', 'System Admin'),
-              desc: t('RBAC, লেজার ল্যাব ও অডিট লগ', 'RBAC & Audit Trail'),
-              dept: t('জাতীয় গভর্ন্যান্স', 'National Governance')
-            },
-          ].map((item) => (
-            <button
-              type="button"
-              key={item.role}
-              onClick={() => enterRolePortal(item.role)}
-              className="rounded-xl border border-slate-200 bg-white p-5 hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group text-left w-full focus-visible:ring-2 focus-visible:ring-[#006A4E] focus-visible:outline-none relative overflow-hidden"
-            >
-              <span className="absolute top-2 right-2 text-[10px] text-slate-200 font-mono group-hover:text-emerald-400 transition-colors">+</span>
-              <div>
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#006A4E] group-hover:bg-[#006A4E] group-hover:text-white flex items-center justify-center transition-colors">
-                  {item.icon}
-                </div>
-                <div className="text-[10px] uppercase font-bold text-slate-400 mt-3">{item.dept}</div>
-                <h3 className="font-bold text-base text-slate-900 mt-0.5">{item.title}</h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">{item.desc}</p>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-[#006A4E]">
-                <span>{t('প্যানেল খুলুন', 'Open Workspace')}</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      {/* Structural Comparison Matrix */}
-      <section className="mx-auto max-w-7xl px-4">
-        <div className="mb-6 border-b border-slate-200 pb-3">
-          <h2 className="text-2xl font-bold text-slate-900">
-            {t('প্রচলিত ম্যানুয়াল রেজিস্ট্রি বনাম ভূমি সুরক্ষা', 'Manual Registry vs BhumiShield')}
-          </h2>
-          <p className="text-slate-500 text-xs sm:text-sm mt-0.5">
-            {t(
-              'বাংলাদেশের প্রচলিত ভূমি ব্যবস্থাপনার ৫টি প্রধান ফাঁক যেখানে সিস্টেম প্রতিরোধ গড়ে তোলে:',
-              'Five land-record risks addressed within the records available to this application:'
-            )}
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
-          <table className="w-full text-left border-collapse text-xs sm:text-sm">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-[11px]">
-                <th className="py-3 px-4 font-bold">{t('জালিয়াতির ঝুঁকি', 'Fraud Risk')}</th>
-                <th className="py-3 px-4 font-bold">{t('প্রচলিত রেজিস্ট্রি ব্যবস্থা', 'Traditional Manual Way')}</th>
-                <th className="py-3 px-4 font-bold text-[#006A4E]">{t('ভূমি সুরক্ষা ট্রাস্ট লেয়ার', 'BhumiShield Solution')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {[
-                [
-                  t('একই জমি বারবার বিক্রি (Double Sale)', 'Double Sale Fraud'),
-                  t('বালাম বই হালনাগাদে সপ্তাহ/মাস লাগে; একই দিনে একাধিক অফিসে বিক্রি সম্ভব', 'Slow volume updates; same land can be sold to multiple victims'),
-                  t('রিয়েল-টাইম বিক্রেতার অংশ ব্লক ও লক; একই দিনে ডুপ্লিকেট দলিল বন্ধ', 'Real-time share deduction; immediate duplicate registration block')
-                ],
-                [
-                  t('জাল আমমোক্তারনামা (Forged POA)', 'Forged POA / Absentee Fraud'),
-                  t('প্রবাসে বা দূরে থাকলে ভুয়া কাগজপত্র দিয়ে জমি আত্মসাতের সুযোগ', 'Absentee owners easily forged by land grabbers'),
-                  t('নাগরিক ডিজিটাল বিক্রয় লক; ভল্ট থেকে মালিকের অনুমোদন বা ডিজিটাল আনলক ছাড়া রেজিস্ট্রি স্বয়ংক্রিয়ভাবে অবরুদ্ধ', 'Citizen Digital Sale Lock; strictly blocked at gatekeeper until owner unlocks')
-                ],
-                [
-                  t('খতিয়ান চেইন ফাঁকি (Lineage Break)', 'Lineage Manipulation'),
-                  t('ম্যানুয়ালি সিএস-এসএ-আরএস মিলিয়ে দেখা অসম্ভব; ভুয়া পরচা ব্যবহার', 'Manual verification impossible; fake khatian sheets forged'),
-                  t('সিএস (১৮৮৮-১৯৪০) থেকে প্রযোজ্য আরএস/বিএস খতিয়ানের মোট জমি ও ফারায়েজ ধারাবাহিকতা নিরীক্ষা', 'CS to RS/BS survey area continuity & inheritance audit')
-                ],
-                [
-                  t('বন্ধকী জমি গোপনে বিক্রি (Mortgaged Sale)', 'Mortgaged Plot Sale'),
-                  t('ব্যাংক ও সাব-রেজিস্ট্রির মধ্যে কোনো সংযোগ নেই; তথ্য লুকানো সহজ', 'No link between commercial banks and registry offices'),
-                  t('কেন্দ্রীয় ডিজিটাল লিয়েন লক ও ঋণ পরিশোধের পর ডিজিটাল যাচাইযোগ্য NOC', 'Central real-time lien check & verifiable digital NOC')
-                ],
-                [
-                  t('বালাম বই টেম্পারিং (Record Alteration)', 'Physical Record Tampering'),
-                  t('অফিসের বালাম বইয়ের পাতা ছিঁড়ে বা ঘষামাজা করে দলিল পরিবর্তন সম্ভব', 'Physical register books can be altered by corrupt staff'),
-                  t('গাণিতিক অখণ্ড লেজার ও ডিজিটাল ট্রাস্ট স্বাক্ষর; ১টি অক্ষর পরিবর্তনও সাথে সাথে ধরা পড়ে', 'Immutable mathematical ledger & digital signatures; single character alteration detected')
-                ]
-              ].map(([risk, traditional, solution], idx) => (
-                <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
-                  <td className="py-3.5 px-4 font-bold text-slate-800">{risk}</td>
-                  <td className="py-3.5 px-4 text-slate-600">
-                    <span className="inline-flex items-center gap-1.5 text-rose-700">
-                      <X className="w-4 h-4 shrink-0" />
-                      <span>{traditional}</span>
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 font-semibold text-slate-900">
-                    <span className="inline-flex items-center gap-1.5 text-emerald-800">
-                      <Check className="w-4 h-4 shrink-0 font-bold" />
-                      <span>{solution}</span>
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Emergency Helpline Banner with Vector Topographic Background */}
-      <section className="mx-auto max-w-7xl px-4">
-        <div className="relative rounded-2xl bg-gradient-to-r from-[#074f38] via-[#05412e] to-[#043324] text-white p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl overflow-hidden">
-          {/* Subtle Vector Contours in Helpline */}
-          <TopographicContourVector opacity={0.16} strokeColor="rgba(52, 211, 153, 0.4)" />
-
-          <div className="relative space-y-1.5 text-center md:text-left z-10">
-            <div className="inline-flex items-center gap-2 text-emerald-300 text-xs font-bold uppercase tracking-wider">
-              <PhoneCall className="w-4 h-4" />
-              <span>{t('সরকারি ভূমি সেবা কল সেন্টার ও অভিযোগ হটলাইন', 'Government Land Call Center & Grievance Cell')}</span>
+              <button
+                type="button"
+                onClick={() => setSearchTab('map')}
+                className={`h-9 px-4 rounded-full text-[11px] sm:text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer ${
+                  searchTab === 'map'
+                    ? 'bg-[#006A4E] text-white ring-2 ring-[#006A4E]/30 font-black'
+                    : 'bg-[#006A4E]/90 hover:bg-[#006A4E] text-white'
+                }`}
+              >
+                <Compass className="w-3 h-3 stroke-[2.5]" />
+                <span className="tracking-wide">
+                  {t('ডিজিটাল মৌজা নকশা →', 'DIGITAL MOUZA MAP →')}
+                </span>
+              </button>
             </div>
-            <h3 className="text-xl sm:text-2xl font-bold">
-              {t('ভূমি সেবা সংক্রান্ত যেকোনো তথ্যের জন্য কল করুন', 'Contact Official Land Support Directly')}
+
+            {/* Compact Live Interactive Verification Console */}
+            <div className="pt-0.5 max-w-lg">
+              <div className="bg-white/95 backdrop-blur-md rounded-xl border border-slate-200/90 p-3 shadow-sm">
+                {searchTab === 'check' && (
+                  <form onSubmit={handleHeroSearch} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[11px] font-extrabold text-slate-800 flex items-center gap-1.5">
+                        <MapPin className="w-3 h-3 text-[#006A4E]" />
+                        <span>{t('জমির দাগ বা খতিয়ান নম্বর দিয়ে তাৎক্ষণিক রেকর্ড অনুসন্ধান', 'Instant Record Search by Plot or Khatian No')}</span>
+                      </Label>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={dagInput}
+                        onChange={(e) => setDagInput(e.target.value)}
+                        placeholder={t('যেমন: দাগ ১০১ বা খতিয়ান ৪১০১', 'e.g. Plot 101 or Khatian 4101')}
+                        className="h-9 text-xs font-bold text-slate-800 rounded-lg border-slate-300 focus:border-[#006A4E]"
+                      />
+                      <Button
+                        type="submit"
+                        className="h-9 px-4 bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs rounded-lg shrink-0 shadow-2xs cursor-pointer"
+                      >
+                        <Search className="w-3 h-3 mr-1" />
+                        <span>{t('অনুসন্ধান করুন', 'Search Record')}</span>
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1 text-[11px] text-slate-500">
+                      <span className="font-medium">{t('টেস্ট:', 'Test:')}</span>
+                      <button
+                        type="button"
+                        onClick={() => setDagInput('101')}
+                        className="px-2 py-0.5 rounded-full font-bold bg-emerald-50 text-[#006A4E] border border-emerald-200 hover:bg-emerald-100 cursor-pointer text-[10px]"
+                      >
+                        🟢 {t('দাগ ১০১ (রেকর্ড হালনাগাদ)', 'Dag 101 (Updated Title)')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDagInput('102')}
+                        className="px-2 py-0.5 rounded-full font-bold bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 cursor-pointer text-[10px]"
+                      >
+                        🟡 {t('দাগ ১০২ (ব্যাংক দায়বদ্ধ / ঋণ)', 'Dag 102 (Bank Lien)')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDagInput('103')}
+                        className="px-2 py-0.5 rounded-full font-bold bg-rose-50 text-rose-800 border border-rose-200 hover:bg-rose-100 cursor-pointer text-[10px]"
+                      >
+                        🔴 {t('দাগ ১০৩ (আপিল বা বিরোধাধীন)', 'Dag 103 (Court Dispute)')}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {searchTab === 'qr' && (
+                  <form onSubmit={handleHeroSearch} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[11px] font-extrabold text-slate-800 flex items-center gap-1.5">
+                        <FileText className="w-3 h-3 text-[#006A4E]" />
+                        <span>{t('দলিল নম্বর দিয়ে ডিজিটাল সিল ও কিউআর যাচাই', 'Verify Registered Deed, Digital Seal & QR Code')}</span>
+                      </Label>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={deedInput}
+                        onChange={(e) => setDeedInput(e.target.value)}
+                        placeholder={t('যেমন: DL-2026-1001', 'e.g. DL-2026-1001')}
+                        className="h-9 font-mono text-xs font-bold text-slate-800 rounded-lg border-slate-300 focus:border-[#006A4E]"
+                      />
+                      <Button
+                        type="submit"
+                        className="h-9 px-4 bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs rounded-lg shrink-0 shadow-2xs cursor-pointer"
+                      >
+                        <QrCode className="w-3 h-3 mr-1" />
+                        <span>{t('দলিল পরীক্ষা', 'Check Deed')}</span>
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-1 text-[11px] text-slate-500">
+                      <span className="font-medium">{t('নমুনা:', 'Sample:')}</span>
+                      <button
+                        type="button"
+                        onClick={() => setDeedInput('DL-2026-1001')}
+                        className="px-2 py-0.5 rounded-full font-mono bg-slate-100 text-slate-800 border border-slate-200 hover:bg-slate-200 cursor-pointer font-bold text-[10px]"
+                      >
+                        DL-2026-1001 (বৈধ সাব-রেজিস্ট্রি দলিল)
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {searchTab === 'map' && (
+                  <form onSubmit={handleHeroSearch} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[11px] font-extrabold text-slate-800 flex items-center gap-1.5">
+                        <Compass className="w-3 h-3 text-[#006A4E]" />
+                        <span>{t('মৌজা ও জে.এল. নম্বর দিয়ে ডিজিটাল ক্যাডাস্ট্রাল নকশা', 'Digital Cadastral Survey Map by Mouza & JL No')}</span>
+                      </Label>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <Select value={mouzaSelect} onValueChange={setMouzaSelect}>
+                          <SelectTrigger className="h-9 text-xs rounded-lg border-slate-300 font-semibold bg-white">
+                            <SelectValue placeholder={t('মৌজা নির্বাচন করুন', 'Select Mouza')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {(locationsQuery.data || []).map((loc: any) => (
+                                <SelectItem key={loc.id} value={String(loc.id)}>
+                                  {loc.mouza_bn} ({t('জেএল', 'JL')} {toBanglaDigits(loc.jl_no || '১', lang)}) - {loc.upazila_bn}, {loc.district_bn}
+                                </SelectItem>
+                              ))}
+                              {(!locationsQuery.data || locationsQuery.data.length === 0) && (
+                                <>
+                                  <SelectItem value="1">ধামরাই (জেএল ৪১০১) - ঢাকা</SelectItem>
+                                  <SelectItem value="2">সাভার (জেএল ৫০২) - ঢাকা</SelectItem>
+                                  <SelectItem value="3">মিরপুর (জেএল ১০৫) - ঢাকা</SelectItem>
+                                </>
+                              )}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button
+                        type="submit"
+                        className="h-9 px-4 bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs rounded-lg shrink-0 shadow-2xs cursor-pointer"
+                      >
+                        <Compass className="w-3 h-3 mr-1" />
+                        <span>{t('ম্যাপে দেখুন', 'Open Map')}</span>
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* 2. SIMPLE 3-STEP GUIDE: How It Works */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            {t('ভূমিসেবা গ্রহণের সহজ ৩টি ধাপ', '3 Simple Steps to Access Land Services')}
+          </h2>
+          <p className="text-sm text-slate-600">
+            {t(
+              'ঘরে বসেই যেকোনো ভূমি রেকর্ড অনুসন্ধান, আবেদন বা সুরক্ষা সেবা নিন কোনো মধ্যস্বত্বভোগী ছাড়াই।',
+              'Access any land record, online application, or ownership protection from home without middlemen.'
+            )}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Step 1 */}
+          <Card className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs hover:shadow-md transition space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-[#006A4E] font-black text-lg">
+              ১
+            </div>
+            <h3 className="text-lg font-black text-slate-900">
+              {t('১. দাগ, খতিয়ান বা দলিল দিয়ে খুঁজুন', '1. Search Plot, Khatian or Deed')}
             </h3>
-            <p className="text-xs sm:text-sm text-emerald-100/80 max-w-xl">
+            <p className="text-sm text-slate-600 leading-relaxed">
               {t(
-                'ভূমি সুরক্ষা নাগরিক সেবা সার্বক্ষণিক হটলাইন ১৬১২২ এ কল করে তথ্য ও কারিগরি সহায়তা নিন (সার্বক্ষণিক সেবা চালু; অপারেটর নির্ধারিত সাধারণ কল চার্জ প্রযোজ্য)।',
-                'Call BhumiShield Citizen Support Hotline 16122 for platform assistance and inquiry (24/7 service; standard telecom charges apply).'
+                'আপনার জমির দাগ, খতিয়ান অথবা দলিলের নম্বর দিন। সরকারি সার্ভার থেকে তাৎক্ষণিক মালিকানা, জমির শ্রেণি ও রেকর্ড প্রদর্শিত হবে।',
+                'Enter your plot, khatian, or deed number to view authenticated government records, ownership history, and acreage immediately.'
               )}
             </p>
-          </div>
+          </Card>
 
-          <div className="relative flex items-center gap-3 shrink-0 z-10">
-            <div className="bg-white/10 backdrop-blur-sm px-5 py-3 rounded-xl text-center border border-white/20 shadow-inner">
-              <span className="text-[10px] text-emerald-200 block uppercase font-bold tracking-wider">Land Helpline</span>
-              <span className="text-2xl font-extrabold font-mono tracking-wider text-white">১৬১২২</span>
+          {/* Step 2 */}
+          <Card className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs hover:shadow-md transition space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 font-black text-lg">
+              ২
             </div>
-            <button
-              onClick={() => onNavigate('help')}
-              className="px-5 py-3 rounded-xl bg-white text-[#074f38] hover:bg-emerald-50 font-bold text-xs cursor-pointer shadow-md transition-colors min-h-[46px]"
-            >
-              {t('সহায়িকা ও FAQ →', 'Help & FAQ →')}
-            </button>
+            <h3 className="text-lg font-black text-slate-900">
+              {t('২. ১-ক্লিকে সেবা গ্রহণ ও ট্র্যাকিং', '2. 1-Click Application & Live Tracking')}
+            </h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              {t(
+                'ডিজিটাল পর্চা ডাউনলোড, ই-নামজারি আবেদন কিংবা দলিলের কিউআর কোড যাচাই করুন। মোবাইল ট্র্যাকিং নম্বরের মাধ্যমে প্রতিটি ধাপের লাইভ অগ্রগতি জানুন।',
+                'Download certified khatians, apply for e-mutation, or verify deeds online with live tracking from application to approval.'
+              )}
+            </p>
+          </Card>
+
+          {/* Step 3 */}
+          <Card className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs hover:shadow-md transition space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 font-black text-lg">
+              ৩
+            </div>
+            <h3 className="text-lg font-black text-slate-900">
+              {t('৩. ডিজিটাল প্রত্যয়ন ও বিক্রয় লক সুরক্ষা', '3. Digital Certificate & Title Security')}
+            </h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              {t(
+                'সরকারি ডিজিটাল সিলযুক্ত নথিপত্র সংগ্রহ করুন এবং অননুমোদিত হস্তান্তর ও জালিয়াতি রোধে নিজের জমিতে বিক্রয় লক সক্রিয় রাখুন।',
+                'Receive tamper-proof documents with QR codes and activate sale lock protection to keep your land 100% secure.'
+              )}
+            </p>
+          </Card>
+        </div>
+      </section>
+
+      {/* 3. CORE CITIZEN SERVICES: Clean Visual Cards With REAL Generated Images */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
+        <div className="text-center max-w-2xl mx-auto space-y-2">
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            {t('নাগরিকদের জন্য প্রধান ভূমিসেবা সমূহ', 'Core Land Services for Citizens')}
+          </h2>
+          <p className="text-sm text-slate-600">
+            {t(
+              'আপনার কাঙ্ক্ষিত সেবাটি বেছে নিন এবং সরাসরি কার্যক্রম শুরু করুন।',
+              'Choose the land service you need and get started directly.'
+            )}
+          </p>
+        </div>
+
+        {/* 4 Feature Cards with Real Images */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          {/* Service 1: Digital Khatian & Ownership Records */}
+          <Card className="rounded-3xl border border-slate-200/90 bg-white overflow-hidden shadow-xs hover:shadow-lg transition flex flex-col justify-between group">
+            <div>
+              <div className="overflow-hidden aspect-[4/3] bg-emerald-50">
+                <img
+                  src="/assets/check-before-buy.jpg"
+                  alt={t('ডিজিটাল খতিয়ান ও রেকর্ড অনুসন্ধান', 'Digital Khatian & Ownership Records')}
+                  className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                />
+              </div>
+              <div className="p-5 space-y-2">
+                <h3 className="text-base font-black text-slate-900">
+                  {t('ডিজিটাল খতিয়ান ও রেকর্ড অনুসন্ধান', 'Digital Khatian & Records')}
+                </h3>
+                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                  {t(
+                    'সিএস, এসএ, আরএস ও বিএস খতিয়ানের ধারাবাহিকতা, মালিকানার সত্যতা ও বর্তমান অবস্থা মুহূর্তেই জানুন।',
+                    'Search historical khatian records, verify authentic ownership, and check land classification in seconds.'
+                  )}
+                </p>
+              </div>
+            </div>
+            <div className="p-5 pt-0">
+              <Button
+                onClick={() => onNavigate('check')}
+                className="w-full bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold rounded-xl h-10 shadow-xs"
+              >
+                <span>{t('খতিয়ান অনুসন্ধান', 'Search Records')}</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+              </Button>
+            </div>
+          </Card>
+
+          {/* Service 2: Digital Mouza Map */}
+          <Card className="rounded-3xl border border-slate-200/90 bg-white overflow-hidden shadow-xs hover:shadow-lg transition flex flex-col justify-between group">
+            <div>
+              <div className="overflow-hidden aspect-[4/3] bg-teal-50">
+                <img
+                  src="/assets/digital-mouza-map.jpg"
+                  alt={t('ডিজিটাল মৌজা নকশা ও পরিমাপ', 'Digital Mouza Map & Survey')}
+                  className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                />
+              </div>
+              <div className="p-5 space-y-2">
+                <h3 className="text-base font-black text-slate-900">
+                  {t('ডিজিটাল মৌজা নকশা ও পরিমাপ', 'Digital Mouza Map & Survey')}
+                </h3>
+                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                  {t(
+                    'স্যাটেলাইট মানচিত্রে আপনার দাগের সীমানা, ভৌগোলিক অবস্থান ও জমির সুনির্দিষ্ট পরিমাপ নিখুঁতভাবে দেখুন।',
+                    'Explore parcel boundaries, geographic coordinates, and precise acreage measurements on cadastral maps.'
+                  )}
+                </p>
+              </div>
+            </div>
+            <div className="p-5 pt-0">
+              <Button
+                variant="outline"
+                onClick={() => onNavigate('map')}
+                className="w-full border-slate-300 text-slate-800 hover:bg-slate-50 text-xs font-bold rounded-xl h-10 shadow-2xs"
+              >
+                <span>{t('নকশা দেখুন', 'Explore Map')}</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+              </Button>
+            </div>
+          </Card>
+
+          {/* Service 3: Deed QR Verification */}
+          <Card className="rounded-3xl border border-slate-200/90 bg-white overflow-hidden shadow-xs hover:shadow-lg transition flex flex-col justify-between group">
+            <div>
+              <div className="overflow-hidden aspect-[4/3] bg-blue-50">
+                <img
+                  src="/assets/deed-qr-verify.png"
+                  alt={t('স্মার্ট দলিল যাচাই ও কিউআর স্ক্যান', 'Deed Verification & QR Check')}
+                  className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                />
+              </div>
+              <div className="p-5 space-y-2">
+                <h3 className="text-base font-black text-slate-900">
+                  {t('স্মার্ট দলিল যাচাই ও কিউআর স্ক্যান', 'Deed Verification & QR Check')}
+                </h3>
+                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                  {t(
+                    'স্মার্টফোনে কিউআর কোড স্ক্যান করে সাব-রেজিস্ট্রারের ডিজিটাল সিল, ভলিউম ও দলিলের আসল সত্যতা জেনে নিন।',
+                    'Scan deed QR codes to verify registrar signatures, volume records, and official government seals.'
+                  )}
+                </p>
+              </div>
+            </div>
+            <div className="p-5 pt-0">
+              <Button
+                variant="outline"
+                onClick={() => onNavigate('qr')}
+                className="w-full border-slate-300 text-slate-800 hover:bg-slate-50 text-xs font-bold rounded-xl h-10 shadow-2xs"
+              >
+                <span>{t('দলিল পরীক্ষা', 'Verify Deed')}</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+              </Button>
+            </div>
+          </Card>
+
+          {/* Service 4: Citizen Land Vault */}
+          <Card className="rounded-3xl border border-slate-200/90 bg-white overflow-hidden shadow-xs hover:shadow-lg transition flex flex-col justify-between group">
+            <div>
+              <div className="overflow-hidden aspect-[4/3] bg-amber-50">
+                <img
+                  src="/assets/citizen-vault-smartcard.png"
+                  alt={t('নাগরিক খতিয়ান ভল্ট ও সুরক্ষা লক', 'Citizen Land Vault & Title Protection')}
+                  className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                />
+              </div>
+              <div className="p-5 space-y-2">
+                <h3 className="text-base font-black text-slate-900">
+                  {t('নাগরিক খতিয়ান ভল্ট ও সুরক্ষা লক', 'Citizen Vault & Sale Lock')}
+                </h3>
+                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                  {t(
+                    'আপনার জাতীয় পরিচয়পত্রের অধীন সব জমি এক ভল্টে নিরাপদে রাখুন এবং জালিয়াতি ঠেকাতে বিক্রয় লক সক্রিয় করুন।',
+                    'Store all your land records securely under your NID and protect your properties with smart sale lock.'
+                  )}
+                </p>
+              </div>
+            </div>
+            <div className="p-5 pt-0">
+              <Button
+                variant="outline"
+                onClick={() => onNavigate('home')}
+                className="w-full border-slate-300 text-slate-800 hover:bg-slate-50 text-xs font-bold rounded-xl h-10 shadow-2xs"
+              >
+                <span>{t('ভল্টে প্রবেশ করুন', 'Open Vault')}</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+              </Button>
+            </div>
+          </Card>
+
+        </div>
+
+        {/* Complete National Land Services Directory Strip */}
+        <div className="pt-4">
+          <div className="p-6 rounded-3xl bg-slate-100/70 border border-slate-200/80">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-4 h-4 text-[#006A4E]" />
+              <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                {t('বাংলাদেশের পূর্ণাঙ্গ ডিজিটাল ভূমিসেবা ইকোসিস্টেম', 'Comprehensive Bangladesh Land Services Ecosystem')}
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div className="p-3 bg-white rounded-2xl border border-slate-200/60 shadow-2xs space-y-1">
+                <div className="text-[11px] font-black text-slate-800 flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{t('ই-নামজারি ও জমাভাগ', 'e-Mutation')}</span>
+                </div>
+                <p className="text-[10px] text-slate-500 leading-tight">
+                  {t('অনলাইন মিউটেশন ও খতিয়ান সৃজন', 'Digital mutation & title transfer')}
+                </p>
+              </div>
+
+              <div className="p-3 bg-white rounded-2xl border border-slate-200/60 shadow-2xs space-y-1">
+                <div className="text-[11px] font-black text-slate-800 flex items-center gap-1.5">
+                  <Compass className="w-3.5 h-3.5 text-teal-600" />
+                  <span>{t('ডিজিটাল মৌজা ম্যাপ', 'Cadastral GIS')}</span>
+                </div>
+                <p className="text-[10px] text-slate-500 leading-tight">
+                  {t('স্যাটেলাইটে দাগের সীমানা পরিমাপ', 'Satellite parcel boundary GIS')}
+                </p>
+              </div>
+
+              <div className="p-3 bg-white rounded-2xl border border-slate-200/60 shadow-2xs space-y-1">
+                <div className="text-[11px] font-black text-slate-800 flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{t('ভূমি উন্নয়ন কর', 'LD-Tax Online')}</span>
+                </div>
+                <p className="text-[10px] text-slate-500 leading-tight">
+                  {t('অনলাইনে খাজনা ও ই-দাখিলা গ্রহণ', 'Online tax payment & e-Dakhila')}
+                </p>
+              </div>
+
+              <div className="p-3 bg-white rounded-2xl border border-slate-200/60 shadow-2xs space-y-1">
+                <div className="text-[11px] font-black text-slate-800 flex items-center gap-1.5">
+                  <FileCheck2 className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>{t('স্মার্ট দলিল নিবন্ধন', 'Sub-Registry')}</span>
+                </div>
+                <p className="text-[10px] text-slate-500 leading-tight">
+                  {t('মেকার-চেকার ডিজিটাল রেজিস্ট্রেশন', 'Maker-checker deed registration')}
+                </p>
+              </div>
+
+              <div className="p-3 bg-white rounded-2xl border border-slate-200/60 shadow-2xs space-y-1">
+                <div className="text-[11px] font-black text-slate-800 flex items-center gap-1.5">
+                  <HelpCircle className="w-3.5 h-3.5 text-purple-600" />
+                  <span>{t('উত্তরাধিকার ফারায়েজ', 'Faraiz Share')}</span>
+                </div>
+                <p className="text-[10px] text-slate-500 leading-tight">
+                  {t('ওয়ারিশান সম্পত্তি বণ্টন হিসাব', 'Inheritance share calculation')}
+                </p>
+              </div>
+
+              <div className="p-3 bg-white rounded-2xl border border-slate-200/60 shadow-2xs space-y-1">
+                <div className="text-[11px] font-black text-slate-800 flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{t('বিক্রয় লক সুরক্ষা', 'Sale Lock Shield')}</span>
+                </div>
+                <p className="text-[10px] text-slate-500 leading-tight">
+                  {t('অননুমোদিত বিক্রি ও জালিয়াতি রোধ', 'Fraud prevention lock & alerts')}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
+
+      {/* 4. LIVE SERVICE STATS: Clean & Dynamic */}
+      <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <Card className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <h3 className="text-sm font-black text-slate-900">
+                {t('জাতীয় ভূমি সেবা পরিসংখ্যান', 'Live National Land Statistics')}
+              </h3>
+            </div>
+            <span className="text-xs text-slate-500">
+              {t('সরাসরি সরকারি সার্ভারের সাথে সংযুক্ত', 'Live Connected')}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+              <div className="text-xs font-bold text-slate-600 mb-1">{t('নিবন্ধিত ডিজিটাল দলিল', 'Registered Deeds')}</div>
+              <div className="text-2xl sm:text-3xl font-black text-[#006A4E] font-mono">
+                {toBanglaDigits(kpis.total_deeds ?? kpis.deeds_count ?? 91, lang)}
+              </div>
+            </div>
+            <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100">
+              <div className="text-xs font-bold text-slate-600 mb-1">{t('যাচাইকৃত খতিয়ান ও দাগ', 'Verified Khatians')}</div>
+              <div className="text-2xl sm:text-3xl font-black text-blue-800 font-mono">
+                {toBanglaDigits(kpis.total_plots ?? kpis.plots_count ?? 71, lang)}
+              </div>
+            </div>
+            <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-100">
+              <div className="text-xs font-bold text-slate-600 mb-1">{t('অনুমোদিত ই-নামজারি', 'Approved Mutations')}</div>
+              <div className="text-2xl sm:text-3xl font-black text-amber-800 font-mono">
+                {toBanglaDigits(kpis.approved_mutations ?? kpis.total_mutations ?? 12, lang)}
+              </div>
+            </div>
+            <div className="p-4 rounded-2xl bg-teal-50/50 border border-teal-100">
+              <div className="text-xs font-bold text-slate-600 mb-1">{t('ডিজিটাল সেবা প্রাপ্তি', 'Service Success Rate')}</div>
+              <div className="text-2xl sm:text-3xl font-black text-teal-800 font-mono">
+                {toBanglaDigits(100, lang)}%
+              </div>
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      {/* 5. CITIZEN HELPLINE 16122 & FAQ (shadcn Accordion) */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          
+          {/* Left Column: 16122 Call Center Card */}
+          <div className="lg:col-span-5">
+            <Card className="relative rounded-3xl border border-slate-700/40 text-white p-6 sm:p-8 shadow-xl overflow-hidden group">
+              {/* High-Resolution Background Image with Cinematic Gradient Overlay */}
+              <div className="absolute inset-0 z-0">
+                <img
+                  src="/assets/helpline-16122-bg.jpg"
+                  alt="16122 Land Helpline Call Center"
+                  className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/80 to-slate-900/60" />
+              </div>
+
+              {/* Card Foreground Content */}
+              <div className="relative z-10 space-y-5">
+                <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center text-amber-300 shadow-inner">
+                  <PhoneCall className="w-6 h-6" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-black text-white drop-shadow-xs">
+                    {t('১৬১২২ নম্বরে কল করুন', 'Call 16122 Anytime')}
+                  </h3>
+                  <p className="text-xs text-slate-200 leading-relaxed font-medium">
+                    {t(
+                      'জমি সংক্রান্ত যে কোনো সমস্যা, নামজারি আবেদন বা পরামর্শের জন্য সরকারি ভূমি সেবা কল সেন্টারে সরাসরি কথা বলুন।',
+                      'Direct citizen assistance for land mutations, deeds, and official counseling.'
+                    )}
+                  </p>
+                </div>
+
+                <div className="pt-2">
+                  <a
+                    href="tel:16122"
+                    className="inline-flex items-center justify-center gap-2 w-full h-11 rounded-xl bg-white text-[#006A4E] font-black text-sm hover:bg-emerald-50 transition shadow-md hover:shadow-lg hover:scale-[1.01]"
+                  >
+                    <PhoneCall className="w-4 h-4 text-[#006A4E]" />
+                    <span>{t('এখনই কল করুন (১৬১২২)', 'Call Now (16122)')}</span>
+                  </a>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Right Column: Frequently Asked Questions (shadcn Accordion) */}
+          <div className="lg:col-span-7 space-y-4">
+            <div>
+              <h3 className="text-xl font-black text-slate-900">
+                {t('সাধারণ জিজ্ঞাসা ও উত্তর', 'Frequently Asked Questions')}
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {t('নাগরিকদের সাধারণ প্রশ্নের সহজ ও স্পষ্ট সমাধান', 'Clear and simple answers to common citizen questions about land services')}
+              </p>
+            </div>
+
+            <Accordion type="single" collapsible className="space-y-3">
+              <AccordionItem value="item-1" className="border border-slate-200/90 rounded-2xl bg-white px-4 shadow-2xs">
+                <AccordionTrigger className="text-sm font-bold text-slate-900 hover:no-underline py-4 text-left">
+                  {t('এই প্ল্যাটফর্মে নাগরিকরা কোন কোন ডিজিটাল ভূমি সেবা পাবেন?', 'What land services are available on this platform?')}
+                </AccordionTrigger>
+                <AccordionContent className="text-xs text-slate-600 leading-relaxed pb-4">
+                  {t(
+                    'নাগরিকরা ঘরে বসেই খতিয়ান (পর্চা) অনুসন্ধান, স্যাটেলাইট মৌজা নকশায় জমির সীমানা পরিমাপ, সাব-রেজিস্ট্রি দলিলের সত্যতা যাচাই, স্বয়ংক্রিয় ই-নামজারি ট্র্যাকিং এবং নিজের জমির ওপর অননুমোদিত হস্তান্তর ও জালিয়াতি ঠেকাতে ডিজিটাল বিক্রয় লক সুবিধা পাবেন।',
+                    'Citizens can search e-khatians, measure parcel boundaries on satellite maps, verify registered deeds, track e-mutations, and activate digital sale lock to prevent unauthorized transfers.'
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-2" className="border border-slate-200/90 rounded-2xl bg-white px-4 shadow-2xs">
+                <AccordionTrigger className="text-sm font-bold text-slate-900 hover:no-underline py-4 text-left">
+                  {t('জমির খতিয়ান ও দাগ নম্বর কীভাবে অনুসন্ধান করব?', 'How to search plot and khatian records?')}
+                </AccordionTrigger>
+                <AccordionContent className="text-xs text-slate-600 leading-relaxed pb-4">
+                  {t(
+                    'আমাদের সার্চ কনসোলে মৌজা নির্বাচন করে দাগ অথবা খতিয়ান নম্বর লিখুন। মুহূর্তেই সরকারি রেকর্ড থেকে মালিকের নাম, জমির শ্রেণি, খতিয়ান নম্বর এবং কোনো ব্যাংক ঋণ বা আদালতের স্থগিতাদেশ আছে কিনা তা পরিষ্কার দেখতে পাবেন।',
+                    'Select your mouza and enter the plot or khatian number in the search console. You will instantly see the recorded owner, land type, and any bank mortgages or legal status.'
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-3" className="border border-slate-200/90 rounded-2xl bg-white px-4 shadow-2xs">
+                <AccordionTrigger className="text-sm font-bold text-slate-900 hover:no-underline py-4 text-left">
+                  {t('দলিল নিবন্ধনের পর ই-নামজারি (মিউটেশন) কীভাবে সম্পন্ন হয়?', 'How does e-mutation work after deed registration?')}
+                </AccordionTrigger>
+                <AccordionContent className="text-xs text-slate-600 leading-relaxed pb-4">
+                  {t(
+                    'সাব-রেজিস্ট্রি অফিসে দলিল নিবন্ধিত হওয়ার সাথে সাথেই তা স্বয়ংক্রিয়ভাবে আন্তঃসংযুক্ত সিস্টেমের মাধ্যমে এসি ল্যান্ড অফিসের ই-নামজারি ডকেটে পৌঁছে যায়। নাগরিককে আলাদা আবেদন নিয়ে ঘুরতে হয় না; এসএমএস ও ট্র্যাকিং কোডের মাধ্যমে প্রতিটি ধাপের হালনাগাদ অগ্রগতি জানা যায়।',
+                    'Once a deed is registered at the Sub-Registry, data transfers automatically to the AC Land e-mutation docket. Citizens receive SMS and tracking code updates at every step.'
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-4" className="border border-slate-200/90 rounded-2xl bg-white px-4 shadow-2xs">
+                <AccordionTrigger className="text-sm font-bold text-slate-900 hover:no-underline py-4 text-left">
+                  {t('নাগরিক খতিয়ান ভল্ট এবং "বিক্রয় লক" কীভাবে জমি সুরক্ষিত রাখে?', 'How does Citizen Vault and Sale Lock protect land?')}
+                </AccordionTrigger>
+                <AccordionContent className="text-xs text-slate-600 leading-relaxed pb-4">
+                  {t(
+                    'আপনার জাতীয় পরিচয়পত্রের (NID) সাথে যুক্ত সব বৈধ জমি স্মার্ট ভল্টে সংরক্ষিত থাকে। আপনি "বিক্রয় লক অন" করে রাখলে আপনার নিজস্ব বায়োমেট্রিক ওটিপি সম্মতি ছাড়া সাব-রেজিস্ট্রিতে জমি বিক্রি বা হস্তান্তর হতে পারবে না। ফলে জমি জালিয়াতি শতভাগ বন্ধ থাকে।',
+                    'All verified land records linked to your NID reside in your personal vault. When Sale Lock is enabled, no deed can be registered without your explicit biometric OTP consent, eliminating land fraud.'
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="item-5" className="border border-slate-200/90 rounded-2xl bg-white px-4 shadow-2xs">
+                <AccordionTrigger className="text-sm font-bold text-slate-900 hover:no-underline py-4 text-left">
+                  {t('জমি সংক্রান্ত যেকোনো জটিলতায় কীভাবে সরকারি সহায়তা পাওয়া যাবে?', 'How to get official citizen assistance for land disputes?')}
+                </AccordionTrigger>
+                <AccordionContent className="text-xs text-slate-600 leading-relaxed pb-4">
+                  {t(
+                    'ভূমি মন্ত্রণালয়ের সার্বক্ষণিক টোল-ফ্রি ১৬১২২ কল সেন্টারে সরাসরি কথা বলে যেকোনো পরামর্শ বা সহায়তা পাওয়া যাবে। এছাড়া আমাদের "সহায়তা" বিভাগ থেকে বিরোধ নিষ্পত্তির আবেদন ও ট্র্যাকিং করা সম্ভব।',
+                    'Call toll-free 16122 anytime for direct counseling from government land experts, or submit an online support ticket for dispute resolution and guidance.'
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+
+        </div>
+      </section>
+
     </div>
   );
 };

@@ -26,7 +26,35 @@ final class RoleControlController
     public static function switchDemoRole(array $body): array
     {
         $role = trim((string) ($body['role'] ?? 'citizen'));
-        $user = DB::selectOne('SELECT * FROM users WHERE role = ? AND is_active = 1 ORDER BY id ASC LIMIT 1', [$role]);
+        $username = trim((string) ($body['username'] ?? ''));
+        $userId = (int) ($body['user_id'] ?? 0);
+
+        $user = null;
+        if ($userId > 0) {
+            $user = DB::selectOne('SELECT * FROM users WHERE id = ? AND is_active = 1 LIMIT 1', [$userId]);
+        }
+        if (!$user && $username !== '') {
+            $user = DB::selectOne('SELECT * FROM users WHERE username = ? AND is_active = 1 LIMIT 1', [$username]);
+        }
+        if (!$user && $role !== '') {
+            $user = DB::selectOne('SELECT * FROM users WHERE role = ? AND is_active = 1 ORDER BY id ASC LIMIT 1', [$role]);
+        }
+        if (!$user) {
+            $aliasMap = [
+                'uno' => 'uno_supervisor',
+                'adc_revenue' => 'appellate_reviewer',
+                'kanungo' => 'settlement_records_officer',
+                'settlement_officer' => 'settlement_checker',
+                'system_auditor' => 'auditor',
+                'district_registrar' => 'district_registrar',
+                'joint_sub_registrar' => 'joint_sub_registrar',
+            ];
+            $aliased = $aliasMap[$role] ?? null;
+            if ($aliased) {
+                $user = DB::selectOne('SELECT * FROM users WHERE role = ? AND is_active = 1 ORDER BY id ASC LIMIT 1', [$aliased]);
+            }
+        }
+
         if (!$user) {
             throw new \RuntimeException(json_encode([
                 'status' => 404,
@@ -70,6 +98,7 @@ final class RoleControlController
             'current_role' => $role,
             'current_permissions' => $matrix[$role]['permissions'] ?? [],
             'matrix' => $matrix,
+            'roles' => \App\Services\RbacService::ROLES,
         ];
     }
 

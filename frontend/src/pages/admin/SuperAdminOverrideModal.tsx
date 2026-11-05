@@ -13,6 +13,25 @@ import {
 } from 'lucide-react';
 import { BhumiApi } from '../../api/client';
 import { useAppUI } from '../../i18n';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface SuperAdminOverrideModalProps {
   isOpen: boolean;
@@ -103,40 +122,27 @@ export const SuperAdminOverrideModal: React.FC<SuperAdminOverrideModalProps> = (
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="super-admin-override-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn"
-    >
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xl max-w-xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 border-slate-200/90 shadow-2xl">
         {/* Header */}
-        <div className="bg-gradient-to-r from-slate-900 to-[#0A1F1C] px-6 py-4 flex items-center justify-between text-white border-b border-slate-800">
+        <DialogHeader className="bg-gradient-to-r from-slate-900 to-[#0A1F1C] px-6 py-4 flex flex-row items-center justify-between text-white border-b border-slate-800 space-y-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-400">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-400 shrink-0">
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
-              <h2 id="super-admin-override-modal-title" className="text-base font-black tracking-tight flex items-center gap-2">
+              <DialogTitle className="text-base font-black tracking-tight text-white flex items-center gap-2">
                 <span>{t('প্রশাসনিক ওভাররাইড কনসোল', 'Administrative Override Console')}</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-slate-900">
+                <Badge className="text-[10px] font-black bg-amber-400 text-slate-900 hover:bg-amber-300">
                   SUPER ADMIN
-                </span>
-              </h2>
-              <p className="text-xs text-slate-400">
+                </Badge>
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-400 mt-0.5">
                 {t('অডিট ট্রেইলে স্থায়ীভাবে নথিভুক্ত নিয়ন্ত্রিত প্রশাসনিক হস্তক্ষেপ', 'Audit-chained controlled administrative intervention')}
-              </p>
+              </DialogDescription>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t('বন্ধ করুন', 'Close')}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+        </DialogHeader>
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1 text-slate-800 text-xs">
@@ -165,30 +171,31 @@ export const SuperAdminOverrideModal: React.FC<SuperAdminOverrideModalProps> = (
           {/* Target Type & Target ID */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1">
+              <Label className="block text-[11px] font-bold text-slate-700 mb-1">
                 {t('ওভাররাইডের ক্ষেত্র (Target Type)', 'Override Target Type')} *
-              </label>
-              <select
-                value={targetType}
-                onChange={(e) => setTargetType(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white font-semibold text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
-              >
-                <option value="TRANSFER_STAGE_ADVANCE">সেবা আবেদন ধাপ অগ্রগতি (Transfer Advance)</option>
-                <option value="TICKET_ESCALATE">জরুরি সাপোর্ট টিকিট এসকেলেশন (Ticket Escalate)</option>
-                <option value="PLOT_UNFREEZE_ADMIN">প্রশাসনিক স্থগিতাদেশ অবমুক্ত (Plot Unfreeze)</option>
-                <option value="GENERAL_ADMIN_NOTE">সার্বভৌম প্রশাসনিক নোট (General Override)</option>
-              </select>
+              </Label>
+              <Select value={targetType} onValueChange={setTargetType}>
+                <SelectTrigger className="w-full text-xs font-semibold h-9">
+                  <SelectValue placeholder={t('ক্ষেত্র নির্বাচন করুন', 'Select Target Type')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TRANSFER_STAGE_ADVANCE" className="text-xs">সেবা আবেদন ধাপ অগ্রগতি (Transfer Advance)</SelectItem>
+                  <SelectItem value="TICKET_ESCALATE" className="text-xs">জরুরি সাপোর্ট টিকিট এসকেলেশন (Ticket Escalate)</SelectItem>
+                  <SelectItem value="PLOT_UNFREEZE_ADMIN" className="text-xs">প্রশাসনিক স্থগিতাদেশ অবমুক্ত (Plot Unfreeze)</SelectItem>
+                  <SelectItem value="GENERAL_ADMIN_NOTE" className="text-xs">সার্বভৌম প্রশাসনিক নোট (General Override)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1">
+              <Label className="block text-[11px] font-bold text-slate-700 mb-1">
                 {t('কেস কোড বা আইডি (Target ID)', 'Case Code / Target ID')} *
-              </label>
-              <input
+              </Label>
+              <Input
                 type="text"
                 placeholder={t('যেমন: TR-2026-000101 বা টিকিট নং', 'e.g. TR-2026-000101 or Ticket ID')}
                 value={targetId}
                 onChange={(e) => setTargetId(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 font-semibold text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+                className="h-9 text-xs font-semibold"
                 required
               />
             </div>
@@ -196,15 +203,15 @@ export const SuperAdminOverrideModal: React.FC<SuperAdminOverrideModalProps> = (
 
           {/* Reason BN (Mandatory min 15 chars) */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+            <Label className="block text-[11px] font-bold text-slate-700 mb-1">
               {t('প্রশাসনিক ওভাররাইডের সুনির্দিষ্ট কারণ (Reason BN)', 'Administrative Reason (BN)')} *
-            </label>
-            <textarea
+            </Label>
+            <Textarea
               rows={3}
               placeholder={t('ওভাররাইড কেন প্রয়োজন তা আইনগত ও পরিচালনাগত প্রেক্ষাপটসহ বিস্তারিত লিখুন (কমপক্ষে ১৫ অক্ষর)...', 'Explain why this override is necessary with operational and legal context (min 15 chars)...')}
               value={reasonBn}
               onChange={(e) => setReasonBn(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+              className="text-xs"
               required
             />
             <div className="flex justify-between items-center text-[10px] text-slate-400 mt-0.5">
@@ -215,15 +222,15 @@ export const SuperAdminOverrideModal: React.FC<SuperAdminOverrideModalProps> = (
 
           {/* Evidence Reference (Mandatory min 5 chars) */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+            <Label className="block text-[11px] font-bold text-slate-700 mb-1">
               {t('সংশ্লিষ্ট নথি / সরকারি স্মারক নম্বর (Evidence Reference)', 'Official Order / Evidence Reference')} *
-            </label>
-            <input
+            </Label>
+            <Input
               type="text"
               placeholder={t('যেমন: স্মারক নং-ভুমিসেবা/প্রশাসন/২০২৬-০৮৯ বা আদালতের আদেশ নং', 'e.g. Order Memo No. / Court Decree Ref')}
               value={evidenceRef}
               onChange={(e) => setEvidenceRef(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+              className="h-9 text-xs"
               required
             />
           </div>
@@ -234,9 +241,9 @@ export const SuperAdminOverrideModal: React.FC<SuperAdminOverrideModalProps> = (
               {t('অ্যাক্টর পরিচয় (Actor Identity):', 'Actor Identity:')}{' '}
               <span className="font-bold text-slate-900">@{user?.username || 'admin'}</span> ({user?.role || 'system_admin'})
             </span>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-[#006A4E] text-[10px] font-extrabold">
+            <Badge className="bg-emerald-100 text-[#006A4E] text-[10px] font-extrabold hover:bg-emerald-200">
               Ed25519 CHAINED
-            </span>
+            </Badge>
           </div>
 
           {/* Confirmation Checkbox */}
@@ -257,21 +264,22 @@ export const SuperAdminOverrideModal: React.FC<SuperAdminOverrideModalProps> = (
 
           {/* Action Buttons */}
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold transition cursor-pointer"
+              className="text-xs font-bold"
             >
               {t('বাতিল', 'Cancel')}
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={loading || !confirmed}
-              className={`px-5 py-2 rounded-lg font-bold text-white transition flex items-center gap-1.5 cursor-pointer shadow-xs ${
+              className={`text-xs font-bold text-white transition flex items-center gap-1.5 shadow-xs ${
                 confirmed && !loading
                   ? 'bg-rose-700 hover:bg-rose-800'
-                  : 'bg-slate-400 cursor-not-allowed'
+                  : 'bg-slate-400 opacity-60'
               }`}
             >
               {loading ? (
@@ -282,10 +290,10 @@ export const SuperAdminOverrideModal: React.FC<SuperAdminOverrideModalProps> = (
                   <span>{t('ওভাররাইড কার্যকর করুন', 'Execute Override')}</span>
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

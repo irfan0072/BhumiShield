@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppUI } from '../i18n';
 import { BhumiApi } from '../api/client';
+import { toBanglaDigits } from '../theme/tokens';
 import {
   BookOpen,
   Search,
@@ -12,7 +13,8 @@ import {
   Calendar,
   ChevronRight,
   ShieldCheck,
-  CheckCircle,
+  CheckCircle2,
+  AlertCircle,
   HelpCircle,
   X,
   Volume2,
@@ -22,8 +24,26 @@ import {
   Sparkles,
   Scale,
   ArrowRight,
-  FileText
+  FileText,
+  RotateCcw,
+  SlidersHorizontal,
+  Check
 } from 'lucide-react';
+import { useBlogPosts } from '../components/publicHooks';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 interface BlogPost {
   id: number;
@@ -42,26 +62,20 @@ interface BlogPost {
   published_at: string;
 }
 
-interface Category {
-  id: number;
-  slug: string;
-  name_bn: string;
-  name_en: string;
-}
-
 export const EducationalBlogPage: React.FC = () => {
-  const { t, lang, formatDate, formatNumber } = useAppUI();
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const { t, lang, formatDate } = useAppUI();
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Reader Modal
+  // TanStack Query for Dynamic Blog Posts
+  const blogQuery = useBlogPosts(selectedCategory);
+
+  // Reader Modal State
   const [activePost, setActivePost] = useState<BlogPost | null>(null);
   const [hasVotedHelpful, setHasVotedHelpful] = useState<Record<number, boolean>>({});
+  const [readerFontSize, setReaderFontSize] = useState<'normal' | 'large' | 'huge'>('normal');
 
-  // Interactive Guides State: 'mutation' | 'faraiz'
+  // Interactive Guides Tabs: 'mutation' | 'faraiz'
   const [activeGuideTab, setActiveGuideTab] = useState<'mutation' | 'faraiz'>('mutation');
   const [activeMutationStep, setActiveMutationStep] = useState(1);
 
@@ -99,293 +113,223 @@ export const EducationalBlogPage: React.FC = () => {
     utterance.lang = lang === 'bn' ? 'bn-BD' : 'en-US';
     utterance.rate = 0.95;
 
-    utterance.onend = () => setPlayingAudioId(null);
-    utterance.onerror = () => setPlayingAudioId(null);
+    utterance.onend = () => {
+      setPlayingAudioId(null);
+    };
+
+    utterance.onerror = () => {
+      setPlayingAudioId(null);
+    };
 
     setPlayingAudioId(id);
     window.speechSynthesis.speak(utterance);
   };
 
-  const fetchBlog = () => {
-    setLoading(true);
-    const params: any = {};
-    if (selectedCategory) params.category = selectedCategory;
-    if (searchQuery) params.q = searchQuery;
-
-    BhumiApi.listBlogPosts(params)
-      .then((res) => {
-        setPosts(res.items || []);
-        if (res.categories && res.categories.length > 0) {
-          setCategories(res.categories);
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to load blog posts', err);
-      })
-      .finally(() => setLoading(false));
+  const handleHelpfulClick = async (post: BlogPost) => {
+    if (hasVotedHelpful[post.id]) return;
+    try {
+      await BhumiApi.markBlogPostHelpful(post.id);
+      setHasVotedHelpful((prev) => ({ ...prev, [post.id]: true }));
+      post.helpful_count = (post.helpful_count || 0) + 1;
+    } catch {
+      // Optimistic update fallback
+      setHasVotedHelpful((prev) => ({ ...prev, [post.id]: true }));
+      post.helpful_count = (post.helpful_count || 0) + 1;
+    }
   };
 
-  useEffect(() => {
-    fetchBlog();
-  }, [selectedCategory]);
+  // Faraiz Islamic Inheritance Calculations
+  const calculateFaraiz = () => {
+    const total = Number(faraizTotalLand) || 100;
+    const wivesCount = Number(faraizWives) || 0;
+    const sonsCount = Number(faraizSons) || 0;
+    const daughtersCount = Number(faraizDaughters) || 0;
 
-  useEffect(() => {
-    if (!activePost) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setActivePost(null);
-      }
+    // Has children? Wife/Wives get 1/8 (12.5%) total. If no children, 1/4 (25%).
+    const hasChildren = sonsCount > 0 || daughtersCount > 0;
+    const wivesTotalShareFraction = hasChildren ? 0.125 : 0.25;
+    const wivesTotalLand = wivesCount > 0 ? total * wivesTotalShareFraction : 0;
+    const eachWifeLand = wivesCount > 0 ? wivesTotalLand / wivesCount : 0;
+
+    const remainingForChildren = total - wivesTotalLand;
+    const totalChildUnits = sonsCount * 2 + daughtersCount * 1;
+
+    let eachSonLand = 0;
+    let eachDaughterLand = 0;
+
+    if (totalChildUnits > 0) {
+      const unitValue = remainingForChildren / totalChildUnits;
+      eachSonLand = unitValue * 2;
+      eachDaughterLand = unitValue * 1;
+    }
+
+    return {
+      wivesTotalLand: Number(wivesTotalLand.toFixed(2)),
+      eachWifeLand: Number(eachWifeLand.toFixed(2)),
+      eachSonLand: Number(eachSonLand.toFixed(2)),
+      eachDaughterLand: Number(eachDaughterLand.toFixed(2)),
+      totalSonsLand: Number((eachSonLand * sonsCount).toFixed(2)),
+      totalDaughtersLand: Number((eachDaughterLand * daughtersCount).toFixed(2)),
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activePost]);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchBlog();
   };
 
-  const handleHelpfulClick = (postId: number, slug: string) => {
-    if (hasVotedHelpful[postId]) return;
+  const faraizResults = calculateFaraiz();
 
-    BhumiApi.markBlogPostHelpful(slug || postId)
-      .then((res) => {
-        setHasVotedHelpful((prev) => ({ ...prev, [postId]: true }));
-        setPosts((prev) =>
-          prev.map((p) => (p.id === postId ? { ...p, helpful_count: res.helpful_count } : p))
-        );
-        if (activePost && activePost.id === postId) {
-          setActivePost({ ...activePost, helpful_count: res.helpful_count });
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to mark helpful', err);
-      });
-  };
+  const rawPosts: BlogPost[] = blogQuery.data?.items || [];
+  const filteredPosts = rawPosts.filter((p) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.trim().toLowerCase();
+    return (
+      (p.title_bn || '').toLowerCase().includes(q) ||
+      (p.title_en || '').toLowerCase().includes(q) ||
+      (p.body_bn || '').toLowerCase().includes(q)
+    );
+  });
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Banner */}
-        <div className="bg-[#006A4E] text-white rounded-2xl p-6 sm:p-8 shadow-sm space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-800/60 border border-emerald-600/40 text-emerald-100 text-xs font-semibold">
-            <BookOpen className="w-4 h-4 text-emerald-300" />
-            <span>{t('নাগরিক ভূমি সাক্ষরতা ও জ্ঞানকোষ', 'Citizen Land Literacy & Guide')}</span>
+    <div className="min-h-screen bg-[#FAFAFA] text-slate-900 pb-24 relative overflow-hidden">
+      {/* Ambient background glow & subtle dot pattern */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[450px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl -z-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] opacity-40 -z-10 pointer-events-none" />
+
+      {/* Top Banner Header (Linear / Vercel Bento-Grid Style) */}
+      <section className="pt-8 sm:pt-12 pb-8 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+        <div className="space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 shadow-xs text-xs font-semibold text-[#006A4E]">
+            <BookOpen className="w-4 h-4 text-[#006A4E]" />
+            <span>{t('ভূমি শিক্ষা ও সচেতনতা', 'Land Literacy & Guides')}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            {t('ভূমি অধিকার, আইন ও সুরক্ষা সহায়িকা', 'Land Rights, Legal Rules & Protection Guide')}
+
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-snug">
+            {t('ভূমি সহায়িকা ও ব্লগ', 'Land Guide & Blog')}
           </h1>
-          <p className="text-emerald-100 text-sm sm:text-base max-w-3xl leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed">
             {t(
-              'জমি ক্রয়-বিক্রয়ের সতর্কতা, খতিয়ানের ইতিহাস মেলানো, ফারায়েজ অনুযায়ী ওয়ারিশি নামজারি এবং ব্যাংকের ডিজিটাল এনওসি সংক্রান্ত আইনি বিশ্লেষণ ও দিকনির্দেশনা। সাধারণ নাগরিককে প্রতারণামুক্ত রাখার সহজ পথপ্রদর্শক।',
-              'Practical guides, fraud prevention checklists, inheritance calculation steps, and survey lineage breakdown written by land officers and legal experts for everyday citizens.'
+              'ভূমি আইন, ই-নামজারি ও ফারায়েজ সংক্রান্ত প্রয়োজনীয় তথ্য ও সহায়িকা।',
+              'Plain-language legal guidelines, inheritance calculation, and e-mutation guidance.'
             )}
           </p>
         </div>
+      </section>
 
-        {/* Interactive Citizen Guides: E-Mutation Process & Faraiz Inheritance */}
-        <div className="panel p-6 space-y-5 bg-white border border-slate-200 shadow-sm rounded-2xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-            <div>
-              <h2 className="text-lg font-black text-[#074f38] flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-[#006A4E]" />
-                <span>{t('ইন্টারেক্টিভ নির্দেশিকা ও সিমুলেটর', 'Interactive Guides & Simulators')}</span>
+      {/* Main Container */}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-2 space-y-8">
+        {/* INTERACTIVE TOOLS SECTION */}
+        <Card className="bg-white rounded-3xl border border-slate-200/90 shadow-xl overflow-hidden p-6 sm:p-8 space-y-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+            <div className="space-y-1">
+              <Badge className="bg-emerald-100 text-[#006A4E] border-emerald-300 font-bold">
+                {t('সহায়ক টুলস', 'Citizen Tools')}
+              </Badge>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900">
+                {activeGuideTab === 'mutation'
+                  ? t('ই-নামজারি নির্দেশিকা', 'e-Mutation Guide')
+                  : t('ফারায়েজ সম্পত্তি বণ্টন সিমুলেটর', 'Faraiz Inheritance Share Simulator')}
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {t('আইনি জটিলতা দূর করে নাগরিকদের জন্য সহজ বোধগম্য নির্দেশিকা', 'Plain-language legal workflows & calculators for citizens')}
-              </p>
             </div>
 
-            {/* Guide Switcher Tabs */}
-            <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl">
-              <button
-                type="button"
-                onClick={() => setActiveGuideTab('mutation')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  activeGuideTab === 'mutation'
-                    ? 'bg-white text-[#006A4E] shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                🏛️ {t('ই-নামজারি প্রক্রিয়া ফ্লো', 'E-Mutation Flow')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveGuideTab('faraiz')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  activeGuideTab === 'faraiz'
-                    ? 'bg-white text-[#006A4E] shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                ⚖️ {t('ফারায়েজ বণ্টন ক্যালকুলেটর', 'Faraiz Simulator')}
-              </button>
-            </div>
+            <Tabs
+              value={activeGuideTab}
+              onValueChange={(val) => setActiveGuideTab(val as 'mutation' | 'faraiz')}
+              className="w-auto"
+            >
+              <TabsList className="bg-slate-100 p-1 rounded-xl border border-slate-200">
+                <TabsTrigger
+                  value="mutation"
+                  className="text-xs font-bold px-3 py-1.5 rounded-lg data-[state=active]:bg-[#006A4E] data-[state=active]:text-white transition cursor-pointer"
+                >
+                  {t('ই-নামজারি', 'e-Mutation')}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="faraiz"
+                  className="text-xs font-bold px-3 py-1.5 rounded-lg data-[state=active]:bg-[#006A4E] data-[state=active]:text-white transition cursor-pointer"
+                >
+                  {t('ফারায়েজ', 'Faraiz')}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
 
-          {/* TAB 1: E-Mutation Workflow Stepper */}
+          {/* TAB 1: e-Mutation 4-Step Interactive Guide */}
           {activeGuideTab === 'mutation' && (
-            <div className="space-y-5 animate-rise">
-              {/* Stepper Pills */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {[
-                  { step: 1, title: '১. আবেদন', sub: 'দিন ১' },
-                  { step: 2, title: '২. প্রতিবেদন', sub: 'দিন ২-৭' },
-                  { step: 3, title: '৩. সার্ভেয়ার', sub: 'দিন ৮-১২' },
-                  { step: 4, title: '৪. শুনানি', sub: 'দিন ১৩-১৮' },
-                  { step: 5, title: '৫. ডিসিআর ফি', sub: 'দিন ১৯-২১' },
-                  { step: 6, title: '৬. খতিয়ান জারি', sub: 'দিন ২২-২৮' },
-                ].map((s) => (
-                  <button
-                    key={s.step}
+                  { step: 1, title: '১. অনলাইন আবেদন', sub: 'দলিল ও খতিয়ান দাখিল' },
+                  { step: 2, title: '২. সহকারী কমিশনার (ভূমি)', sub: 'আবেদন যাচাই ও প্রস্তাব' },
+                  { step: 3, title: '৩. শুনানি ও নোটিশ', sub: 'অনলাইনে আপত্তি দাখিল' },
+                  { step: 4, title: '৪. ডিসিআর ও নতুন খতিয়ান', sub: 'সরকারি ফি ও পর্চা' },
+                ].map((item) => (
+                  <Button
+                    key={item.step}
                     type="button"
-                    onClick={() => setActiveMutationStep(s.step)}
-                    className={`p-2.5 rounded-xl text-left border transition-all cursor-pointer ${
-                      activeMutationStep === s.step
-                        ? 'bg-[#006A4E] text-white border-[#006A4E] shadow-sm'
-                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                    variant="outline"
+                    onClick={() => setActiveMutationStep(item.step)}
+                    className={`h-auto p-3 rounded-xl border-2 text-left justify-start transition cursor-pointer flex-col items-start space-y-1 ${
+                      activeMutationStep === item.step
+                        ? 'bg-emerald-50/80 border-[#006A4E] shadow-xs hover:bg-emerald-100/80'
+                        : 'bg-white border-slate-200 hover:border-emerald-300'
                     }`}
                   >
-                    <span className="text-xs font-bold block">{s.title}</span>
-                    <span className={`text-[10px] block ${activeMutationStep === s.step ? 'text-emerald-100' : 'text-slate-500'}`}>
-                      {s.sub}
-                    </span>
-                  </button>
+                    <div className="text-xs font-black text-[#006A4E]">{item.title}</div>
+                    <div className="text-[11px] text-slate-500 font-medium whitespace-normal">{item.sub}</div>
+                  </Button>
                 ))}
               </div>
 
-              {/* Step Detail Card */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/50 border border-emerald-200 text-xs sm:text-sm text-slate-800 space-y-3">
+              {/* Step Details Box */}
+              <div className="p-5 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-3">
                 {activeMutationStep === 1 && (
-                  <>
-                    <h3 className="font-extrabold text-[#006A4E] text-sm sm:text-base">
-                      {t('ধাপ ১: অনলাইনে নামজারি আবেদন দাখিল', 'Step 1: Online Application Submission')}
+                  <div className="space-y-2">
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      {t('ধাপ ১: অনলাইনে নামজারি আবেদন পেশ', 'Step 1: Filing e-Mutation Application Online')}
                     </h3>
-                    <p className="text-slate-600 leading-relaxed">
+                    <p className="text-xs text-slate-600 leading-relaxed">
                       {t(
-                        'নাগরিক তার রেজিস্ট্রিকৃত সাফ-কবলা দলিল বা ওয়ারিশ সনদ, পূর্ববর্তী খতিয়ান ও এনআইডি কপি নিয়ে mutation.gov.bd পোর্টালে অথবা ইউনিয়ন ডিজিটাল সেন্টারে আবেদন করবেন। আবেদনের সাথে সরকারি কোর্ট ফি ২০ টাকা ও নোটিশ জারি ফি ৫০ টাকা (মোট ৭০ টাকা) মোবাইল ব্যাংকিংয়ে জমা দিতে হয়।',
-                        'Submit deed copy, khatian lineage, and NID at mutation.gov.bd. Initial statutory filing fee is BDT 70 paid via MFS.'
+                        'দলিল রেজিস্ট্রির পর সাব-রেজিস্ট্রার কর্তৃক প্রেরিত অটোমেশন থেকে অথবা নাগরিক নিজে নামজারি আবেদন করতে পারেন। প্রয়োজনীয় কাগজপত্র: মূল দলিলের কপি, পূর্ববর্তী খতিয়ানের অনুলিপি এবং জাতীয় পরিচয়পত্র। আবেদনের সরকারি ফি ২০ টাকা।',
+                        'Submit deed copy, prior khatian, and NID. Official application fee is 20 BDT.'
                       )}
                     </p>
-                    <div className="flex flex-wrap gap-2 text-xs pt-1">
-                      <span className="chip bg-white border border-emerald-200 font-semibold text-[#006A4E]">
-                        ✓ {t('প্রয়োজনীয়: মূল দলিল, পূর্ববর্তী খতিয়ান, NID', 'Docs: Deed, Khatian, NID')}
-                      </span>
-                      <span className="chip bg-white border border-emerald-200 font-semibold text-slate-700">
-                        ⏱ {t('সময়সীমা: তাৎক্ষণিক ট্র্যাকিং ট্র্যাকিং নম্বর প্রদান', 'Timeline: Instant Tracking ID')}
-                      </span>
-                    </div>
-                  </>
+                  </div>
                 )}
-
                 {activeMutationStep === 2 && (
-                  <>
-                    <h3 className="font-extrabold text-[#006A4E] text-sm sm:text-base">
-                      {t('ধাপ ২: ইউনিয়ন ভূমি উপ-সহকারীর সরেজমিন তদন্ত', 'Step 2: Union Land Assistant Officer (ULAO) Verification')}
+                  <div className="space-y-2">
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      {t('ধাপ ২: সহকারী কমিশনার (ভূমি) কর্তৃক যাচাই ও প্রস্তাব', 'Step 2: Land Office Scrutiny & Field Report')}
                     </h3>
-                    <p className="text-slate-600 leading-relaxed">
+                    <p className="text-xs text-slate-600 leading-relaxed">
                       {t(
-                        'সংশ্লিষ্ট ইউনিয়ন ভূমি সহকারী কর্মকর্তা সরেজমিনে গিয়ে এবং ইউনিয়ন রেজিস্টার-২ পরীক্ষা করে জমির দখলদারিত্ব ও সর্বশেষ ভূ-রাজস্ব পরিশোধের সত্যতা যাচাই করবেন এবং অনলাইন পোর্টালে প্রতিবেদন পাঠাবেন।',
-                        'The local land assistant inspects physical possession, checks Register-2 records, and uploads a statutory verification report.'
+                        'ইউনিয়ন ভূমি সহকারী কর্মকর্তা (নায়েব) সরেজমিনে দখল ও রেকর্ড যাচাই করে প্রতিবেদন প্রদান করেন। জমিতে কোনো সরকারি খাস জমি বা লিয়েন আছে কি না তা সিস্টেমে নিশ্চিত করা হয়।',
+                        'Union Land Assistant Officer conducts field inquiry to verify physical possession and boundaries.'
                       )}
                     </p>
-                    <div className="flex flex-wrap gap-2 text-xs pt-1">
-                      <span className="chip bg-white border border-emerald-200 font-semibold text-[#006A4E]">
-                        ✓ {t('প্রয়োজনীয়: সরেজমিন দখল ও দাখিলা রেকর্ড', 'Verification: Physical possession & tax dakhila')}
-                      </span>
-                      <span className="chip bg-white border border-emerald-200 font-semibold text-slate-700">
-                        ⏱ {t('সময়সীমা: সর্বোচ্চ ৭ কার্যদিবস', 'Timeline: Max 7 working days')}
-                      </span>
-                    </div>
-                  </>
+                  </div>
                 )}
-
                 {activeMutationStep === 3 && (
-                  <>
-                    <h3 className="font-extrabold text-[#006A4E] text-sm sm:text-base">
-                      {t('ধাপ ৩: সার্ভেয়ার সীমানা প্রতিবেদন (প্রযোজ্য ক্ষেত্রে)', 'Step 3: Surveyor Demarcation & Area Report')}
+                  <div className="space-y-2">
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      {t('ধাপ ৩: শুনানি ও পক্ষগণের নোটিশ জারি', 'Step 3: Hearing & Notice Issuance')}
                     </h3>
-                    <p className="text-slate-600 leading-relaxed">
+                    <p className="text-xs text-slate-600 leading-relaxed">
                       {t(
-                        'জমির দাগ বা অংশে কোনো সীমানা বিরোধ বা অতিরিক্ত জমার দাবি থাকলে সার্ভেয়ার নকশা পরিমাপ করে দাগের অবশিষ্টাংশের সঠিকতা নির্ণয় করেন।',
-                        'In cases of boundary ambiguity or plot sub-division, surveyor generates cadastral demarcation report.'
+                        'অন্যান্য ওয়ারিশ বা সংশ্লিষ্ট পক্ষগণের প্রতি নোটিশ জারি করা হয় (নোটিশ ফি ৫০ টাকা)। শুনানির নির্ধারিত দিনে সহকারী কমিশনার (ভূমি) উভয় পক্ষের বক্তব্য ও কাগজপত্র পর্যালোচনা করেন।',
+                        'Notices issued to co-sharers (Fee: 50 BDT). AC Land presides over judicial hearing.'
                       )}
                     </p>
-                    <div className="flex flex-wrap gap-2 text-xs pt-1">
-                      <span className="chip bg-white border border-emerald-200 font-semibold text-[#006A4E]">
-                        ✓ {t('যাচাই: মৌজা নকশা ও দাগের সীমানা', 'Audit: Cadastral Map Plot Demarcation')}
-                      </span>
-                      <span className="chip bg-white border border-emerald-200 font-semibold text-slate-700">
-                        ⏱ {t('সময়সীমা: ৪-৫ কার্যদিবস', 'Timeline: 4-5 working days')}
-                      </span>
-                    </div>
-                  </>
+                  </div>
                 )}
-
                 {activeMutationStep === 4 && (
-                  <>
-                    <h3 className="font-extrabold text-[#006A4E] text-sm sm:text-base">
-                      {t('ধাপ ৪: এসি ল্যান্ড শুনানি ও আপত্তি নিষ্পত্তি', 'Step 4: AC Land Hearing & Objection Resolution')}
+                  <div className="space-y-2">
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      {t('ধাপ ৪: চূড়ান্ত নামজারি অনুমোদন, ডিসিআর ও খতিয়ান সংগ্রহ', 'Step 4: Approval, DCR & BS Khatian')}
                     </h3>
-                    <p className="text-slate-600 leading-relaxed">
+                    <p className="text-xs text-slate-600 leading-relaxed">
                       {t(
-                        'সহকারী কমিশনার (ভূমি) পক্ষগণকে শুনানিতে ডাকেন। কোনো পক্ষ থেকে আপত্তি থাকলে তা লিখিতভাবে গ্রহণ ও নিষ্পত্তি করা হয়। কোনো বিরোধ না থাকলে নামজারি অনুমোদন আদেশ জারি হয়।',
-                        'AC Land conducts a formal hearing. If no legitimate adverse claim exists, mutation approval order is issued.'
+                        'সহকারী কমিশনার (ভূমি) নামজারি অনুমোদন দিলে রেকর্ড সংশোধন ফি (১,০০০ টাকা) ও খতিয়ান সরবরাহ ফি (১০০ টাকা) পরিশোধের পর Form No. 1077 ডিসিআর ও কিউআর সিলযুক্ত আধুনিক বিএস খতিয়ান ডাউনলোড করা যায়। সর্বমোট সরকারি খরচ ১,১৭০ টাকা।',
+                        'Upon approval, pay 1,100 BDT to collect Form 1077 DCR and new Khatian. Total statutory cost is exactly 1,170 BDT.'
                       )}
                     </p>
-                    <div className="flex flex-wrap gap-2 text-xs pt-1">
-                      <span className="chip bg-white border border-emerald-200 font-semibold text-[#006A4E]">
-                        ✓ {t('প্রয়োজনীয়: মূল দলিলের কপি ও এনআইডি', 'Bring: Original deed & photo ID')}
-                      </span>
-                      <span className="chip bg-white border border-emerald-200 font-semibold text-slate-700">
-                        ⏱ {t('সময়সীমা: ৫-৬ কার্যদিবস', 'Timeline: 5-6 working days')}
-                      </span>
-                    </div>
-                  </>
-                )}
-
-                {activeMutationStep === 5 && (
-                  <>
-                    <h3 className="font-extrabold text-[#006A4E] text-sm sm:text-base">
-                      {t('ধাপ ৫: সরকারি ডিসিআর ও খতিয়ান ফি প্রদান', 'Step 5: DCR & Khatian Statutory Fee Payment')}
-                    </h3>
-                    <p className="text-slate-600 leading-relaxed">
-                      {t(
-                        'অনুমোদনের পর নাগরিকের মোবাইলে এসএমএস যাবে। সরকারি ডিসিআর ফি ১,০০০ টাকা ও খতিয়ান ফি ১০০ টাকা (সর্বমোট ১,১০০ টাকা + ভ্যাট/চার্জ = ১,১৭০ টাকা) মোবাইল ব্যাংকিংয়ে পরিশোধ করতে হয়। কোনো অতিরিক্ত টাকা কাউকে দিতে হয় না।',
-                        'Citizen pays official DCR fee (BDT 1,000) and khatian issuance fee (BDT 100) via MFS. Total fixed cost BDT 1,170.'
-                      )}
-                    </p>
-                    <div className="flex flex-wrap gap-2 text-xs pt-1">
-                      <span className="chip bg-emerald-100 text-emerald-900 font-bold border border-emerald-300">
-                        💰 {t('নির্দিষ্ট সরকারি ফি: ১,১৭০ টাকা', 'Statutory Fee: BDT 1,170 only')}
-                      </span>
-                      <span className="chip bg-white border border-emerald-200 font-semibold text-slate-700">
-                        ⏱ {t('সময়সীমা: এসএমএস পাওয়ার ২ দিনের মধ্যে', 'Timeline: Within 2 days of SMS')}
-                      </span>
-                    </div>
-                  </>
-                )}
-
-                {activeMutationStep === 6 && (
-                  <>
-                    <h3 className="font-extrabold text-[#006A4E] text-sm sm:text-base">
-                      {t('ধাপ ৬: অনুমোদিত ডিজিটাল কিউআর খতিয়ান ও ডিসিআর ডাউনলোড', 'Step 6: QR-Verified Digital Khatian & DCR Issuance')}
-                    </h3>
-                    <p className="text-slate-600 leading-relaxed">
-                      {t(
-                        'ফি পরিশোধের সাথে সাথে সিস্টেম স্বয়ংক্রিয়ভাবে বারকোড ও কিউআর সিলমোহরযুক্ত অনুমোদিত ই-নামজারি খতিয়ান তৈরি করে। নাগরিক ঘরে বসেই প্রিন্ট করে সরকারি সব কাজে ব্যবহার করতে পারবেন।',
-                        'QR-verified digital khatian is immediately available for download and valid for all legal and banking purposes.'
-                      )}
-                    </p>
-                    <div className="flex flex-wrap gap-2 text-xs pt-1">
-                      <span className="chip bg-emerald-100 text-emerald-900 font-bold border border-emerald-300">
-                        🛡️ {t('অনলাইন যাচাইযোগ্য কিউআর কোড সিলমোহর', 'Online QR Code Verifiable')}
-                      </span>
-                      <span className="chip bg-white border border-emerald-200 font-semibold text-slate-700">
-                        ⏱ {t('সর্বমোট সময়সীমা: ২৮ কার্যদিবসের মধ্যে সম্পন্ন', 'Total SLA: Completed within 28 working days')}
-                      </span>
-                    </div>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
@@ -393,395 +337,376 @@ export const EducationalBlogPage: React.FC = () => {
 
           {/* TAB 2: Faraiz Inheritance Simulator */}
           {activeGuideTab === 'faraiz' && (
-            <div className="space-y-5 animate-rise">
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    {t('মোট উত্তরাধিকার জমি (শতক):', 'Total Land Area (Decimals):')}
-                  </label>
-                  <input
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">{t('মোট জমি (শতক)', 'Total Land (Decimals)')}</label>
+                  <Input
                     type="number"
-                    min="1"
                     value={faraizTotalLand}
-                    onChange={(e) => setFaraizTotalLand(Math.max(1, Number(e.target.value) || 0))}
-                    className="w-full px-3 py-1.5 text-sm font-bold font-mono border border-slate-300 rounded-lg outline-none bg-white focus:ring-2 focus:ring-[#006A4E]"
+                    onChange={(e) => setFaraizTotalLand(Number(e.target.value) || 0)}
+                    className="h-10 text-sm font-bold border-slate-300 font-mono"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    {t('স্ত্রী সংখ্যা:', 'Number of Wives:')}
-                  </label>
-                  <input
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">{t('স্ত্রী সংখ্যা', 'Number of Wives')}</label>
+                  <Input
                     type="number"
                     min="0"
                     max="4"
                     value={faraizWives}
-                    onChange={(e) => setFaraizWives(Math.max(0, Number(e.target.value) || 0))}
-                    className="w-full px-3 py-1.5 text-sm font-bold font-mono border border-slate-300 rounded-lg outline-none bg-white focus:ring-2 focus:ring-[#006A4E]"
+                    onChange={(e) => setFaraizWives(Number(e.target.value) || 0)}
+                    className="h-10 text-sm font-bold border-slate-300 font-mono"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    {t('পুত্র সন্তান সংখ্যা:', 'Number of Sons:')}
-                  </label>
-                  <input
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">{t('পুত্র সংখ্যা', 'Number of Sons')}</label>
+                  <Input
                     type="number"
                     min="0"
                     value={faraizSons}
-                    onChange={(e) => setFaraizSons(Math.max(0, Number(e.target.value) || 0))}
-                    className="w-full px-3 py-1.5 text-sm font-bold font-mono border border-slate-300 rounded-lg outline-none bg-white focus:ring-2 focus:ring-[#006A4E]"
+                    onChange={(e) => setFaraizSons(Number(e.target.value) || 0)}
+                    className="h-10 text-sm font-bold border-slate-300 font-mono"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    {t('কন্যা সন্তান সংখ্যা:', 'Number of Daughters:')}
-                  </label>
-                  <input
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-700">{t('কন্যা সংখ্যা', 'Number of Daughters')}</label>
+                  <Input
                     type="number"
                     min="0"
                     value={faraizDaughters}
-                    onChange={(e) => setFaraizDaughters(Math.max(0, Number(e.target.value) || 0))}
-                    className="w-full px-3 py-1.5 text-sm font-bold font-mono border border-slate-300 rounded-lg outline-none bg-white focus:ring-2 focus:ring-[#006A4E]"
+                    onChange={(e) => setFaraizDaughters(Number(e.target.value) || 0)}
+                    className="h-10 text-sm font-bold border-slate-300 font-mono"
                   />
                 </div>
               </div>
 
-              {/* Instant Calculated Distribution */}
-              {(() => {
-                const hasChildren = faraizSons > 0 || faraizDaughters > 0;
-                const wifeFraction = hasChildren ? 0.125 : 0.25;
-                const totalWifeLand = faraizWives > 0 ? faraizTotalLand * wifeFraction : 0;
-                const perWifeLand = faraizWives > 0 ? totalWifeLand / faraizWives : 0;
-
-                const remainingLand = faraizTotalLand - totalWifeLand;
-                const totalChildWeights = (faraizSons * 2) + faraizDaughters;
-                const perSonLand = totalChildWeights > 0 && faraizSons > 0 ? (remainingLand / totalChildWeights) * 2 : 0;
-                const perDaughterLand = totalChildWeights > 0 && faraizDaughters > 0 ? (remainingLand / totalChildWeights) * 1 : 0;
-
-                return (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {/* Wives Card */}
-                    <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/60 space-y-1">
-                      <div className="flex items-center justify-between text-xs font-extrabold text-[#006A4E]">
-                        <span>{t('স্ত্রীগণের অংশ', 'Wife Share')}</span>
-                        <span>{hasChildren ? '১/৮ (১২.৫%)' : '১/৪ (২৫%)'}</span>
-                      </div>
-                      <div className="text-xl font-extrabold text-slate-900">
-                        {totalWifeLand.toFixed(2)} {t('শতক', 'Dec')}
-                      </div>
-                      <p className="text-[11px] text-slate-600">
-                        {faraizWives > 0
-                          ? `${t('প্রত্যেকে পাবেন:', 'Per wife:')} ${perWifeLand.toFixed(2)} ${t('শতক', 'Dec')}`
-                          : t('কোনো অংশীদার নেই', 'No heirs in this category')}
-                      </p>
-                    </div>
-
-                    {/* Sons Card */}
-                    <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/60 space-y-1">
-                      <div className="flex items-center justify-between text-xs font-extrabold text-blue-900">
-                        <span>{t('পুত্রগণের অংশ (আসাবা)', 'Sons (Residuary)')}</span>
-                        <span>{t('কন্যার দ্বিগুণ (২:১)', '2x Daughter')}</span>
-                      </div>
-                      <div className="text-xl font-extrabold text-slate-900">
-                        {(perSonLand * faraizSons).toFixed(2)} {t('শতক', 'Dec')}
-                      </div>
-                      <p className="text-[11px] text-slate-600">
-                        {faraizSons > 0
-                          ? `${t('প্রতি পুত্র পাবেন:', 'Per son:')} ${perSonLand.toFixed(2)} ${t('শতক', 'Dec')}`
-                          : t('কোনো পুত্র সন্তান নেই', 'No sons')}
-                      </p>
-                    </div>
-
-                    {/* Daughters Card */}
-                    <div className="p-4 rounded-xl border border-teal-200 bg-teal-50/50 space-y-1">
-                      <div className="flex items-center justify-between text-xs font-extrabold text-teal-900">
-                        <span>{t('কন্যাগণের অংশ', 'Daughters Share')}</span>
-                        <span>{t('১ অংশ (১:২)', '1x Share')}</span>
-                      </div>
-                      <div className="text-xl font-extrabold text-slate-900">
-                        {(perDaughterLand * faraizDaughters).toFixed(2)} {t('শতক', 'Dec')}
-                      </div>
-                      <p className="text-[11px] text-slate-600">
-                        {faraizDaughters > 0
-                          ? `${t('প্রতি কন্যা পাবেন:', 'Per daughter:')} ${perDaughterLand.toFixed(2)} ${t('শতক', 'Dec')}`
-                          : t('কোনো কন্যা সন্তান নেই', 'No daughters')}
-                      </p>
-                    </div>
+              {/* Faraiz Distribution Outcome Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-4 rounded-xl bg-purple-50 border border-purple-200 space-y-1">
+                  <span className="text-xs font-semibold text-purple-900 block">{t('স্ত্রীর মোট অংশ (১/৮)', 'Wife/Wives Share (1/8)')}</span>
+                  <div className="text-xl font-black text-purple-900 font-mono">
+                    {toBanglaDigits(faraizResults.wivesTotalLand)} {t('শতক', 'Dec')}
                   </div>
-                );
-              })()}
+                  <span className="text-[11px] text-purple-700">
+                    {faraizWives > 1 ? `${toBanglaDigits(faraizResults.eachWifeLand)} শতক প্রতি স্ত্রী` : 'সম্পূর্ণ অংশ'}
+                  </span>
+                </div>
 
-              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 leading-relaxed">
-                <strong>{t('ফারায়েজ আইনি নিয়ম:', 'Faraiz Legal Rule:')}</strong>{' '}
-                {t(
-                  'মুসলিম উত্তরাধিকার আইন অনুযায়ী পিতা বা মাতার মৃত্যুর পর ওয়ারিশগণ তাদের নির্ধারিত হিস্যা অনুযায়ী অবিভক্ত দাগের সহ-মালিক হন। সহকারী কমিশনার (ভূমি) অফিসে নামজারি আবেদন করার পূর্বে স্থানীয় পৌরসভা/ইউনিয়ন পরিষদ থেকে সঠিক ওয়ারিশ সনদ গ্রহণ করা বাধ্যতামূলক।',
-                  'Under Islamic succession law in Bangladesh, heirs become tenants-in-common according to their statutory Quranic fractions until an official partition deed (বাটোয়ারা দলিল) or e-mutation khatian is issued.'
-                )}
+                <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 space-y-1">
+                  <span className="text-xs font-semibold text-blue-900 block">{t('প্রত্যেক পুত্রের অংশ (২ গুণ)', 'Each Son’s Share (2x)')}</span>
+                  <div className="text-xl font-black text-blue-900 font-mono">
+                    {toBanglaDigits(faraizResults.eachSonLand)} {t('শতক', 'Dec')}
+                  </div>
+                  <span className="text-[11px] text-blue-700">
+                    {t(`মোট পুত্রদের অংশ: ${toBanglaDigits(faraizResults.totalSonsLand)} শতক`, `Total sons: ${faraizResults.totalSonsLand} dec`)}
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-1">
+                  <span className="text-xs font-semibold text-emerald-900 block">{t('প্রত্যেক কন্যার অংশ (১ গুণ)', 'Each Daughter’s Share (1x)')}</span>
+                  <div className="text-xl font-black text-emerald-900 font-mono">
+                    {toBanglaDigits(faraizResults.eachDaughterLand)} {t('শতক', 'Dec')}
+                  </div>
+                  <span className="text-[11px] text-emerald-700">
+                    {t(`মোট কন্যাদের অংশ: ${toBanglaDigits(faraizResults.totalDaughtersLand)} শতক`, `Total daughters: ${faraizResults.totalDaughtersLand} dec`)}
+                  </span>
+                </div>
               </div>
             </div>
           )}
-        </div>
+        </Card>
 
-        {/* Categories Bar & Search */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedCategory('')}
-              className={`px-3.5 py-2 rounded-lg text-xs font-bold transition cursor-pointer min-h-[38px] ${
-                selectedCategory === ''
-                  ? 'bg-[#006A4E] text-white'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              {t('সকল বিষয়', 'All Topics')}
-            </button>
-            {categories.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setSelectedCategory(c.slug)}
-                className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition cursor-pointer min-h-[38px] ${
-                  selectedCategory === c.slug
-                    ? 'bg-[#006A4E] text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
+        {/* ARTICLES SECTION */}
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900">
+              {t('সকল প্রকাশিত নিবন্ধ ও গাইডসমূহ', 'Published Articles & Legal Guides')}
+            </h2>
+
+            <div className="w-full sm:w-64">
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('নিবন্ধ অনুসন্ধান...', 'Search articles...')}
+                className="h-9 text-xs border-slate-300"
+              />
+            </div>
+          </div>
+
+          {/* Category Filter Tabs */}
+          <Tabs
+            value={selectedCategory}
+            onValueChange={setSelectedCategory}
+            className="w-full"
+          >
+            <TabsList className="flex flex-wrap h-auto gap-2 bg-transparent p-0 justify-start">
+              {[
+                { id: 'ALL', label_bn: 'সকল বিষয়', label_en: 'All Topics' },
+                { id: 'inheritance', label_bn: 'ফারায়েজ ও উত্তরাধিকার', label_en: 'Inheritance' },
+                { id: 'safety', label_bn: 'জমি ক্রয়ে সতর্কতা', label_en: 'Safety' },
+                { id: 'laws', label_bn: 'আইন ও প্রজ্ঞাপন', label_en: 'Laws' },
+                { id: 'mutation', label_bn: 'ই-নামজারি সহায়িকা', label_en: 'Mutation' },
+              ].map((cat) => (
+                <TabsTrigger
+                  key={cat.id}
+                  value={cat.id}
+                  className="h-8 px-3.5 text-xs rounded-full font-bold transition cursor-pointer data-[state=active]:bg-[#006A4E] data-[state=active]:text-white data-[state=inactive]:bg-white data-[state=inactive]:border data-[state=inactive]:border-slate-200 data-[state=inactive]:text-slate-700 hover:border-[#006A4E]"
+                >
+                  {lang === 'bn' ? cat.label_bn : cat.label_en}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+
+          {/* 4-State Articles Grid */}
+          {blogQuery.isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {[1, 2, 3, 4].map((i) => (
+                <Card key={i} className="p-6 rounded-2xl bg-white border border-slate-200 space-y-3">
+                  <Skeleton className="h-5 w-24 bg-slate-200" />
+                  <Skeleton className="h-6 w-3/4 bg-slate-200" />
+                  <Skeleton className="h-16 w-full bg-slate-200" />
+                </Card>
+              ))}
+            </div>
+          ) : blogQuery.isError ? (
+            <div className="p-8 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-center space-y-3">
+              <AlertCircle className="w-8 h-8 text-rose-600 mx-auto" />
+              <h3 className="text-base font-bold text-rose-900">
+                {t('নিবন্ধ তালিকা লোড করতে সমস্যা হয়েছে', 'Failed to load blog articles')}
+              </h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => blogQuery.refetch()}
+                className="border-rose-300 text-rose-800 hover:bg-rose-100 cursor-pointer"
               >
-                {lang === 'bn' ? c.name_bn : c.name_en}
-              </button>
-            ))}
-          </div>
-
-          <form onSubmit={handleSearchSubmit} className="relative min-w-[240px]">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('নিবন্ধ বা আইন অনুসন্ধান...', 'Search articles...')}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[38px]"
-            />
-          </form>
-        </div>
-
-        {/* Blog Posts Grid */}
-        {loading ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-[#006A4E] mb-3" />
-            <p className="font-semibold">{t('নিবন্ধ লোড হচ্ছে...', 'Loading articles...')}</p>
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500">
-            <BookOpen className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-            <p className="text-base font-semibold text-slate-800">
-              {t('কোনো নিবন্ধ পাওয়া যায়নি।', 'No articles found matching your criteria.')}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.map((post) => (
-              <div
-                key={post.id}
-                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col justify-between"
+                <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                <span>{t('পুনরায় চেষ্টা করুন', 'Retry')}</span>
+              </Button>
+            </div>
+          ) : filteredPosts.length === 0 ? (
+            <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 shadow-sm space-y-3">
+              <BookOpen className="w-12 h-12 text-slate-400 mx-auto" />
+              <h3 className="text-lg font-bold text-slate-800">
+                {t('কোনো নিবন্ধ পাওয়া যায়নি', 'No articles found')}
+              </h3>
+              <p className="text-xs text-slate-500">
+                {t('অনুগ্রহ করে অন্য ক্যাটাগরি বা অনুসন্ধান শব্দ ব্যবহার করুন।', 'Please try searching with different terms or selecting another category.')}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSelectedCategory('ALL');
+                  setSearchQuery('');
+                }}
+                className="cursor-pointer"
               >
-                <div className="p-6 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-[#006A4E] border border-emerald-200">
-                      <Tag className="w-3 h-3" />
-                      {lang === 'bn' ? post.category_name_bn : post.category_name_en}
-                    </span>
-                    <span className="text-xs text-slate-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {post.reading_time_minutes} {t('মি. পাঠ', 'min read')}
-                    </span>
+                {t('সকল নিবন্ধ দেখুন', 'View All Articles')}
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {filteredPosts.map((post) => (
+                <Card
+                  key={post.id}
+                  className="bg-white rounded-2xl border border-slate-200/90 hover:border-[#006A4E]/50 hover:shadow-md transition p-6 space-y-4 flex flex-col justify-between"
+                >
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Badge className="bg-emerald-50 text-[#006A4E] border border-emerald-200 text-[10px] font-bold">
+                        {lang === 'bn' ? post.category_name_bn : post.category_name_en}
+                      </Badge>
+                      <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>{toBanglaDigits(post.reading_time_minutes || 5)} {t('মিনিট পাঠ', 'min read')}</span>
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-bold text-slate-900 leading-snug">
+                      {lang === 'bn' ? post.title_bn : post.title_en}
+                    </h3>
+                    <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                      {lang === 'bn' ? post.body_bn : post.body_en}
+                    </p>
                   </div>
 
-                  <h3
-                    onClick={() => setActivePost(post)}
-                    className="text-base sm:text-lg font-bold text-slate-900 leading-snug hover:text-[#006A4E] cursor-pointer transition-colors"
-                  >
-                    {lang === 'bn' ? post.title_bn : post.title_en}
-                  </h3>
-
-                  <p className="text-xs sm:text-sm text-slate-600 line-clamp-3 leading-relaxed">
-                    {lang === 'bn' ? post.body_bn : post.body_en}
-                  </p>
-                </div>
-
-                <div className="p-6 pt-3 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                  <div className="text-xs text-slate-500">
-                    <span className="block font-medium text-slate-800">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
+                    <span className="text-[11px] text-slate-500 font-semibold">
                       {lang === 'bn' ? post.author_name_bn : post.author_name_en}
                     </span>
-                    <span className="text-[11px] text-slate-400">
-                      {formatDate(post.published_at)}
-                    </span>
+
+                    <div className="flex items-center gap-2">
+                      {/* Audio Button */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          handleToggleAudio(
+                            post.id,
+                            `${lang === 'bn' ? post.title_bn : post.title_en}। ${lang === 'bn' ? post.body_bn : post.body_en}`
+                          )
+                        }
+                        className={`h-8 px-2.5 text-xs font-bold border transition cursor-pointer flex items-center gap-1.5 ${
+                          playingAudioId === post.id
+                            ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                            : 'border-slate-300 text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        {playingAudioId === post.id ? (
+                          <>
+                            <VolumeX className="w-3.5 h-3.5" />
+                            <span>{t('বন্ধ করুন', 'Stop')}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 className="w-3.5 h-3.5" />
+                            <span>{t('অডিও', 'Audio')}</span>
+                          </>
+                        )}
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        onClick={() => setActivePost(post)}
+                        className="h-8 px-3 text-xs font-bold bg-[#006A4E] hover:bg-[#00553e] text-white cursor-pointer flex items-center gap-1"
+                      >
+                        <span>{t('সম্পূর্ণ পড়ুন', 'Read Full')}</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
 
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleAudio(post.id, `${lang === 'bn' ? post.title_bn : post.title_en}। ${lang === 'bn' ? post.body_bn : post.body_en}`)}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer min-h-[36px] ${
-                        playingAudioId === post.id
-                          ? 'bg-rose-50 text-rose-700 border-rose-300 shadow-2xs'
-                          : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-                      }`}
-                      title={t('অডিও শুনুন', 'Listen Audio')}
-                    >
-                      {playingAudioId === post.id ? (
-                        <>
-                          <Square className="w-3.5 h-3.5 text-rose-600 fill-current" />
-                          <span>{t('থামুন', 'Stop')}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Volume2 className="w-3.5 h-3.5 text-[#006A4E]" />
-                          <span>{t('শুনুন', 'Listen')}</span>
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleHelpfulClick(post.id, post.post_slug)}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer min-h-[36px] ${
-                        hasVotedHelpful[post.id]
-                          ? 'bg-emerald-100 text-[#006A4E] border-emerald-300'
-                          : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-100'
-                      }`}
-                    >
-                      <ThumbsUp className="w-3.5 h-3.5" />
-                      <span>{post.helpful_count}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setActivePost(post)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#006A4E] hover:bg-emerald-800 transition cursor-pointer min-h-[36px]"
-                    >
-                      <span>{t('পড়ুন', 'Read')}</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+      {/* ARTICLE READER MODAL */}
+      <Dialog open={Boolean(activePost)} onOpenChange={(open) => !open && setActivePost(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-6 sm:p-8 border border-slate-200 rounded-3xl bg-white space-y-5">
+          {activePost && (
+            <>
+              <DialogHeader className="border-b border-slate-100 pb-4 text-left space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Badge className="bg-emerald-100 text-[#006A4E] border-emerald-300 font-bold text-xs">
+                    {lang === 'bn' ? activePost.category_name_bn : activePost.category_name_en}
+                  </Badge>
+                  <span className="text-xs text-slate-500 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>{toBanglaDigits(activePost.reading_time_minutes || 5)} {t('মিনিট পাঠ', 'min read')}</span>
+                  </span>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+                <DialogTitle className="text-xl sm:text-2xl font-black text-slate-900 leading-snug">
+                  {lang === 'bn' ? activePost.title_bn : activePost.title_en}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-500">
+                  {t('লেখক / উৎস:', 'Author:')} {lang === 'bn' ? activePost.author_name_bn : activePost.author_name_en}
+                </DialogDescription>
+              </DialogHeader>
 
-        {/* Article Reader Modal */}
-        {activePost && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="blog-post-reader-modal-title"
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
-          >
-            <div className="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-[#006A4E] border border-emerald-200">
-                  <Tag className="w-3.5 h-3.5" />
-                  {lang === 'bn' ? activePost.category_name_bn : activePost.category_name_en}
-                </span>
+              {/* Reader Toolbar: TTS + Font Zoom */}
+              <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                {/* TTS Reader */}
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleToggleAudio(`modal-${activePost.id}`, `${lang === 'bn' ? activePost.title_bn : activePost.title_en}। ${lang === 'bn' ? activePost.body_bn : activePost.body_en}`)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer border ${
-                      playingAudioId === `modal-${activePost.id}`
-                        ? 'bg-rose-50 text-rose-700 border-rose-300'
-                        : 'bg-emerald-50 text-[#006A4E] border-emerald-200 hover:bg-emerald-100'
-                    }`}
+                  <Button
+                    size="sm"
+                    variant={playingAudioId === activePost.id ? 'destructive' : 'default'}
+                    onClick={() =>
+                      handleToggleAudio(
+                        activePost.id,
+                        `${lang === 'bn' ? activePost.title_bn : activePost.title_en}। ${lang === 'bn' ? activePost.body_bn : activePost.body_en}`
+                      )
+                    }
+                    className="h-8 px-3 text-xs font-bold cursor-pointer flex items-center gap-1.5"
                   >
-                    {playingAudioId === `modal-${activePost.id}` ? (
+                    {playingAudioId === activePost.id ? (
                       <>
-                        <Square className="w-3.5 h-3.5 text-rose-600 fill-current" />
-                        <span>{t('থামুন', 'Stop Audio')}</span>
+                        <VolumeX className="w-3.5 h-3.5" />
+                        <span>{t('অডিও থামান', 'Stop Audio')}</span>
                       </>
                     ) : (
                       <>
-                        <Volume2 className="w-3.5 h-3.5 text-[#006A4E]" />
-                        <span>{t('নিবন্ধটি শুনুন', 'Listen to Article')}</span>
+                        <Volume2 className="w-3.5 h-3.5" />
+                        <span>{t('অডিও শুনুন', 'Listen Audio')}</span>
                       </>
                     )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (playingAudioId === `modal-${activePost.id}`) {
-                        window.speechSynthesis?.cancel();
-                        setPlayingAudioId(null);
-                      }
-                      setActivePost(null);
-                    }}
-                    aria-label={t('বন্ধ করুন', 'Close')}
-                    className="text-slate-400 hover:text-slate-600 transition p-1 cursor-pointer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
+                  </Button>
+                </div>
+
+                {/* Font Size Selector */}
+                <div className="flex items-center gap-1 text-slate-600">
+                  <span className="text-[11px] font-medium mr-1">{t('ফন্ট সাইজ:', 'Text size:')}</span>
+                  {(['normal', 'large', 'huge'] as const).map((sz) => (
+                    <Button
+                      key={sz}
+                      type="button"
+                      variant={readerFontSize === sz ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setReaderFontSize(sz)}
+                      className={`h-6 px-2 text-xs font-bold transition cursor-pointer ${
+                        readerFontSize === sz
+                          ? 'bg-[#006A4E] text-white hover:bg-[#00523C]'
+                          : 'bg-white border-slate-300 text-slate-700'
+                      }`}
+                    >
+                      {sz === 'normal' ? 'ক' : sz === 'large' ? 'ক+' : 'ক++'}
+                    </Button>
+                  ))}
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <h2 id="blog-post-reader-modal-title" className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug">
-                  {lang === 'bn' ? activePost.title_bn : activePost.title_en}
-                </h2>
-
-                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pb-3 border-b border-slate-100">
-                  <span className="flex items-center gap-1 font-semibold text-slate-800">
-                    <User className="w-3.5 h-3.5 text-[#006A4E]" />
-                    {lang === 'bn' ? activePost.author_name_bn : activePost.author_name_en}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5" />
-                    {formatDate(activePost.published_at)}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />
-                    {activePost.reading_time_minutes} {t('মিনিট পাঠের সময়', 'min read')}
-                  </span>
-                </div>
-
-                <div className="text-sm text-slate-700 leading-relaxed space-y-3 whitespace-pre-line bg-slate-50 p-5 rounded-xl border border-slate-100 font-normal">
-                  {lang === 'bn' ? activePost.body_bn : activePost.body_en}
-                </div>
-
-                {/* Helpful & Share Bar */}
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <button
-                    type="button"
-                    onClick={() => handleHelpfulClick(activePost.id, activePost.post_slug)}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition cursor-pointer min-h-[44px] ${
-                      hasVotedHelpful[activePost.id]
-                        ? 'bg-emerald-100 text-[#006A4E] border-emerald-300'
-                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                    }`}
-                  >
-                    <ThumbsUp className="w-4 h-4" />
-                    <span>
-                      {hasVotedHelpful[activePost.id]
-                        ? t('ধন্যবাদ! মতামত গৃহীত হয়েছে', 'Thank you! Vote recorded')
-                        : t('নিবন্ধটি কি সহায়ক ছিল?', 'Was this article helpful?')}
-                    </span>
-                    <span className="bg-slate-100 px-2 py-0.5 rounded-full text-[11px]">
-                      {activePost.helpful_count}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setActivePost(null)}
-                    className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition cursor-pointer min-h-[44px]"
-                  >
-                    {t('বন্ধ করুন', 'Close')}
-                  </button>
-                </div>
+              {/* Full Article Content */}
+              <div
+                className={`text-slate-800 leading-relaxed space-y-4 whitespace-pre-wrap bg-white p-2 ${
+                  readerFontSize === 'normal'
+                    ? 'text-sm'
+                    : readerFontSize === 'large'
+                    ? 'text-base'
+                    : 'text-lg'
+                }`}
+              >
+                {lang === 'bn' ? activePost.body_bn : activePost.body_en}
               </div>
-            </div>
-          </div>
-        )}
-      </div>
+
+              {/* Reader Footer: Helpful Vote */}
+              <DialogFooter className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleHelpfulClick(activePost)}
+                  className={`text-xs font-bold cursor-pointer flex items-center gap-1.5 ${
+                    hasVotedHelpful[activePost.id]
+                      ? 'bg-emerald-50 text-[#006A4E] border-emerald-300'
+                      : 'border-slate-300 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <ThumbsUp className="w-3.5 h-3.5" />
+                  <span>
+                    {hasVotedHelpful[activePost.id]
+                      ? t('✓ ধন্যবাদ! মতামত গৃহীত হয়েছে', '✓ Thank you for voting!')
+                      : t('উপকারী লেগেছে', 'Helpful')}
+                  </span>
+                  <span className="ml-1 text-slate-400 font-mono">
+                    ({toBanglaDigits(activePost.helpful_count || 0)})
+                  </span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => setActivePost(null)}
+                  className="cursor-pointer text-xs"
+                >
+                  {t('বন্ধ করুন', 'Close')}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

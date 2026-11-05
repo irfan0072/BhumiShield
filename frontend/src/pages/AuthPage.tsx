@@ -2,6 +2,20 @@ import React, { useState } from 'react';
 import { useAppUI, UserRole } from '../i18n';
 import { BhumiApi } from '../api/client';
 import { CitizenVerificationModal } from '../components/CitizenVerificationModal';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import {
   LogIn,
   UserPlus,
@@ -15,18 +29,17 @@ import {
   ShieldCheck,
   Building2,
   FileText,
-  AlertCircle,
   HelpCircle,
   Mail,
   Phone,
   Clock,
   ArrowRight,
   Sparkles,
-  Copy,
-  Check,
   Search,
-  ArrowUp,
-  User,
+  Check,
+  Shield,
+  Fingerprint,
+  FileCheck2,
 } from 'lucide-react';
 
 const ROLE_ROUTE: Record<string, string> = {
@@ -287,7 +300,7 @@ export const DEMO_CREDENTIALS: DemoCredentialItem[] = [
     officeBn: 'জেলা প্রশাসকের কার্যালয় (রাজস্ব শাখা), ঢাকা',
     color: 'bg-indigo-100 text-indigo-800 border-indigo-300',
     descBn: 'এসি ল্যান্ডের নামজারি আদেশের বিরুদ্ধে দায়েরকৃত মিস-কেস ও আপিল নিষ্পত্তি',
-  descEn: 'Statutory mutation appeal review, hearing scheduling and appellate judgment',
+    descEn: 'Statutory mutation appeal review, hearing scheduling and appellate judgment',
   },
 
   // 6. Bank & Mortgage
@@ -473,8 +486,8 @@ export const FAST_EVALUATOR_ROLES: FastEvaluatorRole[] = [
     username: 'citizen',
     nameBn: 'নাগরিক',
     nameEn: 'Citizen',
-    titleBn: 'মো. রফিকুল ইসলাম (নাগরিক)',
-    titleEn: 'Md. Rafiqul Islam (Citizen)',
+    titleBn: 'মো. রফিকুল ইসলাম',
+    titleEn: 'Md. Rafiqul Islam',
     dot: 'bg-emerald-500',
   },
   {
@@ -538,8 +551,7 @@ export const AuthPage: React.FC<{
   const [password, setPassword] = useState(isDemoMode ? 'demo123' : '');
   const [showPassword, setShowPassword] = useState(false);
 
-  // Demo credentials directory state & copy helper
-  const [copiedUser, setCopiedUser] = useState<string | null>(null);
+  // Fast Fill & Feedback
   const [credentialToast, setCredentialToast] = useState<{ username: string; roleName: string } | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [credSearch, setCredSearch] = useState<string>('');
@@ -556,31 +568,21 @@ export const AuthPage: React.FC<{
       // ignore clipboard error
     }
 
-    setCopiedUser(cred.username);
     setCredentialToast({
       username: cred.username,
       roleName: lang === 'bn' ? cred.roleNameBn : cred.roleNameEn,
     });
 
     setTimeout(() => {
-      setCopiedUser((prev) => (prev === cred.username ? null : prev));
-    }, 2500);
-
-    setTimeout(() => {
       setCredentialToast(null);
-    }, 6000);
+    }, 4500);
 
     if (autoLogin) {
       handleLogin(cred.username, cred.password);
-    } else {
-      const formElem = document.getElementById('login-form-card');
-      if (formElem) {
-        formElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
     }
   };
 
-  // Registration state - supports both Phone and Email
+  // Registration state
   const [regMethod, setRegMethod] = useState<'phone' | 'email'>('phone');
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState(isDemoMode ? 'demo123' : '');
@@ -619,7 +621,7 @@ export const AuthPage: React.FC<{
         setSuccessMsg(t('সফলভাবে পরিচয় নিশ্চিত হয়েছে!', 'Signed in successfully!'));
         setTimeout(() => {
           onSuccessNavigate(ROLE_ROUTE[res.user.role as UserRole] || 'home');
-        }, 250);
+        }, 200);
       } else {
         throw new Error('Invalid authentication response');
       }
@@ -713,1011 +715,566 @@ export const AuthPage: React.FC<{
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      {/* Top Government Platform Header */}
-      <div className="text-center space-y-2 mb-2">
-        <div className="inline-flex items-center justify-center h-14 w-14 rounded-full bg-[#006A4E] text-white text-xl font-bold ring-4 ring-emerald-100 shadow-sm mx-auto">
-          <span>ভূ</span>
-        </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-          {t('ভূমি সুরক্ষা গেটওয়ে', 'BhumiShield Account Sign-In')}
-        </h1>
-        <p className="text-xs sm:text-sm text-slate-500 font-medium">
-          {t('স্বাধীন ভূমি রেকর্ড ও যাচাই অ্যাপ্লিকেশন', 'Independent land-record workflow and verification application')}
-        </p>
-      </div>
-
-      <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/90 shadow-sm">
-        {/* Navigation Tabs */}
-        <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-4 mb-6">
-          <button
-            type="button"
-            onClick={() => setTab('login')}
-            className={`px-4 py-2.5 rounded-lg font-bold text-xs flex items-center gap-2 cursor-pointer transition min-h-[38px] ${
-              tab === 'login' ? 'bg-[#006A4E] text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            <LogIn className="w-4 h-4" />
-            <span>{t('নিরাপদ সাইন-ইন (Sign In)', 'Sign In')}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('register')}
-            className={`px-4 py-2.5 rounded-lg font-bold text-xs flex items-center gap-2 cursor-pointer transition min-h-[38px] ${
-              tab === 'register' ? 'bg-[#006A4E] text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-            }`}
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>{t('নাগরিক নিবন্ধন (Citizen Register)', 'Citizen Register')}</span>
-          </button>
-          {user && (
-            <button
-              type="button"
-              onClick={() => setTab('profile')}
-              className={`px-4 py-2.5 rounded-lg font-bold text-xs flex items-center gap-2 cursor-pointer transition min-h-[38px] ${
-                tab === 'profile' ? 'bg-[#006A4E] text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <UserCheck className="w-4 h-4" />
-              <span>{t('আমার প্রোফাইল', 'My Profile')}</span>
-            </button>
-          )}
-        </div>
-
-        {errorMsg && (
-          <div className="p-4 mb-6 rounded-xl bg-red-50 border border-red-200 text-red-900 font-bold text-xs flex items-center gap-2.5">
-            <ShieldAlert className="w-5 h-5 text-red-600 shrink-0" />
-            <span>{errorMsg}</span>
+    <div className="max-w-xl xl:max-w-6xl mx-auto py-4 sm:py-8 px-4 sm:px-6">
+      {/* Main Split-Screen Container with Real Generated Visual Asset */}
+      <div className="rounded-3xl border border-slate-200/90 shadow-xl bg-white overflow-hidden grid grid-cols-1 xl:grid-cols-12 min-h-[580px]">
+        
+        {/* Left Column: Visual Showcase (Strictly Hidden on Mobiles & Tablets, Visible ONLY on Desktop >= 1280px) */}
+        <div className="hidden xl:flex xl:col-span-5 bg-gradient-to-br from-[#003829] via-[#004e38] to-[#01281e] text-white p-7 sm:p-9 flex-col justify-between relative overflow-hidden">
+          {/* Real Background Artwork Layer */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src={tab === 'register' ? '/assets/auth-deed-showcase.png' : '/assets/auth-showcase.png'}
+              alt="BhumiShield Digital Land Security"
+              className="w-full h-full object-cover object-center opacity-30 mix-blend-luminosity scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#01241a] via-[#003d2e]/80 to-[#002e22]/85" />
           </div>
-        )}
 
-        {successMsg && (
-          <div className="p-4 mb-6 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 font-bold text-xs flex items-center gap-2.5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            <span>{successMsg}</span>
-          </div>
-        )}
-
-        {/* 1. Login Tab */}
-        {tab === 'login' && (
-          <div>
-            {/* Evaluator 1-Click Fast Login Deck */}
-            <div className="mb-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-slate-50 to-emerald-50/90 border border-emerald-200/90 shadow-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3.5">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex h-3 w-3 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-600"></span>
-                  </span>
-                  <div>
-                    <span className="text-xs font-extrabold text-emerald-950 uppercase tracking-wider flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                      {t('বিচারক ও মূল্যায়নকারী কুইক লগইন ডেক (Evaluator 1-Click Fast Login)', 'Judge & Evaluator 1-Click Fast Login Deck')}
-                    </span>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      {t(
-                        'নিচের যেকোনো প্রাতিষ্ঠানিক ভূমিকায় ক্লিক করে অবিলম্বে ডেমো সেশনে প্রবেশ করুন (স্ক্রোল করার প্রয়োজন নেই):',
-                        'Click any key institutional role below for instant demo sign-in (no scrolling required):'
-                      )}
-                    </p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200/70 text-emerald-800 self-start sm:self-center">
-                  {t('লাইভ টেস্ট প্রস্তুত', 'Evaluation Ready')}
-                </span>
-              </div>
-
-              {/* 6 Key Role Badges Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-                {FAST_EVALUATOR_ROLES.map((role) => {
-                  const cred = DEMO_CREDENTIALS.find((c) => c.username === role.username);
-                  const isSelected = username === role.username;
-                  return (
-                    <div
-                      key={role.roleKey}
-                      className={`relative flex flex-col justify-between p-2.5 rounded-xl border transition-all ${
-                        isSelected
-                          ? 'border-[#006A4E] bg-white ring-2 ring-[#006A4E]/20 shadow-xs'
-                          : 'border-slate-200 bg-white/80 hover:bg-white hover:border-slate-300'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-1 mb-1.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 truncate">
-                          {lang === 'bn' ? role.nameBn : role.nameEn}
-                        </span>
-                        <span className={`w-2 h-2 rounded-full ${role.dot}`} />
-                      </div>
-                      <div className="text-xs font-bold text-slate-900 truncate mb-1">
-                        {lang === 'bn' ? cred?.nameBn || role.titleBn : cred?.nameEn || role.titleEn}
-                      </div>
-                      <div className="text-[10px] font-mono text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 truncate mb-2">
-                        user: {role.username}
-                      </div>
-                      <div className="flex gap-1 mt-auto">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (cred) fillAndCopy(cred, false);
-                          }}
-                          title={t('ফর্মে ইউজারনেম ও পাসওয়ার্ড বসান', 'Fill credentials into form')}
-                          className="flex-1 py-1 px-1.5 rounded text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer text-center"
-                        >
-                          {t('পূরণ', 'Fill')}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={loading}
-                          onClick={() => {
-                            if (cred) fillAndCopy(cred, true);
-                          }}
-                          title={t('সরাসরি এই ভূমিকায় লগইন করুন', 'Instant 1-click login as this role')}
-                          className="flex-1 py-1 px-1.5 rounded text-[10px] font-bold bg-[#006A4E] hover:bg-[#00553e] text-white transition cursor-pointer flex items-center justify-center gap-0.5 shadow-2xs"
-                        >
-                          <LogIn className="w-2.5 h-2.5 shrink-0" />
-                          <span>{t('লগইন', 'Login')}</span>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+          {/* Top Brand Header */}
+          <div className="relative z-10 space-y-3">
+            <div className="inline-flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15 text-xs font-bold text-emerald-200">
+              <Shield className="w-4 h-4 text-emerald-400" />
+              <span>{t('জাতীয় ডিজিটাল ভূমি ব্যবস্থাপনা', 'National Digital Land Ledger')}</span>
             </div>
+            
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-tight text-white">
+              {t('স্মার্ট ভূমিসেবা ও নাগরিক সুরক্ষা ভল্ট', 'Smart Land Services & Citizen Protection')}
+            </h1>
+            
+            <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed font-normal">
+              {t(
+                'বায়োমেট্রিক ও এনআইডি সংযুক্তির মাধ্যমে জালিয়াতিমুক্ত জমি ক্রয়-বিক্রয় এবং তাৎক্ষণিক খতিয়ান ভল্ট।',
+                'Fraud-proof land transactions and instant title verification powered by biometrics and cryptographic ledger.'
+              )}
+            </p>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-            {/* Left: Official Login Form */}
-            <form
-              id="login-form-card"
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleLogin();
-              }}
-              className="md:col-span-7 space-y-4"
-            >
+          {/* Middle: Real Generated Image Card Showcase */}
+          <div className="relative z-10 my-6">
+            <div className="rounded-2xl overflow-hidden border border-white/20 shadow-2xl bg-black/25 backdrop-blur-md p-2">
+              <img
+                src="/assets/citizen-vault-smartcard.png"
+                alt={t('ডিজিটাল নাগরিক স্মার্টকার্ড', 'Citizen Land Vault Smartcard')}
+                className="w-full h-auto object-cover rounded-xl shadow-md"
+              />
+            </div>
+          </div>
+
+          {/* Bottom Security Guarantees */}
+          <div className="relative z-10 space-y-2.5 text-xs text-emerald-100/90 border-t border-white/15 pt-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>{t('Ed25519 ক্রিপ্টোগ্রাফিক ডিজিটাল স্বাক্ষরযুক্ত দলিল', 'Ed25519 Asymmetrically Signed Deeds')}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>{t('সাব-রেজিস্ট্রি থেকে এসি ল্যান্ডে সরাসরি অটো-মিউটেশন', 'Zero-friction Sub-Registry to AC Land Mutation')}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>{t('মালিকের সম্মতি ছাড়া বিক্রি লক সুরক্ষা (Smart Lock)', 'Owner Consent Enforced Plot Sale Lock')}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Clean shadcn/ui Login & Registration */}
+        <div className="col-span-1 xl:col-span-7 p-6 sm:p-10 flex flex-col justify-between bg-white">
+          <div className="space-y-6">
+            
+            {/* Header with Title and Mode Switcher Tabs */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">
-                  {t('আপনার অ্যাকাউন্টে প্রবেশ করুন', 'Sign In to Your Workspace')}
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                  {tab === 'login'
+                    ? t('অ্যাকাউন্টে প্রবেশ করুন', 'Sign In to Workspace')
+                    : tab === 'register'
+                    ? t('নাগরিক অ্যাকাউন্ট নিবন্ধন', 'Citizen Registration')
+                    : t('আমার প্রোফাইল', 'My Profile')}
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  {t('নাগরিক বা অনুমোদিত কর্মকর্তা ক্রেডেনশিয়াল প্রদান করুন', 'Enter citizen or authorized officer credentials')}
+                  {tab === 'login'
+                    ? t('নাগরিক বা অনুমোদিত কর্মকর্তা ক্রেডেনশিয়াল দিন', 'Enter citizen or authorized officer credentials')
+                    : t('আপনার জাতীয় পরিচয়পত্র দিয়ে সেবা গ্রহণ করুন', 'Access land services with your verified NID')}
                 </p>
               </div>
 
-              {credentialToast && (
-                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-xs flex items-center justify-between gap-2 shadow-xs animate-fadeIn">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <div>
-                      <span className="font-bold text-emerald-900">{credentialToast.roleName}</span>
-                      <span className="text-emerald-800">
-                        {' '}— ইউজারনেম (<span className="font-mono font-bold text-slate-900">{credentialToast.username}</span>) ও পাসওয়ার্ড ফর্মে পূরণ ও কপি করা হয়েছে!
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-200/60 px-2 py-0.5 rounded shrink-0">
-                    {t('পূরণ সম্পন্ন', 'Filled')}
-                  </span>
-                </div>
-              )}
-
-              <div>
-                <label htmlFor="auth-username" className="block text-xs font-bold text-slate-700 mb-1.5">
-                  {t('ইউজারনেম / ইমেইল / মোবাইল নম্বর (Username / Email / Mobile):', 'Username / Email / Mobile Phone:')}
-                </label>
-                <div className="relative">
-                  <input
-                    id="auth-username"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder={t('ইউজারনেম, ইমেইল অথবা মোবাইল নম্বর দিন (যেমন: citizen)', 'Username, email or mobile (e.g. citizen)')}
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-lg border border-slate-300 font-mono text-sm placeholder:text-slate-500 focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20 focus:outline-none"
-                    required
-                  />
-                  <UserCheck className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="auth-password" className="block text-xs font-bold text-slate-700 mb-1.5">
-                  {t('গোপনীয় পাসওয়ার্ড (Password):', 'Password:')}
-                </label>
-                <div className="relative">
-                  <input
-                    id="auth-password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-slate-300 font-mono text-sm placeholder:text-slate-500 focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20 focus:outline-none"
-                    required
-                  />
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? t('পাসওয়ার্ড লুকান', 'Hide password') : t('পাসওয়ার্ড দেখুন', 'Show password')}
-                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-700 cursor-pointer"
-                    title={showPassword ? 'Hide password' : 'Show password'}
+              {/* Mode Tabs */}
+              <Tabs value={tab} onValueChange={(val) => setTab(val as any)} className="w-auto">
+                <TabsList className="bg-slate-100 p-1 rounded-xl h-auto">
+                  <TabsTrigger
+                    value="login"
+                    className="text-xs font-bold py-2 px-3.5 rounded-lg data-[state=active]:bg-[#006A4E] data-[state=active]:text-white shadow-2xs"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
+                    <LogIn className="w-3.5 h-3.5 mr-1.5" />
+                    <span>{t('লগইন', 'Sign In')}</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="register"
+                    className="text-xs font-bold py-2 px-3.5 rounded-lg data-[state=active]:bg-[#006A4E] data-[state=active]:text-white shadow-2xs"
+                  >
+                    <UserPlus className="w-3.5 h-3.5 mr-1.5" />
+                    <span>{t('নিবন্ধন', 'Register')}</span>
+                  </TabsTrigger>
+                  {user && (
+                    <TabsTrigger
+                      value="profile"
+                      className="text-xs font-bold py-2 px-3.5 rounded-lg data-[state=active]:bg-[#006A4E] data-[state=active]:text-white shadow-2xs"
+                    >
+                      <UserCheck className="w-3.5 h-3.5 mr-1.5" />
+                      <span>{t('প্রোফাইল', 'Profile')}</span>
+                    </TabsTrigger>
+                  )}
+                </TabsList>
+              </Tabs>
+            </div>
 
-              <div className="pt-2">
-                <button
+            {/* Error / Success Alerts */}
+            {errorMsg && (
+              <Alert variant="destructive" className="py-3 text-xs flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                <AlertDescription className="font-bold">{errorMsg}</AlertDescription>
+              </Alert>
+            )}
+
+            {successMsg && (
+              <Alert className="py-3 border-emerald-200 bg-emerald-50 text-emerald-900 text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <AlertDescription className="font-bold text-emerald-900">{successMsg}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* TAB 1: LOGIN FORM */}
+            {tab === 'login' && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleLogin();
+                }}
+                className="space-y-4 pt-1"
+              >
+                <div className="space-y-1.5">
+                  <Label htmlFor="auth-username" className="text-xs font-bold text-slate-700">
+                    {t('ইউজারনেম / ইমেইল / মোবাইল নম্বর', 'Username / Email / Mobile Phone')}
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="auth-username"
+                      type="text"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder={t('যেমন: citizen, registrar, acland', 'e.g. citizen, registrar, acland')}
+                      className="w-full pl-10 h-11 text-sm font-semibold rounded-xl border-slate-300 focus:border-[#006A4E]"
+                      required
+                    />
+                    <UserCheck className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="auth-password" className="text-xs font-bold text-slate-700">
+                      {t('পাসওয়ার্ড', 'Password')}
+                    </Label>
+                    <span className="text-[11px] text-slate-500 font-mono">
+                      {isDemoMode && 'Demo: demo123'}
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      id="auth-password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full pl-10 pr-10 h-11 text-sm font-semibold rounded-xl border-slate-300 focus:border-[#006A4E]"
+                      required
+                    />
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-1.5 top-1.5 h-8 w-8 text-slate-400 hover:text-slate-700"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                <Button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 px-5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-sm cursor-pointer shadow-sm transition-all flex items-center justify-center gap-2"
+                  className="w-full h-11 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-sm shadow-md transition"
                 >
-                  <LogIn className="w-4 h-4" />
-                  <span>{loading ? t('যাচাই হচ্ছে...', 'Verifying credentials...') : t('পোর্টালে প্রবেশ করুন', 'Sign In to Workspace')}</span>
-                </button>
-              </div>
+                  <LogIn className="w-4 h-4 mr-2" />
+                  <span>{loading ? t('যাচাই হচ্ছে...', 'Verifying...') : t('পোর্টালে প্রবেশ করুন →', 'Sign In to Workspace →')}</span>
+                </Button>
 
-              <div className="text-center pt-2">
-                <span className="text-xs text-slate-500">
-                  {t('কোনো অ্যাকাউন্ট নেই? ', "Don't have an account? ")}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setTab('register')}
-                  className="text-xs font-bold text-[#006A4E] hover:underline cursor-pointer"
-                >
-                  {t('নাগরিক নিবন্ধন করুন', 'Register as Citizen')}
-                </button>
-              </div>
-            </form>
-
-            {/* Right: Security Standards & Institutional Notice */}
-            <div className="md:col-span-5 bg-slate-50 rounded-xl p-5 border border-slate-200 space-y-4">
-              <div className="flex items-center gap-2 font-bold text-xs text-slate-800 border-b border-slate-200 pb-3">
-                <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
-                <span>{t('প্রাতিষ্ঠানিক নিরাপত্তা নির্দেশিকা ও প্রটোকল', 'Security Standards & Protocol')}</span>
-              </div>
-
-              <ul className="space-y-3 text-xs text-slate-600">
-                <li className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-1.5 shrink-0" />
-                  <div>
-                    <span className="font-bold text-slate-800 block">ডিজিটাল দলিলের অখণ্ডতা ও নিরাপত্তা</span>
-                    <span>ভূমি দলিলের প্রতিটি স্বাক্ষরে প্রাতিষ্ঠানিক ডিজিটাল সুরক্ষা এবং সেশনে সুরক্ষিত টোকেন ব্যবহৃত হয়।</span>
-                    <details className="mt-1 text-[11px] text-slate-500 cursor-pointer">
-                      <summary className="hover:text-slate-700 font-medium">প্রযুক্তিগত বিস্তারিত (Ed25519 / Token)</summary>
-                      <div className="mt-1 font-mono text-[10px] bg-slate-100 p-1.5 rounded">
-                        Protocol: Ed25519 Asymmetric Digital Signature & Revocable Bearer Tokens.
-                      </div>
-                    </details>
-                  </div>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-1.5 shrink-0" />
-                  <div>
-                    <span className="font-bold text-slate-800 block">কঠোর রোল-ভিত্তিক প্রবেশাধিকার</span>
-                    <span>সাব-রেজিস্ট্রার, এসি ল্যান্ড ও ব্যাংক অফিসার অ্যাকাউন্ট শুধুমাত্র সংশ্লিষ্ট প্রশাসনিক দপ্তর কর্তৃক ইস্যু করা হয়।</span>
-                  </div>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mt-1.5 shrink-0" />
-                  <div>
-                    <span className="font-bold text-slate-800 block">কেন্দ্রীয় অডিট ট্রেইল</span>
-                    <span>সমর্থিত রেকর্ড পরিবর্তন ও দাপ্তরিক সিদ্ধান্ত অডিট ট্রেইলে নথিভুক্ত হয়।</span>
-                  </div>
-                </li>
-              </ul>
-
-              <div className="pt-2 border-t border-slate-200/80 text-[11px] text-slate-500 flex items-center gap-1.5">
-                <HelpCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span>{t('জরুরি সহায়তা: জাতীয় হেল্পলাইন ১৬১২২', 'Emergency Support: National Helpline 16122')}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-        {/* Evaluator Demo Credentials Directory (All 22+ Roles with Copy & 1-Click Login) */}
-        {tab === 'login' && (() => {
-          const filteredCredentials = DEMO_CREDENTIALS.filter((c) => {
-            const matchesCategory = selectedCategory === 'all' || c.category === selectedCategory;
-            const query = credSearch.trim().toLowerCase();
-            if (!query) return matchesCategory;
-            return (
-              matchesCategory &&
-              (c.username.toLowerCase().includes(query) ||
-                c.roleNameBn.toLowerCase().includes(query) ||
-                c.roleNameEn.toLowerCase().includes(query) ||
-                c.nameBn.toLowerCase().includes(query) ||
-                c.nameEn.toLowerCase().includes(query) ||
-                c.officeBn.toLowerCase().includes(query))
-            );
-          });
-
-          return (
-            <div className="mt-10 pt-8 border-t border-slate-200">
-              {/* Directory Header */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-lg bg-emerald-100 text-[#006A4E] flex items-center justify-center font-bold">
-                      <KeyRound className="w-4 h-4" />
-                    </div>
-                    <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">
-                      {t(
-                        'সকল প্রাতিষ্ঠানিক ও নাগরিক ডেমো ভূমিকা (Demo Credentials Directory — ২২টি ভূমিকা)',
-                        'All Institutional & Citizen Demo Roles (Directory — 22+ Roles)'
-                      )}
-                    </h3>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {t(
-                      'যেকোনো কার্ডের "কপি ও পূরণ" বাটনে ক্লিক করলে ইউজারনেম ও পাসওয়ার্ড সরাসরি উপরের লগইন ফর্মে চলে যাবে এবং ক্লিপবোর্ডে কপি হবে।',
-                      'Click "Copy & Fill" on any card to automatically populate the username and password into the login form.'
-                    )}
-                  </p>
-                </div>
-
-                {/* Search box */}
-                <div className="relative w-full md:w-72">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    type="text"
-                    value={credSearch}
-                    onChange={(e) => setCredSearch(e.target.value)}
-                    aria-label={t('পদবি, নাম বা ইউজারনেম খুঁজুন', 'Search role, name or username')}
-                    placeholder={t('পদবি, নাম বা ইউজারনেম খুঁজুন...', 'Search role, name or username...')}
-                    className="w-full pl-9 pr-7 py-2 rounded-lg border border-slate-300 text-xs font-medium placeholder:text-slate-500 focus:border-[#006A4E] focus:ring-2 focus:ring-[#006A4E]/20 focus:outline-none bg-white"
-                  />
-                  {credSearch && (
-                    <button
-                      type="button"
-                      onClick={() => setCredSearch('')}
-                      aria-label={t('অনুসন্ধান মুছুন', 'Clear search')}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Category Filter Pills */}
-              <div className="flex flex-wrap gap-1.5 mb-5 pb-1">
-                {[
-                  { id: 'all', labelBn: `সকল ভূমিকা (${DEMO_CREDENTIALS.length})`, labelEn: `All Roles (${DEMO_CREDENTIALS.length})` },
-                  { id: 'citizen', labelBn: 'নাগরিক ও সেবা (৩)', labelEn: 'Citizen & Public (3)' },
-                  { id: 'registry', labelBn: 'সাব-রেজিস্ট্রি (৩)', labelEn: 'Sub-Registry (3)' },
-                  { id: 'acland', labelBn: 'এসি ল্যান্ড ও রাজস্ব (৫)', labelEn: 'AC Land & Revenue (5)' },
-                  { id: 'survey', labelBn: 'জরিপ ও রেকর্ডস (২)', labelEn: 'Survey & Records (2)' },
-                  { id: 'bank', labelBn: 'ব্যাংক ও বন্ধক (২)', labelEn: 'Bank & Mortgage (2)' },
-                  { id: 'admin', labelBn: 'প্রশাসন ও অডিট (৬)', labelEn: 'Admin & Audit (6)' },
-                  { id: 'specialist', labelBn: 'স্পেশালিস্ট ও আদালত (২)', labelEn: 'Specialist & Court (2)' },
-                ].map((cat) => {
-                  const isActive = selectedCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => setSelectedCategory(cat.id)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                        isActive
-                          ? 'bg-slate-900 text-white shadow-xs'
-                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
-                      }`}
-                    >
-                      <span>{lang === 'bn' ? cat.labelBn : cat.labelEn}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                {filteredCredentials.map((c) => {
-                  const isCopied = copiedUser === c.username;
-                  const isCurrentFormUser = username === c.username;
-                  return (
-                    <div
-                      key={c.username}
-                      className={`rounded-xl border p-4 transition-all duration-200 flex flex-col justify-between ${
-                        isCurrentFormUser
-                          ? 'bg-emerald-50/60 border-[#006A4E] shadow-sm ring-2 ring-[#006A4E]/20'
-                          : 'bg-slate-50/80 hover:bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs'
-                      }`}
-                    >
-                      <div className="space-y-2.5">
-                        {/* Top Badges & Quick Copy */}
-                        <div className="flex items-center justify-between gap-2">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${c.color}`}>
-                            {lang === 'bn' ? c.categoryBn : c.categoryEn}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => fillAndCopy(c, false)}
-                            title={t('লগইন ফর্মে পূরণ করুন ও ক্লিপবোর্ডে কপি করুন', 'Fill into form & copy to clipboard')}
-                            className={`text-xs px-2.5 py-1 rounded-md font-bold flex items-center gap-1 transition cursor-pointer border ${
-                              isCopied
-                                ? 'bg-emerald-600 text-white border-emerald-600'
-                                : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300 shadow-2xs'
-                            }`}
-                          >
-                            {isCopied ? (
-                              <>
-                                <Check className="w-3.5 h-3.5" />
-                                <span className="text-[11px]">{t('কপি সম্পন্ন!', 'Copied!')}</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="w-3.5 h-3.5 text-slate-500" />
-                                <span className="text-[11px]">{t('কপি ও পূরণ', 'Copy & Fill')}</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-
-                        {/* Role & Officer Details */}
-                        <div>
-                          <h4 className="text-sm font-bold text-slate-900 leading-snug">
-                            {lang === 'bn' ? c.roleNameBn : c.roleNameEn}
-                          </h4>
-                          <div className="text-xs text-slate-600 font-medium mt-0.5">
-                            {lang === 'bn' ? c.nameBn : c.nameEn}
-                          </div>
-                          <div className="text-[11px] text-slate-400 truncate mt-0.5" title={c.officeBn}>
-                            {c.officeBn}
-                          </div>
-                        </div>
-
-                        {/* Credentials Display Box */}
-                        <div className="bg-white/90 rounded-lg p-2.5 border border-slate-200/80 font-mono text-xs flex items-center justify-between">
-                          <div>
-                            <span className="text-slate-400 text-[10px] block uppercase">User</span>
-                            <span className="font-bold text-slate-800">{c.username}</span>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-slate-400 text-[10px] block uppercase">Pass</span>
-                            <span className="font-bold text-slate-600">{c.password}</span>
-                          </div>
-                        </div>
-
-                        {/* Scope/Role summary */}
-                        <p className="text-[11px] text-slate-500 leading-relaxed line-clamp-2">
-                          {lang === 'bn' ? c.descBn : c.descEn}
-                        </p>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="pt-3 mt-3 border-t border-slate-200/70 grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => fillAndCopy(c, false)}
-                          className={`w-full py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                            isCurrentFormUser
-                              ? 'bg-[#006A4E] text-white shadow-2xs'
-                              : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
-                          }`}
-                        >
-                          {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                          <span>{isCurrentFormUser ? t('ফর্মে রয়েছে', 'In Form') : t('ফর্ম পূরণ', 'Fill Form')}</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          disabled={loading}
-                          onClick={() => fillAndCopy(c, true)}
-                          className="w-full py-2 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer bg-slate-900 hover:bg-slate-800 text-white shadow-2xs"
-                        >
-                          <LogIn className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>{t('১-ক্লিক লগইন', 'Instant Login')}</span>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {filteredCredentials.length === 0 && (
-                <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-300">
-                  <Search className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-xs text-slate-500 font-bold">
-                    {t('কোনো ভূমিকা বা ইউজারনেম মেলেনি।', 'No matching credentials found.')}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCredSearch('');
-                      setSelectedCategory('all');
-                    }}
-                    className="mt-2 text-xs font-bold text-[#006A4E] hover:underline cursor-pointer"
-                  >
-                    {t('সবগুলো দেখুন', 'Reset filters')}
-                  </button>
-                </div>
-              )}
-            </div>
-          );
-        })()}
-
-        {/* 2. Citizen Registration Tab (Supports Phone and Email Registration) */}
-        {tab === 'register' && (
-          <div>
-            {regPendingNotice ? (
-              <div className="space-y-6 animate-fadeIn">
-                <div className="p-6 rounded-2xl bg-amber-50/80 border-2 border-amber-300 text-amber-950 space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md">
-                      <Clock className="w-6 h-6 animate-pulse" />
-                    </div>
-                    <div className="space-y-1 flex-1">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <h2 className="text-xl font-extrabold text-amber-900">
-                          {t('নাগরিক নিবন্ধন সফল — সুপার অ্যাডমিন অনুমোদনের অপেক্ষায়', 'Registration Submitted — Pending Super Admin Approval')}
-                        </h2>
-                        <span className="px-3 py-1 rounded-full text-xs font-mono font-bold bg-amber-200 text-amber-900 border border-amber-300">
-                          PENDING_ADMIN_VERIFICATION
-                        </span>
-                      </div>
-                      <p className="text-xs text-amber-800 leading-relaxed font-medium">
-                        {t(
-                          'আপনার নাগরিক অ্যাকাউন্ট নিবন্ধন তথ্য সিস্টেমে সফলভাবে সংরক্ষিত হয়েছে। ভূমি রেকর্ডের সংবেদনশীলতা ও জাতীয় নিরাপত্তার স্বার্থে সুপার অ্যাডমিন কর্তৃক প্রোফাইল যাচাইকরণের পর অ্যাকাউন্টটি অনুমোদিত হবে।',
-                          'Your registration details have been submitted. Under BhumiShield security policies, citizen profiles require Super Admin verification before full workspace access is unlocked.'
-                        )}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Citizen Registration Summary Card */}
-                  <div className="p-4 rounded-xl bg-white border border-amber-200 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                    <div>
-                      <span className="text-slate-400 block text-[11px] font-bold">{t('পূর্ণ নাম', 'Full Name')}</span>
-                      <span className="font-bold text-slate-800 text-sm">{regPendingNotice.full_name_bn}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block text-[11px] font-bold">{t('ইউজারনেম', 'Username')}</span>
-                      <span className="font-mono font-bold text-emerald-800 text-sm">@{regPendingNotice.username}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block text-[11px] font-bold">{t('নিবন্ধন মাধ্যম', 'Channel')}</span>
-                      <span className="font-bold text-slate-700 capitalize flex items-center gap-1.5 mt-0.5">
-                        {regPendingNotice.registration_channel === 'email' ? <Mail className="w-3.5 h-3.5 text-blue-600" /> : <Phone className="w-3.5 h-3.5 text-emerald-600" />}
-                        {regPendingNotice.registration_channel === 'email' ? t('ইমেইল', 'Email') : t('মোবাইল নম্বর', 'Phone')}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block text-[11px] font-bold">{t('যোগাযোগের তথ্য', 'Contact')}</span>
-                      <span className="font-mono text-slate-700">
-                        {regPendingNotice.registration_channel === 'email' ? regPendingNotice.email : regPendingNotice.phone_dummy}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Flow guidance note */}
-                  <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs flex items-center gap-2.5">
-                    <ShieldCheck className="w-5 h-5 text-emerald-700 shrink-0" />
-                    <span>
-                      {t(
-                        'পরবর্তী ধাপ: সুপার অ্যাডমিন অনুমোদনের পর আপনি লগইন করলে একটি সংক্ষিপ্ত পপ-আপ ফর্মে ছবি, অভিভাবকের নাম ও পূর্ণ ঠিকানা দিয়ে প্রোফাইল সম্পূর্ণ করতে পারবেন এবং তাৎক্ষণিকভাবে সকল নাগরিক সেবা ব্যবহার করতে পারবেন।',
-                        'Next Step: Once the Super Admin verifies your account, log in to complete your profile via a quick modal to unlock all services.'
-                      )}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setVerificationTargetNid(regPendingNotice.nid || '');
-                        setIsVerificationModalOpen(true);
-                      }}
-                      className="px-5 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-sm transition flex items-center gap-1.5"
-                    >
-                      <ShieldCheck className="w-4 h-4 text-emerald-200" />
-                      <span>{t('এনআইডি ও বায়োমেট্রিক এখনই যাচাই করুন', 'Verify NID & Biometrics Now')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setRegPendingNotice(null);
-                        setTab('login');
-                      }}
-                      className="px-5 py-2.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs cursor-pointer shadow-sm transition flex items-center gap-2"
-                    >
-                      <LogIn className="w-4 h-4" />
-                      <span>{t('লগইন স্ক্রিনে যান (Proceed to Sign In)', 'Go to Sign In')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRegPendingNotice(null)}
-                      className="px-4 py-2.5 rounded-lg bg-white border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50 cursor-pointer"
-                    >
-                      {t('অন্য একটি অ্যাকাউন্ট নিবন্ধন করুন', 'Register Another Account')}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={handleRegister} className="space-y-5">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">
-                    {t('নাগরিক অ্যাকাউন্ট নিবন্ধন (মোবাইল বা ইমেইল)', 'Citizen Account Registration (Phone or Email)')}
-                  </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    {t('মোবাইল নম্বর অথবা ইমেইল ঠিকানা দিয়ে নতুন নাগরিক অ্যাকাউন্ট তৈরি করুন', 'Create a new citizen account using either mobile phone number or email address')}
-                  </p>
-                </div>
-
-                {/* Registration Method Switcher */}
-                <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100 rounded-xl border border-slate-200">
-                  <button
-                    type="button"
-                    onClick={() => setRegMethod('phone')}
-                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition ${
-                      regMethod === 'phone'
-                        ? 'bg-[#006A4E] text-white shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-                    }`}
-                  >
-                    <Phone className="w-4 h-4" />
-                    <span>{t('মোবাইল নম্বর দিয়ে নিবন্ধন (Register with Phone)', 'Register with Phone')}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRegMethod('email')}
-                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition ${
-                      regMethod === 'email'
-                        ? 'bg-[#006A4E] text-white shadow-xs'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-                    }`}
-                  >
-                    <Mail className="w-4 h-4" />
-                    <span>{t('ইমেইল ঠিকানা দিয়ে নিবন্ধন (Register with Email)', 'Register with Email')}</span>
-                  </button>
-                </div>
-
-                {/* Account Type Badge */}
-                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs font-semibold flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                    <span>{t('অ্যাকাউন্টের ধরন: সাধারণ নাগরিক (Citizen Account)', 'Account Type: Verified Citizen Account')}</span>
-                  </div>
-                  <span className="text-[11px] font-mono text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-                    Role: citizen
+                <div className="text-center pt-2">
+                  <span className="text-xs text-slate-500">
+                    {t('কোনো অ্যাকাউন্ট নেই? ', "Don't have an account? ")}
                   </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Primary identifier based on method */}
-                  {regMethod === 'phone' ? (
-                    <div>
-                      <label htmlFor="reg-primary-phone" className="block text-xs font-bold text-slate-700 mb-1">
-                        {t('মোবাইল নম্বর (বাধ্যতামূলক):', 'Mobile Phone Number (Required):')} <span className="text-red-600">*</span>
-                      </label>
-                      <input
-                        id="reg-primary-phone"
-                        type="tel"
-                        value={regPhone}
-                        onChange={(e) => setRegPhone(e.target.value)}
-                        placeholder="01700-000999"
-                        className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs placeholder:text-slate-500 focus:border-[#006A4E] focus:ring-1 focus:ring-[#006A4E]"
-                        required
-                      />
-                    </div>
-                  ) : (
-                    <div>
-                      <label htmlFor="reg-primary-email" className="block text-xs font-bold text-slate-700 mb-1">
-                        {t('ইমেইল ঠিকানা (বাধ্যতামূলক):', 'Email Address (Required):')} <span className="text-red-600">*</span>
-                      </label>
-                      <input
-                        id="reg-primary-email"
-                        type="email"
-                        value={regEmail}
-                        onChange={(e) => setRegEmail(e.target.value)}
-                        placeholder="citizen@domain.com"
-                        className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs placeholder:text-slate-500 focus:border-[#006A4E] focus:ring-1 focus:ring-[#006A4E]"
-                        required
-                      />
-                    </div>
-                  )}
-
-                  {/* Secondary optional identifier */}
-                  {regMethod === 'phone' ? (
-                    <div>
-                      <label htmlFor="reg-secondary-email" className="block text-xs font-bold text-slate-700 mb-1">
-                        {t('ইমেইল ঠিকানা (ঐচ্ছিক):', 'Email Address (Optional):')}
-                      </label>
-                      <input
-                        id="reg-secondary-email"
-                        type="email"
-                        value={regEmail}
-                        onChange={(e) => setRegEmail(e.target.value)}
-                        placeholder="name@domain.com"
-                        className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs placeholder:text-slate-500"
-                      />
-                    </div>
-                  ) : (
-                    <div>
-                      <label htmlFor="reg-secondary-phone" className="block text-xs font-bold text-slate-700 mb-1">
-                        {t('মোবাইল নম্বর (ঐচ্ছিক):', 'Phone Number (Optional):')}
-                      </label>
-                      <input
-                        id="reg-secondary-phone"
-                        type="tel"
-                        value={regPhone}
-                        onChange={(e) => setRegPhone(e.target.value)}
-                        placeholder="01700-000999"
-                        className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs placeholder:text-slate-500"
-                      />
-                    </div>
-                  )}
-
-                  <div>
-                    <label htmlFor="reg-username" className="block text-xs font-bold text-slate-700 mb-1">
-                      {t('ইউজারনেম (Username):', 'Username:')}
-                    </label>
-                    <input
-                      id="reg-username"
-                      type="text"
-                      value={regUsername}
-                      onChange={(e) => setRegUsername(e.target.value)}
-                      placeholder={regMethod === 'email' ? 'e.g. saiful_islam (ঐচ্ছিক)' : 'e.g. saiful_islam'}
-                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono placeholder:text-slate-500"
-                    />
-                    <span className="text-[10px] text-slate-400">
-                      {t('খালি রাখলে স্বয়ংক্রিয়ভাবে তৈরি হবে', 'Auto-generated if left empty')}
-                    </span>
-                  </div>
-
-                  <div>
-                    <label htmlFor="reg-password" className="block text-xs font-bold text-slate-700 mb-1">
-                      {t('গোপনীয় পাসওয়ার্ড (Password):', 'Password:')} <span className="text-red-600">*</span>
-                    </label>
-                    <input
-                      id="reg-password"
-                      type="password"
-                      value={regPassword}
-                      onChange={(e) => setRegPassword(e.target.value)}
-                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono placeholder:text-slate-500"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="reg-name-bn" className="block text-xs font-bold text-slate-700 mb-1">
-                      {t('পূর্ণ নাম (বাংলায়):', 'Full Name (Bangla):')} <span className="text-red-600">*</span>
-                    </label>
-                    <input
-                      id="reg-name-bn"
-                      type="text"
-                      value={regNameBn}
-                      onChange={(e) => setRegNameBn(e.target.value)}
-                      placeholder="মোঃ সাইফুল ইসলাম"
-                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs placeholder:text-slate-500"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="reg-name-en" className="block text-xs font-bold text-slate-700 mb-1">
-                      {t('পূর্ণ নাম (ইংরেজিতে):', 'Full Name (English):')}
-                    </label>
-                    <input
-                      id="reg-name-en"
-                      type="text"
-                      value={regNameEn}
-                      onChange={(e) => setRegNameEn(e.target.value)}
-                      placeholder="Md. Saiful Islam"
-                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs placeholder:text-slate-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="reg-nid" className="block text-xs font-bold text-slate-700 mb-1">
-                      {t('জাতীয় পরিচয়পত্র / এনআইডি নম্বর:', 'NID Number:')}
-                    </label>
-                    <input
-                      id="reg-nid"
-                      type="text"
-                      value={regNid}
-                      onChange={(e) => setRegNid(e.target.value)}
-                      placeholder="9900001099"
-                      className="w-full p-2.5 rounded-lg border border-slate-300 font-mono text-xs placeholder:text-slate-500"
-                    />
-                    <span className="text-[10px] text-slate-400">
-                      {t('১০ বা ১৭ ডিজিট (প্রোফাইল সম্পন্নকালেও দেওয়া যাবে)', 'Can also be updated during profile completion')}
-                    </span>
-                  </div>
-
-                  <div>
-                    <label htmlFor="reg-office" className="block text-xs font-bold text-slate-700 mb-1">
-                      {t('ঠিকানা / অবস্থান:', 'Address / Location:')}
-                    </label>
-                    <input
-                      id="reg-office"
-                      type="text"
-                      value={regOffice}
-                      onChange={(e) => setRegOffice(e.target.value)}
-                      placeholder="ঢাকা, বাংলাদেশ"
-                      className="w-full p-2.5 rounded-lg border border-slate-300 text-xs placeholder:text-slate-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-[11px] text-slate-500 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span>
-                    {t(
-                      'নিরাপত্তা নির্দেশিকা: সাধারণ নাগরিক নিবন্ধন ব্যতীত অন্যান্য কর্মকর্তা ও ব্যাংক প্যানেলের আইডি প্রশাসনিকভাবে সুপার অ্যাডমিন কর্তৃক নিয়ন্ত্রিত ও অনুমোদিত হয়।',
-                      'Security Notice: Official and bank panel institutional IDs are provisioned exclusively under Super Admin governance.'
-                    )}
-                  </span>
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="py-3 px-6 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs cursor-pointer shadow-sm transition flex items-center gap-2"
+                  <Button
+                    type="button"
+                    variant="link"
+                    onClick={() => setTab('register')}
+                    className="text-xs font-bold text-[#006A4E] p-0 h-auto"
                   >
-                    <UserPlus className="w-4 h-4" />
-                    <span>{loading ? t('নিবন্ধন প্রক্রিয়াধীন...', 'Registering...') : t('নাগরিক অ্যাকাউন্ট নিবন্ধন করুন', 'Complete Citizen Registration')}</span>
-                  </button>
+                    {t('নাগরিক নিবন্ধন করুন', 'Register as Citizen')}
+                  </Button>
                 </div>
               </form>
             )}
-          </div>
-        )}
 
-        {/* 3. Profile Tab */}
-        {tab === 'profile' && user && (
-          <form onSubmit={handleProfileSave} className="space-y-4">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">
-                {t('প্রোফাইল ও নিরাপত্তা সেটিংস', 'Profile & Security Settings')}
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {t('আপনার ব্যক্তিগত বিবরণ ও পাসওয়ার্ড পরিবর্তন করুন', 'Update personal details and change password')}
-              </p>
-            </div>
+            {/* TAB 2: REGISTER FORM */}
+            {tab === 'register' && (
+              <div className="space-y-4">
+                {regPendingNotice ? (
+                  <div className="p-5 rounded-2xl bg-amber-50/90 border border-amber-300 text-amber-950 space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                        <Clock className="w-5 h-5 animate-pulse" />
+                      </div>
+                      <div className="space-y-1 flex-1">
+                        <h3 className="text-base font-extrabold text-amber-900">
+                          {t('নাগরিক নিবন্ধন সফল — সুপার অ্যাডমিন অনুমোদনের অপেক্ষায়', 'Registration Submitted — Pending Super Admin Approval')}
+                        </h3>
+                        <p className="text-xs text-amber-800 leading-relaxed font-medium">
+                          {t(
+                            'জাতীয় নিরাপত্তার স্বার্থে নাগরিক প্রোফাইল যাচাইকরণের পর অ্যাকাউন্টটি সক্রিয় হবে। তাৎক্ষণিক আনলক করতে এনআইডি ও বায়োমেট্রিক সম্পন্ন করুন।',
+                            'Citizen profiles require verification. You can also complete biometric verification now.'
+                          )}
+                        </p>
+                      </div>
+                    </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t('পূর্ণ নাম (বাংলা):', 'Full Name (Bangla):')}
-                </label>
-                <input
-                  type="text"
-                  value={profNameBn}
-                  onChange={(e) => setProfNameBn(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t('পূর্ণ নাম (ইংরেজি):', 'Full Name (English):')}
-                </label>
-                <input
-                  type="text"
-                  value={profNameEn}
-                  onChange={(e) => setProfNameEn(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t('মোবাইল নম্বর:', 'Phone:')}
-                </label>
-                <input
-                  type="text"
-                  value={profPhone}
-                  onChange={(e) => setProfPhone(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
-                />
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-slate-700">
-                    {t('জাতীয় পরিচয়পত্র (NID):', 'National ID (NID):')}
-                  </label>
-                  {Number(user?.is_identity_verified) === 1 ? (
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                      ✓ {t('যাচাইকৃত', 'Verified')}
-                    </span>
-                  ) : (
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                        ⏳ {t('যাচাই অপেক্ষমাণ', 'Pending Verification')}
-                      </span>
-                      <button
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <Button
                         type="button"
+                        size="sm"
                         onClick={() => {
-                          setVerificationTargetNid(profNid || user?.nid || '');
+                          setVerificationTargetNid(regPendingNotice.nid || '');
                           setIsVerificationModalOpen(true);
                         }}
-                        className="text-[10px] font-bold text-white bg-[#006A4E] hover:bg-emerald-800 px-2 py-0.5 rounded shadow-2xs transition cursor-pointer"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs gap-1.5"
                       >
-                        {t('এখনই যাচাই করুন', 'Verify Now')}
-                      </button>
+                        <ShieldCheck className="w-4 h-4 text-emerald-200" />
+                        <span>{t('এনআইডি ও বায়োমেট্রিক এখনই যাচাই করুন', 'Verify NID & Biometrics Now')}</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          setRegPendingNotice(null);
+                          setTab('login');
+                        }}
+                        className="bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs"
+                      >
+                        {t('লগইন স্ক্রিনে যান', 'Go to Sign In')}
+                      </Button>
                     </div>
-                  )}
-                </div>
-                <input
-                  type="text"
-                  value={profNid}
-                  readOnly={Number(user?.is_identity_verified) === 1}
-                  onChange={(e) => setProfNid(e.target.value)}
-                  placeholder="e.g. 19901234567890123"
-                  className={`w-full p-2.5 rounded-lg border text-xs font-mono ${
-                    Number(user?.is_identity_verified) === 1
-                      ? 'bg-slate-50 border-slate-200 text-slate-600 cursor-not-allowed'
-                      : 'bg-white border-slate-300 text-slate-900 focus:border-[#006A4E]'
-                  }`}
-                />
-                <span className="text-[10px] text-slate-400 mt-0.5 block">
-                  {Number(user?.is_identity_verified) === 1
-                    ? t('যাচাইকৃত পরিচয়পত্র পরিবর্তনের জন্য হেল্পলাইনে যোগাযোগ করুন।', 'Contact helpline to correct verified identity.')
-                    : t('১০ বা ১৭ ডিজিটের এনআইডি দিন (অ্যাডমিন অনুমোদনের পর ভেরিফাইড হবে)।', 'Enter 10 or 17-digit NID (will be verified by admin).')}
-                </span>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t('অফিস / ঠিকানা:', 'Office / Location:')}
-                </label>
-                <input
-                  type="text"
-                  value={profOffice}
-                  readOnly={user?.role !== 'admin'}
-                  onChange={(e) => setProfOffice(e.target.value)}
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold" htmlFor="profile-current-password">{t('বর্তমান পাসওয়ার্ড (পরিবর্তনের জন্য)', 'Current Password (to change password)')}</label>
-                <input id="profile-current-password" type="password" autoComplete="current-password" className="field" value={profCurrentPass} onChange={(e) => setProfCurrentPass(e.target.value)} />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  {t('নতুন পাসওয়ার্ড (ঐচ্ছিক):', 'New Password (Optional):')}
-                </label>
-                <input
-                  type="password"
-                  autoComplete="new-password"
-                  value={profNewPass}
-                  onChange={(e) => setProfNewPass(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full p-2.5 rounded-lg border border-slate-300 text-xs font-mono"
-                />
-              </div>
-            </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleRegister} className="space-y-4">
+                    {/* Method Switcher */}
+                    <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
+                      <Button
+                        type="button"
+                        variant={regMethod === 'phone' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setRegMethod('phone')}
+                        className={`font-bold text-xs gap-1.5 ${
+                          regMethod === 'phone'
+                            ? 'bg-[#006A4E] text-white hover:bg-[#00523C]'
+                            : 'text-slate-600 hover:bg-slate-200/70'
+                        }`}
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                        <span>{t('মোবাইল নম্বর', 'Mobile Number')}</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={regMethod === 'email' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setRegMethod('email')}
+                        className={`font-bold text-xs gap-1.5 ${
+                          regMethod === 'email'
+                            ? 'bg-[#006A4E] text-white hover:bg-[#00523C]'
+                            : 'text-slate-600 hover:bg-slate-200/70'
+                        }`}
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                        <span>{t('ইমেইল ঠিকানা', 'Email Address')}</span>
+                      </Button>
+                    </div>
 
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-5 py-2.5 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs cursor-pointer shadow-xs transition"
-              >
-                {t('প্রোফাইল সংরক্ষণ করুন', 'Save Profile')}
-              </button>
-            </div>
-          </form>
-        )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs font-bold text-slate-700">{t('পূর্ণ নাম (বাংলা)', 'Full Name (Bangla)')}</Label>
+                        <Input
+                          value={regNameBn}
+                          onChange={(e) => setRegNameBn(e.target.value)}
+                          placeholder={t('যেমন: মো. রফিকুল ইসলাম', 'e.g. Md. Rafiqul Islam')}
+                          className="h-10 text-xs rounded-xl"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs font-bold text-slate-700">{t('পূর্ণ নাম (English)', 'Full Name (English)')}</Label>
+                        <Input
+                          value={regNameEn}
+                          onChange={(e) => setRegNameEn(e.target.value)}
+                          placeholder="e.g. Md. Rafiqul Islam"
+                          className="h-10 text-xs rounded-xl"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs font-bold text-slate-700">{t('পছন্দের ইউজারনেম', 'Desired Username')}</Label>
+                        <Input
+                          value={regUsername}
+                          onChange={(e) => setRegUsername(e.target.value)}
+                          placeholder="e.g. rafiqul26"
+                          className="h-10 text-xs font-mono rounded-xl"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs font-bold text-slate-700">{t('জাতীয় পরিচয়পত্র নম্বর (NID)', 'NID Number')}</Label>
+                        <Input
+                          value={regNid}
+                          onChange={(e) => setRegNid(e.target.value)}
+                          placeholder={t('১০ বা ১৭ ডিজিটের এনআইডি', '10 or 17 digit NID')}
+                          className="h-10 text-xs font-mono rounded-xl"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {regMethod === 'phone' ? (
+                      <div className="space-y-1">
+                        <Label className="text-xs font-bold text-slate-700">{t('সক্রিয় মোবাইল নম্বর', 'Active Mobile Number')}</Label>
+                        <Input
+                          value={regPhone}
+                          onChange={(e) => setRegPhone(e.target.value)}
+                          placeholder="01700-000000"
+                          className="h-10 text-xs font-mono rounded-xl"
+                          required
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <Label className="text-xs font-bold text-slate-700">{t('সক্রিয় ইমেইল ঠিকানা', 'Active Email Address')}</Label>
+                        <Input
+                          type="email"
+                          value={regEmail}
+                          onChange={(e) => setRegEmail(e.target.value)}
+                          placeholder="name@example.com"
+                          className="h-10 text-xs font-mono rounded-xl"
+                          required
+                        />
+                      </div>
+                    )}
+
+                    <div className="space-y-1">
+                      <Label className="text-xs font-bold text-slate-700">{t('গোপনীয় পাসওয়ার্ড', 'Set Password')}</Label>
+                      <Input
+                        type="password"
+                        value={regPassword}
+                        onChange={(e) => setRegPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="h-10 text-xs font-mono rounded-xl"
+                        required
+                      />
+                    </div>
+
+                    <Button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full h-11 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-sm shadow-md"
+                    >
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      <span>{loading ? t('নিবন্ধন হচ্ছে...', 'Submitting...') : t('নাগরিক অ্যাকাউন্ট তৈরি করুন', 'Create Citizen Account')}</span>
+                    </Button>
+                  </form>
+                )}
+              </div>
+            )}
+
+            {/* TAB 3: PROFILE FORM */}
+            {tab === 'profile' && user && (
+              <form onSubmit={handleProfileSave} className="space-y-4">
+                <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold text-emerald-950">{user.full_name_bn || user.name}</div>
+                    <div className="text-[11px] text-emerald-800 font-mono">Role: {user.role} | Office: {user.office_name}</div>
+                  </div>
+                  <Badge className="bg-emerald-600 text-white text-xs">{t('সক্রিয়', 'Active')}</Badge>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-bold text-slate-700">{t('নাম (বাংলা)', 'Name (Bangla)')}</Label>
+                    <Input value={profNameBn} onChange={(e) => setProfNameBn(e.target.value)} className="h-10 text-xs rounded-xl" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-bold text-slate-700">{t('নাম (English)', 'Name (English)')}</Label>
+                    <Input value={profNameEn} onChange={(e) => setProfNameEn(e.target.value)} className="h-10 text-xs rounded-xl" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-bold text-slate-700">{t('মোবাইল নম্বর', 'Phone')}</Label>
+                    <Input value={profPhone} onChange={(e) => setProfPhone(e.target.value)} className="h-10 text-xs font-mono rounded-xl" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-bold text-slate-700">{t('এনআইডি', 'NID')}</Label>
+                    <Input value={profNid} onChange={(e) => setProfNid(e.target.value)} className="h-10 text-xs font-mono rounded-xl" />
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full h-10 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs"
+                  >
+                    <span>{loading ? t('সংরক্ষণ হচ্ছে...', 'Saving...') : t('প্রোফাইল আপডেট করুন', 'Save Profile')}</span>
+                  </Button>
+                </div>
+              </form>
+            )}
+
+          </div>
+
+          {/* Clean Expandable Demo Credentials Directory (22+ Roles) */}
+          <div className="mt-6 pt-5 border-t border-slate-100">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="demo-directory" className="border-none">
+                <AccordionTrigger className="text-xs font-bold text-slate-700 hover:text-slate-900 py-2 hover:no-underline">
+                  <div className="flex items-center gap-2">
+                    <KeyRound className="w-4 h-4 text-[#006A4E]" />
+                    <span>{t('সকল ২২টি প্রাতিষ্ঠানিক ও নাগরিক ডেমো ভূমিকা (Demo Directory)', 'All 22+ Demo Roles Directory')}</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-2 pb-0 space-y-3">
+                  {/* Category Filter Chips */}
+                  <div className="flex flex-wrap gap-1.5 pb-1">
+                    {[
+                      { id: 'all', bn: 'সব ভূমিকা (২২)', en: 'All Roles (22)' },
+                      { id: 'citizen', bn: 'নাগরিক ও সেবা', en: 'Citizen' },
+                      { id: 'registry', bn: 'সাব-রেজিস্ট্রি', en: 'Registry' },
+                      { id: 'acland', bn: 'এসি ল্যান্ড ও রাজস্ব', en: 'AC Land' },
+                      { id: 'bank', bn: 'ব্যাংক ও বন্ধক', en: 'Bank' },
+                      { id: 'admin', bn: 'প্রশাসন ও অডিট', en: 'Admin' },
+                      { id: 'specialist', bn: 'আদালত ও স্পেশালিস্ট', en: 'Legal' },
+                    ].map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setSelectedCategory(cat.id)}
+                        className={`px-2 py-1 rounded-lg text-[10px] font-bold transition ${
+                          selectedCategory === cat.id
+                            ? 'bg-[#006A4E] text-white'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                        }`}
+                      >
+                        {lang === 'bn' ? cat.bn : cat.en}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Search Input */}
+                  <div className="relative">
+                    <Input
+                      value={credSearch}
+                      onChange={(e) => setCredSearch(e.target.value)}
+                      placeholder={t('নাম বা পদবি দিয়ে খুঁজুন...', 'Search demo accounts...')}
+                      className="h-8 text-xs pl-8 rounded-lg"
+                    />
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+
+                  {/* Credentials List (Compact) */}
+                  <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1">
+                    {DEMO_CREDENTIALS.filter((c) => {
+                      const matchCat = selectedCategory === 'all' || c.category === selectedCategory;
+                      const q = credSearch.trim().toLowerCase();
+                      if (!q) return matchCat;
+                      return (
+                        matchCat &&
+                        (c.username.toLowerCase().includes(q) ||
+                          c.roleNameBn.toLowerCase().includes(q) ||
+                          c.nameBn.toLowerCase().includes(q) ||
+                          c.roleNameEn.toLowerCase().includes(q))
+                      );
+                    }).map((cred) => (
+                      <div
+                        key={cred.username}
+                        className="p-2 rounded-xl border border-slate-200/80 bg-slate-50/60 hover:bg-slate-50 flex items-center justify-between gap-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold text-slate-900 truncate">
+                              {lang === 'bn' ? cred.nameBn : cred.nameEn}
+                            </span>
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-slate-300">
+                              @{cred.username}
+                            </Badge>
+                          </div>
+                          <div className="text-[10px] text-slate-500 truncate">
+                            {lang === 'bn' ? cred.roleNameBn : cred.roleNameEn} · {cred.officeBn}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => fillAndCopy(cred, false)}
+                            className="h-6 px-2 text-[10px] font-bold border-slate-300"
+                          >
+                            {t('পূরণ', 'Fill')}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => fillAndCopy(cred, true)}
+                            className="h-6 px-2 text-[10px] font-bold bg-[#006A4E] hover:bg-[#00553e] text-white"
+                          >
+                            {t('লগইন', 'Login')}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
+
+        </div>
+
       </div>
 
-      {/* NID Porichoy Verification Modal */}
-      <CitizenVerificationModal
-        isOpen={isVerificationModalOpen}
-        initialNid={verificationTargetNid || profNid || user?.nid || ''}
-        onClose={() => setIsVerificationModalOpen(false)}
-        onSuccess={() => {
-          if (user) {
-            setUser({
-              ...user,
-              is_identity_verified: 1,
-              nid: verificationTargetNid || profNid || user.nid,
-            });
-            setProfNid(verificationTargetNid || profNid || user.nid || '');
-          }
-          setSuccessMsg(t('এনআইডি ও বায়োমেট্রিক পরিচয় সফলভাবে নিশ্চিত করা হয়েছে!', 'NID & Biometrics verified successfully!'));
-        }}
-      />
+      {/* Citizen Verification Modal */}
+      {isVerificationModalOpen && (
+        <CitizenVerificationModal
+          isOpen={isVerificationModalOpen}
+          onClose={() => setIsVerificationModalOpen(false)}
+          initialNid={verificationTargetNid}
+          onSuccess={() => {
+            setIsVerificationModalOpen(false);
+            setSuccessMsg(t('নাগরিক পরিচয় সফলভাবে বায়োমেট্রিক দ্বারা নিশ্চিত হয়েছে!', 'Identity verified with biometrics!'));
+          }}
+        />
+      )}
     </div>
   );
 };

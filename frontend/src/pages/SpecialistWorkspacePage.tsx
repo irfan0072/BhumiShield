@@ -23,20 +23,46 @@ import {
 import { useAppUI } from '../i18n';
 import { BhumiApi } from '../api/client';
 import { toBanglaDigits, maskNid, maskPhone } from '../theme/tokens';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { SpecialistAcquisitionDashboard } from '@/components/officials/SpecialistAcquisitionDashboard';
 
-interface SpecialistWorkspacePageProps {
+export interface SpecialistWorkspacePageProps {
+  currentSubPage?: string;
+  onNavigateSubPage?: (page: string) => void;
   onNavigate?: (tab: string) => void;
 }
 
-export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = ({ onNavigate }) => {
+export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = ({ currentSubPage, onNavigateSubPage, onNavigate }) => {
   const { lang, t, role, user, activeSubTab, setActiveSubTab } = useAppUI();
   const isDcRole = role === 'dc_acquisition_officer';
   const isLawyerRole = role === 'lawyer_court_user';
 
   const [subTab, setSubTab] = useState<string>(() => {
+    if (currentSubPage) return currentSubPage;
     if (activeSubTab) return activeSubTab;
-    return isDcRole ? 'la_cases' : 'title_scrutiny';
+    return 'overview';
   });
+
+  useEffect(() => {
+    if (currentSubPage && currentSubPage !== subTab) {
+      setSubTab(currentSubPage);
+    }
+  }, [currentSubPage]);
 
   useEffect(() => {
     if (activeSubTab) {
@@ -179,13 +205,13 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
       return [
         {
           id: 'la_cases',
-          label: t('ভূমি অধিগ্রহণ কেস ও গেজেট', 'LA Cases & Gazettes'),
+          label: t('অধিগ্রহণ কেস', 'LA Cases'),
           icon: <Building2 className="w-4 h-4" />,
           count: toBanglaDigits(acquisitions.length, lang),
         },
         {
           id: 'plot_lookup',
-          label: t('দাগ ও অধিগ্রহণ প্লট অ্যাকশন', 'Plot & Acquisition Action'),
+          label: t('দাগ তল্লাশি', 'Plot Search'),
           icon: <Search className="w-4 h-4" />,
           count: toBanglaDigits(filteredPlots.length, lang),
         },
@@ -195,13 +221,13 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
       return [
         {
           id: 'title_scrutiny',
-          label: t('টাইটেল ও খতিয়ান স্ক্রুটিনি', 'Title Scrutiny & Injunctions'),
+          label: t('টাইটেল যাচাই', 'Title Scrutiny'),
           icon: <Scale className="w-4 h-4" />,
           count: toBanglaDigits(filteredPlots.length, lang),
         },
         {
           id: 'disputes',
-          label: t('আদালত আদেশ ও বিরোধ ট্রাইব্যুনাল', 'Disputes & Injunctions Docket'),
+          label: t('আদালত আদেশ', 'Court Orders'),
           icon: <FileSpreadsheet className="w-4 h-4" />,
           count: toBanglaDigits(disputes.length, lang),
         },
@@ -211,19 +237,19 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
     return [
       {
         id: 'la_cases',
-        label: t('ভূমি অধিগ্রহণ কেস ও গেজেট', 'LA Cases & Gazettes'),
+        label: t('অধিগ্রহণ কেস', 'LA Cases'),
         icon: <Building2 className="w-4 h-4" />,
         count: toBanglaDigits(acquisitions.length, lang),
       },
       {
         id: 'disputes',
-        label: t('আদালত আদেশ ও বিরোধ ট্রাইব্যুনাল', 'Disputes & Injunctions Docket'),
+        label: t('আদালত আদেশ', 'Court Orders'),
         icon: <FileSpreadsheet className="w-4 h-4" />,
         count: toBanglaDigits(disputes.length, lang),
       },
       {
         id: 'plot_lookup',
-        label: t('দাগ ও স্বত্ব বিশ্লেষণ', 'Plot & Title Docket'),
+        label: t('দাগ তল্লাশি', 'Plot Search'),
         icon: <Search className="w-4 h-4" />,
         count: toBanglaDigits(filteredPlots.length, lang),
       },
@@ -242,27 +268,27 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                 {isDcRole
-                  ? t('জেলা প্রশাসক কার্যালয় — ভূমি অধিগ্রহণ (LA) শাখা', 'DC Office — Land Acquisition (LA) Division')
-                  : t('দেওয়ানি আদালত ও লিগ্যাল কাউন্সেল পোর্টাল', 'Civil Court & Legal Counsel Title Desk')}
+                  ? t('ভূমি অধিগ্রহণ শাখা', 'Land Acquisition Wing')
+                  : t('দেওয়ানি আদালত পোর্টাল', 'Civil Court Portal')}
               </h1>
               <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#006A4E] text-[11px] font-bold">
-                {isDcRole ? t('সরকারি অধিক্ষেত্র', 'Official Jurisdiction') : t('আইনি যাচাই', 'Legal Scrutiny')}
+                {isDcRole ? t('জেলা প্রশাসন', 'DC Office') : t('আইনি যাচাই', 'Legal Scrutiny')}
               </span>
               {!isDcRole && (
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#006A4E] text-[11px] font-bold border border-emerald-300 flex items-center gap-1">
-                  ✓ {t('বাংলাদেশ বার কাউন্সিল সনদপ্রাপ্ত প্যানেল আইনজীবী', 'Bar Council Verified Advocate')}
+                  ✓ {t('বার কাউন্সিল সনদপ্রাপ্ত', 'Bar Council Certified')}
                 </span>
               )}
             </div>
             <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
               {isDcRole
                 ? t(
-                    'সরকারি উন্নয়ন প্রকল্প ও জাতীয় অবকাঠামোতে ভূমি অধিগ্রহণ (LA কেস), ধারা ৪/৭/৮ গেজেট ও ক্ষতিপূরণ ব্যবস্থাপনা।',
-                    'Public infrastructure land acquisition cases (LA cases), section 4/7/8 gazette notifications and compensation oversight.'
+                    'অবকাঠামো প্রকল্পের ভূমি অধিগ্রহণ, গেজেট ও ক্ষতিপূরণ ব্যবস্থাপনা।',
+                    'Public infrastructure land acquisition, gazettes, and compensation.'
                   )
                 : t(
-                    'দেওয়ানি আদালতের স্বত্ব মামলা, স্থিতাবস্থা আদেশ, নিষেধাজ্ঞা এবং ৩০ বছরের মালিকানা পরম্পরা যাচাই।',
-                    'Civil title litigation scrutiny, injunction recording, and 30-year khatian title chain analysis.'
+                    'দেওয়ানি আদালতের মামলা, নিষেধাজ্ঞা ও মালিকানা যাচাই।',
+                    'Civil court suits, injunctions, and ownership verification.'
                   )}
             </p>
           </div>
@@ -276,28 +302,37 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
           </div>
           {onNavigate && (
             <>
-              <button
+              <Button
+                variant="outline"
                 type="button"
                 onClick={() => onNavigate('map')}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
+                className="border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold gap-1.5"
               >
                 <Compass className="w-4 h-4 text-emerald-700" />
                 <span>{t('ক্যাডাস্ট্রাল ম্যাপ', 'Cadastral Map')}</span>
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={() => onNavigate('check')}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                className="bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold gap-1.5 shadow-xs"
               >
                 <Search className="w-4 h-4" />
                 <span>{t('টাইটেল ভেরিফাই', 'Verify Title')}</span>
-              </button>
+              </Button>
             </>
           )}
         </div>
       </div>
 
-      {/* Operational KPI Cards */}
+      {/* Executive shadcn DC Land Acquisition Dashboard Tab */}
+      {subTab === 'overview' && (
+        <SpecialistAcquisitionDashboard
+          onNavigateTab={handleSubTabChange}
+        />
+      )}
+
+      {/* Operational KPI Cards (Shown on LA Cases Overview Page) */}
+      {subTab === 'la_cases' && (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-between">
           <div>
@@ -360,42 +395,7 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
         </div>
       </div>
 
-      {/* Redesigned Sleek Segmented Control Tab Navigation */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-2 shadow-xs">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-          {tabList.map((tab) => {
-            const isActive = subTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => handleSubTabChange(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 cursor-pointer ${
-                  isActive
-                    ? 'bg-[#006A4E] text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                }`}
-              >
-                <span className={isActive ? 'text-white' : 'text-slate-400'}>
-                  {tab.icon}
-                </span>
-                <span>{tab.label}</span>
-                {tab.count !== undefined && (
-                  <span
-                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                      isActive
-                        ? 'bg-white/20 text-white'
-                        : 'bg-slate-200/80 text-slate-700'
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      )}
 
       {/* Land Acquisition Cases & Gazettes Table */}
       {subTab === 'la_cases' && (
@@ -410,48 +410,48 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
                 {t('জাতীয় উন্নয়ন অবকাঠামো ও সরকারি অধিগ্রহণ প্রকল্পের ধারা ৪/৭/৮ তালিকা:', 'National infrastructure acquisition cases and gazette notices:')}
               </p>
             </div>
-            <button
+            <Button
               type="button"
               onClick={() => handleSubTabChange('plot_lookup')}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto"
+              className="bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold gap-1.5 self-start sm:self-auto shadow-xs"
             >
               <PlusCircle className="w-4 h-4" />
               <span>{t('নতুন অধিগ্রহণ নোটিশ জারি করুন', 'Issue New LA Notice')}</span>
-            </button>
+            </Button>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-slate-50/80 text-slate-700 font-bold border-b border-slate-200">
-                <tr>
-                  <th className="py-3 px-4">{t('গেজেট ও কেস আইডি', 'Gazette / Case ID')}</th>
-                  <th className="py-3 px-4">{t('প্রকল্পের নাম ও সংস্থা', 'Project & Agency')}</th>
-                  <th className="py-3 px-4">{t('আইনি ধারা', 'Legal Section')}</th>
-                  <th className="py-3 px-4">{t('অধিক্ষেত্র', 'Jurisdiction')}</th>
-                  <th className="py-3 px-4">{t('অধিগ্রহণকৃত জমি', 'Acquired Land')}</th>
-                  <th className="py-3 px-4 text-right">{t('অ্যাকশন', 'Actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+          <div className="rounded-xl border border-slate-200 overflow-auto max-h-[calc(100vh-280px)] min-h-[300px] scrollbar-thin bg-white">
+            <Table>
+              <TableHeader className="bg-slate-50/80">
+                <TableRow>
+                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('গেজেট ও কেস আইডি', 'Gazette / Case ID')}</TableHead>
+                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('প্রকল্পের নাম ও সংস্থা', 'Project & Agency')}</TableHead>
+                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('আইনি ধারা', 'Legal Section')}</TableHead>
+                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('অধিক্ষেত্র', 'Jurisdiction')}</TableHead>
+                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('অধিগ্রহণকৃত জমি', 'Acquired Land')}</TableHead>
+                  <TableHead className="py-3 px-4 text-right font-bold text-slate-700">{t('অ্যাকশন', 'Actions')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {acquisitions.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400">
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-8 text-center text-slate-400">
                       {t('কোনো অধিগ্রহণ রেকর্ড পাওয়া যায়নি।', 'No land acquisition records found.')}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   acquisitions.map((acq) => (
-                    <tr key={acq.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                    <TableRow key={acq.id} className="hover:bg-slate-50/80 transition-colors">
+                      <TableCell className="py-3 px-4 font-mono font-bold text-slate-900">
                         <div>{acq.gazette_no || `LA-${acq.id}`}</div>
                         <span className="text-[10px] text-emerald-700 font-sans">{t('গেজেট নথিভুক্ত', 'Gazette Persisted')}</span>
-                      </td>
-                      <td className="py-3 px-4">
+                      </TableCell>
+                      <TableCell className="py-3 px-4">
                         <div className="font-bold text-slate-900">{lang === 'bn' ? acq.project_name_bn : (acq.project_name_en || acq.project_name_bn)}</div>
                         <div className="text-[10px] text-slate-500">{acq.acquiring_agency_bn || 'জেলা প্রশাসন এলএ শাখা'}</div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      </TableCell>
+                      <TableCell className="py-3 px-4">
+                        <Badge className={`text-[10px] font-bold ${
                           acq.section_type === 'SECTION_8'
                             ? 'bg-rose-100 text-rose-800'
                             : acq.section_type === 'SECTION_7'
@@ -463,16 +463,18 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
                             : acq.section_type === 'SECTION_7'
                             ? t('ধারা ৭ (আপত্তি শুনানি)', 'Section 7 (Hearing)')
                             : t('ধারা ৪ (প্রাথমিক)', 'Section 4 (Notice)')}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-slate-600">
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-3 px-4 text-slate-600">
                         {acq.mouza_bn ? `${acq.mouza_bn}, ` : ''}{acq.upazila_bn || 'সাভার'}, {acq.district_bn || 'ঢাকা'}
-                      </td>
-                      <td className="py-3 px-4 font-bold text-[#006A4E]">
+                      </TableCell>
+                      <TableCell className="py-3 px-4 font-bold text-[#006A4E]">
                         {toBanglaDigits(acq.total_land_decimal || '০', lang)} {t('শতক', 'dec')}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <button
+                      </TableCell>
+                      <TableCell className="py-3 px-4 text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
                           type="button"
                           onClick={() => {
                             if (acq.plot_ids && acq.plot_ids.length > 0) {
@@ -481,16 +483,16 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
                             }
                             handleSubTabChange('plot_lookup');
                           }}
-                          className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 text-[#006A4E] font-bold text-xs transition cursor-pointer"
+                          className="h-7 text-xs border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 text-[#006A4E] font-bold"
                         >
                           {t('দাগ ও বিবরণ →', 'Inspect Plot →')}
-                        </button>
-                      </td>
-                    </tr>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </div>
       )}
@@ -508,63 +510,63 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
                 {t('দেওয়ানি আদালত কর্তৃক ইস্যুকৃত অন্তর্বর্তীকালীন স্থগিতাদেশ ও স্বত্ব মোকদ্দমা তালিকা:', 'Civil court temporary injunctions and title litigation decrees:')}
               </p>
             </div>
-            <button
+            <Button
               type="button"
               onClick={() => handleSubTabChange(isLawyerRole ? 'title_scrutiny' : 'plot_lookup')}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto"
+              className="bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold gap-1.5 self-start sm:self-auto shadow-xs"
             >
               <PlusCircle className="w-4 h-4" />
               <span>{t('নতুন আদালতের আদেশ দাখিল', 'Log Court Order')}</span>
-            </button>
+            </Button>
           </div>
 
-          <div className="overflow-x-auto rounded-xl border border-slate-200">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-slate-50/80 text-slate-700 font-bold border-b border-slate-200">
-                <tr>
-                  <th className="py-3 px-4">{t('কেস / বিরোধ আইডি', 'Case / Dispute ID')}</th>
-                  <th className="py-3 px-4">{t('বিরোধের ধরন', 'Dispute Type')}</th>
-                  <th className="py-3 px-4">{t('আদালত আদেশ ও বিবরণ', 'Court Order & Details')}</th>
-                  <th className="py-3 px-4">{t('আবেদনকারী / আইনজীবী', 'Complainant / Lawyer')}</th>
-                  <th className="py-3 px-4">{t('স্ট্যাটাস', 'Status')}</th>
-                  <th className="py-3 px-4 text-right">{t('অ্যাকশন', 'Actions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+          <div className="rounded-xl border border-slate-200 overflow-auto max-h-[calc(100vh-280px)] min-h-[300px] scrollbar-thin bg-white">
+            <Table>
+              <TableHeader className="bg-slate-50/80">
+                <TableRow>
+                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('কেস / বিরোধ আইডি', 'Case / Dispute ID')}</TableHead>
+                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('বিরোধের ধরন', 'Dispute Type')}</TableHead>
+                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('আদালত আদেশ ও বিবরণ', 'Court Order & Details')}</TableHead>
+                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('আবেদনকারী / আইনজীবী', 'Complainant / Lawyer')}</TableHead>
+                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('স্ট্যাটাস', 'Status')}</TableHead>
+                  <TableHead className="py-3 px-4 text-right font-bold text-slate-700">{t('অ্যাকশন', 'Actions')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {disputes.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-400">
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-8 text-center text-slate-400">
                       {t('কোনো আদালতের মামলা বা বিরোধ রেকর্ড পাওয়া যায়নি।', 'No court dispute records found.')}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   disputes.map((disp) => (
-                    <tr key={disp.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-slate-900">
+                    <TableRow key={disp.id} className="hover:bg-slate-50/80 transition-colors">
+                      <TableCell className="py-3 px-4 font-mono font-bold text-slate-900">
                         #{disp.id}
                         <div className="text-[10px] text-slate-500 font-sans">
                           {t('দাগ নং', 'Plot')} {disp.plot_id}
                         </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      </TableCell>
+                      <TableCell className="py-3 px-4">
+                        <Badge className={`text-[10px] font-bold ${
                           disp.dispute_type === 'INJUNCTION'
-                            ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                            ? 'bg-rose-100 text-rose-800 border-rose-200'
                             : disp.dispute_type === 'TITLE_SUIT'
-                            ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                            : 'bg-blue-100 text-blue-800 border border-blue-200'
+                            ? 'bg-amber-100 text-amber-800 border-amber-200'
+                            : 'bg-blue-100 text-blue-800 border-blue-200'
                         }`}>
                           {disp.dispute_type === 'INJUNCTION'
                             ? t('স্থগিতাদেশ (Injunction)', 'Injunction')
                             : disp.dispute_type === 'TITLE_SUIT'
                             ? t('স্বত্ব মামলা (Title Suit)', 'Title Suit')
                             : t('সীমানা বিরোধ', 'Boundary Dispute')}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-slate-700 max-w-xs truncate">
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-3 px-4 text-slate-700 max-w-xs truncate">
                         {disp.description_bn || t('আদালতের অন্তর্বর্তীকালীন স্থগিতাদেশ', 'Court Injunction Decree')}
-                      </td>
-                      <td className="py-3 px-4 text-slate-600 font-medium">
+                      </TableCell>
+                      <TableCell className="py-3 px-4 text-slate-600 font-medium">
                         <div className="font-semibold text-slate-800">{disp.complainant_name_bn || disp.plaintiff_name || t('বিজ্ঞ আইনজীবী', 'Advocate')}</div>
                         {(disp.complainant_nid || disp.plaintiff_nid) && (
                           <div className="text-[10px] font-mono text-slate-500 mt-0.5">
@@ -576,34 +578,36 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
                             মোবাইল: {maskPhone(disp.phone || disp.complainant_phone, lang)}
                           </div>
                         )}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      </TableCell>
+                      <TableCell className="py-3 px-4">
+                        <Badge className={`text-[10px] font-bold ${
                           disp.status === 'RESOLVED'
                             ? 'bg-emerald-100 text-emerald-800'
                             : 'bg-amber-100 text-amber-800'
                         }`}>
                           {disp.status === 'RESOLVED' ? t('নিষ্পত্তিকৃত', 'Resolved') : t('বিচারাধীন', 'Pending')}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <button
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="py-3 px-4 text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
                           type="button"
                           onClick={() => {
                             const found = plots.find((p) => p.id === disp.plot_id);
                             if (found) setSelectedPlot(found);
                             handleSubTabChange(isLawyerRole ? 'title_scrutiny' : 'plot_lookup');
                           }}
-                          className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 text-[#006A4E] font-bold text-xs transition cursor-pointer"
+                          className="h-7 text-xs border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 text-[#006A4E] font-bold"
                         >
                           {t('নথি পরীক্ষা →', 'Inspect Docket →')}
-                        </button>
-                      </td>
-                    </tr>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </div>
       )}
@@ -624,53 +628,85 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
           </div>
 
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 z-10" />
+            <Input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('দাগ নং, কোড বা মৌজা দিয়ে খুঁজুন...', 'Search dag no, code, mouza...')}
-              className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 bg-white text-xs text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              className="pl-9 h-10 text-xs"
             />
           </div>
 
-          <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-            {loading ? (
-              <div className="py-8 text-center text-xs text-slate-400">{t('তথ্য লোড হচ্ছে...', 'Loading data...')}</div>
-            ) : filteredPlots.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-400">{t('কোনো ফলাফল পাওয়া যায়নি', 'No plots found')}</div>
-            ) : (
-              filteredPlots.map((plot) => {
-                const isSelected = selectedPlot && selectedPlot.id === plot.id;
-                return (
-                  <button
-                    key={plot.id}
-                    type="button"
-                    onClick={() => setSelectedPlot(plot)}
-                    className={`w-full p-3 rounded-xl border text-left transition cursor-pointer ${
-                      isSelected
-                        ? 'bg-emerald-50/70 border-emerald-300 ring-2 ring-emerald-500/20'
-                        : 'bg-slate-50/50 border-slate-200 hover:bg-slate-100/70'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-slate-900">
-                        {t(`দাগ নং ${toBanglaDigits(plot.dag_no_bn || plot.dag_no, lang)}`, `Dag ${plot.dag_no}`)}
-                      </span>
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600">
-                        {plot.plot_code}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-[11px] text-slate-500 mt-1">
-                      <span>{plot.mouza_bn || plot.mouza_en || 'বীরুলিয়া'}</span>
-                      <span className="font-semibold text-emerald-800">
-                        {toBanglaDigits(plot.total_area_decimal || '০', lang)} {t('শতক', 'dec')}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })
-            )}
+          <div className="rounded-xl border border-slate-200 overflow-hidden bg-white max-h-96 overflow-y-auto">
+            <Table>
+              <TableHeader className="bg-slate-50/90 sticky top-0 z-10">
+                <TableRow>
+                  <TableHead className="py-2 px-3 text-[11px] font-bold text-slate-700">{t('দাগ নং', 'Dag No')}</TableHead>
+                  <TableHead className="py-2 px-3 text-[11px] font-bold text-slate-700">{t('মৌজা', 'Mouza')}</TableHead>
+                  <TableHead className="py-2 px-3 text-[11px] font-bold text-slate-700">{t('পরিমাণ', 'Area')}</TableHead>
+                  <TableHead className="py-2 px-2 text-right text-[11px] font-bold text-slate-700"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-8 text-center text-xs text-slate-400">
+                      {t('তথ্য লোড হচ্ছে...', 'Loading data...')}
+                    </TableCell>
+                  </TableRow>
+                ) : filteredPlots.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-8 text-center text-xs text-slate-400">
+                      {t('কোনো ফলাফল পাওয়া যায়নি', 'No plots found')}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredPlots.map((plot) => {
+                    const isSelected = selectedPlot && selectedPlot.id === plot.id;
+                    return (
+                      <TableRow
+                        key={plot.id}
+                        onClick={() => setSelectedPlot(plot)}
+                        className={`cursor-pointer transition-colors ${
+                          isSelected
+                            ? 'bg-emerald-50/80 font-bold border-l-4 border-l-[#006A4E]'
+                            : 'hover:bg-slate-50/80'
+                        }`}
+                      >
+                        <TableCell className="py-2.5 px-3">
+                          <div className="font-bold text-slate-900 text-xs">
+                            {toBanglaDigits(plot.dag_no_bn || plot.dag_no, lang)}
+                          </div>
+                          <div className="text-[10px] font-mono text-slate-500">{plot.plot_code}</div>
+                        </TableCell>
+                        <TableCell className="py-2.5 px-3 text-xs text-slate-600">
+                          {plot.mouza_bn || plot.mouza_en || 'বীরুলিয়া'}
+                        </TableCell>
+                        <TableCell className="py-2.5 px-3 text-xs font-semibold text-emerald-800">
+                          {toBanglaDigits(plot.total_area_decimal || '০', lang)} {t('শতক', 'dec')}
+                        </TableCell>
+                        <TableCell className="py-2.5 px-2 text-right">
+                          {isSelected ? (
+                            <Badge className="bg-[#006A4E] text-white text-[9px] px-1.5 py-0.5">
+                              ✓ {t('নির্বাচিত', 'Selected')}
+                            </Badge>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-1.5 text-[10px] text-slate-500 hover:text-slate-900"
+                            >
+                              {t('বাছাই', 'Select')}
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
           </div>
         </div>
 
@@ -768,63 +804,64 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
                   <div className="space-y-2.5 pt-1">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       <div>
-                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        <Label className="block text-[11px] font-semibold text-slate-600 mb-1">
                           {t('প্রকল্পের নাম', 'Project Name')}
-                        </label>
-                        <input
+                        </Label>
+                        <Input
                           type="text"
                           value={projectName}
                           onChange={(e) => setProjectName(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-900"
+                          className="h-9 text-xs"
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        <Label className="block text-[11px] font-semibold text-slate-600 mb-1">
                           {t('গেজেট নম্বর', 'Gazette No')}
-                        </label>
-                        <input
+                        </Label>
+                        <Input
                           type="text"
                           value={gazetteNo}
                           onChange={(e) => setGazetteNo(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-900"
+                          className="h-9 text-xs"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       <div>
-                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        <Label className="block text-[11px] font-semibold text-slate-600 mb-1">
                           {t('অধিগ্রহণকৃত জমির পরিমাণ (শতক)', 'Acquired Land Area (dec)')}
-                        </label>
-                        <input
+                        </Label>
+                        <Input
                           type="number"
                           value={acquiredArea}
                           onChange={(e) => setAcquiredArea(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-900"
+                          className="h-9 text-xs"
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        <Label className="block text-[11px] font-semibold text-slate-600 mb-1">
                           {t('আইনগত ধারা', 'Legal Section')}
-                        </label>
-                        <select
-                          value={sectionType}
-                          onChange={(e) => setSectionType(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-900"
-                        >
-                          <option value="SECTION_4">ধারা ৪ (প্রাথমিক অধিগ্রহণ প্রজ্ঞাপন)</option>
-                          <option value="SECTION_7">ধারা ৭ (শুনানি ও আপত্তি নিষ্পত্তি)</option>
-                          <option value="SECTION_8">ধারা ৮ (ক্ষতিপূরণ নির্ধারণ রোয়েদাদ)</option>
-                        </select>
+                        </Label>
+                        <Select value={sectionType} onValueChange={setSectionType}>
+                          <SelectTrigger className="w-full h-9 text-xs shadow-xs">
+                            <SelectValue placeholder={t('ধারা নির্বাচন করুন', 'Select Section')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="SECTION_4" className="text-xs">ধারা ৪ (প্রাথমিক অধিগ্রহণ প্রজ্ঞাপন)</SelectItem>
+                            <SelectItem value="SECTION_7" className="text-xs">ধারা ৭ (শুনানি ও আপত্তি নিষ্পত্তি)</SelectItem>
+                            <SelectItem value="SECTION_8" className="text-xs">ধারা ৮ (ক্ষতিপূরণ নির্ধারণ রোয়েদাদ)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 pt-2">
-                      <button
+                      <Button
                         type="button"
                         disabled={submitting}
                         onClick={handleIssueAcquisitionNotice}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] disabled:opacity-50 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                        className="bg-[#006A4E] hover:bg-[#00553e] disabled:opacity-50 text-white text-xs font-bold gap-1.5"
                       >
                         <CheckCircle2 className="w-4 h-4" />
                         <span>
@@ -832,17 +869,18 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
                             ? t('নথিভুক্ত হচ্ছে...', 'Submitting...')
                             : t('অধিগ্রহণ নোটিশ জারি করুন (বাস্তব এন্ট্রি)', 'Issue Acquisition Notice (Persisted)')}
                         </span>
-                      </button>
+                      </Button>
 
                       {onNavigate && (
-                        <button
+                        <Button
+                          variant="outline"
                           type="button"
                           onClick={() => onNavigate('check')}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition cursor-pointer"
+                          className="border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold gap-1.5"
                         >
                           <Search className="w-4 h-4 text-emerald-700" />
                           <span>{t('সম্পূর্ণ খতিয়ান চেইন পরীক্ষা', 'Inspect 30-Yr Khatian Chain')}</span>
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -850,63 +888,64 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
                   <div className="space-y-2.5 pt-1">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       <div>
-                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        <Label className="block text-[11px] font-semibold text-slate-600 mb-1">
                           {t('মামলা নম্বর', 'Suit / Case No')}
-                        </label>
-                        <input
+                        </Label>
+                        <Input
                           type="text"
                           value={suitNo}
                           onChange={(e) => setSuitNo(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-900"
+                          className="h-9 text-xs"
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        <Label className="block text-[11px] font-semibold text-slate-600 mb-1">
                           {t('আদালতের নাম', 'Court Name')}
-                        </label>
-                        <input
+                        </Label>
+                        <Input
                           type="text"
                           value={courtName}
                           onChange={(e) => setCourtName(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-900"
+                          className="h-9 text-xs"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                       <div>
-                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        <Label className="block text-[11px] font-semibold text-slate-600 mb-1">
                           {t('বিরোধের ধরন', 'Dispute Type')}
-                        </label>
-                        <select
-                          value={disputeType}
-                          onChange={(e) => setDisputeType(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-900"
-                        >
-                          <option value="INJUNCTION">স্থগিতাদেশ (Court Injunction)</option>
-                          <option value="TITLE_SUIT">স্বত্ব মামলা (Title Suit)</option>
-                          <option value="BOUNDARY_DISPUTE">সীমানা বিরোধ (Boundary Dispute)</option>
-                        </select>
+                        </Label>
+                        <Select value={disputeType} onValueChange={setDisputeType}>
+                          <SelectTrigger className="w-full h-9 text-xs shadow-xs">
+                            <SelectValue placeholder={t('বিরোধের ধরন নির্বাচন করুন', 'Select Dispute Type')} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="INJUNCTION" className="text-xs">স্থগিতাদেশ (Court Injunction)</SelectItem>
+                            <SelectItem value="TITLE_SUIT" className="text-xs">স্বত্ব মামলা (Title Suit)</SelectItem>
+                            <SelectItem value="BOUNDARY_DISPUTE" className="text-xs">সীমানা বিরোধ (Boundary Dispute)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
-                        <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        <Label className="block text-[11px] font-semibold text-slate-600 mb-1">
                           {t('স্থগিতাদেশের বিবরণ ও কারণ', 'Injunction Details')}
-                        </label>
-                        <input
+                        </Label>
+                        <Input
                           type="text"
                           value={injunctionReason}
                           onChange={(e) => setInjunctionReason(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-900"
+                          className="h-9 text-xs"
                         />
                       </div>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 pt-2">
-                      <button
+                      <Button
                         type="button"
                         disabled={submitting}
                         onClick={handleLogCourtInjunction}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] disabled:opacity-50 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                        className="bg-[#006A4E] hover:bg-[#00553e] disabled:opacity-50 text-white text-xs font-bold gap-1.5"
                       >
                         <CheckCircle2 className="w-4 h-4" />
                         <span>
@@ -914,17 +953,18 @@ export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = (
                             ? t('নথিভুক্ত হচ্ছে...', 'Submitting...')
                             : t('আদালতের আদেশ ডাটাবেজে সংরক্ষণ করুন', 'Log Court Order (Persisted)')}
                         </span>
-                      </button>
+                      </Button>
 
                       {onNavigate && (
-                        <button
+                        <Button
+                          variant="outline"
                           type="button"
                           onClick={() => onNavigate('check')}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition cursor-pointer"
+                          className="border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold gap-1.5"
                         >
                           <Search className="w-4 h-4 text-emerald-700" />
                           <span>{t('সম্পূর্ণ খতিয়ান চেইন পরীক্ষা', 'Inspect 30-Yr Khatian Chain')}</span>
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>

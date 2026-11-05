@@ -19,6 +19,34 @@ import {
 import { BhumiApi } from '../../api/client';
 import { toBanglaDigits } from '../../theme/tokens';
 import { useAppUI } from '../../i18n';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from '@/components/ui/table';
 
 interface SuperAdminTransfersTabProps {
   transfers: any[];
@@ -218,86 +246,88 @@ export const SuperAdminTransfersTab: React.FC<SuperAdminTransfersTabProps> = ({
       <div className="p-4 bg-white border border-slate-200/80 rounded-2xl shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
         {/* Search */}
         <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-          <input
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 z-10" />
+          <Input
             type="text"
             placeholder={t('কেস কোড, এনআইডি, দাগ বা কর্মকর্তা দিয়ে খুঁজুন...', 'Search by transfer code, NID, dag, or officer...')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+            className="pl-9 h-9 text-xs"
           />
         </div>
 
         {/* Stage Filter Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1">
           {stagesList.map((st) => (
-            <button
+            <Button
               key={st.key}
               type="button"
+              size="sm"
+              variant={stageFilter === st.key ? 'default' : 'outline'}
               onClick={() => setStageFilter(st.key)}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+              className={`h-7 px-3 text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                 stageFilter === st.key
-                  ? 'bg-[#006A4E] text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-[#006A4E] text-white hover:bg-[#00553e]'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border-transparent'
               }`}
             >
               {lang === 'bn' ? st.label_bn : st.label_en}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
       {/* Main Table */}
       <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-50 border-b border-slate-200/80 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
-              <tr>
-                <th className="px-4 py-3">{t('আবেদন কোড', 'Transfer Code')}</th>
-                <th className="px-4 py-3">{t('দাগ ও বিবরণ', 'Plot & Details')}</th>
-                <th className="px-4 py-3">{t('জমির পরিমাণ ও মূল্য', 'Area & Price')}</th>
-                <th className="px-4 py-3">{t('১৩-ধাপ অগ্রগতি', '13-Step Progress')}</th>
-                <th className="px-4 py-3">{t('দায়িত্বপ্রাপ্ত কর্মকর্তা ও কার্যালয়', 'Assigned Officer & Office')}</th>
-                <th className="px-4 py-3 text-right">{t('অ্যাকশন', 'Actions')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
+        <div className="overflow-auto max-h-[calc(100vh-280px)] min-h-[300px] scrollbar-thin">
+          <Table>
+            <TableHeader className="bg-slate-50 border-b border-slate-200/80">
+              <TableRow>
+                <TableHead className="px-4 py-3 text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('আবেদন কোড', 'Transfer Code')}</TableHead>
+                <TableHead className="px-4 py-3 text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('দাগ ও বিবরণ', 'Plot & Details')}</TableHead>
+                <TableHead className="px-4 py-3 text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('জমির পরিমাণ ও মূল্য', 'Area & Price')}</TableHead>
+                <TableHead className="px-4 py-3 text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('১৩-ধাপ অগ্রগতি', '13-Step Progress')}</TableHead>
+                <TableHead className="px-4 py-3 text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('দায়িত্বপ্রাপ্ত কর্মকর্তা ও কার্যালয়', 'Assigned Officer & Office')}</TableHead>
+                <TableHead className="px-4 py-3 text-right text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('অ্যাকশন', 'Actions')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-slate-100">
               {filteredTransfers.length > 0 ? (
                 filteredTransfers.map((tItem) => (
-                  <tr key={tItem.id} className="hover:bg-slate-50/70 transition">
-                    <td className="px-4 py-3 font-mono font-bold text-slate-900">
+                  <TableRow key={tItem.id} className="hover:bg-slate-50/70 transition">
+                    <TableCell className="px-4 py-3 font-mono font-bold text-slate-900">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[#006A4E]">{tItem.transfer_code}</span>
                       </div>
                       <div className="text-[10px] text-slate-400 font-sans mt-0.5">
                         {t('দাখিলকারী এনআইডি: ', 'Applicant NID: ')}{toBanglaDigits(tItem.created_by_nid || 'N/A', lang)}
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <div className="font-bold text-slate-900">
                         {t('দাগ নং #', 'Plot Dag #')}{toBanglaDigits(tItem.plot_id, lang)}
                       </div>
                       <div className="text-[10px] text-slate-500">
                         {t('দলিল ধরন: ', 'Deed Type: ')}{tItem.deed_type || 'SALE'}
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <div className="font-bold text-slate-900">
                         {toBanglaDigits(tItem.transfer_area_decimal || 0, lang)} {t('শতাংশ', 'Decimal')}
                       </div>
                       <div className="text-[10px] text-slate-500">
                         ৳ {toBanglaDigits((tItem.proposed_price_bdt || 0).toLocaleString(), lang)}
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       {getStageBadge(tItem.public_stage, tItem.current_step)}
                       {tItem.correction_notes_bn && (
                         <div className="mt-1 text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                           {t('সংশোধন চাওয়া হয়েছে: ', 'Correction: ')}{tItem.correction_notes_bn}
                         </div>
                       )}
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       {tItem.assigned_to_name ? (
                         <div>
                           <div className="font-bold text-slate-900 flex items-center gap-1">
@@ -310,76 +340,74 @@ export const SuperAdminTransfersTab: React.FC<SuperAdminTransfersTabProps> = ({
                           </div>
                         </div>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800">
+                        <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200 text-[10px] font-extrabold">
                           {t('অ্যাসাইন করা হয়নি', 'Unassigned')}
-                        </span>
+                        </Badge>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-right">
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button
+                        <Button
                           type="button"
+                          variant="outline"
+                          size="sm"
                           onClick={() => setSelectedTransfer(tItem)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 flex items-center gap-1 cursor-pointer transition shadow-2xs"
+                          className="h-7 text-xs font-bold gap-1 shadow-2xs"
                         >
                           <Eye className="w-3.5 h-3.5 text-slate-500" />
                           <span>{t('বিস্তারিত', 'View')}</span>
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          size="sm"
                           onClick={() => handleOpenReassign(tItem)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[#006A4E] flex items-center gap-1 cursor-pointer transition shadow-2xs"
+                          className="h-7 text-xs font-bold bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[#006A4E] gap-1 shadow-2xs"
                         >
                           <UserCheck className="w-3.5 h-3.5 text-[#006A4E]" />
                           <span>{t('পুনর্বণ্টন', 'Reassign')}</span>
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          size="sm"
                           onClick={() => handleOpenCorrection(tItem)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 flex items-center gap-1 cursor-pointer transition shadow-2xs"
+                          className="h-7 text-xs font-bold bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 gap-1 shadow-2xs"
                         >
                           <Edit2 className="w-3.5 h-3.5 text-amber-700" />
                           <span>{t('সংশোধন', 'Correction')}</span>
-                        </button>
+                        </Button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-slate-400">
+                <TableRow>
+                  <TableCell colSpan={6} className="px-4 py-12 text-center text-slate-400">
                     <Layers className="w-8 h-8 mx-auto mb-2 text-slate-300" />
                     <p className="font-bold">{t('কোনো সেবা আবেদন পাওয়া যায়নি।', 'No transfer applications found.')}</p>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
 
       {/* Case Details Drawer / Modal */}
-      {selectedTransfer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="bg-slate-900 px-6 py-4 flex items-center justify-between text-white border-b border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                  <Layers className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black tracking-tight">{selectedTransfer.transfer_code}</h3>
-                  <p className="text-xs text-slate-400">{t('১৩-ধাপের সম্পূর্ণ রূপরেখা ও স্থিতি', '13-Step Comprehensive Case Profile')}</p>
-                </div>
+      <Dialog open={!!selectedTransfer} onOpenChange={(open) => !open && setSelectedTransfer(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 border-slate-200 shadow-2xl">
+          <DialogHeader className="bg-slate-900 px-6 py-4 flex flex-row items-center justify-between text-white border-b border-slate-800 space-y-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <Layers className="w-5 h-5" />
               </div>
-              <button
-                onClick={() => setSelectedTransfer(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div>
+                <DialogTitle className="text-base font-black tracking-tight text-white">{selectedTransfer?.transfer_code}</DialogTitle>
+                <DialogDescription className="text-xs text-slate-400 mt-0.5">{t('১৩-ধাপের সম্পূর্ণ রূপরেখা ও স্থিতি', '13-Step Comprehensive Case Profile')}</DialogDescription>
+              </div>
             </div>
+          </DialogHeader>
 
+          {selectedTransfer && (
             <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-700">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
                 <div>
@@ -456,109 +484,104 @@ export const SuperAdminTransfersTab: React.FC<SuperAdminTransfersTabProps> = ({
                 </div>
               </div>
             </div>
+          )}
 
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedTransfer(null)}
-                className="px-4 py-2 rounded-lg font-bold border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-              >
-                {t('বন্ধ করুন', 'Close')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          <DialogFooter className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSelectedTransfer(null)}
+              className="font-bold text-xs"
+            >
+              {t('বন্ধ করুন', 'Close')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Reassign Modal */}
-      {reassignModalOpen && reassignTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden">
-            <div className="bg-slate-900 px-6 py-4 flex items-center justify-between text-white border-b border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                  <UserCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black tracking-tight">{t('কর্মকর্তা ও অফিস পুনর্বণ্টন', 'Reassign Officer & Office')}</h3>
-                  <p className="text-xs text-slate-400">{reassignTarget.transfer_code}</p>
-                </div>
+      <Dialog open={reassignModalOpen && !!reassignTarget} onOpenChange={(open) => !open && setReassignModalOpen(false)}>
+        <DialogContent className="max-w-lg overflow-hidden flex flex-col p-0 gap-0 border-slate-200 shadow-2xl">
+          <DialogHeader className="bg-slate-900 px-6 py-4 flex flex-row items-center justify-between text-white border-b border-slate-800 space-y-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <UserCheck className="w-5 h-5" />
               </div>
-              <button
-                onClick={() => setReassignModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div>
+                <DialogTitle className="text-base font-black tracking-tight text-white">{t('কর্মকর্তা ও অফিস পুনর্বণ্টন', 'Reassign Officer & Office')}</DialogTitle>
+                <DialogDescription className="text-xs text-slate-400 mt-0.5">{reassignTarget?.transfer_code}</DialogDescription>
+              </div>
             </div>
+          </DialogHeader>
 
+          {reassignTarget && (
             <form onSubmit={handleReassignSubmit} className="p-6 space-y-4 text-xs text-slate-700">
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                <Label className="block text-[11px] font-bold text-slate-700 mb-1">
                   {t('কর্মকর্তা নির্বাচন করুন (Assignee Officer)', 'Select Officer')} *
-                </label>
-                <select
-                  value={targetUserId}
-                  onChange={(e) => setTargetUserId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white font-semibold text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
-                  required
-                >
-                  <option value="">-- {t('কর্মকর্তা নির্বাচন করুন', 'Select Officer')} --</option>
-                  {usersList
-                    .filter((u) => ['ac_land', 'sub_registrar', 'land_office_assistant', 'field_verification_officer', 'service_point_operator'].includes(u.role))
-                    .map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.full_name_bn || u.username} ({u.role}) - {u.office_bn || 'উপজেলা ভূমি কার্যালয়'}
-                      </option>
-                    ))}
-                </select>
+                </Label>
+                <Select value={targetUserId} onValueChange={setTargetUserId}>
+                  <SelectTrigger className="w-full text-xs font-semibold h-9">
+                    <SelectValue placeholder={`-- ${t('কর্মকর্তা নির্বাচন করুন', 'Select Officer')} --`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {usersList
+                      ?.filter((u) => ['ac_land', 'sub_registrar', 'land_office_assistant', 'field_verification_officer', 'service_point_operator'].includes(u.role))
+                      .map((u) => (
+                        <SelectItem key={u.id} value={String(u.id)} className="text-xs">
+                          {u.full_name_bn || u.username} ({u.role}) - {u.office_bn || 'উপজেলা ভূমি কার্যালয়'}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                <Label className="block text-[11px] font-bold text-slate-700 mb-1">
                   {t('কার্যকারিতা অফিস (Office)', 'Office')}
-                </label>
-                <select
-                  value={targetOfficeId}
-                  onChange={(e) => setTargetOfficeId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white font-semibold text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
-                >
-                  <option value="">-- {t('অফিস নির্বাচন করুন', 'Select Office')} --</option>
-                  {officesList.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.name_bn} ({o.office_type}) - {o.district_bn || ''}
-                    </option>
-                  ))}
-                </select>
+                </Label>
+                <Select value={targetOfficeId} onValueChange={setTargetOfficeId}>
+                  <SelectTrigger className="w-full text-xs font-semibold h-9">
+                    <SelectValue placeholder={`-- ${t('অফিস নির্বাচন করুন', 'Select Office')} --`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {officesList?.map((o) => (
+                      <SelectItem key={o.id} value={String(o.id)} className="text-xs">
+                        {o.name_bn} ({o.office_type}) - {o.district_bn || ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                <Label className="block text-[11px] font-bold text-slate-700 mb-1">
                   {t('পুনর্বণ্টনের কারণ (Reason for Reassignment)', 'Reason for Reassignment')} *
-                </label>
-                <textarea
+                </Label>
+                <Textarea
                   rows={2}
                   value={reassignReason}
                   onChange={(e) => setReassignReason(e.target.value)}
                   placeholder={t('কাজের চাপ সুষম বণ্টন বা বিশেষ প্রশাসনিক আদেশের কারণ উল্লেখ করুন...', 'Enter reason for reassignment...')}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+                  className="text-xs"
                   required
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                <button
+              <DialogFooter className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setReassignModalOpen(false)}
                   disabled={reassignLoading}
-                  className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold transition cursor-pointer"
+                  className="text-xs font-bold"
                 >
                   {t('বাতিল', 'Cancel')}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={reassignLoading}
-                  className="px-5 py-2 rounded-lg font-bold text-white bg-[#006A4E] hover:bg-[#005a42] transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  className="bg-[#006A4E] hover:bg-[#005a42] text-white text-xs font-bold gap-1.5 shadow-xs"
                 >
                   {reassignLoading ? (
                     <span>{t('সংরক্ষণ হচ্ছে...', 'Saving...')}</span>
@@ -568,46 +591,40 @@ export const SuperAdminTransfersTab: React.FC<SuperAdminTransfersTabProps> = ({
                       <span>{t('পুনর্বণ্টন সম্পন্ন করুন', 'Confirm Reassign')}</span>
                     </>
                   )}
-                </button>
-              </div>
+                </Button>
+              </DialogFooter>
             </form>
-          </div>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Correction Request Modal */}
-      {correctionModalOpen && correctionTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden">
-            <div className="bg-slate-900 px-6 py-4 flex items-center justify-between text-white border-b border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
-                  <Edit2 className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black tracking-tight">{t('সংশোধন অনুরোধ প্রেরণ', 'Request Transfer Correction')}</h3>
-                  <p className="text-xs text-slate-400">{correctionTarget.transfer_code}</p>
-                </div>
+      <Dialog open={correctionModalOpen && !!correctionTarget} onOpenChange={(open) => !open && setCorrectionModalOpen(false)}>
+        <DialogContent className="max-w-lg overflow-hidden flex flex-col p-0 gap-0 border-slate-200 shadow-2xl">
+          <DialogHeader className="bg-slate-900 px-6 py-4 flex flex-row items-center justify-between text-white border-b border-slate-800 space-y-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                <Edit2 className="w-5 h-5" />
               </div>
-              <button
-                onClick={() => setCorrectionModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div>
+                <DialogTitle className="text-base font-black tracking-tight text-white">{t('সংশোধন অনুরোধ প্রেরণ', 'Request Transfer Correction')}</DialogTitle>
+                <DialogDescription className="text-xs text-slate-400 mt-0.5">{correctionTarget?.transfer_code}</DialogDescription>
+              </div>
             </div>
+          </DialogHeader>
 
+          {correctionTarget && (
             <form onSubmit={handleCorrectionSubmit} className="p-6 space-y-4 text-xs text-slate-700">
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                <Label className="block text-[11px] font-bold text-slate-700 mb-1">
                   {t('সংশোধন অনুরোধের সুনির্দিষ্ট কারণ ও বিবরণ (Correction Notes)', 'Correction Details & Required Actions')} *
-                </label>
-                <textarea
+                </Label>
+                <Textarea
                   rows={4}
                   value={correctionReason}
                   onChange={(e) => setCorrectionReason(e.target.value)}
                   placeholder={t('যেমন: খতিয়ানের দ্বিতীয় পাতার স্পষ্ট স্ক্যান কপি দাখিল করুন অথবা ওয়ারিশ সনদের মূল কপি সংযুক্তি আবশ্যক (কমপক্ষে ১০ অক্ষর)...', 'Explain clearly what documents or corrections are needed (min 10 chars)...')}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+                  className="text-xs"
                   required
                 />
                 <div className="text-[10px] text-slate-400 mt-1 flex justify-between">
@@ -616,19 +633,20 @@ export const SuperAdminTransfersTab: React.FC<SuperAdminTransfersTabProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                <button
+              <DialogFooter className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setCorrectionModalOpen(false)}
                   disabled={correctionLoading}
-                  className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold transition cursor-pointer"
+                  className="text-xs font-bold"
                 >
                   {t('বাতিল', 'Cancel')}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={correctionLoading}
-                  className="px-5 py-2 rounded-lg font-bold text-white bg-amber-600 hover:bg-amber-700 transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold gap-1.5 shadow-xs"
                 >
                   {correctionLoading ? (
                     <span>{t('প্রেরণ হচ্ছে...', 'Sending...')}</span>
@@ -638,12 +656,12 @@ export const SuperAdminTransfersTab: React.FC<SuperAdminTransfersTabProps> = ({
                       <span>{t('সংশোধন অনুরোধ পাঠান', 'Send Request')}</span>
                     </>
                   )}
-                </button>
-              </div>
+                </Button>
+              </DialogFooter>
             </form>
-          </div>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

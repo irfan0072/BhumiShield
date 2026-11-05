@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" fill="none">
+  <!-- Outer circle with golden outline -->
+  <circle cx="60" cy="60" r="57" fill="#006A4E" stroke="#D4AF37" stroke-width="3"/>
+  <!-- Inner ring -->
+  <circle cx="60" cy="60" r="48" fill="#F42A41" stroke="#D4AF37" stroke-width="2"/>
+  <!-- Map of Bangladesh silhouette in gold -->
+  <path d="M52 35 C54 32, 58 31, 62 33 C66 35, 68 39, 67 43 C65 47, 68 50, 71 52 C74 54, 76 57, 73 61 C70 65, 72 68, 75 70 C78 72, 76 76, 73 78 C70 80, 68 85, 65 87 C62 89, 58 87, 56 83 C54 79, 50 78, 48 74 C46 70, 48 66, 50 63 C52 60, 49 56, 47 52 C45 48, 48 44, 51 40 Z" fill="#FFD700" opacity="0.95"/>
+  <!-- 4 Stars representing the four founding principles -->
+  <polygon points="60,18 62,23 67,23 63,26 65,31 60,28 55,31 57,26 53,23 58,23" fill="#FFD700"/>
+  <polygon points="60,102 62,107 67,107 63,110 65,115 60,112 55,115 57,110 53,107 58,107" fill="#FFD700"/>
+  <polygon points="18,60 23,62 23,67 26,63 31,65 28,60 31,55 26,57 23,53 23,58" fill="#FFD700"/>
+  <polygon points="102,60 107,62 107,67 110,63 115,65 112,60 115,55 110,57 107,53 107,58" fill="#FFD700"/>
+</svg>

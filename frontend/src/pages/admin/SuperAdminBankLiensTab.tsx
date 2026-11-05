@@ -19,6 +19,26 @@ import {
 import { toBanglaDigits } from '../../theme/tokens';
 import { useAppUI } from '../../i18n';
 import { BhumiApi } from '../../api/client';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '../../components/ui/dialog';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '../../components/ui/table';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Badge } from '../../components/ui/badge';
 
 interface SuperAdminBankLiensTabProps {
   mortgages: any[];
@@ -88,9 +108,9 @@ export const SuperAdminBankLiensTab: React.FC<SuperAdminBankLiensTabProps> = ({
           <div>
             <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
               <span>{t('ব্যাংক বন্ধক লিয়েন, জামানত ঝুঁকি ও এনওসি তদারকি', 'Bank Mortgages, Collateral Risk & Digital NOC')}</span>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-[#006A4E]">
+              <Badge variant="outline" className="bg-emerald-50 border-emerald-200 text-[#006A4E] font-black text-[11px]">
                 {toBanglaDigits(filteredMortgages.length, lang)} {t('টি লিয়েন', 'Liens')}
-              </span>
+              </Badge>
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
               {t(
@@ -101,13 +121,15 @@ export const SuperAdminBankLiensTab: React.FC<SuperAdminBankLiensTabProps> = ({
           </div>
         </div>
 
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={onRefresh}
-          className="px-3.5 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 transition self-start md:self-auto cursor-pointer"
+          className="rounded-xl font-bold border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 shadow-2xs"
         >
           <RefreshCw className="w-3.5 h-3.5 text-[#006A4E]" />
           <span>{t('রিফ্রেশ', 'Refresh')}</span>
-        </button>
+        </Button>
       </div>
 
       {/* Interactive Bank Collateral Tool Widget */}
@@ -120,34 +142,34 @@ export const SuperAdminBankLiensTab: React.FC<SuperAdminBankLiensTabProps> = ({
         </div>
         <form onSubmit={handleRunCollateralCheck} className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
           <div>
-            <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('জমির দাগ নম্বর (Dag No)', 'Plot Dag No')}</label>
-            <input
+            <Label className="block text-[11px] font-bold text-slate-700 mb-1">{t('জমির দাগ নম্বর (Dag No)', 'Plot Dag No')}</Label>
+            <Input
               type="text"
               placeholder={t('যেমন: ১২৫ বা ১০১', 'e.g. 125')}
               value={collateralDag}
               onChange={(e) => setCollateralDag(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+              className="w-full text-xs rounded-lg border-slate-300 focus-visible:ring-2 focus-visible:ring-[#006A4E]"
               required
             />
           </div>
           <div>
-            <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('বন্ধকী পরিমাণ শতাংশ (Area Decimal)', 'Mortgage Decimal')}</label>
-            <input
+            <Label className="block text-[11px] font-bold text-slate-700 mb-1">{t('বন্ধকী পরিমাণ শতাংশ (Area Decimal)', 'Mortgage Decimal')}</Label>
+            <Input
               type="number"
               step="0.1"
               value={collateralArea}
               onChange={(e) => setCollateralArea(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+              className="w-full text-xs rounded-lg border-slate-300 focus-visible:ring-2 focus-visible:ring-[#006A4E]"
             />
           </div>
           <div className="flex items-end">
-            <button
+            <Button
               type="submit"
               disabled={collateralLoading}
-              className="w-full px-4 py-2 rounded-lg font-bold text-white bg-[#006A4E] hover:bg-[#005a42] transition cursor-pointer shadow-xs flex items-center justify-center gap-1.5"
+              className="w-full rounded-lg font-bold text-white bg-[#006A4E] hover:bg-[#005a42] shadow-xs flex items-center justify-center gap-1.5"
             >
               {collateralLoading ? <span>{t('যাচাই হচ্ছে...', 'Checking...')}</span> : <span>{t('জামানত পরীক্ষা করুন', 'Verify Collateral')}</span>}
-            </button>
+            </Button>
           </div>
         </form>
 
@@ -157,9 +179,9 @@ export const SuperAdminBankLiensTab: React.FC<SuperAdminBankLiensTabProps> = ({
               <CheckCircle2 className="w-4 h-4 text-[#006A4E]" />
               <span>{collateralResult.remarks_bn || t('দাগটি মুক্ত ও জামানতের উপযোগী। কোনো সক্রিয় লিয়েন নেই।', 'Plot is clear for mortgage collateral.')}</span>
             </div>
-            <div className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#006A4E] text-white">
+            <Badge variant="outline" className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#006A4E] text-white border-transparent">
               SCORE: {collateralResult.risk_score || '95/100'}
-            </div>
+            </Badge>
           </div>
         )}
       </div>
@@ -168,13 +190,13 @@ export const SuperAdminBankLiensTab: React.FC<SuperAdminBankLiensTabProps> = ({
       <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
         <div className="p-4 border-b border-slate-200/80 flex flex-col md:flex-row items-center justify-between gap-3">
           <div className="relative w-full md:w-80">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-            <input
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 z-10" />
+            <Input
               type="text"
               placeholder={t('ব্যাংকের নাম, শাখা বা লোন হিসাব দিয়ে খুঁজুন...', 'Search by bank, branch, loan account...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+              className="w-full pl-9 pr-3 py-1.5 h-9 rounded-xl border border-slate-300 text-xs focus-visible:ring-2 focus-visible:ring-[#006A4E]"
             />
           </div>
 
@@ -184,108 +206,108 @@ export const SuperAdminBankLiensTab: React.FC<SuperAdminBankLiensTabProps> = ({
               { key: 'ACTIVE', label_bn: 'সক্রিয় বন্ধক', label_en: 'Active Liens' },
               { key: 'RELEASED', label_bn: 'অবমুক্তকৃত (NOC)', label_en: 'Released' },
             ].map((st) => (
-              <button
+              <Button
                 key={st.key}
                 type="button"
+                variant={statusFilter === st.key ? 'default' : 'outline'}
+                size="sm"
                 onClick={() => setStatusFilter(st.key)}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                className={`px-3 py-1 h-8 rounded-lg text-xs font-bold transition whitespace-nowrap ${
                   statusFilter === st.key
-                    ? 'bg-[#006A4E] text-white shadow-xs'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-[#006A4E] hover:bg-[#005a42] text-white shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 border-transparent text-slate-600'
                 }`}
               >
                 {lang === 'bn' ? st.label_bn : st.label_en}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-50 border-b border-slate-200/80 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
-              <tr>
-                <th className="px-4 py-3">{t('দাগ নং', 'Plot Dag')}</th>
-                <th className="px-4 py-3">{t('ব্যাংক ও শাখা', 'Bank & Branch')}</th>
-                <th className="px-4 py-3">{t('ঋণ হিসাব ও পরিমাণ', 'Loan Account & Area')}</th>
-                <th className="px-4 py-3">{t('ঋণগ্রহীতা এনআইডি', 'Borrower NID')}</th>
-                <th className="px-4 py-3">{t('অবস্থা', 'Status')}</th>
-                <th className="px-4 py-3 text-right">{t('ডিজিটাল এনওসি', 'Digital NOC')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
+        <div className="overflow-auto max-h-[calc(100vh-280px)] min-h-[300px] scrollbar-thin">
+          <Table>
+            <TableHeader className="bg-slate-50 border-b border-slate-200/80">
+              <TableRow>
+                <TableHead className="px-4 py-3 font-bold uppercase tracking-wider text-[10px] text-slate-600">{t('দাগ নং', 'Plot Dag')}</TableHead>
+                <TableHead className="px-4 py-3 font-bold uppercase tracking-wider text-[10px] text-slate-600">{t('ব্যাংক ও শাখা', 'Bank & Branch')}</TableHead>
+                <TableHead className="px-4 py-3 font-bold uppercase tracking-wider text-[10px] text-slate-600">{t('ঋণ হিসাব ও পরিমাণ', 'Loan Account & Area')}</TableHead>
+                <TableHead className="px-4 py-3 font-bold uppercase tracking-wider text-[10px] text-slate-600">{t('ঋণগ্রহীতা এনআইডি', 'Borrower NID')}</TableHead>
+                <TableHead className="px-4 py-3 font-bold uppercase tracking-wider text-[10px] text-slate-600">{t('অবস্থা', 'Status')}</TableHead>
+                <TableHead className="px-4 py-3 text-right font-bold uppercase tracking-wider text-[10px] text-slate-600">{t('ডিজিটাল এনওসি', 'Digital NOC')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-slate-100">
               {filteredMortgages.length > 0 ? (
                 filteredMortgages.map((m) => (
-                  <tr key={m.id} className="hover:bg-slate-50/70 transition">
-                    <td className="px-4 py-3 font-bold text-slate-900">
+                  <TableRow key={m.id} className="hover:bg-slate-50/70 transition">
+                    <TableCell className="px-4 py-3 font-bold text-slate-900">
                       দাগ #{toBanglaDigits(m.dag_no_bn || m.plot_id, lang)}
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <div className="font-bold text-slate-900">{m.bank_name_bn || m.bank_name || 'সোনালী ব্যাংক পিএলসি'}</div>
                       <div className="text-[10px] text-slate-500">{m.branch_name_bn || m.branch_name || 'সাভার প্রধান শাখা'}</div>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <div className="font-mono text-slate-900 font-bold">{m.loan_account_no || 'LON-2026-991'}</div>
                       <div className="text-[10px] text-slate-500">{toBanglaDigits(m.mortgaged_area_decimal || 8.5, lang)} শতাংশ বন্ধক</div>
-                    </td>
-                    <td className="px-4 py-3 font-mono text-slate-600">
+                    </TableCell>
+                    <TableCell className="px-4 py-3 font-mono text-slate-600">
                       {toBanglaDigits(m.borrower_nid || '19852691234567890', lang)}
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       {m.status === 'ACTIVE' ? (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 flex items-center gap-1 w-fit">
+                        <Badge variant="outline" className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-900 border-amber-200 flex items-center gap-1 w-fit">
                           <Lock className="w-3 h-3" />
                           <span>{t('সক্রিয় বন্ধক লিয়েন', 'Active Mortgage')}</span>
-                        </span>
+                        </Badge>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-[#006A4E] flex items-center gap-1 w-fit">
+                        <Badge variant="outline" className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-[#006A4E] border-emerald-200 flex items-center gap-1 w-fit">
                           <CheckCircle2 className="w-3 h-3" />
                           <span>{t('অবমুক্তকৃত (Released)', 'Released')}</span>
-                        </span>
+                        </Badge>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => setSelectedMortgage(m)}
-                        className="px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 inline-flex items-center gap-1 cursor-pointer transition shadow-2xs"
+                        className="px-2.5 py-1 h-7 rounded-lg text-xs font-bold border-slate-200 bg-white hover:bg-slate-100 text-slate-700 inline-flex items-center gap-1 shadow-2xs"
                       >
                         <FileCheck className="w-3.5 h-3.5 text-[#006A4E]" />
                         <span>{t('এনওসি ভিউ', 'View NOC')}</span>
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-slate-400">
+                <TableRow>
+                  <TableCell colSpan={6} className="px-4 py-12 text-center text-slate-400">
                     <Landmark className="w-8 h-8 mx-auto mb-2 text-slate-300" />
                     <p className="font-bold">{t('কোনো ব্যাংক লিয়েন রেকর্ড পাওয়া যায়নি।', 'No mortgage liens found.')}</p>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
 
-      {/* NOC Certificate Drawer */}
-      {selectedMortgage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden">
-            <div className="bg-slate-900 px-6 py-4 flex items-center justify-between text-white border-b border-slate-800">
+      {/* NOC Certificate Dialog */}
+      <Dialog open={!!selectedMortgage} onOpenChange={(open) => !open && setSelectedMortgage(null)}>
+        {selectedMortgage && (
+          <DialogContent className="sm:max-w-lg p-0 overflow-hidden border border-slate-200 rounded-2xl shadow-2xl">
+            <DialogHeader className="bg-slate-900 px-6 py-4 text-white border-b border-slate-800">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
                   <FileCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black tracking-tight">{t('ডিজিটাল ব্যাংক ছাড়পত্র সনদ (NOC)', 'Digital Mortgage Release NOC')}</h3>
-                  <p className="text-xs text-slate-400">সার্টিফিকেট নং: NOC-2026-{selectedMortgage.id}</p>
+                  <DialogTitle className="text-base font-black tracking-tight text-white">{t('ডিজিটাল ব্যাংক ছাড়পত্র সনদ (NOC)', 'Digital Mortgage Release NOC')}</DialogTitle>
+                  <DialogDescription className="text-xs text-slate-400">সার্টিফিকেট নং: NOC-2026-{selectedMortgage.id}</DialogDescription>
                 </div>
               </div>
-              <button onClick={() => setSelectedMortgage(null)} className="p-1 rounded-lg text-slate-400 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+            </DialogHeader>
             <div className="p-6 space-y-4 text-xs text-slate-700">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center space-y-2">
                 <div className="text-[11px] font-extrabold uppercase text-[#006A4E]">{selectedMortgage.bank_name_bn || 'সোনালী ব্যাংক পিএলসি'}</div>
@@ -300,18 +322,18 @@ export const SuperAdminBankLiensTab: React.FC<SuperAdminBankLiensTabProps> = ({
                 <div className="truncate text-emerald-400">9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08</div>
               </div>
             </div>
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
-              <button
-                type="button"
+            <DialogFooter className="p-4 bg-slate-50 border-t border-slate-200">
+              <Button
+                variant="outline"
                 onClick={() => setSelectedMortgage(null)}
-                className="px-4 py-2 rounded-lg font-bold border border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+                className="font-bold border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
               >
                 {t('বন্ধ করুন', 'Close')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   );
 };

@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Calculator,
-  X,
   Users,
   PieChart,
   Send,
@@ -20,6 +19,27 @@ import { useAppUI } from '../i18n';
 import { BhumiApi } from '../api/client';
 import { toBanglaDigits } from '../theme/tokens';
 import { triggerAppNotification } from './NotificationCenter';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
 
 export interface CalculatedHeir {
   id: string;
@@ -48,17 +68,6 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
   onMutationSuccess,
 }) => {
   const { lang, t, role, user } = useAppUI();
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
 
   // Inputs
   const [deceasedGender, setDeceasedGender] = useState<'MALE' | 'FEMALE'>('MALE');
@@ -329,52 +338,37 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="faraiz-calculator-modal-title"
-      className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 sm:p-4 backdrop-blur-xs animate-in fade-in duration-150"
-    >
-      <div className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-3xl bg-white shadow-2xl border border-slate-200 text-slate-800">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[92vh] overflow-hidden flex flex-col p-6 rounded-2xl bg-white shadow-2xl border border-slate-200">
         {/* Modal Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/95 px-6 py-4 backdrop-blur-md">
+        <DialogHeader className="pb-3 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-3">
-            <span className="p-2.5 rounded-2xl bg-emerald-700 text-white shadow-md shadow-emerald-700/20">
+            <span className="p-2.5 rounded-2xl bg-emerald-700 text-white shadow-md shadow-emerald-700/20 shrink-0">
               <Scale className="w-6 h-6" />
             </span>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 id="faraiz-calculator-modal-title" className="text-base sm:text-lg font-bold text-slate-900">
+              <div className="flex items-center gap-2 flex-wrap">
+                <DialogTitle className="text-base sm:text-lg font-bold text-slate-900">
                   {t('ইসলামিক ফারায়েজ ও ওয়ারিশান বণ্টন ক্যালকুলেটর', 'Islamic Faraiz & Inheritance Engine')}
-                </h3>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                </DialogTitle>
+                <Badge variant="safe" className="text-[10px] font-bold">
                   {t('শরিয়াহ ও জাতীয় ট্রাস্ট স্ট্যান্ডার্ড', 'Shariah & Trust Verified')}
-                </span>
+                </Badge>
               </div>
-              <p className="text-xs text-slate-500">
+              <DialogDescription className="text-xs text-slate-500 mt-0.5">
                 {t(
                   'উত্তরাধিকারীদের নির্ভুল কোরআনিক হিস্যা নির্ধারণ ও ১-ক্লিকে ওয়ারিশান নামজারি আবেদন',
                   'Calculate exact fractional Quranic shares and file 1-click succession e-mutation'
                 )}
-              </p>
+              </DialogDescription>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t('বন্ধ করুন', 'Close')}
-            className="p-1.5 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+        </DialogHeader>
 
         {submitResult ? (
           /* Success Screen */
-          <div className="p-8 text-center space-y-4">
+          <div className="p-8 text-center space-y-4 overflow-y-auto">
             <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto shadow-inner">
               <CheckCircle2 className="w-10 h-10" />
             </div>
@@ -406,25 +400,26 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
             </div>
 
             <div className="flex items-center justify-center gap-3 pt-4">
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => setSubmitResult(null)}
-                className="px-5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                className="min-h-[44px] text-xs font-bold"
               >
                 {t('নতুন ফারায়েজ হিসাব', 'Calculate Another')}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-xs font-bold text-white shadow-md transition cursor-pointer"
+                className="min-h-[44px] bg-emerald-700 hover:bg-emerald-800 text-xs font-bold text-white shadow-md"
               >
                 {t('বন্ধ করুন ও ড্যাশবোর্ডে ফিরুন', 'Done & Close')}
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
           /* Calculator & Submission Form */
-          <div className="p-6 space-y-6">
+          <div className="overflow-y-auto space-y-6 pr-1 flex-1 py-2">
             {errorMsg && (
               <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
@@ -434,28 +429,28 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
 
             {/* Step 1: Deceased & Plot Parameters */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-slate-700">
                   {t('প্রয়াত ব্যক্তির নাম / পরিচয়', 'Deceased Person Name')}
-                </label>
-                <input
+                </Label>
+                <Input
                   type="text"
                   value={deceasedName}
                   onChange={(e) => setDeceasedName(e.target.value)}
-                  className="w-full text-xs font-medium px-3 py-2 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  className="text-xs font-medium bg-white h-9"
                   placeholder="মোঃ আবদুল করিম"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-slate-700">
                   {t('প্রয়াত ব্যক্তির লিঙ্গ', 'Deceased Gender')}
-                </label>
+                </Label>
                 <div className="flex rounded-xl bg-white border border-slate-300 p-0.5">
                   <button
                     type="button"
                     onClick={() => setDeceasedGender('MALE')}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer min-h-[36px] ${
                       deceasedGender === 'MALE'
                         ? 'bg-emerald-700 text-white shadow-xs'
                         : 'text-slate-600 hover:text-slate-900'
@@ -466,7 +461,7 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setDeceasedGender('FEMALE')}
-                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer min-h-[36px] ${
                       deceasedGender === 'FEMALE'
                         ? 'bg-emerald-700 text-white shadow-xs'
                         : 'text-slate-600 hover:text-slate-900'
@@ -477,14 +472,14 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-slate-700">
                   {t('জমির প্লট / দাগ নির্বাচন', 'Select Plot / Dag')}
-                </label>
+                </Label>
                 <select
                   value={selectedPlotId}
                   onChange={handlePlotSelect}
-                  className="w-full text-xs font-medium px-3 py-2 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  className="w-full text-xs font-medium px-3 py-2 rounded-xl border border-slate-300 bg-white h-9 focus:outline-none focus:ring-2 focus:ring-emerald-600"
                 >
                   {plots.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -499,13 +494,13 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
                   {t('মোট বণ্টনের জন্য জমির পরিমাণ (শতক):', 'Total Estate Land Area (decimals):')}
                 </span>
                 <div className="flex items-center gap-2">
-                  <input
+                  <Input
                     type="number"
                     step="0.01"
                     min="0.1"
                     value={totalArea}
                     onChange={(e) => setTotalArea(Math.max(0.1, parseFloat(e.target.value) || 0))}
-                    className="w-24 text-right font-bold text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none"
+                    className="w-24 text-right font-bold text-xs h-8 bg-white"
                   />
                   <span className="font-semibold text-slate-500">{t('শতক', 'dec')}</span>
                 </div>
@@ -523,9 +518,9 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
                 {/* Spouse */}
                 {deceasedGender === 'MALE' ? (
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <Label className="block text-[11px] font-bold text-slate-700 mb-1">
                       {t('জীবিত স্ত্রী সংখ্যা', 'Surviving Wives')}
-                    </label>
+                    </Label>
                     <select
                       value={wivesCount}
                       onChange={(e) => setWivesCount(Number(e.target.value))}
@@ -540,9 +535,9 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
                   </div>
                 ) : (
                   <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <Label className="block text-[11px] font-bold text-slate-700 mb-1">
                       {t('স্বামী জীবিত?', 'Husband Alive?')}
-                    </label>
+                    </Label>
                     <select
                       value={hasHusband ? 1 : 0}
                       onChange={(e) => setHasHusband(Number(e.target.value) === 1)}
@@ -556,39 +551,39 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
 
                 {/* Sons */}
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <Label className="block text-[11px] font-bold text-slate-700 mb-1">
                     {t('পুত্র সন্তান সংখ্যা', 'Sons Count')}
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="number"
                     min="0"
                     max="15"
                     value={sonsCount}
                     onChange={(e) => setSonsCount(Math.max(0, parseInt(e.target.value) || 0))}
-                    className="w-full text-xs font-bold p-1.5 rounded-lg border border-slate-300 bg-white text-center"
+                    className="w-full text-xs font-bold h-8 bg-white text-center"
                   />
                 </div>
 
                 {/* Daughters */}
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <Label className="block text-[11px] font-bold text-slate-700 mb-1">
                     {t('কন্যা সন্তান সংখ্যা', 'Daughters Count')}
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="number"
                     min="0"
                     max="15"
                     value={daughtersCount}
                     onChange={(e) => setDaughtersCount(Math.max(0, parseInt(e.target.value) || 0))}
-                    className="w-full text-xs font-bold p-1.5 rounded-lg border border-slate-300 bg-white text-center"
+                    className="w-full text-xs font-bold h-8 bg-white text-center"
                   />
                 </div>
 
                 {/* Mother */}
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <Label className="block text-[11px] font-bold text-slate-700 mb-1">
                     {t('মাতা জীবিত?', 'Mother Alive?')}
-                  </label>
+                  </Label>
                   <select
                     value={motherAlive ? 1 : 0}
                     onChange={(e) => setMotherAlive(Number(e.target.value) === 1)}
@@ -601,9 +596,9 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
 
                 {/* Father */}
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <Label className="block text-[11px] font-bold text-slate-700 mb-1">
                     {t('পিতা জীবিত?', 'Father Alive?')}
-                  </label>
+                  </Label>
                   <select
                     value={fatherAlive ? 1 : 0}
                     onChange={(e) => setFatherAlive(Number(e.target.value) === 1)}
@@ -616,14 +611,14 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
 
                 {/* Warishan Cert */}
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <Label className="block text-[11px] font-bold text-slate-700 mb-1">
                     {t('ওয়ারিশান সনদপত্র নং', 'Cert. No')}
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="text"
                     value={certificateNo}
                     onChange={(e) => setCertificateNo(e.target.value)}
-                    className="w-full text-xs font-mono font-bold p-1.5 rounded-lg border border-slate-300 bg-white text-center"
+                    className="w-full text-xs font-mono font-bold h-8 bg-white text-center"
                   />
                 </div>
               </div>
@@ -636,9 +631,9 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
                   <PieChart className="w-4 h-4 text-emerald-700" />
                   {t('জমির শতক বণ্টন অনুপাত চার্ট', 'Land Apportionment Share Distribution')}
                 </span>
-                <span className="font-semibold text-slate-500">
+                <Badge variant="safe" className="font-semibold text-[10px]">
                   {t('মোট ১০০% হিস্যা সম্পূর্ণ', '100% Exact Conserved Distribution')}
-                </span>
+                </Badge>
               </div>
 
               {/* Progress stack */}
@@ -667,55 +662,55 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
               </div>
             </div>
 
-            {/* Step 4: Complete Fractional Table */}
-            <div className="rounded-2xl border border-slate-200 overflow-hidden">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                  <tr>
-                    <th className="px-4 py-3">{t('ওয়ারিশান নাম ও সম্পর্ক', 'Heir & Relation')}</th>
-                    <th className="px-4 py-3">{t('আইনি হিস্যা / ভগ্নাংশ', 'Quranic Share')}</th>
-                    <th className="px-4 py-3 text-right">{t('শতাংশ (%)', 'Percentage')}</th>
-                    <th className="px-4 py-3 text-right">{t('বণ্টনকৃত জমি (শতক)', 'Allocated Land (Dec)')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 font-medium">
+            {/* Step 4: Canonical shadcn Table with Fixed Header & Scrollable List */}
+            <div className="rounded-2xl border border-slate-200 overflow-auto max-h-72 scrollbar-thin">
+              <Table>
+                <TableHeader className="bg-slate-100">
+                  <TableRow>
+                    <TableHead className="font-bold text-slate-700">{t('ওয়ারিশান নাম ও সম্পর্ক', 'Heir & Relation')}</TableHead>
+                    <TableHead className="font-bold text-slate-700">{t('আইনি হিস্যা / ভগ্নাংশ', 'Quranic Share')}</TableHead>
+                    <TableHead className="text-right font-bold text-slate-700">{t('শতাংশ (%)', 'Percentage')}</TableHead>
+                    <TableHead className="text-right font-bold text-slate-700">{t('বণ্টনকৃত জমি (শতক)', 'Allocated Land (Dec)')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {calculatedHeirs.map((h) => (
-                    <tr key={h.id} className="hover:bg-slate-50/80 transition">
-                      <td className="px-4 py-3">
+                    <TableRow key={h.id} className="hover:bg-slate-50/80 transition">
+                      <TableCell className="font-medium">
                         <span className="font-bold text-slate-900">{h.name_bn}</span>
-                        <span className="ml-2 text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                        <Badge variant="secondary" className="ml-2 text-[10px] font-normal">
                           {h.relation}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 font-mono font-bold text-emerald-800">
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-mono font-bold text-emerald-800">
                         {h.fraction_str}
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono font-bold text-slate-700">
+                      </TableCell>
+                      <TableCell className="text-right font-mono font-bold text-slate-700">
                         {h.share_percent.toFixed(2)}%
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono font-extrabold text-slate-900">
+                      </TableCell>
+                      <TableCell className="text-right font-mono font-extrabold text-slate-900">
                         {lang === 'bn' ? toBanglaDigits(h.area_decimal.toFixed(2)) : h.area_decimal.toFixed(2)} {t('শতক', 'dec')}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-                <tfoot className="bg-slate-50 font-bold border-t border-slate-200 text-slate-900">
-                  <tr>
-                    <td className="px-4 py-2.5">{t('মোট সংকলন', 'Total Conserved')}</td>
-                    <td className="px-4 py-2.5 font-mono text-emerald-900">১/১ (১০০%)</td>
-                    <td className="px-4 py-2.5 text-right font-mono">১০০.০০%</td>
-                    <td className="px-4 py-2.5 text-right font-mono text-emerald-900 font-extrabold">
+                </TableBody>
+                <TableFooter className="bg-slate-50 font-bold border-t border-slate-200 text-slate-900">
+                  <TableRow>
+                    <TableCell>{t('মোট সংকলন', 'Total Conserved')}</TableCell>
+                    <TableCell className="font-mono text-emerald-900">১/১ (১০০%)</TableCell>
+                    <TableCell className="text-right font-mono">১০০.০০%</TableCell>
+                    <TableCell className="text-right font-mono text-emerald-900 font-extrabold">
                       {lang === 'bn' ? toBanglaDigits(totalArea.toFixed(2)) : totalArea.toFixed(2)} {t('শতক', 'dec')}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
+                    </TableCell>
+                  </TableRow>
+                </TableFooter>
+              </Table>
             </div>
 
             {/* Action Buttons */}
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100">
               <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
                 <span>
                   {t(
                     'আবেদন দাখিল করলে স্বয়ংক্রিয়ভাবে এসিল্যান্ড ডকেটে শুনানির জন্য কেস প্রস্তুত হবে।',
@@ -725,18 +720,19 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
               </div>
 
               <div className="flex items-center gap-3 w-full sm:w-auto">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={onClose}
-                  className="w-1/2 sm:w-auto px-5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                  className="w-1/2 sm:w-auto min-h-[44px] text-xs font-bold"
                 >
                   {t('বাতিল', 'Cancel')}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={handleSubmitSuccessionMutation}
                   disabled={submitting || calculatedHeirs.length === 0}
-                  className="w-1/2 sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-xs font-bold text-white shadow-md shadow-emerald-700/20 transition flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-1/2 sm:w-auto min-h-[44px] bg-emerald-700 hover:bg-emerald-800 text-xs font-bold text-white shadow-md shadow-emerald-700/20 flex items-center justify-center gap-2"
                 >
                   {submitting ? (
                     <span>{t('দাখিল হচ্ছে...', 'Submitting...')}</span>
@@ -746,12 +742,12 @@ export const FaraizCalculatorModal: React.FC<FaraizCalculatorModalProps> = ({
                       <span>{t('১-ক্লিকে ওয়ারিশান নামজারি আবেদন দাখিল', 'File 1-Click Succession e-Mutation')}</span>
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Bell,
   X,
@@ -469,12 +470,16 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
         )}
       </div>
 
-      {/* 3. Floating In-App Toast Alert (Pops up on live events) */}
-      {activeToast && (
-        <div className="fixed bottom-6 right-6 z-50 max-w-sm rounded-2xl bg-white shadow-2xl border border-[#006A4E]/20 p-4 animate-in slide-in-from-bottom-5 duration-200 text-slate-800">
+      {/* 3. Floating In-App Toast Alert (Pops up on live events, rendered via Portal directly on document.body) */}
+      {activeToast && typeof document !== 'undefined' && createPortal(
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed top-20 right-4 sm:top-20 sm:right-6 z-[9999] max-w-sm w-[calc(100vw-2rem)] sm:w-96 rounded-2xl bg-white shadow-2xl border border-emerald-500/30 ring-1 ring-slate-900/10 p-4 animate-in slide-in-from-top-4 duration-200 text-slate-800"
+        >
           <div className="flex items-start gap-3">
             <span
-              className={`p-2 rounded-xl shrink-0 ${
+              className={`p-2 rounded-xl shrink-0 shadow-2xs ${
                 activeToast.type === 'ALERT'
                   ? 'bg-rose-100 text-rose-700'
                   : activeToast.type === 'WARNING'
@@ -497,13 +502,14 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
                   {t('লাইভ নোটিফিকেশন', 'Live Alert')}
                 </span>
                 <button
                   type="button"
                   onClick={() => setActiveToast(null)}
-                  className="p-1 rounded-full text-slate-400 hover:text-slate-700 cursor-pointer"
+                  className="p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors"
+                  title={t('বিজ্ঞপ্তি বন্ধ করুন', 'Dismiss alert')}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -533,7 +539,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ onNaviga
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

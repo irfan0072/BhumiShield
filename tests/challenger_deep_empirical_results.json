@@ -1,0 +1,112 @@
+{
+  "timestamp": "2026-11-03T07:05:21.163Z",
+  "totalTests": 17,
+  "passedTests": 17,
+  "failedTests": 0,
+  "successRate": "100.0%",
+  "verdict": "APPROVE",
+  "testLog": [
+    {
+      "category": "Faraiz:Standard",
+      "name": "Standard Family 2:1 Asaba & Zawil Furood conservation",
+      "passed": true,
+      "details": "Total %: 100.0000%, Son/Daughter Ratio: 2.0000"
+    },
+    {
+      "category": "Faraiz:Polygyny",
+      "name": "4 Wives equal division of Quranic 1/8 quota (3.125% each)",
+      "passed": true,
+      "details": "4 wives received 3.125% each (total wife share: 12.500%)"
+    },
+    {
+      "category": "Faraiz:DaughtersOnly",
+      "name": "Sole daughter gets 1/2 (50%) vs 3 daughters get exact 2/3 (66.67%)",
+      "passed": true,
+      "details": "Sole: 50.00%, 3 Daughters: 66.67% (each 22.22%)"
+    },
+    {
+      "category": "Faraiz:AwlDeficit",
+      "name": "Awl scenario does not cause negative estate distribution or crash",
+      "passed": true,
+      "details": "Distributed: 100.00%, No negative shares: true"
+    },
+    {
+      "category": "Faraiz:MonteCarlo",
+      "name": "10,000 randomized permutations maintain non-negative shares & <=100% conservation",
+      "passed": true,
+      "details": "Tested 10,000 permutations. Total % range: [0.00%, 100.00%]"
+    },
+    {
+      "category": "Shoelace:MetricAccuracy",
+      "name": "100m x 100m Savar cadastral parcel computes to ~10,000 sqm (247.1 decimals)",
+      "passed": true,
+      "details": "Computed Area: 9999.96 m² (error: 0.0004%), Decimals: 247.105"
+    },
+    {
+      "category": "Shoelace:Orientation",
+      "name": "Clockwise vs Counter-Clockwise vertex ordering produces identical area",
+      "passed": true,
+      "details": "CW Area: 11333.7986 m², CCW Area: 11333.7986 m²"
+    },
+    {
+      "category": "Shoelace:Degenerate",
+      "name": "Collinear triangle computes to <0.01 sqm (zero within geographic float tolerance) and <3 vertices safely returns null",
+      "passed": true,
+      "details": "Collinear Area: 0.002577 m², Two Points: null"
+    },
+    {
+      "category": "ParcelDesigner:Snapping",
+      "name": "12px threshold snaps within radius, rejects beyond radius, and picks nearest",
+      "passed": true,
+      "details": "Snap <12px: true, Reject >12px: true, Nearest neighbor picked: true"
+    },
+    {
+      "category": "PersonaDock:22RolesCatalog",
+      "name": "JudgePersonaDock contains full roster of demo personas (23 unique usernames defined)",
+      "passed": true,
+      "details": "Found 23 unique demo usernames in JudgePersonaDock.tsx"
+    },
+    {
+      "category": "PersonaDock:CacheInvalidation",
+      "name": "queryClient.invalidateQueries() invoked on every role switch to prevent cross-role data leaks",
+      "passed": true,
+      "details": "Verified queryClient.invalidateQueries() is called in finally block of handleSelectRole()"
+    },
+    {
+      "category": "PersonaDock:OfflineFallback",
+      "name": "Catch block protects offline role switching without unhandled rejection or app crash",
+      "passed": true,
+      "details": "Verified fallback catch handler updates user state and unsets isSwitching flag cleanly"
+    },
+    {
+      "category": "PersonaDock:TokenHygiene",
+      "name": "Post-admin role switch to citizen strictly purges supervisor token and updates JWT",
+      "passed": true,
+      "details": "Admin token purged on citizen switch: true, All 5 successive tokens distinct: true"
+    },
+    {
+      "category": "Network:HealthRetryBackoff",
+      "name": "App health query configured with 18s timeout and 3-attempt exponential backoff",
+      "passed": true,
+      "details": "timeout: 18000ms, retry: 3, retryDelay: min(1000 * 2^attempt, 8000ms)"
+    },
+    {
+      "category": "Network:ColdStartNotice",
+      "name": "Cold-start detection triggers \"সার্ভার জেগে উঠছে...\" notification after 3000ms threshold",
+      "passed": true,
+      "details": "Verified 3000ms delay detection and plain Bengali user-facing microcopy"
+    },
+    {
+      "category": "Network:AxiosClientConfig",
+      "name": "Axios client includes 12s timeout, Bearer JWT injection, and X-Admin-Supervisor-Token propagation",
+      "passed": true,
+      "details": "timeout: 12000ms, Bearer JWT header: true, Supervisor token header: true"
+    },
+    {
+      "category": "Network:UnwrapListDefensive",
+      "name": "unwrapList defensively handles bare arrays, paginated envelopes, single objects, and null/undefined without throwing",
+      "passed": true,
+      "details": "Bare array -> 3, items envelope -> 2, single object -> 1, null -> 0"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
-import {SourceCards} from '../components/sources/SourceCards';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppUI } from '../i18n';
 import { BhumiApi } from '../api/client';
+import { toBanglaDigits } from '../theme/tokens';
 import {
   Building2,
   Search,
@@ -14,9 +14,39 @@ import {
   Calendar,
   Landmark,
   HelpCircle,
-  X
+  X,
+  PhoneCall,
+  CheckCircle2,
+  AlertTriangle,
+  RotateCcw,
+  Sparkles,
+  ExternalLink,
+  Printer
 } from 'lucide-react';
 import { CitizenProblemTriageModal } from '../components/CitizenProblemTriageModal';
+import { useOffices } from '../components/publicHooks';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface OfficeItem {
   id: number;
@@ -30,7 +60,7 @@ interface OfficeItem {
   district_en: string;
   upazila_bn: string;
   upazila_en: string;
-  mouzas_served_json: string;
+  mouzas_served_json?: string;
   latitude: number | null;
   longitude: number | null;
   address_bn: string;
@@ -38,686 +68,582 @@ interface OfficeItem {
   contact_phone: string;
 }
 
-interface OfficeLocatorPageProps {
-  onNavigate?: (tab: string) => void;
-}
-
-export const OfficeLocatorPage: React.FC<OfficeLocatorPageProps> = ({ onNavigate }) => {
+export const OfficeLocatorPage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNavigate }) => {
   const { t, lang } = useAppUI();
-  const [offices, setOffices] = useState<OfficeItem[]>([]);
-  const [linkedOfficeId, setLinkedOfficeId] = useState(() => Number(new URLSearchParams(window.location.search).get('office_id')) || 0);
-  const [loading, setLoading] = useState(true);
+
+  // Search & Filters State
   const [districtFilter, setDistrictFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
   const [upazilaFilter, setUpazilaFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState(() => new URLSearchParams(window.location.search).get('area') || '');
 
-  // Appointment Modal
+  // TanStack Query for Dynamic Offices Directory
+  const queryParams = {
+    district: districtFilter || undefined,
+    upazila: upazilaFilter || undefined,
+    type: typeFilter || undefined,
+    q: searchQuery.trim() || undefined,
+  };
+  const officesQuery = useOffices(queryParams);
+
+  // Appointment Modal State
   const [bookingOffice, setBookingOffice] = useState<OfficeItem | null>(null);
   const [appointmentName, setAppointmentName] = useState('');
   const [appointmentPhone, setAppointmentPhone] = useState('');
   const [appointmentDate, setAppointmentDate] = useState('');
   const [appointmentTimeSlot, setAppointmentTimeSlot] = useState('10:00 AM - 11:30 AM');
-  const [appointmentServiceType, setAppointmentServiceType] = useState('GENERAL_INQUIRY');
+  const [appointmentServiceType, setAppointmentServiceType] = useState('MUTATION');
   const [appointmentCaseRef, setAppointmentCaseRef] = useState('');
-  const [bookingSuccess, setBookingSuccess] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState('');
   const [bookingResult, setBookingResult] = useState<any | null>(null);
-  const [mapNotice, setMapNotice] = useState<string | null>(null);
+
+  // Citizen Problem Triage Launcher Modal
   const [triageModalOpen, setTriageModalOpen] = useState(false);
 
-  const fetchOffices = () => {
-    setLoading(true);
-    const params: any = {};
-    if (linkedOfficeId > 0) params.office_id = linkedOfficeId;
-    if (typeFilter) params.type = typeFilter;
-    if (districtFilter) params.district = districtFilter;
-    if (upazilaFilter) params.upazila = upazilaFilter;
-    if (searchQuery.trim()) params.q = searchQuery.trim();
+  const rawOffices: OfficeItem[] = officesQuery.data || [];
 
-    BhumiApi.listOffices(params)
-      .then((res: any) => {
-        setOffices(Array.isArray(res) ? res : (res?.items || []));
-      })
-      .catch((err) => {
-        console.error('Failed to load offices', err);
-      })
-      .finally(() => setLoading(false));
-  };
+  const availableDistricts = useMemo(() => {
+    const set = new Set<string>();
+    rawOffices.forEach((o) => {
+      if (o.district_bn) set.add(o.district_bn);
+      else if (o.district_en) set.add(o.district_en);
+    });
+    return Array.from(set).sort();
+  }, [rawOffices]);
 
-  useEffect(() => {
-    fetchOffices();
-  }, [typeFilter, districtFilter, upazilaFilter, linkedOfficeId]);
-
-  useEffect(() => {
-    if (!bookingOffice) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setBookingOffice(null);
-        setBookingSuccess(false);
-        setBookingResult(null);
-        setBookingError('');
+  const availableUpazilas = useMemo(() => {
+    const set = new Set<string>();
+    rawOffices.forEach((o) => {
+      if (districtFilter) {
+        const matchesDistrict = (o.district_bn === districtFilter) || (o.district_en === districtFilter);
+        if (!matchesDistrict) return;
       }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [bookingOffice]);
+      if (o.upazila_bn) set.add(o.upazila_bn);
+      else if (o.upazila_en) set.add(o.upazila_en);
+    });
+    return Array.from(set).sort();
+  }, [rawOffices, districtFilter]);
 
-  const getOfficeTypeBadge = (type: string) => {
-    switch (type) {
-      case 'registry':
-      case 'sub_registry':
-        return {
-          labelBn: 'সাব-রেজিস্ট্রি অফিস',
-          labelEn: 'Sub-Registry Office',
-          bg: 'bg-emerald-50 text-[#006A4E] border-emerald-200',
-        };
-      case 'ac_land':
-        return {
-          labelBn: 'উপজেলা ভূমি অফিস (এসি ল্যান্ড)',
-          labelEn: 'Upazila Land Office',
-          bg: 'bg-blue-50 text-blue-800 border-blue-200',
-        };
-      case 'settlement':
-        return {
-          labelBn: 'জোনাল সেটেলমেন্ট অফিস',
-          labelEn: 'Zonal Settlement Office',
-          bg: 'bg-indigo-50 text-indigo-800 border-indigo-200',
-        };
-      case 'service_point':
-        return {
-          labelBn: 'ইউনিয়ন ডিজিটাল সেন্টার (সার্ভিস পয়েন্ট)',
-          labelEn: 'UDC Service Point',
-          bg: 'bg-amber-50 text-amber-800 border-amber-200',
-        };
-      case 'bank_branch':
-      case 'bank':
-        return {
-          labelBn: 'তফসিলি ব্যাংক শাখা',
-          labelEn: 'Bank Branch',
-          bg: 'bg-purple-50 text-purple-800 border-purple-200',
-        };
-      case 'admin_cell':
-        return {
-          labelBn: 'জেলা প্রশাসন ও গভর্ন্যান্স সেল',
-          labelEn: 'District Administration / Cell',
-          bg: 'bg-teal-50 text-teal-800 border-teal-200',
-        };
-      default:
-        return {
-          labelBn: 'সরকারি অফিস',
-          labelEn: 'Government Office',
-          bg: 'bg-slate-50 text-slate-700 border-slate-200',
-        };
-    }
-  };
-
-  const filteredOffices = offices.filter((item) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    const nameMatch =
-      item.name_bn?.toLowerCase().includes(q) || item.name_en?.toLowerCase().includes(q);
-    const codeMatch = item.office_code?.toLowerCase().includes(q);
-    const upazilaMatch =
-      item.upazila_bn?.toLowerCase().includes(q) || item.upazila_en?.toLowerCase().includes(q);
-    const districtMatch =
-      item.district_bn?.toLowerCase().includes(q) || item.district_en?.toLowerCase().includes(q);
-    const mouzaMatch = item.mouzas_served_json?.toLowerCase().includes(q);
-    const addressMatch =
-      item.address_bn?.toLowerCase().includes(q) || item.address_en?.toLowerCase().includes(q);
-    return nameMatch || codeMatch || upazilaMatch || districtMatch || mouzaMatch || addressMatch;
+  const filteredOffices = rawOffices.filter((off) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.trim().toLowerCase();
+    return (
+      (off.name_bn || '').toLowerCase().includes(q) ||
+      (off.name_en || '').toLowerCase().includes(q) ||
+      (off.upazila_bn || '').toLowerCase().includes(q) ||
+      (off.district_bn || '').toLowerCase().includes(q) ||
+      (off.address_bn || '').toLowerCase().includes(q)
+    );
   });
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!bookingOffice) return;
+    if (!bookingOffice || !appointmentName.trim() || !appointmentPhone.trim() || !appointmentDate) return;
     setBookingLoading(true);
     setBookingError('');
+
     try {
       const res = await BhumiApi.createAppointment({
         office_id: bookingOffice.id,
+        office_name_bn: bookingOffice.name_bn,
         citizen_name_bn: appointmentName.trim(),
         citizen_phone: appointmentPhone.trim(),
-        slot_date: appointmentDate,
-        slot_time: appointmentTimeSlot,
-        service_type: appointmentServiceType,
-        case_reference: appointmentCaseRef.trim() || undefined,
-        notes_bn: `${appointmentServiceType} সংক্রান্ত সেবা সাক্ষাত। পছন্দের সময় স্লট: ${appointmentTimeSlot}`,
+        appointment_date: appointmentDate,
+        time_slot: appointmentTimeSlot,
+        service_category: appointmentServiceType,
+        case_ref: appointmentCaseRef.trim(),
       });
-      setBookingResult(res.appointment);
-      setBookingSuccess(true);
+      setBookingResult(res);
     } catch (err: any) {
-      const msg = err?.response?.data?.detail?.message_bn || err?.response?.data?.message || err.message;
-      setBookingError(msg || t('বুকিং প্রক্রিয়াকরণে ত্রুটি হয়েছে।', 'Failed to book appointment.'));
+      setBookingError(
+        err?.response?.data?.message_bn ||
+        t('অ্যাপয়েন্টমেন্ট স্লট সংরক্ষণ করতে সমস্যা হয়েছে। অনুগ্রহ করে পুনরায় চেষ্টা করুন।', 'Failed to book appointment slot. Please try again.')
+      );
     } finally {
       setBookingLoading(false);
     }
   };
 
-  const handleViewOnMap = (off: OfficeItem) => {
-    if (off.latitude && off.longitude) {
-      onNavigate?.(`map?lat=${off.latitude}&lng=${off.longitude}&office_id=${off.id}`);
-    } else {
-      setMapNotice(
-        t(
-          'মানচিত্রে দেখানো যাচ্ছে না — এই দপ্তরের GPS স্থানাঙ্ক জরিপ চলমান।',
-          'Map unavailable — GPS coordinates for this office are currently being surveyed.'
-        )
-      );
-      setTimeout(() => setMapNotice(null), 6000);
-    }
+  const handleResetFilters = () => {
+    setDistrictFilter('');
+    setUpazilaFilter('');
+    setTypeFilter('');
+    setSearchQuery('');
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {linkedOfficeId > 0 && (
-          <div className="source-panel">
-            <p>{t('সংযুক্ত অফিসটি দেখানো হচ্ছে।', 'Showing the linked office.')}</p>
-            <button
-              onClick={() => {
-                setLinkedOfficeId(0);
-                const url = new URL(window.location.href);
-                url.searchParams.delete('office_id');
-                window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
-              }}
-            >
-              {t('সব অফিস দেখুন', 'Show all offices')}
-            </button>
+    <div className="min-h-screen bg-[#FAFAFA] text-slate-900 pb-24 relative overflow-hidden">
+      {/* Ambient background glow & subtle dot pattern */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[450px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl -z-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] opacity-40 -z-10 pointer-events-none" />
+
+      {/* Top Banner Header (Linear / Vercel Bento-Grid Style) */}
+      <section className="pt-8 sm:pt-12 pb-8 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+        <div className="space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 shadow-xs text-xs font-semibold text-[#006A4E]">
+            <Building2 className="w-4 h-4 text-[#006A4E]" />
+            <span>{t('ভূমি অফিস ডিরেক্টরি', 'Office Directory')}</span>
           </div>
-        )}
-        <SourceCards kind="OFFICE" officeId={linkedOfficeId} title={t('অফিস ও সিটিজেন চার্টারের হালনাগাদ','Reviewed official updates')} />
-        {/* Banner */}
-        <div className="bg-[#006A4E] text-white rounded-2xl p-6 sm:p-8 shadow-sm space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-800/60 border border-emerald-600/40 text-emerald-100 text-xs font-semibold">
-            <Building2 className="w-4 h-4 text-emerald-300" />
-            <span>{t('সার্ভিস পয়েন্ট ও দপ্তর অনুসন্ধান', 'Office Directory & Service Points')}</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            {t('নিকটস্থ ভূমি, সাব-রেজিস্ট্রি ও ইউনিয়ন সেবা কেন্দ্র', 'Nearby Land, Sub-Registry & Union Service Points')}
+
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-snug">
+            {t('নিকটস্থ ভূমি অফিস', 'Nearby Land Offices')}
           </h1>
-          <p className="text-emerald-100 text-sm sm:text-base max-w-3xl leading-relaxed">
+          <p className="text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed">
             {t(
-              'ঢাকা, গাজীপুর ও কুমিল্লা জেলাসহ বাংলাদেশের বিভিন্ন সাব-রেজিস্ট্রি অফিস, সহকারী কমিশনার (ভূমি) কার্যালয়, জোনাল সেটেলমেন্ট অফিস এবং ইউনিয়ন ডিজিটাল সেন্টার সেবা কেন্দ্রের সম্পূর্ণ তালিকা, অধিক্ষেত্র ও সেবা নির্দেশিকা।',
-              'Official nationwide directory of sub-registry offices, upazila land offices, zonal settlement offices, and union digital service points with jurisdiction details.'
+              'সহকারী কমিশনার (ভূমি) ও সাব-রেজিস্ট্রি অফিসের ঠিকানা ও যোগাযোগ।',
+              'Addresses and contact info for AC Land and Sub-Registry offices.'
             )}
           </p>
-        </div>
 
-        {/* Citizen Problem Triage Launch Banner */}
-        <div className="bg-gradient-to-r from-emerald-950 via-[#074f38] to-[#006A4E] text-white p-5 sm:p-6 rounded-2xl border border-emerald-500/30 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-800/80 text-emerald-100 text-xs font-bold border border-emerald-500/40">
-              <HelpCircle className="w-3.5 h-3.5" />
-              {t('নাগরিক সমস্যা নিরসন ও দিকনির্দেশনা উইজার্ড', 'Citizen Problem Resolution Wizard')}
-            </span>
-            <h3 className="text-base sm:text-lg font-black text-white">
-              {t('বুঝতে পারছেন না কোন অফিসে যাবেন বা কার কাছে আবেদন করবেন?', 'Not sure which office to visit or where to apply?')}
-            </h3>
-            <p className="text-xs text-emerald-100/90 leading-relaxed max-w-2xl">
-              {t(
-                'নামজারি সমস্যা, দাগের ভুল, বালাম অনুসন্ধান, ক্ষতিপূরণ বা খারিজ সংক্রান্ত সমস্যার তাৎক্ষণিক সমাধান ও প্রয়োজনীয় দলিলের তালিকা জানতে উইজার্ডটি চালু করুন।',
-                'Find your exact competent officer, required documents, statutory fees, and physical attendance rules in 3 clicks.'
-              )}
-            </p>
+          {/* Quick Problem Triage & 16122 Callout */}
+          <div className="pt-2 flex flex-wrap items-center gap-3">
+            <Button
+              onClick={() => setTriageModalOpen(true)}
+              className="bg-[#006A4E] text-white hover:bg-[#00553e] font-black text-xs sm:text-sm h-11 px-5 rounded-xl shadow-md shadow-emerald-900/10 cursor-pointer flex items-center gap-2"
+            >
+              <HelpCircle className="w-4 h-4" />
+              <span>{t('সমস্যা ও অফিস গাইড', 'Problem & Office Guide')}</span>
+            </Button>
+
+            <a
+              href="tel:16122"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition shadow-xs"
+            >
+              <PhoneCall className="w-3.5 h-3.5 text-[#006A4E]" />
+              <span>{t('হেল্পলাইন: ১৬১২২', 'Helpline: 16122')}</span>
+            </a>
           </div>
-          <button
-            type="button"
-            onClick={() => setTriageModalOpen(true)}
-            className="px-5 py-3 rounded-xl bg-white hover:bg-emerald-50 text-[#006A4E] font-extrabold text-xs sm:text-sm shadow-md transition-all shrink-0 cursor-pointer flex items-center justify-center gap-2"
-          >
-            <HelpCircle className="w-4 h-4 text-[#006A4E]" />
-            <span>{t('সমস্যার সঠিক সমাধান খুঁজুন', 'Launch Problem Wizard')}</span>
-          </button>
         </div>
+      </section>
 
-        {/* F18: Inline map-unavailable notice (replaces alert()). */}
-        {mapNotice && (
-          <div className="bg-amber-50 border border-amber-300 text-amber-900 rounded-xl px-4 py-3 flex items-start justify-between gap-3">
-            <div className="flex items-start gap-2">
-              <MapPin className="w-4 h-4 mt-0.5 text-amber-700 shrink-0" />
-              <p className="text-sm font-semibold">{mapNotice}</p>
+      {/* Main Container */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-2 space-y-6">
+        {/* Search & Filter Controls Card */}
+        <Card className="bg-white rounded-2xl border border-slate-200/90 shadow-lg p-5 sm:p-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2">
+              <Search className="w-4 h-4 text-[#006A4E]" />
+              <h2 className="text-sm font-bold text-slate-800">
+                {t('অফিস অনুসন্ধান ও ফিল্টার', 'Search & Filter Offices')}
+              </h2>
             </div>
-            <button
-              type="button"
-              onClick={() => setMapNotice(null)}
-              className="text-amber-700 hover:text-amber-900 text-sm font-bold px-2"
-              aria-label="Dismiss notice"
+            {(districtFilter || upazilaFilter || typeFilter || searchQuery) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetFilters}
+                className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 h-8 px-2.5 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5 mr-1" />
+                <span>{t('ফিল্টার মুছুন', 'Clear Filters')}</span>
+              </Button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Search Input */}
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700">{t('অফিস বা এলাকার নাম', 'Office Name or Area')}</label>
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('যেমন: সাভার, ধামরাই...', 'e.g. Savar, Dhamrai...')}
+                className="h-10 text-sm border-slate-300"
+              />
+            </div>
+
+            {/* Office Type Filter */}
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-slate-700">{t('দপ্তরের ধরন', 'Office Type')}</Label>
+              <Select
+                value={typeFilter || 'ALL'}
+                onValueChange={(val) => setTypeFilter(val === 'ALL' ? '' : val)}
+              >
+                <SelectTrigger className="w-full h-10 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-xs focus:ring-2 focus:ring-[#006A4E]">
+                  <SelectValue placeholder={t('সকল দপ্তর', 'All Office Types')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="ALL">{t('সকল দপ্তর', 'All Office Types')}</SelectItem>
+                    <SelectItem value="AC_LAND">{t('সহকারী কমিশনার (ভূমি) কার্যালয়', 'AC Land Office')}</SelectItem>
+                    <SelectItem value="SUB_REGISTRY">{t('সাব-রেজিস্ট্রি অফিস', 'Sub-Registry Office')}</SelectItem>
+                    <SelectItem value="SETTLEMENT">{t('সেটেলমেন্ট অফিস (জরিপ)', 'Settlement Survey Office')}</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* District Filter */}
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-slate-700">{t('জেলা', 'District')}</Label>
+              <Select
+                value={districtFilter || 'ALL'}
+                onValueChange={(val) => {
+                  setDistrictFilter(val === 'ALL' ? '' : val);
+                  setUpazilaFilter('');
+                }}
+              >
+                <SelectTrigger className="w-full h-10 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-xs focus:ring-2 focus:ring-[#006A4E]">
+                  <SelectValue placeholder={t('সকল জেলা', 'All Districts')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="ALL">{t('সকল জেলা', 'All Districts')}</SelectItem>
+                    {availableDistricts.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {d}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Upazila Filter */}
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-slate-700">{t('উপজেলা', 'Upazila')}</Label>
+              <Select
+                value={upazilaFilter || 'ALL'}
+                onValueChange={(val) => setUpazilaFilter(val === 'ALL' ? '' : val)}
+              >
+                <SelectTrigger className="w-full h-10 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-xs focus:ring-2 focus:ring-[#006A4E]">
+                  <SelectValue placeholder={t('সকল উপজেলা', 'All Upazilas')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="ALL">{t('সকল উপজেলা', 'All Upazilas')}</SelectItem>
+                    {availableUpazilas.map((u) => (
+                      <SelectItem key={u} value={u}>
+                        {u}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </Card>
+
+        {/* 4-State UI Coverage: Offices Directory */}
+        {officesQuery.isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="p-6 rounded-2xl bg-white border border-slate-200 space-y-4">
+                <Skeleton className="h-6 w-32 bg-slate-200" />
+                <Skeleton className="h-5 w-3/4 bg-slate-200" />
+                <Skeleton className="h-12 w-full bg-slate-200" />
+                <Skeleton className="h-10 w-full bg-slate-200" />
+              </Card>
+            ))}
+          </div>
+        ) : officesQuery.isError ? (
+          <div className="p-8 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-center space-y-3">
+            <AlertTriangle className="w-8 h-8 text-rose-600 mx-auto" />
+            <h3 className="text-base font-bold text-rose-900">
+              {t('অফিস ডিরেক্টরি লোড করতে সমস্যা হয়েছে', 'Failed to load offices directory')}
+            </h3>
+            <p className="text-xs text-rose-700 max-w-md mx-auto">
+              {t('ইন্টারনেট সংযোগ পরীক্ষা করে পুনরায় চেষ্টা করুন।', 'Please check your connection and retry.')}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => officesQuery.refetch()}
+              className="border-rose-300 text-rose-800 hover:bg-rose-100 cursor-pointer"
             >
-              ✕
-            </button>
-          </div>
-        )}
-
-        {/* Filters and Search */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm grid grid-cols-1 sm:grid-cols-4 gap-3">
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('দপ্তর, জেলা, উপজেলা বা মৌজা...', 'Search by office, district, mouza...')}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
-            />
-          </div>
-
-          <div>
-            <select
-              value={districtFilter}
-              onChange={(e) => {
-                setDistrictFilter(e.target.value);
-                setUpazilaFilter('');
-              }}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
-            >
-              <option value="">{t('সকল জেলা', 'All Districts')}</option>
-              <option value="ঢাকা">{t('ঢাকা', 'Dhaka')}</option>
-              <option value="গাজীপুর">{t('গাজীপুর', 'Gazipur')}</option>
-              <option value="কুমিল্লা">{t('কুমিল্লা', 'Cumilla')}</option>
-              <option value="নারায়ণগঞ্জ">{t('নারায়ণগঞ্জ', 'Narayanganj')}</option>
-            </select>
-          </div>
-
-          <div>
-            <select
-              value={upazilaFilter}
-              onChange={(e) => setUpazilaFilter(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
-            >
-              <option value="">{t('সকল উপজেলা', 'All Upazilas')}</option>
-              {(!districtFilter || districtFilter === 'ঢাকা') && <option value="সাভার">{t('সাভার (ঢাকা)', 'Savar (Dhaka)')}</option>}
-              {(!districtFilter || districtFilter === 'ঢাকা') && <option value="তেজগাঁও">{t('তেজগাঁও (ঢাকা)', 'Tejgaon (Dhaka)')}</option>}
-              {(!districtFilter || districtFilter === 'গাজীপুর') && <option value="গাজীপুর সদর">{t('গাজীপুর সদর', 'Gazipur Sadar')}</option>}
-              {(!districtFilter || districtFilter === 'কুমিল্লা') && <option value="দাউদকান্দি">{t('দাউদকান্দি (কুমিল্লা)', 'Daudkandi (Cumilla)')}</option>}
-              {(!districtFilter || districtFilter === 'কুমিল্লা') && <option value="কুমিল্লা আদর্শ সদর">{t('কুমিল্লা আদর্শ সদর', 'Cumilla Adarsha Sadar')}</option>}
-            </select>
-          </div>
-
-          <div>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
-            >
-              <option value="">{t('সকল প্রকার দপ্তর', 'All Office Types')}</option>
-              <option value="registry">{t('সাব-রেজিস্ট্রি অফিস', 'Sub-Registry')}</option>
-              <option value="ac_land">{t('উপজেলা ভূমি অফিস', 'Upazila Land Office')}</option>
-              <option value="settlement">{t('জোনাল সেটেলমেন্ট অফিস', 'Zonal Settlement')}</option>
-              <option value="service_point">{t('ইউনিয়ন সার্ভিস পয়েন্ট', 'UDC Service Point')}</option>
-              <option value="bank_branch">{t('ব্যাংক শাখা', 'Bank Branch')}</option>
-              <option value="admin_cell">{t('জেলা প্রশাসন ও সেল', 'District Admin / Cell')}</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Offices Grid */}
-        {loading ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-[#006A4E] mb-3" />
-            <p className="font-semibold">{t('দপ্তরের তালিকা লোড হচ্ছে...', 'Loading offices...')}</p>
+              <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+              <span>{t('পুনরায় চেষ্টা করুন', 'Retry')}</span>
+            </Button>
           </div>
         ) : filteredOffices.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-amber-200 p-10 text-center text-slate-600 space-y-4 shadow-xs">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center">
-              <Building2 className="w-8 h-8" />
-            </div>
-            <div className="max-w-md mx-auto space-y-2">
-              <h3 className="text-base font-bold text-slate-900">
-                {t('এই অঞ্চলে কোনো সরকারি কার্যালয় অনবোর্ড করা হয়নি (Coverage Gap)', 'No Onboarded Office for this Jurisdiction')}
-              </h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                {t(
-                  'অনুসন্ধানকৃত এলাকা বা ফিল্টারের অধীনে কোনো সক্রিয় দপ্তর নিবন্ধিত নেই। নতুন এলাকা অনবোর্ডিং প্রক্রিয়াধীন রয়েছে। জরুরি ভূমি সেবা বা তথ্য অনুসন্ধানের জন্য সরাসরি ১৬১২২ হেল্পলাইনে যোগাযোগ করুন।',
-                  'No active office registered under this jurisdiction. Coverage expansion is in progress. For emergency land services, call 16122.'
-                )}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setDistrictFilter('');
-                  setUpazilaFilter('');
-                  setTypeFilter('');
-                  setSearchQuery('');
-                }}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
-              >
-                {t('ফিল্টার রিসেট করুন', 'Reset Filters')}
-              </button>
-              {onNavigate && (
-                <button
-                  type="button"
-                  onClick={() => onNavigate('home?section=tickets&new=1')}
-                  className="px-4 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold transition cursor-pointer"
-                >
-                  {t('নতুন অঞ্চল অনবোর্ডিং আবেদন', 'Request Jurisdiction Onboarding')}
-                </button>
-              )}
-            </div>
+          <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 shadow-sm space-y-3">
+            <Building2 className="w-12 h-12 text-slate-400 mx-auto" />
+            <h3 className="text-lg font-bold text-slate-900">
+              {t('কোনো অফিস পাওয়া যায়নি', 'No land offices found')}
+            </h3>
+            <p className="text-xs text-slate-500">
+              {t('অনুগ্রহ করে অন্য জেলা বা উপজেলা নির্বাচন করুন।', 'Please adjust your filter parameters or search terms.')}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResetFilters}
+              className="border-slate-300 cursor-pointer"
+            >
+              {t('সকল অফিস দেখুন', 'View All Offices')}
+            </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredOffices.map((off) => {
-              const badge = getOfficeTypeBadge(off.office_type);
-              let mouzasServed: string[] = [];
-              try {
-                mouzasServed = JSON.parse(off.mouzas_served_json || '[]');
-              } catch {
-                mouzasServed = [];
-              }
-
-              return (
-                <div
-                  key={off.id}
-                  className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-6 space-y-4 flex flex-col justify-between"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badge.bg} mb-2`}
-                        >
-                          {lang === 'bn' ? badge.labelBn : badge.labelEn}
-                        </span>
-                        <h3 className="text-lg font-bold text-slate-900 leading-snug">
-                          {lang === 'bn' ? off.name_bn : off.name_en}
-                        </h3>
-                        <p className="text-xs font-mono text-slate-500">{off.office_code}</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 text-xs text-slate-600">
-                      <div className="flex items-start gap-2">
-                        <MapPin className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-                        <span>{lang === 'bn' ? off.address_bn : off.address_en}</span>
-                      </div>
-
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <Phone className="w-4 h-4 text-slate-400 shrink-0" />
-                          <span>
-                            {t('যোগাযোগ:', 'Contact:')} <strong className="text-slate-800">{off.contact_phone}</strong>
-                          </span>
-                        </div>
-                        <a
-                          href="tel:16122"
-                          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#006A4E] text-[11px] font-bold border border-emerald-200 hover:bg-emerald-100 transition-colors shadow-2xs"
-                        >
-                          <span>📞 ১৬১২২ হটলাইন</span>
-                        </a>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-slate-400 shrink-0" />
-                        <span>{t('কার্যকাল: রবিবার - বৃহস্পতিবার, সকাল ৯টা - বিকাল ৪টা', 'Sun - Thu, 9:00 AM - 4:00 PM')}</span>
-                      </div>
-                    </div>
-
-                    {mouzasServed.length > 0 && (
-                      <div className="pt-2 border-t border-slate-100">
-                        <span className="text-[11px] font-bold text-slate-600 block mb-1">
-                          {t('আওতাধীন মৌজাসমূহ:', 'Jurisdiction Mouzas:')}
-                        </span>
-                        <div className="flex flex-wrap gap-1">
-                          {mouzasServed.map((m, idx) => (
-                            <span
-                              key={idx}
-                              className="px-2 py-0.5 bg-slate-100 rounded text-[11px] text-slate-700 font-medium"
-                            >
-                              {m}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredOffices.map((office) => (
+              <Card
+                key={office.id}
+                className="bg-white rounded-2xl border border-slate-200/90 hover:border-[#006A4E]/50 hover:shadow-md transition p-6 space-y-4 flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <Badge
+                      className={
+                        office.office_type === 'AC_LAND'
+                          ? 'bg-emerald-100 text-[#006A4E] border-emerald-300 font-bold text-[10px]'
+                          : office.office_type === 'SUB_REGISTRY'
+                          ? 'bg-blue-100 text-blue-800 border-blue-300 font-bold text-[10px]'
+                          : 'bg-purple-100 text-purple-800 border-purple-300 font-bold text-[10px]'
+                      }
+                    >
+                      {office.office_type === 'AC_LAND'
+                        ? t('এসি ল্যান্ড অফিস', 'AC Land Office')
+                        : office.office_type === 'SUB_REGISTRY'
+                        ? t('সাব-রেজিস্ট্রি কার্যালয়', 'Sub-Registry')
+                        : t('সেটেলমেন্ট অফিস', 'Settlement Office')}
+                    </Badge>
+                    <span className="text-[11px] font-mono text-slate-500">
+                      {office.office_code}
+                    </span>
                   </div>
 
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleViewOnMap(off)}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition cursor-pointer min-h-[40px]"
-                    >
-                      <MapPin className="w-3.5 h-3.5" />
-                      <span>{t('ম্যাপে অবস্থান', 'View on Map')}</span>
-                    </button>
+                  <h3 className="text-lg font-black text-slate-900 leading-snug">
+                    {lang === 'bn' ? office.name_bn : office.name_en}
+                  </h3>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setBookingOffice(off);
-                        setBookingSuccess(false);
-                        setBookingResult(null);
-                        setBookingError('');
-                      }}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold text-white bg-[#006A4E] hover:bg-emerald-800 transition cursor-pointer min-h-[40px]"
-                    >
-                      <Calendar className="w-3.5 h-3.5" />
-                      <span>{t('সরাসরি সাক্ষাতের বুকিং', 'Book Appointment')}</span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Appointment Booking Modal */}
-        {bookingOffice && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="office-booking-modal-title"
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
-          >
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-[#006A4E]" />
-                  <div>
-                    <h3 id="office-booking-modal-title" className="font-bold text-slate-900 text-base leading-tight">
-                      {t('স্থানীয় সেবা অ্যাপয়েন্টমেন্ট অনুরোধ', 'Local Service Appointment Request')}
-                    </h3>
-                    <p className="text-[11px] text-slate-500">
-                      {t('দপ্তরের কাজের চাপ ও সময়সূচী সাপেক্ষে সেবা অনুরোধ', 'Subject to office schedule & capacity confirmation')}
+                  <div className="space-y-2 text-xs text-slate-600">
+                    <p className="flex items-start gap-1.5 leading-relaxed">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                      <span>{lang === 'bn' ? office.address_bn : office.address_en}</span>
+                    </p>
+                    <p className="flex items-center gap-1.5 font-mono text-slate-800">
+                      <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <a href={`tel:${office.contact_phone}`} className="hover:underline font-bold">
+                        {office.contact_phone || '০২-৯৯৮৮৭৭৬৬'}
+                      </a>
+                    </p>
+                    <p className="flex items-center gap-1.5 text-slate-500 text-[11px]">
+                      <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span>{t('রবি - বৃহস্পতি: সকাল ৯:০০ - বিকাল ৫:০০', 'Sun - Thu: 9:00 AM - 5:00 PM')}</span>
                     </p>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBookingOffice(null);
-                    setBookingSuccess(false);
-                    setBookingResult(null);
-                    setBookingError('');
-                  }}
-                  aria-label={t('বন্ধ করুন', 'Close')}
-                  className="text-slate-400 hover:text-slate-600 transition p-1 cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
 
-              {bookingSuccess && bookingResult ? (
-                <div className="p-6 text-center space-y-3 bg-emerald-50 rounded-xl border border-emerald-200">
-                  <ShieldCheck className="w-10 h-10 text-[#006A4E] mx-auto animate-bounce" />
-                  <p className="font-bold text-emerald-950 text-base">
-                    {t('✔ আপনার অ্যাপয়েন্টমেন্ট অনুরোধ সফলভাবে গৃহীত হয়েছে!', '✔ Appointment request submitted successfully!')}
-                  </p>
-                  <div className="bg-white p-3 rounded-lg border border-emerald-200 text-left space-y-1.5 text-xs">
-                    <div>
-                      <span className="text-slate-500">{t('ট্র্যাকিং কোড:', 'Tracking Code:')}</span>{' '}
-                      <span className="font-mono font-bold text-[#006A4E]">{bookingResult.appointment_code}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500">{t('অনুরোধকৃত তারিখ ও সময়:', 'Requested Date & Time:')}</span>{' '}
-                      <span className="font-semibold">{bookingResult.slot_date} ({bookingResult.slot_time})</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500">{t('সেবার ধরণ:', 'Service:')}</span>{' '}
-                      <span className="font-semibold">{bookingResult.service_type}</span>
-                    </div>
-                    <div className="pt-1 border-t border-slate-100 text-[11px] text-amber-800">
-                      <span>• {t('স্ট্যাটাস: স্থানীয় অনুরোধ অপেক্ষমাণ (দপ্তরের অনুমোদন সাপেক্ষে)', 'Status: Local Request Pending Confirmation')}</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-emerald-800">
-                    {t('নির্ধারিত তারিখে প্রয়োজনীয় মূল কাগজপত্রসহ উপস্থিত হোন। ট্র্যাকিং কোডটি সংরক্ষণ করুন।', 'Please bring your original NID and documents on the selected date. Save your tracking code.')}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBookingOffice(null);
-                      setBookingSuccess(false);
-                      setBookingResult(null);
-                      setAppointmentName('');
-                      setAppointmentPhone('');
-                      setAppointmentDate('');
-                      setAppointmentCaseRef('');
-                    }}
-                    className="mt-3 w-full py-2.5 bg-[#006A4E] text-white rounded-lg text-xs font-bold hover:bg-emerald-800 transition cursor-pointer min-h-[40px]"
-                  >
-                    {t('সম্পন্ন', 'Done')}
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleBookingSubmit} className="space-y-3.5">
-                  {bookingError && (
-                    <div className="p-3 bg-red-50 text-red-700 text-xs rounded-lg border border-red-200">
-                      {bookingError}
-                    </div>
+                {/* Card Action Buttons */}
+                <CardFooter className="p-0 pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
+                  {onNavigate && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onNavigate(`map?office_id=${office.id}`)}
+                      className="h-10 text-xs font-bold border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center justify-center gap-1"
+                    >
+                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{t('মানচিত্রে দেখুন', 'On Map')}</span>
+                    </Button>
                   )}
 
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-700">
-                    <p>
-                      <strong>{t('নির্বাচিত দপ্তর:', 'Office:')}</strong>{' '}
-                      {lang === 'bn' ? bookingOffice.name_bn : bookingOffice.name_en}
-                    </p>
-                    <p className="text-slate-500 mt-0.5">
-                      {lang === 'bn' ? bookingOffice.address_bn : bookingOffice.address_en}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      {t('আপনার নাম', 'Your Full Name')} *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={appointmentName}
-                      onChange={(e) => setAppointmentName(e.target.value)}
-                      placeholder={t('উদা: মো. রফিকুল ইসলাম', 'e.g. Md. Rafiqul Islam')}
-                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      {t('মোবাইল নম্বর', 'Mobile Number')} *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={appointmentPhone}
-                      onChange={(e) => setAppointmentPhone(e.target.value)}
-                      placeholder="01700-001001"
-                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        {t('পছন্দের তারিখ', 'Preferred Date')} *
-                      </label>
-                      <input
-                        type="date"
-                        required
-                        value={appointmentDate}
-                        onChange={(e) => setAppointmentDate(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        {t('পছন্দের সময় স্লট', 'Time Slot')} *
-                      </label>
-                      <select
-                        value={appointmentTimeSlot}
-                        onChange={(e) => setAppointmentTimeSlot(e.target.value)}
-                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
-                      >
-                        <option value="10:00 AM - 11:30 AM">{t('সকাল ১০:০০ - ১১:৩০', 'Morning 10:00 - 11:30 AM')}</option>
-                        <option value="11:30 AM - 01:00 PM">{t('দুপুর ১১:৩০ - ০১:০০', 'Noon 11:30 AM - 01:00 PM')}</option>
-                        <option value="02:00 PM - 03:30 PM">{t('দুপুর ০২:০০ - ০৩:৩০', 'Afternoon 02:00 - 03:30 PM')}</option>
-                        <option value="03:30 PM - 05:00 PM">{t('বিকাল ০৩:৩০ - ০৫:০০', 'Late Afternoon 03:30 - 05:00 PM')}</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      {t('সেবার ধরণ', 'Service Category')} *
-                    </label>
-                    <select
-                      value={appointmentServiceType}
-                      onChange={(e) => setAppointmentServiceType(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
-                    >
-                      <option value="GENERAL_INQUIRY">{t('সাধারণ নাগরিক পরামর্শ ও তথ্য অনুসন্ধান', 'General Inquiry & Advisory')}</option>
-                      <option value="MUTATION_HEARING">{t('ই-নামজারি শুনানী তথ্য ও কাগজপত্র জমা', 'Mutation Hearing & Record Submission')}</option>
-                      <option value="DEED_REGISTRATION">{t('দলিল রেজিস্ট্রি প্রস্তুতি ও ফি যাচাই', 'Deed Registry Preparation & Fee Check')}</option>
-                      <option value="RECORD_VERIFICATION">{t('খতিয়ান/পর্চা রেকর্ড শুদ্ধিকরণ পরামর্শ', 'Khatian/Porcha Correction Advisory')}</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      {t('আবেদন বা মামলা রেফারেন্স (ঐচ্ছিক)', 'Application / Case Ref (Optional)')}
-                    </label>
-                    <input
-                      type="text"
-                      value={appointmentCaseRef}
-                      onChange={(e) => setAppointmentCaseRef(e.target.value)}
-                      placeholder={t('উদা: MUT-2026-0042', 'e.g. MUT-2026-0042')}
-                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
-                    />
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                    <button
-                      type="button"
-                      onClick={() => setBookingOffice(null)}
-                      disabled={bookingLoading}
-                      className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer min-h-[40px]"
-                    >
-                      {t('বাতিল', 'Cancel')}
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={bookingLoading}
-                      className="px-5 py-2 bg-[#006A4E] hover:bg-emerald-800 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition cursor-pointer min-h-[40px]"
-                    >
-                      {bookingLoading ? t('অনুরোধ দাখিল হচ্ছে...', 'Submitting Request...') : t('অ্যাপয়েন্টমেন্ট অনুরোধ পাঠান', 'Send Appointment Request')}
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setBookingOffice(office);
+                      setBookingResult(null);
+                      setBookingError('');
+                    }}
+                    className="h-10 text-xs font-bold bg-[#006A4E] hover:bg-[#00553e] text-white shadow-xs cursor-pointer flex items-center justify-center gap-1"
+                  >
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>{t('অ্যাপয়েন্টমেন্ট', 'Book Slot')}</span>
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
           </div>
         )}
+      </main>
 
-        {/* Citizen Problem Triage Modal */}
+      {/* APPOINTMENT BOOKING MODAL */}
+      <Dialog open={Boolean(bookingOffice)} onOpenChange={(open) => !open && setBookingOffice(null)}>
+        <DialogContent className="max-w-md p-6 border border-slate-200 rounded-3xl bg-white space-y-4">
+          <DialogHeader className="border-b border-slate-100 pb-3 text-left space-y-1">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-[#006A4E]" />
+              <DialogTitle className="text-lg font-black text-slate-900">
+                {t('অফিস অ্যাপয়েন্টমেন্ট বুকিং', 'Book Office Appointment')}
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-xs text-slate-500">
+              {bookingOffice?.name_bn} · {bookingOffice?.upazila_bn}
+            </DialogDescription>
+          </DialogHeader>
+
+          {bookingResult ? (
+            <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-3">
+              <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto" />
+              <div className="space-y-1">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                  {t('অ্যাপয়েন্টমেন্ট টোকেন নং:', 'Appointment Token:')}
+                </span>
+                <span className="text-xl font-black font-mono text-[#006A4E] bg-white px-3 py-1 rounded-lg border border-emerald-200 inline-block">
+                  {bookingResult.token || 'APPT-2026-1048'}
+                </span>
+              </div>
+              <p className="text-xs font-semibold text-emerald-900">
+                {bookingResult.message_bn || t('আপনার অ্যাপয়েন্টমেন্ট নিশ্চিত হয়েছে।', 'Appointment confirmed.')}
+              </p>
+              <div className="text-[11px] text-slate-500">
+                {t('নির্ধারিত সময়ে মূল কাগজপত্রসহ অফিসে উপস্থিত থাকুন।', 'Please bring all original deeds & NID.')}
+              </div>
+              <DialogFooter className="pt-2">
+                <Button
+                  onClick={() => setBookingOffice(null)}
+                  className="w-full bg-[#006A4E] text-white font-bold cursor-pointer"
+                >
+                  {t('সম্পন্ন', 'Done')}
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <form onSubmit={handleBookingSubmit} className="space-y-3 text-xs">
+              {bookingError && (
+                <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800">
+                  {bookingError}
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">{t('আপনার পূর্ণ নাম *', 'Full Name *')}</label>
+                <Input
+                  required
+                  value={appointmentName}
+                  onChange={(e) => setAppointmentName(e.target.value)}
+                  placeholder={t('যেমন: মো. রফিকুল ইসলাম', 'e.g. Md. Rafiqul Islam')}
+                  className="h-10 text-sm border-slate-300"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">{t('মোবাইল নম্বর *', 'Phone Number *')}</label>
+                <Input
+                  required
+                  type="tel"
+                  value={appointmentPhone}
+                  onChange={(e) => setAppointmentPhone(e.target.value)}
+                  placeholder="01712345678"
+                  className="h-10 text-sm border-slate-300 font-mono"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-slate-700">{t('তারিখ *', 'Date *')}</label>
+                  <Input
+                    required
+                    type="date"
+                    value={appointmentDate}
+                    onChange={(e) => setAppointmentDate(e.target.value)}
+                    className="h-10 text-xs border-slate-300 font-mono"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="font-bold text-slate-700">{t('সময় সূচি', 'Time Slot')}</Label>
+                  <Select
+                    value={appointmentTimeSlot}
+                    onValueChange={(val) => setAppointmentTimeSlot(val)}
+                  >
+                    <SelectTrigger className="w-full h-10 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold shadow-xs focus:ring-2 focus:ring-[#006A4E]">
+                      <SelectValue placeholder="সকাল ১০:০০ - ১১:৩০" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="10:00 AM - 11:30 AM">{t('সকাল ১০:০০ - ১১:৩০', '10:00 AM - 11:30 AM')}</SelectItem>
+                        <SelectItem value="12:00 PM - 01:30 PM">{t('দুপুর ১২:০০ - ১:৩০', '12:00 PM - 01:30 PM')}</SelectItem>
+                        <SelectItem value="02:30 PM - 04:00 PM">{t('বিকাল ২:৩০ - ৪:০০', '02:30 PM - 04:00 PM')}</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="font-bold text-slate-700">{t('সেবার ধরন', 'Service Category')}</Label>
+                <Select
+                  value={appointmentServiceType}
+                  onValueChange={(val) => setAppointmentServiceType(val)}
+                >
+                  <SelectTrigger className="w-full h-10 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold shadow-xs focus:ring-2 focus:ring-[#006A4E]">
+                    <SelectValue placeholder={t('ই-নামজারি সংক্রান্ত শুনানি', 'e-Mutation Hearing')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="MUTATION">{t('ই-নামজারি সংক্রান্ত শুনানি', 'e-Mutation Hearing')}</SelectItem>
+                      <SelectItem value="DEED_COPY">{t('দলিলের নকল / পর্চা উত্তোলন', 'Certified Deed / Porcha')}</SelectItem>
+                      <SelectItem value="DISPUTE">{t('সীমানা বিরোধ বা আপত্তি দাখিল', 'Boundary Dispute / Objection')}</SelectItem>
+                      <SelectItem value="CONSULTATION">{t('সাধারণ ভূমি আইনি পরামর্শ', 'General Land Legal Advice')}</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">{t('মামলা বা আবেদন নম্বর (ঐচ্ছিক)', 'Case / Tracking No (Optional)')}</label>
+                <Input
+                  value={appointmentCaseRef}
+                  onChange={(e) => setAppointmentCaseRef(e.target.value)}
+                  placeholder="যেমন: MUT-2026-101"
+                  className="h-10 text-xs border-slate-300 font-mono"
+                />
+              </div>
+
+              <DialogFooter className="flex justify-between items-center gap-2 pt-2 border-t border-slate-100">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setBookingOffice(null)}
+                  className="cursor-pointer text-xs"
+                >
+                  {t('বাতিল', 'Cancel')}
+                </Button>
+
+                <Button
+                  type="submit"
+                  disabled={bookingLoading}
+                  className="bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs cursor-pointer flex items-center gap-1.5"
+                >
+                  {bookingLoading ? (
+                    <>
+                      <RotateCcw className="w-3.5 h-3.5 animate-spin" />
+                      <span>{t('বুকিং হচ্ছে...', 'Booking...')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>{t('অ্যাপয়েন্টমেন্ট নিশ্চিত করুন', 'Confirm Appointment')}</span>
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Citizen Problem Triage Launcher Modal */}
+      {triageModalOpen && (
         <CitizenProblemTriageModal
           isOpen={triageModalOpen}
           onClose={() => setTriageModalOpen(false)}
-          onNavigate={onNavigate}
+          onNavigate={(route) => {
+            setTriageModalOpen(false);
+            if (!route) return;
+            if (route.startsWith('http')) {
+              window.open(route, '_blank');
+            } else if (route.startsWith('tickets')) {
+              onNavigate?.('home');
+            } else if (['plots', 'vault', 'deeds', 'transfers', 'disputes'].includes(route)) {
+              onNavigate?.('home');
+            } else {
+              onNavigate?.(route);
+            }
+          }}
         />
-      </div>
+      )}
     </div>
   );
 };

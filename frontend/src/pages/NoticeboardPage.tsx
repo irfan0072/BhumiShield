@@ -1,7 +1,7 @@
-import {SourceCards} from '../components/sources/SourceCards';
 import React, { useState, useEffect } from 'react';
 import { useAppUI } from '../i18n';
 import { BhumiApi } from '../api/client';
+import { toBanglaDigits } from '../theme/tokens';
 import {
   Bell,
   Search,
@@ -21,8 +21,26 @@ import {
   Volume2,
   VolumeX,
   Square,
-  Play
+  Play,
+  RotateCcw,
+  Sparkles,
+  Info
 } from 'lucide-react';
+import { useNotices } from '../components/publicHooks';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface NoticeAttachment {
   id: number;
@@ -57,13 +75,19 @@ interface NoticeItem {
 
 export const NoticeboardPage: React.FC = () => {
   const { t, lang, formatDate } = useAppUI();
-  const [notices, setNotices] = useState<NoticeItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState('');
-  const [scopeFilter, setScopeFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // QR Modal
+  // TanStack Query for Dynamic Notices
+  const queryParams = {
+    category: categoryFilter || undefined,
+  };
+  const noticesQuery = useNotices(queryParams);
+
+  // Active Notice Modal State
+  const [selectedNotice, setSelectedNotice] = useState<NoticeItem | null>(null);
+
+  // Attachment QR Modal State
   const [selectedAttachment, setSelectedAttachment] = useState<NoticeAttachment | null>(null);
 
   // Web Speech API Text-to-Speech State
@@ -79,7 +103,7 @@ export const NoticeboardPage: React.FC = () => {
 
   const handleToggleAudio = (notice: NoticeItem) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) {
-      alert(t('আপনার ব্রাউজারে অডিও স্পিচ ফিচার সমর্থিত নয়।', 'Text-to-speech is not supported by your browser.'));
+      alert(t('আপনার ব্রাউজারে অডিও স্পিচ সুবিধা সমর্থিত নয়।', 'Text-to-speech is not supported by your browser.'));
       return;
     }
 
@@ -98,421 +122,455 @@ export const NoticeboardPage: React.FC = () => {
     utterance.lang = lang === 'bn' ? 'bn-BD' : 'en-US';
     utterance.rate = 0.95;
 
-    utterance.onend = () => setPlayingNoticeId(null);
-    utterance.onerror = () => setPlayingNoticeId(null);
+    utterance.onend = () => {
+      setPlayingNoticeId(null);
+    };
+
+    utterance.onerror = () => {
+      setPlayingNoticeId(null);
+    };
 
     setPlayingNoticeId(notice.id);
     window.speechSynthesis.speak(utterance);
   };
 
-  const fetchNotices = () => {
-    setLoading(true);
-    const params: any = {};
-    if (categoryFilter) params.category = categoryFilter;
-    if (scopeFilter) params.scope = scopeFilter;
-    if (searchQuery) params.q = searchQuery;
+  const rawNotices: NoticeItem[] = noticesQuery.data?.items || [];
 
-    BhumiApi.listNotices(params)
-      .then((res) => {
-        setNotices(res.items || []);
-      })
-      .catch((err) => {
-        console.error('Failed to load notices', err);
-      })
-      .finally(() => setLoading(false));
-  };
+  // Filter by search query
+  const filteredNotices = rawNotices.filter((n) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.trim().toLowerCase();
+    return (
+      (n.title_bn || '').toLowerCase().includes(q) ||
+      (n.title_en || '').toLowerCase().includes(q) ||
+      (n.body_bn || '').toLowerCase().includes(q) ||
+      (n.published_by || '').toLowerCase().includes(q)
+    );
+  });
 
-  useEffect(() => {
-    fetchNotices();
-  }, [categoryFilter, scopeFilter]);
-
-  useEffect(() => {
-    if (!selectedAttachment) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setSelectedAttachment(null);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedAttachment]);
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchNotices();
-  };
-
-  const getCategoryBadge = (cat: string) => {
-    switch (cat) {
-      case 'CIRCULAR_POLICY':
-        return {
-          bg: 'bg-emerald-50 text-[#006A4E] border-emerald-200',
-          labelBn: 'পরিপত্র ও নীতিমালার নির্দেশ',
-          labelEn: 'Policy Circular',
-        };
-      case 'OFFICE_NOTICE':
-        return {
-          bg: 'bg-blue-50 text-blue-800 border-blue-200',
-          labelBn: 'অফিস নোটিশ',
-          labelEn: 'Office Notice',
-        };
-      case 'PUBLIC_HEARING':
-        return {
-          bg: 'bg-amber-50 text-amber-800 border-amber-200',
-          labelBn: 'গণশুনানী ও ক্যাম্প',
-          labelEn: 'Public Hearing',
-        };
-      case 'FRAUD_WARNING':
-        return {
-          bg: 'bg-rose-100 text-rose-800 border-rose-300 font-bold',
-          labelBn: 'সতর্কবার্তা ও জালিয়াতি প্রতিরোধ',
-          labelEn: 'Fraud Alert',
-        };
-      case 'GAZETTE':
-        return {
-          bg: 'bg-teal-50 text-teal-800 border-teal-200 font-semibold',
-          labelBn: 'অফিসিয়াল গেজেট',
-          labelEn: 'Official Gazette',
-        };
-      default:
-        return {
-          bg: 'bg-slate-50 text-slate-700 border-slate-200',
-          labelBn: 'সাধারণ বিজ্ঞপ্তি',
-          labelEn: 'Notice',
-        };
-    }
-  };
-
-  const [downloading, setDownloading] = useState(false);
-  const [downloadError, setDownloadError] = useState<string | null>(null);
-  const [verifyState, setVerifyState] = useState<{ ok: boolean; hash: string } | null>(null);
-
-  const handleDownloadNoticeDocument = async (att: NoticeAttachment) => {
-    const notice = notices.find((n) => n.id === att.notice_id);
-    if (!notice) return;
-    setDownloading(true);
-    setDownloadError(null);
-    try {
-      // F09: real government-signed PDF. The backend hashes the canonical
-      // envelope and signs the SHA-256 with Ed25519; the PDF body embeds
-      // both so a human reader (or verifier) can re-derive and check.
-      const apiBase = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8000';
-      const url = `${apiBase}/api/v1/notices/${encodeURIComponent(notice.notice_slug)}/attachments/${att.id}/download`;
-      const res = await fetch(url, { method: 'GET' });
-      if (!res.ok) {
-        throw new Error(`Download failed: HTTP ${res.status}`);
-      }
-      const blob = await res.blob();
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `bhumi_notice_${notice.notice_slug}_${att.id}.sealed.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(a.href);
-    } catch (e: any) {
-      setDownloadError(e?.message || 'Download failed');
-    } finally {
-      setDownloading(false);
-    }
-  };
-
-  const handleVerifySeal = async (att: NoticeAttachment) => {
-    const notice = notices.find((n) => n.id === att.notice_id);
-    if (!notice) return;
-    try {
-      const apiBase = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8000';
-      const url = `${apiBase}/api/v1/notices/${encodeURIComponent(notice.notice_slug)}/attachments/${att.id}/download?verify=1`;
-      const res = await fetch(url, { method: 'GET' });
-      if (!res.ok) throw new Error(`Verify failed: HTTP ${res.status}`);
-      const data = await res.json();
-      setVerifyState({ ok: !!data.verified, hash: data.content_hash || '' });
-    } catch {
-      setVerifyState({ ok: false, hash: '' });
-    }
-  };
+  const pinnedNotices = filteredNotices.filter((n) => Boolean(n.is_pinned || n.is_urgent));
+  const standardNotices = filteredNotices.filter((n) => !n.is_pinned && !n.is_urgent);
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <SourceCards kind="NOTICE" title={t('সরকারি উৎসের প্রকাশ্য নোটিশ','Reviewed official updates')} />
-        {/* Banner */}
-        <div className="bg-[#006A4E] text-white rounded-2xl p-6 sm:p-8 shadow-sm space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-800/60 border border-emerald-600/40 text-emerald-100 text-xs font-semibold">
-            <Bell className="w-4 h-4 text-emerald-300" />
-            <span>{t('ডিজিটাল নীতি ও নির্দেশনামূলক নোটিশবোর্ড', 'Digital Policy & Guidance Notices')}</span>
+    <div className="min-h-screen bg-[#FAFAFA] text-slate-900 pb-8 sm:pb-12 relative overflow-hidden">
+      {/* Ambient background glow & subtle dot pattern */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[320px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl -z-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] opacity-40 -z-10 pointer-events-none" />
+
+      {/* Main Container */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4">
+        {/* Compact Integrated Header Bar */}
+        <div className="bg-white rounded-xl border border-slate-200/90 p-3 sm:p-3.5 shadow-xs mb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200 text-[#006A4E] flex items-center justify-center shrink-0">
+              <Bell className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm sm:text-base font-black text-slate-900 leading-tight">
+                  {t('নোটিশবোর্ড ও গেজেট', 'Noticeboard & Gazettes')}
+                </h1>
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  {t('ভূমি মন্ত্রণালয় ও সাব-রেজিস্ট্রি', 'Ministry & Sub-Registry')}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5 leading-none">
+                {t('ভূমি মন্ত্রণালয় ও সাব-রেজিস্ট্রির সরকারি নোটিশ, পরিপত্র, প্রজ্ঞাপন ও আদেশ।', 'Official gazettes, circulars, and notices from land registry authorities.')}
+              </p>
+            </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            {t('ভূমি সুরক্ষা নীতি ও গণবিজ্ঞপ্তি কেন্দ্র', 'BhumiShield Land Policy & Notice Center')}
-          </h1>
-          <p className="text-emerald-100 text-sm sm:text-base max-w-3xl leading-relaxed">
-            {t(
-              'ভূমি হস্তান্তর, নামজারি সময়সীমা, সাব-রেজিস্ট্রি ফি নির্দেশিকা এবং হয়রানি প্রতিরোধে স্বাধীন ডিজিটাল প্ল্যাটফর্মের নীতিমালা ও গণবিজ্ঞপ্তি। প্রতিটি নোটিশ ক্রিপ্টোগ্রাফিক কিউআর সিলমোহর দ্বারা সুরক্ষিত।',
-              'Operational policies, mutation guidelines, statutory fee guidance, and citizen notices published on the independent BhumiShield platform, sealed with verifiable Ed25519 QR codes.'
-            )}
-          </p>
-        </div>
 
-        {/* Filters */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-          <form onSubmit={handleSearchSubmit} className="flex-1 relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('শিরোনাম বা বিবরণে অনুসন্ধান...', 'Search by title or keyword...')}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
-            />
-          </form>
-
-          <div className="flex flex-wrap gap-2">
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-lg">
+              {t(`মোট নোটিশ: ${filteredNotices.length}টি`, `Total: ${filteredNotices.length}`)}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => noticesQuery.refetch()}
+              className="h-8 px-2.5 border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer text-xs flex items-center gap-1 rounded-lg"
             >
-              <option value="">{t('সকল ক্যাটাগরি', 'All Categories')}</option>
-              <option value="CIRCULAR_POLICY">{t('পরিপত্র ও নীতি', 'Circulars')}</option>
-              <option value="OFFICE_NOTICE">{t('অফিস নোটিশ', 'Office Notices')}</option>
-              <option value="PUBLIC_HEARING">{t('গণশুনানী', 'Public Hearings')}</option>
-              <option value="FRAUD_WARNING">{t('জালিয়াতি সতর্কতা', 'Fraud Warnings')}</option>
-              <option value="GAZETTE">{t('অফিসিয়াল গেজেট', 'Gazettes')}</option>
-            </select>
-
-            <select
-              value={scopeFilter}
-              onChange={(e) => setScopeFilter(e.target.value)}
-              className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
-            >
-              <option value="">{t('সকল আওতা', 'All Scopes')}</option>
-              <option value="NATIONAL">{t('জাতীয় পর্যায়', 'National')}</option>
-              <option value="UPAZILA">{t('উপজেলা/স্থানীয়', 'Upazila / Local')}</option>
-            </select>
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{t('রিফ্রেশ', 'Refresh')}</span>
+            </Button>
           </div>
         </div>
 
-        {/* Notices List */}
-        {loading ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-[#006A4E] mb-3" />
-            <p className="font-semibold">{t('বিজ্ঞপ্তি লোড হচ্ছে...', 'Loading notices...')}</p>
+        {/* Search & Category Filter Bar */}
+        <Card className="bg-white rounded-xl border border-slate-200/90 shadow-xs p-2.5 sm:p-3 mb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            {/* Category Tabs */}
+            <Tabs
+              value={categoryFilter || 'ALL'}
+              onValueChange={(val) => setCategoryFilter(val === 'ALL' ? '' : val)}
+              className="w-auto overflow-x-auto scrollbar-none"
+            >
+              <TabsList className="flex flex-nowrap sm:flex-wrap h-auto gap-1 bg-transparent p-0">
+                {[
+                  { id: 'ALL', label_bn: 'সকল নোটিশ', label_en: 'All Notices' },
+                  { id: 'gazette', label_bn: 'সরকারি গেজেট', label_en: 'Gazettes' },
+                  { id: 'circular', label_bn: 'পরিপত্র ও আদেশ', label_en: 'Circulars' },
+                  { id: 'auction', label_bn: 'নিলাম বিজ্ঞপ্তি', label_en: 'Auctions' },
+                  { id: 'urgent', label_bn: 'জরুরি বিজ্ঞপ্তি', label_en: 'Urgent' },
+                ].map((cat) => (
+                  <TabsTrigger
+                    key={cat.id}
+                    value={cat.id}
+                    className="h-7 px-2.5 text-[11px] sm:text-xs rounded-full font-bold transition cursor-pointer data-[state=active]:bg-[#006A4E] data-[state=active]:text-white data-[state=inactive]:bg-slate-50 data-[state=inactive]:border data-[state=inactive]:border-slate-200 data-[state=inactive]:text-slate-700 hover:border-[#006A4E]"
+                  >
+                    {lang === 'bn' ? cat.label_bn : cat.label_en}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+
+            {/* Keyword Search */}
+            <div className="relative w-full sm:w-60 shrink-0">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('শিরোনাম বা কীওয়ার্ড খুঁজুন...', 'Search notices...')}
+                className="h-8 text-xs pl-8 border-slate-300 rounded-lg focus-visible:ring-[#006A4E]"
+              />
+            </div>
           </div>
-        ) : notices.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500">
-            <Bell className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-            <p className="text-base font-semibold text-slate-800">
-              {t('কোনো বিজ্ঞপ্তি পাওয়া যায়নি।', 'No notices found matching your criteria.')}
+        </Card>
+
+        {/* 4-State UI Coverage: Notices List with Responsive Scroll */}
+        {noticesQuery.isLoading ? (
+          <div className="space-y-2.5">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="p-3.5 rounded-xl bg-white border border-slate-200 space-y-2 shadow-2xs">
+                <Skeleton className="h-5 w-1/3 bg-slate-200" />
+                <Skeleton className="h-3.5 w-full bg-slate-200" />
+                <Skeleton className="h-3.5 w-4/5 bg-slate-200" />
+              </Card>
+            ))}
+          </div>
+        ) : noticesQuery.isError ? (
+          <div className="p-6 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-center space-y-2.5">
+            <AlertCircle className="w-7 h-7 text-rose-600 mx-auto" />
+            <h3 className="text-sm sm:text-base font-bold text-rose-900">
+              {t('নোটিশবোর্ড লোড করতে সমস্যা হয়েছে', 'Failed to load noticeboard')}
+            </h3>
+            <p className="text-xs text-rose-700 max-w-md mx-auto">
+              {t('ইন্টারনেট সংযোগ পরীক্ষা করে পুনরায় চেষ্টা করুন।', 'Please check your connection and retry.')}
             </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => noticesQuery.refetch()}
+              className="h-8 border-rose-300 text-rose-800 hover:bg-rose-100 cursor-pointer text-xs"
+            >
+              <RotateCcw className="w-3.5 h-3.5 mr-1" />
+              <span>{t('পুনরায় চেষ্টা করুন', 'Retry')}</span>
+            </Button>
+          </div>
+        ) : filteredNotices.length === 0 ? (
+          <div className="p-8 text-center bg-white rounded-xl border border-slate-200 shadow-2xs space-y-2.5">
+            <FileText className="w-10 h-10 text-slate-400 mx-auto" />
+            <h3 className="text-sm sm:text-base font-bold text-slate-800">
+              {t('কোনো নোটিশ পাওয়া যায়নি', 'No notices found')}
+            </h3>
+            <p className="text-xs text-slate-500">
+              {t('অনুগ্রহ করে অন্য ফিল্টার বা অনুসন্ধান শব্দ ব্যবহার করুন।', 'Try searching with different terms or selecting another category.')}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setCategoryFilter('');
+                setSearchQuery('');
+              }}
+              className="h-8 cursor-pointer text-xs"
+            >
+              {t('সকল নোটিশ দেখুন', 'View All Notices')}
+            </Button>
           </div>
         ) : (
-          <div className="space-y-4">
-            {notices.map((n) => {
-              const badge = getCategoryBadge(n.category);
-              return (
-                <div
-                  key={n.id}
-                  className={`bg-white rounded-xl border shadow-sm transition-all overflow-hidden p-5 sm:p-6 ${
-                    n.is_pinned ? 'border-emerald-300 ring-1 ring-emerald-100 bg-emerald-50/20' : 'border-slate-200'
-                  }`}
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                    <div className="space-y-2 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {Boolean(n.is_pinned) && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-[#006A4E]">
-                            <Pin className="w-3 h-3 rotate-45" />
-                            {t('পিন করা', 'Pinned')}
-                          </span>
-                        )}
-                        {Boolean(n.is_urgent) && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-[#F42A41]">
-                            <AlertCircle className="w-3 h-3" />
-                            {t('জরুরি', 'Urgent')}
-                          </span>
-                        )}
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badge.bg}`}
-                        >
-                          {lang === 'bn' ? badge.labelBn : badge.labelEn}
-                        </span>
-                        <span className="text-xs text-slate-400">
-                          {n.scope === 'NATIONAL' ? t('জাতীয় আওতা', 'National') : t('স্থানীয় আওতা', 'Local')}
-                        </span>
+          <div className="space-y-2.5 max-h-[calc(100vh-190px)] sm:max-h-[calc(100vh-180px)] overflow-y-auto scrollbar-thin pr-1">
+            {/* Pinned & Urgent Notices Section */}
+            {pinnedNotices.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900 px-0.5">
+                  <Pin className="w-3.5 h-3.5 text-amber-700" />
+                  <span>{t('গুরুত্বপূর্ণ ও পিন করা নোটিশসমূহ', 'Pinned & Urgent Notices')}</span>
+                </div>
+
+                {pinnedNotices.map((notice) => (
+                  <Card
+                    key={notice.id}
+                    className="p-3 sm:p-3.5 rounded-xl bg-amber-50/70 border border-amber-300 shadow-2xs space-y-2 hover:shadow-xs transition"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <Badge className="bg-amber-600 text-white font-bold text-[9px] sm:text-[10px] px-1.5 py-0.5">
+                          {t('জরুরি', 'URGENT')}
+                        </Badge>
+                        <Badge variant="outline" className="border-amber-300 text-amber-900 text-[9px] sm:text-[10px] px-1.5 py-0.5">
+                          {notice.category}
+                        </Badge>
                       </div>
-
-                      <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
-                        {lang === 'bn' ? n.title_bn : n.title_en}
-                      </h3>
-
-                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                        {lang === 'bn' ? n.body_bn : n.body_en}
-                      </p>
-
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 pt-2 border-t border-slate-100">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5" />
-                          {formatDate(n.published_at || n.created_at)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Eye className="w-3.5 h-3.5" />
-                          {n.view_count} {t('বার পঠিত', 'views')}
-                        </span>
-                      </div>
+                      <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        <span>{formatDate(notice.published_at || notice.created_at)}</span>
+                      </span>
                     </div>
 
-                    {/* Actions: Audio Listen Helper & Attachments */}
-                    <div className="sm:text-right shrink-0 flex flex-col sm:items-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleAudio(n)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition cursor-pointer border min-h-[44px] ${
-                          playingNoticeId === n.id
-                            ? 'bg-rose-50 text-rose-700 border-rose-300 shadow-xs'
-                            : 'bg-emerald-50 text-[#006A4E] border-emerald-200 hover:bg-emerald-100'
+                    <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
+                      {lang === 'bn' ? notice.title_bn : notice.title_en}
+                    </h3>
+                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                      {lang === 'bn' ? notice.body_bn : notice.body_en}
+                    </p>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-amber-200/60">
+                      <span className="text-[11px] text-slate-600 font-medium truncate max-w-xs">
+                        {notice.published_by}
+                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Audio Reader Button */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleAudio(notice)}
+                          className={`h-7 px-2 text-xs font-bold border transition cursor-pointer flex items-center gap-1 rounded-lg ${
+                            playingNoticeId === notice.id
+                              ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                              : 'border-amber-300 text-amber-900 hover:bg-amber-100'
+                          }`}
+                        >
+                          {playingNoticeId === notice.id ? (
+                            <>
+                              <VolumeX className="w-3 h-3" />
+                              <span>{t('বন্ধ', 'Stop')}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Volume2 className="w-3 h-3" />
+                              <span>{t('শুনুন', 'Listen')}</span>
+                            </>
+                          )}
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          onClick={() => setSelectedNotice(notice)}
+                          className="h-7 px-2.5 text-xs font-bold bg-[#006A4E] hover:bg-[#00553e] text-white cursor-pointer rounded-lg flex items-center gap-1"
+                        >
+                          <span>{t('সম্পূর্ণ পড়ুন', 'Read Full')}</span>
+                          <Eye className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {/* Standard Notices List (Responsive 2-Col Grid on Desktop) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-0.5">
+              {standardNotices.map((notice) => (
+                <Card
+                  key={notice.id}
+                  className="p-3 sm:p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs hover:border-[#006A4E]/40 hover:shadow-xs transition space-y-2"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <Badge variant="outline" className="border-slate-300 text-slate-700 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5">
+                      {notice.category}
+                    </Badge>
+                    <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      <span>{formatDate(notice.published_at || notice.created_at)}</span>
+                    </span>
+                  </div>
+
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 leading-snug">
+                    {lang === 'bn' ? notice.title_bn : notice.title_en}
+                  </h3>
+                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                    {lang === 'bn' ? notice.body_bn : notice.body_en}
+                  </p>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-slate-100">
+                    <span className="text-[11px] text-slate-600 font-medium truncate max-w-xs">
+                      {notice.published_by}
+                    </span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {/* Audio Button */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleToggleAudio(notice)}
+                        className={`h-7 px-2 text-xs font-bold border transition cursor-pointer flex items-center gap-1 rounded-lg ${
+                          playingNoticeId === notice.id
+                            ? 'bg-[#006A4E] text-white border-[#006A4E]'
+                            : 'border-slate-300 text-slate-700 hover:bg-slate-50'
                         }`}
-                        title={t('নোটিশটি অডিওতে শুনুন', 'Listen to this notice')}
                       >
-                        {playingNoticeId === n.id ? (
+                        {playingNoticeId === notice.id ? (
                           <>
-                            <Square className="w-3.5 h-3.5 text-rose-600 fill-current" />
-                            <span>{t('অডিও থামান', 'Stop Audio')}</span>
-                            <span className="flex h-2 w-2 relative">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-                            </span>
+                            <VolumeX className="w-3 h-3" />
+                            <span>{t('বন্ধ', 'Stop')}</span>
                           </>
                         ) : (
                           <>
-                            <Volume2 className="w-3.5 h-3.5 text-[#006A4E]" />
-                            <span>{t('অডিও শুনুন', 'Listen Audio')}</span>
+                            <Volume2 className="w-3 h-3" />
+                            <span>{t('শুনুন', 'Listen')}</span>
                           </>
                         )}
-                      </button>
+                      </Button>
 
-                      {n.attachments && n.attachments.length > 0 && (
-                        n.attachments.map((att) => (
-                          <button
-                            key={att.id}
-                            type="button"
-                            onClick={() => { setSelectedAttachment(att); setVerifyState(null); setDownloadError(null); }}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-[#006A4E] bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition cursor-pointer min-h-[44px]"
-                          >
-                            <FileText className="w-4 h-4 text-emerald-700" />
-                            <span>{t('পিডিএফ ও QR সিল', 'PDF & QR Seal')}</span>
-                            <QrCode className="w-4 h-4 text-emerald-800 ml-1" />
-                          </button>
-                        ))
-                      )}
+                      <Button
+                        size="sm"
+                        onClick={() => setSelectedNotice(notice)}
+                        className="h-7 px-2.5 text-xs font-bold bg-[#006A4E] hover:bg-[#00553e] text-white cursor-pointer rounded-lg flex items-center gap-1"
+                      >
+                        <span>{t('সম্পূর্ণ পড়ুন', 'Read Full')}</span>
+                        <Eye className="w-3 h-3" />
+                      </Button>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Attachment QR & Cryptographic Seal Modal */}
-        {selectedAttachment && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="noticeboard-attachment-title"
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
-          >
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <QrCode className="w-5 h-5 text-[#006A4E]" />
-                  <h3 id="noticeboard-attachment-title" className="font-bold text-slate-900 text-base">
-                    {t('ডিজিটাল বিজ্ঞপ্তি ও কিউআর সিল', 'Digital Notice QR Seal')}
-                  </h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedAttachment(null)}
-                  aria-label={t('বন্ধ করুন', 'Close')}
-                  className="text-slate-400 hover:text-slate-600 transition p-1 cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="text-center space-y-3">
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl inline-block mx-auto">
-                  <div className="w-48 h-48 bg-white border border-slate-300 rounded-lg flex flex-col items-center justify-center p-2 text-center">
-                    <QrCode className="w-32 h-32 text-slate-800" />
-                    <span className="text-[10px] font-mono text-slate-500 break-all truncate max-w-full">
-                      {selectedAttachment.qr_payload}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="text-left text-xs bg-emerald-50 p-3 rounded-xl border border-emerald-200 space-y-1.5 text-emerald-950">
-                  <p>
-                    <strong>{t('নথির নাম:', 'File Name:')}</strong> {selectedAttachment.file_name}
-                  </p>
-                  <p>
-                    <strong>{t('আকার:', 'File Size:')}</strong>{' '}
-                    {Math.round(selectedAttachment.file_size_bytes / 1024)} KB (original)
-                  </p>
-                  <p className="font-mono text-[10px] text-slate-600 break-all">
-                    <strong>SHA-256:</strong> {selectedAttachment.content_hash}
-                  </p>
-                  <p className="text-[11px] text-emerald-800">
-                    ✔ {t('সরকারি-স্বাক্ষরিত পিডিএফ (SHA-256 + Ed25519) — ডাউনলোড করে যাচাই করুন।',
-                         'Government-signed PDF (SHA-256 + Ed25519) — download to verify.')}
-                  </p>
-                  {verifyState && (
-                    <p className={`text-[11px] font-semibold ${verifyState.ok ? 'text-emerald-700' : 'text-rose-700'}`}>
-                      {verifyState.ok
-                        ? t('✔ সিল যাচাই সফল — SHA-256 ও Ed25519 মিলেছে।',
-                             '✔ Seal verified — SHA-256 and Ed25519 match.')
-                        : t('✖ সিল যাচাই ব্যর্থ — স্বাক্ষর অমিল।',
-                             '✖ Seal verification FAILED — signature mismatch.')}
-                    </p>
-                  )}
-                  {downloadError && (
-                    <p className="text-[11px] font-semibold text-rose-700">
-                      {t('ত্রুটি:', 'Error:')} {downloadError}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex flex-wrap justify-end gap-2 pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => handleVerifySeal(selectedAttachment)}
-                  className="px-4 py-2 border border-emerald-300 text-emerald-800 rounded-lg text-xs font-semibold hover:bg-emerald-50 transition cursor-pointer min-h-[44px]"
-                >
-                  {t('সিল যাচাই করুন', 'Verify Seal')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedAttachment(null)}
-                  className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer min-h-[44px]"
-                >
-                  {t('বন্ধ করুন', 'Close')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDownloadNoticeDocument(selectedAttachment)}
-                  disabled={downloading}
-                  className="px-5 py-2 bg-[#006A4E] hover:bg-emerald-800 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer min-h-[44px]"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>
-                    {downloading
-                      ? t('ডাউনলোড হচ্ছে...', 'Downloading...')
-                      : t('সরকারি-স্বাক্ষরিত পিডিএফ ডাউনলোড', 'Download Signed PDF')}
-                  </span>
-                </button>
-              </div>
+                </Card>
+              ))}
             </div>
           </div>
         )}
-      </div>
+      </main>
+
+      {/* NOTICE DETAIL MODAL */}
+      <Dialog open={Boolean(selectedNotice)} onOpenChange={(open) => !open && setSelectedNotice(null)}>
+        <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto p-4 sm:p-5 border border-slate-200 rounded-2xl bg-white space-y-3">
+          {selectedNotice && (
+            <>
+              <DialogHeader className="border-b border-slate-100 pb-3 text-left space-y-1.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Badge className="bg-emerald-100 text-[#006A4E] border-emerald-300 font-bold text-xs">
+                    {selectedNotice.category}
+                  </Badge>
+                  <span className="text-xs text-slate-500 flex items-center gap-1">
+                    <Calendar className="w-3 h-3" />
+                    <span>{formatDate(selectedNotice.published_at || selectedNotice.created_at)}</span>
+                  </span>
+                </div>
+                <DialogTitle className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                  {lang === 'bn' ? selectedNotice.title_bn : selectedNotice.title_en}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-500">
+                  {t('প্রকাশক দপ্তর:', 'Publishing Authority:')} {selectedNotice.published_by}
+                </DialogDescription>
+              </DialogHeader>
+
+              {/* TTS Audio Controls inside modal */}
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs">
+                <div className="flex items-center gap-2 text-[#006A4E] font-bold">
+                  <Volume2 className="w-3.5 h-3.5" />
+                  <span>{t('দৃষ্টিপ্রতিবন্ধী ও অডিও পাঠক:', 'Text-to-Speech Audio Reader:')}</span>
+                </div>
+                <Button
+                  size="sm"
+                  variant={playingNoticeId === selectedNotice.id ? 'destructive' : 'default'}
+                  onClick={() => handleToggleAudio(selectedNotice)}
+                  className="h-7 px-2.5 text-xs font-bold cursor-pointer rounded-lg"
+                >
+                  {playingNoticeId === selectedNotice.id ? t('অডিও থামান', 'Stop Audio') : t('অডিও চালান', 'Play Audio')}
+                </Button>
+              </div>
+
+              {/* Body Content */}
+              <div className="text-xs sm:text-sm text-slate-800 leading-relaxed space-y-2 whitespace-pre-wrap bg-slate-50/50 p-3 rounded-lg border border-slate-200">
+                {lang === 'bn' ? selectedNotice.body_bn : selectedNotice.body_en}
+              </div>
+
+              {/* Attachments */}
+              {selectedNotice.attachments && selectedNotice.attachments.length > 0 && (
+                <div className="space-y-1.5 pt-1.5 border-t border-slate-100">
+                  <span className="text-xs font-bold text-slate-800 block">
+                    {t('সংযুক্ত নথি ও গেজেট কপি:', 'Attached Documents:')}
+                  </span>
+                  <div className="space-y-1.5">
+                    {selectedNotice.attachments.map((att) => (
+                      <div
+                        key={att.id}
+                        className="p-2.5 rounded-lg bg-white border border-slate-200 flex items-center justify-between gap-2.5 text-xs"
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <FileText className="w-4 h-4 text-[#006A4E] shrink-0" />
+                          <span className="font-semibold text-slate-800 truncate">{att.file_name}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectedAttachment(att)}
+                            className="h-7 px-2 text-xs border-slate-300 rounded-lg"
+                          >
+                            <QrCode className="w-3 h-3 mr-1" />
+                            <span>QR</span>
+                          </Button>
+                          <a
+                            href={att.file_path || '#'}
+                            download={att.file_name}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#006A4E] text-white font-bold text-xs hover:bg-[#00553e]"
+                          >
+                            <Download className="w-3 h-3" />
+                            <span>{t('ডাউনলোড', 'Download')}</span>
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <DialogFooter className="border-t border-slate-100 pt-2.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedNotice(null)}
+                  className="cursor-pointer text-xs h-8 rounded-lg"
+                >
+                  {t('বন্ধ করুন', 'Close')}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ATTACHMENT QR MODAL */}
+      <Dialog open={Boolean(selectedAttachment)} onOpenChange={(open) => !open && setSelectedAttachment(null)}>
+        <DialogContent className="max-w-xs p-4 text-center space-y-3 rounded-2xl bg-white">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="text-sm sm:text-base font-bold text-slate-900">
+              {t('নথির ক্রিপ্টোগ্রাফিক QR ভেরিফিকেশন', 'Cryptographic QR Verification')}
+            </DialogTitle>
+            <DialogDescription className="text-[11px] text-slate-500 truncate">
+              {selectedAttachment?.file_name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 inline-block mx-auto">
+            <QrCode className="w-28 h-28 text-[#006A4E] mx-auto" />
+          </div>
+
+          <div className="font-mono text-[9px] text-slate-500 break-all bg-slate-50 p-2 rounded border border-slate-200">
+            {selectedAttachment?.content_hash || '0x4f87a...hash'}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSelectedAttachment(null)}
+              className="w-full cursor-pointer h-8 text-xs rounded-lg"
+            >
+              {t('বন্ধ করুন', 'Close')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

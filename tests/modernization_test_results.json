@@ -1,0 +1,1162 @@
+{
+  "timestamp": "2026-11-03T17:21:07.770Z",
+  "totalTests": 187,
+  "passedTests": 174,
+  "failedTests": 13,
+  "passRate": "93.0%",
+  "modernizedPages": [
+    "LandingPage",
+    "CheckBeforeBuyPage",
+    "VerifyDeedQrPage",
+    "CadastralMapPage",
+    "PublicSalePage",
+    "NoticeboardPage",
+    "EducationalBlogPage",
+    "OfficeLocatorPage",
+    "HelpPage",
+    "AuthPage",
+    "CitizenHome",
+    "ApplicationsPage",
+    "NotFoundPage",
+    "SubRegistrarPage",
+    "AcLandPage",
+    "BankOfficerPage",
+    "LawyerCaseFilingPage",
+    "SpecialistWorkspacePage",
+    "AdminDashboardPage"
+  ],
+  "modernizedModals": [
+    "ParcelDesigner",
+    "TaskAssignmentDrawer",
+    "FaraizCalculatorModal",
+    "BengaliPorchaOcrModal",
+    "PersistentHelpModal",
+    "JudgePersonaDock",
+    "CitizenVerificationModal",
+    "CitizenDcrPorchaModal"
+  ],
+  "testLog": [
+    {
+      "category": "Pages",
+      "testName": "LandingPage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/LandingPage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "LandingPage — Canonical shadcn/ui Primitives (Tabs, Card, Badge, Button, Input, Label, Switch, Skeleton, Select)",
+      "passed": false,
+      "details": "Missing primitives or JSX: Switch, Skeleton"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "LandingPage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (জমি, যাচাই, নিরাপদ, বাংলাদেশ, মৌজা); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "LandingPage — Visual Traffic Light Encoding (Green/Yellow/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: true, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "LandingPage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "LandingPage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: useLandingStats, useLocationsQuery"
+    },
+    {
+      "category": "Pages",
+      "testName": "CheckBeforeBuyPage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/CheckBeforeBuyPage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "CheckBeforeBuyPage — Canonical shadcn/ui Primitives (Button, Card, Badge, Input, Label, Skeleton, Progress, Dialog, Select, Table)",
+      "passed": true,
+      "details": "All 10 primitives imported and rendered in JSX"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "CheckBeforeBuyPage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (যাচাই, ঝুঁকি, সনদ, বিএস, তথ্য); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "CheckBeforeBuyPage — Visual Traffic Light Encoding (Green/Yellow/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: true, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "CheckBeforeBuyPage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "CheckBeforeBuyPage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: BhumiApi.checkBeforeBuy, BhumiApi, RiskReportResponse"
+    },
+    {
+      "category": "Pages",
+      "testName": "VerifyDeedQrPage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/VerifyDeedQrPage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "VerifyDeedQrPage — Canonical shadcn/ui Primitives (Card, Badge, Button, Input, Skeleton, Alert, Accordion)",
+      "passed": true,
+      "details": "All 7 primitives imported and rendered in JSX"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "VerifyDeedQrPage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (দলিল, যাচাই, ডিজিটাল সিল, স্ট্যাম্প, সত্যতা); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "VerifyDeedQrPage — Visual Traffic Light Encoding (Green/Yellow/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: true, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "VerifyDeedQrPage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "VerifyDeedQrPage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: BhumiApi"
+    },
+    {
+      "category": "Pages",
+      "testName": "CadastralMapPage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/CadastralMapPage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "CadastralMapPage — Canonical shadcn/ui Primitives (Sheet, Badge, Button, Select, Tooltip)",
+      "passed": true,
+      "details": "All 5 primitives imported and rendered in JSX"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "CadastralMapPage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (মানচিত্র, ভূমি, রোড, মৌজা, দাগ); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "CadastralMapPage — Visual Traffic Light Encoding (Green/Yellow/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: true, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "CadastralMapPage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "CadastralMapPage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: mapApi, mapFeaturesApi, mapAssignmentsApi"
+    },
+    {
+      "category": "Pages",
+      "testName": "PublicSalePage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/PublicSalePage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "PublicSalePage — Canonical shadcn/ui Primitives (Card, Badge, Button, Input, Label, Textarea, Skeleton, Dialog, Select)",
+      "passed": true,
+      "details": "All 9 primitives imported and rendered in JSX"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "PublicSalePage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (জমি, মূল্য, দাগ); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "PublicSalePage — Visual Traffic Light Encoding (Green/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: false, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "PublicSalePage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "PublicSalePage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: useListings, BhumiApi, useQuery"
+    },
+    {
+      "category": "Pages",
+      "testName": "NoticeboardPage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/NoticeboardPage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "NoticeboardPage — Canonical shadcn/ui Primitives (Card, Badge, Button, Input, Skeleton, Dialog, Tabs)",
+      "passed": true,
+      "details": "All 7 primitives imported and rendered in JSX"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "NoticeboardPage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (নোটিশ, পরিপত্র, অডিও, স্পিচ); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "NoticeboardPage — Visual Traffic Light Encoding (Green/Yellow/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: true, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "NoticeboardPage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "NoticeboardPage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: useNotices, BhumiApi"
+    },
+    {
+      "category": "Pages",
+      "testName": "EducationalBlogPage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/EducationalBlogPage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "EducationalBlogPage — Canonical shadcn/ui Primitives (Card, Badge, Button, Input, Skeleton, Dialog, Tabs)",
+      "passed": true,
+      "details": "All 7 primitives imported and rendered in JSX"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "EducationalBlogPage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (উত্তরাধিকার, ফারায়েজ, আইন, অডিও); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "EducationalBlogPage — Visual Traffic Light Encoding (Green/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: false, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "EducationalBlogPage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "EducationalBlogPage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: useBlogPosts, BhumiApi"
+    },
+    {
+      "category": "Pages",
+      "testName": "OfficeLocatorPage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/OfficeLocatorPage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "OfficeLocatorPage — Canonical shadcn/ui Primitives (Card, Badge, Button, Input, Label, Skeleton, Dialog, Select)",
+      "passed": true,
+      "details": "All 8 primitives imported and rendered in JSX"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "OfficeLocatorPage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (সাব-রেজিস্ট্রি, এসি ল্যান্ড, ১৬১২২, যোগাযোগ, অফিস); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "OfficeLocatorPage — Visual Traffic Light Encoding (Green/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: false, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "OfficeLocatorPage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "OfficeLocatorPage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: useOffices, BhumiApi"
+    },
+    {
+      "category": "Pages",
+      "testName": "HelpPage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/HelpPage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "HelpPage — Canonical shadcn/ui Primitives (Accordion, Table, Badge, Button, Input, Skeleton)",
+      "passed": false,
+      "details": "Missing primitives or JSX: Accordion, Table, Badge, Input, Skeleton"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "HelpPage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (ভূমি, সুরক্ষা, ফি, ১৬১২২, সেবা); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "HelpPage — Visual Traffic Light Encoding (Green/Yellow/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: true, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "HelpPage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "HelpPage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": false,
+      "details": "Zero mock data arrays. Dynamic wiring: "
+    },
+    {
+      "category": "Pages",
+      "testName": "AuthPage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/AuthPage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "AuthPage — Canonical shadcn/ui Primitives (Button, Input, Label, Alert, Tabs, Select)",
+      "passed": false,
+      "details": "Missing primitives or JSX: Select"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "AuthPage — Plain Bengali Typography & Accessible Sizing",
+      "passed": false,
+      "details": "Missing terms: রোল; Accessible touch: true"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "AuthPage — Visual Traffic Light Encoding (Green/Yellow/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: true, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "AuthPage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "AuthPage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: BhumiApi.login, BhumiApi.register, BhumiApi"
+    },
+    {
+      "category": "Pages",
+      "testName": "CitizenHome — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/CitizenHome.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "CitizenHome — Canonical shadcn/ui Primitives (Skeleton, Badge, Button, Input, Label, Alert, Avatar, Switch, Dialog, Select, Tabs)",
+      "passed": false,
+      "details": "Missing primitives or JSX: Avatar, Tabs"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "CitizenHome — Plain Bengali Typography & Accessible Sizing",
+      "passed": false,
+      "details": "Missing terms: ডিজিটাল ভল্ট; Accessible touch: true"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "CitizenHome — Visual Traffic Light Encoding (Green/Yellow/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: true, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "CitizenHome — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "CitizenHome — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: BhumiApi, api.get, api.post, useAppUI"
+    },
+    {
+      "category": "Pages",
+      "testName": "ApplicationsPage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/ApplicationsPage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "ApplicationsPage — Canonical shadcn/ui Primitives (Skeleton, Badge, Button, Input, Label, Alert, Table, Progress, Select, Tabs)",
+      "passed": true,
+      "details": "All 10 primitives imported and rendered in JSX"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "ApplicationsPage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (ই-নামজারি, ধাপ, ডিসিআর, পর্চা, অনুমোদন); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "ApplicationsPage — Visual Traffic Light Encoding (Green/Yellow/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: true, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "ApplicationsPage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "ApplicationsPage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: BhumiApi.listTransfers, BhumiApi.createTransfer, BhumiApi"
+    },
+    {
+      "category": "Pages",
+      "testName": "NotFoundPage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/NotFoundPage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "NotFoundPage — Canonical shadcn/ui Primitives (Card, Badge, Button, Input)",
+      "passed": true,
+      "details": "All 4 primitives imported and rendered in JSX"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "NotFoundPage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (৪০৪, ত্রুটি, কাঙ্ক্ষিত, পৃষ্ঠাটি, ১৬১২২); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "NotFoundPage — Visual Traffic Light Encoding (Green/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: false, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "NotFoundPage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "NotFoundPage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: handleNav, onNavigate"
+    },
+    {
+      "category": "Pages",
+      "testName": "SubRegistrarPage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/SubRegistrarPage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "SubRegistrarPage — Canonical shadcn/ui Primitives (Card, Button, Badge, Table, Accordion, Skeleton, Input, Label, Textarea, Alert, Dialog, Tabs, Select)",
+      "passed": false,
+      "details": "Missing primitives or JSX: Tabs"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "SubRegistrarPage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (সাব-রেজিস্ট্রার, দলিল, বায়োমেট্রিক, মেকার-চেকার, অনুমোদন); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "SubRegistrarPage — Visual Traffic Light Encoding (Green/Yellow/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: true, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "SubRegistrarPage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "SubRegistrarPage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: BhumiApi"
+    },
+    {
+      "category": "Pages:Statutory",
+      "testName": "SubRegistrarPage — Rule T3 Biometric Deed Execution Preserved",
+      "passed": true,
+      "details": "Strict in-person Sub-Registry deed execution with biometric intake"
+    },
+    {
+      "category": "Pages",
+      "testName": "AcLandPage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/AcLandPage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "AcLandPage — Canonical shadcn/ui Primitives (Card, Button, Badge, Table, Input, Label, Textarea, Dialog, Tabs, Select)",
+      "passed": false,
+      "details": "Missing primitives or JSX: Tabs"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "AcLandPage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (সহকারী কমিশনার (ভূমি), এসি ল্যান্ড, নামজারি, শুনানি); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "AcLandPage — Visual Traffic Light Encoding (Green/Yellow/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: true, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "AcLandPage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "AcLandPage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: BhumiApi"
+    },
+    {
+      "category": "Pages",
+      "testName": "BankOfficerPage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/BankOfficerPage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "BankOfficerPage — Canonical shadcn/ui Primitives (Card, Button, Badge, Table, Accordion, Input, Label, Alert, Tabs, Dialog, Select)",
+      "passed": false,
+      "details": "Missing primitives or JSX: Tabs"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "BankOfficerPage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (ব্যাংক, বন্ধক, লিয়েন, এনওসি, সনদ); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "BankOfficerPage — Visual Traffic Light Encoding (Green/Yellow/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: true, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "BankOfficerPage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "BankOfficerPage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: BhumiApi"
+    },
+    {
+      "category": "Pages",
+      "testName": "LawyerCaseFilingPage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/LawyerCaseFilingPage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "LawyerCaseFilingPage — Canonical shadcn/ui Primitives (Card, Button, Badge, Accordion, Input, Label, Textarea, Alert, Tabs, Select)",
+      "passed": true,
+      "details": "All 10 primitives imported and rendered in JSX"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "LawyerCaseFilingPage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (আইনজীবী, নিষেধাজ্ঞা, আদালত, বার কাউন্সিল); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "LawyerCaseFilingPage — Visual Traffic Light Encoding (Green/Yellow/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: true, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "LawyerCaseFilingPage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "LawyerCaseFilingPage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: BhumiApi.verifyLawyer, BhumiApi"
+    },
+    {
+      "category": "Pages",
+      "testName": "SpecialistWorkspacePage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/SpecialistWorkspacePage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "SpecialistWorkspacePage — Canonical shadcn/ui Primitives (Button, Badge, Table, Input, Label, Tabs, Select)",
+      "passed": false,
+      "details": "Missing primitives or JSX: Tabs"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "SpecialistWorkspacePage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (অধিগ্রহণ, প্রকল্প, গেজেট, ধারা); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "SpecialistWorkspacePage — Visual Traffic Light Encoding (Green/Yellow/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: true, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "SpecialistWorkspacePage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "SpecialistWorkspacePage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: BhumiApi"
+    },
+    {
+      "category": "Pages",
+      "testName": "AdminDashboardPage — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/pages/AdminDashboardPage.tsx"
+    },
+    {
+      "category": "Pages:shadcn",
+      "testName": "AdminDashboardPage — Canonical shadcn/ui Primitives (Card, Button, Badge, Input, Dialog, Tabs, Select, Label, Alert, Textarea)",
+      "passed": true,
+      "details": "All 10 primitives imported and rendered in JSX"
+    },
+    {
+      "category": "Pages:Typography",
+      "testName": "AdminDashboardPage — Plain Bengali Typography & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (সিস্টেম অ্যাডমিন, লেজার অডিট, কর্মকর্তা, বদল); Touch targets >=48px/h-11 compliant"
+    },
+    {
+      "category": "Pages:TrafficLight",
+      "testName": "AdminDashboardPage — Visual Traffic Light Encoding (Green/Yellow/Red)",
+      "passed": true,
+      "details": "Green: true, Yellow/Amber: true, Red/Rose: true"
+    },
+    {
+      "category": "Pages:Interactivity",
+      "testName": "AdminDashboardPage — Dynamic Interactive States & Handlers",
+      "passed": true,
+      "details": "Verified interactive hooks, dialog/tab triggers, and state management"
+    },
+    {
+      "category": "Pages:ZeroMock",
+      "testName": "AdminDashboardPage — Zero Hardcoded Mock Data & Dynamic API Wiring",
+      "passed": true,
+      "details": "Zero mock data arrays. Dynamic wiring: BhumiApi"
+    },
+    {
+      "category": "Pages:Statutory",
+      "testName": "AdminDashboardPage — Rule M3 Statutory Separation Preserved",
+      "passed": true,
+      "details": "Admin is restricted to oversight; AC Land remains sole judicial mutation authority"
+    },
+    {
+      "category": "Modals",
+      "testName": "ParcelDesigner — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/components/map/ParcelDesigner.tsx"
+    },
+    {
+      "category": "Modals:shadcn",
+      "testName": "ParcelDesigner — Canonical shadcn/ui Primitives (Dialog, Tabs, Button, Badge, Card, Input, Label, Textarea, Alert)",
+      "passed": true,
+      "details": "Modal built with canonical Dialog, Tabs, Button, Badge, Card, Input, Label, Textarea, Alert primitives"
+    },
+    {
+      "category": "Modals:Typography",
+      "testName": "ParcelDesigner — Bengali Terminology & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (নাল, সিএস, আরএস, বিএস, মৌজা); Touch targets >=48px compliant"
+    },
+    {
+      "category": "Modals:TrafficLight",
+      "testName": "ParcelDesigner — Status Encoding Colors",
+      "passed": true,
+      "details": "Confirmed Green/Yellow/Red visual state coding"
+    },
+    {
+      "category": "Modals:Interactivity",
+      "testName": "ParcelDesigner — Lifecycle & Interactive Controls",
+      "passed": true,
+      "details": "Verified open/close state lifecycle, event listeners, and trigger controls"
+    },
+    {
+      "category": "Modals:ZeroMock",
+      "testName": "ParcelDesigner — Zero Mock Data Array Invariants",
+      "passed": true,
+      "details": "Zero static sample arrays. Dynamic backend wiring verified"
+    },
+    {
+      "category": "Modals:Specialized",
+      "testName": "ParcelDesigner — Leaflet Vector Math & Shoelace Area Computation",
+      "passed": true,
+      "details": "Verified Shoelace polygon decimal computation & vector vertices"
+    },
+    {
+      "category": "Modals",
+      "testName": "TaskAssignmentDrawer — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/components/map/TaskAssignmentDrawer.tsx"
+    },
+    {
+      "category": "Modals:shadcn",
+      "testName": "TaskAssignmentDrawer — Canonical shadcn/ui Primitives (Sheet, Tabs, Button, Badge, Input, Label, Textarea, Alert, Table)",
+      "passed": true,
+      "details": "Modal built with canonical Sheet, Tabs, Button, Badge, Input, Label, Textarea, Alert, Table primitives"
+    },
+    {
+      "category": "Modals:Typography",
+      "testName": "TaskAssignmentDrawer — Bengali Terminology & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (সেটেলমেন্ট, রেকর্ডস, অফিসার, অগ্রাধিকার, সম্পন্ন); Touch targets >=48px compliant"
+    },
+    {
+      "category": "Modals:TrafficLight",
+      "testName": "TaskAssignmentDrawer — Status Encoding Colors",
+      "passed": true,
+      "details": "Confirmed Green/Yellow/Red visual state coding"
+    },
+    {
+      "category": "Modals:Interactivity",
+      "testName": "TaskAssignmentDrawer — Lifecycle & Interactive Controls",
+      "passed": true,
+      "details": "Verified open/close state lifecycle, event listeners, and trigger controls"
+    },
+    {
+      "category": "Modals:ZeroMock",
+      "testName": "TaskAssignmentDrawer — Zero Mock Data Array Invariants",
+      "passed": true,
+      "details": "Zero static sample arrays. Dynamic backend wiring verified"
+    },
+    {
+      "category": "Modals:Specialized",
+      "testName": "TaskAssignmentDrawer — shadcn Sheet & Task SLA Integration",
+      "passed": true,
+      "details": "Verified right-side sheet drawer and mapping task assignment API"
+    },
+    {
+      "category": "Modals",
+      "testName": "FaraizCalculatorModal — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/components/FaraizCalculatorModal.tsx"
+    },
+    {
+      "category": "Modals:shadcn",
+      "testName": "FaraizCalculatorModal — Canonical shadcn/ui Primitives (Dialog, Button, Badge, Input, Label, Table)",
+      "passed": true,
+      "details": "Modal built with canonical Dialog, Button, Badge, Input, Label, Table primitives"
+    },
+    {
+      "category": "Modals:Typography",
+      "testName": "FaraizCalculatorModal — Bengali Terminology & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (মালিক, ওয়ারিশ, স্ত্রী, স্বামী, অংশ); Touch targets >=48px compliant"
+    },
+    {
+      "category": "Modals:TrafficLight",
+      "testName": "FaraizCalculatorModal — Status Encoding Colors",
+      "passed": true,
+      "details": "Confirmed Green/Yellow/Red visual state coding"
+    },
+    {
+      "category": "Modals:Interactivity",
+      "testName": "FaraizCalculatorModal — Lifecycle & Interactive Controls",
+      "passed": true,
+      "details": "Verified open/close state lifecycle, event listeners, and trigger controls"
+    },
+    {
+      "category": "Modals:ZeroMock",
+      "testName": "FaraizCalculatorModal — Zero Mock Data Array Invariants",
+      "passed": true,
+      "details": "Zero static sample arrays. Dynamic backend wiring verified"
+    },
+    {
+      "category": "Modals:Specialized",
+      "testName": "FaraizCalculatorModal — Islamic Inheritance Quranic Math",
+      "passed": true,
+      "details": "Verified Quranic shares, fractions, and heir e-mutation case filing"
+    },
+    {
+      "category": "Modals",
+      "testName": "BengaliPorchaOcrModal — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/components/BengaliPorchaOcrModal.tsx"
+    },
+    {
+      "category": "Modals:shadcn",
+      "testName": "BengaliPorchaOcrModal — Canonical shadcn/ui Primitives (Dialog, Button, Badge, Card, Progress)",
+      "passed": true,
+      "details": "Modal built with canonical Dialog, Button, Badge, Card, Progress primitives"
+    },
+    {
+      "category": "Modals:Typography",
+      "testName": "BengaliPorchaOcrModal — Bengali Terminology & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (বাংলাদেশ, ফরম, ৫৪৬২, খতিয়ান); Touch targets >=48px compliant"
+    },
+    {
+      "category": "Modals:TrafficLight",
+      "testName": "BengaliPorchaOcrModal — Status Encoding Colors",
+      "passed": true,
+      "details": "Confirmed Green/Yellow/Red visual state coding"
+    },
+    {
+      "category": "Modals:Interactivity",
+      "testName": "BengaliPorchaOcrModal — Lifecycle & Interactive Controls",
+      "passed": true,
+      "details": "Verified open/close state lifecycle, event listeners, and trigger controls"
+    },
+    {
+      "category": "Modals:ZeroMock",
+      "testName": "BengaliPorchaOcrModal — Zero Mock Data Array Invariants",
+      "passed": true,
+      "details": "Zero static sample arrays. Dynamic backend wiring verified"
+    },
+    {
+      "category": "Modals:Specialized",
+      "testName": "BengaliPorchaOcrModal — Form 5462 Layout & Laser Scanning",
+      "passed": true,
+      "details": "Verified Form 5462 replica, scan laser, and live DB cross-check"
+    },
+    {
+      "category": "Modals",
+      "testName": "PersistentHelpModal — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/components/PersistentHelpModal.tsx"
+    },
+    {
+      "category": "Modals:shadcn",
+      "testName": "PersistentHelpModal — Canonical shadcn/ui Primitives (Dialog, Tabs, Accordion)",
+      "passed": true,
+      "details": "Modal built with canonical Dialog, Tabs, Accordion primitives"
+    },
+    {
+      "category": "Modals:Typography",
+      "testName": "PersistentHelpModal — Bengali Terminology & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (সাহায্য, ১৬১২২, হটলাইন, ভূমি); Touch targets >=48px compliant"
+    },
+    {
+      "category": "Modals:TrafficLight",
+      "testName": "PersistentHelpModal — Status Encoding Colors",
+      "passed": true,
+      "details": "Confirmed Green/Yellow/Red visual state coding"
+    },
+    {
+      "category": "Modals:Interactivity",
+      "testName": "PersistentHelpModal — Lifecycle & Interactive Controls",
+      "passed": true,
+      "details": "Verified open/close state lifecycle, event listeners, and trigger controls"
+    },
+    {
+      "category": "Modals:ZeroMock",
+      "testName": "PersistentHelpModal — Zero Mock Data Array Invariants",
+      "passed": true,
+      "details": "Zero static sample arrays. Dynamic backend wiring verified"
+    },
+    {
+      "category": "Modals",
+      "testName": "JudgePersonaDock — Source File Exists",
+      "passed": false,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/components/JudgePersonaDock.tsx"
+    },
+    {
+      "category": "Modals",
+      "testName": "CitizenVerificationModal — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/components/CitizenVerificationModal.tsx"
+    },
+    {
+      "category": "Modals:shadcn",
+      "testName": "CitizenVerificationModal — Canonical shadcn/ui Primitives (Dialog, Button, Badge, Input, Label, Progress)",
+      "passed": true,
+      "details": "Modal built with canonical Dialog, Button, Badge, Input, Label, Progress primitives"
+    },
+    {
+      "category": "Modals:Typography",
+      "testName": "CitizenVerificationModal — Bengali Terminology & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (স্মার্ট, এনআইডি, বায়োমেট্রিক, ওটিপি); Touch targets >=48px compliant"
+    },
+    {
+      "category": "Modals:TrafficLight",
+      "testName": "CitizenVerificationModal — Status Encoding Colors",
+      "passed": true,
+      "details": "Confirmed Green/Yellow/Red visual state coding"
+    },
+    {
+      "category": "Modals:Interactivity",
+      "testName": "CitizenVerificationModal — Lifecycle & Interactive Controls",
+      "passed": true,
+      "details": "Verified open/close state lifecycle, event listeners, and trigger controls"
+    },
+    {
+      "category": "Modals:ZeroMock",
+      "testName": "CitizenVerificationModal — Zero Mock Data Array Invariants",
+      "passed": true,
+      "details": "Zero static sample arrays. Dynamic backend wiring verified"
+    },
+    {
+      "category": "Modals:Specialized",
+      "testName": "CitizenVerificationModal — WebCam Face Stream & 6-Box OTP",
+      "passed": true,
+      "details": "Verified webcam stream lifecycle, NID matching, and 6-box OTP entry"
+    },
+    {
+      "category": "Modals",
+      "testName": "CitizenDcrPorchaModal — Source File Exists",
+      "passed": true,
+      "details": "/Applications/XAMPP/xamppfiles/htdocs/landtech hackathon /frontend/src/components/CitizenDcrPorchaModal.tsx"
+    },
+    {
+      "category": "Modals:shadcn",
+      "testName": "CitizenDcrPorchaModal — Canonical shadcn/ui Primitives (Dialog, Tabs, Button, Badge, Card)",
+      "passed": true,
+      "details": "Modal built with canonical Dialog, Tabs, Button, Badge, Card primitives"
+    },
+    {
+      "category": "Modals:Typography",
+      "testName": "CitizenDcrPorchaModal — Bengali Terminology & Accessible Sizing",
+      "passed": true,
+      "details": "Bengali vocabulary verified (বাংলাদেশ, ভূমি, মন্ত্রণালয়, ডিসিআর, পর্চা); Touch targets >=48px compliant"
+    },
+    {
+      "category": "Modals:TrafficLight",
+      "testName": "CitizenDcrPorchaModal — Status Encoding Colors",
+      "passed": true,
+      "details": "Confirmed Green/Yellow/Red visual state coding"
+    },
+    {
+      "category": "Modals:Interactivity",
+      "testName": "CitizenDcrPorchaModal — Lifecycle & Interactive Controls",
+      "passed": true,
+      "details": "Verified open/close state lifecycle, event listeners, and trigger controls"
+    },
+    {
+      "category": "Modals:ZeroMock",
+      "testName": "CitizenDcrPorchaModal — Zero Mock Data Array Invariants",
+      "passed": true,
+      "details": "Zero static sample arrays. Dynamic backend wiring verified"
+    },
+    {
+      "category": "Modals:Specialized",
+      "testName": "CitizenDcrPorchaModal — Form 1077 DCR & Form 5463 Porcha Replicas",
+      "passed": true,
+      "details": "Verified Form 1077 DCR (৳1,170 statutory fee) and Form 5463 Porcha replicas"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "01_LandingPage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn -> 01_LandingPage.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "02_CheckBeforeBuyPage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/check -> 02_CheckBeforeBuyPage.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "03_VerifyDeedQrPage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/verify -> 03_VerifyDeedQrPage.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "04_CadastralMapPage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/map -> 04_CadastralMapPage.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "05_PublicSaleMarketplace — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/sale -> 05_PublicSaleMarketplace.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "06_NoticeboardPage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/notices -> 06_NoticeboardPage.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "07_EducationalBlogPage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/blog -> 07_EducationalBlogPage.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "08_OfficeLocatorPage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/offices -> 08_OfficeLocatorPage.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "09_HelpPage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/help -> 09_HelpPage.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "10_AuthPage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/auth -> 10_AuthPage.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "11_CitizenHome — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/home -> 11_CitizenHome.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "12_ApplicationsPage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/applications -> 12_ApplicationsPage.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "13_NotFoundPage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/notfound -> 13_NotFoundPage.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "14_SubRegistrarPage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/registrar -> 14_SubRegistrarPage.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "15_AcLandPage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/acland -> 15_AcLandPage.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "16_BankOfficerPage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/bank -> 16_BankOfficerPage.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "17_LawyerCaseFilingPage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/lawyer_case -> 17_LawyerCaseFilingPage.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "18_SpecialistWorkspacePage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/specialist -> 18_SpecialistWorkspacePage.png"
+    },
+    {
+      "category": "LiveBrowser:View",
+      "testName": "19_AdminDashboardPage — Live Rendering & Screenshot Capture",
+      "passed": true,
+      "details": "Rendered successfully on http://localhost:5175/bn/admin -> 19_AdminDashboardPage.png"
+    },
+    {
+      "category": "LiveBrowser:Modal",
+      "testName": "JudgePersonaDock — Live Floating Dock Bar Mounted",
+      "passed": false,
+      "details": "Found aside[aria-label=\"বিচারক ও মূল্যায়ন ডক\"] in live DOM"
+    },
+    {
+      "category": "LiveBrowser:Modal",
+      "testName": "PersistentHelpModal — Help Access Point Mounted",
+      "passed": true,
+      "details": "Persistent help launcher active across views"
+    },
+    {
+      "category": "LiveBrowser:Modal",
+      "testName": "CheckBeforeBuyPage — Interactive Verification Action Mounted",
+      "passed": true,
+      "details": "Found 23 interactive buttons on Check Before Buy"
+    }
+  ]
+}

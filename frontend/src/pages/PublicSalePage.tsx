@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAppUI } from '../i18n';
 import { BhumiApi } from '../api/client';
+import { toBanglaDigits } from '../theme/tokens';
 import {
   Building2,
   Search,
@@ -18,8 +19,37 @@ import {
   Lock,
   PhoneCall,
   ChevronRight,
-  Info
+  Info,
+  RotateCcw,
+  Sparkles,
+  ExternalLink,
+  UserCheck
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { useListings } from '../components/publicHooks';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface ListingItem {
   id: number;
@@ -30,6 +60,8 @@ interface ListingItem {
   dag_no_bn: string;
   land_type_bn: string;
   land_type_en: string;
+  division_bn?: string;
+  division_en?: string;
   district_bn: string;
   district_en: string;
   upazila_bn: string;
@@ -46,793 +78,634 @@ interface ListingItem {
   created_at: string;
 }
 
-interface PublicSalePageProps {
-  onNavigate?: (tab: string) => void;
-}
+export const PublicSalePage: React.FC<{ onNavigate?: (tab: string) => void }> = ({ onNavigate }) => {
+  const { t, lang } = useAppUI();
 
-export const PublicSalePage: React.FC<PublicSalePageProps> = ({ onNavigate }) => {
-  const { t, lang, formatNumber } = useAppUI();
-  const [listings, setListings] = useState<ListingItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [disclaimerBn, setDisclaimerBn] = useState('');
-  const [disclaimerEn, setDisclaimerEn] = useState('');
-
-  // Filters
+  // Filters State
+  const [divisionFilter, setDivisionFilter] = useState('');
   const [districtFilter, setDistrictFilter] = useState('');
-  const [upazilaFilter, setUpazilaFilter] = useState('');
+  const [landTypeFilter, setLandTypeFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
 
-  // Enquiry Modal
+  // Dynamic Hierarchy Queries from Real Backend API
+  const { data: divisions = [] } = useQuery<any[]>({
+    queryKey: ['hierarchyDivisions'],
+    queryFn: () => BhumiApi.getHierarchyDivisions(),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const { data: districts = [] } = useQuery<any[]>({
+    queryKey: ['hierarchyDistricts', divisionFilter],
+    queryFn: () => BhumiApi.getHierarchyDistricts(divisionFilter),
+    enabled: Boolean(divisionFilter),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  // TanStack Query for Dynamic Listings
+  const queryFilters = {
+    district: districtFilter || undefined,
+    min_price: minPrice || undefined,
+    max_price: maxPrice || undefined,
+  };
+  const listingsQuery = useListings(queryFilters);
+
+  // Listing Details Modal State
+  const [selectedListing, setSelectedListing] = useState<ListingItem | null>(null);
+
+  // Enquiry Dialog State
   const [enquiryListing, setEnquiryListing] = useState<ListingItem | null>(null);
   const [buyerName, setBuyerName] = useState('');
   const [buyerPhone, setBuyerPhone] = useState('');
   const [buyerNid, setBuyerNid] = useState('');
   const [enquiryMessage, setEnquiryMessage] = useState('');
-  const [enquirySubmitting, setEnquirySubmitting] = useState(false);
-  const [enquirySuccess, setEnquirySuccess] = useState<string | null>(null);
+  const [submittingEnquiry, setSubmittingEnquiry] = useState(false);
+  const [enquirySuccessMsg, setEnquirySuccessMsg] = useState<string | null>(null);
+  const [enquiryErrorMsg, setEnquiryErrorMsg] = useState<string | null>(null);
 
-  // Listing Details Modal
-  const [selectedListingDetail, setSelectedListingDetail] = useState<any | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
+  const rawListings: ListingItem[] = listingsQuery.data?.items || [];
 
-  const fetchListings = () => {
-    setLoading(true);
-    const params: any = {};
-    if (districtFilter) params.district = districtFilter;
-    if (upazilaFilter) params.upazila = upazilaFilter;
-    if (minPrice) params.min_price = minPrice;
-    if (maxPrice) params.max_price = maxPrice;
-
-    BhumiApi.listListings(params)
-      .then((res) => {
-        setListings(res.items || []);
-        setDisclaimerBn(res.disclaimer_bn || '');
-        setDisclaimerEn(res.disclaimer_en || '');
-      })
-      .catch((err) => {
-        console.error('Failed to load listings', err);
-      })
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    fetchListings();
-  }, [districtFilter, upazilaFilter]);
-
-  useEffect(() => {
-    if (!enquiryListing && !selectedListingDetail) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setEnquiryListing(null);
-        setSelectedListingDetail(null);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [enquiryListing, selectedListingDetail]);
-
-  const handleOpenDetail = (listing: ListingItem) => {
-    setDetailLoading(true);
-    setSelectedListingDetail(null);
-    BhumiApi.getListing(listing.listing_code || listing.id)
-      .then((res) => {
-        setSelectedListingDetail(res);
-      })
-      .catch((err) => {
-        console.error('Failed to get listing detail', err);
-      })
-      .finally(() => setDetailLoading(false));
-  };
-
-  const handleSendEnquiry = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!enquiryListing) return;
-
-    setEnquirySubmitting(true);
-    BhumiApi.createListingEnquiry(enquiryListing.listing_code || enquiryListing.id, {
-      buyer_name: buyerName,
-      buyer_phone: buyerPhone,
-      buyer_nid: buyerNid,
-      message_bn: enquiryMessage,
-    })
-      .then((res) => {
-        setEnquirySuccess(lang === 'bn' ? res.message_bn : res.message_en);
-        setTimeout(() => {
-          setEnquiryListing(null);
-          setEnquirySuccess(null);
-          setBuyerName('');
-          setBuyerPhone('');
-          setBuyerNid('');
-          setEnquiryMessage('');
-        }, 2200);
-      })
-      .catch((err) => {
-        alert(err.response?.data?.message_bn || 'আগ্রহ প্রেরণ ব্যর্থ হয়েছে।');
-      })
-      .finally(() => setEnquirySubmitting(false));
-  };
-
-  const filteredListings = listings.filter((item) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    const dagMatch = item.dag_no.includes(q) || item.dag_no_bn.includes(q);
-    const codeMatch = item.listing_code.toLowerCase().includes(q) || item.plot_code.toLowerCase().includes(q);
-    const mouzaMatch =
-      item.mouza_bn.toLowerCase().includes(q) || item.mouza_en.toLowerCase().includes(q);
-    return dagMatch || codeMatch || mouzaMatch;
+  // Client filter for division, land type, and text query (mouza / dag / code)
+  const filteredListings = rawListings.filter((l) => {
+    if (landTypeFilter && l.land_type_bn !== landTypeFilter && l.land_type_en !== landTypeFilter) {
+      return false;
+    }
+    if (divisionFilter) {
+      const matchDivision =
+        (l.division_bn || '').toLowerCase().includes(divisionFilter.toLowerCase()) ||
+        (l.division_en || '').toLowerCase().includes(divisionFilter.toLowerCase());
+      if (!matchDivision) return false;
+    }
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.trim().toLowerCase();
+    return (
+      (l.mouza_bn || '').toLowerCase().includes(q) ||
+      (l.mouza_en || '').toLowerCase().includes(q) ||
+      (l.dag_no || '').includes(q) ||
+      (l.dag_no_bn || '').includes(q) ||
+      (l.listing_code || '').toLowerCase().includes(q)
+    );
   });
 
+  const handleSendEnquiry = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!enquiryListing || !buyerName.trim() || !buyerPhone.trim()) return;
+    setSubmittingEnquiry(true);
+    setEnquiryErrorMsg(null);
+
+    try {
+      await BhumiApi.createListingEnquiry(enquiryListing.id, {
+        buyer_name: buyerName.trim(),
+        buyer_phone: buyerPhone.trim(),
+        buyer_nid: buyerNid.trim(),
+        message: enquiryMessage.trim() || 'আমি এই জমিটি ক্রয় করতে আগ্রহী।',
+      });
+      setEnquirySuccessMsg(
+        t(
+          'আপনার ক্রয় প্রস্তাব বিক্রেতার কাছে সফলভাবে পাঠানো হয়েছে। বিক্রেতা শীঘ্রই আপনার সাথে যোগাযোগ করবেন।',
+          'Your purchase enquiry has been sent to the verified owner.'
+        )
+      );
+      setBuyerName('');
+      setBuyerPhone('');
+      setBuyerNid('');
+      setEnquiryMessage('');
+    } catch {
+      setEnquiryErrorMsg(
+        t(
+          'প্রস্তাব পাঠাতে সমস্যা হয়েছে। অনুগ্রহ করে ফোন নম্বর পরীক্ষা করে পুনরায় চেষ্টা করুন।',
+          'Failed to send enquiry. Please check your contact details and retry.'
+        )
+      );
+    } finally {
+      setSubmittingEnquiry(false);
+    }
+  };
+
+  const handleResetFilters = () => {
+    setDivisionFilter('');
+    setDistrictFilter('');
+    setLandTypeFilter('');
+    setSearchQuery('');
+    setMinPrice('');
+    setMaxPrice('');
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header Banner */}
-        <div className="bg-[#006A4E] text-white rounded-2xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-800/60 border border-emerald-600/40 text-emerald-100 text-xs font-semibold">
-              <ShieldCheck className="w-4 h-4 text-emerald-300" />
-              <span>{t('নিষ্কণ্টক ও যাচাইকৃত জমির হাট', 'Verified & Safe Land Marketplace')}</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              {t('সুরক্ষিত নাগরিক জমি বিক্রয় প্ল্যাটফর্ম', 'Secure Citizen Land Sale Marketplace')}
-            </h1>
-            <p className="text-emerald-100 text-sm sm:text-base leading-relaxed">
-              {t(
-                'কেবলমাত্র নিষ্কণ্টক, বন্ধকমুক্ত, বিক্রয়-লক মুক্ত এবং সহকারী কমিশনার (ভূমি) দ্বারা অনুমোদিত সর্বশেষ খতিয়ানের বৈধ মালিকদের জমি এখানে তালিকাভুক্ত হয়। কোনো দালাল বা মধ্যস্বত্বভোগী নেই।',
-                'Only unencumbered, mortgage-free, unlocked properties with verified ownership records confirmed by AC Land are listed here. Direct citizen-to-citizen connection without unauthorized middlemen.'
-              )}
-            </p>
+    <div className="min-h-screen bg-[#FAFAFA] text-slate-900 pb-24 relative overflow-hidden">
+      {/* Ambient background glow & subtle dot pattern */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[450px] bg-gradient-to-b from-emerald-500/10 via-emerald-500/5 to-transparent blur-3xl -z-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] opacity-40 -z-10 pointer-events-none" />
+
+      {/* Top Banner Header (Linear / Vercel Bento-Grid Style) */}
+      <section className="pt-8 sm:pt-12 pb-8 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+        <div className="space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 shadow-xs text-xs font-semibold text-[#006A4E]">
+            <ShieldCheck className="w-4 h-4 text-[#006A4E]" />
+            <span>{t('যাচাইকৃত জমি মার্কেটপ্লেস', 'Verified Land Marketplace')}</span>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={() => onNavigate?.('check')}
-              className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-white text-[#006A4E] hover:bg-emerald-50 rounded-xl font-bold text-sm shadow-sm transition-colors cursor-pointer min-h-[48px]"
-            >
-              <Search className="w-4 h-4" />
-              <span>{t('অন্য জমি যাচাই করুন', 'Verify Any Land')}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => onNavigate?.('map')}
-              className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl font-bold text-sm border border-emerald-600/50 shadow-sm transition-colors cursor-pointer min-h-[48px]"
-            >
-              <MapPin className="w-4 h-4" />
-              <span>{t('ম্যাপে দেখুন', 'Explore on Map')}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Disclaimer Alert */}
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-          <Info className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
-          <p className="text-xs sm:text-sm text-amber-900 leading-relaxed font-medium">
-            <strong>{t('আইনি নোটিশ:', 'Legal Notice:')}</strong>{' '}
-            {lang === 'bn' ? disclaimerBn : disclaimerEn || disclaimerBn}
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 leading-snug">
+            {t('জমি ক্রয়-বিক্রয় মার্কেটপ্লেস', 'Land Marketplace')}
+          </h1>
+          <p className="text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed">
+            {t(
+              'যাচাইকৃত জমি ও নাগরিক-টু-নাগরিক সরাসরি লেনদেন।',
+              'Verified land listings and direct citizen-to-citizen transactions.'
+            )}
           </p>
         </div>
+      </section>
 
-        {/* Filters and Search Bar */}
-        <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          <div className="relative">
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              {t('অনুসন্ধান (দাগ বা মৌজা)', 'Search (Dag or Mouza)')}
-            </label>
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('উদা: ১০১ বা বিরুলিয়া', 'e.g. 101 or Birulia')}
-                className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] focus:border-transparent outline-none min-h-[40px]"
-              />
+      {/* Main Container */}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-2 space-y-6">
+        {/* Search & Filter Controls Card */}
+        <Card className="bg-white rounded-2xl border border-slate-200/90 shadow-lg p-5 sm:p-6 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-[#006A4E]" />
+              <h2 className="text-sm font-bold text-slate-800">
+                {t('ফিল্টার ও অনুসন্ধান', 'Search & Filter Listings')}
+              </h2>
             </div>
+            {(divisionFilter || districtFilter || landTypeFilter || searchQuery || minPrice || maxPrice) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetFilters}
+                className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50 h-8 px-2.5 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5 mr-1" />
+                <span>{t('ফিল্টার মুছুন', 'Clear Filters')}</span>
+              </Button>
+            )}
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              {t('জেলা', 'District')}
-            </label>
-            <select
-              value={districtFilter}
-              onChange={(e) => setDistrictFilter(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
-            >
-              <option value="">{t('সকল জেলা', 'All Districts')}</option>
-              <option value="ঢাকা">{t('ঢাকা', 'Dhaka')}</option>
-              <option value="গাজীপুর">{t('গাজীপুর', 'Gazipur')}</option>
-              <option value="নারায়ণগঞ্জ">{t('নারায়ণগঞ্জ', 'Narayanganj')}</option>
-            </select>
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            {/* Division Filter */}
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-[#006A4E]" />
+                <span>{t('বিভাগ', 'Division')}</span>
+              </Label>
+              <Select
+                value={divisionFilter || 'ALL'}
+                onValueChange={(val) => {
+                  setDivisionFilter(val === 'ALL' ? '' : val);
+                  setDistrictFilter('');
+                }}
+              >
+                <SelectTrigger className="w-full h-10 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-xs focus:ring-2 focus:ring-[#006A4E]">
+                  <SelectValue placeholder={t('সকল বিভাগ', 'All Divisions')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="ALL">{t('সকল বিভাগ', 'All Divisions')}</SelectItem>
+                    {divisions.map((d: any, idx: number) => {
+                      const val = String(typeof d === 'string' ? d : d.division_bn || d.name_bn || d.name_en || d.id || idx);
+                      const label = typeof d === 'string' ? d : lang === 'bn' ? d.division_bn || d.name_bn : d.division_en || d.name_en || d.name_bn;
+                      return (
+                        <SelectItem key={idx} value={val}>
+                          {label}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              {t('উপজেলা', 'Upazila')}
-            </label>
-            <select
-              value={upazilaFilter}
-              onChange={(e) => setUpazilaFilter(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
-            >
-              <option value="">{t('সকল উপজেলা', 'All Upazilas')}</option>
-              <option value="সাভার">{t('সাভার', 'Savar')}</option>
-              <option value="গাজীপুর সদর">{t('গাজীপুর সদর', 'Gazipur Sadar')}</option>
-              <option value="সোনারগাঁও">{t('সোনারগাঁও', 'Sonargaon')}</option>
-            </select>
-          </div>
+            {/* District Filter */}
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-[#006A4E]" />
+                <span>{t('জেলা', 'District')}</span>
+              </Label>
+              <Select
+                value={districtFilter || 'ALL'}
+                onValueChange={(val) => setDistrictFilter(val === 'ALL' ? '' : val)}
+              >
+                <SelectTrigger className="w-full h-10 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-xs focus:ring-2 focus:ring-[#006A4E]">
+                  <SelectValue placeholder={t('সকল জেলা', 'All Districts')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="ALL">{t('সকল জেলা', 'All Districts')}</SelectItem>
+                    {districts.map((d: any, idx: number) => {
+                      const val = String(typeof d === 'string' ? d : d.district_bn || d.name_bn || d.name_en || d.id || idx);
+                      const label = typeof d === 'string' ? d : lang === 'bn' ? d.district_bn || d.name_bn : d.district_en || d.name_en || d.name_bn;
+                      return (
+                        <SelectItem key={idx} value={val}>
+                          {label}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              {t('সর্বনিম্ন মূল্য (টাকা)', 'Min Price (BDT)')}
-            </label>
-            <input
-              type="number"
-              value={minPrice}
-              onChange={(e) => setMinPrice(e.target.value)}
-              placeholder="1000000"
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
-            />
-          </div>
+            {/* Land Type Filter */}
+            <div className="space-y-1">
+              <Label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                <Building2 className="w-3 h-3 text-[#006A4E]" />
+                <span>{t('জমির শ্রেণি', 'Land Type')}</span>
+              </Label>
+              <Select
+                value={landTypeFilter || 'ALL'}
+                onValueChange={(val) => setLandTypeFilter(val === 'ALL' ? '' : val)}
+              >
+                <SelectTrigger className="w-full h-10 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-xs focus:ring-2 focus:ring-[#006A4E]">
+                  <SelectValue placeholder={t('সকল শ্রেণি', 'All Land Types')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="ALL">{t('সকল শ্রেণি', 'All Land Types')}</SelectItem>
+                    <SelectItem value="বাস্তু / ভিটি">{t('বাস্তু / ভিটি (আবাসিক)', 'Residential / Homestead')}</SelectItem>
+                    <SelectItem value="নাল / কৃষি">{t('নাল / কৃষি', 'Agricultural')}</SelectItem>
+                    <SelectItem value="বাণিজ্যিক">{t('বাণিজ্যিক প্লট', 'Commercial Plot')}</SelectItem>
+                    <SelectItem value="পুকুর / ডোবা">{t('পুকুর / জলাশয়', 'Pond / Waterbody')}</SelectItem>
+                    <SelectItem value="শিল্প">{t('শিল্প ও কলকারখানা', 'Industrial')}</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="flex items-end gap-2">
-            <div className="flex-1">
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                {t('সর্বোচ্চ মূল্য (টাকা)', 'Max Price (BDT)')}
+            {/* Price Range Filter */}
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                <Tag className="w-3 h-3 text-[#006A4E]" />
+                <span>{t('সর্বোচ্চ মূল্য (টাকা)', 'Max Price (BDT)')}</span>
               </label>
-              <input
+              <Input
                 type="number"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
-                placeholder="5000000"
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[40px]"
+                placeholder="যেমন: ৫০০০000"
+                className="h-10 text-xs border-slate-300"
               />
             </div>
-            <button
-              type="button"
-              onClick={fetchListings}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-sm font-semibold transition cursor-pointer min-h-[40px]"
-            >
-              <Filter className="w-4 h-4 inline mr-1" />
-              {t('ফিল্টার', 'Filter')}
-            </button>
-          </div>
-        </div>
 
-        {/* 1-Click Quick Preset Filter Pills */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 text-xs">
-          {/* District Quick Pills */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-slate-500 font-bold mr-1 flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-slate-400" />
-              {t('জেলা:', 'District:')}
-            </span>
-            {[
-              { id: '', bn: 'সকল', en: 'All' },
-              { id: 'ঢাকা', bn: 'ঢাকা', en: 'Dhaka' },
-              { id: 'গাজীপুর', bn: 'গাজীপুর', en: 'Gazipur' },
-              { id: 'নারায়ণগঞ্জ', bn: 'নারায়ণগঞ্জ', en: 'Narayanganj' }
-            ].map((d) => (
-              <button
-                key={d.id}
-                type="button"
-                onClick={() => setDistrictFilter(d.id)}
-                className={`px-2.5 py-1 rounded-full font-semibold transition-all cursor-pointer border ${
-                  districtFilter === d.id
-                    ? 'bg-[#006A4E] text-white border-[#006A4E] shadow-2xs'
-                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                }`}
-              >
-                {lang === 'bn' ? d.bn : d.en}
-              </button>
+            {/* Search Input */}
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                <Search className="w-3 h-3 text-[#006A4E]" />
+                <span>{t('মৌজা বা দাগ', 'Mouza or Dag')}</span>
+              </label>
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('যেমন: ধামরাই বা ১০১', 'e.g. Dhamrai or 101')}
+                className="h-10 text-xs border-slate-300"
+              />
+            </div>
+          </div>
+        </Card>
+
+        {/* 4-State UI Coverage: Listings List */}
+        {listingsQuery.isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="p-5 rounded-2xl bg-white border border-slate-200 space-y-4">
+                <Skeleton className="h-6 w-28 bg-slate-200" />
+                <Skeleton className="h-5 w-3/4 bg-slate-200" />
+                <Skeleton className="h-16 w-full bg-slate-200 rounded-xl" />
+                <Skeleton className="h-10 w-full bg-slate-200 rounded-xl" />
+              </Card>
             ))}
           </div>
-
-          {/* Budget Presets */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-slate-500 font-bold mr-1 flex items-center gap-1">
-              <Tag className="w-3.5 h-3.5 text-slate-400" />
-              {t('বাজেট:', 'Budget:')}
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                setMinPrice('');
-                setMaxPrice('');
-                setTimeout(fetchListings, 50);
-              }}
-              className={`px-2.5 py-1 rounded-full font-semibold transition-all cursor-pointer border ${
-                !minPrice && !maxPrice
-                  ? 'bg-emerald-800 text-white border-emerald-800'
-                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-              }`}
+        ) : listingsQuery.isError ? (
+          <div className="p-8 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-center space-y-3">
+            <AlertTriangle className="w-8 h-8 text-rose-600 mx-auto" />
+            <h3 className="text-base font-bold text-rose-900">
+              {t('তালিকা লোড করতে সমস্যা হয়েছে', 'Failed to load property listings')}
+            </h3>
+            <p className="text-xs text-rose-700 max-w-md mx-auto">
+              {t('ইন্টারনেট সংযোগ পরীক্ষা করে পুনরায় চেষ্টা করুন।', 'Please check your connection and retry.')}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => listingsQuery.refetch()}
+              className="border-rose-300 text-rose-800 hover:bg-rose-100 cursor-pointer"
             >
-              {t('সকল বাজেট', 'All')}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMinPrice('');
-                setMaxPrice('2500000');
-                setTimeout(fetchListings, 50);
-              }}
-              className={`px-2.5 py-1 rounded-full font-semibold transition-all cursor-pointer border ${
-                maxPrice === '2500000' && !minPrice
-                  ? 'bg-emerald-800 text-white border-emerald-800'
-                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              {t('< ২৫ লক্ষ', '< 2.5M')}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMinPrice('2500000');
-                setMaxPrice('5000000');
-                setTimeout(fetchListings, 50);
-              }}
-              className={`px-2.5 py-1 rounded-full font-semibold transition-all cursor-pointer border ${
-                minPrice === '2500000' && maxPrice === '5000000'
-                  ? 'bg-emerald-800 text-white border-emerald-800'
-                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              {t('২৫ - ৫০ লক্ষ', '2.5M - 5M')}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMinPrice('5000000');
-                setMaxPrice('10000000');
-                setTimeout(fetchListings, 50);
-              }}
-              className={`px-2.5 py-1 rounded-full font-semibold transition-all cursor-pointer border ${
-                minPrice === '5000000' && maxPrice === '10000000'
-                  ? 'bg-emerald-800 text-white border-emerald-800'
-                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              {t('৫০ লক্ষ - ১ কোটি', '5M - 10M')}
-            </button>
-          </div>
-        </div>
-
-        {/* Listings Grid */}
-        {loading ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-[#006A4E] mb-3" />
-            <p className="font-semibold">{t('বিজ্ঞাপনসমূহ লোড হচ্ছে...', 'Loading land listings...')}</p>
+              <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+              <span>{t('পুনরায় চেষ্টা করুন', 'Retry')}</span>
+            </Button>
           </div>
         ) : filteredListings.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500">
-            <Building2 className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-            <p className="text-base font-semibold text-slate-800">
-              {t('চিহ্নিত শর্তে কোনো বিক্রির বিজ্ঞাপন পাওয়া যায়নি।', 'No land listings matched your criteria.')}
+          <div className="p-12 text-center bg-white rounded-2xl border border-slate-200 shadow-sm space-y-3">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-[#006A4E] mx-auto flex items-center justify-center">
+              <Building2 className="w-7 h-7" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">
+              {t('কোনো জমি পাওয়া যায়নি', 'No verified listings found')}
+            </h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              {t('আপনার ফিল্টার পরিবর্তন করুন অথবা সকল জমি দেখতে রিসেট চাপুন।', 'Try adjusting your filters or resetting to view all available properties.')}
             </p>
-            <p className="text-xs text-slate-500 mt-1">
-              {t('ফিল্টার রিসেট করে পুনরায় চেষ্টা করুন।', 'Try resetting filters or searching a different mouza.')}
-            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleResetFilters}
+              className="border-slate-300 cursor-pointer"
+            >
+              {t('সকল তালিকা দেখুন', 'View All Listings')}
+            </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredListings.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col justify-between"
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredListings.map((listing) => (
+              <Card
+                key={listing.id}
+                className="bg-white rounded-2xl border border-slate-200/90 hover:border-[#006A4E]/60 shadow-sm hover:shadow-lg transition flex flex-col justify-between overflow-hidden"
               >
-                <div>
-                  {/* Card Header & Badge */}
-                  <div className="p-5 pb-3 border-b border-slate-100 flex items-start justify-between gap-3 bg-slate-50/50">
-                    <div>
-                      {(() => {
-                        // F17: render the actual verification_badge returned by
-                        // the backend (VERIFIED_CLEAR / NEEDS_REVIEW / FLAGGED)
-                        // instead of a hardcoded "Verified Clear" pill.
-                        const badge = String(item.verification_badge || 'NEEDS_REVIEW');
-                        if (badge === 'FLAGGED') {
-                          return (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 border border-rose-200 text-[#F42A41] mb-1.5">
-                              <AlertTriangle className="w-3.5 h-3.5" />
-                              <span>{t('পতাকাঙ্কিত (ঝুঁকিপূর্ণ)', 'Flagged (Risk)')}</span>
-                            </div>
-                          );
-                        }
-                        if (badge === 'NEEDS_REVIEW') {
-                          return (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 border border-amber-200 text-amber-800 mb-1.5">
-                              <Clock className="w-3.5 h-3.5" />
-                              <span>{t('যাচাই-অপেক্ষমাণ', 'Pending Review')}</span>
-                            </div>
-                          );
-                        }
-                        return (
-                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-50 border border-emerald-300 text-[#006A4E] shadow-2xs mb-1.5">
-                            <ShieldCheck className="w-4 h-4 text-[#006A4E]" />
-                            <span>{t('সরকারি ভল্ট ভেরিফায়েড', 'Govt Vault Verified')}</span>
-                          </div>
-                        );
-                      })()}
-                      <h3 className="text-lg font-extrabold text-slate-900 leading-snug">
-                        {t('দাগ নং:', 'Plot Dag:')} {lang === 'bn' ? item.dag_no_bn : item.dag_no}
-                      </h3>
-                      <p className="text-xs text-slate-500 font-mono">{item.listing_code}</p>
-                    </div>
-
-                    <div className="text-right">
-                      <span className="text-xs text-slate-500 block">{t('জমির পরিমাণ', 'Land Area')}</span>
-                      <span className="text-base font-bold text-slate-800">
-                        {formatNumber(item.area_decimal)} {t('শতক', 'Decimal')}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Card Body */}
-                  <div className="p-5 space-y-3">
-                    {/* Visual Land Metric Chips: Decimals, Katha, Price/Dec */}
-                    <div className="grid grid-cols-3 gap-2 text-center p-2 rounded-xl bg-emerald-50/60 border border-emerald-200/70 text-xs">
-                      <div className="p-1">
-                        <span className="text-[10px] text-slate-500 block">{t('শতক', 'Decimals')}</span>
-                        <span className="font-bold text-slate-900">{formatNumber(item.area_decimal)}</span>
-                      </div>
-                      <div className="p-1 border-x border-emerald-200/70">
-                        <span className="text-[10px] text-slate-500 block">{t('কাঠা', 'Katha')}</span>
-                        <span className="font-bold text-slate-900">{formatNumber((item.area_decimal / 1.65).toFixed(1))}</span>
-                      </div>
-                      <div className="p-1">
-                        <span className="text-[10px] text-slate-500 block">{t('দর/শতক', 'Price/Dec')}</span>
-                        <span className="font-bold text-[#006A4E]">
-                          ৳ {formatNumber(Math.round(item.asking_price_bdt / (item.area_decimal || 1)))}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-600">
-                      <MapPin className="w-4 h-4 text-emerald-700 shrink-0" />
-                      <span>
-                        {lang === 'bn'
-                          ? `${item.mouza_bn} মৌজা, ${item.upazila_bn}, ${item.district_bn}`
-                          : `${item.mouza_en} Mouza, ${item.upazila_en}, ${item.district_en}`}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs text-slate-600">
-                      <Tag className="w-4 h-4 text-slate-400 shrink-0" />
-                      <span>
-                        {t('জমির শ্রেণী:', 'Land Class:')}{' '}
-                        <strong>{lang === 'bn' ? item.land_type_bn : item.land_type_en}</strong>
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                      {lang === 'bn' ? item.description_bn : item.description_en}
-                    </p>
-
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                      <span>
-                        {t('বিক্রেতা NID:', 'Seller NID:')}{' '}
-                        <code className="font-mono font-semibold text-slate-700">
-                          {item.seller_nid_masked}
-                        </code>
-                      </span>
-                      <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                        <Lock className="w-3 h-3 text-emerald-600" />
-                        {t('বিক্রয় লক নিষ্ক্রিয়', 'Unlocked')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Card Footer */}
-                <div className="p-5 pt-3 bg-slate-50/70 border-t border-slate-100 space-y-3">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-xs font-medium text-slate-500">{t('চাওয়া মূল্য', 'Asking Price')}</span>
-                    <span className="text-xl font-extrabold text-[#006A4E]">
-                      ৳ {formatNumber(item.asking_price_bdt)}
+                <div className="p-5 space-y-3">
+                  {/* Trust Badge Header */}
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge className="bg-emerald-100 text-emerald-900 border-emerald-300 font-bold text-xs flex items-center gap-1 shadow-2xs">
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#006A4E]" />
+                      <span>{t('ভেরিফাইড জমি', 'BhumiShield Verified')}</span>
+                    </Badge>
+                    <span className="font-mono text-xs text-slate-500 font-semibold">
+                      {listing.listing_code}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleOpenDetail(item)}
-                      className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 transition cursor-pointer min-h-[44px]"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-slate-500" />
-                      <span>{t('বিস্তারিত ও ভল্ট', 'Details & Vault')}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setEnquiryListing(item)}
-                      className="inline-flex items-center justify-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-white bg-[#006A4E] hover:bg-emerald-800 transition cursor-pointer min-h-[44px]"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>{t('আগ্রহ প্রকাশ', 'Inquire')}</span>
-                    </button>
+                  {/* Location & Dag */}
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900 leading-snug">
+                      {listing.mouza_bn} · {t(`দাগ ${toBanglaDigits(listing.dag_no)}`, `Dag ${listing.dag_no}`)}
+                    </h3>
+                    <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                      <MapPin className="w-3 h-3 text-slate-400" />
+                      <span>{listing.upazila_bn}, {listing.district_bn}</span>
+                    </p>
                   </div>
+
+                  {/* Particulars Grid */}
+                  <div className="grid grid-cols-2 gap-2 p-3 rounded-xl bg-slate-50/80 border border-slate-100 text-xs">
+                    <div>
+                      <span className="text-slate-500 text-[10px] block">{t('জমির শ্রেণি:', 'Land Type:')}</span>
+                      <strong className="text-slate-800">{listing.land_type_bn}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 text-[10px] block">{t('জমির পরিমাণ:', 'Area:')}</span>
+                      <strong className="text-slate-900 font-mono">
+                        {toBanglaDigits(listing.area_decimal)} {t('শতক', 'Dec')}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {/* Asking Price */}
+                  <div className="pt-1">
+                    <span className="text-[10px] text-slate-500 block uppercase font-bold tracking-wider">
+                      {t('প্রস্তাবিত বিক্রয় মূল্য:', 'Asking Price:')}
+                    </span>
+                    <div className="text-xl font-black text-[#006A4E] font-mono">
+                      ৳ {toBanglaDigits(Number(listing.asking_price_bdt || 0).toLocaleString())}
+                    </div>
+                  </div>
+
+                  {/* Description Excerpt */}
+                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                    {lang === 'bn' ? listing.description_bn : listing.description_en}
+                  </p>
                 </div>
-              </div>
+
+                {/* Card Actions */}
+                <CardFooter className="p-5 pt-0 border-t border-slate-100 grid grid-cols-2 gap-2 mt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedListing(listing)}
+                    className="h-10 text-xs font-bold border-slate-300 text-slate-700 hover:bg-slate-50 cursor-pointer flex items-center justify-center gap-1"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-slate-500" />
+                    <span>{t('বিস্তারিত', 'Details')}</span>
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setEnquiryListing(listing);
+                      setEnquirySuccessMsg(null);
+                      setEnquiryErrorMsg(null);
+                    }}
+                    className="h-10 text-xs font-bold bg-[#006A4E] hover:bg-[#00553e] text-white shadow-xs cursor-pointer flex items-center justify-center gap-1"
+                  >
+                    <PhoneCall className="w-3.5 h-3.5" />
+                    <span>{t('যোগাযোগ', 'Contact')}</span>
+                  </Button>
+                </CardFooter>
+              </Card>
             ))}
           </div>
         )}
+      </main>
 
-        {/* In-App Enquiry Modal */}
-        {enquiryListing && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="public-sale-enquiry-title"
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
-          >
-            <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <Send className="w-5 h-5 text-[#006A4E]" />
-                  <h3 id="public-sale-enquiry-title" className="font-bold text-slate-900 text-base">
-                    {t('জমির প্রতি আগ্রহ প্রকাশ করুন', 'Express Buyer Interest')}
-                  </h3>
+      {/* 1. LISTING DETAIL MODAL */}
+      <Dialog open={Boolean(selectedListing)} onOpenChange={(open) => !open && setSelectedListing(null)}>
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-6 border border-slate-200 rounded-3xl bg-white space-y-4">
+          {selectedListing && (
+            <>
+              <DialogHeader className="border-b border-slate-100 pb-3 text-left space-y-1">
+                <div className="flex items-center justify-between">
+                  <Badge className="bg-emerald-100 text-emerald-900 border-emerald-300 font-bold text-xs flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#006A4E]" />
+                    <span>{t('ভেরিফাইড জমি', 'Verified Plot')}</span>
+                  </Badge>
+                  <span className="font-mono text-xs text-slate-500 font-bold">
+                    {selectedListing.listing_code}
+                  </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setEnquiryListing(null)}
-                  aria-label={t('বন্ধ করুন', 'Close')}
-                  className="text-slate-400 hover:text-slate-600 transition p-1 cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <DialogTitle className="text-xl font-black text-slate-900 pt-1">
+                  {selectedListing.mouza_bn} · {t(`দাগ নং: ${toBanglaDigits(selectedListing.dag_no)}`, `Plot No: ${selectedListing.dag_no}`)}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-500">
+                  {selectedListing.upazila_bn}, {selectedListing.district_bn}
+                </DialogDescription>
+              </DialogHeader>
+
+              {/* Verified Safeguards Checklist */}
+              <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-2 text-xs">
+                <div className="font-bold text-[#006A4E] flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>{t('সরকারি ডাটাবেজ যাচাইকরণ বিবরণী:', 'Official Registry Verification Summary:')}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-slate-700">
+                  <div>✓ {t('রেকর্ডীয় মালিকানা নিশ্চিত', 'Title confirmed')}</div>
+                  <div>✓ {t('কোনো সক্রিয় ব্যাংক লিয়েন নেই', 'No active mortgage lien')}</div>
+                  <div>✓ {t('দেওয়ানি বিরোধ মুক্ত', 'No court dispute')}</div>
+                  <div>✓ {t('বিক্রয় উন্মুক্ত ও নিষ্কণ্টক', 'Clean & sale unblocked')}</div>
+                </div>
               </div>
 
-              {enquirySuccess ? (
-                <div className="p-6 text-center space-y-2 bg-emerald-50 rounded-xl border border-emerald-200">
-                  <CheckCircle2 className="w-10 h-10 text-[#006A4E] mx-auto animate-bounce" />
-                  <p className="font-bold text-emerald-950 text-sm">{enquirySuccess}</p>
+              {/* Price & Details */}
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <span className="text-slate-500 block">{t('মোট জমির পরিমাণ:', 'Total Area:')}</span>
+                  <strong className="text-base text-slate-900 font-mono">
+                    {toBanglaDigits(selectedListing.area_decimal)} {t('শতক', 'Decimals')}
+                  </strong>
                 </div>
-              ) : (
-                <form onSubmit={handleSendEnquiry} className="space-y-4">
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-700 space-y-1">
-                    <p>
-                      <strong>{t('বিজ্ঞাপন কোড:', 'Listing Code:')}</strong> {enquiryListing.listing_code}
-                    </p>
-                    <p>
-                      <strong>{t('দাগ ও এলাকা:', 'Dag & Area:')}</strong> দাগ{' '}
-                      {lang === 'bn' ? enquiryListing.dag_no_bn : enquiryListing.dag_no},{' '}
-                      {enquiryListing.mouza_bn} মৌজা
-                    </p>
-                    <p>
-                      <strong>{t('মূল্য:', 'Price:')}</strong> ৳{' '}
-                      {formatNumber(enquiryListing.asking_price_bdt)} ({formatNumber(enquiryListing.area_decimal)} শতক)
-                    </p>
-                  </div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <span className="text-slate-500 block">{t('বিক্রয় মূল্য:', 'Asking Price:')}</span>
+                  <strong className="text-base text-[#006A4E] font-mono">
+                    ৳ {toBanglaDigits(Number(selectedListing.asking_price_bdt).toLocaleString())}
+                  </strong>
+                </div>
+              </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      {t('আপনার নাম', 'Your Full Name')} *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={buyerName}
-                      onChange={(e) => setBuyerName(e.target.value)}
-                      placeholder={t('উদা: মো. আরিফুল হক', 'e.g. Md. Ariful Haque')}
-                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[44px]"
-                    />
-                  </div>
+              {/* Description */}
+              <div className="space-y-1 text-xs">
+                <span className="font-bold text-slate-700">{t('জমির বিবরণ:', 'Description:')}</span>
+                <p className="text-slate-600 bg-slate-50 p-3 rounded-xl leading-relaxed">
+                  {lang === 'bn' ? selectedListing.description_bn : selectedListing.description_en}
+                </p>
+              </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        {t('মোবাইল নম্বর (১১ ডিজিট)', 'Mobile Number (11 digits)')} *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={buyerPhone}
-                        onChange={(e) => setBuyerPhone(e.target.value)}
-                        placeholder="01700-009999"
-                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[44px]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">
-                        {t('জাতীয় পরিচয়পত্র (NID)', 'NID Number')} *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={buyerNid}
-                        onChange={(e) => setBuyerNid(e.target.value)}
-                        placeholder="9900009999"
-                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none min-h-[44px]"
-                      />
-                    </div>
-                  </div>
+              <DialogFooter className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
+                {onNavigate && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedListing(null);
+                      onNavigate(`check?dag=${encodeURIComponent(selectedListing.dag_no)}`);
+                    }}
+                    className="text-xs border-emerald-300 text-[#006A4E] hover:bg-emerald-50 cursor-pointer"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 mr-1" />
+                    <span>{t('ভূমি স্বাস্থ্য যাচাই করুন', 'Cross-Check in Due Diligence')}</span>
+                  </Button>
+                )}
 
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      {t('আপনার বার্তা বা প্রস্তাব', 'Message or Offer')}
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={enquiryMessage}
-                      onChange={(e) => setEnquiryMessage(e.target.value)}
-                      placeholder={t(
-                        'আমি এই দাগের জমিটি পরিদর্শন ও আনুষ্ঠানিক যাচাইয়ের মাধ্যমে ক্রয়ে আগ্রহী...',
-                        'I am interested in inspecting and purchasing this verified plot...'
-                      )}
-                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#006A4E] outline-none"
-                    />
-                  </div>
+                <Button
+                  onClick={() => {
+                    const l = selectedListing;
+                    setSelectedListing(null);
+                    setEnquiryListing(l);
+                  }}
+                  className="bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs cursor-pointer"
+                >
+                  <PhoneCall className="w-3.5 h-3.5 mr-1" />
+                  <span>{t('মালিকের সাথে যোগাযোগ করুন', 'Contact Verified Owner')}</span>
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
-                  <p className="text-[11px] text-slate-500 leading-tight">
-                    {t(
-                      '🔒 গোপনীয়তা সুরক্ষা: আপনার ব্যক্তিগত ফোন নম্বর পাবলিক নয়। বিক্রেতা আবেদন গ্রহণ করলে যৌথভাবে হস্তান্তর উইজার্ডে সংযোগ হবে।',
-                      '🔒 Privacy Safeguard: Your contact phone is masked. Direct secure transaction happens only through the official Sub-Registry transfer wizard.'
-                    )}
-                  </p>
+      {/* 2. LISTING ENQUIRY DIALOG */}
+      <Dialog open={Boolean(enquiryListing)} onOpenChange={(open) => !open && setEnquiryListing(null)}>
+        <DialogContent className="max-w-md p-6 border border-slate-200 rounded-3xl bg-white space-y-4">
+          <DialogHeader className="border-b border-slate-100 pb-3 text-left space-y-1">
+            <DialogTitle className="text-lg font-black text-slate-900">
+              {t('মালিকের সাথে যোগাযোগের আবেদন', 'Contact Land Owner')}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              {enquiryListing?.mouza_bn} · {t(`দাগ নং ${toBanglaDigits(enquiryListing?.dag_no || '')}`, `Dag ${enquiryListing?.dag_no}`)}
+            </DialogDescription>
+          </DialogHeader>
 
-                  <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                    <button
-                      type="button"
-                      onClick={() => setEnquiryListing(null)}
-                      className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer min-h-[44px]"
-                    >
-                      {t('বাতিল', 'Cancel')}
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={enquirySubmitting}
-                      className="px-5 py-2 bg-[#006A4E] hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer min-h-[44px]"
-                    >
-                      {enquirySubmitting ? (
-                        <span>{t('প্রেরণ হচ্ছে...', 'Sending...')}</span>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4" />
-                          <span>{t('আগ্রহ প্রেরণ করুন', 'Submit Enquiry')}</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </form>
+          {enquirySuccessMsg ? (
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-3">
+              <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
+              <p className="text-xs font-bold text-emerald-900">{enquirySuccessMsg}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEnquiryListing(null)}
+                className="cursor-pointer"
+              >
+                {t('সম্পন্ন', 'Done')}
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleSendEnquiry} className="space-y-3 text-xs">
+              {enquiryErrorMsg && (
+                <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-800">
+                  {enquiryErrorMsg}
+                </div>
               )}
-            </div>
-          </div>
-        )}
 
-        {/* Listing Details & Vault Summary Modal */}
-        {selectedListingDetail && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="public-sale-detail-title"
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
-          >
-            <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <FileCheck className="w-5 h-5 text-[#006A4E]" />
-                  <h3 id="public-sale-detail-title" className="font-bold text-slate-900 text-base">
-                    {t('জমির পূর্ণ বিবরণ ও ভল্ট স্ট্যাটাস', 'Plot Profile & Vault Status')}
-                  </h3>
-                </div>
-                <button
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">{t('আপনার নাম *', 'Your Name *')}</label>
+                <Input
+                  required
+                  value={buyerName}
+                  onChange={(e) => setBuyerName(e.target.value)}
+                  placeholder={t('যেমন: মো. কামরুল হাসান', 'e.g. Md. Kamrul Hasan')}
+                  className="h-10 text-sm border-slate-300"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">{t('মোবাইল নম্বর *', 'Phone Number *')}</label>
+                <Input
+                  required
+                  type="tel"
+                  value={buyerPhone}
+                  onChange={(e) => setBuyerPhone(e.target.value)}
+                  placeholder="01712345678"
+                  className="h-10 text-sm border-slate-300 font-mono"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700">{t('জাতীয় পরিচয়পত্র নম্বর (ঐচ্ছিক)', 'NID Number (Optional)')}</label>
+                <Input
+                  value={buyerNid}
+                  onChange={(e) => setBuyerNid(e.target.value)}
+                  placeholder="19912691234567890"
+                  className="h-10 text-sm border-slate-300 font-mono"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="font-bold text-slate-700">{t('বার্তা বা প্রস্তাব', 'Message / Offer')}</Label>
+                <Textarea
+                  value={enquiryMessage}
+                  onChange={(e) => setEnquiryMessage(e.target.value)}
+                  placeholder={t('যেমন: আমি এই জমিটি দেখতে চাই এবং ক্রয় করতে আগ্রহী।', 'e.g. I want to visit the plot.')}
+                  className="min-h-[70px] text-xs"
+                />
+              </div>
+
+              <DialogFooter className="flex justify-between items-center gap-2 pt-2 border-t border-slate-100">
+                <Button
                   type="button"
-                  onClick={() => setSelectedListingDetail(null)}
-                  aria-label={t('বন্ধ করুন', 'Close')}
-                  className="text-slate-400 hover:text-slate-600 transition p-1 cursor-pointer"
+                  variant="outline"
+                  onClick={() => setEnquiryListing(null)}
+                  className="cursor-pointer text-xs"
                 >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+                  {t('বাতিল', 'Cancel')}
+                </Button>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200">
-                  <div>
-                    <span className="text-slate-500 block">{t('বিজ্ঞাপন কোড', 'Listing Code')}</span>
-                    <strong className="text-sm font-mono text-slate-800">
-                      {selectedListingDetail.listing.listing_code}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block">{t('দাগ কোড', 'Plot Code')}</span>
-                    <strong className="text-sm font-mono text-slate-800">
-                      {selectedListingDetail.plot.plot_code}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block">{t('দাগ নং ও শ্রেণী', 'Dag & Class')}</span>
-                    <strong className="text-sm text-slate-800">
-                      দাগ {selectedListingDetail.plot.dag_no} (
-                      {selectedListingDetail.plot.land_type_bn})
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 block">{t('চাওয়া মূল্য', 'Asking Price')}</span>
-                    <strong className="text-base text-[#006A4E]">
-                      ৳ {formatNumber(selectedListingDetail.listing.asking_price_bdt)}
-                    </strong>
-                  </div>
-                </div>
-
-                {/* Vault Verification Summary */}
-                <div className="border border-emerald-200 bg-emerald-50/60 p-4 rounded-xl space-y-2">
-                  <h4 className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-[#006A4E]" />
-                    {t('নাগরিক ভল্ট ও নথিপত্র সারসংক্ষেপ', 'Citizen Document Vault Summary')}
-                  </h4>
-                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                    <div className="bg-white p-2.5 rounded-lg border border-emerald-100">
-                      <span className="text-slate-500 block text-[11px]">{t('মোট দলিল/পর্চা', 'Total Docs')}</span>
-                      <strong className="text-sm text-slate-800">
-                        {selectedListingDetail.documents_summary.total_documents} টি
-                      </strong>
-                    </div>
-                    <div className="bg-white p-2.5 rounded-lg border border-emerald-100">
-                      <span className="text-slate-500 block text-[11px]">{t('যাচাইকৃত (L2/L3)', 'Verified (L2/L3)')}</span>
-                      <strong className="text-sm text-[#006A4E]">
-                        {selectedListingDetail.documents_summary.verified_documents} টি
-                      </strong>
-                    </div>
-                    <div className="bg-white p-2.5 rounded-lg border border-emerald-100">
-                      <span className="text-slate-500 block text-[11px]">{t('বিএস খতিয়ান', 'BS Khatian')}</span>
-                      <strong className="text-sm text-emerald-700">✓ সংরক্ষিত</strong>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div>
-                  <h5 className="text-xs font-bold text-slate-700 mb-1">{t('বিস্তারিত বর্ণনা', 'Detailed Description')}</h5>
-                  <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    {lang === 'bn'
-                      ? selectedListingDetail.listing.description_bn
-                      : selectedListingDetail.listing.description_en}
-                  </p>
-                </div>
-
-                {/* Action buttons */}
-                <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row gap-2 justify-end">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedListingDetail(null);
-                      onNavigate?.(`check?plot_id=${selectedListingDetail.plot.id}`);
-                    }}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
-                  >
-                    <Search className="w-4 h-4" />
-                    <span>{t('এই দাগের পূর্ণ ঝুঁকি রিপোর্ট যাচাই', 'Run Full Fraud Pre-Check')}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const l = {
-                        ...selectedListingDetail.listing,
-                        dag_no: selectedListingDetail.plot?.dag_no || selectedListingDetail.listing?.dag_no,
-                        dag_no_bn: selectedListingDetail.plot?.dag_no_bn || selectedListingDetail.listing?.dag_no_bn,
-                        mouza_bn: selectedListingDetail.plot?.mouza_bn || selectedListingDetail.listing?.mouza_bn,
-                        mouza_en: selectedListingDetail.plot?.mouza_en || selectedListingDetail.listing?.mouza_en,
-                        upazila_bn: selectedListingDetail.plot?.upazila_bn || selectedListingDetail.listing?.upazila_bn,
-                        upazila_en: selectedListingDetail.plot?.upazila_en || selectedListingDetail.listing?.upazila_en,
-                        district_bn: selectedListingDetail.plot?.district_bn || selectedListingDetail.listing?.district_bn,
-                        district_en: selectedListingDetail.plot?.district_en || selectedListingDetail.listing?.district_en,
-                      };
-                      setSelectedListingDetail(null);
-                      setEnquiryListing(l);
-                    }}
-                    className="px-5 py-2 bg-[#006A4E] hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>{t('আগ্রহ প্রকাশ করুন', 'Express Interest')}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+                <Button
+                  type="submit"
+                  disabled={submittingEnquiry}
+                  className="bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs cursor-pointer flex items-center gap-1.5"
+                >
+                  {submittingEnquiry ? (
+                    <>
+                      <RotateCcw className="w-3.5 h-3.5 animate-spin" />
+                      <span>{t('পাঠানো হচ্ছে...', 'Sending...')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" />
+                      <span>{t('প্রস্তাব পাঠান', 'Send Enquiry')}</span>
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

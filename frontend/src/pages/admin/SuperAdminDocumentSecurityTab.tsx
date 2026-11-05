@@ -16,6 +16,20 @@ import {
 } from 'lucide-react';
 import { BhumiApi } from '../../api/client';
 import { toBanglaDigits } from '../../theme/tokens';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/select';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Badge } from '../../components/ui/badge';
+import { Switch } from '../../components/ui/switch';
+import { Tabs, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { Alert, AlertDescription } from '../../components/ui/alert';
 
 interface DocumentSecurityConfig {
   enable_custom_watermark: boolean;
@@ -121,8 +135,8 @@ export const SuperAdminDocumentSecurityTab: React.FC<SuperAdminDocumentSecurityT
     <div className="space-y-6 animate-fadeIn">
       {/* Notice Alert */}
       {notice && (
-        <div
-          className={`p-4 rounded-2xl border flex items-center justify-between text-xs font-bold transition shadow-xs ${
+        <Alert
+          className={`flex items-center justify-between text-xs font-bold transition shadow-xs ${
             notice.err
               ? 'bg-rose-50 border-rose-200 text-rose-800'
               : 'bg-emerald-50 border-emerald-200 text-[#006A4E]'
@@ -130,7 +144,7 @@ export const SuperAdminDocumentSecurityTab: React.FC<SuperAdminDocumentSecurityT
         >
           <div className="flex items-center gap-2">
             {notice.err ? <AlertTriangle className="w-4 h-4 text-rose-600" /> : <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-            <span>{notice.msg}</span>
+            <AlertDescription className="text-xs font-bold">{notice.msg}</AlertDescription>
           </div>
           <button
             onClick={() => setNotice(null)}
@@ -138,16 +152,16 @@ export const SuperAdminDocumentSecurityTab: React.FC<SuperAdminDocumentSecurityT
           >
             ✕
           </button>
-        </div>
+        </Alert>
       )}
 
       {/* Header Info Panel */}
       <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#006A4E] text-[11px] font-bold">
+            <Badge variant="outline" className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#006A4E] border-emerald-200 text-[11px] font-bold">
               {t('সুপার অ্যাডমিন সার্ভিস কনফিগারেশন', 'Super Admin Service Configuration')}
-            </span>
+            </Badge>
             <span className="text-slate-300">•</span>
             <span className="text-xs text-slate-500 font-medium">
               {t('নাগরিক সেবা ডেলিভারি নিরাপত্তা', 'Citizen Service Delivery Security')}
@@ -174,31 +188,36 @@ export const SuperAdminDocumentSecurityTab: React.FC<SuperAdminDocumentSecurityT
 
         {/* Top Actions */}
         <div className="flex items-center gap-2 shrink-0">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={fetchConfig}
             disabled={loading}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+            className="h-9 px-3.5 rounded-xl border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-bold flex items-center gap-1.5"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>{t('রিফ্রেশ', 'Refresh')}</span>
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={handleResetDefaults}
-            className="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold border border-amber-200 transition cursor-pointer"
+            className="h-9 px-3.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-200 text-xs font-bold"
           >
             <span>{t('ডিফল্ট মান', 'Reset Defaults')}</span>
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            size="sm"
             onClick={handleSave}
             disabled={saving}
-            className="px-5 py-2 rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition cursor-pointer disabled:bg-slate-300"
+            className="h-9 px-5 rounded-xl bg-[#006A4E] hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm"
           >
             {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-4 h-4 stroke-[3]" />}
             <span>{saving ? t('সংরক্ষণ হচ্ছে...', 'Saving...') : t('কনফিগারেশন সংরক্ষণ করুন', 'Save Configuration')}</span>
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -224,46 +243,43 @@ export const SuperAdminDocumentSecurityTab: React.FC<SuperAdminDocumentSecurityT
               </div>
 
               {/* Master Watermark Toggle */}
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
+              <div className="flex items-center gap-2">
+                <Switch
                   checked={config.enable_custom_watermark}
-                  onChange={(e) => setConfig({ ...config, enable_custom_watermark: e.target.checked })}
-                  className="sr-only peer"
+                  onCheckedChange={(checked) => setConfig({ ...config, enable_custom_watermark: checked })}
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#006A4E]"></div>
                 <span className="text-xs font-bold text-slate-700">
                   {config.enable_custom_watermark ? t('সক্রিয়', 'Active') : t('নিষ্ক্রিয়', 'Disabled')}
                 </span>
-              </label>
+              </div>
             </div>
 
             {config.enable_custom_watermark ? (
               <div className="space-y-4 pt-1 animate-fadeIn">
                 {/* Text BN */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <Label className="block text-xs font-bold text-slate-700 mb-1">
                     {t('ওয়াটারমার্ক টেক্সট (বাংলা)*', 'Watermark Text (Bengali)*')}
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="text"
                     value={config.watermark_text_bn}
                     onChange={(e) => setConfig({ ...config, watermark_text_bn: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-[#006A4E]"
+                    className="h-9 text-xs"
                     placeholder="যেমন: গণপ্রজাতন্ত্রী বাংলাদেশ সরকার - ভূমি মন্ত্রণালয়"
                   />
                 </div>
 
                 {/* Text EN */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <Label className="block text-xs font-bold text-slate-700 mb-1">
                     {t('ওয়াটারমার্ক টেক্সট (ইংরেজি)*', 'Watermark Text (English)*')}
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="text"
                     value={config.watermark_text_en}
                     onChange={(e) => setConfig({ ...config, watermark_text_en: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-mono text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 focus:border-[#006A4E]"
+                    className="h-9 font-mono text-xs"
                     placeholder="e.g. GOVERNMENT OF BANGLADESH - MINISTRY OF LAND"
                   />
                 </div>
@@ -295,34 +311,42 @@ export const SuperAdminDocumentSecurityTab: React.FC<SuperAdminDocumentSecurityT
 
                   {/* Watermark Angle */}
                   <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                    <label className="block text-xs font-bold text-slate-700">
+                    <Label className="block text-xs font-bold text-slate-700">
                       {t('জলছাপের কোণ (Angle)', 'Watermark Angle')}
-                    </label>
-                    <select
-                      value={config.watermark_angle_deg}
-                      onChange={(e) => setConfig({ ...config, watermark_angle_deg: parseInt(e.target.value, 10) })}
-                      className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 bg-white"
+                    </Label>
+                    <Select
+                      value={String(config.watermark_angle_deg)}
+                      onValueChange={(val) => setConfig({ ...config, watermark_angle_deg: parseInt(val, 10) })}
                     >
-                      <option value={-45}>{t('কোণাকুণি (-৪৫° ডায়াগোনাল)', 'Diagonal (-45°)')}</option>
-                      <option value={-30}>{t('স্ট্যান্ডার্ড তির্যক (-৩০°)', 'Standard (-30°)')}</option>
-                      <option value={0}>{t('সমান্তরাল অনুভূমিক (০°)', 'Horizontal (0°)')}</option>
-                    </select>
+                      <SelectTrigger className="h-8 text-xs bg-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="-45" className="text-xs">{t('কোণাকুণি (-৪৫° ডায়াগোনাল)', 'Diagonal (-45°)')}</SelectItem>
+                        <SelectItem value="-30" className="text-xs">{t('স্ট্যান্ডার্ড তির্যক (-৩০°)', 'Standard (-30°)')}</SelectItem>
+                        <SelectItem value="0" className="text-xs">{t('সমান্তরাল অনুভূমিক (০°)', 'Horizontal (0°)')}</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Watermark Pattern */}
                   <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                    <label className="block text-xs font-bold text-slate-700">
+                    <Label className="block text-xs font-bold text-slate-700">
                       {t('প্যাটার্ন শৈলী (Pattern)', 'Pattern Style')}
-                    </label>
-                    <select
+                    </Label>
+                    <Select
                       value={config.watermark_pattern}
-                      onChange={(e) => setConfig({ ...config, watermark_pattern: e.target.value as any })}
-                      className="w-full px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 bg-white"
+                      onValueChange={(val) => setConfig({ ...config, watermark_pattern: val as any })}
                     >
-                      <option value="DIAGONAL_SINGLE">{t('একক তির্যক সিল', 'Single Center Seal')}</option>
-                      <option value="REPEATED_TILES">{t('পুনরাবৃত্ত নিরাপত্তা প্যাটার্ন', 'Repeated Matrix')}</option>
-                      <option value="CENTER_SEAL">{t('কেন্দ্রীয় গোল প্রতীক', 'Emblem Stamp')}</option>
-                    </select>
+                      <SelectTrigger className="h-8 text-xs bg-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="DIAGONAL_SINGLE" className="text-xs">{t('একক তির্যক সিল', 'Single Center Seal')}</SelectItem>
+                        <SelectItem value="REPEATED_TILES" className="text-xs">{t('পুনরাবৃত্ত নিরাপত্তা প্যাটার্ন', 'Repeated Matrix')}</SelectItem>
+                        <SelectItem value="CENTER_SEAL" className="text-xs">{t('কেন্দ্রীয় গোল প্রতীক', 'Emblem Stamp')}</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -354,27 +378,24 @@ export const SuperAdminDocumentSecurityTab: React.FC<SuperAdminDocumentSecurityT
               </div>
 
               {/* Master QR Toggle */}
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
+              <div className="flex items-center gap-2">
+                <Switch
                   checked={config.enable_qr_validation_seal}
-                  onChange={(e) => setConfig({ ...config, enable_qr_validation_seal: e.target.checked })}
-                  className="sr-only peer"
+                  onCheckedChange={(checked) => setConfig({ ...config, enable_qr_validation_seal: checked })}
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#006A4E]"></div>
                 <span className="text-xs font-bold text-slate-700">
                   {config.enable_qr_validation_seal ? t('সক্রিয়', 'Active') : t('নিষ্ক্রিয়', 'Disabled')}
                 </span>
-              </label>
+              </div>
             </div>
 
             {config.enable_qr_validation_seal ? (
               <div className="space-y-4 pt-1 animate-fadeIn">
                 {/* QR Layout Style Selector */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-2">
+                  <Label className="block text-xs font-bold text-slate-700 mb-2">
                     {t('কিউআর ভ্যালিডেশন লেআউট স্টাইল নির্বাচন করুন*', 'Select QR Validation Layout Style*')}
-                  </label>
+                  </Label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {/* Style 1: Bordered Gov Seal */}
                     <button
@@ -450,29 +471,33 @@ export const SuperAdminDocumentSecurityTab: React.FC<SuperAdminDocumentSecurityT
                 {/* QR Position & URL Prefix */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <Label className="block text-xs font-bold text-slate-700 mb-1">
                       {t('কিউআর কোডের অবস্থান (Position)', 'QR Code Position')}
-                    </label>
-                    <select
+                    </Label>
+                    <Select
                       value={config.qr_position}
-                      onChange={(e) => setConfig({ ...config, qr_position: e.target.value as any })}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 bg-white"
+                      onValueChange={(val) => setConfig({ ...config, qr_position: val as any })}
                     >
-                      <option value="HEADER_RIGHT">{t('শীর্ষ ডান কোণে (Header Right)', 'Top Right Header')}</option>
-                      <option value="FOOTER_CENTER">{t('পাদচরণ কেন্দ্রে (Footer Center)', 'Bottom Center Footer')}</option>
-                      <option value="SEAL_OVERLAY">{t('জলছাপের কেন্দ্রস্থলে (Emblem Center)', 'Center Watermark Overlay')}</option>
-                    </select>
+                      <SelectTrigger className="h-9 text-xs bg-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="HEADER_RIGHT" className="text-xs">{t('শীর্ষ ডান কোণে (Header Right)', 'Top Right Header')}</SelectItem>
+                        <SelectItem value="FOOTER_CENTER" className="text-xs">{t('পাদচরণ কেন্দ্রে (Footer Center)', 'Bottom Center Footer')}</SelectItem>
+                        <SelectItem value="SEAL_OVERLAY" className="text-xs">{t('জলছাপের কেন্দ্রস্থলে (Emblem Center)', 'Center Watermark Overlay')}</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <Label className="block text-xs font-bold text-slate-700 mb-1">
                       {t('ভ্যালিডেশন লিঙ্ক প্রিফিক্স (URL Path)', 'Verification URL Prefix')}
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                       type="text"
                       value={config.qr_verification_url_prefix}
                       onChange={(e) => setConfig({ ...config, qr_verification_url_prefix: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono text-slate-800"
+                      className="h-9 text-xs font-mono"
                       placeholder="/verify-deed-qr"
                     />
                   </div>
@@ -489,13 +514,7 @@ export const SuperAdminDocumentSecurityTab: React.FC<SuperAdminDocumentSecurityT
             </h3>
 
             <div className="space-y-3">
-              <label className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/70 transition">
-                <input
-                  type="checkbox"
-                  checked={config.show_cryptographic_hash}
-                  onChange={(e) => setConfig({ ...config, show_cryptographic_hash: e.target.checked })}
-                  className="rounded text-[#006A4E] focus:ring-emerald-500 w-4 h-4"
-                />
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/80">
                 <div className="text-xs">
                   <div className="font-bold text-slate-800">
                     {t('ক্রিপ্টোগ্রাফিক SHA-256 অডিট হ্যাশ প্রদর্শন', 'Print Cryptographic SHA-256 Audit Hash')}
@@ -504,15 +523,13 @@ export const SuperAdminDocumentSecurityTab: React.FC<SuperAdminDocumentSecurityT
                     {t('নথিটির প্রতিটি অক্ষরের গাণিতিক ডিজিটাল ফিঙ্গারপ্রিন্ট প্রিন্ট কপিতে অন্তর্ভুক্ত হবে', 'Includes verifiable ledger fingerprint on generated PDF')}
                   </div>
                 </div>
-              </label>
-
-              <label className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/70 transition">
-                <input
-                  type="checkbox"
-                  checked={config.show_issuing_authority_signature}
-                  onChange={(e) => setConfig({ ...config, show_issuing_authority_signature: e.target.checked })}
-                  className="rounded text-[#006A4E] focus:ring-emerald-500 w-4 h-4"
+                <Switch
+                  checked={config.show_cryptographic_hash}
+                  onCheckedChange={(checked) => setConfig({ ...config, show_cryptographic_hash: checked })}
                 />
+              </div>
+
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/80">
                 <div className="text-xs">
                   <div className="font-bold text-slate-800">
                     {t('সহকারী কমিশনার (ভূমি)-এর নামজারি স্বাক্ষর ও সিল', 'AC Land Signature & Official Seal')}
@@ -521,15 +538,13 @@ export const SuperAdminDocumentSecurityTab: React.FC<SuperAdminDocumentSecurityT
                     {t('উপজেলা ভূমি অফিসের ডিজিটাল অনুমোদনের সত্যায়িত স্বাক্ষর ও সিল থাকবে', 'Displays digital official stamp of AC Land and Sub-Registry')}
                   </div>
                 </div>
-              </label>
-
-              <label className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80 cursor-pointer hover:bg-slate-100/70 transition">
-                <input
-                  type="checkbox"
-                  checked={config.show_tamper_warning_text}
-                  onChange={(e) => setConfig({ ...config, show_tamper_warning_text: e.target.checked })}
-                  className="rounded text-[#006A4E] focus:ring-emerald-500 w-4 h-4"
+                <Switch
+                  checked={config.show_issuing_authority_signature}
+                  onCheckedChange={(checked) => setConfig({ ...config, show_issuing_authority_signature: checked })}
                 />
+              </div>
+
+              <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/80">
                 <div className="text-xs">
                   <div className="font-bold text-slate-800">
                     {t('জালিয়াতি প্রতিরোধ সংক্রান্ত আইনি সতর্কবার্তা', 'Tamper-evident Penal Notice')}
@@ -538,7 +553,11 @@ export const SuperAdminDocumentSecurityTab: React.FC<SuperAdminDocumentSecurityT
                     {t('দণ্ডবিধির আওতায় অননুমোদিত রদবদল সংক্রান্ত আইনগত নোটিশ প্রদর্শন', 'Displays legal warning regarding falsification of government records')}
                   </div>
                 </div>
-              </label>
+                <Switch
+                  checked={config.show_tamper_warning_text}
+                  onCheckedChange={(checked) => setConfig({ ...config, show_tamper_warning_text: checked })}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -554,27 +573,27 @@ export const SuperAdminDocumentSecurityTab: React.FC<SuperAdminDocumentSecurityT
                 </span>
               </div>
 
-              {/* Toggle DCR vs Porcha */}
-              <div className="flex items-center bg-slate-800 p-0.5 rounded-xl border border-slate-700">
-                <button
-                  type="button"
-                  onClick={() => setPreviewTab('DCR')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    previewTab === 'DCR' ? 'bg-[#006A4E] text-white' : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  {t('ডিজিটাল ডিসিআর (DCR)', 'Digital DCR')}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPreviewTab('PORCHA')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    previewTab === 'PORCHA' ? 'bg-[#006A4E] text-white' : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  {t('বিএস খতিয়ান পর্চা', 'BS Porcha')}
-                </button>
-              </div>
+              {/* Toggle DCR vs Porcha with Tabs */}
+              <Tabs
+                value={previewTab}
+                onValueChange={(val) => setPreviewTab(val as any)}
+                className="w-auto"
+              >
+                <TabsList className="bg-slate-800 p-0.5 border border-slate-700 h-auto">
+                  <TabsTrigger
+                    value="DCR"
+                    className="px-3 py-1 text-xs font-bold data-[state=active]:bg-[#006A4E] data-[state=active]:text-white text-slate-400"
+                  >
+                    {t('ডিজিটাল ডিসিআর (DCR)', 'Digital DCR')}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="PORCHA"
+                    className="px-3 py-1 text-xs font-bold data-[state=active]:bg-[#006A4E] data-[state=active]:text-white text-slate-400"
+                  >
+                    {t('বিএস খতিয়ান পর্চা', 'BS Porcha')}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
 
             {/* Simulated A4 Document Container */}
@@ -778,3 +797,4 @@ export const SuperAdminDocumentSecurityTab: React.FC<SuperAdminDocumentSecurityT
     </div>
   );
 };
+

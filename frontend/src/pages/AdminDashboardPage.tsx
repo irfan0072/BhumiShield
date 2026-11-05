@@ -36,6 +36,33 @@ import { SuperAdminOverrideModal } from './admin/SuperAdminOverrideModal';
 import { SuperAdminDocumentSecurityTab } from './admin/SuperAdminDocumentSecurityTab';
 import { SuperAdminOfficesTab } from './admin/SuperAdminOfficesTab';
 import { SuperAdminLawyersTab } from './admin/SuperAdminLawyersTab';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Lock,
   Flame,
@@ -482,6 +509,21 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
   const [saveMsg, setSaveMsg] = useState('');
   const [loadError, setLoadError] = useState('');
 
+  // Dynamic Quick Links Menu state (configured dynamically from Super Admin)
+  const [quickLinksMenu, setQuickLinksMenu] = useState<any[]>([
+    { id: 'landing', label_bn: 'হোম', label_en: 'Home', target: 'landing', is_active: true },
+    { id: 'check', label_bn: 'জমি যাচাই', label_en: 'Check Land', target: 'check', is_active: true },
+    { id: 'qr', label_bn: 'দলিল স্ক্যান', label_en: 'Scan Deed', target: 'qr', is_active: true },
+    { id: 'map', label_bn: 'মৌজা নকশা', label_en: 'Mouza Map', target: 'map', is_active: true },
+    { id: 'sale', label_bn: 'নিরাপদ বাজার', label_en: 'Marketplace', target: 'sale', is_active: true },
+    { id: 'notices', label_bn: 'নোটিশবোর্ড', label_en: 'Noticeboard', target: 'notices', is_active: true },
+    { id: 'blog', label_bn: 'ভূমি সহায়িকা', label_en: 'Land Guides', target: 'blog', is_active: true },
+    { id: 'offices', label_bn: 'অফিস সন্ধান', label_en: 'Office Locator', target: 'offices', is_active: true },
+    { id: 'help', label_bn: 'সহায়তা (১৬১২২)', label_en: 'Help (16122)', target: 'help', is_active: true },
+    { id: 'auth', label_bn: 'লগইন / নিবন্ধন', label_en: 'Login / Register', target: 'auth', is_active: true }
+  ]);
+  const [quickLinksSaveMsg, setQuickLinksSaveMsg] = useState('');
+
   // Super Admin OS Workspace State
   const [superAdminStats, setSuperAdminStats] = useState<any | null>(null);
   const [transfersList, setTransfersList] = useState<any[]>([]);
@@ -546,7 +588,18 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
       (val: any) => setAuditLogs(Array.isArray(val) ? val : (val?.items || [])),
       setOcrSample,
       setUsersList,
-      (value) => { setSettingsList(value?.items || []); setSettingsMap(value?.map || value?.settings || {}); },
+      (value) => {
+        setSettingsList(value?.items || []);
+        const sMap = value?.map || value?.settings || {};
+        setSettingsMap(sMap);
+        let ql = sMap['quick_links_menu'];
+        if (typeof ql === 'string') {
+          try { ql = JSON.parse(ql); } catch {}
+        }
+        if (Array.isArray(ql) && ql.length > 0) {
+          setQuickLinksMenu(ql);
+        }
+      },
       setPermissionsData,
       (val) => val && setStats(val),
       (value) => setAdminServices(value?.items || []),
@@ -1352,10 +1405,87 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    await BhumiApi.updateSettings(settingsMap);
+    await BhumiApi.updateSettings({
+      ...settingsMap,
+      quick_links_menu: quickLinksMenu,
+    });
     setSaveMsg(t('সিস্টেম ও রুল ইঞ্জিন পলিসি সফলভাবে সংরক্ষিত হয়েছে!', 'System policy settings saved!'));
     refreshAll();
     setTimeout(() => setSaveMsg(''), 3000);
+  };
+
+  const handleToggleQuickLink = (index: number) => {
+    setQuickLinksMenu((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, is_active: !item.is_active } : item))
+    );
+  };
+
+  const handleUpdateQuickLinkField = (index: number, field: string, val: any) => {
+    setQuickLinksMenu((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [field]: val } : item))
+    );
+  };
+
+  const handleAddQuickLink = () => {
+    const newId = `link_${Date.now()}`;
+    setQuickLinksMenu((prev) => [
+      ...prev,
+      {
+        id: newId,
+        label_bn: 'নতুন সেবা',
+        label_en: 'New Service',
+        target: 'check',
+        badge_bn: '',
+        badge_en: '',
+        is_active: true,
+      },
+    ]);
+  };
+
+  const handleDeleteQuickLink = (index: number) => {
+    setQuickLinksMenu((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleMoveQuickLink = (index: number, direction: 'up' | 'down') => {
+    setQuickLinksMenu((prev) => {
+      const copy = [...prev];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= copy.length) return prev;
+      const temp = copy[index];
+      copy[index] = copy[targetIndex];
+      copy[targetIndex] = temp;
+      return copy;
+    });
+  };
+
+  const handleRestoreDefaultQuickLinks = () => {
+    setQuickLinksMenu([
+      { id: 'landing', label_bn: 'হোম', label_en: 'Home', target: 'landing', is_active: true },
+      { id: 'check', label_bn: 'জমি যাচাই', label_en: 'Check Land', target: 'check', is_active: true },
+      { id: 'qr', label_bn: 'দলিল স্ক্যান', label_en: 'Scan Deed', target: 'qr', is_active: true },
+      { id: 'map', label_bn: 'মৌজা নকশা', label_en: 'Mouza Map', target: 'map', is_active: true },
+      { id: 'sale', label_bn: 'নিরাপদ বাজার', label_en: 'Marketplace', target: 'sale', is_active: true },
+      { id: 'notices', label_bn: 'নোটিশবোর্ড', label_en: 'Noticeboard', target: 'notices', is_active: true },
+      { id: 'blog', label_bn: 'ভূমি সহায়িকা', label_en: 'Land Guides', target: 'blog', is_active: true },
+      { id: 'offices', label_bn: 'অফিস সন্ধান', label_en: 'Office Locator', target: 'offices', is_active: true },
+      { id: 'help', label_bn: 'সহায়তা (১৬১২২)', label_en: 'Help (16122)', target: 'help', is_active: true },
+      { id: 'auth', label_bn: 'লগইন / নিবন্ধন', label_en: 'Login / Register', target: 'auth', is_active: true }
+    ]);
+  };
+
+  const handleSaveQuickLinks = async () => {
+    try {
+      await BhumiApi.updateSettings({
+        ...settingsMap,
+        quick_links_menu: quickLinksMenu,
+      });
+      setQuickLinksSaveMsg(t('কুইক লিংক মেনু সফলভাবে সংরক্ষিত হয়েছে!', 'Quick links menu successfully saved!'));
+      refreshAll();
+      setTimeout(() => setQuickLinksSaveMsg(''), 4000);
+    } catch (err: any) {
+      setQuickLinksSaveMsg(t('সংরক্ষণে ত্রুটি হয়েছে।', 'Failed to save quick links.'));
+      setTimeout(() => setQuickLinksSaveMsg(''), 4000);
+    }
   };
 
   // Computed administrative hierarchy data
@@ -1476,9 +1606,9 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     <div className="panel p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6 bg-white border border-slate-200 rounded-xl shadow-xs">
       <div>
         <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1">
-          <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+          <Button variant="ghost" size="sm" onClick={() => handleTabChange('overview')} className="h-6 px-1.5 text-xs hover:text-[#006A4E] transition cursor-pointer">
             {t('কন্ট্রোল প্যানেল', 'Control Panel')}
-          </button>
+          </Button>
           <span>/</span>
           <span className="text-[#006A4E] font-extrabold">{t('পিলার ২: নাগরিক ও এক্সেস প্রশাসন', 'Pillar 2: Identity & Governance')}</span>
         </div>
@@ -1488,56 +1618,49 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
         </h2>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
-        <button
-          onClick={() => { setSubTab('users'); setUsersSubSegment('directory'); }}
-          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-            subTab === 'users' && usersSubSegment === 'directory'
-              ? 'bg-[#006A4E] text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Users className="w-4 h-4" />
-          <span>{t('ইউজার ডিরেক্টরি', 'User Directory')}</span>
-        </button>
+      <Tabs
+        value={subTab === 'onboarding_appeals' ? 'onboarding_appeals' : subTab === 'rbac' ? 'rbac' : usersSubSegment}
+        onValueChange={(val) => {
+          setSubTab('users');
+          setUsersSubSegment(val as any);
+        }}
+        className="w-auto"
+      >
+        <TabsList className="bg-slate-100 p-1 h-auto flex flex-wrap gap-1">
+          <TabsTrigger
+            value="directory"
+            className="px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 data-[state=active]:bg-[#006A4E] data-[state=active]:text-white"
+          >
+            <Users className="w-4 h-4" />
+            <span>{t('ইউজার ডিরেক্টরি', 'User Directory')}</span>
+          </TabsTrigger>
 
-        <button
-          onClick={() => { setSubTab('users'); setUsersSubSegment('transfer'); }}
-          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-            subTab === 'users' && usersSubSegment === 'transfer'
-              ? 'bg-[#006A4E] text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Building2 className="w-4 h-4" />
-          <span>{t('কর্মকর্তা বদলি ডেস্ক', 'Officer Transfer Desk')}</span>
-          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-400 text-slate-900">POWER</span>
-        </button>
+          <TabsTrigger
+            value="transfer"
+            className="px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 data-[state=active]:bg-[#006A4E] data-[state=active]:text-white"
+          >
+            <Building2 className="w-4 h-4" />
+            <span>{t('কর্মকর্তা বদলি ডেস্ক', 'Officer Transfer Desk')}</span>
+            <Badge variant="outline" className="px-1.5 py-0 text-[9px] font-black bg-amber-400 text-slate-900 border-none">POWER</Badge>
+          </TabsTrigger>
 
-        <button
-          onClick={() => { setSubTab('users'); setUsersSubSegment('onboarding_appeals'); }}
-          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-            (subTab === 'onboarding_appeals' || (subTab === 'users' && usersSubSegment === 'onboarding_appeals'))
-              ? 'bg-[#006A4E] text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <UserCheck className="w-4 h-4" />
-          <span>{t('অনবোর্ডিং ও আপিল', 'Onboarding & Appeals')}</span>
-        </button>
+          <TabsTrigger
+            value="onboarding_appeals"
+            className="px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 data-[state=active]:bg-[#006A4E] data-[state=active]:text-white"
+          >
+            <UserCheck className="w-4 h-4" />
+            <span>{t('অনবোর্ডিং ও আপিল', 'Onboarding & Appeals')}</span>
+          </TabsTrigger>
 
-        <button
-          onClick={() => { setSubTab('users'); setUsersSubSegment('rbac'); }}
-          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-            (subTab === 'rbac' || (subTab === 'users' && usersSubSegment === 'rbac'))
-              ? 'bg-[#006A4E] text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <KeyRound className="w-4 h-4" />
-          <span>{t('অনুমতি ও আরবিক (RBAC)', 'RBAC & Permissions')}</span>
-        </button>
-      </div>
+          <TabsTrigger
+            value="rbac"
+            className="px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 data-[state=active]:bg-[#006A4E] data-[state=active]:text-white"
+          >
+            <KeyRound className="w-4 h-4" />
+            <span>{t('অনুমতি ও আরবিক (RBAC)', 'RBAC & Permissions')}</span>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
     </div>
   );
 
@@ -1796,9 +1919,9 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     <div className="panel p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6 bg-white border border-slate-200 rounded-xl shadow-xs">
       <div>
         <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1">
-          <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+          <Button variant="ghost" size="sm" onClick={() => handleTabChange('overview')} className="h-6 px-1.5 text-xs hover:text-[#006A4E] transition cursor-pointer">
             {t('কন্ট্রোল প্যানেল', 'Control Panel')}
-          </button>
+          </Button>
           <span>/</span>
           <span className="text-[#006A4E] font-extrabold">{t('পিলার ৩: ভূমি ও খতিয়ান শাসন', 'Pillar 3: Plots & Land Governance')}</span>
         </div>
@@ -1808,75 +1931,69 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
         </h2>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
-        <button
-          onClick={() => { setSubTab('plots_control'); setPlotsSubSegment('plots'); }}
-          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-            subTab === 'plots_control' && plotsSubSegment === 'plots'
-              ? 'bg-[#006A4E] text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Compass className="w-4 h-4" />
-          <span>{t('দাগ ডিরেক্টরি ও স্থগিতাদেশ', 'Plots & Admin Freeze')}</span>
-          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-400 text-slate-900">POWER</span>
-        </button>
+      <Tabs
+        value={subTab === 'deeds' ? 'deeds' : subTab === 'hierarchy' ? 'hierarchy' : plotsSubSegment}
+        onValueChange={(val) => {
+          setSubTab('plots_control');
+          setPlotsSubSegment(val as any);
+        }}
+        className="w-auto"
+      >
+        <TabsList className="bg-slate-100 p-1 h-auto flex flex-wrap gap-1">
+          <TabsTrigger
+            value="plots"
+            className="px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 data-[state=active]:bg-[#006A4E] data-[state=active]:text-white"
+          >
+            <Compass className="w-4 h-4" />
+            <span>{t('দাগ ডিরেক্টরি ও স্থগিতাদেশ', 'Plots & Admin Freeze')}</span>
+            <Badge variant="outline" className="px-1.5 py-0 text-[9px] font-black bg-amber-400 text-slate-900 border-none">POWER</Badge>
+          </TabsTrigger>
 
-        <button
-          onClick={() => { setSubTab('plots_control'); setPlotsSubSegment('deeds'); }}
-          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-            (subTab === 'deeds' || (subTab === 'plots_control' && plotsSubSegment === 'deeds'))
-              ? 'bg-[#006A4E] text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <FileText className="w-4 h-4" />
-          <span>{t('দলিল রেজিস্ট্রি ও তদারকি', 'Deeds Supervision')}</span>
-        </button>
+          <TabsTrigger
+            value="deeds"
+            className="px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 data-[state=active]:bg-[#006A4E] data-[state=active]:text-white"
+          >
+            <FileText className="w-4 h-4" />
+            <span>{t('দলিল রেজিস্ট্রি ও তদারকি', 'Deeds Supervision')}</span>
+          </TabsTrigger>
 
-        <button
-          onClick={() => { setSubTab('plots_control'); setPlotsSubSegment('hierarchy'); }}
-          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-            (subTab === 'hierarchy' || (subTab === 'plots_control' && plotsSubSegment === 'hierarchy'))
-              ? 'bg-[#006A4E] text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Layers className="w-4 h-4" />
-          <span>{t('ভৌগোলিক এলাকা কাঠামো', 'Cadastral Hierarchy')}</span>
-        </button>
-      </div>
+          <TabsTrigger
+            value="hierarchy"
+            className="px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 data-[state=active]:bg-[#006A4E] data-[state=active]:text-white"
+          >
+            <Layers className="w-4 h-4" />
+            <span>{t('ভৌগোলিক এলাকা কাঠামো', 'Cadastral Hierarchy')}</span>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
     </div>
   );
 
   const renderMasterFreezeModal = () => {
     if (!freezeModalPlot) return null;
     return (
-      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 p-6 space-y-4 animate-in fade-in duration-150">
-          <div className="flex items-start justify-between border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-2">
+      <Dialog open={!!freezeModalPlot} onOpenChange={(open) => !open && setFreezeModalPlot(null)}>
+        <DialogContent className="sm:max-w-lg p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold text-slate-900">
               <div className={`p-2 rounded-xl ${Number(freezeModalPlot.is_admin_frozen) === 1 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'}`}>
                 <ShieldAlert className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">
+                <span>
                   {Number(freezeModalPlot.is_admin_frozen) === 1
                     ? t('প্রশাসনিক স্থগিতাদেশ প্রত্যাহারের আদেশ', 'Revoke Administrative Plot Freeze')
                     : t('কেন্দ্রীয় প্রশাসনিক স্থগিতাদেশ (Freeze/Hold) জারি', 'Issue Master Administrative Plot Freeze')}
-                </h3>
-                <p className="text-xs text-slate-500">
+                </span>
+                <p className="text-xs text-slate-500 font-normal mt-0.5">
                   দাগ নং: {freezeModalPlot.dag_no_bn || freezeModalPlot.dag_no} • খতিয়ান: {freezeModalPlot.khatian_no_bn || freezeModalPlot.khatian_no || 'N/A'} • মৌজা: {freezeModalPlot.mouza_bn || freezeModalPlot.mouza}
                 </p>
               </div>
-            </div>
-            <button
-              onClick={() => setFreezeModalPlot(null)}
-              className="text-slate-400 hover:text-slate-700 text-lg cursor-pointer"
-            >
-              ✕
-            </button>
-          </div>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              {t('ভূমি রেকর্ডসে কেন্দ্রীয় প্রশাসনিক স্থগিতাদেশ জারি বা প্রত্যাহারের আনুষ্ঠানিক আদেশ।', 'Formal order to issue or revoke administrative injunction freeze on land records.')}
+            </DialogDescription>
+          </DialogHeader>
 
           <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1.5">
             <div className="flex justify-between">
@@ -1898,26 +2015,30 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
           {Number(freezeModalPlot.is_admin_frozen) !== 1 ? (
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <Label className="block text-xs font-bold text-slate-700 mb-1">
                   স্থগিতাদেশ জারির কারণ নির্বাচন করুন <span className="text-rose-500">*</span>:
-                </label>
-                <select
+                </Label>
+                <Select
                   value={freezeReason}
-                  onChange={(e) => setFreezeReason(e.target.value)}
-                  className="w-full text-xs font-medium border border-slate-300 rounded-lg p-2.5 bg-white text-slate-800 focus:ring-2 focus:ring-[#006A4E] focus:outline-none"
+                  onValueChange={setFreezeReason}
                 >
-                  <option value="উচ্চ আদালতের স্থগিতাদেশ (High Court Stay Order)">উচ্চ আদালতের স্থগিতাদেশ (High Court Stay Order)</option>
-                  <option value="দুর্নীতি দমন কমিশন অনুসন্ধান (Anti-Corruption Commission Inquiry)">দুর্নীতি দমন কমিশন অনুসন্ধান (ACC Inquiry)</option>
-                  <option value="মালিকানা ও ওয়ারিশ সংক্রান্ত দেওয়ানি মোকদ্দমা (Title Dispute)">মালিকানা ও ওয়ারিশ সংক্রান্ত দেওয়ানি মোকদ্দমা</option>
-                  <option value="প্রতারণামূলক নামজারি অভিযোগ তদন্তাধীন (Fraudulent Mutation Probe)">প্রতারণামূলক নামজারি অভিযোগ তদন্তাধীন</option>
-                  <option value="বিশেষ প্রশাসনিক আদেশ (Special Administrative Directive)">বিশেষ প্রশাসনিক আদেশ (Special Order)</option>
-                </select>
+                  <SelectTrigger className="h-9 text-xs bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="উচ্চ আদালতের স্থগিতাদেশ (High Court Stay Order)" className="text-xs">উচ্চ আদালতের স্থগিতাদেশ (High Court Stay Order)</SelectItem>
+                    <SelectItem value="দুর্নীতি দমন কমিশন অনুসন্ধান (Anti-Corruption Commission Inquiry)" className="text-xs">দুর্নীতি দমন কমিশন অনুসন্ধান (ACC Inquiry)</SelectItem>
+                    <SelectItem value="মালিকানা ও ওয়ারিশ সংক্রান্ত দেওয়ানি মোকদ্দমা (Title Dispute)" className="text-xs">মালিকানা ও ওয়ারিশ সংক্রান্ত দেওয়ানি মোকদ্দমা</SelectItem>
+                    <SelectItem value="প্রতারণামূলক নামজারি অভিযোগ তদন্তাধীন (Fraudulent Mutation Probe)" className="text-xs">প্রতারণামূলক নামজারি অভিযোগ তদন্তাধীন</SelectItem>
+                    <SelectItem value="বিশেষ প্রশাসনিক আদেশ (Special Administrative Directive)" className="text-xs">বিশেষ প্রশাসনিক আদেশ (Special Order)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <Label className="block text-xs font-bold text-slate-700 mb-1">
                   মামলা / স্মারক নম্বর ও বিস্তারিত নির্দেশ (ঐচ্ছিক):
-                </label>
+                </Label>
                 <textarea
                   rows={3}
                   value={freezeCustomReason}
@@ -1948,17 +2069,19 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
-            <button
+          <DialogFooter className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setFreezeModalPlot(null)}
-              className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 cursor-pointer"
             >
               {t('বাতিল', 'Cancel')}
-            </button>
-            <button
+            </Button>
+            <Button
+              size="sm"
               onClick={handleExecutePlotFreeze}
               disabled={freezeLoading}
-              className={`px-4 py-2 rounded-lg text-white text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50 ${
+              className={`text-white text-xs font-extrabold flex items-center gap-1.5 shadow-sm disabled:opacity-50 ${
                 Number(freezeModalPlot.is_admin_frozen) === 1
                   ? 'bg-amber-600 hover:bg-amber-700'
                   : 'bg-rose-600 hover:bg-rose-700'
@@ -1974,10 +2097,10 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                   ? t('স্থগিতাদেশ প্রত্যাহার নিশ্চিত করুন', 'Confirm Unfreeze')
                   : t('স্থগিতাদেশ কার্যকর করুন', 'Confirm Freeze')}
               </span>
-            </button>
-          </div>
-        </div>
-      </div>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     );
   };
 
@@ -1988,9 +2111,9 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     <div className="panel p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6 bg-white border border-slate-200 rounded-xl shadow-xs">
       <div>
         <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1">
-          <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+          <Button variant="ghost" size="sm" onClick={() => handleTabChange('overview')} className="h-6 px-1.5 text-xs hover:text-[#006A4E] transition cursor-pointer">
             {t('কন্ট্রোল প্যানেল', 'Control Panel')}
-          </button>
+          </Button>
           <span>/</span>
           <span className="text-[#006A4E] font-extrabold">{t('পিলার ৪: লেজার ও সার্বভৌম অডিট', 'Pillar 4: Ledger & Security Audit')}</span>
         </div>
@@ -2000,44 +2123,41 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
         </h2>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
-        <button
-          onClick={() => { setSubTab('ledger'); setLedgerSubSegment('ledger_lab'); }}
-          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-            subTab === 'ledger' && ledgerSubSegment === 'ledger_lab'
-              ? 'bg-[#006A4E] text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Lock className="w-4 h-4" />
-          <span>{t('হ্যাশ-চেইন ও ইন্টিগ্রিটি ল্যাব', 'Ledger Integrity Lab')}</span>
-        </button>
+      <Tabs
+        value={ledgerSubSegment}
+        onValueChange={(val) => {
+          setSubTab('ledger');
+          setLedgerSubSegment(val as any);
+        }}
+        className="w-auto"
+      >
+        <TabsList className="bg-slate-100 p-1 h-auto flex flex-wrap gap-1">
+          <TabsTrigger
+            value="ledger_lab"
+            className="px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 data-[state=active]:bg-[#006A4E] data-[state=active]:text-white"
+          >
+            <Lock className="w-4 h-4" />
+            <span>{t('হ্যাশ-চেইন ও ইন্টিগ্রিটি ল্যাব', 'Ledger Integrity Lab')}</span>
+          </TabsTrigger>
 
-        <button
-          onClick={() => { setSubTab('ledger'); setLedgerSubSegment('audit_trail'); }}
-          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-            (subTab === 'audit' || (subTab === 'ledger' && ledgerSubSegment === 'audit_trail'))
-              ? 'bg-[#006A4E] text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <History className="w-4 h-4" />
-          <span>{t('সার্বভৌম অডিট ট্রেইল', 'Sovereign Audit Log')}</span>
-        </button>
+          <TabsTrigger
+            value="audit_trail"
+            className="px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 data-[state=active]:bg-[#006A4E] data-[state=active]:text-white"
+          >
+            <History className="w-4 h-4" />
+            <span>{t('সার্বভৌম অডিট ট্রেইল', 'Sovereign Audit Log')}</span>
+          </TabsTrigger>
 
-        <button
-          onClick={() => { setSubTab('ledger'); setLedgerSubSegment('database_backup'); }}
-          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-            subTab === 'ledger' && ledgerSubSegment === 'database_backup'
-              ? 'bg-[#006A4E] text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Download className="w-4 h-4" />
-          <span>{t('ডাটাবেজ ব্যাকআপ ও হ্যাশ এক্সপোর্টার', 'Database Backup & Hash')}</span>
-          <span className="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-400 text-slate-900">POWER</span>
-        </button>
-      </div>
+          <TabsTrigger
+            value="database_backup"
+            className="px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 data-[state=active]:bg-[#006A4E] data-[state=active]:text-white"
+          >
+            <Download className="w-4 h-4" />
+            <span>{t('ডাটাবেজ ব্যাকআপ ও হ্যাশ এক্সপোর্টার', 'Database Backup & Hash')}</span>
+            <Badge variant="outline" className="px-1.5 py-0 text-[9px] font-black bg-amber-400 text-slate-900 border-none">POWER</Badge>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
     </div>
   );
 
@@ -2157,9 +2277,9 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     <div className="panel p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6 bg-white border border-slate-200 rounded-xl shadow-xs">
       <div>
         <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1">
-          <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+          <Button variant="ghost" size="sm" onClick={() => handleTabChange('overview')} className="h-6 px-1.5 text-xs hover:text-[#006A4E] transition cursor-pointer">
             {t('কন্ট্রোল প্যানেল', 'Control Panel')}
-          </button>
+          </Button>
           <span>/</span>
           <span className="text-[#006A4E] font-extrabold">{t('পিলার ৫: প্ল্যাটফর্ম পলিসি ও কন্ট্রোল', 'Pillar 5: Platform Policy & Controls')}</span>
         </div>
@@ -2169,55 +2289,48 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
         </h2>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
-        <button
-          onClick={() => { setSubTab('settings'); setSettingsSubSegment('fraud_policy'); }}
-          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-            (subTab === 'risk_protocols' || (subTab === 'settings' && settingsSubSegment === 'fraud_policy'))
-              ? 'bg-[#006A4E] text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <ShieldAlert className="w-4 h-4" />
-          <span>{t('জালিয়াতি প্রতিরোধ ও ঝুঁকি নীতি', 'Fraud Policy')}</span>
-        </button>
+      <Tabs
+        value={settingsSubSegment}
+        onValueChange={(val) => {
+          setSubTab('settings');
+          setSettingsSubSegment(val as any);
+        }}
+        className="w-auto"
+      >
+        <TabsList className="bg-slate-100 p-1 h-auto flex flex-wrap gap-1">
+          <TabsTrigger
+            value="fraud_policy"
+            className="px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 data-[state=active]:bg-[#006A4E] data-[state=active]:text-white"
+          >
+            <ShieldAlert className="w-4 h-4" />
+            <span>{t('জালিয়াতি প্রতিরোধ ও ঝুঁকি নীতি', 'Fraud Policy')}</span>
+          </TabsTrigger>
 
-        <button
-          onClick={() => { setSubTab('settings'); setSettingsSubSegment('catalogue'); }}
-          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-            (subTab === 'catalogue' || (subTab === 'settings' && settingsSubSegment === 'catalogue'))
-              ? 'bg-[#006A4E] text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Coins className="w-4 h-4" />
-          <span>{t('সার্ভিস ও ফি ক্যাটালগ', 'Service Catalogue & Fees')}</span>
-        </button>
+          <TabsTrigger
+            value="catalogue"
+            className="px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 data-[state=active]:bg-[#006A4E] data-[state=active]:text-white"
+          >
+            <Coins className="w-4 h-4" />
+            <span>{t('সার্ভিস ও ফি ক্যাটালগ', 'Service Catalogue & Fees')}</span>
+          </TabsTrigger>
 
-        <button
-          onClick={() => { setSubTab('settings'); setSettingsSubSegment('tickets'); }}
-          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-            (subTab === 'tickets' || (subTab === 'settings' && settingsSubSegment === 'tickets'))
-              ? 'bg-[#006A4E] text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <MessageSquare className="w-4 h-4" />
-          <span>{t('সাপোর্ট ও বিরোধ টিকিট', 'Dispute Tickets')}</span>
-        </button>
+          <TabsTrigger
+            value="tickets"
+            className="px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 data-[state=active]:bg-[#006A4E] data-[state=active]:text-white"
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span>{t('সাপোর্ট ও বিরোধ টিকিট', 'Dispute Tickets')}</span>
+          </TabsTrigger>
 
-        <button
-          onClick={() => { setSubTab('settings'); setSettingsSubSegment('diagnostics'); }}
-          className={`px-3 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-            (subTab === 'dev_outbox' || (subTab === 'settings' && settingsSubSegment === 'diagnostics'))
-              ? 'bg-[#006A4E] text-white shadow-xs'
-              : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <Activity className="w-4 h-4" />
-          <span>{t('সিস্টেম ডায়াগনস্টিকস ও আউটবক্স', 'Diagnostics & Outbox')}</span>
-        </button>
-      </div>
+          <TabsTrigger
+            value="diagnostics"
+            className="px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 data-[state=active]:bg-[#006A4E] data-[state=active]:text-white"
+          >
+            <Activity className="w-4 h-4" />
+            <span>{t('সিস্টেম ডায়াগনস্টিকস ও আউটবক্স', 'Diagnostics & Outbox')}</span>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
     </div>
   );
 
@@ -2297,6 +2410,33 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
           </div>
         </div>
       </div>
+
+      {/* ── RULE M3 STATUTORY INVARIANT BANNER ─────────────────────────────── */}
+      <Card className="border-amber-300 bg-amber-50/80 shadow-2xs">
+        <CardContent className="p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="p-2 rounded-xl bg-amber-200 text-amber-900 shrink-0">
+              <Gavel className="w-5 h-5" />
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-amber-950 text-sm">
+                  {t('বিধিবদ্ধ আইনগত অভিভাবকত্ব ও সীমাবদ্ধতা (Rule M3 Enforcement)', 'Statutory Invariant & Legal Inviolability (Rule M3)')}
+                </span>
+                <Badge className="bg-amber-200 text-amber-950 border-amber-400 font-mono text-[10px]">
+                  RULE M3 STRICT
+                </Badge>
+              </div>
+              <p className="text-amber-900 text-xs mt-0.5 font-medium">
+                {t(
+                  'প্রশাসক বা অডিটর কর্তৃক ভূমির মালিকানা বা রেকর্ড পরিবর্তন আইনত নিষিদ্ধ (Rule M3)। শুধুমাত্র সহকারী কমিশনার (ভূমি) এর অনুমোদন ক্ষমতা রয়েছে। অ্যাডমিন ড্যাশবোর্ড থেকে নামজারি সরাসরি এডিট বা অনুমোদন অপশন আইনত অবরুদ্ধ।',
+                  'Administrators and auditors are prohibited by law from altering land records or approving mutations (Rule M3). Only the Assistant Commissioner (Land) possesses statutory authority.'
+                )}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ── EXECUTIVE COMMAND & KPI STATUS RIBBON ─────────────────────────── */}
       {(role === 'admin' || role === 'system_admin') && (
@@ -3436,124 +3576,121 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
           </div>
 
           {/* Plot Details Modal */}
-          {selectedPlotDetail && (
-            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 p-6 space-y-5 animate-in fade-in duration-150">
-                <div className="flex items-start justify-between border-b border-slate-100 pb-3">
-                  <div>
-                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono">
-                      {selectedPlotDetail.plot_code || 'PLOT-RECORD'}
-                    </span>
-                    <h3 className="text-lg font-bold text-slate-900 mt-1">
-                      {t('দাগ নং', 'Plot Dag No')}: {selectedPlotDetail.dag_no_bn || selectedPlotDetail.dag_no} • {selectedPlotDetail.mouza_bn || selectedPlotDetail.mouza}
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      {t('জমির শ্রেণি:', 'Land Type:')} {selectedPlotDetail.land_type_bn || selectedPlotDetail.land_type} • {t('মোট আয়তন:', 'Total Area:')} {selectedPlotDetail.total_area_decimal} {t('শতাংশ', 'decimals')}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setSelectedPlotDetail(null)}
-                    className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                {/* Owners Section */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-[#006A4E]" />
-                    <span>{t('রেকর্ডকৃত বর্তমান মালিকগণ (Recorded Owners)', 'Recorded Legal Owners')}</span>
-                  </h4>
-                  <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50/50">
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-slate-100 text-slate-600 font-bold">
-                        <tr>
-                          <th className="p-2.5">মালিকের নাম</th>
-                          <th className="p-2.5">পিতা/স্বামীর নাম</th>
-                          <th className="p-2.5">জাতীয় পরিচয়পত্র (NID)</th>
-                          <th className="p-2.5 text-right">মালিকানার অংশ</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-200">
-                        {(selectedPlotDetail.owners || []).map((o: any, idx: number) => (
-                          <tr key={idx} className="bg-white">
-                            <td className="p-2.5 font-bold text-slate-900">{o.name_bn || o.name_en}</td>
-                            <td className="p-2.5 text-slate-600">{o.father_name_bn || o.father_name || '—'}</td>
-                            <td className="p-2.5 font-mono text-slate-700">{o.nid || o.nid_mock}</td>
-                            <td className="p-2.5 text-right font-bold text-[#006A4E]">
-                              {toBanglaDigits(o.area_decimal, lang)} শতাংশ
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Khatian Chain Lineage */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-[#006A4E]" />
-                    <span>{t('ঐতিহাসিক খতিয়ান ধারাবাহিকতা (CS → SA → RS → BS)', 'Historical Khatian Chain')}</span>
-                  </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {['CS', 'SA', 'RS', 'BS'].map((type) => {
-                      const rec = (selectedPlotDetail.khatian_chain || []).find((k: any) => k.type === type || k.survey_type === type);
-                      return (
-                        <div key={type} className="p-3 rounded-xl border border-slate-200 bg-white">
-                          <div className="flex items-center justify-between">
-                            <span className="font-extrabold text-xs text-[#006A4E]">{type} খতিয়ান</span>
-                            <span className="text-[10px] font-mono text-slate-400">#{rec?.khatian_no || '—'}</span>
-                          </div>
-                          <div className="text-[11px] text-slate-700 font-bold mt-1">
-                            {rec?.owner_name_bn || rec?.owner_name || 'রেকর্ডপ্রাপ্ত'}
-                          </div>
-                          <div className="text-[10px] text-slate-500 mt-0.5">
-                            আয়তন: {rec?.area_decimal ?? selectedPlotDetail.total_area_decimal} শতাংশ
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Protection Lock Status & Direct Action */}
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <div className="font-bold text-xs text-slate-900">
-                      {t('বর্তমান বিক্রয় সুরক্ষা স্থিতি:', 'Current Sale Protection Status:')}{' '}
-                      <span className={Number(selectedPlotDetail.owner_sale_locked) === 1 ? 'text-rose-700 font-extrabold' : 'text-emerald-700 font-extrabold'}>
-                        {Number(selectedPlotDetail.owner_sale_locked) === 1 ? t('সুরক্ষিত (লক সক্রিয়)', 'Locked') : t('উন্মুক্ত', 'Unlocked')}
+          <Dialog open={!!selectedPlotDetail} onOpenChange={(open) => { if (!open) setSelectedPlotDetail(null); }}>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              {selectedPlotDetail && (
+                <div className="space-y-5">
+                  <DialogHeader className="border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono">
+                        {selectedPlotDetail.plot_code || 'PLOT-RECORD'}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      {t('সরাসরি অ্যাডমিন কন্ট্রোল থেকে দাগের বিক্রয় অনুমতি পরিচালনা করুন।', 'Manage sale permission directly from administrative control.')}
-                    </p>
+                    <DialogTitle className="text-lg font-bold text-slate-900 mt-1">
+                      {t('দাগ নং', 'Plot Dag No')}: {selectedPlotDetail.dag_no_bn || selectedPlotDetail.dag_no} • {selectedPlotDetail.mouza_bn || selectedPlotDetail.mouza}
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-slate-500">
+                      {t('জমির শ্রেণি:', 'Land Type:')} {selectedPlotDetail.land_type_bn || selectedPlotDetail.land_type} • {t('মোট আয়তন:', 'Total Area:')} {selectedPlotDetail.total_area_decimal} {t('শতাংশ', 'decimals')}
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  {/* Owners Section */}
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-[#006A4E]" />
+                      <span>{t('রেকর্ডকৃত বর্তমান মালিকগণ (Recorded Owners)', 'Recorded Legal Owners')}</span>
+                    </h4>
+                    <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50/50">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-100 text-slate-600 font-bold">
+                          <tr>
+                            <th className="p-2.5">মালিকের নাম</th>
+                            <th className="p-2.5">পিতা/স্বামীর নাম</th>
+                            <th className="p-2.5">জাতীয় পরিচয়পত্র (NID)</th>
+                            <th className="p-2.5 text-right">মালিকানার অংশ</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200">
+                          {(selectedPlotDetail.owners || []).map((o: any, idx: number) => (
+                            <tr key={idx} className="bg-white">
+                              <td className="p-2.5 font-bold text-slate-900">{o.name_bn || o.name_en}</td>
+                              <td className="p-2.5 text-slate-600">{o.father_name_bn || o.father_name || '—'}</td>
+                              <td className="p-2.5 font-mono text-slate-700">{o.nid || o.nid_mock}</td>
+                              <td className="p-2.5 text-right font-bold text-[#006A4E]">
+                                {toBanglaDigits(o.area_decimal, lang)} শতাংশ
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      handleAdminToggleSaleLock(selectedPlotDetail);
-                      setSelectedPlotDetail(null);
-                    }}
-                    className={`px-4 py-2 rounded-lg text-xs font-bold transition cursor-pointer min-h-[36px] flex items-center gap-1.5 self-start sm:self-auto ${
-                      Number(selectedPlotDetail.owner_sale_locked) === 1
-                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                        : 'bg-rose-600 hover:bg-rose-700 text-white'
-                    }`}
-                  >
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>
-                      {Number(selectedPlotDetail.owner_sale_locked) === 1
-                        ? t('বিক্রয় লক নিষ্ক্রিয় করুন', 'Unlock Plot')
-                        : t('বিক্রয় লক সক্রিয় করুন', 'Lock Plot for Sale Protection')}
-                    </span>
-                  </button>
+                  {/* Khatian Chain Lineage */}
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-[#006A4E]" />
+                      <span>{t('ঐতিহাসিক খতিয়ান ধারাবাহিকতা (CS → SA → RS → BS)', 'Historical Khatian Chain')}</span>
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {['CS', 'SA', 'RS', 'BS'].map((type) => {
+                        const rec = (selectedPlotDetail.khatian_chain || []).find((k: any) => k.type === type || k.survey_type === type);
+                        return (
+                          <div key={type} className="p-3 rounded-xl border border-slate-200 bg-white">
+                            <div className="flex items-center justify-between">
+                              <span className="font-extrabold text-xs text-[#006A4E]">{type} খতিয়ান</span>
+                              <span className="text-[10px] font-mono text-slate-400">#{rec?.khatian_no || '—'}</span>
+                            </div>
+                            <div className="text-[11px] text-slate-700 font-bold mt-1">
+                              {rec?.owner_name_bn || rec?.owner_name || 'রেকর্ডপ্রাপ্ত'}
+                            </div>
+                            <div className="text-[10px] text-slate-500 mt-0.5">
+                              আয়তন: {rec?.area_decimal ?? selectedPlotDetail.total_area_decimal} শতাংশ
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Protection Lock Status & Direct Action */}
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="font-bold text-xs text-slate-900">
+                        {t('বর্তমান বিক্রয় সুরক্ষা স্থিতি:', 'Current Sale Protection Status:')}{' '}
+                        <span className={Number(selectedPlotDetail.owner_sale_locked) === 1 ? 'text-rose-700 font-extrabold' : 'text-emerald-700 font-extrabold'}>
+                          {Number(selectedPlotDetail.owner_sale_locked) === 1 ? t('সুরক্ষিত (লক সক্রিয়)', 'Locked') : t('উন্মুক্ত', 'Unlocked')}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        {t('সরাসরি অ্যাডমিন কন্ট্রোল থেকে দাগের বিক্রয় অনুমতি পরিচালনা করুন।', 'Manage sale permission directly from administrative control.')}
+                      </p>
+                    </div>
+
+                    <Button
+                      onClick={() => {
+                        handleAdminToggleSaleLock(selectedPlotDetail);
+                        setSelectedPlotDetail(null);
+                      }}
+                      className={
+                        Number(selectedPlotDetail.owner_sale_locked) === 1
+                          ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                          : 'bg-rose-600 hover:bg-rose-700 text-white'
+                      }
+                      size="sm"
+                    >
+                      <Lock className="w-3.5 h-3.5 mr-1" />
+                      <span>
+                        {Number(selectedPlotDetail.owner_sale_locked) === 1
+                          ? t('বিক্রয় লক নিষ্ক্রিয় করুন', 'Unlock Plot')
+                          : t('বিক্রয় লক সক্রিয় করুন', 'Lock Plot for Sale Protection')}
+                      </span>
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
+              )}
+            </DialogContent>
+          </Dialog>
 
           {renderMasterFreezeModal()}
         </div>
@@ -4317,428 +4454,428 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
           })()}
 
           {/* CENTER POPUP MODAL: Create New User / Officer */}
-          {isCreateUserOpen && (
-            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
-              <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-4 my-8">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#006A4E] flex items-center justify-center">
-                      <UserPlus className="w-4 h-4" />
+          <Dialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
+            <DialogContent className="sm:max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-base font-extrabold text-slate-900">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-[#006A4E] flex items-center justify-center">
+                    <UserPlus className="w-4 h-4" />
+                  </div>
+                  <span>{t('নতুন কর্মকর্তা বা ব্যবহারকারী অ্যাকাউন্ট তৈরি করুন', 'Create New Officer or User Account')}</span>
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-500">
+                  {t('সিস্টেমে নতুন কর্মকর্তা বা সেবা প্রদানকারী ব্যবহারকারী যুক্ত করুন।', 'Add a new officer or service provider account to the system.')}
+                </DialogDescription>
+              </DialogHeader>
+
+              <form onSubmit={handleCreateUser} className="space-y-4 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <Label className="block font-bold text-slate-700 mb-1">{t('ভূমিকা (Role):', 'Role:')} *</Label>
+                    <Select
+                      value={newRole}
+                      onValueChange={(val) => {
+                        const r = val as UserRole;
+                        setNewRole(r);
+                        const req = !['citizen', 'admin', 'system_admin', 'auditor', 'support_agent', 'content_editor', 'content_approver', 'platform_moderator'].includes(r);
+                        if (req && newOfficeId === 0 && officesList.length > 0) {
+                          setNewOfficeId(officesList[0].id);
+                          setNewOffice(lang === 'bn' ? officesList[0].name_bn : (officesList[0].name_en || officesList[0].name_bn));
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="h-9 text-xs bg-white font-bold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-72">
+                        <SelectItem value="citizen" className="text-xs">Citizen (সাধারণ নাগরিক)</SelectItem>
+                        <SelectItem value="service_point_operator" className="text-xs">Service Point Operator (UDC / ডিজিটাল সেন্টার)</SelectItem>
+                        <SelectItem value="sub_registrar" className="text-xs">Sub-Registrar (সাব-রেজিস্ট্রার)</SelectItem>
+                        <SelectItem value="registry_data_officer" className="text-xs">Registry Data Officer (রেজিস্ট্রি ডাটা মেকার)</SelectItem>
+                        <SelectItem value="ac_land" className="text-xs">AC Land (সহকারী কমিশনার ভূমি)</SelectItem>
+                        <SelectItem value="land_office_assistant" className="text-xs">Land Office Assistant (উপজেলা ভূমি সহকারী)</SelectItem>
+                        <SelectItem value="field_verification_officer" className="text-xs">Field Verification Officer (মাঠ তদন্ত কর্মকর্তা)</SelectItem>
+                        <SelectItem value="settlement_records_officer" className="text-xs">Settlement Records Officer (জরিপ মেকার)</SelectItem>
+                        <SelectItem value="settlement_checker" className="text-xs">Assistant Settlement Officer (জরিপ চেকার)</SelectItem>
+                        <SelectItem value="uno_supervisor" className="text-xs">UNO Supervisor (উপজেলা নির্বাহী কর্মকর্তা)</SelectItem>
+                        <SelectItem value="appellate_reviewer" className="text-xs">Appellate Reviewer (এডিসি রাজস্ব / আপিল কর্তৃপক্ষ)</SelectItem>
+                        <SelectItem value="bank_officer" className="text-xs">Bank Officer (ঋণ ও জামানত মেকার)</SelectItem>
+                        <SelectItem value="bank_manager" className="text-xs">Bank Manager (শাখা ব্যবস্থাপক - চেকার)</SelectItem>
+                        <SelectItem value="support_agent" className="text-xs">Support Agent (১৬১২২ হেল্পলাইন / জিআরএস)</SelectItem>
+                        <SelectItem value="platform_moderator" className="text-xs">Platform Moderator (মার্কেটপ্লেস মডারেটর)</SelectItem>
+                        <SelectItem value="content_editor" className="text-xs">Content Editor (নোটিশ ও কন্টেন্ট এডিটর)</SelectItem>
+                        <SelectItem value="content_approver" className="text-xs">Content Approver (কন্টেন্ট ও নোটিশ অ্যাপ্রুভার)</SelectItem>
+                        <SelectItem value="system_admin" className="text-xs">System Admin (সিস্টেম অ্যাডমিনিস্ট্রেটর)</SelectItem>
+                        <SelectItem value="admin" className="text-xs">Admin (অ্যাডমিন)</SelectItem>
+                        <SelectItem value="auditor" className="text-xs">National Auditor (জাতীয় অডিটর)</SelectItem>
+                        <SelectItem value="dc_acquisition_officer" className="text-xs">DC Acquisition Officer (এলএ কর্মকর্তা)</SelectItem>
+                        <SelectItem value="lawyer_court_user" className="text-xs">Lawyer / Court User (আদালত প্রতিনিধি)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label className="block font-bold text-slate-700 mb-1">{t('ইউজারনেম (Username):', 'Username:')} *</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono">@</span>
+                      <Input
+                        type="text"
+                        placeholder="officer_savar"
+                        value={newUsername}
+                        onChange={(e) => setNewUsername(e.target.value)}
+                        className="pl-7 pr-3 h-9 font-mono text-xs"
+                        required
+                      />
                     </div>
-                    <span>{t('নতুন কর্মকর্তা বা ব্যবহারকারী অ্যাকাউন্ট তৈরি করুন', 'Create New Officer or User Account')}</span>
-                  </h3>
-                  <button
-                    onClick={() => setIsCreateUserOpen(false)}
-                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center cursor-pointer transition text-sm"
-                  >
-                    ✕
-                  </button>
+                  </div>
+
+                  <div>
+                    <Label className="block font-bold text-slate-700 mb-1">{t('পূর্ণ নাম (বাংলায়):', 'Full Name (Bangla):')} *</Label>
+                    <Input
+                      type="text"
+                      placeholder="মোঃ আবদুর রহমান"
+                      value={newNameBn}
+                      onChange={(e) => setNewNameBn(e.target.value)}
+                      className="h-9 text-xs"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="block font-bold text-slate-700 mb-1">{t('পূর্ণ নাম (ইংরেজিতে):', 'Full Name (English):')}</Label>
+                    <Input
+                      type="text"
+                      placeholder="Md. Abdur Rahman"
+                      value={newNameEn}
+                      onChange={(e) => setNewNameEn(e.target.value)}
+                      className="h-9 text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="block font-bold text-slate-700 mb-1">{t('মোবাইল নম্বর:', 'Phone:')} *</Label>
+                    <Input
+                      type="text"
+                      placeholder="01711-000111"
+                      value={newPhone}
+                      onChange={(e) => setNewPhone(e.target.value)}
+                      className="h-9 font-mono text-xs"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="block font-bold text-slate-700 mb-1">{t('ইমেইল ঠিকানা:', 'Email:')}</Label>
+                    <Input
+                      type="email"
+                      placeholder="officer@bhumishield.gov.bd"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      className="h-9 font-mono text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="block font-bold text-slate-700 mb-1">{t('জাতীয় পরিচয়পত্র (NID):', 'NID:')} *</Label>
+                    <Input
+                      type="text"
+                      placeholder="9900008888"
+                      value={newNid}
+                      onChange={(e) => setNewNid(e.target.value)}
+                      className="h-9 font-mono text-xs"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="block font-bold text-slate-700 mb-1">
+                      {t('অফিস / অধিক্ষেত্র:', 'Office / Jurisdiction:')}{!['citizen', 'admin', 'system_admin', 'auditor', 'support_agent', 'content_editor', 'content_approver', 'platform_moderator'].includes(newRole) && ' *'}
+                    </Label>
+                    {!['citizen', 'admin', 'system_admin', 'auditor', 'support_agent', 'content_editor', 'content_approver', 'platform_moderator'].includes(newRole) ? (
+                      <Select
+                        value={String(newOfficeId)}
+                        onValueChange={(val) => {
+                          const id = Number(val);
+                          setNewOfficeId(id);
+                          const match = officesList.find((o) => Number(o.id) === id);
+                          if (match) setNewOffice(lang === 'bn' ? match.name_bn : (match.name_en || match.name_bn));
+                        }}
+                      >
+                        <SelectTrigger className="h-9 text-xs bg-white font-semibold">
+                          <SelectValue placeholder={t('-- সক্রিয় কার্যালয় নির্বাচন করুন --', '-- Select Active Office --')} />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-72">
+                          {officesList.map((off: any) => (
+                            <SelectItem key={off.id} value={String(off.id)} className="text-xs">
+                              {lang === 'bn' ? off.name_bn : (off.name_en || off.name_bn)} — {off.district_bn || off.district_en} ({off.office_type || 'OFFICE'})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        type="text"
+                        placeholder={t('কেন্দ্রীয় দপ্তর / প্রযোজ্য নয়', 'Central Headquarters / Not applicable')}
+                        value={newOffice}
+                        onChange={(e) => setNewOffice(e.target.value)}
+                        className="h-9 bg-slate-50 text-slate-500 text-xs"
+                      />
+                    )}
+                  </div>
                 </div>
 
-                <form onSubmit={handleCreateUser} className="space-y-4 text-xs">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1">{t('ভূমিকা (Role):', 'Role:')} *</label>
-                      <select
-                        value={newRole}
-                        onChange={(e) => {
-                          const r = e.target.value as UserRole;
-                          setNewRole(r);
-                          const req = !['citizen', 'admin', 'system_admin', 'auditor', 'support_agent', 'content_editor', 'content_approver', 'platform_moderator'].includes(r);
-                          if (req && newOfficeId === 0 && officesList.length > 0) {
-                            setNewOfficeId(officesList[0].id);
-                            setNewOffice(lang === 'bn' ? officesList[0].name_bn : (officesList[0].name_en || officesList[0].name_bn));
-                          }
-                        }}
-                        className="w-full p-2.5 rounded-lg border border-slate-300 font-bold bg-white text-xs"
-                      >
-                        <optgroup label={t('নাগরিক ও সার্ভিস পয়েন্ট', 'Citizen & Service Point')}>
-                          <option value="citizen">Citizen (সাধারণ নাগরিক)</option>
-                          <option value="service_point_operator">Service Point Operator (UDC / ডিজিটাল সেন্টার)</option>
-                        </optgroup>
-                        <optgroup label={t('নিবন্ধন অধিদপ্তর (সাব-রেজিস্ট্রি)', 'Sub-Registry Department')}>
-                          <option value="sub_registrar">Sub-Registrar (সাব-রেজিস্ট্রার)</option>
-                          <option value="registry_data_officer">Registry Data Officer (রেজিস্ট্রি ডাটা মেকার)</option>
-                        </optgroup>
-                        <optgroup label={t('ভূমি প্রশাসন ও এসি ল্যান্ড', 'Land Administration & AC Land')}>
-                          <option value="ac_land">AC Land (সহকারী কমিশনার ভূমি)</option>
-                          <option value="land_office_assistant">Land Office Assistant (উপজেলা ভূমি সহকারী)</option>
-                          <option value="field_verification_officer">Field Verification Officer (মাঠ তদন্ত কর্মকর্তা)</option>
-                          <option value="settlement_records_officer">Settlement Records Officer (জরিপ মেকার)</option>
-                          <option value="settlement_checker">Assistant Settlement Officer (জরিপ চেকার)</option>
-                          <option value="uno_supervisor">UNO Supervisor (উপজেলা নির্বাহী কর্মকর্তা)</option>
-                          <option value="appellate_reviewer">Appellate Reviewer (এডিসি রাজস্ব / আপিল কর্তৃপক্ষ)</option>
-                        </optgroup>
-                        <optgroup label={t('ব্যাংক ও আর্থিক প্রতিষ্ঠান', 'Banks & Financial Institutions')}>
-                          <option value="bank_officer">Bank Officer (ঋণ ও জামানত মেকার)</option>
-                          <option value="bank_manager">Bank Manager (শাখা ব্যবস্থাপক - চেকার)</option>
-                        </optgroup>
-                        <optgroup label={t('প্ল্যাটফর্ম সাপোর্ট ও মডারেশন', 'Platform Support & Moderation')}>
-                          <option value="support_agent">Support Agent (১৬১২২ হেল্পলাইন / জিআরএস)</option>
-                          <option value="platform_moderator">Platform Moderator (মার্কেটপ্লেস মডারেটর)</option>
-                          <option value="content_editor">Content Editor (নোটিশ ও কন্টেন্ট এডিটর)</option>
-                          <option value="content_approver">Content Approver (কন্টেন্ট ও নোটিশ অ্যাপ্রুভার)</option>
-                        </optgroup>
-                        <optgroup label={t('সিস্টেম ও অডিট', 'System & Audit')}>
-                          <option value="system_admin">System Admin (সিস্টেম অ্যাডমিনিস্ট্রেটর)</option>
-                          <option value="admin">Admin (অ্যাডমিন)</option>
-                          <option value="auditor">National Auditor (জাতীয় অডিটর)</option>
-                          <option value="dc_acquisition_officer">DC Acquisition Officer (এলএ কর্মকর্তা)</option>
-                          <option value="lawyer_court_user">Lawyer / Court User (আদালত প্রতিনিধি)</option>
-                        </optgroup>
-                      </select>
-                    </div>
+                <div>
+                  <Label htmlFor="new-officer-password" className="block font-bold text-slate-700 mb-1">{t('প্রাথমিক পাসওয়ার্ড (অন্তত ৮ অক্ষর)','Initial password (at least 8 characters)')} *</Label>
+                  <Input id="new-officer-password" type="password" required minLength={8} autoComplete="new-password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} className="h-9 text-xs" />
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 flex items-center gap-2">
+                  <KeyRound className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span>
+                    {t(
+                      'এই অ্যাকাউন্টের জন্য পৃথক পাসওয়ার্ড দিন। সবার জন্য একই পাসওয়ার্ড ব্যবহার করবেন না।',
+                      'Set an individual password for this account. Never reuse a shared password.'
+                    )}
+                  </span>
+                </div>
 
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1">{t('ইউজারনেম (Username):', 'Username:')} *</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono">@</span>
-                        <input
-                          type="text"
-                          placeholder="officer_savar"
-                          value={newUsername}
-                          onChange={(e) => setNewUsername(e.target.value)}
-                          className="w-full pl-7 pr-3 py-2 rounded-lg border border-slate-300 font-mono bg-white text-xs"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1">{t('পূর্ণ নাম (বাংলায়):', 'Full Name (Bangla):')} *</label>
-                      <input
-                        type="text"
-                        placeholder="মোঃ আবদুর রহমান"
-                        value={newNameBn}
-                        onChange={(e) => setNewNameBn(e.target.value)}
-                        className="w-full p-2 rounded-lg border border-slate-300 bg-white text-xs"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1">{t('পূর্ণ নাম (ইংরেজিতে):', 'Full Name (English):')}</label>
-                      <input
-                        type="text"
-                        placeholder="Md. Abdur Rahman"
-                        value={newNameEn}
-                        onChange={(e) => setNewNameEn(e.target.value)}
-                        className="w-full p-2 rounded-lg border border-slate-300 bg-white text-xs"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1">{t('মোবাইল নম্বর:', 'Phone:')} *</label>
-                      <input
-                        type="text"
-                        placeholder="01711-000111"
-                        value={newPhone}
-                        onChange={(e) => setNewPhone(e.target.value)}
-                        className="w-full p-2 rounded-lg border border-slate-300 font-mono bg-white text-xs"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1">{t('ইমেইল ঠিকানা:', 'Email:')}</label>
-                      <input
-                        type="email"
-                        placeholder="officer@bhumishield.gov.bd"
-                        value={newEmail}
-                        onChange={(e) => setNewEmail(e.target.value)}
-                        className="w-full p-2 rounded-lg border border-slate-300 font-mono bg-white text-xs"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1">{t('জাতীয় পরিচয়পত্র (NID):', 'NID:')} *</label>
-                      <input
-                        type="text"
-                        placeholder="9900008888"
-                        value={newNid}
-                        onChange={(e) => setNewNid(e.target.value)}
-                        className="w-full p-2 rounded-lg border border-slate-300 font-mono bg-white text-xs"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-slate-700 mb-1">
-                        {t('অফিস / অধিক্ষেত্র:', 'Office / Jurisdiction:')}{!['citizen', 'admin', 'system_admin', 'auditor', 'support_agent', 'content_editor', 'content_approver', 'platform_moderator'].includes(newRole) && ' *'}
-                      </label>
-                      {!['citizen', 'admin', 'system_admin', 'auditor', 'support_agent', 'content_editor', 'content_approver', 'platform_moderator'].includes(newRole) ? (
-                        <select
-                          value={newOfficeId}
-                          onChange={(e) => {
-                            const id = Number(e.target.value);
-                            setNewOfficeId(id);
-                            const match = officesList.find((o) => Number(o.id) === id);
-                            if (match) setNewOffice(lang === 'bn' ? match.name_bn : (match.name_en || match.name_bn));
-                          }}
-                          className="w-full p-2 rounded-lg border border-slate-300 bg-white text-xs font-semibold"
-                          required
-                        >
-                          <option value={0}>{t('-- সক্রিয় কার্যালয় নির্বাচন করুন --', '-- Select Active Office --')}</option>
-                          {officesList.map((off: any) => (
-                            <option key={off.id} value={off.id}>
-                              {lang === 'bn' ? off.name_bn : (off.name_en || off.name_bn)} — {off.district_bn || off.district_en} ({off.office_type || 'OFFICE'})
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <input
-                          type="text"
-                          placeholder={t('কেন্দ্রীয় দপ্তর / প্রযোজ্য নয়', 'Central Headquarters / Not applicable')}
-                          value={newOffice}
-                          onChange={(e) => setNewOffice(e.target.value)}
-                          className="w-full p-2 rounded-lg border border-slate-300 bg-slate-50 text-slate-500 text-xs"
-                        />
-                      )}
-                    </div>
-                  </div>
-
-                  <label htmlFor="new-officer-password">{t('প্রাথমিক পাসওয়ার্ড (অন্তত ৮ অক্ষর)','Initial password (at least 8 characters)')}<input id="new-officer-password" type="password" required minLength={8} autoComplete="new-password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} className="w-full p-2 rounded-lg border border-slate-300"/></label>
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 flex items-center gap-2">
-                    <KeyRound className="w-4 h-4 text-slate-400 shrink-0" />
-                    <span>
-                      {t(
-                        'এই অ্যাকাউন্টের জন্য পৃথক পাসওয়ার্ড দিন। সবার জন্য একই পাসওয়ার্ড ব্যবহার করবেন না।',
-                        'Set an individual password for this account. Never reuse a shared password.'
-                      )}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-                    <button
-                      type="button"
-                      onClick={() => setIsCreateUserOpen(false)}
-                      className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold cursor-pointer transition text-xs"
-                    >
-                      {t('বাতিল', 'Cancel')}
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-5 py-2 rounded-xl bg-[#006A4E] hover:bg-[#00553e] text-white font-bold cursor-pointer shadow-xs transition text-xs flex items-center gap-2"
-                    >
-                      <UserPlus className="w-4 h-4" />
-                      <span>{t('অ্যাকাউন্ট তৈরি ও সক্রিয় করুন', 'Create & Activate Account')}</span>
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
+                <DialogFooter className="pt-3 border-t border-slate-100 flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsCreateUserOpen(false)}
+                  >
+                    {t('বাতিল', 'Cancel')}
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className="bg-[#006A4E] hover:bg-[#00553e] text-white flex items-center gap-2"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span>{t('অ্যাকাউন্ট তৈরি ও সক্রিয় করুন', 'Create & Activate Account')}</span>
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
 
           {/* CENTER POPUP MODAL: View User Details & Permissions */}
-          {selectedUserDetail && (
-            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
-              <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 space-y-5 my-8">
-                {/* Header */}
-                <div className="flex items-start justify-between pb-4 border-b border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#006A4E] to-[#074f38] text-white flex items-center justify-center font-bold text-lg shadow-sm">
-                      {selectedUserDetail.avatar_url ? (
-                        <img src={selectedUserDetail.avatar_url} alt="" className="w-full h-full object-cover rounded-2xl" />
-                      ) : (
-                        <span>{(selectedUserDetail.full_name_bn || selectedUserDetail.username || 'ব')[0]}</span>
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-extrabold text-base text-slate-900">
-                          {lang === 'bn' ? selectedUserDetail.full_name_bn : (selectedUserDetail.full_name_en || selectedUserDetail.full_name_bn)}
-                        </h3>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-[#074f38] text-white">
-                          {selectedUserDetail.role}
-                        </span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
-                          selectedUserDetail.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-                        }`}>
-                          {selectedUserDetail.is_active ? 'ACTIVE' : 'DISABLED'}
-                        </span>
+          <Dialog open={!!selectedUserDetail} onOpenChange={(open) => { if (!open) setSelectedUserDetail(null); }}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              {selectedUserDetail && (
+                <div className="space-y-5">
+                  {/* Header */}
+                  <DialogHeader className="pb-4 border-b border-slate-100 text-left">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#006A4E] to-[#074f38] text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                        {selectedUserDetail.avatar_url ? (
+                          <img src={selectedUserDetail.avatar_url} alt="" className="w-full h-full object-cover rounded-2xl" />
+                        ) : (
+                          <span>{(selectedUserDetail.full_name_bn || selectedUserDetail.username || 'ব')[0]}</span>
+                        )}
                       </div>
-                      <p className="text-xs text-slate-500 font-mono mt-0.5">
-                        @{selectedUserDetail.username} • ID #{selectedUserDetail.id}
-                      </p>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <DialogTitle className="font-extrabold text-base text-slate-900">
+                            {lang === 'bn' ? selectedUserDetail.full_name_bn : (selectedUserDetail.full_name_en || selectedUserDetail.full_name_bn)}
+                          </DialogTitle>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-[#074f38] text-white">
+                            {selectedUserDetail.role}
+                          </span>
+                          <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
+                            selectedUserDetail.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                          }`}>
+                            {selectedUserDetail.is_active ? 'ACTIVE' : 'DISABLED'}
+                          </span>
+                        </div>
+                        <DialogDescription className="text-xs text-slate-500 font-mono mt-0.5">
+                          @{selectedUserDetail.username} • ID #{selectedUserDetail.id}
+                        </DialogDescription>
+                      </div>
                     </div>
-                  </div>
-                  <button
-                    onClick={() => setSelectedUserDetail(null)}
-                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center cursor-pointer transition"
-                  >
-                    ✕
-                  </button>
-                </div>
+                  </DialogHeader>
 
-                {/* Pending Citizen Verification Alert */}
-                {selectedUserDetail.role === 'citizen' && Number(selectedUserDetail.is_identity_verified) !== 1 && (
-                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div className="flex items-start gap-2.5">
-                      <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                      <div className="text-xs">
-                        <div className="font-bold text-amber-900">{t('নাগরিকের অ্যাকাউন্ট অনুমোদন অপেক্ষমাণ', 'Citizen Account Approval Pending')}</div>
-                        <div className="text-amber-700 text-[11px] mt-0.5">
-                          {t('এনআইডি ও পরিচয়পত্রের সত্যতা যাচাই করে সিস্টেমে প্রবেশাধিকার প্রদান করুন।', 'Verify NID and enable system access for this citizen.')}
+                  {/* Pending Citizen Verification Alert */}
+                  {selectedUserDetail.role === 'citizen' && Number(selectedUserDetail.is_identity_verified) !== 1 && (
+                    <Alert className="border-amber-300 bg-amber-50">
+                      <AlertCircle className="w-5 h-5 text-amber-600" />
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full">
+                        <div>
+                          <div className="font-bold text-amber-900 text-xs">{t('নাগরিকের অ্যাকাউন্ট অনুমোদন অপেক্ষমাণ', 'Citizen Account Approval Pending')}</div>
+                          <AlertDescription className="text-amber-700 text-[11px] mt-0.5">
+                            {t('এনআইডি ও পরিচয়পত্রের সত্যতা যাচাই করে সিস্টেমে প্রবেশাধিকার প্রদান করুন।', 'Verify NID and enable system access for this citizen.')}
+                          </AlertDescription>
+                        </div>
+                        <Button
+                          onClick={async () => {
+                            await handleVerifyCitizen(selectedUserDetail.id);
+                            setSelectedUserDetail({ ...selectedUserDetail, is_identity_verified: 1 });
+                          }}
+                          size="sm"
+                          className="bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold shrink-0"
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-1 text-emerald-300" />
+                          <span>{t('অনুমোদন ও যাচাই সম্পন্ন করুন', 'Approve & Verify')}</span>
+                        </Button>
+                      </div>
+                    </Alert>
+                  )}
+
+                  {/* Detail Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                      <h4 className="font-bold text-slate-700 uppercase text-[11px] tracking-wide border-b border-slate-200 pb-1.5 flex items-center gap-1.5">
+                        <UserCheck className="w-3.5 h-3.5 text-[#006A4E]" />
+                        <span>{t('ব্যক্তিগত বিবরণ', 'Personal Information')}</span>
+                      </h4>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">{t('পূর্ণ নাম (বাংলা):', 'Full Name (BN):')}</span>
+                          <span className="font-bold text-slate-800">{selectedUserDetail.full_name_bn || '—'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">{t('পূর্ণ নাম (ইংরেজি):', 'Full Name (EN):')}</span>
+                          <span className="font-semibold text-slate-800">{selectedUserDetail.full_name_en || '—'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">{t('জাতীয় পরিচয়পত্র (NID):', 'NID Number:')}</span>
+                          <span className="font-mono font-bold text-slate-800">{selectedUserDetail.nid_mock || selectedUserDetail.nid || '—'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">{t('জন্ম তারিখ:', 'Date of Birth:')}</span>
+                          <span className="font-mono text-slate-800">{selectedUserDetail.date_of_birth || '—'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">{t('লিঙ্গ:', 'Gender:')}</span>
+                          <span className="text-slate-800">{selectedUserDetail.gender || '—'}</span>
                         </div>
                       </div>
                     </div>
-                    <button
-                      onClick={async () => {
-                        await handleVerifyCitizen(selectedUserDetail.id);
-                        setSelectedUserDetail({ ...selectedUserDetail, is_identity_verified: 1 });
-                      }}
-                      className="px-3.5 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold cursor-pointer shadow-sm transition flex items-center gap-1.5 shrink-0"
-                    >
-                      <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-                      <span>{t('অনুমোদন ও যাচাই সম্পন্ন করুন', 'Approve & Verify')}</span>
-                    </button>
-                  </div>
-                )}
 
-                {/* Detail Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
-                    <h4 className="font-bold text-slate-700 uppercase text-[11px] tracking-wide border-b border-slate-200 pb-1.5 flex items-center gap-1.5">
-                      <UserCheck className="w-3.5 h-3.5 text-[#006A4E]" />
-                      <span>{t('ব্যক্তিগত বিবরণ', 'Personal Information')}</span>
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+                      <h4 className="font-bold text-slate-700 uppercase text-[11px] tracking-wide border-b border-slate-200 pb-1.5 flex items-center gap-1.5">
+                        <Building2 className="w-3.5 h-3.5 text-[#006A4E]" />
+                        <span>{t('যোগাযোগ ও অধিক্ষেত্র', 'Contact & Office')}</span>
+                      </h4>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-500">{t('মোবাইল নম্বর:', 'Phone:')}</span>
+                          <span className="font-mono font-bold text-slate-800">{selectedUserDetail.phone_mock || selectedUserDetail.phone_dummy || '—'}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-500">{t('ইমেইল:', 'Email:')}</span>
+                          <span className="font-mono text-slate-800 truncate max-w-[170px]">{selectedUserDetail.email || '—'}</span>
+                        </div>
+                        <div className="flex justify-between items-start">
+                          <span className="text-slate-500">{t('অফিস / অধিক্ষেত্র:', 'Office / Location:')}</span>
+                          <span className="font-semibold text-slate-800 text-right max-w-[170px]">{selectedUserDetail.office_name || selectedUserDetail.office_bn || '—'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">{t('যোগদানের তারিখ:', 'Join Date:')}</span>
+                          <span className="font-mono text-slate-800">{formatUserDate(selectedUserDetail.created_at)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Access & Role Controls */}
+                  <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200 space-y-3 text-xs">
+                    <h4 className="font-bold text-[#074f38] uppercase text-[11px] tracking-wide border-b border-emerald-200/60 pb-1.5 flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#006A4E]" />
+                      <span>{t('অ্যাক্সেস ও ভূমিকা নিয়ন্ত্রণ (Role & Access Control)', 'Role & Access Control')}</span>
                     </h4>
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">{t('পূর্ণ নাম (বাংলা):', 'Full Name (BN):')}</span>
-                        <span className="font-bold text-slate-800">{selectedUserDetail.full_name_bn || '—'}</span>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                      <div>
+                        <Label className="block text-[11px] font-bold text-slate-700 mb-1">{t('ভূমিকা পরিবর্তন করুন:', 'Change Role:')}</Label>
+                        <Select
+                          value={selectedUserDetail.role}
+                          onValueChange={async (updatedRole) => {
+                            await handleChangeUserRole(selectedUserDetail, updatedRole);
+                            setSelectedUserDetail({ ...selectedUserDetail, role: updatedRole });
+                          }}
+                        >
+                          <SelectTrigger className="w-full font-bold bg-white text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="citizen">citizen (সাধারণ নাগরিক)</SelectItem>
+                            <SelectItem value="sub_registrar">sub_registrar (সাব-রেজিস্ট্রার)</SelectItem>
+                            <SelectItem value="ac_land">ac_land (সহকারী কমিশনার ভূমি)</SelectItem>
+                            <SelectItem value="bank_officer">bank_officer (ব্যাংক কর্মকর্তা)</SelectItem>
+                            <SelectItem value="field_verification_officer">field_verification_officer (ফিল্ড অফিসার)</SelectItem>
+                            <SelectItem value="registry_data_officer">registry_data_officer (রেজিস্ট্রি ডেটা অফিসার)</SelectItem>
+                            <SelectItem value="settlement_officer">settlement_officer (সার্ভেয়ার / সেটেলমেন্ট অফিসার)</SelectItem>
+                            <SelectItem value="uno_supervisor">uno_supervisor (ইউএনও / এডিসি)</SelectItem>
+                            <SelectItem value="udc_operator">udc_operator (ইউডিসি উদ্যোক্তা)</SelectItem>
+                            <SelectItem value="support_agent">support_agent (সাপোর্ট ডেস্ক)</SelectItem>
+                            <SelectItem value="admin">admin (সিস্টেম অ্যাডমিন)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">{t('পূর্ণ নাম (ইংরেজি):', 'Full Name (EN):')}</span>
-                        <span className="font-semibold text-slate-800">{selectedUserDetail.full_name_en || '—'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">{t('জাতীয় পরিচয়পত্র (NID):', 'NID Number:')}</span>
-                        <span className="font-mono font-bold text-slate-800">{selectedUserDetail.nid_mock || selectedUserDetail.nid || '—'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">{t('জন্ম তারিখ:', 'Date of Birth:')}</span>
-                        <span className="font-mono text-slate-800">{selectedUserDetail.date_of_birth || '—'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">{t('লিঙ্গ:', 'Gender:')}</span>
-                        <span className="text-slate-800">{selectedUserDetail.gender || '—'}</span>
+
+                      <div>
+                        <Label className="block text-[11px] font-bold text-slate-700 mb-1">{t('অ্যাকাউন্ট স্থিতি (Status):', 'Account Status:')}</Label>
+                        <button
+                          onClick={async () => {
+                            await handleToggleUserStatus(selectedUserDetail);
+                            setSelectedUserDetail({ ...selectedUserDetail, is_active: selectedUserDetail.is_active ? 0 : 1 });
+                          }}
+                          className={`w-full py-2 px-3 rounded-lg font-bold text-xs cursor-pointer border transition flex items-center justify-center gap-2 ${
+                            selectedUserDetail.is_active
+                              ? 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100'
+                              : 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100'
+                          }`}
+                        >
+                          {selectedUserDetail.is_active ? t('⛔ অ্যাকাউন্ট নিষ্ক্রিয় / স্থগিত করুন', '⛔ Suspend Account') : t('✓ অ্যাকাউন্ট পুনরায় সক্রিয় করুন', '✓ Activate Account')}
+                        </button>
                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
-                    <h4 className="font-bold text-slate-700 uppercase text-[11px] tracking-wide border-b border-slate-200 pb-1.5 flex items-center gap-1.5">
-                      <Building2 className="w-3.5 h-3.5 text-[#006A4E]" />
-                      <span>{t('যোগাযোগ ও অধিক্ষেত্র', 'Contact & Office')}</span>
-                    </h4>
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500">{t('মোবাইল নম্বর:', 'Phone:')}</span>
-                        <span className="font-mono font-bold text-slate-800">{selectedUserDetail.phone_mock || selectedUserDetail.phone_dummy || '—'}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-500">{t('ইমেইল:', 'Email:')}</span>
-                        <span className="font-mono text-slate-800 truncate max-w-[170px]">{selectedUserDetail.email || '—'}</span>
-                      </div>
-                      <div className="flex justify-between items-start">
-                        <span className="text-slate-500">{t('অফিস / অধিক্ষেত্র:', 'Office / Location:')}</span>
-                        <span className="font-semibold text-slate-800 text-right max-w-[170px]">{selectedUserDetail.office_name || selectedUserDetail.office_bn || '—'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">{t('যোগদানের তারিখ:', 'Join Date:')}</span>
-                        <span className="font-mono text-slate-800">{formatUserDate(selectedUserDetail.created_at)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Access & Role Controls */}
-                <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200 space-y-3 text-xs">
-                  <h4 className="font-bold text-[#074f38] uppercase text-[11px] tracking-wide border-b border-emerald-200/60 pb-1.5 flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#006A4E]" />
-                    <span>{t('অ্যাক্সেস ও ভূমিকা নিয়ন্ত্রণ (Role & Access Control)', 'Role & Access Control')}</span>
-                  </h4>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('ভূমিকা পরিবর্তন করুন:', 'Change Role:')}</label>
-                      <select
-                        value={selectedUserDetail.role}
-                        onChange={async (e) => {
-                          const updatedRole = e.target.value;
-                          await handleChangeUserRole(selectedUserDetail, updatedRole);
-                          setSelectedUserDetail({ ...selectedUserDetail, role: updatedRole });
-                        }}
-                        className="w-full p-2 rounded-lg border border-slate-300 font-bold bg-white text-xs"
-                      >
-                        <option value="citizen">citizen (সাধারণ নাগরিক)</option>
-                        <option value="sub_registrar">sub_registrar (সাব-রেজিস্ট্রার)</option>
-                        <option value="ac_land">ac_land (সহকারী কমিশনার ভূমি)</option>
-                        <option value="bank_officer">bank_officer (ব্যাংক কর্মকর্তা)</option>
-                        <option value="field_verification_officer">field_verification_officer (ফিল্ড অফিসার)</option>
-                        <option value="registry_data_officer">registry_data_officer (রেজিস্ট্রি ডেটা অফিসার)</option>
-                        <option value="settlement_officer">settlement_officer (সার্ভেয়ার / সেটেলমেন্ট অফিসার)</option>
-                        <option value="uno_supervisor">uno_supervisor (ইউএনও / এডিসি)</option>
-                        <option value="udc_operator">udc_operator (ইউডিসি উদ্যোক্তা)</option>
-                        <option value="support_agent">support_agent (সাপোর্ট ডেস্ক)</option>
-                        <option value="admin">admin (সিস্টেম অ্যাডমিন)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-bold text-slate-700 mb-1">{t('অ্যাকাউন্ট স্থিতি (Status):', 'Account Status:')}</label>
-                      <button
+                  {/* Modal Footer */}
+                  <DialogFooter className="flex items-center justify-between pt-2 border-t border-slate-100 sm:justify-between">
+                    {selectedUserDetail.id > 5 && selectedUserDetail.username !== 'admin' ? (
+                      <Button
+                        variant="ghost"
                         onClick={async () => {
-                          await handleToggleUserStatus(selectedUserDetail);
-                          setSelectedUserDetail({ ...selectedUserDetail, is_active: selectedUserDetail.is_active ? 0 : 1 });
+                          if (window.confirm(lang === 'bn' ? 'আপনি কি নিশ্চিত যে এই ব্যবহারকারী অপসারণ করতে চান?' : 'Are you sure you want to delete this user?')) {
+                            await handleDeleteUser(selectedUserDetail.id);
+                            setSelectedUserDetail(null);
+                          }
                         }}
-                        className={`w-full py-2 px-3 rounded-lg font-bold text-xs cursor-pointer border transition flex items-center justify-center gap-2 ${
-                          selectedUserDetail.is_active
-                            ? 'bg-rose-50 border-rose-300 text-rose-700 hover:bg-rose-100'
-                            : 'bg-emerald-50 border-emerald-300 text-emerald-800 hover:bg-emerald-100'
-                        }`}
+                        className="text-rose-600 hover:bg-rose-50 text-xs font-bold"
+                        size="sm"
                       >
-                        {selectedUserDetail.is_active ? t('⛔ অ্যাকাউন্ট নিষ্ক্রিয় / স্থগিত করুন', '⛔ Suspend Account') : t('✓ অ্যাকাউন্ট পুনরায় সক্রিয় করুন', '✓ Activate Account')}
-                      </button>
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        <span>{t('ব্যবহারকারী অপসারণ করুন', 'Delete User')}</span>
+                      </Button>
+                    ) : <div />}
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={() => handleImpersonate(selectedUserDetail.role)}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold"
+                        size="sm"
+                      >
+                        <KeyRound className="w-4 h-4 mr-1" />
+                        <span>{t(`ভূমিকা পরিবর্তন: ${selectedUserDetail.role}`, `Login as ${selectedUserDetail.role}`)}</span>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => setSelectedUserDetail(null)}
+                        size="sm"
+                      >
+                        {t('বন্ধ করুন', 'Close')}
+                      </Button>
                     </div>
-                  </div>
+                  </DialogFooter>
                 </div>
-
-                {/* Modal Footer */}
-                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                  {selectedUserDetail.id > 5 && selectedUserDetail.username !== 'admin' ? (
-                    <button
-                      onClick={async () => {
-                        if (window.confirm(lang === 'bn' ? 'আপনি কি নিশ্চিত যে এই ব্যবহারকারী অপসারণ করতে চান?' : 'Are you sure you want to delete this user?')) {
-                          await handleDeleteUser(selectedUserDetail.id);
-                          setSelectedUserDetail(null);
-                        }
-                      }}
-                      className="px-3.5 py-2 rounded-lg text-rose-600 hover:bg-rose-50 text-xs font-bold cursor-pointer transition flex items-center gap-1.5"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      <span>{t('ব্যবহারকারী অপসারণ করুন', 'Delete User')}</span>
-                    </button>
-                  ) : <div />}
-
-                  <button
-                    onClick={() => handleImpersonate(selectedUserDetail.role)}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer transition flex items-center gap-1.5 shadow-xs"
-                  >
-                    <KeyRound className="w-4 h-4" />
-                    <span>{t(`ভূমিকা পরিবর্তন: ${selectedUserDetail.role}`, `Login as ${selectedUserDetail.role}`)}</span>
-                  </button>
-
-                  <button
-                    onClick={() => setSelectedUserDetail(null)}
-                    className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer transition"
-                  >
-                    {t('বন্ধ করুন', 'Close')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+              )}
+            </DialogContent>
+          </Dialog>
             </>
           )}
         </div>
@@ -5204,12 +5341,12 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
           </div>
 
           {/* CENTER POPUP MODAL: Centered Full Deed Docket Modal */}
-          {selectedDeedDocket && (
-            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fadeIn">
-              <div className="bg-white rounded-2xl max-w-4xl w-full p-6 shadow-2xl border border-slate-200 space-y-5 my-8 max-h-[90vh] overflow-y-auto">
-                {/* Header */}
-                <div className="flex items-start justify-between pb-3 border-b border-slate-100">
-                  <div>
+          <Dialog open={!!selectedDeedDocket} onOpenChange={(open) => { if (!open) setSelectedDeedDocket(null); }}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              {selectedDeedDocket && (
+                <div className="space-y-5">
+                  {/* Header */}
+                  <DialogHeader className="pb-3 border-b border-slate-100 text-left">
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs font-black px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
                         {selectedDeedDocket.deed?.deed_no}
@@ -5223,312 +5360,315 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
                         </span>
                       )}
                     </div>
-                    <h3 className="font-extrabold text-lg text-slate-900 mt-1 flex items-center gap-2">
+                    <DialogTitle className="font-extrabold text-lg text-slate-900 mt-1 flex items-center gap-2">
                       <FileText className="w-5 h-5 text-[#006A4E]" />
                       <span>{t('ডিজিটাল দলিল ডকেট ও ক্রিপ্টোগ্রাফিক ভেরিফিকেশন প্রুফ', 'Digital Deed Docket & Cryptographic Proof')}</span>
-                    </h3>
-                  </div>
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-slate-500">
+                      {t('দলিল নম্বর ও ক্রিপ্টোগ্রাফিক ব্লক যাচাইকরণের সামগ্রিক নথি', 'Official cryptographic deed docket verification and lineage record')}
+                    </DialogDescription>
+                  </DialogHeader>
 
-                  <button
-                    onClick={() => setSelectedDeedDocket(null)}
-                    className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center cursor-pointer transition text-sm"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                {/* If Flagged Alert */}
-                {Number(selectedDeedDocket.deed?.is_flagged_admin) === 1 && (
-                  <div className="p-4 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-xs space-y-1">
-                    <div className="font-extrabold flex items-center gap-1.5">
+                  {/* If Flagged Alert */}
+                  {Number(selectedDeedDocket.deed?.is_flagged_admin) === 1 && (
+                    <Alert className="border-rose-300 bg-rose-50 text-rose-900">
                       <Ban className="w-4 h-4 text-rose-600" />
-                      <span>{t('প্রশাসনিক স্থগিতাদেশ কার্যকর রয়েছে (ADMIN HOLD ACTIVE)', 'ADMINISTRATIVE HOLD ACTIVE')}</span>
-                    </div>
-                    <p className="text-[11px] text-rose-800">
-                      <strong>{t('স্থগিতের কারণ:', 'Reason:')}</strong> {selectedDeedDocket.deed?.flag_reason_bn || 'তদন্তের স্বার্থে স্থগিত রাখা হয়েছে।'}
-                    </p>
-                  </div>
-                )}
-
-                {/* Grid 1: Parties (Seller & Buyer) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  {/* Seller */}
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                    <div className="font-bold text-slate-700 uppercase text-[11px] border-b pb-1.5 text-rose-800 flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5" />
-                      <span>{t('হস্তান্তরকারী / দাতা (বিক্রেতা)', 'Transferor / Seller')}</span>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="font-bold text-base text-slate-900">{selectedDeedDocket.seller?.name_bn || '—'}</div>
-                      <div className="text-slate-600"><strong>পিতার নাম:</strong> {selectedDeedDocket.seller?.father_name_bn || '—'}</div>
-                      <div className="font-mono text-slate-700"><strong>NID:</strong> {selectedDeedDocket.seller?.nid || '—'}</div>
-                      <div className="font-mono text-slate-700"><strong>মোবাইল:</strong> {selectedDeedDocket.seller?.phone_mock || selectedDeedDocket.seller?.phone || '—'}</div>
-                      <div className="text-slate-500 text-[11px]"><strong>ঠিকানা:</strong> {selectedDeedDocket.seller?.address_bn || '—'}</div>
-                    </div>
-                  </div>
-
-                  {/* Buyer */}
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                    <div className="font-bold text-slate-700 uppercase text-[11px] border-b pb-1.5 text-emerald-800 flex items-center gap-1">
-                      <Users className="w-3.5 h-3.5" />
-                      <span>{t('গ্রহীতা / ক্রেতা', 'Transferee / Buyer')}</span>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="font-bold text-base text-slate-900">{selectedDeedDocket.buyer?.name_bn || '—'}</div>
-                      <div className="text-slate-600"><strong>পিতার নাম:</strong> {selectedDeedDocket.buyer?.father_name_bn || '—'}</div>
-                      <div className="font-mono text-slate-700"><strong>NID:</strong> {selectedDeedDocket.buyer?.nid || '—'}</div>
-                      <div className="font-mono text-slate-700"><strong>মোবাইল:</strong> {selectedDeedDocket.buyer?.phone_mock || selectedDeedDocket.buyer?.phone || '—'}</div>
-                      <div className="text-slate-500 text-[11px]"><strong>ঠিকানা:</strong> {selectedDeedDocket.buyer?.address_bn || '—'}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Grid 2: Parcel & Land Attributes */}
-                <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200 space-y-3 text-xs">
-                  <div className="font-bold text-[#006A4E] uppercase text-[11px] flex items-center gap-1.5 border-b border-emerald-200/60 pb-1.5">
-                    <MapPin className="w-3.5 h-3.5" />
-                    <span>{t('জমির তফসিল ও তফসিলভুক্ত বিবরণ (Universal Hierarchy Location)', 'Land Parcel & Location Attributes')}</span>
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div>
-                      <span className="text-slate-500 block text-[10px]">{t('বিভাগ', 'Division')}</span>
-                      <span className="font-bold text-slate-800">{selectedDeedDocket.location?.division_bn || 'ঢাকা'}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 block text-[10px]">{t('জেলা', 'District')}</span>
-                      <span className="font-bold text-slate-800">{selectedDeedDocket.location?.district_bn || 'ঢাকা'}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 block text-[10px]">{t('উপজেলা / থানা', 'Upazila')}</span>
-                      <span className="font-bold text-slate-800">{selectedDeedDocket.location?.upazila_bn || 'সাভার'}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 block text-[10px]">{t('মৌজা ও জে.এল.', 'Mouza & JL')}</span>
-                      <span className="font-bold text-slate-800">
-                        {selectedDeedDocket.location?.mouza_bn} (জে.এল. {toBanglaDigits(selectedDeedDocket.location?.jl_no, lang)})
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 block text-[10px]">{t('দাগ নম্বর', 'Dag No')}</span>
-                      <span className="font-extrabold text-[#006A4E] font-mono text-sm">
-                        {toBanglaDigits(selectedDeedDocket.plot?.dag_no, lang)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 block text-[10px]">{t('জমির শ্রেণি', 'Land Type')}</span>
-                      <span className="font-semibold text-slate-800">{selectedDeedDocket.plot?.land_type_bn || selectedDeedDocket.plot?.land_type || 'ভিটা'}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 block text-[10px]">{t('হস্তান্তরিত অংশ ও আয়তন', 'Transferred Area')}</span>
-                      <span className="font-extrabold text-slate-900 font-mono">
-                        {toBanglaDigits(selectedDeedDocket.deed?.area_decimal, lang)} {t('শতক', 'dec')} ({selectedDeedDocket.deed?.share_fraction || '১/১'})
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-slate-500 block text-[10px]">{t('দলিল মূল্য (টাকা)', 'Deed Value (BDT)')}</span>
-                      <span className="font-extrabold text-blue-900 font-mono">
-                        ৳{toBanglaDigits(Number(selectedDeedDocket.deed?.price_bdt).toLocaleString(), lang)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Grid 3: Cryptographic Ledger Proof */}
-                <div className="p-4 rounded-xl bg-slate-900 text-white space-y-3 font-mono text-xs">
-                  <div className="flex items-center justify-between border-b border-white/10 pb-2">
-                    <span className="font-bold text-emerald-400 flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5" />
-                      <span>{t('ক্রিপ্টোগ্রাফিক লেজার অখণ্ডতা প্রুফ (Block #' + selectedDeedDocket.verification?.chain_index + ')', 'Ledger Proof')}</span>
-                    </span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
-                      ✔ Ed25519 Verified
-                    </span>
-                  </div>
-                  <div className="space-y-1.5 text-[11px]">
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                      <span className="text-slate-400">Content Hash (SHA-256):</span>
-                      <span className="text-white truncate max-w-sm">{selectedDeedDocket.verification?.stored_hash}</span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                      <span className="text-slate-400">Previous Block Hash:</span>
-                      <span className="text-slate-300 truncate max-w-sm">{selectedDeedDocket.verification?.prev_hash}</span>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
-                      <span className="text-slate-400">Ed25519 Digital Signature:</span>
-                      <span className="text-emerald-300 truncate max-w-sm">{selectedDeedDocket.deed?.signature}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Grid 4: Connected History (Mutations, Khatians, Mortgages, Disputes) */}
-                <div className="space-y-3 text-xs">
-                  <h4 className="font-bold text-slate-800 uppercase text-[11px] tracking-wide flex items-center gap-1.5">
-                    <History className="w-3.5 h-3.5 text-[#006A4E]" />
-                    <span>{t('সম্পর্কিত রেকর্ড ও আইনি ইতিহাস', 'Connected Records & Legal History')}</span>
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {/* Mutations */}
-                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                      <span className="font-bold text-slate-700 block mb-1">{t('নামজারি আদেশ', 'Mutation Status')}</span>
-                      {selectedDeedDocket.history?.mutations?.length > 0 ? (
-                        <div className="space-y-1 text-[11px]">
-                          {selectedDeedDocket.history.mutations.map((m: any, i: number) => (
-                            <div key={i} className="text-slate-700 font-mono">
-                              কেস: {m.case_no} ({m.status})
-                            </div>
-                          ))}
+                      <div>
+                        <div className="font-extrabold text-xs">
+                          {t('প্রশাসনিক স্থগিতাদেশ কার্যকর রয়েছে (ADMIN HOLD ACTIVE)', 'ADMINISTRATIVE HOLD ACTIVE')}
                         </div>
-                      ) : (
-                        <span className="text-slate-400 text-[11px]">{t('কোনো নামজারি কেস নেই', 'No mutation yet')}</span>
-                      )}
+                        <AlertDescription className="text-[11px] text-rose-800 mt-0.5">
+                          <strong>{t('স্থগিতের কারণ:', 'Reason:')}</strong> {selectedDeedDocket.deed?.flag_reason_bn || 'তদন্তের স্বার্থে স্থগিত রাখা হয়েছে।'}
+                        </AlertDescription>
+                      </div>
+                    </Alert>
+                  )}
+
+                  {/* Grid 1: Parties (Seller & Buyer) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    {/* Seller */}
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                      <div className="font-bold text-slate-700 uppercase text-[11px] border-b pb-1.5 text-rose-800 flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5" />
+                        <span>{t('হস্তান্তরকারী / দাতা (বিক্রেতা)', 'Transferor / Seller')}</span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="font-bold text-base text-slate-900">{selectedDeedDocket.seller?.name_bn || '—'}</div>
+                        <div className="text-slate-600"><strong>পিতার নাম:</strong> {selectedDeedDocket.seller?.father_name_bn || '—'}</div>
+                        <div className="font-mono text-slate-700"><strong>NID:</strong> {selectedDeedDocket.seller?.nid || '—'}</div>
+                        <div className="font-mono text-slate-700"><strong>মোবাইল:</strong> {selectedDeedDocket.seller?.phone_mock || selectedDeedDocket.seller?.phone || '—'}</div>
+                        <div className="text-slate-500 text-[11px]"><strong>ঠিকানা:</strong> {selectedDeedDocket.seller?.address_bn || '—'}</div>
+                      </div>
                     </div>
 
-                    {/* Mortgages */}
-                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                      <span className="font-bold text-slate-700 block mb-1">{t('ব্যাংক বন্ধক / লিয়েন', 'Bank Mortgages')}</span>
-                      {selectedDeedDocket.history?.mortgages?.length > 0 ? (
-                        <div className="space-y-1 text-[11px] text-blue-800">
-                          {selectedDeedDocket.history.mortgages.map((m: any, i: number) => (
-                            <div key={i}>
-                              {m.bank_name_bn} (৳{Number(m.amount_bdt).toLocaleString()})
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-emerald-700 font-semibold text-[11px]">✔ {t('দায়মুক্ত রেকর্ড', 'No Active Liens')}</span>
-                      )}
-                    </div>
-
-                    {/* Disputes */}
-                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-                      <span className="font-bold text-slate-700 block mb-1">{t('আদালতের মামলা / বিরোধ', 'Litigation / Disputes')}</span>
-                      {selectedDeedDocket.history?.disputes?.length > 0 ? (
-                        <div className="space-y-1 text-[11px] text-amber-800">
-                          {selectedDeedDocket.history.disputes.map((d: any, i: number) => (
-                            <div key={i}>
-                              {d.dispute_type} ({d.status})
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-emerald-700 font-semibold text-[11px]">✔ {t('নিষ্কণ্টক মালিকানা', 'No Active Disputes')}</span>
-                      )}
+                    {/* Buyer */}
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                      <div className="font-bold text-slate-700 uppercase text-[11px] border-b pb-1.5 text-emerald-800 flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5" />
+                        <span>{t('গ্রহীতা / ক্রেতা', 'Transferee / Buyer')}</span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="font-bold text-base text-slate-900">{selectedDeedDocket.buyer?.name_bn || '—'}</div>
+                        <div className="text-slate-600"><strong>পিতার নাম:</strong> {selectedDeedDocket.buyer?.father_name_bn || '—'}</div>
+                        <div className="font-mono text-slate-700"><strong>NID:</strong> {selectedDeedDocket.buyer?.nid || '—'}</div>
+                        <div className="font-mono text-slate-700"><strong>মোবাইল:</strong> {selectedDeedDocket.buyer?.phone_mock || selectedDeedDocket.buyer?.phone || '—'}</div>
+                        <div className="text-slate-500 text-[11px]"><strong>ঠিকানা:</strong> {selectedDeedDocket.buyer?.address_bn || '—'}</div>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Modal Footer Actions */}
-                <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                  <button
-                    onClick={() => {
-                      const isFlagged = Number(selectedDeedDocket.deed?.is_flagged_admin) === 1;
-                      setFlagDeedModal({
-                        deed: selectedDeedDocket.deed,
-                        action: isFlagged ? 'CLEAR' : 'HOLD',
-                        reason: isFlagged ? '' : 'তদন্তের স্বার্থে সাময়িক স্থগিতাদেশ জারি।',
-                      });
-                    }}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition flex items-center gap-1.5 ${
-                      Number(selectedDeedDocket.deed?.is_flagged_admin) === 1
-                        ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
-                        : 'bg-rose-600 hover:bg-rose-700 text-white shadow-xs'
-                    }`}
-                  >
-                    {Number(selectedDeedDocket.deed?.is_flagged_admin) === 1 ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        <span>{t('স্থগিতাদেশ প্রত্যাহার করুন (Clear Hold)', 'Clear Hold')}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Ban className="w-4 h-4" />
-                        <span>{t('প্রশাসনিক স্থগিতাদেশ জারি করুন (Admin Hold)', 'Place Hold')}</span>
-                      </>
-                    )}
-                  </button>
+                  {/* Grid 2: Parcel & Land Attributes */}
+                  <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200 space-y-3 text-xs">
+                    <div className="font-bold text-[#006A4E] uppercase text-[11px] flex items-center gap-1.5 border-b border-emerald-200/60 pb-1.5">
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span>{t('জমির তফসিল ও তফসিলভুক্ত বিবরণ (Universal Hierarchy Location)', 'Land Parcel & Location Attributes')}</span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div>
+                        <span className="text-slate-500 block text-[10px]">{t('বিভাগ', 'Division')}</span>
+                        <span className="font-bold text-slate-800">{selectedDeedDocket.location?.division_bn || 'ঢাকা'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block text-[10px]">{t('জেলা', 'District')}</span>
+                        <span className="font-bold text-slate-800">{selectedDeedDocket.location?.district_bn || 'ঢাকা'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block text-[10px]">{t('উপজেলা / থানা', 'Upazila')}</span>
+                        <span className="font-bold text-slate-800">{selectedDeedDocket.location?.upazila_bn || 'সাভার'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block text-[10px]">{t('মৌজা ও জে.এল.', 'Mouza & JL')}</span>
+                        <span className="font-bold text-slate-800">
+                          {selectedDeedDocket.location?.mouza_bn} (জে.এল. {toBanglaDigits(selectedDeedDocket.location?.jl_no, lang)})
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block text-[10px]">{t('দাগ নম্বর', 'Dag No')}</span>
+                        <span className="font-extrabold text-[#006A4E] font-mono text-sm">
+                          {toBanglaDigits(selectedDeedDocket.plot?.dag_no, lang)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block text-[10px]">{t('জমির শ্রেণি', 'Land Type')}</span>
+                        <span className="font-semibold text-slate-800">{selectedDeedDocket.plot?.land_type_bn || selectedDeedDocket.plot?.land_type || 'ভিটা'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block text-[10px]">{t('হস্তান্তরিত অংশ ও আয়তন', 'Transferred Area')}</span>
+                        <span className="font-extrabold text-slate-900 font-mono">
+                          {toBanglaDigits(selectedDeedDocket.deed?.area_decimal, lang)} {t('শতক', 'dec')} ({selectedDeedDocket.deed?.share_fraction || '১/১'})
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block text-[10px]">{t('দলিল মূল্য (টাকা)', 'Deed Value (BDT)')}</span>
+                        <span className="font-extrabold text-blue-900 font-mono">
+                          ৳{toBanglaDigits(Number(selectedDeedDocket.deed?.price_bdt).toLocaleString(), lang)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
-                  <button
-                    onClick={() => setSelectedDeedDocket(null)}
-                    className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer transition"
-                  >
-                    {t('বন্ধ করুন', 'Close')}
-                  </button>
+                  {/* Grid 3: Cryptographic Ledger Proof */}
+                  <div className="p-4 rounded-xl bg-slate-900 text-white space-y-3 font-mono text-xs">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                      <span className="font-bold text-emerald-400 flex items-center gap-1.5">
+                        <Lock className="w-3.5 h-3.5" />
+                        <span>{t('ক্রিপ্টোগ্রাফিক লেজার অখণ্ডতা প্রুফ (Block #' + selectedDeedDocket.verification?.chain_index + ')', 'Ledger Proof')}</span>
+                      </span>
+                      <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
+                        ✔ Ed25519 Verified
+                      </span>
+                    </div>
+                    <div className="space-y-1.5 text-[11px]">
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-slate-400">Content Hash (SHA-256):</span>
+                        <span className="text-white truncate max-w-sm">{selectedDeedDocket.verification?.stored_hash}</span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-slate-400">Previous Block Hash:</span>
+                        <span className="text-slate-300 truncate max-w-sm">{selectedDeedDocket.verification?.prev_hash}</span>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1">
+                        <span className="text-slate-400">Ed25519 Digital Signature:</span>
+                        <span className="text-emerald-300 truncate max-w-sm">{selectedDeedDocket.deed?.signature}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Grid 4: Connected History (Mutations, Khatians, Mortgages, Disputes) */}
+                  <div className="space-y-3 text-xs">
+                    <h4 className="font-bold text-slate-800 uppercase text-[11px] tracking-wide flex items-center gap-1.5">
+                      <History className="w-3.5 h-3.5 text-[#006A4E]" />
+                      <span>{t('সম্পর্কিত রেকর্ড ও আইনি ইতিহাস', 'Connected Records & Legal History')}</span>
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {/* Mutations */}
+                      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                        <span className="font-bold text-slate-700 block mb-1">{t('নামজারি আদেশ', 'Mutation Status')}</span>
+                        {selectedDeedDocket.history?.mutations?.length > 0 ? (
+                          <div className="space-y-1 text-[11px]">
+                            {selectedDeedDocket.history.mutations.map((m: any, i: number) => (
+                              <div key={i} className="text-slate-700 font-mono">
+                                কেস: {m.case_no} ({m.status})
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 text-[11px]">{t('কোনো নামজারি কেস নেই', 'No mutation yet')}</span>
+                        )}
+                      </div>
+
+                      {/* Mortgages */}
+                      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                        <span className="font-bold text-slate-700 block mb-1">{t('ব্যাংক বন্ধক / লিয়েন', 'Bank Mortgages')}</span>
+                        {selectedDeedDocket.history?.mortgages?.length > 0 ? (
+                          <div className="space-y-1 text-[11px] text-blue-800">
+                            {selectedDeedDocket.history.mortgages.map((m: any, i: number) => (
+                              <div key={i}>
+                                {m.bank_name_bn} (৳{Number(m.amount_bdt).toLocaleString()})
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-emerald-700 font-semibold text-[11px]">✔ {t('দায়মুক্ত রেকর্ড', 'No Active Liens')}</span>
+                        )}
+                      </div>
+
+                      {/* Disputes */}
+                      <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                        <span className="font-bold text-slate-700 block mb-1">{t('আদালতের মামলা / বিরোধ', 'Litigation / Disputes')}</span>
+                        {selectedDeedDocket.history?.disputes?.length > 0 ? (
+                          <div className="space-y-1 text-[11px] text-amber-800">
+                            {selectedDeedDocket.history.disputes.map((d: any, i: number) => (
+                              <div key={i}>
+                                {d.dispute_type} ({d.status})
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-emerald-700 font-semibold text-[11px]">✔ {t('নিষ্কণ্টক মালিকানা', 'No Active Disputes')}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Modal Footer Actions */}
+                  <DialogFooter className="flex items-center justify-between pt-3 border-t border-slate-100 sm:justify-between">
+                    <Button
+                      onClick={() => {
+                        const isFlagged = Number(selectedDeedDocket.deed?.is_flagged_admin) === 1;
+                        setFlagDeedModal({
+                          deed: selectedDeedDocket.deed,
+                          action: isFlagged ? 'CLEAR' : 'HOLD',
+                          reason: isFlagged ? '' : 'তদন্তের স্বার্থে সাময়িক স্থগিতাদেশ জারি।',
+                        });
+                      }}
+                      className={
+                        Number(selectedDeedDocket.deed?.is_flagged_admin) === 1
+                          ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                          : 'bg-rose-600 hover:bg-rose-700 text-white'
+                      }
+                      size="sm"
+                    >
+                      {Number(selectedDeedDocket.deed?.is_flagged_admin) === 1 ? (
+                        <>
+                          <Check className="w-4 h-4 mr-1" />
+                          <span>{t('স্থগিতাদেশ প্রত্যাহার করুন (Clear Hold)', 'Clear Hold')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Ban className="w-4 h-4 mr-1" />
+                          <span>{t('প্রশাসনিক স্থগিতাদেশ জারি করুন (Admin Hold)', 'Place Hold')}</span>
+                        </>
+                      )}
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      onClick={() => setSelectedDeedDocket(null)}
+                      size="sm"
+                    >
+                      {t('বন্ধ করুন', 'Close')}
+                    </Button>
+                  </DialogFooter>
                 </div>
-              </div>
-            </div>
-          )}
+              )}
+            </DialogContent>
+          </Dialog>
 
           {/* CENTER POPUP MODAL: Flag/Hold Confirmation Modal */}
-          {flagDeedModal && (
-            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-              <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
-                    <Ban className={`w-5 h-5 ${flagDeedModal.action === 'HOLD' ? 'text-rose-600' : 'text-emerald-600'}`} />
-                    <span>
+          <Dialog open={!!flagDeedModal} onOpenChange={(open) => { if (!open) setFlagDeedModal(null); }}>
+            <DialogContent className="max-w-lg">
+              {flagDeedModal && (
+                <div className="space-y-4">
+                  <DialogHeader className="pb-2 border-b border-slate-100 text-left">
+                    <DialogTitle className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                      <Ban className={`w-5 h-5 ${flagDeedModal.action === 'HOLD' ? 'text-rose-600' : 'text-emerald-600'}`} />
+                      <span>
+                        {flagDeedModal.action === 'HOLD'
+                          ? t('দলিল স্থগিতাদেশ (Admin Hold) জারি', 'Place Administrative Hold')
+                          : t('স্থগিতাদেশ প্রত্যাহার ও রেকর্ড অবমুক্তকরণ', 'Clear Administrative Hold')}
+                      </span>
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-slate-500">
                       {flagDeedModal.action === 'HOLD'
-                        ? t('দলিল স্থগিতাদেশ (Admin Hold) জারি', 'Place Administrative Hold')
-                        : t('স্থগিতাদেশ প্রত্যাহার ও রেকর্ড অবমুক্তকরণ', 'Clear Administrative Hold')}
-                    </span>
-                  </h3>
-                  <button
-                    onClick={() => setFlagDeedModal(null)}
-                    className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer text-xs"
-                  >
-                    ✕
-                  </button>
-                </div>
+                        ? t('দলিল লেনদেন সাময়িকভাবে স্থগিত করার কারণ ব্যাখ্যা করুন', 'Specify administrative rationale to place an official hold')
+                        : t('স্থগিতাদেশ প্রত্যাহারের অনুমোদন প্রদান করুন', 'Confirm removal of administrative hold on this deed')}
+                    </DialogDescription>
+                  </DialogHeader>
 
-                <div className="text-xs text-slate-600 space-y-1">
-                  <div><strong>দলিল নং:</strong> {flagDeedModal.deed.deed_no}</div>
-                  <div><strong>দাগ নং:</strong> {flagDeedModal.deed.dag_no} • {flagDeedModal.deed.mouza_bn}</div>
-                  <div><strong>ক্রেতা:</strong> {flagDeedModal.deed.buyer_name_bn}</div>
-                </div>
+                  <div className="text-xs text-slate-600 space-y-1">
+                    <div><strong>দলিল নং:</strong> {flagDeedModal.deed?.deed_no}</div>
+                    <div><strong>দাগ নং:</strong> {flagDeedModal.deed?.dag_no} • {flagDeedModal.deed?.mouza_bn}</div>
+                    <div><strong>ক্রেতা:</strong> {flagDeedModal.deed?.buyer_name_bn}</div>
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    {flagDeedModal.action === 'HOLD'
-                      ? t('স্থগিতাদেশের কারণ ও আইনি ব্যাখ্যা:', 'Reason for Administrative Hold:')
-                      : t('স্থগিতাদেশ প্রত্যাহারের কারণ / মন্তব্য:', 'Reason for Clearing Hold:')}
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={flagDeedModal.reason}
-                    onChange={(e) => setFlagDeedModal({ ...flagDeedModal, reason: e.target.value })}
-                    placeholder={
-                      flagDeedModal.action === 'HOLD'
-                        ? 'জালিয়াতি বা ওয়ারিশান আপত্তির কারণে সহকারী কমিশনার (ভূমি) এর নির্দেশক্রমে স্থগিত...'
-                        : 'তদন্ত সম্পন্ন ও উপযুক্ত বায়া রেকর্ড নিশ্চিত হওয়ায় হোল্ড প্রত্যাহার...'
-                    }
-                    className="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
-                  />
-                </div>
+                  <div>
+                    <Label className="block text-xs font-bold text-slate-700 mb-1">
+                      {flagDeedModal.action === 'HOLD'
+                        ? t('স্থগিতাদেশের কারণ ও আইনি ব্যাখ্যা:', 'Reason for Administrative Hold:')
+                        : t('স্থগিতাদেশ প্রত্যাহারের কারণ / মন্তব্য:', 'Reason for Clearing Hold:')}
+                    </Label>
+                    <Textarea
+                      rows={3}
+                      value={flagDeedModal.reason}
+                      onChange={(e) => setFlagDeedModal({ ...flagDeedModal, reason: e.target.value })}
+                      placeholder={
+                        flagDeedModal.action === 'HOLD'
+                          ? 'জালিয়াতি বা ওয়ারিশান আপত্তির কারণে সহকারী কমিশনার (ভূমি) এর নির্দেশক্রমে স্থগিত...'
+                          : 'তদন্ত সম্পন্ন ও উপযুক্ত বায়া রেকর্ড নিশ্চিত হওয়ায় হোল্ড প্রত্যাহার...'
+                      }
+                      className="w-full text-xs"
+                    />
+                  </div>
 
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => setFlagDeedModal(null)}
-                    className="px-4 py-2 rounded-lg border border-slate-300 text-slate-600 text-xs font-bold hover:bg-slate-50 cursor-pointer"
-                  >
-                    {t('বাতিল', 'Cancel')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleConfirmFlagDeed}
-                    className={`px-4 py-2 rounded-lg text-white text-xs font-bold cursor-pointer transition shadow-xs ${
-                      flagDeedModal.action === 'HOLD'
-                        ? 'bg-rose-600 hover:bg-rose-700'
-                        : 'bg-emerald-600 hover:bg-emerald-700'
-                    }`}
-                  >
-                    {flagDeedModal.action === 'HOLD'
-                      ? t('স্থগিতাদেশ কার্যকর করুন', 'Confirm Hold')
-                      : t('হোল্ড প্রত্যাহার সম্পন্ন করুন', 'Confirm Release')}
-                  </button>
+                  <DialogFooter className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setFlagDeedModal(null)}
+                      size="sm"
+                    >
+                      {t('বাতিল', 'Cancel')}
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleConfirmFlagDeed}
+                      className={
+                        flagDeedModal.action === 'HOLD'
+                          ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                      }
+                      size="sm"
+                    >
+                      {flagDeedModal.action === 'HOLD'
+                        ? t('স্থগিতাদেশ কার্যকর করুন', 'Confirm Hold')
+                        : t('হোল্ড প্রত্যাহার সম্পন্ন করুন', 'Confirm Release')}
+                    </Button>
+                  </DialogFooter>
                 </div>
-              </div>
-            </div>
-          )}
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
       )}
 
@@ -6225,269 +6365,248 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
           )}
 
           {/* CENTER POPUP MODAL: Add / Edit Mouza Modal */}
-          {isAddMouzaOpen && (
-            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-              <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                  <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+          <Dialog open={isAddMouzaOpen} onOpenChange={setIsAddMouzaOpen}>
+            <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+              <div className="space-y-4">
+                <DialogHeader className="pb-3 border-b border-slate-100 text-left">
+                  <DialogTitle className="font-extrabold text-base text-slate-900 flex items-center gap-2">
                     <MapPin className="w-5 h-5 text-[#006A4E]" />
                     <span>
                       {editingMouza
                         ? t('মৌজা তথ্য সম্পাদনা ও জে.এল. সংশোধন', 'Edit Mouza & J.L. Record')
                         : t('নতুন মৌজা নিবন্ধন (New Mouza Onboarding)', 'Register New Mouza')}
                     </span>
-                  </h3>
-                  <button
-                    onClick={() => setIsAddMouzaOpen(false)}
-                    className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer text-xs"
-                  >
-                    ✕
-                  </button>
-                </div>
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-slate-500">
+                    {t(
+                      'বিভাগ -> জেলা -> উপজেলা প্রমিত অনুক্রমে সঠিক তথ্য নির্বাচন করুন। জে.এল. নম্বর মৌজার জন্য অনন্য হওয়া আবশ্যক।',
+                      'Specify Division -> District -> Upazila correctly. J.L. number must be valid for land deeds matching.'
+                    )}
+                  </DialogDescription>
+                </DialogHeader>
 
                 <form onSubmit={handleSaveMouza} className="space-y-4 text-xs">
-                  <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-[11px] leading-relaxed">
-                    {t(
-                      'নির্দেশনা: বিভাগ -> জেলা -> উপজেলা প্রমিত অনুক্রমে সঠিক তথ্য নির্বাচন করুন। জে.এল. নম্বর মৌজার জন্য অনন্য হওয়া আবশ্যক।',
-                      'Guidelines: Specify Division -> District -> Upazila correctly. J.L. number must be valid for land deeds matching.'
-                    )}
-                  </div>
-
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">
+                      <Label className="block font-bold text-slate-700 mb-1">
                         {t('বিভাগ (বাংলা)*', 'Division (Bangla)*')}
-                      </label>
-                      <input
+                      </Label>
+                      <Input
                         type="text"
                         required
                         value={mouzaForm.division_bn}
                         onChange={(e) => setMouzaForm({ ...mouzaForm, division_bn: e.target.value })}
-                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">
+                      <Label className="block font-bold text-slate-700 mb-1">
                         {t('Division (English)', 'Division (English)')}
-                      </label>
-                      <input
+                      </Label>
+                      <Input
                         type="text"
                         value={mouzaForm.division_en}
                         onChange={(e) => setMouzaForm({ ...mouzaForm, division_en: e.target.value })}
-                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">
+                      <Label className="block font-bold text-slate-700 mb-1">
                         {t('জেলা (বাংলা)*', 'District (Bangla)*')}
-                      </label>
-                      <input
+                      </Label>
+                      <Input
                         type="text"
                         required
                         value={mouzaForm.district_bn}
                         onChange={(e) => setMouzaForm({ ...mouzaForm, district_bn: e.target.value })}
-                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">
+                      <Label className="block font-bold text-slate-700 mb-1">
                         {t('District (English)', 'District (English)')}
-                      </label>
-                      <input
+                      </Label>
+                      <Input
                         type="text"
                         value={mouzaForm.district_en}
                         onChange={(e) => setMouzaForm({ ...mouzaForm, district_en: e.target.value })}
-                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">
+                      <Label className="block font-bold text-slate-700 mb-1">
                         {t('উপজেলা / থানা (বাংলা)*', 'Upazila (Bangla)*')}
-                      </label>
-                      <input
+                      </Label>
+                      <Input
                         type="text"
                         required
                         value={mouzaForm.upazila_bn}
                         onChange={(e) => setMouzaForm({ ...mouzaForm, upazila_bn: e.target.value })}
-                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">
+                      <Label className="block font-bold text-slate-700 mb-1">
                         {t('Upazila (English)', 'Upazila (English)')}
-                      </label>
-                      <input
+                      </Label>
+                      <Input
                         type="text"
                         value={mouzaForm.upazila_en}
                         onChange={(e) => setMouzaForm({ ...mouzaForm, upazila_en: e.target.value })}
-                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="sm:col-span-2">
-                      <label className="block font-bold text-slate-700 mb-1">
+                      <Label className="block font-bold text-slate-700 mb-1">
                         {t('মৌজার নাম (বাংলা)*', 'Mouza Name (Bangla)*')}
-                      </label>
-                      <input
+                      </Label>
+                      <Input
                         type="text"
                         required
                         value={mouzaForm.mouza_bn}
                         onChange={(e) => setMouzaForm({ ...mouzaForm, mouza_bn: e.target.value })}
                         placeholder="যেমন: সাভার মৌজা, বাড্ডা, তেজগাঁও..."
-                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">
+                      <Label className="block font-bold text-slate-700 mb-1">
                         {t('জে.এল. নম্বর*', 'J.L. Number*')}
-                      </label>
-                      <input
+                      </Label>
+                      <Input
                         type="text"
                         required
                         value={mouzaForm.jl_no}
                         onChange={(e) => setMouzaForm({ ...mouzaForm, jl_no: e.target.value })}
                         placeholder="যেমন: ১২, ৪৭..."
-                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">
+                      <Label className="block font-bold text-slate-700 mb-1">
                         {t('অক্ষাংশ (Latitude - ঐচ্ছিক)', 'Latitude (Optional)')}
-                      </label>
-                      <input
+                      </Label>
+                      <Input
                         type="number"
                         step="any"
                         value={mouzaForm.latitude}
                         onChange={(e) => setMouzaForm({ ...mouzaForm, latitude: e.target.value })}
                         placeholder="23.8510"
-                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block font-bold text-slate-700 mb-1">
+                      <Label className="block font-bold text-slate-700 mb-1">
                         {t('দ্রাঘিমাংশ (Longitude - ঐচ্ছিক)', 'Longitude (Optional)')}
-                      </label>
-                      <input
+                      </Label>
+                      <Input
                         type="number"
                         step="any"
                         value={mouzaForm.longitude}
                         onChange={(e) => setMouzaForm({ ...mouzaForm, longitude: e.target.value })}
                         placeholder="90.2600"
-                        className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                    <button
+                  <DialogFooter className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                    <Button
                       type="button"
+                      variant="outline"
                       onClick={() => setIsAddMouzaOpen(false)}
-                      className="px-4 py-2 rounded-lg border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 cursor-pointer"
+                      size="sm"
                     >
                       {t('বাতিল', 'Cancel')}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="submit"
-                      className="px-5 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00523C] text-white font-bold transition shadow-xs cursor-pointer"
+                      className="bg-[#006A4E] hover:bg-[#00523C] text-white font-bold"
+                      size="sm"
                     >
                       {editingMouza ? t('হালনাগাদ সংরক্ষণ করুন', 'Save Changes') : t('মৌজা যুক্ত করুন', 'Create Mouza')}
-                    </button>
-                  </div>
+                    </Button>
+                  </DialogFooter>
                 </form>
               </div>
-            </div>
-          )}
+            </DialogContent>
+          </Dialog>
 
           {/* CENTER POPUP MODAL: Rename Tier Modal */}
-          {renamingTierModal && (
-            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-              <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                  <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
-                    <Edit2 className="w-4 h-4 text-[#006A4E]" />
-                    <span>{t('প্রশাসনিক স্তরের নাম পরিবর্তন', 'Rename Administrative Tier')}</span>
-                  </h3>
-                  <button
-                    onClick={() => setRenamingTierModal(null)}
-                    className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer text-xs"
-                  >
-                    ✕
-                  </button>
-                </div>
+          <Dialog open={!!renamingTierModal} onOpenChange={(open) => { if (!open) setRenamingTierModal(null); }}>
+            <DialogContent className="max-w-md">
+              {renamingTierModal && (
+                <div className="space-y-4">
+                  <DialogHeader className="pb-2 border-b border-slate-100 text-left">
+                    <DialogTitle className="font-extrabold text-base text-slate-900 flex items-center gap-2">
+                      <Edit2 className="w-4 h-4 text-[#006A4E]" />
+                      <span>{t('প্রশাসনিক স্তরের নাম পরিবর্তন', 'Rename Administrative Tier')}</span>
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-slate-500">
+                      {t(
+                        'নাম পরিবর্তনের সাথে সাথে এই স্তরের অধীনস্থ সকল জেলা, উপজেলা ও মৌজার রেকর্ড স্বয়ংক্রিয়ভাবে নতুন নামে হালনাগাদ হবে।',
+                        'Renaming cascades automatically to all subordinate entities in the hierarchy.'
+                      )}
+                    </DialogDescription>
+                  </DialogHeader>
 
-                <div className="text-xs text-slate-600 p-2.5 rounded-lg bg-amber-50 border border-amber-200">
-                  <strong>{t('সতর্কতা:', 'Notice:')}</strong>{' '}
-                  {t(
-                    'নাম পরিবর্তনের সাথে সাথে এই স্তরের অধীনস্থ সকল জেলা, উপজেলা ও মৌজার রেকর্ড স্বয়ংক্রিয়ভাবে নতুন নামে হালনাগাদ হবে।',
-                    'Renaming cascades automatically to all subordinate entities in the hierarchy.'
-                  )}
-                </div>
-
-                <form onSubmit={handleSaveRenameTier} className="space-y-3 text-xs">
-                  <div>
-                    <label className="block font-bold text-slate-500 mb-1">
-                      {t('বর্তমান নাম:', 'Current Name:')}
-                    </label>
-                    <div className="font-bold text-slate-800 p-2 bg-slate-100 rounded-lg">
-                      {renamingTierModal.old_bn} ({renamingTierModal.tier})
+                  <form onSubmit={handleSaveRenameTier} className="space-y-3 text-xs">
+                    <div>
+                      <Label className="block font-bold text-slate-500 mb-1">
+                        {t('বর্তমান নাম:', 'Current Name:')}
+                      </Label>
+                      <div className="font-bold text-slate-800 p-2 bg-slate-100 rounded-lg">
+                        {renamingTierModal.old_bn} ({renamingTierModal.tier})
+                      </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="block font-bold text-slate-700 mb-1">
-                      {t('নতুন নাম (বাংলা)*', 'New Name (Bangla)*')}
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={renamingTierModal.new_bn}
-                      onChange={(e) => setRenamingTierModal({ ...renamingTierModal, new_bn: e.target.value })}
-                      className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
-                    />
-                  </div>
+                    <div>
+                      <Label className="block font-bold text-slate-700 mb-1">
+                        {t('নতুন নাম (বাংলা)*', 'New Name (Bangla)*')}
+                      </Label>
+                      <Input
+                        type="text"
+                        required
+                        value={renamingTierModal.new_bn}
+                        onChange={(e) => setRenamingTierModal({ ...renamingTierModal, new_bn: e.target.value })}
+                      />
+                    </div>
 
-                  <div>
-                    <label className="block font-bold text-slate-700 mb-1">
-                      {t('নতুন নাম (English)', 'New Name (English)')}
-                    </label>
-                    <input
-                      type="text"
-                      value={renamingTierModal.new_en}
-                      onChange={(e) => setRenamingTierModal({ ...renamingTierModal, new_en: e.target.value })}
-                      className="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-1 focus:ring-[#006A4E] focus:outline-none"
-                    />
-                  </div>
+                    <div>
+                      <Label className="block font-bold text-slate-700 mb-1">
+                        {t('নতুন নাম (English)', 'New Name (English)')}
+                      </Label>
+                      <Input
+                        type="text"
+                        value={renamingTierModal.new_en}
+                        onChange={(e) => setRenamingTierModal({ ...renamingTierModal, new_en: e.target.value })}
+                      />
+                    </div>
 
-                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                    <button
-                      type="button"
-                      onClick={() => setRenamingTierModal(null)}
-                      className="px-4 py-2 rounded-lg border border-slate-300 text-slate-600 font-bold hover:bg-slate-50 cursor-pointer"
-                    >
-                      {t('বাতিল', 'Cancel')}
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-5 py-2 rounded-lg bg-[#006A4E] hover:bg-[#00523C] text-white font-bold transition shadow-xs cursor-pointer"
-                    >
-                      {t('পরিবর্তন সংরক্ষণ করুন', 'Confirm Rename')}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
+                    <DialogFooter className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setRenamingTierModal(null)}
+                        size="sm"
+                      >
+                        {t('বাতিল', 'Cancel')}
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="bg-[#006A4E] hover:bg-[#00523C] text-white font-bold"
+                        size="sm"
+                      >
+                        {t('পরিবর্তন সংরক্ষণ করুন', 'Confirm Rename')}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
             </>
           )}
         </div>
@@ -6854,225 +6973,222 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
           </div>
 
           {/* MODAL 1: EDIT / CREATE SERVICE */}
-          {editingService && (
-            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <h3 className="font-bold text-base text-[#074f38] flex items-center gap-2">
-                    <BookOpen className="w-5 h-5 text-[#006A4E]" />
-                    <span>
-                      {editingService.id
-                        ? t('সেবা তথ্য সম্পাদনা করুন', 'Edit Service Information')
-                        : t('নতুন সেবা যুক্তকরণ', 'Add New Official Service')}
-                    </span>
-                  </h3>
-                  <button
-                    onClick={() => setEditingService(null)}
-                    className="text-slate-400 hover:text-slate-700 text-sm font-bold cursor-pointer"
-                  >
-                    ✕
-                  </button>
+          <Dialog open={!!editingService} onOpenChange={(open) => { if (!open) setEditingService(null); }}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              {editingService && (
+                <div className="space-y-4">
+                  <DialogHeader className="border-b border-slate-100 pb-3 text-left">
+                    <DialogTitle className="font-bold text-base text-[#074f38] flex items-center gap-2">
+                      <BookOpen className="w-5 h-5 text-[#006A4E]" />
+                      <span>
+                        {editingService.id
+                          ? t('সেবা তথ্য সম্পাদনা করুন', 'Edit Service Information')
+                          : t('নতুন সেবা যুক্তকরণ', 'Add New Official Service')}
+                      </span>
+                    </DialogTitle>
+                    <DialogDescription className="text-xs text-slate-500">
+                      {t('নাগরিক সেবার বিস্তারিত বিবরণ, ক্যাটাগরি ও পোর্টাল লিংক নির্ধারণ করুন', 'Configure citizen service metadata, category, and official portal URL')}
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <form onSubmit={handleSaveService} className="space-y-3.5 text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="font-bold text-slate-700 block mb-1">
+                          সার্ভিস কোড (Service Code) *
+                        </Label>
+                        <Input
+                          type="text"
+                          disabled={Boolean(editingService.id)}
+                          value={editingService.service_code || ''}
+                          onChange={(e) =>
+                            setEditingService({ ...editingService, service_code: e.target.value.toUpperCase() })
+                          }
+                          placeholder="MUTATION_ACLAND"
+                          className="font-mono font-bold"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label className="font-bold text-slate-700 block mb-1">
+                          ক্যাটাগরি (Category) *
+                        </Label>
+                        <select
+                          value={editingService.category || 'REVENUE_MUTATION'}
+                          onChange={(e) => setEditingService({ ...editingService, category: e.target.value })}
+                          className="w-full p-2 rounded-lg border border-slate-300 font-bold bg-white text-xs"
+                        >
+                          <option value="REVENUE_MUTATION">নামজারি ও রাজস্ব (REVENUE_MUTATION)</option>
+                          <option value="RECORD_MAPS">খতিয়ান ও মৌজা ম্যাপ (RECORD_MAPS)</option>
+                          <option value="LAND_REGISTRATION">দলিল ও রেজিস্ট্রি (LAND_REGISTRATION)</option>
+                          <option value="FINANCE_MORTGAGE">ব্যাংক বন্ধক (FINANCE_MORTGAGE)</option>
+                          <option value="DISPUTE_CITIZEN">নাগরিক বিরোধ (DISPUTE_CITIZEN)</option>
+                          <option value="HELPLINE_INFO">সহায়িকা ও হেল্পলাইন (HELPLINE_INFO)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="font-bold text-slate-700 block mb-1">
+                          শিরোনাম (বাংলা) *
+                        </Label>
+                        <Input
+                          type="text"
+                          value={editingService.title_bn || ''}
+                          onChange={(e) => setEditingService({ ...editingService, title_bn: e.target.value })}
+                          placeholder="ই-নামজারি আবেদন"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label className="font-bold text-slate-700 block mb-1">
+                          শিরোনাম (ইংরেজি)
+                        </Label>
+                        <Input
+                          type="text"
+                          value={editingService.title_en || ''}
+                          onChange={(e) => setEditingService({ ...editingService, title_en: e.target.value })}
+                          placeholder="Online e-Mutation"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="font-bold text-slate-700 block mb-1">
+                        সংক্ষিপ্ত বিবরণী (বাংলা)
+                      </Label>
+                      <Textarea
+                        rows={2}
+                        value={editingService.description_bn || ''}
+                        onChange={(e) => setEditingService({ ...editingService, description_bn: e.target.value })}
+                        placeholder="সেবার সারসংক্ষেপ ও নির্দেশিকা..."
+                        className="w-full text-xs"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <Label className="font-bold text-slate-700 block mb-1">
+                          সেবার ধরন (Type)
+                        </Label>
+                        <select
+                          value={editingService.service_type || 'EXTERNAL_OFFICIAL'}
+                          onChange={(e) =>
+                            setEditingService({ ...editingService, service_type: e.target.value as any })
+                          }
+                          className="w-full p-2 rounded-lg border border-slate-300 font-bold bg-white text-xs"
+                        >
+                          <option value="EXTERNAL_OFFICIAL">বহিস্থ সরকারি পোর্টাল (EXTERNAL_OFFICIAL)</option>
+                          <option value="INTERNAL_FEATURE">অভ্যন্তরীণ ফিচার (INTERNAL_FEATURE)</option>
+                          <option value="HYBRID_GUIDANCE">গাইডেন্স ও নির্দেশিকা (HYBRID_GUIDANCE)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label className="font-bold text-slate-700 block mb-1">
+                          অভ্যন্তরীণ রুট (যদি থাকে)
+                        </Label>
+                        <Input
+                          type="text"
+                          value={editingService.internal_route || ''}
+                          onChange={(e) => setEditingService({ ...editingService, internal_route: e.target.value })}
+                          placeholder="check, qr, home"
+                          className="font-mono"
+                        />
+                      </div>
+                      <div>
+                        <Label className="font-bold text-slate-700 block mb-1">
+                          প্রদর্শন ক্রম (Order)
+                        </Label>
+                        <Input
+                          type="number"
+                          value={editingService.display_order ?? 10}
+                          onChange={(e) =>
+                            setEditingService({ ...editingService, display_order: Number(e.target.value) })
+                          }
+                          className="font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="font-bold text-slate-700 block mb-1">
+                          বহিস্থ সরকারি URL (HTTPS বাধ্যতামূলক)
+                        </Label>
+                        <Input
+                          type="url"
+                          value={editingService.external_url || ''}
+                          onChange={(e) => setEditingService({ ...editingService, external_url: e.target.value })}
+                          placeholder="https://mutation.land.gov.bd"
+                          className="font-mono"
+                        />
+                      </div>
+                      <div>
+                        <Label className="font-bold text-slate-700 block mb-1">
+                          উৎস / গেজেট URL (HTTPS বাধ্যতামূলক)
+                        </Label>
+                        <Input
+                          type="url"
+                          value={editingService.source_url || ''}
+                          onChange={(e) => setEditingService({ ...editingService, source_url: e.target.value })}
+                          placeholder="https://minland.gov.bd"
+                          className="font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <Label className="font-bold text-slate-700 block mb-1">
+                          কর্তৃপক্ষের নাম (বাংলা)
+                        </Label>
+                        <Input
+                          type="text"
+                          value={editingService.authority_name_bn || ''}
+                          onChange={(e) =>
+                            setEditingService({ ...editingService, authority_name_bn: e.target.value })
+                          }
+                          placeholder="উপজেলা ভূমি অফিস (এসি ল্যান্ড)"
+                        />
+                      </div>
+                      <div>
+                        <Label className="font-bold text-slate-700 block mb-1">
+                          কর্তৃপক্ষের নাম (ইংরেজি)
+                        </Label>
+                        <Input
+                          type="text"
+                          value={editingService.authority_name_en || ''}
+                          onChange={(e) =>
+                            setEditingService({ ...editingService, authority_name_en: e.target.value })
+                          }
+                          placeholder="Upazila Land Office"
+                        />
+                      </div>
+                    </div>
+
+                    <DialogFooter className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setEditingService(null)}
+                        size="sm"
+                      >
+                        {t('বাতিল', 'Cancel')}
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="bg-[#006A4E] hover:bg-[#00553e] text-white font-bold"
+                        size="sm"
+                      >
+                        {t('সংরক্ষণ করুন', 'Save Service Record')}
+                      </Button>
+                    </DialogFooter>
+                  </form>
                 </div>
-
-                <form onSubmit={handleSaveService} className="space-y-3.5 text-xs">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">
-                        সার্ভিস কোড (Service Code) *
-                      </label>
-                      <input
-                        type="text"
-                        disabled={Boolean(editingService.id)}
-                        value={editingService.service_code || ''}
-                        onChange={(e) =>
-                          setEditingService({ ...editingService, service_code: e.target.value.toUpperCase() })
-                        }
-                        placeholder="MUTATION_ACLAND"
-                        className="field font-mono font-bold"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">
-                        ক্যাটাগরি (Category) *
-                      </label>
-                      <select
-                        value={editingService.category || 'REVENUE_MUTATION'}
-                        onChange={(e) => setEditingService({ ...editingService, category: e.target.value })}
-                        className="field font-bold"
-                      >
-                        <option value="REVENUE_MUTATION">নামজারি ও রাজস্ব (REVENUE_MUTATION)</option>
-                        <option value="RECORD_MAPS">খতিয়ান ও মৌজা ম্যাপ (RECORD_MAPS)</option>
-                        <option value="LAND_REGISTRATION">দলিল ও রেজিস্ট্রি (LAND_REGISTRATION)</option>
-                        <option value="FINANCE_MORTGAGE">ব্যাংক বন্ধক (FINANCE_MORTGAGE)</option>
-                        <option value="DISPUTE_CITIZEN">নাগরিক বিরোধ (DISPUTE_CITIZEN)</option>
-                        <option value="HELPLINE_INFO">সহায়িকা ও হেল্পলাইন (HELPLINE_INFO)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">
-                        শিরোনাম (বাংলা) *
-                      </label>
-                      <input
-                        type="text"
-                        value={editingService.title_bn || ''}
-                        onChange={(e) => setEditingService({ ...editingService, title_bn: e.target.value })}
-                        placeholder="ই-নামজারি আবেদন"
-                        className="field"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">
-                        শিরোনাম (ইংরেজি)
-                      </label>
-                      <input
-                        type="text"
-                        value={editingService.title_en || ''}
-                        onChange={(e) => setEditingService({ ...editingService, title_en: e.target.value })}
-                        placeholder="Online e-Mutation"
-                        className="field"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="font-bold text-slate-700 block mb-1">
-                      সংক্ষিপ্ত বিবরণী (বাংলা)
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={editingService.description_bn || ''}
-                      onChange={(e) => setEditingService({ ...editingService, description_bn: e.target.value })}
-                      placeholder="সেবার সারসংক্ষেপ ও নির্দেশিকা..."
-                      className="field"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">
-                        সেবার ধরন (Type)
-                      </label>
-                      <select
-                        value={editingService.service_type || 'EXTERNAL_OFFICIAL'}
-                        onChange={(e) =>
-                          setEditingService({ ...editingService, service_type: e.target.value as any })
-                        }
-                        className="field font-bold"
-                      >
-                        <option value="EXTERNAL_OFFICIAL">বহিস্থ সরকারি পোর্টাল (EXTERNAL_OFFICIAL)</option>
-                        <option value="INTERNAL_FEATURE">অভ্যন্তরীণ ফিচার (INTERNAL_FEATURE)</option>
-                        <option value="HYBRID_GUIDANCE">গাইডেন্স ও নির্দেশিকা (HYBRID_GUIDANCE)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">
-                        অভ্যন্তরীণ রুট (যদি থাকে)
-                      </label>
-                      <input
-                        type="text"
-                        value={editingService.internal_route || ''}
-                        onChange={(e) => setEditingService({ ...editingService, internal_route: e.target.value })}
-                        placeholder="check, qr, home"
-                        className="field font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">
-                        প্রদর্শন ক্রম (Order)
-                      </label>
-                      <input
-                        type="number"
-                        value={editingService.display_order ?? 10}
-                        onChange={(e) =>
-                          setEditingService({ ...editingService, display_order: Number(e.target.value) })
-                        }
-                        className="field font-mono"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">
-                        বহিস্থ সরকারি URL (HTTPS বাধ্যতামূলক)
-                      </label>
-                      <input
-                        type="url"
-                        value={editingService.external_url || ''}
-                        onChange={(e) => setEditingService({ ...editingService, external_url: e.target.value })}
-                        placeholder="https://mutation.land.gov.bd"
-                        className="field font-mono"
-                      />
-                    </div>
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">
-                        উৎস / গেজেট URL (HTTPS বাধ্যতামূলক)
-                      </label>
-                      <input
-                        type="url"
-                        value={editingService.source_url || ''}
-                        onChange={(e) => setEditingService({ ...editingService, source_url: e.target.value })}
-                        placeholder="https://minland.gov.bd"
-                        className="field font-mono"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">
-                        কর্তৃপক্ষের নাম (বাংলা)
-                      </label>
-                      <input
-                        type="text"
-                        value={editingService.authority_name_bn || ''}
-                        onChange={(e) =>
-                          setEditingService({ ...editingService, authority_name_bn: e.target.value })
-                        }
-                        placeholder="উপজেলা ভূমি অফিস (এসি ল্যান্ড)"
-                        className="field"
-                      />
-                    </div>
-                    <div>
-                      <label className="font-bold text-slate-700 block mb-1">
-                        কর্তৃপক্ষের নাম (ইংরেজি)
-                      </label>
-                      <input
-                        type="text"
-                        value={editingService.authority_name_en || ''}
-                        onChange={(e) =>
-                          setEditingService({ ...editingService, authority_name_en: e.target.value })
-                        }
-                        placeholder="Upazila Land Office"
-                        className="field"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setEditingService(null)}
-                      className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-bold hover:bg-slate-50 cursor-pointer min-h-[36px]"
-                    >
-                      {t('বাতিল', 'Cancel')}
-                    </button>
-                    <button
-                      type="submit"
-                      className="btn-primary text-xs font-bold cursor-pointer min-h-[36px]"
-                    >
-                      {t('সংরক্ষণ করুন', 'Save Service Record')}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
+              )}
+            </DialogContent>
+          </Dialog>
 
           {/* MODAL 2: EDIT FEE & SNAPSHOT VERSION */}
           {editingFee && (
@@ -7380,70 +7496,262 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
 
       {/* TAB 5: Site Settings & Rules Engine Configuration */}
       {subTab === 'settings' && (
-        <div className="panel p-6 space-y-5">
-          <div>
-            <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
-              <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
-                {t('কন্ট্রোল প্যানেল', 'Control Panel')}
-              </button>
-              <span>/</span>
-              <span className="text-[#006A4E] font-extrabold">{t('সিস্টেম পলিসি ও নোটিশ', 'System Policy Settings')}</span>
-            </div>
-            <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
-              <Settings className="w-5 h-5 text-[#006A4E]" />
-              <span>
-                {t(
-                  'সিস্টেম কনফিগারেশন, RBAC পলিসি ও জালিয়াতি রুল ইঞ্জিন থ্রেশহোল্ড',
-                  'System Policy Configuration, RBAC Enforcement & Rules Engine Thresholds'
-                )}
-              </span>
-            </h2>
-          </div>
-
-          {saveMsg && (
-            <div className="p-4 rounded-xl bg-[#EDF7F4] text-[#006A4E] font-bold text-xs">
-              {saveMsg}
-            </div>
-          )}
-
-          <form onSubmit={handleSaveSettings} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {settingsList.map((st) => (
-                <div
-                  key={st.setting_key || st.key}
-                  className="p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12"
-                >
-                  <label className="block font-bold text-xs text-[#0A1F1C] mb-1">
-                    {lang === 'bn' ? st.label_bn || st.description_bn : st.label_en || st.description_en}
-                  </label>
-                  <div className="text-[11px] font-mono text-[#5F7A74]/80 mb-2">
-                    {st.setting_key || st.key}
-                  </div>
-                  <input
-                    type="text"
-                    value={
-                      settingsMap[st.setting_key || st.key] ??
-                      st.setting_value ??
-                      String(st.value ?? '')
-                    }
-                    onChange={(e) =>
-                      setSettingsMap({
-                        ...settingsMap,
-                        [st.setting_key || st.key]: e.target.value,
-                      })
-                    }
-                    className="w-full p-2 rounded-lg bg-white border border-[#006A4E]/20 text-xs font-semibold"
-                  />
+        <div className="space-y-6">
+          {/* A. DYNAMIC QUICK USEFUL LINKS MENU MANAGER */}
+          <Card className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <Badge className="bg-emerald-100 text-[#006A4E] hover:bg-emerald-100 font-bold text-xs">
+                    {t('ডায়নামিক নেভিগেশন', 'Dynamic Navigation')}
+                  </Badge>
+                  <h3 className="text-base font-black text-slate-900">
+                    {t('জরুরি সেবা ও কুইক লিংক মেনু সেটিংস', 'Quick Useful Services Menu Settings')}
+                  </h3>
                 </div>
-              ))}
+                <p className="text-xs text-slate-500 mt-1">
+                  {t(
+                    'হোমপেজ ও নিচের ফ্লোটিং ডকে প্রদর্শিত জরুরি সেবার লিংকসমূহ এখান থেকে ইচ্ছামতো পরিবর্তন, চালু/বন্ধ বা নতুন লিংক যুক্ত করুন।',
+                    'Dynamically manage and reorder the useful service links displayed on the homepage floating dock.'
+                  )}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRestoreDefaultQuickLinks}
+                  className="text-xs font-bold border-slate-200 hover:bg-slate-100"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                  <span>{t('ডিফল্ট সেট করুন', 'Reset Defaults')}</span>
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleAddQuickLink}
+                  className="bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  <span>{t('নতুন লিংক যোগ', 'Add Link')}</span>
+                </Button>
+              </div>
             </div>
-            <button
-              type="submit"
-              className="btn-primary text-xs cursor-pointer min-h-[40px]"
-            >
-              {t('পলিসি সংরক্ষণ করুন', 'Save System Policies')}
-            </button>
-          </form>
+
+            {quickLinksSaveMsg && (
+              <div className="mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-[#006A4E] font-bold text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{quickLinksSaveMsg}</span>
+              </div>
+            )}
+
+            {/* Quick Links Table with Fixed Header & Scrollable List */}
+            <div className="mt-4 overflow-auto max-h-[360px] scrollbar-thin rounded-2xl border border-slate-200">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50 hover:bg-slate-50 text-xs">
+                    <TableHead className="w-16 font-bold text-slate-700">{t('অবস্থা', 'Active')}</TableHead>
+                    <TableHead className="font-bold text-slate-700">{t('বাংলা নাম (Label BN)', 'Bangla Label')}</TableHead>
+                    <TableHead className="font-bold text-slate-700">{t('ইংরেজি নাম (Label EN)', 'English Label')}</TableHead>
+                    <TableHead className="font-bold text-slate-700">{t('গন্তব্য রুট (Target Route)', 'Target Route')}</TableHead>
+                    <TableHead className="font-bold text-slate-700">{t('ব্যাজ (Badge)', 'Badge')}</TableHead>
+                    <TableHead className="text-right font-bold text-slate-700">{t('অ্যাকশন', 'Actions')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {quickLinksMenu.map((item, idx) => (
+                    <TableRow key={item.id || idx} className="hover:bg-slate-50/50">
+                      <TableCell>
+                        <Switch
+                          checked={item.is_active !== false}
+                          onCheckedChange={() => handleToggleQuickLink(idx)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={item.label_bn || ''}
+                          onChange={(e) => handleUpdateQuickLinkField(idx, 'label_bn', e.target.value)}
+                          className="h-8 text-xs font-bold rounded-lg border-slate-300 w-36"
+                          placeholder="বাংলা নাম"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={item.label_en || ''}
+                          onChange={(e) => handleUpdateQuickLinkField(idx, 'label_en', e.target.value)}
+                          className="h-8 text-xs rounded-lg border-slate-300 w-36"
+                          placeholder="English Label"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <Select
+                            value={['landing', 'check', 'qr', 'map', 'sale', 'notices', 'blog', 'offices', 'help', 'auth', 'home'].includes(item.target) ? item.target : 'custom'}
+                            onValueChange={(val) => {
+                              if (val !== 'custom') handleUpdateQuickLinkField(idx, 'target', val);
+                            }}
+                          >
+                            <SelectTrigger className="h-8 text-xs rounded-lg border-slate-300 w-32 bg-white">
+                              <SelectValue placeholder="রুট বাছুন" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="landing">হোম (landing)</SelectItem>
+                              <SelectItem value="check">জমি যাচাই (check)</SelectItem>
+                              <SelectItem value="qr">দলিল স্ক্যান (qr)</SelectItem>
+                              <SelectItem value="map">মৌজা নকশা (map)</SelectItem>
+                              <SelectItem value="sale">নিরাপদ বাজার (sale)</SelectItem>
+                              <SelectItem value="notices">নোটিশবোর্ড (notices)</SelectItem>
+                              <SelectItem value="blog">ভূমি সহায়িকা (blog)</SelectItem>
+                              <SelectItem value="offices">অফিস সন্ধান (offices)</SelectItem>
+                              <SelectItem value="help">সহায়তা ১৬১২২ (help)</SelectItem>
+                              <SelectItem value="auth">লগইন / নিবন্ধন (auth)</SelectItem>
+                              <SelectItem value="home">নাগরিক ভল্ট (home)</SelectItem>
+                              <SelectItem value="custom">কাস্টম রুট (custom)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {!['landing', 'check', 'qr', 'map', 'sale', 'notices', 'blog', 'offices', 'help', 'auth', 'home'].includes(item.target) && (
+                            <Input
+                              value={item.target || ''}
+                              onChange={(e) => handleUpdateQuickLinkField(idx, 'target', e.target.value)}
+                              className="h-8 text-xs rounded-lg border-slate-300 w-28"
+                              placeholder="route name"
+                            />
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={item.badge_bn || ''}
+                          onChange={(e) => handleUpdateQuickLinkField(idx, 'badge_bn', e.target.value)}
+                          className="h-8 text-xs rounded-lg border-slate-300 w-24"
+                          placeholder="ব্যাজ (ঐচ্ছিক)"
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={idx === 0}
+                            onClick={() => handleMoveQuickLink(idx, 'up')}
+                            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900"
+                            title="উপরে নিন"
+                          >
+                            ↑
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={idx === quickLinksMenu.length - 1}
+                            onClick={() => handleMoveQuickLink(idx, 'down')}
+                            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-900"
+                            title="নিচে নিন"
+                          >
+                            ↓
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteQuickLink(idx)}
+                            className="h-7 w-7 p-0 text-rose-500 hover:text-rose-700 hover:bg-rose-50"
+                            title="মুছে ফেলুন"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <Button
+                type="button"
+                onClick={handleSaveQuickLinks}
+                className="bg-[#006A4E] hover:bg-[#00553e] text-white font-bold text-xs h-10 px-6 rounded-xl shadow-xs"
+              >
+                <Check className="w-4 h-4 mr-1.5" />
+                <span>{t('কুইক লিংক মেনু সংরক্ষণ করুন', 'Save Quick Links Menu')}</span>
+              </Button>
+            </div>
+          </Card>
+
+          {/* B. GENERAL SYSTEM POLICY SETTINGS */}
+          <div className="panel p-6 space-y-5">
+            <div>
+              <div className="text-xs font-bold text-slate-500 flex items-center gap-1.5 mb-1.5">
+                <button onClick={() => handleTabChange('overview')} className="hover:text-[#006A4E] transition cursor-pointer">
+                  {t('কন্ট্রোল প্যানেল', 'Control Panel')}
+                </button>
+                <span>/</span>
+                <span className="text-[#006A4E] font-extrabold">{t('সিস্টেম পলিসি ও নোটিশ', 'System Policy Settings')}</span>
+              </div>
+              <h2 className="font-bold text-lg text-[#074f38] flex items-center gap-2">
+                <Settings className="w-5 h-5 text-[#006A4E]" />
+                <span>
+                  {t(
+                    'সিস্টেম কনফিগারেশন, RBAC পলিসি ও জালিয়াতি রুল ইঞ্জিন থ্রেশহোল্ড',
+                    'System Policy Configuration, RBAC Enforcement & Rules Engine Thresholds'
+                  )}
+                </span>
+              </h2>
+            </div>
+
+            {saveMsg && (
+              <div className="p-4 rounded-xl bg-[#EDF7F4] text-[#006A4E] font-bold text-xs">
+                {saveMsg}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveSettings} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {settingsList
+                  .filter((st) => (st.setting_key || st.key) !== 'quick_links_menu')
+                  .map((st) => (
+                    <div
+                      key={st.setting_key || st.key}
+                      className="p-4 rounded-xl bg-[#EDF7F4]/80 border border-[#006A4E]/12"
+                    >
+                      <label className="block font-bold text-xs text-[#0A1F1C] mb-1">
+                        {lang === 'bn' ? st.label_bn || st.description_bn : st.label_en || st.description_en}
+                      </label>
+                      <div className="text-[11px] font-mono text-[#5F7A74]/80 mb-2">
+                        {st.setting_key || st.key}
+                      </div>
+                      <input
+                        type="text"
+                        value={
+                          settingsMap[st.setting_key || st.key] ??
+                          st.setting_value ??
+                          String(st.value ?? '')
+                        }
+                        onChange={(e) =>
+                          setSettingsMap({
+                            ...settingsMap,
+                            [st.setting_key || st.key]: e.target.value,
+                          })
+                        }
+                        className="w-full p-2 rounded-lg bg-white border border-[#006A4E]/20 text-xs font-semibold"
+                      />
+                    </div>
+                  ))}
+              </div>
+              <button
+                type="submit"
+                className="btn-primary text-xs cursor-pointer min-h-[40px]"
+              >
+                {t('পলিসি সংরক্ষণ করুন', 'Save System Policies')}
+              </button>
+            </form>
+          </div>
         </div>
       )}
 

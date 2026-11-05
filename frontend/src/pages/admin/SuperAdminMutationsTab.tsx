@@ -19,6 +19,27 @@ import {
 import { toBanglaDigits } from '../../theme/tokens';
 import { useAppUI } from '../../i18n';
 import { BhumiApi } from '../../api/client';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from '@/components/ui/table';
 
 interface SuperAdminMutationsTabProps {
   mutations: any[];
@@ -157,72 +178,74 @@ export const SuperAdminMutationsTab: React.FC<SuperAdminMutationsTabProps> = ({
       {/* Filter and Search Bar */}
       <div className="p-4 bg-white border border-slate-200/80 rounded-2xl shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-          <input
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 z-10" />
+          <Input
             type="text"
             placeholder={t('কেস নং, দলিল নং, দাগ, মৌজা বা পক্ষ দিয়ে খুঁজুন...', 'Search by case no, deed no, dag, mouza, or party...')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+            className="pl-9 h-9 text-xs"
           />
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           {[
             { key: 'ALL', label_bn: 'সকল নামজারি', label_en: 'All' },
             { key: 'PENDING', label_bn: 'অনুমোদনের অপেক্ষায়', label_en: 'Pending' },
             { key: 'APPROVED', label_bn: 'অনুমোদিত ডিক্রি', label_en: 'Approved' },
             { key: 'REJECTED', label_bn: 'খারিজকৃত আবেদন', label_en: 'Rejected' },
           ].map((st) => (
-            <button
+            <Button
               key={st.key}
               type="button"
+              size="sm"
+              variant={statusFilter === st.key ? 'default' : 'outline'}
               onClick={() => setStatusFilter(st.key)}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+              className={`h-7 px-3 text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                 statusFilter === st.key
-                  ? 'bg-[#006A4E] text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-[#006A4E] text-white hover:bg-[#00553e]'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border-transparent'
               }`}
             >
               {lang === 'bn' ? st.label_bn : st.label_en}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
       {/* Main Table */}
       <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-50 border-b border-slate-200/80 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
-              <tr>
-                <th className="px-4 py-3">{t('নামজারি কেস নং', 'Mutation Case No')}</th>
-                <th className="px-4 py-3">{t('মৌজা ও দাগ', 'Mouza & Dag')}</th>
-                <th className="px-4 py-3">{t('জমির পরিমাণ', 'Land Area')}</th>
-                <th className="px-4 py-3">{t('বিক্রেতা ও ক্রেতা', 'Seller & Buyer')}</th>
-                <th className="px-4 py-3">{t('অবস্থা', 'Status')}</th>
-                <th className="px-4 py-3 text-right">{t('অ্যাকশন', 'Actions')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
+        <div className="overflow-auto max-h-[calc(100vh-280px)] min-h-[300px] scrollbar-thin">
+          <Table>
+            <TableHeader className="bg-slate-50 border-b border-slate-200/80">
+              <TableRow>
+                <TableHead className="px-4 py-3 text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('নামজারি কেস নং', 'Mutation Case No')}</TableHead>
+                <TableHead className="px-4 py-3 text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('মৌজা ও দাগ', 'Mouza & Dag')}</TableHead>
+                <TableHead className="px-4 py-3 text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('জমির পরিমাণ', 'Land Area')}</TableHead>
+                <TableHead className="px-4 py-3 text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('বিক্রেতা ও ক্রেতা', 'Seller & Buyer')}</TableHead>
+                <TableHead className="px-4 py-3 text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('অবস্থা', 'Status')}</TableHead>
+                <TableHead className="px-4 py-3 text-right text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('অ্যাকশন', 'Actions')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-slate-100">
               {filteredMutations.length > 0 ? (
                 filteredMutations.map((m) => (
-                  <tr key={m.id} className="hover:bg-slate-50/70 transition">
-                    <td className="px-4 py-3 font-mono font-bold text-slate-900">
+                  <TableRow key={m.id} className="hover:bg-slate-50/70 transition">
+                    <TableCell className="px-4 py-3 font-mono font-bold text-slate-900">
                       <span className="text-[#006A4E]">{m.case_no}</span>
                       <div className="text-[10px] text-slate-400 font-sans mt-0.5">
                         {t('দলিল নং: ', 'Deed No: ')}{m.deed_no || 'N/A'}
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <div className="font-bold text-slate-900">
                         {t('দাগ: ', 'Dag: ')}{toBanglaDigits(m.dag_no_bn || m.dag_no, lang)}
                       </div>
                       <div className="text-[10px] text-slate-500">
                         {m.mouza_bn || 'বিরুলিয়া'}, {m.upazila_bn || 'সাভার'}
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <div className="font-bold text-slate-900">
                         {toBanglaDigits(m.area_decimal || 0, lang)} {t('শতাংশ', 'Decimal')}
                       </div>
@@ -231,8 +254,8 @@ export const SuperAdminMutationsTab: React.FC<SuperAdminMutationsTabProps> = ({
                           {t('অংশ: ', 'Share: ')}{m.share_fraction}
                         </div>
                       )}
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       <div className="text-slate-900 font-medium">
                         <span className="text-slate-500 text-[10px]">{t('ক্রেতা: ', 'Buyer: ')}</span>
                         <span className="font-bold">{m.buyer_name_bn || 'ক্রেতা'}</span>
@@ -241,82 +264,83 @@ export const SuperAdminMutationsTab: React.FC<SuperAdminMutationsTabProps> = ({
                         <span className="text-[10px]">{t('বিক্রেতা: ', 'Seller: ')}</span>
                         <span>{m.seller_name_bn || 'বিক্রেতা'}</span>
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       {m.status === 'APPROVED' ? (
-                        <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-[#006A4E] flex items-center gap-1 w-fit">
+                        <Badge className="bg-emerald-100 text-[#006A4E] hover:bg-emerald-200 border-emerald-200 text-[11px] font-bold gap-1">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           <span>{t('অনুমোদিত', 'Approved')}</span>
-                        </span>
+                        </Badge>
                       ) : m.status === 'REJECTED' ? (
-                        <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 flex items-center gap-1 w-fit">
+                        <Badge className="bg-rose-100 text-rose-800 hover:bg-rose-200 border-rose-200 text-[11px] font-bold gap-1">
                           <XOctagon className="w-3.5 h-3.5" />
                           <span>{t('খারিজকৃত', 'Rejected')}</span>
-                        </span>
+                        </Badge>
                       ) : (
-                        <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 flex items-center gap-1 w-fit">
+                        <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200 text-[11px] font-bold gap-1">
                           <Clock className="w-3.5 h-3.5" />
                           <span>{t('অনুমোদনের অপেক্ষায়', 'Pending Review')}</span>
-                        </span>
+                        </Badge>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-right">
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button
+                        <Button
                           type="button"
+                          variant="outline"
+                          size="sm"
                           onClick={() => setSelectedMutation(m)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 flex items-center gap-1 cursor-pointer transition shadow-2xs"
+                          className="h-7 text-xs font-bold gap-1 shadow-2xs"
                         >
                           <ShieldAlert className="w-3.5 h-3.5 text-amber-600" />
                           <span>{t('ঝুঁকি রিপোর্ট', 'Risk Report')}</span>
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          size="sm"
                           onClick={() => handleOpenReconcile(m)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[#006A4E] flex items-center gap-1 cursor-pointer transition shadow-2xs"
+                          className="h-7 text-xs font-bold bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[#006A4E] gap-1 shadow-2xs"
                         >
                           <RotateCcw className="w-3.5 h-3.5 text-[#006A4E]" />
                           <span>{t('খতিয়ান সমন্বয়', 'Reconcile')}</span>
-                        </button>
+                        </Button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-slate-400">
+                <TableRow>
+                  <TableCell colSpan={6} className="px-4 py-12 text-center text-slate-400">
                     <FileSpreadsheet className="w-8 h-8 mx-auto mb-2 text-slate-300" />
                     <p className="font-bold">{t('কোনো নামজারি কেস পাওয়া যায়নি।', 'No mutation cases found.')}</p>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </div>
 
       {/* Risk Report Modal */}
-      {selectedMutation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="bg-slate-900 px-6 py-4 flex items-center justify-between text-white border-b border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
-                  <ShieldCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black tracking-tight">{t('স্বয়ংক্রিয় ঝুঁকি ও স্বত্ব বিশ্লেষণ রিপোর্ট', 'Automated Fraud & Title Risk Report')}</h3>
-                  <p className="text-xs text-slate-400">{selectedMutation.case_no}</p>
-                </div>
+      <Dialog open={!!selectedMutation} onOpenChange={(open) => !open && setSelectedMutation(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 border-slate-200 shadow-2xl">
+          <DialogHeader className="bg-slate-900 px-6 py-4 flex flex-row items-center justify-between text-white border-b border-slate-800 space-y-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-5 h-5" />
               </div>
-              <button
-                onClick={() => setSelectedMutation(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div>
+                <DialogTitle className="text-base font-black tracking-tight text-white">
+                  {t('স্বয়ংক্রিয় ঝুঁকি ও স্বত্ব বিশ্লেষণ রিপোর্ট', 'Automated Fraud & Title Risk Report')}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-400 mt-0.5">
+                  {selectedMutation?.case_no}
+                </DialogDescription>
+              </div>
             </div>
+          </DialogHeader>
 
+          {selectedMutation && (
             <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-700">
               <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl flex items-center justify-between">
                 <div>
@@ -327,9 +351,9 @@ export const SuperAdminMutationsTab: React.FC<SuperAdminMutationsTabProps> = ({
                       : t('সতর্কতা: উচ্চ ঝুঁকি শনাক্ত হয়েছে', 'High Risk Detected')}
                   </div>
                 </div>
-                <div className="px-3 py-1 rounded-full text-xs font-black bg-[#006A4E] text-white">
+                <Badge className="px-3 py-1 text-xs font-black bg-[#006A4E] text-white hover:bg-[#00553e]">
                   SCORE: {selectedMutation.risk_report?.risk_score ?? '100/100'}
-                </div>
+                </Badge>
               </div>
 
               {/* 5-Pillar Checklist */}
@@ -374,98 +398,98 @@ export const SuperAdminMutationsTab: React.FC<SuperAdminMutationsTabProps> = ({
                 </div>
               </div>
             </div>
+          )}
 
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setSelectedMutation(null)}
-                className="px-4 py-2 rounded-lg font-bold border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-              >
-                {t('বন্ধ করুন', 'Close')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          <DialogFooter className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSelectedMutation(null)}
+              className="font-bold text-xs"
+            >
+              {t('বন্ধ করুন', 'Close')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Khatian Reconcile Modal */}
-      {reconcileModalOpen && reconcileTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden">
-            <div className="bg-slate-900 px-6 py-4 flex items-center justify-between text-white border-b border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                  <RotateCcw className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-black tracking-tight">{t('খতিয়ান রেকর্ডস সমন্বয় ও সংশোধন', 'Reconcile Khatian Record')}</h3>
-                  <p className="text-xs text-slate-400">{reconcileTarget.case_no}</p>
-                </div>
+      <Dialog open={reconcileModalOpen && !!reconcileTarget} onOpenChange={(open) => !open && setReconcileModalOpen(false)}>
+        <DialogContent className="max-w-lg overflow-hidden flex flex-col p-0 gap-0 border-slate-200 shadow-2xl">
+          <DialogHeader className="bg-slate-900 px-6 py-4 flex flex-row items-center justify-between text-white border-b border-slate-800 space-y-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <RotateCcw className="w-5 h-5" />
               </div>
-              <button
-                onClick={() => setReconcileModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div>
+                <DialogTitle className="text-base font-black tracking-tight text-white">
+                  {t('খতিয়ান রেকর্ডস সমন্বয় ও সংশোধন', 'Reconcile Khatian Record')}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-400 mt-0.5">
+                  {reconcileTarget?.case_no}
+                </DialogDescription>
+              </div>
             </div>
+          </DialogHeader>
 
+          {reconcileTarget && (
             <form onSubmit={handleReconcileSubmit} className="p-6 space-y-4 text-xs text-slate-700">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <Label className="block text-[11px] font-bold text-slate-700 mb-1">
                     {t('সংশোধিত দাগ নং', 'Reconciled Dag No')} *
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="text"
                     value={reconcileDag}
                     onChange={(e) => setReconcileDag(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+                    className="h-9 text-xs font-semibold"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  <Label className="block text-[11px] font-bold text-slate-700 mb-1">
                     {t('সংশোধিত পরিমাণ (শতাংশ)', 'Reconciled Area (Decimal)')} *
-                  </label>
-                  <input
+                  </Label>
+                  <Input
                     type="number"
                     step="0.01"
                     value={reconcileArea}
                     onChange={(e) => setReconcileArea(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+                    className="h-9 text-xs font-semibold"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                <Label className="block text-[11px] font-bold text-slate-700 mb-1">
                   {t('সমন্বয়ের আইনি কারণ ও রেকর্ডরুম রেফারেন্স', 'Reconciliation Ground & Record Room Ref')} *
-                </label>
-                <textarea
+                </Label>
+                <Textarea
                   rows={3}
                   value={reconcileNotes}
                   onChange={(e) => setReconcileNotes(e.target.value)}
                   placeholder={t('রেকর্ডরুম ভলিউম নম্বর ও কারণ উল্লেখ করুন...', 'Enter record room volume number and grounds...')}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-[#006A4E] focus:outline-hidden"
+                  className="text-xs"
                   required
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                <button
+              <DialogFooter className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setReconcileModalOpen(false)}
                   disabled={reconcileLoading}
-                  className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold transition cursor-pointer"
+                  className="text-xs font-bold"
                 >
                   {t('বাতিল', 'Cancel')}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={reconcileLoading}
-                  className="px-5 py-2 rounded-lg font-bold text-white bg-[#006A4E] hover:bg-[#005a42] transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  className="bg-[#006A4E] hover:bg-[#005a42] text-white text-xs font-bold gap-1.5 shadow-xs"
                 >
                   {reconcileLoading ? (
                     <span>{t('সমন্বয় হচ্ছে...', 'Reconciling...')}</span>
@@ -475,12 +499,12 @@ export const SuperAdminMutationsTab: React.FC<SuperAdminMutationsTabProps> = ({
                       <span>{t('সমন্বয় নিশ্চিত করুন', 'Confirm Reconciliation')}</span>
                     </>
                   )}
-                </button>
-              </div>
+                </Button>
+              </DialogFooter>
             </form>
-          </div>
-        </div>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

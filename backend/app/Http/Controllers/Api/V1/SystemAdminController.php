@@ -155,18 +155,22 @@ final class SystemAdminController
 
         // I01: Identity verification. Self-registered public citizens start unverified (0)
         // to prevent unauthorized portfolio takeover. Admin-provisioned accounts start verified (1).
-        $isIdentityVerified = $isAdmin && $role !== 'citizen' ? 1 : 0;
+        $isIdentityVerified = $isAdmin ? (isset($req['is_identity_verified']) ? ((int) $req['is_identity_verified'] ? 1 : 0) : 1) : 0;
         $isProfileComplete = $isAdmin ? 1 : 0;
         $avatarUrl = trim((string) ($req['avatar_url'] ?? ''));
 
         $office = null;
         $officeId = (int) ($req['office_id'] ?? 0);
         $officeRequired = !in_array($role, ['citizen','admin','system_admin','auditor','support_agent','content_editor','content_approver','platform_moderator'], true);
-        if ($isAdmin && $officeRequired && $officeId <= 0) throw new \RuntimeException(json_encode(['status'=>422,'code'=>'OFFICE_REQUIRED','message_en'=>'Assign an office to this officer.','message_bn'=>'কর্মকর্তার কার্যালয় নির্বাচন করুন।'],JSON_UNESCAPED_UNICODE));
+        if ($isAdmin && $officeRequired && $officeId <= 0 && empty($officeBn)) {
+            throw new \RuntimeException(json_encode(['status'=>422,'code'=>'OFFICE_REQUIRED','message_en'=>'Assign an office to this officer.','message_bn'=>'কর্মকর্তার কার্যালয় নির্বাচন করুন।'],JSON_UNESCAPED_UNICODE));
+        }
         if ($isAdmin && $role !== 'citizen' && $officeId > 0) {
             $office = DB::selectOne('SELECT * FROM offices WHERE id = ? AND is_active = 1', [$officeId]);
-            if (!$office) throw new \RuntimeException(json_encode(['status'=>422,'code'=>'INVALID_OFFICE','message_en'=>'Choose an active office.','message_bn'=>'সক্রিয় কার্যালয় নির্বাচন করুন।'],JSON_UNESCAPED_UNICODE));
-            $officeBn = $office['name_bn']; $officeEn = $office['name_en'];
+            if ($office) {
+                $officeBn = $office['name_bn']; 
+                $officeEn = $office['name_en'];
+            }
         }
         $userId = DB::insert(
             'INSERT INTO users (username, email, full_name_bn, full_name_en, role, office_bn, office_en, phone_dummy, nid, is_active, is_identity_verified, is_profile_complete, avatar_url, registration_channel, token_version, password_hash, last_login_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, 1, ?, ?, ?)',
@@ -853,6 +857,14 @@ final class SystemAdminController
         $lockedPlotsCnt = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM plots WHERE owner_sale_locked = 1')['c'] ?? 0);
         $openDisputesCnt = (int) (DB::selectOne("SELECT COUNT(*) AS c FROM disputes WHERE status = 'OPEN'")['c'] ?? 0);
 
+        // Core Institutional Metrics
+        $officesCnt = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM offices')['c'] ?? 0);
+        $mouzasCnt = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM locations')['c'] ?? 0);
+        $blogsCnt = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM blog_posts')['c'] ?? 0);
+        $noticesCnt = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM notices')['c'] ?? 0);
+        $citizensCnt = (int) (DB::selectOne("SELECT COUNT(*) AS c FROM users WHERE role IN ('citizen', 'service_point_operator')")['c'] ?? 0);
+        $officialsCnt = (int) (DB::selectOne("SELECT COUNT(*) AS c FROM users WHERE role NOT IN ('citizen', 'service_point_operator')")['c'] ?? 0);
+
         $allDeeds = DB::select('SELECT * FROM deeds ORDER BY chain_index ASC');
         $ledgerStatus = LedgerService::verifyEntireLedger($allDeeds);
 
@@ -924,8 +936,17 @@ final class SystemAdminController
                 'total_khatians' => $khatiansCnt,
                 'total_persons' => $personsCnt,
                 'total_users' => $usersCnt,
+                'total_offices' => $officesCnt,
+                'total_citizens' => $citizensCnt,
+                'total_official_employees' => $officialsCnt,
+                'total_officials' => $officialsCnt,
+                'total_mouzas' => $mouzasCnt,
+                'total_mouja' => $mouzasCnt,
+                'total_blogs' => $blogsCnt,
+                'total_notices' => $noticesCnt,
                 'active_officers_count' => (int) (DB::selectOne("SELECT COUNT(*) AS c FROM users WHERE is_active = 1 AND role != 'citizen'")['c'] ?? 0),
                 'total_deeds' => count($allDeeds),
+                'total_dolil' => count($allDeeds),
                 'held_deeds_count' => (int) (DB::selectOne("SELECT COUNT(*) AS c FROM deeds WHERE status = 'HELD'")['c'] ?? 0),
                 'issued_noc_count' => (int) (DB::selectOne('SELECT COUNT(*) AS c FROM noc_certificates')['c'] ?? 0),
                 'total_deed_value_bdt' => $totalDeedValueBdt,
@@ -947,6 +968,15 @@ final class SystemAdminController
                 'plots' => $plotsCnt,
                 'khatians' => $khatiansCnt,
                 'deeds' => count($allDeeds),
+                'dolil' => count($allDeeds),
+                'offices' => $officesCnt,
+                'citizens' => $citizensCnt,
+                'officials' => $officialsCnt,
+                'official_employees' => $officialsCnt,
+                'mouzas' => $mouzasCnt,
+                'mouja' => $mouzasCnt,
+                'blogs' => $blogsCnt,
+                'notices' => $noticesCnt,
                 'active_mortgages' => count($activeLiens),
                 'pending_mutations' => $pendingMut,
                 'users' => $usersCnt,
@@ -1573,10 +1603,10 @@ final class SystemAdminController
         }
         RoleMiddleware::authorize(['admin', 'system_admin'], $resolvedActor);
 
-        $tier = trim((string) ($payload['tier'] ?? '')); // 'division' | 'district' | 'upazila'
-        $oldNameBn = trim((string) ($payload['old_name_bn'] ?? ''));
-        $newNameBn = trim((string) ($payload['new_name_bn'] ?? ''));
-        $newNameEn = trim((string) ($payload['new_name_en'] ?? $newNameBn));
+        $tier = strtolower(trim((string) ($payload['tier'] ?? ''))); // 'division' | 'district' | 'upazila'
+        $oldNameBn = trim((string) ($payload['old_name_bn'] ?? ($payload['old_bn'] ?? '')));
+        $newNameBn = trim((string) ($payload['new_name_bn'] ?? ($payload['new_bn'] ?? '')));
+        $newNameEn = trim((string) ($payload['new_name_en'] ?? ($payload['new_en'] ?? $newNameBn)));
 
         if (!$tier || !$oldNameBn || !$newNameBn) {
             throw new \RuntimeException(json_encode([
@@ -2035,6 +2065,7 @@ final class SystemAdminController
         $workloadCounts = [
             'transfers' => $transferActive,
             'deeds' => $deedPending,
+            'total_deeds' => (int) (DB::selectOne("SELECT COUNT(*) AS c FROM deeds")['c'] ?? 0),
             'mutations' => $mutationPending,
             'field_reports' => $fieldReportsCount,
             'sla_dispatches' => $slaDispatchesPending,
@@ -2045,9 +2076,14 @@ final class SystemAdminController
             'acquisitions' => $acquisitionsActive,
             'listings' => $listingsPublished,
             'tickets' => $ticketsOpen,
-            'notices' => $noticesDraft,
+            'notices' => (int) (DB::selectOne("SELECT COUNT(*) AS c FROM notices")['c'] ?? 0),
+            'notices_draft' => $noticesDraft,
             'users' => $totalUsers,
-            'offices' => $totalOffices,
+            'offices' => (int) (DB::selectOne("SELECT COUNT(*) AS c FROM offices")['c'] ?? 0),
+            'citizens' => (int) (DB::selectOne("SELECT COUNT(*) AS c FROM users WHERE role IN ('citizen', 'service_point_operator')")['c'] ?? 0),
+            'official_employees' => (int) (DB::selectOne("SELECT COUNT(*) AS c FROM users WHERE role NOT IN ('citizen', 'service_point_operator')")['c'] ?? 0),
+            'mouzas' => (int) (DB::selectOne("SELECT COUNT(*) AS c FROM locations")['c'] ?? 0),
+            'blogs' => (int) (DB::selectOne("SELECT COUNT(*) AS c FROM blog_posts")['c'] ?? 0),
             'frozen_plots' => $frozenPlots,
             'flagged_deeds' => $flaggedDeeds,
             'overdue_cases' => $totalOverdueCount,

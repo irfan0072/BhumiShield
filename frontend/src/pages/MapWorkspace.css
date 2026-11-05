@@ -976,9 +976,10 @@
 @media (max-width: 900px) {
   .map-mobile-nav-bar {
     display: flex;
+    bottom: 56px;
   }
   .land-map-workspace {
-    padding-bottom: 75px !important;
+    padding-bottom: 120px !important;
   }
   /* Mobile Tab Display Logic */
   .map-explorer-grid.mobile-tab-search .map-search-panel {

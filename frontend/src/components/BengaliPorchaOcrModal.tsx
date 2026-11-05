@@ -7,7 +7,6 @@ import {
   FileSearch,
   CheckCircle2,
   AlertTriangle,
-  X,
   UploadCloud,
   Search,
   Scale,
@@ -19,6 +18,17 @@ import {
   Eye,
   Check,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 interface BengaliPorchaOcrModalProps {
   isOpen: boolean;
@@ -39,17 +49,6 @@ export const BengaliPorchaOcrModal: React.FC<BengaliPorchaOcrModalProps> = ({
   const [showRawText, setShowRawText] = useState<boolean>(false);
   const [dbVerification, setDbVerification] = useState<any>(null);
   const [dbLoading, setDbLoading] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
 
   // Listen for custom open event
   useEffect(() => {
@@ -137,106 +136,91 @@ export const BengaliPorchaOcrModal: React.FC<BengaliPorchaOcrModalProps> = ({
     }
   }, [isOpen, preset]);
 
-  if (!isOpen) return null;
-
   const dagVal = ocrResult?.structured?.dag_no?.value || '101';
   const khatianVal = ocrResult?.structured?.khatian_no?.value || '4101';
   const areaVal = ocrResult?.structured?.area_decimal?.value || '20.00';
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="bengali-porcha-ocr-modal-title"
-      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fadeIn"
-    >
-      {/* Modal Dialog */}
-      <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[92vh] overflow-hidden flex flex-col p-6 rounded-2xl bg-white shadow-2xl border border-slate-200">
         {/* Modal Top Header */}
-        <div className="bg-[#006A4E] text-white px-5 py-4 flex items-center justify-between shrink-0">
+        <DialogHeader className="pb-3 border-b border-slate-100 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-white/10 text-amber-300">
+            <div className="p-2.5 rounded-2xl bg-[#006A4E] text-amber-300 shadow-md shadow-emerald-900/20 shrink-0">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 id="bengali-porcha-ocr-modal-title" className="font-extrabold text-sm sm:text-base leading-tight">
+              <div className="flex items-center gap-2 flex-wrap">
+                <DialogTitle className="text-base sm:text-lg font-bold text-slate-900">
                   {t('বাংলা পর্চা ও খতিয়ান ডকুমেন্ট এআই স্ক্যানার', 'Document AI / Bengali Porcha Scanner')}
-                </h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-900">
+                </DialogTitle>
+                <Badge variant="warn" className="text-[10px] font-bold">
                   AI OCR v2.4
-                </span>
+                </Badge>
               </div>
-              <p className="text-[11px] text-emerald-100">
+              <DialogDescription className="text-xs text-slate-500 mt-0.5">
                 {t(
                   'সিএস/এসএ/আরএস/বিএস স্ক্যান কপি হতে স্বয়ংক্রিয়ভাবে দাগ, খতিয়ান ও মালিকানা তথ্য এক্সট্রাকশন',
                   'Automated extraction of Dag, Khatian, and Ownership records from physical survey scans'
                 )}
-              </p>
+              </DialogDescription>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t('বন্ধ করুন', 'Close')}
-            className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition cursor-pointer text-sm"
-            title={t('বন্ধ করুন', 'Close')}
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+        </DialogHeader>
 
         {/* Preset Selector Bar */}
-        <div className="bg-slate-50 border-b border-slate-200 px-5 py-3 flex flex-wrap items-center justify-between gap-2 shrink-0">
-          <div className="flex items-center gap-1.5 flex-wrap text-xs">
+        <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-2 shrink-0">
+          <div className="flex items-center gap-2 flex-wrap text-xs">
             <span className="text-slate-500 font-bold mr-1">{t('নমুনা স্ক্যান কপি:', 'Sample Scans:')}</span>
-            <button
+            <Button
               type="button"
+              size="sm"
+              variant={preset === 'bs_4101' ? 'default' : 'outline'}
               onClick={() => {
                 setPreset('bs_4101');
                 runOcr('bs_4101');
               }}
-              className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer border text-xs ${
-                preset === 'bs_4101'
-                  ? 'bg-[#006A4E] text-white border-[#006A4E] shadow-xs'
-                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+              className={`h-8 text-xs font-bold rounded-xl ${
+                preset === 'bs_4101' ? 'bg-[#006A4E] text-white hover:bg-[#00553e]' : ''
               }`}
             >
               📄 {t('বিএস ৪১০১ (নিষ্কণ্টক দাগ ১০১)', 'BS 4101 (Clean Plot 101)')}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              size="sm"
+              variant={preset === 'bs_4107_mismatch' ? 'default' : 'outline'}
               onClick={() => {
                 setPreset('bs_4107_mismatch');
                 runOcr('bs_4107_mismatch');
               }}
-              className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer border text-xs ${
-                preset === 'bs_4107_mismatch'
-                  ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
-                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+              className={`h-8 text-xs font-bold rounded-xl ${
+                preset === 'bs_4107_mismatch' ? 'bg-amber-600 text-white hover:bg-amber-700 border-amber-600' : ''
               }`}
             >
               ⚠️ {t('বিএস ৪১০৭ (ক্ষেত্র অমিল দাগ ১০৭)', 'BS 4107 (Mismatch Plot 107)')}
-            </button>
+            </Button>
           </div>
 
           <div className="flex items-center gap-2">
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => runOcr(preset)}
               disabled={scanning}
-              className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+              className="h-8 text-xs font-bold rounded-xl flex items-center gap-1.5"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${scanning ? 'animate-spin text-[#006A4E]' : ''}`} />
               <span>{scanning ? t('স্ক্যানিং...', 'Scanning...') : t('পুনরায় স্ক্যান', 'Rescan')}</span>
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Main Body: 2-Column Side-by-Side (Document Scan vs Extracted Fields) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200 overflow-y-auto flex-1 custom-scrollbar">
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200 overflow-y-auto flex-1 gap-4 pr-1 py-2">
           {/* Left Column: Physical Document Scan Simulator */}
-          <div className="p-5 bg-slate-100/70 flex flex-col space-y-3">
+          <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-200/80 flex flex-col space-y-3">
             <div className="flex items-center justify-between text-xs font-bold text-slate-600">
               <span className="flex items-center gap-1.5">
                 <FileText className="w-4 h-4 text-slate-500" />
@@ -341,51 +325,54 @@ export const BengaliPorchaOcrModal: React.FC<BengaliPorchaOcrModalProps> = ({
           </div>
 
           {/* Right Column: AI Extracted Structured Data & Live Cross-Verification */}
-          <div className="p-5 flex flex-col space-y-4">
+          <div className="p-4 flex flex-col space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-[#006A4E]" />
                 <span>{t('এআই এক্সট্রাক্টকৃত ফিল্ডসমূহ', 'AI Extracted Fields')}</span>
               </span>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-[#006A4E]">
+              <Badge variant="safe" className="text-[10px] font-bold">
                 গড় আত্মবিশ্বাস: ৯৬.৫%
-              </span>
+              </Badge>
             </div>
 
             {/* Structured Fields Grid */}
             <div className="grid grid-cols-2 gap-2.5 text-xs">
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="flex items-center justify-between text-[10px] text-slate-500">
+                <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
                   <span>{t('দাগ নম্বর', 'Plot Dag')}</span>
                   <span className="text-emerald-700 font-mono font-bold">৯৯%</span>
                 </div>
+                <Progress value={99} className="h-1.5 mb-1.5" />
                 <strong className="text-sm font-black text-[#006A4E]">
                   {toBanglaDigits(dagVal, lang)}
                 </strong>
               </div>
 
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="flex items-center justify-between text-[10px] text-slate-500">
+                <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
                   <span>{t('খতিয়ান নম্বর', 'Khatian No')}</span>
                   <span className="text-emerald-700 font-mono font-bold">৯৮%</span>
                 </div>
+                <Progress value={98} className="h-1.5 mb-1.5" />
                 <strong className="text-sm font-bold text-slate-900">
                   {toBanglaDigits(khatianVal, lang)}
                 </strong>
               </div>
 
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="flex items-center justify-between text-[10px] text-slate-500">
+                <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
                   <span>{t('মৌজা ও জে.এল.', 'Mouza & JL')}</span>
                   <span className="text-emerald-700 font-mono font-bold">৯৭%</span>
                 </div>
+                <Progress value={97} className="h-1.5 mb-1.5" />
                 <strong className="text-xs font-bold text-slate-900">
                   {ocrResult?.structured?.mouza_bn?.value || 'বিরুলিয়া'}
                 </strong>
               </div>
 
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="flex items-center justify-between text-[10px] text-slate-500">
+                <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
                   <span>{t('জমির আয়তন', 'Area')}</span>
                   <span className={`font-mono font-bold ${
                     preset === 'bs_4107_mismatch' ? 'text-amber-700' : 'text-emerald-700'
@@ -393,16 +380,21 @@ export const BengaliPorchaOcrModal: React.FC<BengaliPorchaOcrModalProps> = ({
                     {preset === 'bs_4107_mismatch' ? '৮৪% ⚠️' : '৯৮%'}
                   </span>
                 </div>
+                <Progress
+                  value={preset === 'bs_4107_mismatch' ? 84 : 98}
+                  className={`h-1.5 mb-1.5 ${preset === 'bs_4107_mismatch' ? '[&>div]:bg-amber-600' : ''}`}
+                />
                 <strong className="text-xs font-bold text-[#006A4E]">
                   {toBanglaDigits(areaVal, lang)} {t('শতক', 'dec')}
                 </strong>
               </div>
 
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 col-span-2">
-                <div className="flex items-center justify-between text-[10px] text-slate-500">
+                <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
                   <span>{t('মালিকের নাম ও অংশ', 'Owner & Share')}</span>
                   <span className="text-emerald-700 font-mono font-bold">৯৬%</span>
                 </div>
+                <Progress value={96} className="h-1.5 mb-1.5" />
                 <strong className="text-xs font-bold text-slate-900">
                   {ocrResult?.structured?.owner_name_bn?.value || 'মো. রফিকুল ইসলাম'} ({ocrResult?.structured?.share_fraction?.value || '১/১'})
                 </strong>
@@ -410,54 +402,58 @@ export const BengaliPorchaOcrModal: React.FC<BengaliPorchaOcrModalProps> = ({
             </div>
 
             {/* Live Database Cross-Verification Alert */}
-            <div className="p-3.5 rounded-2xl border text-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="font-extrabold text-slate-800 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  <span>{t('ভূমি সুরক্ষা ডাটাবেস সমন্বয় (Live Cross-Check)', 'Database Match Audit')}</span>
-                </span>
-                {dbLoading && <span className="text-[10px] text-slate-400">যাচাই হচ্ছে...</span>}
-              </div>
-
-              {preset === 'bs_4107_mismatch' ? (
-                <div className="bg-amber-50 border border-amber-300 rounded-xl p-3 text-amber-900 space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold text-xs">
-                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>রেকর্ড ব্যত্যয় ও ক্ষেত্র অমিল শনাক্ত (RS vs BS Area Discrepancy)</span>
-                  </div>
-                  <p className="text-[11px] text-amber-800 leading-relaxed">
-                    স্ক্যানকৃত বিএস পর্চায় ২৬ শতক উল্লিখিত থাকলেও ভূমি রেকর্ডে আরএস দাগে ছিল ১৮ শতক। নামজারির পূর্বে সহকারী কমিশনার (ভূমি) দ্বারা সরেজমিন সার্ভে প্রয়োজন।
-                  </p>
+            <Card className="border shadow-none">
+              <CardHeader className="p-3.5 pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>{t('ভূমি সুরক্ষা ডাটাবেস সমন্বয় (Live Cross-Check)', 'Database Match Audit')}</span>
+                  </CardTitle>
+                  {dbLoading && <span className="text-[10px] text-slate-400">যাচাই হচ্ছে...</span>}
                 </div>
-              ) : (
-                <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3 text-emerald-900 space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold text-xs">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>১০০% ডাটাবেস মিল: কোনো ব্যত্যয় বা ঝুঁকি নেই (Clean Title)</span>
+              </CardHeader>
+              <CardContent className="p-3.5 pt-0">
+                {preset === 'bs_4107_mismatch' ? (
+                  <div className="bg-amber-50 border border-amber-300 rounded-xl p-3 text-amber-900 space-y-1">
+                    <div className="flex items-center gap-1.5 font-bold text-xs">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span>রেকর্ড ব্যত্যয় ও ক্ষেত্র অমিল শনাক্ত (RS vs BS Area Discrepancy)</span>
+                    </div>
+                    <p className="text-[11px] text-amber-800 leading-relaxed">
+                      স্ক্যানকৃত বিএস পর্চায় ২৬ শতক উল্লিখিত থাকলেও ভূমি রেকর্ডে আরএস দাগে ছিল ১৮ শতক। নামজারির পূর্বে সহকারী কমিশনার (ভূমি) দ্বারা সরেজমিন সার্ভে প্রয়োজন।
+                    </p>
                   </div>
-                  <p className="text-[11px] text-emerald-800 leading-relaxed">
-                    স্ক্যানকৃত বিএস ৪১০১ পর্চার দাগ ১০১-এর ২০.০০ শতক জমি ভূমি মন্ত্রণালয়ের কেন্দ্রীয় ডিজিটাল লেজারের সাথে হুবহু মিলেছে। কোনো ব্যাংক লিয়েন বা দেওয়ানি মামলা নেই।
-                  </p>
-                </div>
-              )}
-            </div>
+                ) : (
+                  <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3 text-emerald-900 space-y-1">
+                    <div className="flex items-center gap-1.5 font-bold text-xs">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>১০০% ডাটাবেস মিল: কোনো ব্যত্যয় বা ঝুঁকি নেই (Clean Title)</span>
+                    </div>
+                    <p className="text-[11px] text-emerald-800 leading-relaxed">
+                      স্ক্যানকৃত বিএস ৪১০১ পর্চার দাগ ১০১-এর ২০.০০ শতক জমি ভূমি মন্ত্রণালয়ের কেন্দ্রীয় ডিজিটাল লেজারের সাথে হুবহু মিলেছে। কোনো ব্যাংক লিয়েন বা দেওয়ানি মামলা নেই।
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Action Buttons */}
             <div className="pt-2 space-y-2 mt-auto">
-              <button
+              <Button
                 type="button"
                 onClick={() => {
                   onClose();
                   onNavigate?.(`check?dag=${dagVal}`);
                 }}
-                className="w-full py-2.5 bg-slate-900 hover:bg-black text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                className="w-full min-h-[44px] bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2"
               >
                 <Search className="w-4 h-4 text-emerald-400" />
                 <span>{t('এই দাগটি ভূমি সুরক্ষায় অডিট করুন (Audit Plot)', 'Audit Plot in BhumiShield')}</span>
-              </button>
+              </Button>
 
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => {
                   onClose();
                   window.dispatchEvent(
@@ -470,15 +466,15 @@ export const BengaliPorchaOcrModal: React.FC<BengaliPorchaOcrModalProps> = ({
                     })
                   );
                 }}
-                className="w-full py-2 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                className="w-full min-h-[44px] bg-purple-50 hover:bg-purple-100 text-purple-800 border-purple-200 text-xs font-bold rounded-xl flex items-center justify-center gap-2"
               >
                 <Scale className="w-4 h-4 text-purple-700" />
                 <span>{t('এই দাগের ফারায়েজ বণ্টন হিসাব করুন', 'Calculate Faraiz for this Plot')}</span>
-              </button>
+              </Button>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };

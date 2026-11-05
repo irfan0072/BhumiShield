@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient, useHealth } from './api/queries';
 import { AppUIProvider, useAppUI } from './i18n';
 import { NavbarAndLayout } from './components/NavbarAndLayout';
 import { AuthGuard } from './components/AuthGuard';
+import { OfficialWorkspaceShell } from './components/officials/OfficialWorkspaceShell';
 import { LandingPage } from './pages/LandingPage';
 import { PageSkeleton } from './components/PageSkeleton';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { PersistentHelpModal } from './components/PersistentHelpModal';
 
 const CitizenHome = React.lazy(() => import('./pages/CitizenHome').then(m => ({ default: m.CitizenHome })));
+const CitizenProfilePage = React.lazy(() => import('./pages/CitizenProfilePage').then(m => ({ default: m.CitizenProfilePage })));
+const CitizenSettingsPage = React.lazy(() => import('./pages/CitizenSettingsPage').then(m => ({ default: m.CitizenSettingsPage })));
 const CheckBeforeBuyPage = React.lazy(() => import('./pages/CheckBeforeBuyPage').then(m => ({ default: m.CheckBeforeBuyPage })));
 const VerifyDeedQrPage = React.lazy(() => import('./pages/VerifyDeedQrPage').then(m => ({ default: m.VerifyDeedQrPage })));
 const SubRegistrarPage = React.lazy(() => import('./pages/SubRegistrarPage').then(m => ({ default: m.SubRegistrarPage })));
 const AcLandPage = React.lazy(() => import('./pages/AcLandPage').then(m => ({ default: m.AcLandPage })));
 const BankOfficerPage = React.lazy(() => import('./pages/BankOfficerPage').then(m => ({ default: m.BankOfficerPage })));
+const AdminMasterWorkspace = React.lazy(() => import('./pages/admin/AdminMasterWorkspace').then(m => ({ default: m.AdminMasterWorkspace })));
 const AdminDashboardPage = React.lazy(() => import('./pages/AdminDashboardPage').then(m => ({ default: m.AdminDashboardPage })));
 const HelpPage = React.lazy(() => import('./pages/HelpPage').then(m => ({ default: m.HelpPage })));
 const AuthPage = React.lazy(() => import('./pages/AuthPage').then(m => ({ default: m.AuthPage })));
@@ -70,16 +77,18 @@ const getInitialTab = (): string => {
   if (cleanPath.startsWith('/admin')) return 'admin';
   if (cleanPath.startsWith('/auth') || cleanPath.startsWith('/login')) return 'auth';
   if (cleanPath.startsWith('/profile')) return 'profile';
+  if (cleanPath.startsWith('/settings')) return 'settings';
 
   const tabParam = search.get('tab');
   if (tabParam === 'cadastral') return 'map';
-  if (tabParam && ['landing', 'home', 'applications', 'specialist', 'check', 'qr', 'help', 'auth', 'registrar', 'acland', 'bank', 'admin', 'profile', 'sale', 'notices', 'blog', 'map', 'offices', 'lawyer_case'].includes(tabParam)) return tabParam;
+  if (tabParam && ['landing', 'home', 'applications', 'specialist', 'check', 'qr', 'help', 'auth', 'registrar', 'acland', 'bank', 'admin', 'profile', 'settings', 'sale', 'notices', 'blog', 'map', 'offices', 'lawyer_case'].includes(tabParam)) return tabParam;
   return 'notfound';
 };
 
 export const AppContent: React.FC = () => {
-  const { lang, setLang } = useAppUI();
+  const { lang, setLang, user } = useAppUI();
   const [activeTab, setActiveTabState] = useState<string>(getInitialTab);
+  const { isColdStarting, coldStartMessageBn, coldStartMessageEn } = useHealth();
 
   // Synchronize URL on tab change or mount
   const syncUrl = (target: string, replace = false) => {
@@ -91,7 +100,19 @@ export const AppContent: React.FC = () => {
       query = '?' + parts[1];
     }
     const currentUrl = new URL(window.location.href);
-    const targetPath = tab === 'landing' ? `/${lang}` : `/${lang}/${tab}`;
+
+    // Preserve existing subpath if present and on the same main tab (e.g. /bn/registrar/wizard -> /en/registrar/wizard)
+    let subpath = '';
+    const pathParts = currentUrl.pathname.split('/').filter(Boolean);
+    if (pathParts.length >= 2) {
+      const firstIsLang = pathParts[0] === 'bn' || pathParts[0] === 'en';
+      const currentMainTab = firstIsLang ? pathParts[1] : pathParts[0];
+      if (currentMainTab === tab && (firstIsLang ? pathParts.length > 2 : pathParts.length > 1)) {
+        subpath = '/' + (firstIsLang ? pathParts.slice(2).join('/') : pathParts.slice(1).join('/'));
+      }
+    }
+
+    const targetPath = tab === 'landing' ? `/${lang}` : `/${lang}/${tab}${subpath}`;
     const fullPath = query ? `${targetPath}${query}` : targetPath;
     if (currentUrl.pathname + currentUrl.search !== fullPath) {
       if (replace) {
@@ -137,97 +158,11 @@ export const AppContent: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab]);
 
-  return (
-    <NavbarAndLayout activeTab={activeTab} setActiveTab={setActiveTab}>
-      <React.Suspense fallback={<PageSkeleton />}>
-        {/* 1. Public Pages (Accessible by All Visitors & Guests) */}
-        {activeTab === 'landing' && <LandingPage onNavigate={setActiveTab} />}
-        {activeTab === 'check' && <CheckBeforeBuyPage />}
-        {activeTab === 'qr' && <VerifyDeedQrPage />}
-        {activeTab === 'sale' && <PublicSalePage onNavigate={setActiveTab} />}
-        {activeTab === 'notices' && <NoticeboardPage />}
-        {activeTab === 'blog' && <EducationalBlogPage />}
-        {(activeTab === 'map' || activeTab === 'cadastral') && <CadastralMapPage onNavigate={setActiveTab} />}
-        {activeTab === 'offices' && <OfficeLocatorPage onNavigate={setActiveTab} />}
-        {activeTab === 'help' && <HelpPage onNavigate={setActiveTab} />}
-        {activeTab === 'auth' && <AuthPage mode="login" onSuccessNavigate={setActiveTab} />}
-
-        {/* 2. Role Protected Workspaces (Guarded by Strict RBAC AuthGuard) */}
-        {activeTab === 'lawyer_case' && (
-          <AuthGuard
-            allowedRoles={['lawyer_court_user', 'admin', 'system_admin']}
-            roleTitleBn="আইনজীবী ও দেওয়ানি আদালত পোর্টাল"
-            roleTitleEn="Lawyer & Civil Court Portal"
-            deptBn="বাংলাদেশ বার কাউন্সিল তালিকাভুক্ত আইনজীবী কনসোল"
-            deptEn="Bar Council Empaneled Advocate Console"
-            onNavigate={setActiveTab}
-          >
-            <LawyerCaseFilingPage onNavigateHome={() => setActiveTab('home')} />
-          </AuthGuard>
-        )}
-        {activeTab === 'home' && (
-          <AuthGuard
-            allowedRoles={['citizen', 'service_point_operator', 'admin', 'system_admin']}
-            roleTitleBn="নাগরিক ভূমি পোর্টাল"
-            roleTitleEn="Citizen Land Portal"
-            deptBn="নাগরিক সেবা ও ভূমি সুরক্ষা ভল্ট"
-            deptEn="Citizen Property Vault & Verification"
-            onNavigate={setActiveTab}
-          >
-            <CitizenHome onNavigate={setActiveTab} />
-          </AuthGuard>
-        )}
-
-        {activeTab === 'registrar' && (
-          <AuthGuard
-            allowedRoles={['sub_registrar', 'registry_data_officer', 'admin', 'system_admin']}
-            roleTitleBn="সাব-রেজিস্ট্রার কনসোল"
-            roleTitleEn="Sub-Registrar Console"
-            deptBn="নিবন্ধন অধিদপ্তর • আইন, বিচার ও সংসদ বিষয়ক মন্ত্রণালয়"
-            deptEn="Directorate of Registration • Ministry of Law"
-            onNavigate={setActiveTab}
-          >
-            <SubRegistrarPage onNavigate={setActiveTab} />
-          </AuthGuard>
-        )}
-
-        {activeTab === 'acland' && (
-          <AuthGuard
-            allowedRoles={[
-              'ac_land',
-              'land_office_assistant',
-              'field_verification_officer',
-              'settlement_records_officer',
-              'settlement_checker',
-              'uno_supervisor',
-              'appellate_reviewer',
-              'admin',
-              'system_admin',
-            ]}
-            roleTitleBn="সহকারী কমিশনার (ভূমি) কনসোল"
-            roleTitleEn="Assistant Commissioner of Land Console"
-            deptBn="উপজেলা ভূমি অফিস • ভূমি মন্ত্রণালয়"
-            deptEn="Upazila Land Office • Ministry of Land"
-            onNavigate={setActiveTab}
-          >
-            <AcLandPage />
-          </AuthGuard>
-        )}
-
-        {activeTab === 'bank' && (
-          <AuthGuard
-            allowedRoles={['bank_officer', 'bank_manager', 'admin', 'system_admin']}
-            roleTitleBn="ব্যাংক মর্টগেজ ও লিয়েন কনসোল"
-            roleTitleEn="Bank Mortgage & Lien Console"
-            deptBn="তফসিলি বাণিজ্যিক ব্যাংক জামানত বিভাগ"
-            deptEn="Scheduled Bank Collateral & Lien Division"
-            onNavigate={setActiveTab}
-          >
-            <BankOfficerPage />
-          </AuthGuard>
-        )}
-
-        {activeTab === 'admin' && (
+  // Dedicated Official Enterprise Workspace (Completely different layout from citizen panel)
+  if (activeTab === 'admin') {
+    return (
+      <>
+        <React.Suspense fallback={<PageSkeleton />}>
           <AuthGuard
             allowedRoles={[
               'admin',
@@ -244,9 +179,213 @@ export const AppContent: React.FC = () => {
             deptEn="Central Cryptographic Ledger Governance"
             onNavigate={setActiveTab}
           >
-            <AdminDashboardPage onNavigate={setActiveTab} />
+            <AdminMasterWorkspace onNavigate={setActiveTab} />
+          </AuthGuard>
+        </React.Suspense>
+
+        {isColdStarting && (
+          <div className="fixed top-0 inset-x-0 z-50 bg-[#C4891A] text-white text-center py-2 px-4 font-bold text-xs sm:text-sm shadow-md animate-pulse flex items-center justify-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-white animate-ping" />
+            <span>{lang === 'bn' ? coldStartMessageBn : coldStartMessageEn}</span>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // 1. Sub-Registrar Enterprise Workspace
+  if (activeTab === 'registrar') {
+    return (
+      <>
+        <React.Suspense fallback={<PageSkeleton />}>
+          <AuthGuard
+            allowedRoles={['sub_registrar', 'registry_data_officer', 'joint_sub_registrar', 'district_registrar', 'admin', 'system_admin']}
+            roleTitleBn="সাব-রেজিস্ট্রার কনসোল"
+            roleTitleEn="Sub-Registrar Console"
+            deptBn="নিবন্ধন অধিদপ্তর • আইন, বিচার ও সংসদ বিষয়ক মন্ত্রণালয়"
+            deptEn="Directorate of Registration • Ministry of Law"
+            onNavigate={setActiveTab}
+          >
+            <OfficialWorkspaceShell workspaceType="registrar" onNavigateMainTab={setActiveTab}>
+              <SubRegistrarPage onNavigate={setActiveTab} />
+            </OfficialWorkspaceShell>
+          </AuthGuard>
+        </React.Suspense>
+
+        {isColdStarting && (
+          <div className="fixed top-0 inset-x-0 z-50 bg-[#C4891A] text-white text-center py-2 px-4 font-bold text-xs sm:text-sm shadow-md animate-pulse flex items-center justify-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-white animate-ping" />
+            <span>{lang === 'bn' ? coldStartMessageBn : coldStartMessageEn}</span>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // 2. AC Land & Revenue Court Enterprise Workspace
+  if (activeTab === 'acland') {
+    return (
+      <>
+        <React.Suspense fallback={<PageSkeleton />}>
+          <AuthGuard
+            allowedRoles={[
+              'ac_land',
+              'land_office_assistant',
+              'field_verification_officer',
+              'settlement_records_officer',
+              'settlement_checker',
+              'settlement_officer',
+              'kanungo',
+              'uno_supervisor',
+              'uno',
+              'appellate_reviewer',
+              'adc_revenue',
+              'divisional_commissioner',
+              'dlrs_officer',
+              'land_appeal_board',
+              'land_reform_board',
+              'admin',
+              'system_admin',
+            ]}
+            roleTitleBn="সহকারী কমিশনার (ভূমি) কনসোল"
+            roleTitleEn="Assistant Commissioner of Land Console"
+            deptBn="উপজেলা ভূমি অফিস • ভূমি মন্ত্রণালয়"
+            deptEn="Upazila Land Office • Ministry of Land"
+            onNavigate={setActiveTab}
+          >
+            <OfficialWorkspaceShell workspaceType="acland" onNavigateMainTab={setActiveTab}>
+              <AcLandPage onNavigate={setActiveTab} />
+            </OfficialWorkspaceShell>
+          </AuthGuard>
+        </React.Suspense>
+
+        {isColdStarting && (
+          <div className="fixed top-0 inset-x-0 z-50 bg-[#C4891A] text-white text-center py-2 px-4 font-bold text-xs sm:text-sm shadow-md animate-pulse flex items-center justify-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-white animate-ping" />
+            <span>{lang === 'bn' ? coldStartMessageBn : coldStartMessageEn}</span>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // 3. Bank Mortgage & Credit Desk Enterprise Workspace
+  if (activeTab === 'bank') {
+    return (
+      <>
+        <React.Suspense fallback={<PageSkeleton />}>
+          <AuthGuard
+            allowedRoles={['bank_officer', 'bank_manager', 'admin', 'system_admin']}
+            roleTitleBn="ব্যাংক মর্টগেজ ও লিয়েন কনসোল"
+            roleTitleEn="Bank Mortgage & Lien Console"
+            deptBn="তফসিলি বাণিজ্যিক ব্যাংক জামানত বিভাগ"
+            deptEn="Scheduled Bank Collateral & Lien Division"
+            onNavigate={setActiveTab}
+          >
+            <OfficialWorkspaceShell workspaceType="bank" onNavigateMainTab={setActiveTab}>
+              <BankOfficerPage />
+            </OfficialWorkspaceShell>
+          </AuthGuard>
+        </React.Suspense>
+
+        {isColdStarting && (
+          <div className="fixed top-0 inset-x-0 z-50 bg-[#C4891A] text-white text-center py-2 px-4 font-bold text-xs sm:text-sm shadow-md animate-pulse flex items-center justify-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-white animate-ping" />
+            <span>{lang === 'bn' ? coldStartMessageBn : coldStartMessageEn}</span>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // 4. Lawyer & Civil Court Portal Enterprise Workspace
+  if (activeTab === 'lawyer_case') {
+    return (
+      <>
+        <React.Suspense fallback={<PageSkeleton />}>
+          <AuthGuard
+            allowedRoles={['lawyer_court_user', 'admin', 'system_admin']}
+            roleTitleBn="আইনজীবী ও দেওয়ানি আদালত পোর্টাল"
+            roleTitleEn="Lawyer & Civil Court Portal"
+            deptBn="বাংলাদেশ বার কাউন্সিল তালিকাভুক্ত আইনজীবী কনসোল"
+            deptEn="Bar Council Empaneled Advocate Console"
+            onNavigate={setActiveTab}
+          >
+            <OfficialWorkspaceShell workspaceType="lawyer" onNavigateMainTab={setActiveTab}>
+              <LawyerCaseFilingPage onNavigateHome={() => setActiveTab('home')} />
+            </OfficialWorkspaceShell>
+          </AuthGuard>
+        </React.Suspense>
+
+        {isColdStarting && (
+          <div className="fixed top-0 inset-x-0 z-50 bg-[#C4891A] text-white text-center py-2 px-4 font-bold text-xs sm:text-sm shadow-md animate-pulse flex items-center justify-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-white animate-ping" />
+            <span>{lang === 'bn' ? coldStartMessageBn : coldStartMessageEn}</span>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // 5. Specialist Judicial & Land Acquisition Workspace
+  if (activeTab === 'specialist') {
+    return (
+      <>
+        <React.Suspense fallback={<PageSkeleton />}>
+          <AuthGuard
+            allowedRoles={['dc_acquisition_officer', 'admin', 'system_admin']}
+            roleTitleBn="বিশেষায়িত বিচারিক ও অধিগ্রহণ কনসোল"
+            roleTitleEn="Specialist Judicial & Acquisition Console"
+            deptBn="জেলা প্রশাসন ও দেওয়ানি আদালত ডেস্ক"
+            deptEn="District Administration & Civil Court Desk"
+            onNavigate={setActiveTab}
+          >
+            <OfficialWorkspaceShell workspaceType="specialist" onNavigateMainTab={setActiveTab}>
+              <SpecialistWorkspacePage onNavigate={setActiveTab} />
+            </OfficialWorkspaceShell>
+          </AuthGuard>
+        </React.Suspense>
+
+        {isColdStarting && (
+          <div className="fixed top-0 inset-x-0 z-50 bg-[#C4891A] text-white text-center py-2 px-4 font-bold text-xs sm:text-sm shadow-md animate-pulse flex items-center justify-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-white animate-ping" />
+            <span>{lang === 'bn' ? coldStartMessageBn : coldStartMessageEn}</span>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <NavbarAndLayout activeTab={activeTab} setActiveTab={setActiveTab}>
+      <React.Suspense fallback={<PageSkeleton />}>
+        {/* 1. Public Pages (Accessible by All Visitors & Guests) */}
+        {activeTab === 'landing' && <LandingPage onNavigate={setActiveTab} />}
+        {activeTab === 'check' && <CheckBeforeBuyPage />}
+        {activeTab === 'qr' && <VerifyDeedQrPage />}
+        {activeTab === 'sale' && <PublicSalePage onNavigate={setActiveTab} />}
+        {activeTab === 'notices' && <NoticeboardPage />}
+        {activeTab === 'blog' && <EducationalBlogPage />}
+        {(activeTab === 'map' || activeTab === 'cadastral') && <CadastralMapPage onNavigate={setActiveTab} />}
+        {activeTab === 'offices' && <OfficeLocatorPage onNavigate={setActiveTab} />}
+        {activeTab === 'help' && <HelpPage onNavigate={setActiveTab} />}
+        {activeTab === 'auth' && <AuthPage mode="login" onSuccessNavigate={setActiveTab} />}
+
+        {/* 2. Citizen Land Vault & Property Protection */}
+        {activeTab === 'home' && (
+          <AuthGuard
+            allowedRoles={['citizen', 'service_point_operator', 'admin', 'system_admin']}
+            roleTitleBn="নাগরিক ভূমি পোর্টাল"
+            roleTitleEn="Citizen Land Portal"
+            deptBn="নাগরিক সেবা ও ভূমি সুরক্ষা ভল্ট"
+            deptEn="Citizen Property Vault & Verification"
+            onNavigate={setActiveTab}
+          >
+            <CitizenHome onNavigate={setActiveTab} />
           </AuthGuard>
         )}
+
 
         {activeTab === 'profile' && (
           <AuthGuard
@@ -278,7 +417,45 @@ export const AppContent: React.FC = () => {
             roleTitleEn="User Profile"
             onNavigate={setActiveTab}
           >
-            <AuthPage mode="profile" onSuccessNavigate={setActiveTab} />
+            {user?.role === 'citizen' || user?.role === 'service_point_operator' ? (
+              <CitizenProfilePage onNavigate={setActiveTab} />
+            ) : (
+              <AuthPage mode="profile" onSuccessNavigate={setActiveTab} />
+            )}
+          </AuthGuard>
+        )}
+
+        {activeTab === 'settings' && (
+          <AuthGuard
+            allowedRoles={[
+              'citizen',
+              'service_point_operator',
+              'sub_registrar',
+              'registry_data_officer',
+              'ac_land',
+              'land_office_assistant',
+              'field_verification_officer',
+              'settlement_records_officer',
+              'settlement_checker',
+              'uno_supervisor',
+              'appellate_reviewer',
+              'bank_officer',
+              'bank_manager',
+              'support_agent',
+              'platform_moderator',
+              'content_editor',
+              'content_approver',
+              'system_admin',
+              'auditor',
+              'dc_acquisition_officer',
+              'lawyer_court_user',
+              'admin',
+            ]}
+            roleTitleBn="নাগরিক সেটিংস ও নিরাপত্তা"
+            roleTitleEn="Citizen Settings & Security"
+            onNavigate={setActiveTab}
+          >
+            <CitizenSettingsPage onNavigate={setActiveTab} />
           </AuthGuard>
         )}
 
@@ -296,34 +473,37 @@ export const AppContent: React.FC = () => {
           </AuthGuard>
         )}
 
-        {/* 4. Specialist Judicial & Land Acquisition Console */}
-        {activeTab === 'specialist' && (
-          <AuthGuard
-            allowedRoles={['dc_acquisition_officer', 'lawyer_court_user', 'admin', 'system_admin']}
-            roleTitleBn="বিশেষায়িত বিচারিক ও অধিগ্রহণ কনসোল"
-            roleTitleEn="Specialist Judicial & Acquisition Console"
-            deptBn="জেলা প্রশাসন ও দেওয়ানি আদালত ডেস্ক"
-            deptEn="District Administration & Civil Court Desk"
-            onNavigate={setActiveTab}
-          >
-            <SpecialistWorkspacePage onNavigate={setActiveTab} />
-          </AuthGuard>
-        )}
 
         {/* 5. Explicit 404 Not Found Page */}
         {activeTab === 'notfound' && <NotFoundPage onNavigate={setActiveTab} />}
       </React.Suspense>
     </NavbarAndLayout>
+
+    {/* Render Cold-Start Alert Notification Banner */}
+    {isColdStarting && (
+      <div className="fixed top-0 inset-x-0 z-50 bg-[#C4891A] text-white text-center py-2 px-4 font-bold text-xs sm:text-sm shadow-md animate-pulse flex items-center justify-center gap-2">
+        <span className="h-2 w-2 rounded-full bg-white animate-ping" />
+        <span>{lang === 'bn' ? coldStartMessageBn : coldStartMessageEn}</span>
+      </div>
+    )}
+
+    {/* Persistent 16122 Helpline & Triage Modal */}
+    <PersistentHelpModal onNavigate={setActiveTab} />
+
+
+    </>
   );
 };
 
 export function App() {
   return (
-    <ErrorBoundary>
-      <AppUIProvider>
-        <AppContent />
-      </AppUIProvider>
-    </ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
+        <AppUIProvider>
+          <AppContent />
+        </AppUIProvider>
+      </ErrorBoundary>
+    </QueryClientProvider>
   );
 }
 

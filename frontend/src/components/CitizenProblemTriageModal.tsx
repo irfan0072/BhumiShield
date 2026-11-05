@@ -362,8 +362,6 @@ export const CitizenProblemTriageModal: React.FC<CitizenProblemTriageModalProps>
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
-
   // Resolve Competent Office from Property Jurisdiction
   const resolvedOffice = useMemo(() => {
     if (dontKnowLocation) {
@@ -514,12 +512,14 @@ export const CitizenProblemTriageModal: React.FC<CitizenProblemTriageModalProps>
     }
   };
 
+  if (!isOpen) return null;
+
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="citizen-problem-triage-modal-title"
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-fadeIn"
+      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 animate-fadeIn"
     >
       <div className="bg-white rounded-3xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Header */}

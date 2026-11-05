@@ -1,10 +1,10 @@
 {
-    "timestamp": "2026-11-02T14:07:45+00:00",
+    "timestamp": "2026-11-03T09:28:12+00:00",
     "total": 43,
     "passed": 43,
     "failed": 0,
     "pass_rate_percent": 100,
-    "elapsed_ms": 4111.48,
+    "elapsed_ms": 16064.38,
     "status": "PASS",
     "suites": [
         {
@@ -17,139 +17,139 @@
                     "name": "test_01_public_health_and_readiness",
                     "description": "Public Health & Identity Readiness Endpoints",
                     "status": "PASS",
-                    "elapsed_ms": 13.29
+                    "elapsed_ms": 18.26
                 },
                 {
                     "name": "test_02_citizen_property_vault",
                     "description": "Role 01: Citizen Property Vault & Owned Plots",
                     "status": "PASS",
-                    "elapsed_ms": 222.77
+                    "elapsed_ms": 374.67
                 },
                 {
                     "name": "test_03_service_point_operator",
                     "description": "Role 02: Service Point Operator Biometric Intake",
                     "status": "PASS",
-                    "elapsed_ms": 161.13
+                    "elapsed_ms": 369.66
                 },
                 {
                     "name": "test_04_sub_registrar_console",
                     "description": "Role 03: Sub-Registrar Deeds Pipeline & Fee Calculation",
                     "status": "PASS",
-                    "elapsed_ms": 169.14
+                    "elapsed_ms": 538.45
                 },
                 {
                     "name": "test_05_registry_data_officer",
                     "description": "Role 04: Registry Data Officer Ledger Ingestion",
                     "status": "PASS",
-                    "elapsed_ms": 160.22
+                    "elapsed_ms": 1767.14
                 },
                 {
                     "name": "test_06_ac_land_mutations_and_reconciliation",
                     "description": "Role 05: AC Land Mutation Docket & Flagged Khatians",
                     "status": "PASS",
-                    "elapsed_ms": 207.41
+                    "elapsed_ms": 1593.07
                 },
                 {
                     "name": "test_07_land_office_assistant",
                     "description": "Role 06: Land Office Assistant Case Processing",
                     "status": "PASS",
-                    "elapsed_ms": 201.47
+                    "elapsed_ms": 1019.45
                 },
                 {
                     "name": "test_08_field_verification_officer",
                     "description": "Role 07: Field Verification Officer Inspection Reports",
                     "status": "PASS",
-                    "elapsed_ms": 179.84
+                    "elapsed_ms": 742.69
                 },
                 {
                     "name": "test_09_settlement_records_officer",
                     "description": "Role 08: Settlement Records Officer Cadastral Editor",
                     "status": "PASS",
-                    "elapsed_ms": 172.33
+                    "elapsed_ms": 624.91
                 },
                 {
                     "name": "test_10_settlement_checker",
                     "description": "Role 09: Settlement Checker Onboarding Staging Review",
                     "status": "PASS",
-                    "elapsed_ms": 171.82
+                    "elapsed_ms": 541.21
                 },
                 {
                     "name": "test_11_uno_supervisor",
                     "description": "Role 10: UNO Supervisor SLA Dispatch Control",
                     "status": "PASS",
-                    "elapsed_ms": 184.06
+                    "elapsed_ms": 572.64
                 },
                 {
                     "name": "test_12_appellate_reviewer",
                     "description": "Role 11: Appellate Reviewer (ADC Revenue) Appeals",
                     "status": "PASS",
-                    "elapsed_ms": 168.81
+                    "elapsed_ms": 584.39
                 },
                 {
                     "name": "test_13_bank_officer_mortgages",
                     "description": "Role 12: Bank Officer Mortgage Collateral Checks",
                     "status": "PASS",
-                    "elapsed_ms": 178.03
+                    "elapsed_ms": 475.7
                 },
                 {
                     "name": "test_14_bank_manager_noc_generation",
                     "description": "Role 13: Bank Manager Lien Release & Verifiable NOC",
                     "status": "PASS",
-                    "elapsed_ms": 170.89
+                    "elapsed_ms": 1117.19
                 },
                 {
                     "name": "test_15_support_agent_tickets",
                     "description": "Role 14: Support Agent Helpline Tickets & Resolution",
                     "status": "PASS",
-                    "elapsed_ms": 169.3
+                    "elapsed_ms": 611.09
                 },
                 {
                     "name": "test_16_platform_moderator_marketplace",
                     "description": "Role 15: Platform Moderator Marketplace Listings",
                     "status": "PASS",
-                    "elapsed_ms": 161.81
+                    "elapsed_ms": 466.46
                 },
                 {
                     "name": "test_17_content_editor_publications",
                     "description": "Role 16: Content Editor Land Guidance Drafts",
                     "status": "PASS",
-                    "elapsed_ms": 171.44
+                    "elapsed_ms": 501.8
                 },
                 {
                     "name": "test_18_content_approver_publishing",
                     "description": "Role 17: Content Approver Publishing Decisions",
                     "status": "PASS",
-                    "elapsed_ms": 174.24
+                    "elapsed_ms": 749.62
                 },
                 {
                     "name": "test_19_super_admin_governance",
                     "description": "Role 18: Super Admin System Users, Stats & Backup",
                     "status": "PASS",
-                    "elapsed_ms": 214.32
+                    "elapsed_ms": 641.84
                 },
                 {
                     "name": "test_20_national_cryptographic_auditor",
                     "description": "Role 19: National Cryptographic Auditor Ledger Verification",
                     "status": "PASS",
-                    "elapsed_ms": 182.82
+                    "elapsed_ms": 509.61
                 },
                 {
                     "name": "test_21_dc_acquisition_officer",
                     "description": "Role 20: DC Land Acquisition Officer Cases",
                     "status": "PASS",
-                    "elapsed_ms": 167.95
+                    "elapsed_ms": 472.36
                 },
                 {
                     "name": "test_22_lawyer_court_portal",
                     "description": "Role 21: Civil Court Advocate Verification & Case Filing",
                     "status": "PASS",
-                    "elapsed_ms": 1.17
+                    "elapsed_ms": 4.81
                 },
                 {
                     "name": "test_23_public_portals_and_citizen_services",
                     "description": "Public Portals: Check Before Buy, QR Verify, Map, Notices, Blog",
                     "status": "PASS",
-                    "elapsed_ms": 23.2
+                    "elapsed_ms": 100.22
                 }
             ]
         },
@@ -163,61 +163,61 @@
                     "name": "test_01_unauthenticated_request_fails_closed_401",
                     "description": "Anonymous request to protected routes fails closed with 401 AUTH_REQUIRED",
                     "status": "PASS",
-                    "elapsed_ms": 3.51
+                    "elapsed_ms": 24.38
                 },
                 {
                     "name": "test_02_unauthorized_role_access_fails_closed_403",
                     "description": "Unauthorized roles blocked with 403 FORBIDDEN_ROLE",
                     "status": "PASS",
-                    "elapsed_ms": 2.54
+                    "elapsed_ms": 15.68
                 },
                 {
                     "name": "test_03_rule_m3_admin_cannot_edit_land_data_or_approve_mutations_403",
                     "description": "Rule M3: Admin cannot mutate land data or approve transfers (403 ADMIN_CANNOT_EDIT_LAND_DATA)",
                     "status": "PASS",
-                    "elapsed_ms": 0.58
+                    "elapsed_ms": 1.48
                 },
                 {
                     "name": "test_04_suspended_account_fails_closed_403",
                     "description": "Suspended accounts fail closed with 403 ACCOUNT_SUSPENDED",
                     "status": "PASS",
-                    "elapsed_ms": 0.78
+                    "elapsed_ms": 9.1
                 },
                 {
                     "name": "test_05_maker_checker_segregation_policy_422",
                     "description": "Maker-checker segregation prevents self-approval of own work",
                     "status": "PASS",
-                    "elapsed_ms": 0.58
+                    "elapsed_ms": 2.38
                 },
                 {
                     "name": "test_06_invalid_negative_or_zero_areas_rejected_422",
                     "description": "Negative and zero land areas strictly rejected with 422",
                     "status": "PASS",
-                    "elapsed_ms": 1.05
+                    "elapsed_ms": 4.18
                 },
                 {
                     "name": "test_07_invalid_geometry_and_polygon_constraints_422",
                     "description": "Self-intersecting polygons and invalid GeoJSON rejected with 422",
                     "status": "PASS",
-                    "elapsed_ms": 0.38
+                    "elapsed_ms": 5.08
                 },
                 {
                     "name": "test_08_tampered_deed_cryptographic_verification_detects_hash_mismatch",
                     "description": "Cryptographic ledger detects tampered deed content hash mismatch",
                     "status": "PASS",
-                    "elapsed_ms": 29.5
+                    "elapsed_ms": 95.68
                 },
                 {
                     "name": "test_09_nonexistent_resources_return_honest_404",
                     "description": "Non-existent plots, deeds, lawyers and notices return honest 404",
                     "status": "PASS",
-                    "elapsed_ms": 2.34
+                    "elapsed_ms": 7.78
                 },
                 {
                     "name": "test_10_missing_required_payload_fields_return_422",
                     "description": "Incomplete request payloads return 422 validation errors",
                     "status": "PASS",
-                    "elapsed_ms": 1.59
+                    "elapsed_ms": 5.71
                 }
             ]
         },
@@ -231,37 +231,37 @@
                     "name": "test_01_plot_lock_and_marketplace_listing_rejection",
                     "description": "Plot Lock toggles sale freeze and blocks public marketplace listing (PLOT_LOCKED)",
                     "status": "PASS",
-                    "elapsed_ms": 2.45
+                    "elapsed_ms": 7.15
                 },
                 {
                     "name": "test_02_active_mortgage_lien_blocks_noc_generation_until_released",
                     "description": "Active mortgage lien blocks NOC generation (ACTIVE_LIEN_CANNOT_ISSUE_NOC) until released",
                     "status": "PASS",
-                    "elapsed_ms": 7.76
+                    "elapsed_ms": 22.33
                 },
                 {
                     "name": "test_03_upheld_dispute_injunction_freezes_plot_and_blocks_transfer",
                     "description": "Upheld dispute injunction freezes plot and blocks Sub-Registrar transfer (PLOT_TRANSFER_FROZEN)",
                     "status": "PASS",
-                    "elapsed_ms": 3.14
+                    "elapsed_ms": 8.67
                 },
                 {
                     "name": "test_04_cadastral_map_drawing_and_maker_checker_parcel_allocation",
                     "description": "Cadastral Mouza Map polygon drawing + Maker-Checker review + Parcel Allocation + Khatian Generation",
                     "status": "PASS",
-                    "elapsed_ms": 4.67
+                    "elapsed_ms": 45.43
                 },
                 {
                     "name": "test_05_stay_order_appeal_granted_locks_plot_against_sale",
                     "description": "Appellate stay order granted locks plot against sale (owner_sale_locked=1)",
                     "status": "PASS",
-                    "elapsed_ms": 1.05
+                    "elapsed_ms": 2.95
                 },
                 {
                     "name": "test_06_rapid_resale_threshold_dynamically_configured_and_enforced",
                     "description": "Dynamic rapid resale threshold in site settings verified by deterministic fraud engine",
                     "status": "PASS",
-                    "elapsed_ms": 2.89
+                    "elapsed_ms": 5.35
                 }
             ]
         },
@@ -275,25 +275,25 @@
                     "name": "test_01_complete_property_transfer_and_mutation_lifecycle",
                     "description": "Scenario A: Citizen check -> Fee calc -> Pre-check -> Deed registration -> AC Land mutation -> Vault update",
                     "status": "PASS",
-                    "elapsed_ms": 204.88
+                    "elapsed_ms": 572.88
                 },
                 {
                     "name": "test_02_bank_mortgage_lien_collateral_due_diligence_and_noc_lifecycle",
                     "description": "Scenario B: Bank mortgage lien creation -> Check Before You Buy alert -> Loan release -> Cryptographic NOC verify",
                     "status": "PASS",
-                    "elapsed_ms": 19.1
+                    "elapsed_ms": 105.83
                 },
                 {
                     "name": "test_03_lawyer_bar_verification_court_filing_freeze_and_resolution",
                     "description": "Scenario C: Bar Council lawyer verify -> Court suit filing -> Plot transfer freeze -> Dispute resolution",
                     "status": "PASS",
-                    "elapsed_ms": 174.22
+                    "elapsed_ms": 511.56
                 },
                 {
                     "name": "test_04_super_admin_sovereign_power_ledger_audit_backup_broadcast",
                     "description": "Scenario D: Super Admin ledger health check -> Audit log query -> Sovereign DB backup -> Emergency broadcast",
                     "status": "PASS",
-                    "elapsed_ms": 19.58
+                    "elapsed_ms": 83.45
                 }
             ]
         }

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="twBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#022c22" />
+      <stop offset="55%" stop-color="#064e3b" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+    <linearGradient id="stepGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <filter id="softGlowTw">
+      <feGaussianBlur stdDeviation="25" result="blur" />
+    </filter>
+  </defs>
+
+  <!-- Base Canvas -->
+  <rect width="800" height="240" rx="20" fill="url(#twBg)" stroke="#34d399" stroke-width="1.2" />
+
+  <!-- Ambient light -->
+  <circle cx="120" cy="60" r="100" fill="#059669" opacity="0.3" filter="url(#softGlowTw)" />
+  <circle cx="700" cy="180" r="110" fill="#10b981" opacity="0.25" filter="url(#softGlowTw)" />
+
+  <!-- Subtle Contour Curves -->
+  <path d="M 0 160 Q 200 80 400 120 T 800 60" fill="none" stroke="#34d399" stroke-opacity="0.15" stroke-width="2" />
+  <path d="M 0 200 Q 250 140 500 160 T 800 110" fill="none" stroke="#6ee7b7" stroke-opacity="0.1" stroke-width="1.5" />
+
+  <!-- Right Graphic Visual: Abstract Connected Problem-Solving Nodes -->
+  <g transform="translate(560, 40)">
+    <!-- Connecting flow dashed path -->
+    <path d="M 30 75 Q 85 20, 140 75 T 220 75" fill="none" stroke="#34d399" stroke-width="2" stroke-dasharray="4 4" stroke-opacity="0.6" />
+
+    <!-- Node 1 -->
+    <g transform="translate(10, 55)">
+      <circle cx="20" cy="20" r="22" fill="#047857" stroke="#34d399" stroke-width="2" />
+      <circle cx="20" cy="20" r="8" fill="#ecfdf5" />
+    </g>
+
+    <!-- Node 2 -->
+    <g transform="translate(120, 55)">
+      <circle cx="20" cy="20" r="22" fill="#064e3b" stroke="#fbbf24" stroke-width="2" />
+      <polygon points="20,13 22,18 27,18 23,21 25,26 20,23 15,26 17,21 13,18 18,18" fill="#fbbf24" />
+    </g>
+
+    <!-- Node 3 (Success Check) -->
+    <g transform="translate(195, 55)">
+      <circle cx="20" cy="20" r="24" fill="#059669" stroke="#6ee7b7" stroke-width="2.5" />
+      <path d="M 12 20 L 17 25 L 28 14" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+  </g>
+</svg>

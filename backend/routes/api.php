@@ -278,6 +278,7 @@ return static function (string $method, string $uri, array $query, array $body):
     if ($method === 'POST' && $sub === '/manage/content') return \App\Http\Controllers\Api\V1\ContentWorkflowController::save($body);
     if ($method === 'POST' && preg_match('#^/manage/content/(\d+)/status$#', $sub, $m)) return \App\Http\Controllers\Api\V1\ContentWorkflowController::transition((int)$m[1], $body);
     if ($method === 'PUT' && preg_match('#^/manage/content/(\d+)$#', $sub, $m)) return \App\Http\Controllers\Api\V1\ContentWorkflowController::save($body, (int)$m[1]);
+    if ($method === 'DELETE' && preg_match('#^/manage/content/(\d+)$#', $sub, $m)) return \App\Http\Controllers\Api\V1\ContentWorkflowController::softDelete((int)$m[1], $query);
     // 3d. Offices, Public Notices and Educational Blog (Sections 6, 8.5, 8.6)
     if ($method === 'GET' && $sub === '/offices') {
         return PublicMarketplaceAndPortalController::listOffices($query);
@@ -704,28 +705,28 @@ return static function (string $method, string $uri, array $query, array $body):
         return SystemAdminController::getHierarchyDivisions();
     }
     if ($method === 'GET' && $sub === '/hierarchy/districts') {
-        return SystemAdminController::getHierarchyDistricts($query['division'] ?? null);
+        return SystemAdminController::getHierarchyDistricts($query['division'] ?? $query['division_bn'] ?? null);
     }
     if ($method === 'GET' && $sub === '/hierarchy/upazilas') {
-        return SystemAdminController::getHierarchyUpazilas($query['district'] ?? null, $query['division'] ?? null);
+        return SystemAdminController::getHierarchyUpazilas($query['district'] ?? $query['district_bn'] ?? null, $query['division'] ?? $query['division_bn'] ?? null);
     }
     if ($method === 'GET' && $sub === '/hierarchy/mouzas') {
-        return SystemAdminController::getHierarchyMouzas($query['upazila'] ?? null, $query['district'] ?? null);
+        return SystemAdminController::getHierarchyMouzas($query['upazila'] ?? $query['upazila_bn'] ?? null, $query['district'] ?? $query['district_bn'] ?? null);
     }
     if ($method === 'POST' && $sub === '/admin/hierarchy/mouza') {
-        $actor = RoleMiddleware::authorize(['admin']);
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
         return SystemAdminController::createHierarchyMouza($body, $actor);
     }
     if ($method === 'PUT' && preg_match('#^/admin/hierarchy/mouza/(\d+)$#', $sub, $m)) {
-        $actor = RoleMiddleware::authorize(['admin']);
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
         return SystemAdminController::updateHierarchyMouza((int) $m[1], $body, $actor);
     }
     if ($method === 'DELETE' && preg_match('#^/admin/hierarchy/mouza/(\d+)$#', $sub, $m)) {
-        $actor = RoleMiddleware::authorize(['admin']);
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
         return SystemAdminController::deleteHierarchyMouza((int) $m[1], $actor);
     }
     if ($method === 'POST' && $sub === '/admin/hierarchy/rename') {
-        $actor = RoleMiddleware::authorize(['admin']);
+        $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
         return SystemAdminController::renameHierarchyTier($body, $actor);
     }
 

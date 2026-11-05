@@ -656,8 +656,8 @@ export const BhumiApi = {
       }
       return r.data;
     }),
-  switchDemoRole: (role: string) =>
-    api.post('/auth/switch-demo-role', { role }).then((r) => {
+  switchDemoRole: (role: string, username?: string, userId?: number) =>
+    api.post('/auth/switch-demo-role', { role, username, user_id: userId }).then((r) => {
       const u = r.data.user;
       if (u) {
         u.nid_mock = u.nid || u.nid_mock || '';
@@ -1146,6 +1146,8 @@ export const BhumiApi = {
     id ? api.put(`/manage/content/${id}`, data).then((r) => r.data) : api.post('/manage/content', data).then((r) => r.data),
   transitionManagedContent: (id: number, data: { kind?: string; status: string }): Promise<any> =>
     api.post(`/manage/content/${id}/status`, data).then((r) => r.data),
+  deleteManagedContent: (id: number, query?: { kind?: string }): Promise<any> =>
+    api.delete(`/manage/content/${id}`, { params: query }).then((r) => r.data),
 
   // Institutional Public Registers & Blog (Phase 3 & Tier B)
   listOffices: (query?: any): Promise<any[]> =>
