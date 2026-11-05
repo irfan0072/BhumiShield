@@ -89,9 +89,9 @@ export const SubRegistrarPage: React.FC<SubRegistrarPageProps> = ({
   }, [currentSubPage]);
 
   useEffect(() => {
-    const allowed: SubRegistrarTab[] = ['wizard', 'held', 'deeds', 'khatian', 'verifier', 'fees', 'onboarding'];
+    const allowed: SubRegistrarTab[] = ['overview', 'wizard', 'held', 'deeds', 'khatian', 'verifier', 'fees', 'onboarding'];
     if (!allowed.includes(subTab)) {
-      const fallback: SubRegistrarTab = role === 'registry_data_officer' ? 'wizard' : 'held';
+      const fallback: SubRegistrarTab = role === 'registry_data_officer' ? 'wizard' : 'overview';
       setSubTab(fallback);
       setActiveSubTab(fallback);
     }
@@ -177,7 +177,7 @@ export const SubRegistrarPage: React.FC<SubRegistrarPageProps> = ({
   }, []);
 
   useEffect(() => {
-    if (activeSubTab && ['wizard', 'held', 'deeds', 'khatian', 'verifier', 'fees', 'onboarding'].includes(activeSubTab)) {
+    if (activeSubTab && ['overview', 'wizard', 'held', 'deeds', 'khatian', 'verifier', 'fees', 'onboarding'].includes(activeSubTab)) {
       setSubTab(activeSubTab as SubRegistrarTab);
       if (activeSubTab === 'held') {
         setDeedStatusFilter('HELD');
@@ -453,10 +453,10 @@ export const SubRegistrarPage: React.FC<SubRegistrarPageProps> = ({
       {/* Executive shadcn Sub-Registrar Dashboard Tab */}
       {subTab === 'overview' && (
         <SubRegistrarDashboard
-          onNavigateTab={handleSubTabChange}
-          deedsList={deeds}
+          onNavigateTab={(tab) => handleTabChange(tab as SubRegistrarTab)}
+          deedsList={deedsList}
           stats={{
-            total_registered: deeds.length > 0 ? deeds.length : 91,
+            total_registered: deedsList.length > 0 ? deedsList.length : (stats?.kpis?.total_deeds ?? 91),
             pending_hearing: heldDeedsCount,
             fraud_blocked: 15,
             revenue_collected: 485250,

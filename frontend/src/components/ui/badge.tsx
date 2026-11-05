@@ -21,6 +21,8 @@ const badgeVariants = cva(
           'border-amber-300 bg-amber-50 text-amber-900',
         danger:
           'border-rose-300 bg-rose-50 text-rose-800',
+        destructive:
+          'border-rose-300 bg-rose-50 text-rose-800',
         outline:
           'border-[#006A4E]/30 text-[#006A4E] bg-white',
         secondary:

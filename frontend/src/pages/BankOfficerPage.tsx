@@ -148,7 +148,7 @@ export const BankOfficerPage: React.FC<BankOfficerPageProps> = ({
   }, []);
 
   useEffect(() => {
-    if (activeSubTab && ['mortgages', 'new_lien', 'noc', 'khatian'].includes(activeSubTab)) {
+    if (activeSubTab && ['overview', 'mortgages', 'new_lien', 'noc', 'khatian'].includes(activeSubTab)) {
       setSubTab(activeSubTab as BankTab);
       if (activeSubTab === 'noc') {
         setStatusFilter('RELEASED');
@@ -452,10 +452,10 @@ export const BankOfficerPage: React.FC<BankOfficerPageProps> = ({
       {/* Executive shadcn Bank Officer Dashboard Tab */}
       {subTab === 'overview' && (
         <BankOfficerDashboard
-          onNavigateTab={handleSubTabChange}
+          onNavigateTab={(tab) => handleTabChange(tab as BankTab)}
           stats={{
-            active_liens: liens.length > 0 ? liens.length : 14,
-            mortgage_value_bdt: totalMortgageValue > 0 ? totalMortgageValue : 185000000,
+            active_liens: mortgages.length > 0 ? mortgages.length : 14,
+            mortgage_value_bdt: 185000000,
             pending_noc: 3,
             flagged_anomalies: 2,
           }}

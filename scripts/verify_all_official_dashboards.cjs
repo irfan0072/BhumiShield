@@ -3,7 +3,7 @@ const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const ARTIFACT_DIR = '/Users/apple/.gemini/antigravity/brain/7b8b01c8-f348-4efb-9538-8258cb9637e0';
+const ARTIFACT_DIR = '/Users/apple/.gemini/antigravity/brain/b1e816da-5647-4a2f-af77-167a7fbe1c20';
 const BASE_URL = 'http://localhost:5176';
 
 const AUDIT_TARGETS = [
@@ -13,6 +13,9 @@ const AUDIT_TARGETS = [
   { name: '04_bank_officer_dashboard', path: '/bn/bank', role: 'bank_officer', username: 'bank', name_bn: 'নাজমুল হাসান' },
   { name: '05_lawyer_chamber_dashboard', path: '/bn/lawyer-case', role: 'lawyer_court_user', username: 'advocate', name_bn: 'ব্যারিস্টার মাহবুবুল আলম' },
   { name: '06_dc_acquisition_dashboard', path: '/bn/specialist', role: 'dc_acquisition_officer', username: 'dc_la', name_bn: 'মো. আনিসুর রহমান' },
+  { name: '07_admin_overview', path: '/bn/admin', role: 'admin', username: 'admin', name_bn: 'প্রধান প্রশাসক' },
+  { name: '08_admin_deeds', path: '/bn/admin/deeds', role: 'admin', username: 'admin', name_bn: 'প্রধান প্রশাসক' },
+  { name: '09_admin_mutations', path: '/bn/admin/mutations', role: 'admin', username: 'admin', name_bn: 'প্রধান প্রশাসক' },
 ];
 
 async function runAudit() {

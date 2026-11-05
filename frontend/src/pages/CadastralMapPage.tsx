@@ -1519,7 +1519,7 @@ export const CadastralMapPage: React.FC<{ onNavigate?: (tab: string) => void }> 
             </CardContent>
 
             {/* Dock Footer with Pagination */}
-            {data && data.total_pages > 1 && (
+            {data && (data as any).total_pages > 1 && (
               <CardFooter className="p-2.5 border-t border-border/60 bg-muted/20 flex items-center justify-between text-xs shrink-0">
                 <Button
                   variant="outline"
@@ -1531,13 +1531,13 @@ export const CadastralMapPage: React.FC<{ onNavigate?: (tab: string) => void }> 
                   {t('পূর্ববর্তী', 'Prev')}
                 </Button>
                 <span className="text-[10px] text-muted-foreground font-mono">
-                  {toBnDigits(page)} / {toBnDigits(data.total_pages)}
+                  {toBnDigits(page)} / {toBnDigits((data as any).total_pages)}
                 </span>
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={page >= data.total_pages}
-                  onClick={() => setPage((p) => Math.min(data.total_pages, p + 1))}
+                  disabled={page >= (data as any).total_pages}
+                  onClick={() => setPage((p) => Math.min((data as any).total_pages, p + 1))}
                   className="h-7 px-2 text-[11px]"
                 >
                   {t('পরবর্তী', 'Next')}
@@ -1659,7 +1659,7 @@ export const CadastralMapPage: React.FC<{ onNavigate?: (tab: string) => void }> 
               <div className="space-y-1.5 p-2.5 rounded-xl bg-muted/30 border border-border/60 text-[11px]">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{t('খতিয়ান নম্বর:', 'Khatian No:')}</span>
-                  <span className="font-mono font-bold text-foreground">{selected.khatian_no || '১০২/বিএস'}</span>
+                  <span className="font-mono font-bold text-foreground">{(selected as any).khatian_no || '১০২/বিএস'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{t('জরিপ সংস্করণ:', 'Survey Version:')}</span>

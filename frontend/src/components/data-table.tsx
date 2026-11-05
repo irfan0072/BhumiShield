@@ -473,7 +473,7 @@ export function DataTable({
                       key={column.id}
                       className="capitalize"
                       checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
+                      onCheckedChange={(value: boolean) =>
                         column.toggleVisibility(!!value)
                       }
                     >

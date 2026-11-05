@@ -17,6 +17,7 @@ import {
   RefreshCw,
   Search,
   ArrowRight,
+  ArrowLeft,
   Sparkles,
   Info,
   Calendar,

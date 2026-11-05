@@ -365,6 +365,7 @@ export const AcLandPage: React.FC<AcLandPageProps> = ({
     if (
       currentSubPage &&
       [
+        'overview',
         'mutations',
         'khatians',
         'disputes',
@@ -383,6 +384,7 @@ export const AcLandPage: React.FC<AcLandPageProps> = ({
     if (
       activeSubTab &&
       [
+        'overview',
         'mutations',
         'khatians',
         'disputes',
@@ -970,7 +972,7 @@ export const AcLandPage: React.FC<AcLandPageProps> = ({
       {/* ========================================================================= */}
       {subTab === 'overview' && (
         <AcLandExecutiveDashboard
-          onNavigateTab={handleSubTabChange}
+          onNavigateTab={(tab) => handleTabChange(tab as AcLandTab)}
           stats={{
             active_mutations: mutations.length > 0 ? mutations.length : 38,
             flagged_khatians: flaggedKhatians.length > 0 ? flaggedKhatians.length : 12,

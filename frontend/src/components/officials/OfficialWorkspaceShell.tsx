@@ -211,19 +211,24 @@ export const OfficialWorkspaceShell: React.FC<OfficialWorkspaceShellProps> = ({
     const search = new URLSearchParams(window.location.search);
     const tabParam = search.get('tab') || search.get('sub');
 
+    // 1. Check if explicit tabParam matches any configured nav item (including 'overview')
+    if (tabParam && config.navItems.some((item) => item.id === tabParam)) {
+      return tabParam;
+    }
+
     if (workspaceType === 'registrar') {
-      if (tabParam && ['held', 'wizard', 'deeds', 'khatian', 'verifier', 'fees', 'onboarding'].includes(tabParam)) return tabParam;
       if (path.includes('/wizard') || path.includes('/new-deed')) return 'wizard';
       if (path.includes('/deeds') || path.includes('/balam')) return 'deeds';
       if (path.includes('/fees') || path.includes('/calculator')) return 'fees';
       if (path.includes('/khatian')) return 'khatian';
       if (path.includes('/verifier')) return 'verifier';
       if (path.includes('/onboarding') || path.includes('/batch')) return 'onboarding';
-      return 'held';
+      if (path.includes('/held') || path.includes('/hearing')) return 'held';
+      return config.defaultTab;
     }
 
     if (workspaceType === 'acland') {
-      if (tabParam && ['mutations', 'khatians', 'disputes', 'field_reports', 'survey_batches', 'sla_overview', 'appeals', 'explorer', 'verifier', 'onboarding'].includes(tabParam)) return tabParam;
+      if (path.includes('/mutations')) return 'mutations';
       if (path.includes('/khatian') || path.includes('/plot')) return 'khatians';
       if (path.includes('/dispute') || path.includes('/tribunal')) return 'disputes';
       if (path.includes('/field') || path.includes('/surveyor')) return 'field_reports';
@@ -233,28 +238,28 @@ export const OfficialWorkspaceShell: React.FC<OfficialWorkspaceShellProps> = ({
       if (path.includes('/explorer') || path.includes('/search')) return 'explorer';
       if (path.includes('/verifier') || path.includes('/security')) return 'verifier';
       if (path.includes('/onboarding')) return 'onboarding';
-      return 'mutations';
+      return config.defaultTab;
     }
 
     if (workspaceType === 'bank') {
-      if (tabParam && ['mortgages', 'new_lien', 'noc', 'khatian'].includes(tabParam)) return tabParam;
       if (path.includes('/new') || path.includes('/lien') || path.includes('/create')) return 'new_lien';
       if (path.includes('/noc') || path.includes('/release')) return 'noc';
       if (path.includes('/khatian') || path.includes('/title')) return 'khatian';
-      return 'mortgages';
+      if (path.includes('/mortgage')) return 'mortgages';
+      return config.defaultTab;
     }
 
     if (workspaceType === 'lawyer') {
-      if (tabParam && ['step1', 'step2', 'step3'].includes(tabParam)) return tabParam;
       if (path.includes('/suit') || path.includes('/dispute') || path.includes('/step2')) return 'step2';
       if (path.includes('/injunction') || path.includes('/petition') || path.includes('/docket') || path.includes('/step3')) return 'step3';
-      return 'step1';
+      if (path.includes('/license') || path.includes('/bar') || path.includes('/step1')) return 'step1';
+      return config.defaultTab;
     }
 
     if (workspaceType === 'specialist') {
-      if (tabParam && ['la_cases', 'title_scrutiny'].includes(tabParam)) return tabParam;
       if (path.includes('/scrutiny') || path.includes('/title')) return 'title_scrutiny';
-      return 'la_cases';
+      if (path.includes('/la') || path.includes('/cases')) return 'la_cases';
+      return config.defaultTab;
     }
 
     return config.defaultTab;

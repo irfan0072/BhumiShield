@@ -380,7 +380,8 @@ export const CitizenHome: React.FC<{ onNavigate: (target: string) => void }> = (
       const errText = t('ফাইলটি ১০ মেগাবাইটের মধ্যে রাখুন।', 'File size must be under 10MB.');
       setNotice({ msg: errText, err: true });
       triggerAppNotification({
-        type: 'ERROR',
+        type: 'ALERT',
+        targetTab: 'home',
         title_bn: 'আপলোডে সমস্যা',
         title_en: 'Upload Error',
         message_bn: errText,
@@ -407,6 +408,7 @@ export const CitizenHome: React.FC<{ onNavigate: (target: string) => void }> = (
       setNotice({ msg: successText });
       triggerAppNotification({
         type: 'SUCCESS',
+        targetTab: 'home',
         title_bn: 'কাগজপত্র আপলোড সম্পন্ন',
         title_en: 'Document Uploaded',
         message_bn: successText,
@@ -421,7 +423,8 @@ export const CitizenHome: React.FC<{ onNavigate: (target: string) => void }> = (
       const errText = err?.response?.data?.error || t('আপলোডে ত্রুটি হয়েছে।', 'Failed to upload document.');
       setNotice({ msg: errText, err: true });
       triggerAppNotification({
-        type: 'ERROR',
+        type: 'ALERT',
+        targetTab: 'home',
         title_bn: 'আপলোডে সমস্যা',
         title_en: 'Upload Error',
         message_bn: errText,

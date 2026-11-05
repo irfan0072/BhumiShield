@@ -1407,7 +1407,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     e.preventDefault();
     await BhumiApi.updateSettings({
       ...settingsMap,
-      quick_links_menu: quickLinksMenu,
+      quick_links_menu: JSON.stringify(quickLinksMenu),
     });
     setSaveMsg(t('সিস্টেম ও রুল ইঞ্জিন পলিসি সফলভাবে সংরক্ষিত হয়েছে!', 'System policy settings saved!'));
     refreshAll();
@@ -1477,7 +1477,7 @@ export const AdminDashboardPage: React.FC<{ onNavigate?: (tab: string) => void }
     try {
       await BhumiApi.updateSettings({
         ...settingsMap,
-        quick_links_menu: quickLinksMenu,
+        quick_links_menu: JSON.stringify(quickLinksMenu),
       });
       setQuickLinksSaveMsg(t('কুইক লিংক মেনু সফলভাবে সংরক্ষিত হয়েছে!', 'Quick links menu successfully saved!'));
       refreshAll();

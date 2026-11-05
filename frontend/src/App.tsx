@@ -199,7 +199,7 @@ export const AppContent: React.FC = () => {
       <>
         <React.Suspense fallback={<PageSkeleton />}>
           <AuthGuard
-            allowedRoles={['sub_registrar', 'registry_data_officer', 'joint_sub_registrar', 'district_registrar', 'admin', 'system_admin']}
+            allowedRoles={['sub_registrar', 'registry_data_officer', 'admin', 'system_admin']}
             roleTitleBn="সাব-রেজিস্ট্রার কনসোল"
             roleTitleEn="Sub-Registrar Console"
             deptBn="নিবন্ধন অধিদপ্তর • আইন, বিচার ও সংসদ বিষয়ক মন্ত্রণালয়"
@@ -234,16 +234,8 @@ export const AppContent: React.FC = () => {
               'field_verification_officer',
               'settlement_records_officer',
               'settlement_checker',
-              'settlement_officer',
-              'kanungo',
               'uno_supervisor',
-              'uno',
               'appellate_reviewer',
-              'adc_revenue',
-              'divisional_commissioner',
-              'dlrs_officer',
-              'land_appeal_board',
-              'land_reform_board',
               'admin',
               'system_admin',
             ]}

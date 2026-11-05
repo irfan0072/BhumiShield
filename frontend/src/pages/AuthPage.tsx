@@ -1110,7 +1110,7 @@ export const AuthPage: React.FC<{
               <form onSubmit={handleProfileSave} className="space-y-4">
                 <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
                   <div>
-                    <div className="text-xs font-bold text-emerald-950">{user.full_name_bn || user.name}</div>
+                    <div className="text-xs font-bold text-emerald-950">{user.full_name_bn || (user as any).name || user.username}</div>
                     <div className="text-[11px] text-emerald-800 font-mono">Role: {user.role} | Office: {user.office_name}</div>
                   </div>
                   <Badge className="bg-emerald-600 text-white text-xs">{t('সক্রিয়', 'Active')}</Badge>
