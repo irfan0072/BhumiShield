@@ -222,6 +222,7 @@ export interface AdminAnomalyItem {
   title_bn: string;
   title_en: string;
   description_bn: string;
+  description_en?: string;
   created_at: string;
   plot_id?: number;
   deed_id?: number;
@@ -680,6 +681,7 @@ export const BhumiApi = {
       }));
     }),
   createUser: (payload: any) => api.post('/admin/users', payload).then((r) => r.data),
+  listAdminUsers: () => BhumiApi.listUsers(),
   updateUser: (id: number, payload: any) => api.put(`/admin/users/${id}`, payload).then((r) => r.data),
   deleteUser: (id: number) => api.delete(`/admin/users/${id}`).then((r) => r.data),
 
@@ -990,11 +992,17 @@ export const BhumiApi = {
     }),
   getMutations: () =>
     api.get('/mutations').then((r) => {
-      const items = r.data.items || r.data || [];
+      const rawData = r.data?.data || r.data;
+      const items = rawData?.items || (Array.isArray(rawData) ? rawData : []);
       return items.map((m: any) => ({
         ...m,
+        applicant_name_bn: m.applicant_name_bn || m.buyer_name_bn || '',
+        applicant_name_en: m.applicant_name_en || m.buyer_name_en || '',
+        applicant_nid: m.applicant_nid || m.buyer_nid || '',
+        applicant_phone: m.applicant_phone || m.buyer_phone || '',
         share_fraction: m.share_fraction || '',
-        decision_note_bn: m.decision_reason_bn || '',
+        decision_note_bn: m.decision_reason_bn || m.decision_note_bn || '',
+        order_notes_bn: m.order_notes_bn || m.decision_reason_bn || '',
       }));
     }),
   decideMutation: (mutationId: number, status: 'APPROVED' | 'REJECTED', decision_note_bn: string) =>
@@ -1030,6 +1038,7 @@ export const BhumiApi = {
         loan_amount_bdt: Number(m.amount_bdt ?? m.loan_amount_bdt ?? 0),
       }));
     }),
+  listMortgages: () => BhumiApi.getMortgages(),
   checkBankCollateral: async (payload: { plot_id: number; borrower_id: number; area_mortgaged_decimal: number }) => {
     const response = await api.post('/mortgages/collateral-check', payload);
     return normalizeRiskBundle(response.data);
@@ -1141,7 +1150,7 @@ export const BhumiApi = {
 
   // Content & Moderation Workflows (R08)
   listManagedContent: (query?: { kind?: string }): Promise<any> =>
-    api.get('/manage/content', { params: query }).then((r) => r.data),
+    api.get('/manage/content', { params: query }).then((r) => r.data?.data || r.data),
   saveManagedContent: (data: any, id?: number): Promise<any> =>
     id ? api.put(`/manage/content/${id}`, data).then((r) => r.data) : api.post('/manage/content', data).then((r) => r.data),
   transitionManagedContent: (id: number, data: { kind?: string; status: string }): Promise<any> =>
@@ -1364,6 +1373,22 @@ export const BhumiApi = {
     per_page?: number;
   }): Promise<AdminDeedsResponse> =>
     api.get('/admin/deeds', { params }).then((r) => r.data),
+  listAdminKhatians: (params?: {
+    q?: string;
+    survey_type?: string;
+    status?: string;
+    mouza_id?: number | string;
+  }): Promise<{
+    status: number;
+    items: any[];
+    total: number;
+    kpis?: {
+      total_khatians: number;
+      valid_khatians: number;
+      flagged_khatians: number;
+    };
+  }> =>
+    api.get('/admin/khatians', { params }).then((r) => r.data),
   getAdminDeedDetail: (id: number): Promise<AdminDeedDetailResponse> =>
     api.get(`/admin/deeds/${id}`).then((r) => r.data),
   flagAdminDeed: (

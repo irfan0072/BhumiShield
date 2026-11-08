@@ -479,7 +479,7 @@ return static function (string $method, string $uri, array $query, array $body):
         return WorkflowController::applyMutation($body, $actor);
     }
     if ($method === 'GET' && $sub === '/mutations') {
-        $actor = RoleMiddleware::authorize(['ac_land', 'land_office_assistant', 'field_verification_officer', 'settlement_records_officer', 'settlement_checker', 'uno_supervisor', 'appellate_reviewer', 'admin', 'auditor']);
+        $actor = RoleMiddleware::authorize(['ac_land', 'land_office_assistant', 'field_verification_officer', 'settlement_records_officer', 'settlement_checker', 'uno_supervisor', 'appellate_reviewer', 'admin', 'system_admin', 'auditor']);
         return WorkflowController::listMutations($query['status'] ?? null, $actor);
     }
     if ($method === 'POST' && (preg_match('#^/mutations/(\d+)/decide$#', $sub, $m) || preg_match('#^/mutations/(\d+)/decision$#', $sub, $m))) {
@@ -742,6 +742,12 @@ return static function (string $method, string $uri, array $query, array $body):
     if ($method === 'POST' && preg_match('#^/admin/deeds/(\d+)/flag$#', $sub, $m)) {
         $actor = RoleMiddleware::authorize(['admin', 'system_admin']);
         return SystemAdminController::flagAdminDeed((int) $m[1], $body, $actor);
+    }
+
+    // 11. Super Admin Khatians & Survey Records
+    if ($method === 'GET' && ($sub === '/admin/khatians' || $sub === '/khatians')) {
+        $actor = RoleMiddleware::authorize(['admin', 'auditor', 'system_admin', 'ac_land', 'support_agent']);
+        return SystemAdminController::listAdminKhatians($query, $actor);
     }
 
     throw new \RuntimeException(json_encode([

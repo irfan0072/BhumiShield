@@ -1,50 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Users,
-  Search,
-  RotateCcw,
-  Building2,
-  ArrowRightLeft,
-  KeyRound,
-  ShieldCheck,
-  CheckCircle2,
-  Briefcase,
-  MapPin,
-  ExternalLink,
-  Award,
-  UserPlus,
-} from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ArrowRightLeft, BadgeCheck, Building2, Eye, KeyRound, MoreHorizontal, UserCheck, UserPlus, Users } from 'lucide-react';
 import { useAppUI, UserRole } from '@/i18n';
 import { BhumiApi } from '@/api/client';
-import { toBanglaDigits, maskPhone } from '@/theme/tokens';
-import { Input } from '@/components/ui/input';
+import { toBanglaDigits, maskNid, maskPhone } from '@/theme/tokens';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { CreateOfficialDialog } from '@/components/admin/CreateOfficialDialog';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  AdminPage,
+  ConfirmDialog,
+  DataTable,
+  DetailList,
+  DetailSheet,
+  EmptyRow,
+  Field,
+  FormDialog,
+  LoadingRows,
+  PageToolbar,
+  Section,
+  StatCard,
+  StatGrid,
+  StatusBadge,
+  inputCls,
+  notify,
+  useCreateIntent,
+} from '@/components/admin/kit';
 
 const OFFICIAL_ROLES = [
   'admin',
@@ -79,6 +66,56 @@ const OFFICIAL_ROLES = [
   'content_editor',
   'content_approver',
 ];
+
+const ROLE_LABELS: Record<string, [string, string]> = {
+  admin: ['সিস্টেম অ্যাডমিন', 'System admin'],
+  system_admin: ['আইটি অ্যাডমিন', 'IT admin'],
+  sub_registrar: ['সাব-রেজিস্ট্রার', 'Sub-Registrar'],
+  joint_sub_registrar: ['যুগ্ম সাব-রেজিস্ট্রার', 'Joint Sub-Registrar'],
+  district_registrar: ['জেলা রেজিস্ট্রার', 'District Registrar'],
+  registry_data_officer: ['দলিল রেকর্ড কিপার', 'Deed record keeper'],
+  ac_land: ['এসি ল্যান্ড', 'AC Land'],
+  land_office_assistant: ['ভূমি সহকারী', 'Land office assistant'],
+  field_verification_officer: ['সার্ভেয়ার', 'Surveyor'],
+  settlement_records_officer: ['সেটেলমেন্ট রেকর্ডস অফিসার', 'Settlement records officer'],
+  settlement_checker: ['সহকারী সেটেলমেন্ট অফিসার', 'Settlement checker'],
+  settlement_officer: ['সেটেলমেন্ট অফিসার', 'Settlement officer'],
+  kanungo: ['কানুনগো', 'Kanungo'],
+  uno: ['ইউএনও', 'UNO'],
+  uno_supervisor: ['ইউএনও', 'UNO'],
+  adc_revenue: ['এডিসি রাজস্ব', 'ADC Revenue'],
+  appellate_reviewer: ['এডিসি রাজস্ব আপিল', 'ADC appeals'],
+  divisional_commissioner: ['বিভাগীয় কমিশনার', 'Divisional Commissioner'],
+  dlrs_officer: ['ডিএলআরএস কর্মকর্তা', 'DLRS officer'],
+  land_appeal_board: ['ভূমি আপিল বোর্ড', 'Land Appeal Board'],
+  land_reform_board: ['ভূমি সংস্কার বোর্ড', 'Land Reform Board'],
+  bank_officer: ['ব্যাংক কর্মকর্তা', 'Bank officer'],
+  bank_manager: ['ব্যাংক ম্যানেজার', 'Bank manager'],
+  lawyer_court_user: ['আইনজীবী', 'Advocate'],
+  dc_acquisition_officer: ['অধিগ্রহণ কর্মকর্তা', 'Acquisition officer'],
+  auditor: ['অডিটর', 'Auditor'],
+  system_auditor: ['সিস্টেম অডিটর', 'System auditor'],
+  support_agent: ['হেল্পলাইন কর্মকর্তা', 'Helpline agent'],
+  platform_moderator: ['মডারেটর', 'Moderator'],
+  content_editor: ['কনটেন্ট সম্পাদক', 'Content editor'],
+  content_approver: ['কনটেন্ট অনুমোদক', 'Content approver'],
+  forest_officer: ['বন কর্মকর্তা', 'Forest officer'],
+  waqf_administrator: ['ওয়াকফ প্রশাসক', 'Waqf administrator'],
+  karbari: ['কারবারি', 'Karbari'],
+};
+
+/** Office types the backend accepts for each role on transfer (mirrors SystemAdminController::transferOfficer). */
+const ROLE_OFFICE_TYPES: Record<string, string[]> = {
+  sub_registrar: ['registry', 'sub_registry'],
+  registry_data_officer: ['registry', 'sub_registry'],
+  ac_land: ['ac_land'],
+  land_office_assistant: ['ac_land'],
+  field_verification_officer: ['ac_land'],
+  settlement_records_officer: ['settlement'],
+  settlement_checker: ['settlement'],
+  bank_officer: ['bank_branch', 'bank'],
+  bank_manager: ['bank_branch', 'bank'],
+};
 
 export const getOfficerTargetTab = (role: string): string => {
   switch (role) {
@@ -130,34 +167,84 @@ export const getOfficerTargetTab = (role: string): string => {
   }
 };
 
+const displayName = (u: any) => u.full_name_bn || u.name_bn || u.name || u.full_name_en || u.username;
+const officeOf = (u: any) => u.office_name || u.office_bn || u.office_en || '';
+const isActive = (u: any) => u.is_active === undefined || Number(u.is_active) === 1;
+const isVerified = (u: any) => Number(u.is_identity_verified) === 1 || u.nid_verified === true;
+
+const formatDate = (iso: string | null | undefined, lang: 'bn' | 'en') => {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
 export const AdminOfficialsPage: React.FC = () => {
-  const { lang, t, role: currentRole, setRole, setUser, setToken } = useAppUI();
+  const { lang, t, setRole, setUser, setToken } = useAppUI();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
-  const [createOfficialModalOpen, setCreateOfficialModalOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [selected, setSelected] = useState<any | null>(null);
+  const [loginTarget, setLoginTarget] = useState<any | null>(null);
 
-  // Transfer Dialog
+  // Transfer
   const [transferTarget, setTransferTarget] = useState<any | null>(null);
-  const [newOffice, setNewOffice] = useState('');
-  const [transferReason, setTransferReason] = useState('');
+  const [offices, setOffices] = useState<any[]>([]);
+  const [officesLoaded, setOfficesLoaded] = useState(false);
+  const [newOfficeId, setNewOfficeId] = useState('');
+  const [orderRef, setOrderRef] = useState('');
   const [transferring, setTransferring] = useState(false);
+
+  const n = (v: number) => toBanglaDigits(v, lang);
+  const roleLabel = (r: string) => {
+    const hit = ROLE_LABELS[r];
+    if (hit) return lang === 'bn' ? hit[0] : hit[1];
+    return String(r || '').replace(/_/g, ' ');
+  };
+
+  useCreateIntent(() => setCreateOpen(true));
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const res: any = await BhumiApi.listUsers();
+      const rawList = Array.isArray(res) ? res : res.items || [];
+      setUsers(
+        rawList.filter(
+          (u: any) => OFFICIAL_ROLES.includes(u.role) || !['citizen', 'service_point_operator'].includes(u.role)
+        )
+      );
+    } catch (e) {
+      notify.err(e, lang);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLoginAsOfficial = async (u: any) => {
     const targetTab = getOfficerTargetTab(u.role);
-    try {
-      // 1. Preserve current admin session for supervisor privileges & return path
-      const currentToken = localStorage.getItem('bs_token');
-      const currentUser = localStorage.getItem('bs_user');
-      const currentRoleVal = localStorage.getItem('bs_role');
-      if (currentRoleVal === 'admin' || currentRoleVal === 'system_admin') {
-        if (currentToken) localStorage.setItem('bs_admin_original_token', currentToken);
-        if (currentUser) localStorage.setItem('bs_admin_original_user', currentUser);
-      }
-      localStorage.setItem('bs_superadmin_mode', '1');
+    // Preserve the current admin session for supervisor privileges and the return path.
+    const prev = {
+      orig: localStorage.getItem('bs_admin_original_token'),
+      origUser: localStorage.getItem('bs_admin_original_user'),
+      mode: localStorage.getItem('bs_superadmin_mode'),
+    };
+    const currentToken = localStorage.getItem('bs_token');
+    const currentUser = localStorage.getItem('bs_user');
+    const currentRoleVal = localStorage.getItem('bs_role');
+    if (currentRoleVal === 'admin' || currentRoleVal === 'system_admin') {
+      if (currentToken) localStorage.setItem('bs_admin_original_token', currentToken);
+      if (currentUser) localStorage.setItem('bs_admin_original_user', currentUser);
+    }
+    localStorage.setItem('bs_superadmin_mode', '1');
 
-      // 2. Switch role via backend API
+    try {
       const res = await BhumiApi.switchDemoRole(u.role, u.username, u.id);
       if (res?.access_token && res?.user) {
         setToken(res.access_token);
@@ -166,295 +253,269 @@ export const AdminOfficialsPage: React.FC = () => {
       } else {
         setRole(u.role as UserRole);
       }
-
       window.location.href = `/${lang}/${targetTab}`;
     } catch (err) {
-      console.warn('Switch demo role fallback:', err);
-      // Fallback: set officer role and target official workspace (NEVER /home!)
-      setRole(u.role as UserRole);
-      window.location.href = `/${lang}/${targetTab}`;
+      // Roll back the impersonation flags so the admin session stays clean.
+      const restore = (k: string, v: string | null) => (v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v));
+      restore('bs_admin_original_token', prev.orig);
+      restore('bs_admin_original_user', prev.origUser);
+      restore('bs_superadmin_mode', prev.mode);
+      notify.err(err, lang);
+      throw err;
     }
   };
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const res = await BhumiApi.listUsers();
-      const rawList = Array.isArray(res) ? res : res.items || [];
-      // Filter only institutional officials
-      const officialList = rawList.filter((u: any) =>
-        OFFICIAL_ROLES.includes(u.role) || !['citizen', 'service_point_operator'].includes(u.role)
-      );
-      setUsers(officialList);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const handleOpenTransfer = (u: any) => {
+  const openTransfer = (u: any) => {
+    setSelected(null);
     setTransferTarget(u);
-    setNewOffice('উপজেলা ভূমি অফিস, ধামরাই, ঢাকা');
-    setTransferReason('মন্ত্রণালয়ের বার্ষিক কর্মকর্তা বদলি ও পদায়ন আদেশ মোতাবেক');
+    setNewOfficeId('');
+    setOrderRef('');
+    if (!officesLoaded) {
+      BhumiApi.listOffices()
+        .then((items: any) => {
+          setOffices(Array.isArray(items) ? items : items?.items || []);
+          setOfficesLoaded(true);
+        })
+        .catch((e) => notify.err(e, lang, t('অফিস তালিকা আসেনি', 'Could not load offices')));
+    }
   };
+
+  const transferOffices = useMemo(() => {
+    const types = transferTarget ? ROLE_OFFICE_TYPES[transferTarget.role] : undefined;
+    return types ? offices.filter((o) => types.includes(o.office_type)) : offices;
+  }, [offices, transferTarget]);
 
   const handleConfirmTransfer = async () => {
-    if (!transferTarget) return;
+    if (!transferTarget || !newOfficeId) return;
     try {
       setTransferring(true);
-      await BhumiApi.transferOfficer(transferTarget.id, {
-        new_office_id: transferTarget.office_id || 1,
-        transfer_order_ref: transferReason,
-        notes: newOffice,
+      const res = await BhumiApi.transferOfficer(transferTarget.id, {
+        new_office_id: Number(newOfficeId),
+        transfer_order_ref: orderRef.trim() || undefined,
       });
+      notify.ok((lang === 'bn' ? res?.message_bn : res?.message_en) || t('বদলি হয়েছে', 'Transferred'));
       setTransferTarget(null);
       fetchUsers();
     } catch (e) {
-      console.error(e);
+      notify.err(e, lang);
     } finally {
       setTransferring(false);
     }
   };
 
-  const filtered = users.filter((u) => {
-    const matchesRole = roleFilter === 'ALL' || u.role === roleFilter;
-    const q = search.toLowerCase();
-    const matchesQuery =
-      !search ||
-      String(u.name_bn || u.name || '').toLowerCase().includes(q) ||
-      String(u.username || '').toLowerCase().includes(q) ||
-      String(u.office_name || u.office_bn || '').toLowerCase().includes(q);
-    return matchesRole && matchesQuery;
-  });
+  const roleOptions = useMemo(
+    () => Array.from(new Set(users.map((u) => u.role))).sort((a, b) => roleLabel(a).localeCompare(roleLabel(b))),
+    [users, lang] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
-  const totalOfficials = users.length;
-  const uniqueOffices = new Set(users.map((u) => u.office_name || u.office_bn || 'ভূমি মন্ত্রণালয়, ঢাকা')).size;
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return users.filter((u) => {
+      if (roleFilter !== 'ALL' && u.role !== roleFilter) return false;
+      if (!q) return true;
+      return [u.full_name_bn, u.name_bn, u.name, u.full_name_en, u.username, u.office_bn, u.office_name, u.office_en, roleLabel(u.role)].some(
+        (v) => String(v || '').toLowerCase().includes(q)
+      );
+    });
+  }, [users, search, roleFilter, lang]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const total = users.length;
+  const activeCount = users.filter(isActive).length;
+  const verifiedCount = users.filter(isVerified).length;
+  const officeCount = new Set(users.map(officeOf).filter(Boolean)).size;
+  const dash = (v: number) => (loading ? '—' : n(v));
+
+  const statusBadge = (u: any) =>
+    isActive(u) ? (
+      <StatusBadge tone="green">{t('সক্রিয়', 'Active')}</StatusBadge>
+    ) : (
+      <StatusBadge tone="slate">{t('বন্ধ', 'Inactive')}</StatusBadge>
+    );
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-2.5 p-3 sm:p-4 max-w-7xl mx-auto w-full overflow-hidden">
-      {/* Search, Filter & Actions Toolbar */}
-      <Card className="shrink-0 border border-border/80 shadow-2xs bg-card p-2 sm:p-2.5 rounded-xl">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-2">
-          <div className="flex items-center gap-2 w-full lg:w-auto flex-1">
-            <div className="relative flex-1 sm:max-w-xs">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t('নাম, ইউজার বা অফিস দিয়ে খুঁজুন...', 'Search by name, user or office...')}
-                className="pl-8 h-8 text-xs rounded-lg border-border"
-              />
-            </div>
+    <AdminPage fill>
+      <StatGrid>
+        <StatCard label={t('মোট কর্মকর্তা', 'Officials')} value={dash(total)} icon={Users} tone="blue" />
+        <StatCard label={t('সক্রিয়', 'Active')} value={dash(activeCount)} icon={UserCheck} tone="green" />
+        <StatCard label={t('যাচাইকৃত', 'Verified')} value={dash(verifiedCount)} icon={BadgeCheck} tone="violet" />
+        <StatCard label={t('অফিস', 'Offices')} value={dash(officeCount)} icon={Building2} tone="amber" />
+      </StatGrid>
 
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-[180px] h-8 text-xs rounded-lg border-border shrink-0">
-                <SelectValue placeholder={t('সকল পদবী', 'All Roles')} />
-              </SelectTrigger>
-              <SelectContent className="max-h-60 text-xs">
-                <SelectItem value="ALL">{t('সকল পদবী (All Roles)', 'All Roles')}</SelectItem>
-                <SelectItem value="admin">{t('জাতীয় অ্যাডমিন (admin)', 'System Admin')}</SelectItem>
-                <SelectItem value="sub_registrar">{t('সাব-রেজিস্ট্রার (sub_registrar)', 'Sub-Registrar')}</SelectItem>
-                <SelectItem value="registry_data_officer">{t('দলিল রেকর্ড কিপার (registry_data_officer)', 'Deed Record Keeper')}</SelectItem>
-                <SelectItem value="ac_land">{t('এসি ল্যান্ড (ac_land)', 'AC Land')}</SelectItem>
-                <SelectItem value="land_office_assistant">{t('সহকারী নায়েব (land_office_assistant)', 'Office Assistant')}</SelectItem>
-                <SelectItem value="field_verification_officer">{t('সার্ভেয়ার / আমিন (field_verification_officer)', 'Surveyor / Amin')}</SelectItem>
-                <SelectItem value="settlement_records_officer">{t('সেটেলমেন্ট রেকর্ডস অফিসার (settlement_records_officer)', 'Settlement Checker')}</SelectItem>
-                <SelectItem value="bank_officer">{t('ব্যাংক লিয়েন অফিসার (bank_officer)', 'Bank Officer')}</SelectItem>
-                <SelectItem value="bank_manager">{t('ব্যাংক শাখা ব্যবস্থাপক (bank_manager)', 'Bank Manager')}</SelectItem>
-                <SelectItem value="uno_supervisor">{t('উপজেলা নির্বাহী অফিসার (uno_supervisor)', 'UNO')}</SelectItem>
-                <SelectItem value="appellate_reviewer">{t('অতিরিক্ত জেলা প্রশাসক (appellate_reviewer)', 'ADC Revenue')}</SelectItem>
-                <SelectItem value="district_registrar">{t('জেলা রেজিস্ট্রার (district_registrar)', 'District Registrar')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center gap-2 w-full lg:w-auto shrink-0 justify-end flex-wrap">
-            <Badge variant="outline" className="text-xs font-semibold px-2.5 py-1 text-purple-800 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/60 border-purple-200 dark:border-purple-800 shrink-0">
-              {t('মোট:', 'Total:')} {toBanglaDigits(filtered.length, lang)} {t('জন কর্মকর্তা', 'Officials')}
-            </Badge>
-
-            <Button
-              size="sm"
-              onClick={() => setCreateOfficialModalOpen(true)}
-              className="h-8 gap-1.5 px-3 text-xs font-bold bg-purple-700 hover:bg-purple-800 text-white shadow-2xs cursor-pointer rounded-lg shrink-0"
-            >
-              <UserPlus className="size-3.5" />
-              <span>{t('নতুন কর্মকর্তা', 'New Official')}</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchUsers}
-              className="h-8 px-2.5 gap-1 text-xs font-semibold cursor-pointer rounded-lg border-border shrink-0"
-            >
-              <RotateCcw className="size-3.5" />
-              <span>{t('রিফ্রেশ', 'Refresh')}</span>
-            </Button>
-          </div>
-        </div>
-      </Card>
-
-      {/* 3. Single-Screen Framed Table Container with Viewport Scroll */}
-      <Card className="flex-1 min-h-0 border border-border/80 shadow-2xs bg-card rounded-xl overflow-hidden flex flex-col">
-        <div className="flex-1 min-h-0 overflow-auto scrollbar-thin">
-          <Table>
-            <TableHeader className="sticky top-0 bg-muted/95 backdrop-blur-xs z-20 border-b border-border shadow-xs">
-              <TableRow className="text-xs hover:bg-transparent">
-                <TableHead className="h-9 py-1.5 font-bold text-foreground bg-muted/95">{t('কর্মকর্তা ও ইউজার', 'Officer & User')}</TableHead>
-                <TableHead className="h-9 py-1.5 font-bold text-foreground bg-muted/95">{t('পদবী ও রোল', 'Designation & Role')}</TableHead>
-                <TableHead className="h-9 py-1.5 font-bold text-foreground bg-muted/95">{t('কার্যালয় ও কর্মস্থল', 'Office & Posting')}</TableHead>
-                <TableHead className="h-9 py-1.5 font-bold text-foreground bg-muted/95">{t('এনআইডি ও যোগাযোগ', 'Contact & NID')}</TableHead>
-                <TableHead className="h-9 py-1.5 font-bold text-foreground text-right bg-muted/95">{t('অ্যাকশন ও একাউন্ট অ্যাক্সেস', 'Actions & Access')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-10 text-xs text-muted-foreground">
-                    {t('কর্মকর্তা তথ্য লোড হচ্ছে...', 'Loading officer directory...')}
-                  </TableCell>
-                </TableRow>
-              ) : filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-10 text-xs text-muted-foreground">
-                    {t('কোনো কর্মকর্তা পাওয়া যায়নি।', 'No officials found matching query.')}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtered.map((u) => (
-                  <TableRow key={u.id} className="text-xs hover:bg-muted/50 transition">
-                    <TableCell className="py-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 flex items-center justify-center font-bold text-[10px] shrink-0">
-                          {String(u.name_bn || u.name || u.username || 'ক').charAt(0)}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="font-bold text-foreground truncate">{u.name_bn || u.name || u.username}</div>
-                          <div className="text-[10px] text-muted-foreground font-mono leading-none">@{u.username}</div>
-                        </div>
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="py-2">
-                      <Badge variant="outline" className="font-mono text-[9px] uppercase font-bold bg-muted/40 px-1.5 py-0.5">
-                        {u.role}
-                      </Badge>
-                    </TableCell>
-
-                    <TableCell className="py-2">
-                      <div className="font-medium text-foreground flex items-center gap-1 text-[11px] truncate max-w-xs">
-                        <Building2 className="size-3 text-muted-foreground shrink-0" />
-                        <span className="truncate">{u.office_name || u.office_bn || t('ভূমি মন্ত্রণালয়, ঢাকা', 'Ministry of Land')}</span>
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="py-2 font-mono text-muted-foreground text-[11px]">
-                      <div>{u.nid_mock || u.nid || 'N/A'}</div>
-                      <div className="text-[10px]">{maskPhone(u.phone_mock || u.phone)}</div>
-                    </TableCell>
-
-                    <TableCell className="py-2 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleOpenTransfer(u)}
-                          className="h-7 px-2 text-xs font-semibold gap-1 text-purple-700 hover:text-purple-900 border-purple-200 dark:border-purple-800 rounded-lg"
-                        >
-                          <ArrowRightLeft className="size-3" />
-                          <span>{t('বদলি', 'Transfer')}</span>
-                        </Button>
-
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleLoginAsOfficial(u)}
-                          className="h-7 px-2 text-xs font-semibold text-emerald-800 hover:text-emerald-950 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 rounded-lg"
-                          title={t('এই কর্মকর্তার অ্যাকাউন্টে সরাসরি লগইন করুন', 'Login directly into this officer account')}
-                        >
-                          <KeyRound className="size-3 mr-1 text-emerald-600" />
-                          <span>{t('লগইন', 'Login')}</span>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </Card>
-
-      {/* Transfer Officer Dialog */}
-      <Dialog open={!!transferTarget} onOpenChange={(open) => !open && setTransferTarget(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-base font-bold flex items-center gap-2">
-              <ArrowRightLeft className="size-5 text-purple-700" />
-              <span>{t('কর্মকর্তা বদলি', 'Transfer Officer')}</span>
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              {t('কর্মকর্তার নতুন কর্মস্থলে বদলি নিশ্চিত করুন।', 'Transfer official to a new office.')}
-            </DialogDescription>
-          </DialogHeader>
-
-          {transferTarget && (
-            <div className="space-y-4 py-2 text-xs">
-              <div className="p-3 rounded-lg border bg-muted/40 space-y-1">
-                <div className="font-bold text-foreground">{transferTarget.name_bn || transferTarget.name}</div>
-                <div className="text-muted-foreground font-mono">
-                  {t('বর্তমান কার্যালয়:', 'Current Office:')} {transferTarget.office_name || transferTarget.office_bn || 'ভূমি মন্ত্রণালয়'}
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">{t('নতুন পদায়ন কার্যালয়:', 'New Land Office:')}</label>
-                <Input
-                  value={newOffice}
-                  onChange={(e) => setNewOffice(e.target.value)}
-                  className="h-9 text-xs"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-foreground">{t('বদলি আদেশের কারণ ও স্মারক:', 'Transfer Order Memo:')}</label>
-                <Input
-                  value={transferReason}
-                  onChange={(e) => setTransferReason(e.target.value)}
-                  className="h-9 text-xs"
-                />
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button variant="outline" size="sm" onClick={() => setTransferTarget(null)}>
-              {t('বাতিল', 'Cancel')}
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleConfirmTransfer}
-              disabled={transferring}
-              className="bg-purple-700 hover:bg-purple-800 text-white font-bold"
-            >
-              {transferring ? t('বদলি সম্পন্ন হচ্ছে...', 'Transferring...') : t('বদলি আদেশ জারি করুন', 'Confirm Transfer')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Super Admin Create Official Modal */}
-      <CreateOfficialDialog
-        isOpen={createOfficialModalOpen}
-        onClose={() => setCreateOfficialModalOpen(false)}
-        onSuccess={fetchUsers}
+      <PageToolbar
+        search={search}
+        onSearch={setSearch}
+        placeholder={t('নাম, ইউজার, অফিস…', 'Name, user, office…')}
+        filters={
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="h-9 w-48 rounded-lg bg-white text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+              <SelectItem value="ALL">{t('সব পদবী', 'All roles')}</SelectItem>
+              {roleOptions.map((r) => (
+                <SelectItem key={r} value={r}>
+                  {roleLabel(r)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        }
+        actions={
+          <Button size="sm" className="h-9" onClick={() => setCreateOpen(true)}>
+            <UserPlus className="size-4" />
+            {t('নতুন কর্মকর্তা', 'New official')}
+          </Button>
+        }
       />
-    </div>
+
+      <Section fill
+        title={t('কর্মকর্তা তালিকা', 'Officials')}
+        action={!loading && <span className="text-xs text-slate-500">{n(filtered.length)}{t(' জন', '')}</span>}
+      >
+        <DataTable headers={[t('নাম', 'Name'), t('পদবী', 'Role'), t('অফিস', 'Office'), t('অবস্থা', 'Status'), '']} alignRight={[4]}>
+          {loading ? (
+            <LoadingRows cols={5} />
+          ) : filtered.length === 0 ? (
+            <EmptyRow cols={5} text={t('কোনো কর্মকর্তা নেই', 'No officials found')} />
+          ) : (
+            filtered.map((u) => (
+              <tr key={u.id} className="cursor-pointer" onClick={() => setSelected(u)}>
+                <td className="max-w-0 w-[30%]">
+                  <div className="truncate font-medium text-slate-900">{displayName(u)}</div>
+                  <div className="truncate text-xs text-slate-500">@{u.username}</div>
+                </td>
+                <td className="max-w-0 w-[20%]">
+                  <div className="truncate text-slate-700">{roleLabel(u.role)}</div>
+                </td>
+                <td className="max-w-0">
+                  <div className="truncate text-slate-600">{officeOf(u) || '—'}</div>
+                </td>
+                <td>{statusBadge(u)}</td>
+                <td className="w-12 text-right" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="size-8" aria-label={t('আরও', 'More')}>
+                        <MoreHorizontal className="size-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
+                      <DropdownMenuItem onClick={() => setSelected(u)}>
+                        <Eye className="size-4" />
+                        {t('বিস্তারিত', 'View')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setLoginTarget(u)}>
+                        <KeyRound className="size-4" />
+                        {t('এই ব্যবহারকারী হিসেবে ঢুকুন', 'Log in as user')}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => openTransfer(u)}>
+                        <ArrowRightLeft className="size-4" />
+                        {t('অফিস বদলি', 'Transfer office')}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </td>
+              </tr>
+            ))
+          )}
+        </DataTable>
+      </Section>
+
+      <DetailSheet
+        open={!!selected}
+        onOpenChange={(o) => !o && setSelected(null)}
+        title={selected ? displayName(selected) : ''}
+        subtitle={selected ? roleLabel(selected.role) : undefined}
+        footer={
+          selected && (
+            <>
+              <Button variant="outline" size="sm" className="h-9" onClick={() => openTransfer(selected)}>
+                <ArrowRightLeft className="size-4" />
+                {t('অফিস বদলি', 'Transfer')}
+              </Button>
+              <Button size="sm" className="h-9" onClick={() => setLoginTarget(selected)}>
+                <KeyRound className="size-4" />
+                {t('এই ব্যবহারকারী হিসেবে ঢুকুন', 'Log in as user')}
+              </Button>
+            </>
+          )
+        }
+      >
+        {selected && (
+          <>
+            <div className="flex flex-wrap items-center gap-2">{statusBadge(selected)}</div>
+            <DetailList
+              items={[
+                [t('ইউজারনেম', 'Username'), `@${selected.username}`],
+                [t('পদবী', 'Role'), roleLabel(selected.role)],
+                [t('অফিস', 'Office'), officeOf(selected) || '—'],
+                [t('মোবাইল', 'Mobile'), maskPhone(selected.phone_mock || selected.phone, lang)],
+                [t('এনআইডি', 'NID'), maskNid(selected.nid_mock || selected.nid, lang)],
+                !!selected.email && [t('ইমেইল', 'Email'), selected.email],
+                [t('শেষ লগইন', 'Last login'), formatDate(selected.last_login_at, lang)],
+              ]}
+            />
+          </>
+        )}
+      </DetailSheet>
+
+      <ConfirmDialog
+        open={!!loginTarget}
+        onOpenChange={(o) => !o && setLoginTarget(null)}
+        title={t('এই ব্যবহারকারী হিসেবে ঢুকবেন?', 'Log in as this user?')}
+        description={loginTarget ? `${displayName(loginTarget)} · ${roleLabel(loginTarget.role)}` : undefined}
+        confirmLabel={t('ঢুকুন', 'Log in')}
+        cancelLabel={t('বাতিল', 'Cancel')}
+        onConfirm={() => handleLoginAsOfficial(loginTarget)}
+      />
+
+      <FormDialog
+        open={!!transferTarget}
+        onOpenChange={(o) => !o && setTransferTarget(null)}
+        title={t('অফিস বদলি', 'Transfer office')}
+        description={transferTarget ? `${displayName(transferTarget)} · ${officeOf(transferTarget) || '—'}` : undefined}
+        submitLabel={t('বদলি করুন', 'Transfer')}
+        cancelLabel={t('বাতিল', 'Cancel')}
+        onSubmit={handleConfirmTransfer}
+        busy={transferring}
+        disabled={!newOfficeId}
+        size="sm"
+      >
+        <Field label={t('নতুন অফিস', 'New office')}>
+          <Select value={newOfficeId} onValueChange={setNewOfficeId}>
+            <SelectTrigger className="h-9 w-full rounded-lg text-sm">
+              <SelectValue placeholder={officesLoaded ? t('অফিস বাছুন', 'Choose office') : t('লোড হচ্ছে…', 'Loading…')} />
+            </SelectTrigger>
+            <SelectContent className="max-h-64">
+              {transferOffices.map((o) => (
+                <SelectItem key={o.id} value={String(o.id)}>
+                  {lang === 'bn' ? o.name_bn || o.name_en : o.name_en || o.name_bn}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {officesLoaded && transferOffices.length === 0 && (
+            <span className="block text-xs text-slate-500">{t('মানানসই অফিস নেই', 'No matching office')}</span>
+          )}
+        </Field>
+        <Field label={t('আদেশ নম্বর', 'Order ref')}>
+          <input
+            value={orderRef}
+            onChange={(e) => setOrderRef(e.target.value)}
+            placeholder={t('স্মারক নং', 'Memo no.')}
+            className={inputCls}
+          />
+        </Field>
+      </FormDialog>
+
+      <CreateOfficialDialog
+        isOpen={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onSuccess={() => {
+          notify.ok(t('কর্মকর্তা যোগ হয়েছে', 'Official added'));
+          fetchUsers();
+        }}
+      />
+    </AdminPage>
   );
 };

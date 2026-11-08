@@ -1,45 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Scale,
-  Building2,
-  Search,
-  FileText,
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  Layers,
-  QrCode,
-  ShieldAlert,
-  ArrowRight,
-  ExternalLink,
-  BookOpen,
-  FileCheck,
-  Compass,
-  FileSpreadsheet,
-  PlusCircle,
-  Landmark,
-  ShieldCheck,
-} from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAppUI } from '../i18n';
 import { BhumiApi } from '../api/client';
-import { toBanglaDigits, maskNid, maskPhone } from '../theme/tokens';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { notify } from '@/components/admin/kit';
 import { SpecialistAcquisitionDashboard } from '@/components/officials/SpecialistAcquisitionDashboard';
+import { LaCasesSection, LaTab } from './specialist/LaCasesSection';
+import { TitleScrutinySection } from './specialist/TitleScrutinySection';
+import { AcquisitionNoticeDialog, AcquisitionCasePayload } from './specialist/AcquisitionNoticeDialog';
+import { InjunctionDialog, CourtOrderPayload } from './specialist/InjunctionDialog';
 
 export interface SpecialistWorkspacePageProps {
   currentSubPage?: string;
@@ -47,937 +14,190 @@ export interface SpecialistWorkspacePageProps {
   onNavigate?: (tab: string) => void;
 }
 
+type View = 'overview' | 'la_cases' | 'title_scrutiny';
+
+/** Maps every known sub-page id (shell menu ids plus older in-page ids) to a view. */
+const toView = (id?: string | null): View => {
+  if (id === 'la_cases' || id === 'disputes') return 'la_cases';
+  if (id === 'title_scrutiny' || id === 'plot_lookup') return 'title_scrutiny';
+  return 'overview';
+};
+
+const toList = (res: any): any[] => (Array.isArray(res) ? res : res?.items || []);
+
 export const SpecialistWorkspacePage: React.FC<SpecialistWorkspacePageProps> = ({ currentSubPage, onNavigateSubPage, onNavigate }) => {
-  const { lang, t, role, user, activeSubTab, setActiveSubTab } = useAppUI();
-  const isDcRole = role === 'dc_acquisition_officer';
-  const isLawyerRole = role === 'lawyer_court_user';
+  const { lang, t, role, activeSubTab, setActiveSubTab } = useAppUI();
+  const roleKey = String(role);
+  const isDcRole = roleKey === 'dc_acquisition_officer';
+  const isLawyerRole = roleKey === 'lawyer_court_user';
+  const isAdmin = roleKey === 'admin' || roleKey === 'system_admin';
+  // Backend: POST /admin/acquisition/cases → admin, system_admin, dc_acquisition_officer.
+  const canCreateCase = isDcRole || isAdmin;
+  // Backend: POST /citizen/disputes → citizen, admin (system_admin).
+  const canLogOrder = isAdmin;
 
-  const [subTab, setSubTab] = useState<string>(() => {
-    if (currentSubPage) return currentSubPage;
-    if (activeSubTab) return activeSubTab;
-    return 'overview';
-  });
+  const [localSub, setLocalSub] = useState<string>(() => currentSubPage || activeSubTab || 'overview');
+  const subTab = currentSubPage || localSub;
+  const view = toView(subTab);
+
+  const [laTab, setLaTab] = useState<LaTab>(subTab === 'disputes' ? 'disputes' : 'cases');
+  const keepLaTab = useRef(false);
+  useEffect(() => {
+    if (subTab === 'disputes') setLaTab('disputes');
+    else if (subTab === 'la_cases' && !keepLaTab.current) setLaTab('cases');
+    keepLaTab.current = false;
+  }, [subTab]);
 
   useEffect(() => {
-    if (currentSubPage && currentSubPage !== subTab) {
-      setSubTab(currentSubPage);
-    }
-  }, [currentSubPage]);
-
-  useEffect(() => {
-    if (activeSubTab) {
-      setSubTab(activeSubTab);
-    }
-  }, [activeSubTab]);
+    if (!currentSubPage && activeSubTab) setLocalSub(activeSubTab);
+  }, [activeSubTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubTabChange = (tabId: string) => {
-    setSubTab(tabId);
-    if (setActiveSubTab) {
-      setActiveSubTab(tabId);
+    let target = tabId;
+    if (tabId === 'disputes') {
+      setLaTab('disputes');
+      keepLaTab.current = true;
+      target = 'la_cases';
+    } else if (tabId === 'la_cases') {
+      setLaTab('cases');
+    } else if (tabId === 'plot_lookup') {
+      target = 'title_scrutiny';
     }
+    setLocalSub(target);
+    if (onNavigateSubPage) onNavigateSubPage(target);
+    else setActiveSubTab?.(target);
   };
 
   const [plots, setPlots] = useState<any[]>([]);
   const [disputes, setDisputes] = useState<any[]>([]);
   const [acquisitions, setAcquisitions] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedPlot, setSelectedPlot] = useState<any | null>(null);
+  const [selectedPlotId, setSelectedPlotId] = useState<number | null>(null);
 
-  // Form & Action states
-  const [projectName, setProjectName] = useState('ঢাকা-চট্টগ্রাম এক্সপ্রেসওয়ে অধিগ্রহণ প্রকল্প');
-  const [gazetteNo, setGazetteNo] = useState('');
-  const [acquiredArea, setAcquiredArea] = useState('15.50');
-  const [sectionType, setSectionType] = useState('SECTION_4');
-  const [suitNo, setSuitNo] = useState('');
-  const [courtName, setCourtName] = useState('যুগ্ম জেলা জজ ১ম আদালত, ঢাকা');
-  const [injunctionReason, setInjunctionReason] = useState('স্বত্ব ও দখলের অন্তর্বর্তীকালীন স্থগিতাদেশ আদেশ');
-  const [disputeType, setDisputeType] = useState('INJUNCTION');
-  const [submitting, setSubmitting] = useState(false);
-  const [actionMessage, setActionMessage] = useState<{ text: string; isError?: boolean } | null>(null);
+  const [noticeOpen, setNoticeOpen] = useState(false);
+  const [noticePlotIds, setNoticePlotIds] = useState<number[]>([]);
+  const [orderPlot, setOrderPlot] = useState<any | null>(null);
 
-  const loadData = () => {
-    setLoading(true);
+  const loadData = async (quiet = false) => {
+    if (!quiet) setLoading(true);
     const disputesPromise = isLawyerRole
-      ? BhumiApi.getMyLawyerCases().then((res) => (Array.isArray(res) ? res : res.items || [])).catch(() => [])
-      : BhumiApi.listDisputes().catch(() => []);
-
-    Promise.all([
-      BhumiApi.getPlots().catch(() => []),
-      disputesPromise,
-      BhumiApi.listAcquisitionCases().catch(() => ({ items: [] })),
-    ])
-      .then(([plotsRes, dispRes, acqRes]) => {
-        const pList = Array.isArray(plotsRes) ? plotsRes : plotsRes.items || [];
-        const dList = Array.isArray(dispRes) ? dispRes : dispRes.items || [];
-        const aList = Array.isArray(acqRes) ? acqRes : acqRes.items || [];
-        setPlots(pList);
-        setDisputes(dList);
-        setAcquisitions(aList);
-        if (pList.length > 0 && !selectedPlot) setSelectedPlot(pList[0]);
-      })
-      .finally(() => setLoading(false));
+      ? BhumiApi.getMyLawyerCases().then(toList).catch(() => [])
+      : BhumiApi.listDisputes().then(toList).catch(() => []);
+    const casesPromise = isLawyerRole
+      ? Promise.resolve([])
+      : BhumiApi.listAcquisitionCases()
+          .then(toList)
+          .catch((e) => {
+            notify.err(e, lang);
+            return [];
+          });
+    const [p, d, a] = await Promise.all([BhumiApi.getPlots().then(toList).catch(() => []), disputesPromise, casesPromise]);
+    setPlots(p);
+    setDisputes(d);
+    setAcquisitions(a);
+    setLoading(false);
   };
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Real Dynamic Operational KPIs
-  const totalAcquiredDecimal = acquisitions.reduce((acc, a) => acc + (parseFloat(a.total_land_decimal) || 0), 0);
-  const section4Count = acquisitions.filter((a) => a.section_type === 'SECTION_4').length;
-  const injunctionPlotsCount = new Set(disputes.map((d) => d.plot_id)).size;
-  const courtDecreesCount = disputes.filter((d) => d.status === 'RESOLVED' || d.dispute_type === 'INJUNCTION').length;
+  const openNotice = (plotIds: number[] = []) => {
+    setNoticePlotIds(plotIds);
+    setNoticeOpen(true);
+  };
 
-  const handleIssueAcquisitionNotice = async () => {
-    if (!selectedPlot) return;
-    setSubmitting(true);
-    setActionMessage(null);
+  const openPlot = (plotId: number) => {
+    setSelectedPlotId(plotId);
+    handleSubTabChange('title_scrutiny');
+  };
+
+  /** createAcquisitionCase → toast + reload. Throws so the dialog stays open on error. */
+  const handleIssueAcquisitionNotice = async (payload: AcquisitionCasePayload) => {
     try {
-      const payload = {
-        project_name_bn: projectName,
-        project_name_en: projectName,
-        acquiring_agency_bn: 'জেলা প্রশাসন ভূমি অধিগ্রহণ শাখা',
-        section_type: sectionType,
-        district_bn: selectedPlot.district_bn || 'ঢাকা',
-        upazila_bn: selectedPlot.upazila_bn || 'সাভার',
-        mouza_bn: selectedPlot.mouza_bn || 'বিরুলিয়া',
-        plot_ids: [selectedPlot.id],
-        total_land_decimal: parseFloat(acquiredArea) || parseFloat(selectedPlot.total_area_decimal) || 10,
-        gazette_no: gazetteNo || `গেজেট-${Date.now().toString().slice(-4)}`,
-      };
       const res = await BhumiApi.createAcquisitionCase(payload);
-      setActionMessage({
-        text: res.message_bn || t('অধিগ্রহণ ধারা ৪ প্রজ্ঞাপন সফলভাবে জারি ও গেজেটেড হয়েছে।', 'Section 4 acquisition notice issued successfully.'),
-      });
-      loadData();
-    } catch (err: any) {
-      setActionMessage({
-        text: err?.response?.data?.message_bn || err?.message || t('অধিগ্রহণ নোটিশ তৈরিতে ত্রুটি হয়েছে।', 'Failed to create acquisition notice.'),
-        isError: true,
-      });
-    } finally {
-      setSubmitting(false);
+      notify.ok(res?.message_bn && lang === 'bn' ? res.message_bn : t('নোটিশ জারি হয়েছে', 'Notice issued'));
+      await loadData(true);
+    } catch (e) {
+      notify.err(e, lang);
+      throw e;
     }
   };
 
-  const handleLogCourtInjunction = async () => {
-    if (!selectedPlot) return;
-    setSubmitting(true);
-    setActionMessage(null);
+  /** fileDispute → toast + reload. Throws so the dialog stays open on error. */
+  const handleLogCourtInjunction = async (payload: CourtOrderPayload) => {
     try {
-      const desc = `মামলা নং: ${suitNo || 'দেওয়ানি মোকাদ্দমা-২০২৬'}। আদালত: ${courtName}। কারণ: ${injunctionReason}।`;
-      await BhumiApi.fileDispute({
-        plot_id: selectedPlot.id,
-        dispute_type: disputeType,
-        description_bn: desc,
-        complainant_name_bn: 'বিজ্ঞ আইনজীবী / আদালত আদেশ বাহক',
-        complainant_nid: user?.nid || '19852694123456789',
-      });
-      setActionMessage({
-        text: t('আদালতের অন্তর্বর্তীকালীন স্থগিতাদেশ ও স্বত্ব প্রতিবেদন সফলভাবে নথিভুক্ত হয়েছে।', 'Court injunction and title report logged successfully.'),
-      });
-      loadData();
-    } catch (err: any) {
-      setActionMessage({
-        text: err?.response?.data?.message_bn || err?.message || t('আদালতের আদেশ নথিভুক্তকরণে ত্রুটি হয়েছে।', 'Failed to log court order.'),
-        isError: true,
-      });
-    } finally {
-      setSubmitting(false);
+      await BhumiApi.fileDispute(payload);
+      notify.ok(t('আদালত আদেশ যুক্ত হয়েছে', 'Court order added'));
+      await loadData(true);
+    } catch (e) {
+      notify.err(e, lang);
+      throw e;
     }
   };
-
-  const filteredPlots = plots.filter((p) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      String(p.dag_no).includes(q) ||
-      String(p.dag_no_bn).includes(q) ||
-      String(p.plot_code).toLowerCase().includes(q) ||
-      String(p.mouza_bn || '').toLowerCase().includes(q) ||
-      String(p.mouza_en || '').toLowerCase().includes(q)
-    );
-  });
-
-  const tabList = useMemo(() => {
-    if (isDcRole) {
-      return [
-        {
-          id: 'la_cases',
-          label: t('অধিগ্রহণ কেস', 'LA Cases'),
-          icon: <Building2 className="w-4 h-4" />,
-          count: toBanglaDigits(acquisitions.length, lang),
-        },
-        {
-          id: 'plot_lookup',
-          label: t('দাগ তল্লাশি', 'Plot Search'),
-          icon: <Search className="w-4 h-4" />,
-          count: toBanglaDigits(filteredPlots.length, lang),
-        },
-      ];
-    }
-    if (isLawyerRole) {
-      return [
-        {
-          id: 'title_scrutiny',
-          label: t('টাইটেল যাচাই', 'Title Scrutiny'),
-          icon: <Scale className="w-4 h-4" />,
-          count: toBanglaDigits(filteredPlots.length, lang),
-        },
-        {
-          id: 'disputes',
-          label: t('আদালত আদেশ', 'Court Orders'),
-          icon: <FileSpreadsheet className="w-4 h-4" />,
-          count: toBanglaDigits(disputes.length, lang),
-        },
-      ];
-    }
-    // Admin / Supervisor View
-    return [
-      {
-        id: 'la_cases',
-        label: t('অধিগ্রহণ কেস', 'LA Cases'),
-        icon: <Building2 className="w-4 h-4" />,
-        count: toBanglaDigits(acquisitions.length, lang),
-      },
-      {
-        id: 'disputes',
-        label: t('আদালত আদেশ', 'Court Orders'),
-        icon: <FileSpreadsheet className="w-4 h-4" />,
-        count: toBanglaDigits(disputes.length, lang),
-      },
-      {
-        id: 'plot_lookup',
-        label: t('দাগ তল্লাশি', 'Plot Search'),
-        icon: <Search className="w-4 h-4" />,
-        count: toBanglaDigits(filteredPlots.length, lang),
-      },
-    ];
-  }, [isDcRole, isLawyerRole, acquisitions.length, disputes.length, filteredPlots.length, lang, t]);
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Modern Executive Workspace Header */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-start sm:items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#006A4E] to-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs ring-4 ring-emerald-50">
-            {isDcRole ? <Building2 className="w-6 h-6" /> : <Scale className="w-6 h-6" />}
-          </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                {isDcRole
-                  ? t('ভূমি অধিগ্রহণ শাখা', 'Land Acquisition Wing')
-                  : t('দেওয়ানি আদালত পোর্টাল', 'Civil Court Portal')}
-              </h1>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#006A4E] text-[11px] font-bold">
-                {isDcRole ? t('জেলা প্রশাসন', 'DC Office') : t('আইনি যাচাই', 'Legal Scrutiny')}
-              </span>
-              {!isDcRole && (
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#006A4E] text-[11px] font-bold border border-emerald-300 flex items-center gap-1">
-                  ✓ {t('বার কাউন্সিল সনদপ্রাপ্ত', 'Bar Council Certified')}
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
-              {isDcRole
-                ? t(
-                    'অবকাঠামো প্রকল্পের ভূমি অধিগ্রহণ, গেজেট ও ক্ষতিপূরণ ব্যবস্থাপনা।',
-                    'Public infrastructure land acquisition, gazettes, and compensation.'
-                  )
-                : t(
-                    'দেওয়ানি আদালতের মামলা, নিষেধাজ্ঞা ও মালিকানা যাচাই।',
-                    'Civil court suits, injunctions, and ownership verification.'
-                  )}
-            </p>
-          </div>
-        </div>
-
-        {/* Cryptographic Ledger Pill & Quick Actions */}
-        <div className="flex flex-wrap items-center gap-2 self-start md:self-center shrink-0">
-          <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-[11px] font-bold text-emerald-800">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>{t('Ed25519 ক্রিপ্টোগ্রাফিক জুডিশিয়াল লেজার', 'Ed25519 Cryptographic Judicial Ledger')}</span>
-          </div>
-          {onNavigate && (
-            <>
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => onNavigate('map')}
-                className="border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold gap-1.5"
-              >
-                <Compass className="w-4 h-4 text-emerald-700" />
-                <span>{t('ক্যাডাস্ট্রাল ম্যাপ', 'Cadastral Map')}</span>
-              </Button>
-              <Button
-                type="button"
-                onClick={() => onNavigate('check')}
-                className="bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold gap-1.5 shadow-xs"
-              >
-                <Search className="w-4 h-4" />
-                <span>{t('টাইটেল ভেরিফাই', 'Verify Title')}</span>
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Executive shadcn DC Land Acquisition Dashboard Tab */}
-      {subTab === 'overview' && (
+    <div className="h-full min-h-0">
+      {view === 'overview' && (
         <SpecialistAcquisitionDashboard
           onNavigateTab={handleSubTabChange}
+          cases={acquisitions}
+          disputes={disputes}
+          loading={loading}
+          canCreate={canCreateCase}
+          onNewNotice={() => openNotice()}
+          onOpenPlot={openPlot}
         />
       )}
 
-      {/* Operational KPI Cards (Shown on LA Cases Overview Page) */}
-      {subTab === 'la_cases' && (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              {isDcRole ? t('চলমান এলএ কেস', 'Active LA Cases') : t('বিচারাধীন স্বত্ব মামলা', 'Pending Court Cases')}
-            </span>
-            <div className="text-2xl font-black text-slate-900 mt-1.5">
-              {toBanglaDigits(isDcRole ? acquisitions.length : disputes.length, lang)}
-            </div>
-            <span className="text-[10px] text-emerald-700 font-semibold">{t('তদন্ত ও প্রজ্ঞাপন চলমান', 'Under Active Review')}</span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#006A4E] flex items-center justify-center border border-emerald-100">
-            <Clock className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              {isDcRole ? t('অধিগ্রহণকৃত জমির পরিমাণ', 'Acquired Land Area') : t('স্থগিত দাগসমূহ', 'Injunction Plots')}
-            </span>
-            <div className="text-2xl font-black text-[#006A4E] mt-1.5">
-              {toBanglaDigits(isDcRole ? totalAcquiredDecimal.toFixed(2) : injunctionPlotsCount, lang)} {isDcRole ? t('শতক', 'dec') : t('টি দাগ', 'plots')}
-            </div>
-            <span className="text-[10px] text-slate-500">{t('ডেটাবেজ রেকর্ড থেকে পরিমাপকৃত', 'Aggregated from DB')}</span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-100">
-            <Layers className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              {isDcRole ? t('ধারা ৪ প্রজ্ঞাপন', 'Section 4 Gazettes') : t('আদালতের আদেশ নথিভুক্ত', 'Court Decrees Logged')}
-            </span>
-            <div className="text-2xl font-black text-amber-600 mt-1.5">
-              {toBanglaDigits(isDcRole ? section4Count : courtDecreesCount, lang)}
-            </div>
-            <span className="text-[10px] text-amber-700 font-semibold">{t('ডিজিটাল গেজেট সংবলিত', 'Gazetted & Sealed')}</span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-100">
-            <FileText className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs hover:shadow-sm transition-all duration-200 flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              {isDcRole ? t('অধিগ্রহণাধীন প্লট সংখ্যা', 'Affected Plots') : t('নিষ্পত্তিকৃত বিরোধ', 'Resolved Disputes')}
-            </span>
-            <div className="text-2xl font-black text-emerald-700 mt-1.5">
-              {toBanglaDigits(isDcRole ? acquisitions.reduce((acc, a) => acc + (a.plot_ids ? a.plot_ids.length : 1), 0) : disputes.filter((d) => d.status === 'RESOLVED').length, lang)}
-            </div>
-            <span className="text-[10px] text-emerald-700 font-semibold">{t('বাস্তব কেস রেকর্ড', 'Persisted Records')}</span>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100">
-            <QrCode className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
-
+      {view === 'la_cases' && (
+        <LaCasesSection
+          cases={acquisitions}
+          disputes={disputes}
+          plots={plots}
+          loading={loading}
+          tab={laTab}
+          onTabChange={setLaTab}
+          canCreate={canCreateCase}
+          onCreate={() => openNotice()}
+          onOpenPlot={openPlot}
+        />
       )}
 
-      {/* Land Acquisition Cases & Gazettes Table */}
-      {subTab === 'la_cases' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-            <div>
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-[#006A4E]" />
-                <span>{t('ভূমি অধিগ্রহণ কেস ও গেজেট প্রজ্ঞাপন তালিকা', 'Land Acquisition Cases & Gazette Registry')}</span>
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {t('জাতীয় উন্নয়ন অবকাঠামো ও সরকারি অধিগ্রহণ প্রকল্পের ধারা ৪/৭/৮ তালিকা:', 'National infrastructure acquisition cases and gazette notices:')}
-              </p>
-            </div>
-            <Button
-              type="button"
-              onClick={() => handleSubTabChange('plot_lookup')}
-              className="bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold gap-1.5 self-start sm:self-auto shadow-xs"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>{t('নতুন অধিগ্রহণ নোটিশ জারি করুন', 'Issue New LA Notice')}</span>
-            </Button>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 overflow-auto max-h-[calc(100vh-280px)] min-h-[300px] scrollbar-thin bg-white">
-            <Table>
-              <TableHeader className="bg-slate-50/80">
-                <TableRow>
-                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('গেজেট ও কেস আইডি', 'Gazette / Case ID')}</TableHead>
-                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('প্রকল্পের নাম ও সংস্থা', 'Project & Agency')}</TableHead>
-                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('আইনি ধারা', 'Legal Section')}</TableHead>
-                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('অধিক্ষেত্র', 'Jurisdiction')}</TableHead>
-                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('অধিগ্রহণকৃত জমি', 'Acquired Land')}</TableHead>
-                  <TableHead className="py-3 px-4 text-right font-bold text-slate-700">{t('অ্যাকশন', 'Actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {acquisitions.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="py-8 text-center text-slate-400">
-                      {t('কোনো অধিগ্রহণ রেকর্ড পাওয়া যায়নি।', 'No land acquisition records found.')}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  acquisitions.map((acq) => (
-                    <TableRow key={acq.id} className="hover:bg-slate-50/80 transition-colors">
-                      <TableCell className="py-3 px-4 font-mono font-bold text-slate-900">
-                        <div>{acq.gazette_no || `LA-${acq.id}`}</div>
-                        <span className="text-[10px] text-emerald-700 font-sans">{t('গেজেট নথিভুক্ত', 'Gazette Persisted')}</span>
-                      </TableCell>
-                      <TableCell className="py-3 px-4">
-                        <div className="font-bold text-slate-900">{lang === 'bn' ? acq.project_name_bn : (acq.project_name_en || acq.project_name_bn)}</div>
-                        <div className="text-[10px] text-slate-500">{acq.acquiring_agency_bn || 'জেলা প্রশাসন এলএ শাখা'}</div>
-                      </TableCell>
-                      <TableCell className="py-3 px-4">
-                        <Badge className={`text-[10px] font-bold ${
-                          acq.section_type === 'SECTION_8'
-                            ? 'bg-rose-100 text-rose-800'
-                            : acq.section_type === 'SECTION_7'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-emerald-100 text-emerald-800'
-                        }`}>
-                          {acq.section_type === 'SECTION_8'
-                            ? t('ধারা ৮ (রোয়েদাদ)', 'Section 8 (Award)')
-                            : acq.section_type === 'SECTION_7'
-                            ? t('ধারা ৭ (আপত্তি শুনানি)', 'Section 7 (Hearing)')
-                            : t('ধারা ৪ (প্রাথমিক)', 'Section 4 (Notice)')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="py-3 px-4 text-slate-600">
-                        {acq.mouza_bn ? `${acq.mouza_bn}, ` : ''}{acq.upazila_bn || 'সাভার'}, {acq.district_bn || 'ঢাকা'}
-                      </TableCell>
-                      <TableCell className="py-3 px-4 font-bold text-[#006A4E]">
-                        {toBanglaDigits(acq.total_land_decimal || '০', lang)} {t('শতক', 'dec')}
-                      </TableCell>
-                      <TableCell className="py-3 px-4 text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          type="button"
-                          onClick={() => {
-                            if (acq.plot_ids && acq.plot_ids.length > 0) {
-                              const found = plots.find((p) => p.id === acq.plot_ids[0]);
-                              if (found) setSelectedPlot(found);
-                            }
-                            handleSubTabChange('plot_lookup');
-                          }}
-                          className="h-7 text-xs border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 text-[#006A4E] font-bold"
-                        >
-                          {t('দাগ ও বিবরণ →', 'Inspect Plot →')}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+      {view === 'title_scrutiny' && (
+        <TitleScrutinySection
+          plots={plots}
+          disputes={disputes}
+          cases={acquisitions}
+          loading={loading}
+          selectedPlotId={selectedPlotId}
+          onSelectPlot={setSelectedPlotId}
+          canCreateCase={canCreateCase}
+          canLogOrder={canLogOrder}
+          onNewNotice={(id) => openNotice([id])}
+          onLogOrder={(p) => setOrderPlot(p)}
+          onOpenCases={() => handleSubTabChange('la_cases')}
+          onOpenFullCheck={onNavigate ? () => onNavigate('check') : undefined}
+        />
       )}
 
-      {/* Disputes & Court Injunctions Table */}
-      {subTab === 'disputes' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-            <div>
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <FileSpreadsheet className="w-5 h-5 text-[#006A4E]" />
-                <span>{t('আদালতের আদেশ ও বিরোধ ট্রাইব্যুনাল ডকেট', 'Court Decrees & Dispute Tribunal Docket')}</span>
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {t('দেওয়ানি আদালত কর্তৃক ইস্যুকৃত অন্তর্বর্তীকালীন স্থগিতাদেশ ও স্বত্ব মোকদ্দমা তালিকা:', 'Civil court temporary injunctions and title litigation decrees:')}
-              </p>
-            </div>
-            <Button
-              type="button"
-              onClick={() => handleSubTabChange(isLawyerRole ? 'title_scrutiny' : 'plot_lookup')}
-              className="bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold gap-1.5 self-start sm:self-auto shadow-xs"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>{t('নতুন আদালতের আদেশ দাখিল', 'Log Court Order')}</span>
-            </Button>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 overflow-auto max-h-[calc(100vh-280px)] min-h-[300px] scrollbar-thin bg-white">
-            <Table>
-              <TableHeader className="bg-slate-50/80">
-                <TableRow>
-                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('কেস / বিরোধ আইডি', 'Case / Dispute ID')}</TableHead>
-                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('বিরোধের ধরন', 'Dispute Type')}</TableHead>
-                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('আদালত আদেশ ও বিবরণ', 'Court Order & Details')}</TableHead>
-                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('আবেদনকারী / আইনজীবী', 'Complainant / Lawyer')}</TableHead>
-                  <TableHead className="py-3 px-4 font-bold text-slate-700">{t('স্ট্যাটাস', 'Status')}</TableHead>
-                  <TableHead className="py-3 px-4 text-right font-bold text-slate-700">{t('অ্যাকশন', 'Actions')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {disputes.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="py-8 text-center text-slate-400">
-                      {t('কোনো আদালতের মামলা বা বিরোধ রেকর্ড পাওয়া যায়নি।', 'No court dispute records found.')}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  disputes.map((disp) => (
-                    <TableRow key={disp.id} className="hover:bg-slate-50/80 transition-colors">
-                      <TableCell className="py-3 px-4 font-mono font-bold text-slate-900">
-                        #{disp.id}
-                        <div className="text-[10px] text-slate-500 font-sans">
-                          {t('দাগ নং', 'Plot')} {disp.plot_id}
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-3 px-4">
-                        <Badge className={`text-[10px] font-bold ${
-                          disp.dispute_type === 'INJUNCTION'
-                            ? 'bg-rose-100 text-rose-800 border-rose-200'
-                            : disp.dispute_type === 'TITLE_SUIT'
-                            ? 'bg-amber-100 text-amber-800 border-amber-200'
-                            : 'bg-blue-100 text-blue-800 border-blue-200'
-                        }`}>
-                          {disp.dispute_type === 'INJUNCTION'
-                            ? t('স্থগিতাদেশ (Injunction)', 'Injunction')
-                            : disp.dispute_type === 'TITLE_SUIT'
-                            ? t('স্বত্ব মামলা (Title Suit)', 'Title Suit')
-                            : t('সীমানা বিরোধ', 'Boundary Dispute')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="py-3 px-4 text-slate-700 max-w-xs truncate">
-                        {disp.description_bn || t('আদালতের অন্তর্বর্তীকালীন স্থগিতাদেশ', 'Court Injunction Decree')}
-                      </TableCell>
-                      <TableCell className="py-3 px-4 text-slate-600 font-medium">
-                        <div className="font-semibold text-slate-800">{disp.complainant_name_bn || disp.plaintiff_name || t('বিজ্ঞ আইনজীবী', 'Advocate')}</div>
-                        {(disp.complainant_nid || disp.plaintiff_nid) && (
-                          <div className="text-[10px] font-mono text-slate-500 mt-0.5">
-                            এনআইডি: {maskNid(disp.complainant_nid || disp.plaintiff_nid, lang)}
-                          </div>
-                        )}
-                        {(disp.phone || disp.complainant_phone) && (
-                          <div className="text-[10px] text-slate-500 mt-0.5">
-                            মোবাইল: {maskPhone(disp.phone || disp.complainant_phone, lang)}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="py-3 px-4">
-                        <Badge className={`text-[10px] font-bold ${
-                          disp.status === 'RESOLVED'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-amber-100 text-amber-800'
-                        }`}>
-                          {disp.status === 'RESOLVED' ? t('নিষ্পত্তিকৃত', 'Resolved') : t('বিচারাধীন', 'Pending')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="py-3 px-4 text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          type="button"
-                          onClick={() => {
-                            const found = plots.find((p) => p.id === disp.plot_id);
-                            if (found) setSelectedPlot(found);
-                            handleSubTabChange(isLawyerRole ? 'title_scrutiny' : 'plot_lookup');
-                          }}
-                          className="h-7 text-xs border-slate-200 hover:bg-emerald-50 hover:border-emerald-300 text-[#006A4E] font-bold"
-                        >
-                          {t('নথি পরীক্ষা →', 'Inspect Docket →')}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+      {canCreateCase && (
+        <AcquisitionNoticeDialog
+          open={noticeOpen}
+          onOpenChange={setNoticeOpen}
+          plots={plots}
+          initialPlotIds={noticePlotIds}
+          onSubmit={handleIssueAcquisitionNotice}
+        />
       )}
 
-      {/* Main Workspace 2-Column Docket Layout (For Plot Lookup / Title Scrutiny) */}
-      {(subTab === 'plot_lookup' || subTab === 'title_scrutiny') && (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Plot & Case Lookup */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Search className="w-4 h-4 text-[#006A4E]" />
-              <span>{isDcRole ? t('দাগ ও অধিগ্রহণ প্লট অনুসন্ধান', 'Search Plots for Acquisition') : t('মালিকানা ও মামলা অনুসন্ধান', 'Title & Dispute Search')}</span>
-            </h3>
-            <span className="text-[11px] text-slate-400 font-mono">
-              {toBanglaDigits(filteredPlots.length, lang)} {t('টি প্লট', 'plots')}
-            </span>
-          </div>
-
-          <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 z-10" />
-            <Input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('দাগ নং, কোড বা মৌজা দিয়ে খুঁজুন...', 'Search dag no, code, mouza...')}
-              className="pl-9 h-10 text-xs"
-            />
-          </div>
-
-          <div className="rounded-xl border border-slate-200 overflow-hidden bg-white max-h-96 overflow-y-auto">
-            <Table>
-              <TableHeader className="bg-slate-50/90 sticky top-0 z-10">
-                <TableRow>
-                  <TableHead className="py-2 px-3 text-[11px] font-bold text-slate-700">{t('দাগ নং', 'Dag No')}</TableHead>
-                  <TableHead className="py-2 px-3 text-[11px] font-bold text-slate-700">{t('মৌজা', 'Mouza')}</TableHead>
-                  <TableHead className="py-2 px-3 text-[11px] font-bold text-slate-700">{t('পরিমাণ', 'Area')}</TableHead>
-                  <TableHead className="py-2 px-2 text-right text-[11px] font-bold text-slate-700"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="py-8 text-center text-xs text-slate-400">
-                      {t('তথ্য লোড হচ্ছে...', 'Loading data...')}
-                    </TableCell>
-                  </TableRow>
-                ) : filteredPlots.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="py-8 text-center text-xs text-slate-400">
-                      {t('কোনো ফলাফল পাওয়া যায়নি', 'No plots found')}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredPlots.map((plot) => {
-                    const isSelected = selectedPlot && selectedPlot.id === plot.id;
-                    return (
-                      <TableRow
-                        key={plot.id}
-                        onClick={() => setSelectedPlot(plot)}
-                        className={`cursor-pointer transition-colors ${
-                          isSelected
-                            ? 'bg-emerald-50/80 font-bold border-l-4 border-l-[#006A4E]'
-                            : 'hover:bg-slate-50/80'
-                        }`}
-                      >
-                        <TableCell className="py-2.5 px-3">
-                          <div className="font-bold text-slate-900 text-xs">
-                            {toBanglaDigits(plot.dag_no_bn || plot.dag_no, lang)}
-                          </div>
-                          <div className="text-[10px] font-mono text-slate-500">{plot.plot_code}</div>
-                        </TableCell>
-                        <TableCell className="py-2.5 px-3 text-xs text-slate-600">
-                          {plot.mouza_bn || plot.mouza_en || 'বীরুলিয়া'}
-                        </TableCell>
-                        <TableCell className="py-2.5 px-3 text-xs font-semibold text-emerald-800">
-                          {toBanglaDigits(plot.total_area_decimal || '০', lang)} {t('শতক', 'dec')}
-                        </TableCell>
-                        <TableCell className="py-2.5 px-2 text-right">
-                          {isSelected ? (
-                            <Badge className="bg-[#006A4E] text-white text-[9px] px-1.5 py-0.5">
-                              ✓ {t('নির্বাচিত', 'Selected')}
-                            </Badge>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 px-1.5 text-[10px] text-slate-500 hover:text-slate-900"
-                            >
-                              {t('বাছাই', 'Select')}
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-
-        {/* Right: Selected Plot Docket & Official Notice Case Actions */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-6">
-          {selectedPlot ? (
-            <>
-              <div className="border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-[#006A4E]">
-                      {selectedPlot.plot_code}
-                    </span>
-                    <span className="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
-                      {selectedPlot.land_type_bn || selectedPlot.land_type_en || t('ভিটা (আবাসিক)', 'Residential')}
-                    </span>
-                  </div>
-                  <h2 className="text-lg font-black text-slate-900 mt-1.5">
-                    {t(
-                      `দাগ নং ${toBanglaDigits(selectedPlot.dag_no_bn || selectedPlot.dag_no, lang)} (${selectedPlot.mouza_bn || 'বীরুলিয়া মৌজা'})`,
-                      `Plot Dag ${selectedPlot.dag_no} (${selectedPlot.mouza_en || 'Birulia Mouza'})`
-                    )}
-                  </h2>
-                </div>
-
-                <div className="text-right">
-                  <span className="text-[10px] text-slate-400 block">{t('মোট জমির পরিমাণ', 'Total Area')}</span>
-                  <span className="text-lg font-black text-[#006A4E]">
-                    {toBanglaDigits(selectedPlot.total_area_decimal, lang)} {t('শতক', 'decimals')}
-                  </span>
-                </div>
-              </div>
-
-              {/* Status and Injunction Checks */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                  <span className="text-slate-400 block text-[10px]">{t('মালিকানা বিক্রয় লক', 'Sale Lock')}</span>
-                  <span className={`font-bold mt-0.5 block ${selectedPlot.owner_sale_locked ? 'text-red-600' : 'text-emerald-700'}`}>
-                    {selectedPlot.owner_sale_locked ? t('লক সক্রিয় রয়েছে', 'Lock Active') : t('মুক্ত (অনলকড)', 'Unlocked / Clear')}
-                  </span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                  <span className="text-slate-400 block text-[10px]">{t('ব্যাংক জামানত / লিয়েন', 'Bank Lien')}</span>
-                  <span className="font-bold text-emerald-700 mt-0.5 block">
-                    {t('দায়মুক্ত রেকর্ড', 'Clear of Liens')}
-                  </span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                  <span className="text-slate-400 block text-[10px]">{t('আদালতের স্থিতি / মামলা', 'Court Injunctions')}</span>
-                  <span className="font-bold text-slate-800 mt-0.5 block">
-                    {t('কোনো সক্রিয় নিষেধাজ্ঞা নেই', 'No Active Injunction')}
-                  </span>
-                </div>
-              </div>
-
-              {/* Case Action Box */}
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-3">
-                <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                  <BookOpen className="w-4 h-4 text-[#006A4E]" />
-                  <span>
-                    {isDcRole
-                      ? t('ভূমি অধিগ্রহণ গেজেট নোটিশ নথিভুক্তকরণ', 'Issue Land Acquisition Section 4 Gazette Notice')
-                      : t('দেওয়ানি আদালতের স্থগিতাদেশ ও স্বত্ব প্রতিবেদন দাখিল', 'Submit Injunction Decree & Certified Title Report')}
-                  </span>
-                </h4>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  {isDcRole
-                    ? t(
-                        'এই দাগে অধিগ্রহণ কার্যক্রম শুরু করতে ধারা ৪ প্রজ্ঞাপন জারি করুন। সিস্টেম স্বয়ংক্রিয়ভাবে সেন্ট্রাল কেস লেজারে ডাটাবেজ এন্ট্রি ও গেজেট রেকর্ড সংরক্ষণ করবে।',
-                        'Issue Section 4 notice for infrastructure acquisition. The platform will persist the case in the central database ledger.'
-                      )
-                    : t(
-                        'দেওয়ানি আদালতের মামলা নম্বর ও অন্তর্বর্তীকালীন স্থগিতাদেশ নথিভুক্ত করুন। অনুমোদিত রেকর্ড সেন্ট্রাল ডিসপিউট টেবিলে সংরক্ষিত হবে।',
-                        'Record civil suit case number and temporary injunction decree. The record will be persisted in the disputes ledger.'
-                      )}
-                </p>
-
-                {actionMessage && (
-                  <div
-                    className={`p-3 rounded-xl text-xs font-semibold flex items-center gap-2 ${
-                      actionMessage.isError
-                        ? 'bg-rose-50 text-rose-800 border border-rose-200'
-                        : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                    }`}
-                  >
-                    <CheckCircle2 className="w-4 h-4 shrink-0" />
-                    <span>{actionMessage.text}</span>
-                  </div>
-                )}
-
-                {/* Role Specific Real Action Form */}
-                {isDcRole ? (
-                  <div className="space-y-2.5 pt-1">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <Label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                          {t('প্রকল্পের নাম', 'Project Name')}
-                        </Label>
-                        <Input
-                          type="text"
-                          value={projectName}
-                          onChange={(e) => setProjectName(e.target.value)}
-                          className="h-9 text-xs"
-                        />
-                      </div>
-                      <div>
-                        <Label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                          {t('গেজেট নম্বর', 'Gazette No')}
-                        </Label>
-                        <Input
-                          type="text"
-                          value={gazetteNo}
-                          onChange={(e) => setGazetteNo(e.target.value)}
-                          className="h-9 text-xs"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <Label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                          {t('অধিগ্রহণকৃত জমির পরিমাণ (শতক)', 'Acquired Land Area (dec)')}
-                        </Label>
-                        <Input
-                          type="number"
-                          value={acquiredArea}
-                          onChange={(e) => setAcquiredArea(e.target.value)}
-                          className="h-9 text-xs"
-                        />
-                      </div>
-                      <div>
-                        <Label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                          {t('আইনগত ধারা', 'Legal Section')}
-                        </Label>
-                        <Select value={sectionType} onValueChange={setSectionType}>
-                          <SelectTrigger className="w-full h-9 text-xs shadow-xs">
-                            <SelectValue placeholder={t('ধারা নির্বাচন করুন', 'Select Section')} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="SECTION_4" className="text-xs">ধারা ৪ (প্রাথমিক অধিগ্রহণ প্রজ্ঞাপন)</SelectItem>
-                            <SelectItem value="SECTION_7" className="text-xs">ধারা ৭ (শুনানি ও আপত্তি নিষ্পত্তি)</SelectItem>
-                            <SelectItem value="SECTION_8" className="text-xs">ধারা ৮ (ক্ষতিপূরণ নির্ধারণ রোয়েদাদ)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2 pt-2">
-                      <Button
-                        type="button"
-                        disabled={submitting}
-                        onClick={handleIssueAcquisitionNotice}
-                        className="bg-[#006A4E] hover:bg-[#00553e] disabled:opacity-50 text-white text-xs font-bold gap-1.5"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>
-                          {submitting
-                            ? t('নথিভুক্ত হচ্ছে...', 'Submitting...')
-                            : t('অধিগ্রহণ নোটিশ জারি করুন (বাস্তব এন্ট্রি)', 'Issue Acquisition Notice (Persisted)')}
-                        </span>
-                      </Button>
-
-                      {onNavigate && (
-                        <Button
-                          variant="outline"
-                          type="button"
-                          onClick={() => onNavigate('check')}
-                          className="border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold gap-1.5"
-                        >
-                          <Search className="w-4 h-4 text-emerald-700" />
-                          <span>{t('সম্পূর্ণ খতিয়ান চেইন পরীক্ষা', 'Inspect 30-Yr Khatian Chain')}</span>
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2.5 pt-1">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <Label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                          {t('মামলা নম্বর', 'Suit / Case No')}
-                        </Label>
-                        <Input
-                          type="text"
-                          value={suitNo}
-                          onChange={(e) => setSuitNo(e.target.value)}
-                          className="h-9 text-xs"
-                        />
-                      </div>
-                      <div>
-                        <Label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                          {t('আদালতের নাম', 'Court Name')}
-                        </Label>
-                        <Input
-                          type="text"
-                          value={courtName}
-                          onChange={(e) => setCourtName(e.target.value)}
-                          className="h-9 text-xs"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <Label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                          {t('বিরোধের ধরন', 'Dispute Type')}
-                        </Label>
-                        <Select value={disputeType} onValueChange={setDisputeType}>
-                          <SelectTrigger className="w-full h-9 text-xs shadow-xs">
-                            <SelectValue placeholder={t('বিরোধের ধরন নির্বাচন করুন', 'Select Dispute Type')} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="INJUNCTION" className="text-xs">স্থগিতাদেশ (Court Injunction)</SelectItem>
-                            <SelectItem value="TITLE_SUIT" className="text-xs">স্বত্ব মামলা (Title Suit)</SelectItem>
-                            <SelectItem value="BOUNDARY_DISPUTE" className="text-xs">সীমানা বিরোধ (Boundary Dispute)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                          {t('স্থগিতাদেশের বিবরণ ও কারণ', 'Injunction Details')}
-                        </Label>
-                        <Input
-                          type="text"
-                          value={injunctionReason}
-                          onChange={(e) => setInjunctionReason(e.target.value)}
-                          className="h-9 text-xs"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2 pt-2">
-                      <Button
-                        type="button"
-                        disabled={submitting}
-                        onClick={handleLogCourtInjunction}
-                        className="bg-[#006A4E] hover:bg-[#00553e] disabled:opacity-50 text-white text-xs font-bold gap-1.5"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>
-                          {submitting
-                            ? t('নথিভুক্ত হচ্ছে...', 'Submitting...')
-                            : t('আদালতের আদেশ ডাটাবেজে সংরক্ষণ করুন', 'Log Court Order (Persisted)')}
-                        </span>
-                      </Button>
-
-                      {onNavigate && (
-                        <Button
-                          variant="outline"
-                          type="button"
-                          onClick={() => onNavigate('check')}
-                          className="border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold gap-1.5"
-                        >
-                          <Search className="w-4 h-4 text-emerald-700" />
-                          <span>{t('সম্পূর্ণ খতিয়ান চেইন পরীক্ষা', 'Inspect 30-Yr Khatian Chain')}</span>
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="py-16 text-center text-xs text-slate-400">
-              {t('বাম পাশের তালিকা থেকে একটি দাগ নির্বাচন করুন।', 'Select a plot from the left panel.')}
-            </div>
-          )}
-        </div>
-      </div>
+      {canLogOrder && (
+        <InjunctionDialog
+          open={!!orderPlot}
+          onOpenChange={(o) => !o && setOrderPlot(null)}
+          plot={orderPlot}
+          onSubmit={handleLogCourtInjunction}
+        />
       )}
     </div>
   );

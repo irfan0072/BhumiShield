@@ -5,6 +5,7 @@ import { AppUIProvider, useAppUI } from './i18n';
 import { NavbarAndLayout } from './components/NavbarAndLayout';
 import { AuthGuard } from './components/AuthGuard';
 import { OfficialWorkspaceShell } from './components/officials/OfficialWorkspaceShell';
+import { CitizenShell } from './components/citizen/CitizenShell';
 import { LandingPage } from './pages/LandingPage';
 import { PageSkeleton } from './components/PageSkeleton';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -62,13 +63,14 @@ const getInitialTab = (): string => {
     return 'check';
   }
   if (cleanPath.startsWith('/applications') || cleanPath.startsWith('/transfers')) return 'applications';
-  if (cleanPath.startsWith('/specialist') || cleanPath.startsWith('/la') || cleanPath.startsWith('/court')) return 'specialist';
+  // Lawyer portal must be matched before the specialist '/la…' prefix, or '/lawyer-case' opens the wrong workspace.
+  if (cleanPath.startsWith('/lawyer-case') || cleanPath.startsWith('/lawyercase') || cleanPath.startsWith('/lawyer')) return 'lawyer_case';
+  if (cleanPath.startsWith('/specialist') || cleanPath === '/la' || cleanPath.startsWith('/la/') || cleanPath.startsWith('/la-') || cleanPath.startsWith('/court')) return 'specialist';
   if (cleanPath.startsWith('/sale') || cleanPath.startsWith('/marketplace')) return 'sale';
   if (cleanPath.startsWith('/notices') || cleanPath.startsWith('/circulars')) return 'notices';
   if (cleanPath.startsWith('/blog')) return 'blog';
   if (cleanPath.startsWith('/map') || cleanPath.startsWith('/cadastral')) return 'map';
   if (cleanPath.startsWith('/offices')) return 'offices';
-  if (cleanPath.startsWith('/lawyer-case') || cleanPath.startsWith('/lawyercase') || cleanPath.startsWith('/lawyer')) return 'lawyer_case';
   if (cleanPath.startsWith('/help')) return 'help';
   if (cleanPath.startsWith('/home') || cleanPath.startsWith('/portal') || cleanPath.startsWith('/my/land') || cleanPath.startsWith('/my/transfers') || cleanPath.startsWith('/my/tickets')) return 'home';
   if (cleanPath.startsWith('/registrar')) return 'registrar';
@@ -348,6 +350,129 @@ export const AppContent: React.FC = () => {
     );
   }
 
+  // 6. Citizen Portal Workspace (home, applications, profile, settings)
+  if (
+    activeTab === 'home' ||
+    activeTab === 'applications' ||
+    activeTab === 'profile' ||
+    activeTab === 'settings'
+  ) {
+    return (
+      <>
+        <React.Suspense fallback={<PageSkeleton />}>
+          {activeTab === 'home' && (
+            <AuthGuard
+              allowedRoles={['citizen', 'service_point_operator', 'admin', 'system_admin']}
+              roleTitleBn="নাগরিক ভূমি পোর্টাল"
+              roleTitleEn="Citizen Land Portal"
+              deptBn="নাগরিক সেবা ও ভূমি সুরক্ষা ভল্ট"
+              deptEn="Citizen Property Vault & Verification"
+              onNavigate={setActiveTab}
+            >
+              <CitizenShell activeTab="home" onNavigate={setActiveTab}>
+                <CitizenHome onNavigate={setActiveTab} />
+              </CitizenShell>
+            </AuthGuard>
+          )}
+
+          {activeTab === 'applications' && (
+            <AuthGuard
+              allowedRoles={['citizen', 'service_point_operator', 'admin', 'system_admin']}
+              roleTitleBn="১৩-ধাপের নিরাপদ জমি হস্তান্তর সেবা"
+              roleTitleEn="13-Step Secure Land Transfer Service"
+              deptBn="ভূমি সেবা ও নিবন্ধন সমন্বয় সেল"
+              deptEn="Land Transfer & Registry Coordination Cell"
+              onNavigate={setActiveTab}
+            >
+              <CitizenShell activeTab="applications" onNavigate={setActiveTab}>
+                <ApplicationsPage onNavigate={setActiveTab} />
+              </CitizenShell>
+            </AuthGuard>
+          )}
+
+          {activeTab === 'profile' && (
+            <AuthGuard
+              allowedRoles={[
+                'citizen',
+                'service_point_operator',
+                'sub_registrar',
+                'registry_data_officer',
+                'ac_land',
+                'land_office_assistant',
+                'field_verification_officer',
+                'settlement_records_officer',
+                'settlement_checker',
+                'uno_supervisor',
+                'appellate_reviewer',
+                'bank_officer',
+                'bank_manager',
+                'support_agent',
+                'platform_moderator',
+                'content_editor',
+                'content_approver',
+                'system_admin',
+                'auditor',
+                'dc_acquisition_officer',
+                'lawyer_court_user',
+                'admin',
+              ]}
+              roleTitleBn="ব্যবহারকারী প্রোফাইল"
+              roleTitleEn="User Profile"
+              onNavigate={setActiveTab}
+            >
+              <CitizenShell activeTab="profile" onNavigate={setActiveTab}>
+                <CitizenProfilePage onNavigate={setActiveTab} />
+              </CitizenShell>
+            </AuthGuard>
+          )}
+
+          {activeTab === 'settings' && (
+            <AuthGuard
+              allowedRoles={[
+                'citizen',
+                'service_point_operator',
+                'sub_registrar',
+                'registry_data_officer',
+                'ac_land',
+                'land_office_assistant',
+                'field_verification_officer',
+                'settlement_records_officer',
+                'settlement_checker',
+                'uno_supervisor',
+                'appellate_reviewer',
+                'bank_officer',
+                'bank_manager',
+                'support_agent',
+                'platform_moderator',
+                'content_editor',
+                'content_approver',
+                'system_admin',
+                'auditor',
+                'dc_acquisition_officer',
+                'lawyer_court_user',
+                'admin',
+              ]}
+              roleTitleBn="নাগরিক সেটিংস ও নিরাপত্তা"
+              roleTitleEn="Citizen Settings & Security"
+              onNavigate={setActiveTab}
+            >
+              <CitizenShell activeTab="settings" onNavigate={setActiveTab}>
+                <CitizenSettingsPage onNavigate={setActiveTab} />
+              </CitizenShell>
+            </AuthGuard>
+          )}
+        </React.Suspense>
+
+        {isColdStarting && (
+          <div className="fixed top-0 inset-x-0 z-50 bg-[#C4891A] text-white text-center py-2 px-4 font-bold text-xs sm:text-sm shadow-md animate-pulse flex items-center justify-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-white animate-ping" />
+            <span>{lang === 'bn' ? coldStartMessageBn : coldStartMessageEn}</span>
+          </div>
+        )}
+      </>
+    );
+  }
+
   return (
     <>
       <NavbarAndLayout activeTab={activeTab} setActiveTab={setActiveTab}>
@@ -363,108 +488,6 @@ export const AppContent: React.FC = () => {
         {activeTab === 'offices' && <OfficeLocatorPage onNavigate={setActiveTab} />}
         {activeTab === 'help' && <HelpPage onNavigate={setActiveTab} />}
         {activeTab === 'auth' && <AuthPage mode="login" onSuccessNavigate={setActiveTab} />}
-
-        {/* 2. Citizen Land Vault & Property Protection */}
-        {activeTab === 'home' && (
-          <AuthGuard
-            allowedRoles={['citizen', 'service_point_operator', 'admin', 'system_admin']}
-            roleTitleBn="নাগরিক ভূমি পোর্টাল"
-            roleTitleEn="Citizen Land Portal"
-            deptBn="নাগরিক সেবা ও ভূমি সুরক্ষা ভল্ট"
-            deptEn="Citizen Property Vault & Verification"
-            onNavigate={setActiveTab}
-          >
-            <CitizenHome onNavigate={setActiveTab} />
-          </AuthGuard>
-        )}
-
-
-        {activeTab === 'profile' && (
-          <AuthGuard
-            allowedRoles={[
-              'citizen',
-              'service_point_operator',
-              'sub_registrar',
-              'registry_data_officer',
-              'ac_land',
-              'land_office_assistant',
-              'field_verification_officer',
-              'settlement_records_officer',
-              'settlement_checker',
-              'uno_supervisor',
-              'appellate_reviewer',
-              'bank_officer',
-              'bank_manager',
-              'support_agent',
-              'platform_moderator',
-              'content_editor',
-              'content_approver',
-              'system_admin',
-              'auditor',
-              'dc_acquisition_officer',
-              'lawyer_court_user',
-              'admin',
-            ]}
-            roleTitleBn="ব্যবহারকারী প্রোফাইল"
-            roleTitleEn="User Profile"
-            onNavigate={setActiveTab}
-          >
-            {user?.role === 'citizen' || user?.role === 'service_point_operator' ? (
-              <CitizenProfilePage onNavigate={setActiveTab} />
-            ) : (
-              <AuthPage mode="profile" onSuccessNavigate={setActiveTab} />
-            )}
-          </AuthGuard>
-        )}
-
-        {activeTab === 'settings' && (
-          <AuthGuard
-            allowedRoles={[
-              'citizen',
-              'service_point_operator',
-              'sub_registrar',
-              'registry_data_officer',
-              'ac_land',
-              'land_office_assistant',
-              'field_verification_officer',
-              'settlement_records_officer',
-              'settlement_checker',
-              'uno_supervisor',
-              'appellate_reviewer',
-              'bank_officer',
-              'bank_manager',
-              'support_agent',
-              'platform_moderator',
-              'content_editor',
-              'content_approver',
-              'system_admin',
-              'auditor',
-              'dc_acquisition_officer',
-              'lawyer_court_user',
-              'admin',
-            ]}
-            roleTitleBn="নাগরিক সেটিংস ও নিরাপত্তা"
-            roleTitleEn="Citizen Settings & Security"
-            onNavigate={setActiveTab}
-          >
-            <CitizenSettingsPage onNavigate={setActiveTab} />
-          </AuthGuard>
-        )}
-
-        {/* 3. Applications & 13-Step Transfer Hub */}
-        {activeTab === 'applications' && (
-          <AuthGuard
-            allowedRoles={['citizen', 'service_point_operator', 'admin', 'system_admin']}
-            roleTitleBn="১৩-ধাপের নিরাপদ জমি হস্তান্তর সেবা"
-            roleTitleEn="13-Step Secure Land Transfer Service"
-            deptBn="ভূমি সেবা ও নিবন্ধন সমন্বয় সেল"
-            deptEn="Land Transfer & Registry Coordination Cell"
-            onNavigate={setActiveTab}
-          >
-            <ApplicationsPage onNavigate={setActiveTab} />
-          </AuthGuard>
-        )}
-
 
         {/* 5. Explicit 404 Not Found Page */}
         {activeTab === 'notfound' && <NotFoundPage onNavigate={setActiveTab} />}

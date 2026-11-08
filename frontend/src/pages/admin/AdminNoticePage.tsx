@@ -1,840 +1,734 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Bell,
-  Plus,
-  Search,
+  ArchiveRestore,
   Eye,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-  RotateCcw,
   ExternalLink,
-  Edit3,
-  Calendar,
-  Clock,
+  Flame,
+  MoreHorizontal,
+  Pencil,
+  Pin,
+  Plus,
   Send,
   Trash2,
-  ArchiveRestore,
-  Pin,
-  Flame,
-  Building2,
-  FileText,
-  Radio,
+  Undo2,
+  Upload,
+  XCircle,
 } from 'lucide-react';
 import { useAppUI } from '@/i18n';
 import { BhumiApi } from '@/api/client';
 import { toBanglaDigits } from '@/theme/tokens';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AdminPage,
+  ConfirmDialog,
+  DataTable,
+  DetailList,
+  DetailSheet,
+  EmptyRow,
+  Field,
+  FormDialog,
+  LoadingRows,
+  PageToolbar,
+  Section,
+  StatusBadge,
+  Tone,
+  inputCls,
+  notify,
+  useCreateIntent,
+} from '@/components/admin/kit';
 
-export const AdminNoticePage: React.FC = () => {
+/* ------------------------------------------------------------------ */
+/* Shared manager for notices and blog posts                           */
+/* Backend: ContentWorkflowController (list/save/transition/softDelete) */
+/* ------------------------------------------------------------------ */
+
+export type ContentKind = 'notice' | 'blog';
+type Opt = { value: string; bn: string; en: string };
+
+/** Notice categories used by the seeded data and the public notice board. */
+const NOTICE_CATEGORIES: Opt[] = [
+  { value: 'OFFICE_NOTICE', bn: 'অফিস নোটিশ', en: 'Office notice' },
+  { value: 'CIRCULAR_POLICY', bn: 'পরিপত্র', en: 'Circular' },
+  { value: 'GAZETTE', bn: 'গেজেট', en: 'Gazette' },
+  { value: 'PUBLIC_HEARING', bn: 'গণশুনানি', en: 'Public hearing' },
+  { value: 'FRAUD_WARNING', bn: 'প্রতারণা সতর্কতা', en: 'Fraud warning' },
+];
+
+const NOTICE_SCOPES: Opt[] = [
+  { value: 'NATIONAL', bn: 'জাতীয়', en: 'National' },
+  { value: 'DIVISIONAL', bn: 'বিভাগ', en: 'Division' },
+  { value: 'DISTRICT', bn: 'জেলা', en: 'District' },
+  { value: 'UPAZILA', bn: 'উপজেলা', en: 'Upazila' },
+];
+
+/** Slugs that exist in blog_categories (unknown slugs get a generic name on the server). */
+const BLOG_CATEGORIES: Opt[] = [
+  { value: 'land-literacy', bn: 'ভূমি সাক্ষরতা', en: 'Land literacy' },
+  { value: 'fraud-alerts', bn: 'প্রতারণা সতর্কতা', en: 'Fraud alerts' },
+  { value: 'statutory-rules', bn: 'আইন ও বিধি', en: 'Rules' },
+];
+
+const STATUS: Record<string, { tone: Tone; bn: string; en: string }> = {
+  DRAFT: { tone: 'slate', bn: 'খসড়া', en: 'Draft' },
+  SUBMITTED: { tone: 'amber', bn: 'জমা হয়েছে', en: 'Submitted' },
+  PUBLISHED: { tone: 'green', bn: 'প্রকাশিত', en: 'Published' },
+  REJECTED: { tone: 'red', bn: 'ফেরত', en: 'Returned' },
+  DELETED: { tone: 'slate', bn: 'মুছে ফেলা', en: 'Deleted' },
+};
+
+type TabKey = 'ALL' | 'DRAFT' | 'SUBMITTED' | 'PUBLISHED' | 'DELETED';
+const inTab = (status: string, tab: TabKey) => {
+  const s = String(status || 'DRAFT').toUpperCase();
+  if (tab === 'ALL') return s !== 'DELETED';
+  if (tab === 'DRAFT') return s === 'DRAFT' || s === 'REJECTED';
+  return s === tab;
+};
+
+const REVIEWER_ROLES = ['content_approver', 'admin', 'system_admin'];
+const EDITOR_ROLES = ['content_editor', 'admin', 'system_admin'];
+
+type FormState = {
+  title_bn: string;
+  title_en: string;
+  body_bn: string;
+  body_en: string;
+  category: string;
+  scope: string;
+  is_pinned: boolean;
+  is_urgent: boolean;
+  reading_time_minutes: string;
+};
+
+const MIN = 3; // backend: each title/body must be at least 3 characters
+const ok = (v: string) => v.trim().length >= MIN;
+
+export const ContentManager: React.FC<{ kind: ContentKind }> = ({ kind }) => {
   const { lang, t, user } = useAppUI();
+  const n = (v: number | string) => toBanglaDigits(v, lang);
+  const isNotice = kind === 'notice';
+  const categories = isNotice ? NOTICE_CATEGORIES : BLOG_CATEGORIES;
+  const role = String((user as any)?.role || '');
+  const canReview = REVIEWER_ROLES.includes(role);
+  const canEdit = EDITOR_ROLES.includes(role);
 
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const [scopeFilter, setScopeFilter] = useState<string>('ALL');
-  const [searchQuery, setSearchQuery] = useState<string>('');
   const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<TabKey>('ALL');
+  const [search, setSearch] = useState('');
 
-  // Notifications
-  const [actionAlert, setActionAlert] = useState<{ msg: string; err?: boolean } | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<any | null>(null);
+  const [form, setForm] = useState<FormState>(() => emptyForm(kind));
+  const [bodyLang, setBodyLang] = useState<'bn' | 'en'>('bn');
+  const [saving, setSaving] = useState(false);
 
-  // Create / Edit Modal State
-  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const [editingItem, setEditingItem] = useState<any | null>(null);
-  const [formData, setFormData] = useState({
-    title_bn: '',
-    title_en: '',
-    category: 'COMMUNITY',
-    scope: 'NATIONAL',
-    is_urgent: false,
-    is_pinned: false,
-    body_bn: '',
-    body_en: '',
-  });
-  const [saving, setSaving] = useState<boolean>(false);
-
-  // Soft Delete Confirmation Dialog State
+  const [preview, setPreview] = useState<any | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
-  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
-  // Preview Dialog State
-  const [previewItem, setPreviewItem] = useState<any | null>(null);
-
-  const loadNotices = async () => {
+  const load = async () => {
     setLoading(true);
     try {
-      const res = await BhumiApi.listManagedContent({ kind: 'notice' });
-      setItems(res?.items || []);
-    } catch (err: any) {
-      console.error('Failed to load notices:', err);
-      setActionAlert({ msg: t('নোটিশ লোড করা যায়নি।', 'Failed to load notices.'), err: true });
+      const res = await BhumiApi.listManagedContent({ kind });
+      const list = Array.isArray(res?.items) ? res.items : Array.isArray(res) ? res : [];
+      setItems(list);
+      // keep an open preview in sync with fresh data
+      setPreview((p: any) => (p ? list.find((x: any) => x.id === p.id) || null : p));
+    } catch (e) {
+      setItems([]);
+      notify.err(e, lang);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadNotices();
-  }, []);
+    load();
+  }, [kind]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Stats calculation
-  const stats = useMemo(() => {
-    const total = items.length;
-    const published = items.filter((i) => i.status === 'PUBLISHED').length;
-    const urgentPinned = items.filter((i) => i.is_urgent || i.is_pinned).length;
-    const draftAndDeleted = items.filter((i) => i.status === 'DRAFT' || i.status === 'DELETED').length;
-    return { total, published, urgentPinned, draftAndDeleted };
-  }, [items]);
-
-  const handleOpenCreate = () => {
-    setEditingItem(null);
-    setFormData({
-      title_bn: '',
-      title_en: '',
-      category: 'COMMUNITY',
-      scope: 'NATIONAL',
-      is_urgent: false,
-      is_pinned: false,
-      body_bn: '',
-      body_en: '',
-    });
-    setIsDialogOpen(true);
+  const openCreate = () => {
+    setEditing(null);
+    setForm(emptyForm(kind));
+    setBodyLang('bn');
+    setFormOpen(true);
   };
+  useCreateIntent(() => openCreate());
 
-  const handleOpenEdit = (item: any) => {
-    setEditingItem(item);
-    setFormData({
+  const openEdit = (item: any) => {
+    setEditing(item);
+    setForm({
       title_bn: item.title_bn || '',
       title_en: item.title_en || '',
-      category: item.category || 'COMMUNITY',
-      scope: item.scope || 'NATIONAL',
-      is_urgent: Boolean(item.is_urgent),
-      is_pinned: Boolean(item.is_pinned),
       body_bn: item.body_bn || '',
       body_en: item.body_en || '',
+      category: (isNotice ? item.category : item.category_slug) || categories[0].value,
+      scope: item.scope || 'NATIONAL',
+      is_pinned: Boolean(Number(item.is_pinned)),
+      is_urgent: Boolean(Number(item.is_urgent)),
+      reading_time_minutes: item.reading_time_minutes ? String(item.reading_time_minutes) : '',
     });
-    setIsDialogOpen(true);
+    setBodyLang('bn');
+    setFormOpen(true);
   };
 
-  const handleSave = async (autoPublish = false) => {
-    if (!formData.title_bn || !formData.title_en || !formData.body_bn || !formData.body_en) {
-      setActionAlert({
-        msg: t('অনুগ্রহ করে বাংলা ও ইংরেজি উভয় ভাষায় শিরোনাম এবং নোটিশের বিবরণ লিখুন।', 'Please fill in title and body in both languages.'),
-        err: true,
-      });
-      return;
-    }
+  const counts = useMemo(() => {
+    const c: Record<TabKey, number> = { ALL: 0, DRAFT: 0, SUBMITTED: 0, PUBLISHED: 0, DELETED: 0 };
+    for (const it of items) (Object.keys(c) as TabKey[]).forEach((k) => inTab(it.status, k) && c[k]++);
+    return c;
+  }, [items]);
+
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return items.filter((it) => {
+      if (!inTab(it.status, tab)) return false;
+      if (!q) return true;
+      return [it.title_bn, it.title_en, it.notice_slug, it.post_slug].some((v) => String(v || '').toLowerCase().includes(q));
+    });
+  }, [items, tab, search]);
+
+  const valid = ok(form.title_bn) && ok(form.title_en) && ok(form.body_bn) && ok(form.body_en);
+
+  const save = async () => {
     setSaving(true);
     try {
-      const saved = await BhumiApi.saveManagedContent(
-        {
-          kind: 'notice',
-          title_bn: formData.title_bn,
-          title_en: formData.title_en,
-          category: formData.category,
-          scope: formData.scope,
-          is_urgent: formData.is_urgent ? 1 : 0,
-          is_pinned: formData.is_pinned ? 1 : 0,
-          body_bn: formData.body_bn,
-          body_en: formData.body_en,
-        },
-        editingItem?.id
-      );
-
-      if (autoPublish && saved?.id) {
-        try {
-          await BhumiApi.transitionManagedContent(saved.id, { kind: 'notice', status: 'SUBMITTED' });
-          await BhumiApi.transitionManagedContent(saved.id, { kind: 'notice', status: 'PUBLISHED' });
-        } catch {
-          // fallback
-        }
+      // ContentWorkflowController::save reads `kind` from the body.
+      // On update (PUT) only titles/bodies are stored and the item returns to DRAFT.
+      const payload: Record<string, any> = {
+        kind,
+        title_bn: form.title_bn.trim(),
+        title_en: form.title_en.trim(),
+        body_bn: form.body_bn.trim(),
+        body_en: form.body_en.trim(),
+      };
+      if (isNotice) {
+        payload.category = form.category;
+        payload.scope = form.scope;
+        payload.is_pinned = form.is_pinned;
+        payload.is_urgent = form.is_urgent;
+      } else {
+        payload.category_slug = form.category;
+        const rt = parseInt(form.reading_time_minutes, 10);
+        if (rt > 0) payload.reading_time_minutes = rt;
       }
-
-      setIsDialogOpen(false);
-      setActionAlert({ msg: t('নোটিশ সফলভাবে সংরক্ষিত হয়েছে।', 'Notice saved successfully!') });
-      loadNotices();
-    } catch (err: any) {
-      const msg = err?.response?.data?.message_bn || err?.message || t('সংরক্ষণ করা যায়নি।', 'Failed to save.');
-      setActionAlert({ msg, err: true });
+      await BhumiApi.saveManagedContent(payload, editing?.id);
+      notify.ok(t('সংরক্ষণ হয়েছে', 'Saved'));
+      setFormOpen(false);
+      await load();
+    } catch (e) {
+      notify.err(e, lang);
     } finally {
       setSaving(false);
     }
   };
 
-  // Status transition (Submit, Publish, Reject, Restore)
-  const handleStatusTransition = async (item: any, targetStatus: string) => {
+  const transition = async (item: any, status: string, done: [string, string]) => {
     try {
-      await BhumiApi.transitionManagedContent(item.id, {
-        kind: 'notice',
-        status: targetStatus,
-      });
-      setActionAlert({
-        msg: targetStatus === 'PUBLISHED'
-          ? t('নোটিশটি সফলভাবে জারি ও প্রকাশিত হয়েছে।', 'Notice published successfully!')
-          : targetStatus === 'REJECTED'
-          ? t('নোটিশটি বাতিল করা হয়েছে।', 'Notice rejected.')
-          : targetStatus === 'DRAFT'
-          ? t('নোটিশটি সফলভাবে পুনরুদ্ধার (Restore) করা হয়েছে।', 'Notice restored to draft successfully!')
-          : t('নোটিশটি পর্যালোচনার জন্য পাঠানো হয়েছে।', 'Notice submitted for review.'),
-      });
-      loadNotices();
-    } catch (err: any) {
-      const msg = err?.response?.data?.message_bn || err?.message || t('স্ট্যাটাস পরিবর্তন করা যায়নি।', 'Status update failed.');
-      setActionAlert({ msg, err: true });
-    }
-  };
-
-  // Soft Delete Handler (Marks status='DELETED', never destroys row)
-  const handleConfirmSoftDelete = async () => {
-    if (!deleteTarget) return;
-    setIsDeleting(true);
-    try {
-      await BhumiApi.deleteManagedContent(deleteTarget.id, { kind: 'notice' });
-      setActionAlert({
-        msg: t('নোটিশটি সফট ডিলিট করা হয়েছে (আর্কাইভে সংরক্ষিত)।', 'Notice soft deleted (archived safely).'),
-      });
-      setDeleteTarget(null);
-      loadNotices();
-    } catch (err: any) {
-      const msg = err?.response?.data?.message_bn || err?.message || t('মুছে ফেলা যায়নি।', 'Delete failed.');
-      setActionAlert({ msg, err: true });
+      await BhumiApi.transitionManagedContent(item.id, { kind, status });
+      notify.ok(t(done[0], done[1]));
+    } catch (e) {
+      notify.err(e, lang);
     } finally {
-      setIsDeleting(false);
+      await load();
     }
   };
 
-  // Filter items
-  const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter;
-      const matchesScope = scopeFilter === 'ALL' || item.scope === scopeFilter;
-      const matchesSearch =
-        !searchQuery ||
-        (item.title_bn && item.title_bn.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (item.title_en && item.title_en.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (item.notice_slug && item.notice_slug.toLowerCase().includes(searchQuery.toLowerCase()));
-      return matchesStatus && matchesScope && matchesSearch;
-    });
-  }, [items, statusFilter, scopeFilter, searchQuery]);
+  const remove = async () => {
+    if (!deleteTarget) return;
+    try {
+      await BhumiApi.deleteManagedContent(deleteTarget.id, { kind });
+      notify.ok(t('মুছে ফেলা হয়েছে', 'Deleted'));
+      if (preview?.id === deleteTarget.id) setPreview(null);
+    } catch (e) {
+      notify.err(e, lang);
+      throw e; // keep the confirm dialog open
+    } finally {
+      await load();
+    }
+  };
+
+  /** Workflow actions offered for a given status (mirrors ContentWorkflowController::transition). */
+  const workflowActions = (item: any) => {
+    const s = String(item.status || 'DRAFT').toUpperCase();
+    const list: Array<{ key: string; icon: React.ElementType; label: string; run: () => void; primary?: boolean }> = [];
+    if (s === 'DRAFT' || s === 'REJECTED')
+      list.push({
+        key: 'submit',
+        icon: Send,
+        label: t('জমা দিন', 'Submit'),
+        primary: true,
+        run: () => transition(item, 'SUBMITTED', ['জমা হয়েছে', 'Submitted']),
+      });
+    if (s === 'SUBMITTED' && canReview) {
+      list.push({
+        key: 'publish',
+        icon: Upload,
+        label: t('প্রকাশ করুন', 'Publish'),
+        primary: true,
+        run: () => transition(item, 'PUBLISHED', ['প্রকাশিত হয়েছে', 'Published']),
+      });
+      list.push({
+        key: 'reject',
+        icon: XCircle,
+        label: t('ফেরত দিন', 'Return'),
+        run: () => transition(item, 'REJECTED', ['ফেরত দেওয়া হয়েছে', 'Returned']),
+      });
+    }
+    if (s === 'PUBLISHED')
+      list.push({
+        key: 'unpublish',
+        icon: Undo2,
+        label: t('প্রকাশ বন্ধ', 'Unpublish'),
+        run: () => transition(item, 'DRAFT', ['খসড়ায় ফেরত', 'Moved to draft']),
+      });
+    if (s === 'DELETED')
+      list.push({
+        key: 'restore',
+        icon: ArchiveRestore,
+        label: t('ফিরিয়ে আনুন', 'Restore'),
+        primary: true,
+        run: () => transition(item, 'DRAFT', ['ফিরিয়ে আনা হয়েছে', 'Restored']),
+      });
+    return list;
+  };
+
+  const catLabel = (item: any) => {
+    const v = isNotice ? item.category : item.category_slug;
+    const hit = categories.find((c) => c.value === v);
+    return hit ? (lang === 'bn' ? hit.bn : hit.en) : v ? String(v).replace(/[_-]/g, ' ').toLowerCase() : '—';
+  };
+  const scopeLabel = (v: string) => {
+    const hit = NOTICE_SCOPES.find((s) => s.value === v);
+    return hit ? (lang === 'bn' ? hit.bn : hit.en) : v || '—';
+  };
+  const fmtDate = (iso?: string) => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? '—' : d.toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+  const title = (item: any) => (lang === 'bn' ? item.title_bn || item.title_en : item.title_en || item.title_bn) || '—';
+  const statusBadge = (code: string) => {
+    const s = STATUS[String(code || 'DRAFT').toUpperCase()] || STATUS.DRAFT;
+    return <StatusBadge tone={s.tone}>{lang === 'bn' ? s.bn : s.en}</StatusBadge>;
+  };
+
+  const noun = isNotice ? t('নোটিশ', 'notice') : t('লেখা', 'post');
+  const newLabel = isNotice ? t('নতুন নোটিশ', 'New notice') : t('নতুন লেখা', 'New post');
+  const publicPath = `/${lang}/${isNotice ? 'notices' : 'blog'}`;
+  const editingNonDraft = editing && String(editing.status).toUpperCase() !== 'DRAFT';
+
+  const cols = 4;
+  const tabs: Array<[TabKey, string]> = [
+    ['ALL', t('সব', 'All')],
+    ['DRAFT', t('খসড়া', 'Draft')],
+    ['SUBMITTED', t('জমা', 'Submitted')],
+    ['PUBLISHED', t('প্রকাশিত', 'Published')],
+    ['DELETED', t('মুছে ফেলা', 'Deleted')],
+  ];
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-2.5 p-3 sm:p-4 max-w-7xl mx-auto w-full overflow-hidden">
-      {/* Action Notification Alert */}
-      {actionAlert && (
-        <Alert
-          variant={actionAlert.err ? 'destructive' : 'default'}
-          className="flex items-center justify-between py-2 px-3 shadow-2xs border-blue-200 bg-blue-50/80 text-blue-900 rounded-xl shrink-0"
-        >
-          <div className="flex items-center gap-2">
-            {actionAlert.err ? <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" /> : <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />}
-            <AlertDescription className="font-bold text-xs">{actionAlert.msg}</AlertDescription>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setActionAlert(null)}
-            className="h-6 w-6 p-0 text-slate-500 hover:text-slate-800 cursor-pointer"
-          >
-            ✕
-          </Button>
-        </Alert>
-      )}
-
-      {/* Search, Scope, Status & Actions Toolbar */}
-      <Card className="p-2 sm:p-2.5 rounded-xl border border-border/80 shadow-2xs space-y-2 bg-card shrink-0">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-2">
-          {/* Search Box */}
-          <div className="relative flex-1 w-full lg:max-w-xs">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-muted-foreground pointer-events-none" />
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t('শিরোনাম বা স্মারক দিয়ে খুঁজুন...', 'Search by title or memo...')}
-              className="pl-8 h-8 text-xs rounded-lg bg-background w-full"
-            />
-          </div>
-
-          {/* Scope Filter */}
-          <div className="flex items-center gap-1.5 shrink-0 w-full lg:w-auto">
-            <span className="text-xs font-semibold text-muted-foreground">{t('পরিধি:', 'Scope:')}</span>
-            <Select value={scopeFilter} onValueChange={setScopeFilter}>
-              <SelectTrigger className="h-8 text-xs w-full sm:w-40 rounded-lg">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">{t('সকল পরিধি', 'All Scopes')}</SelectItem>
-                <SelectItem value="NATIONAL">{t('জাতীয় (National)', 'National')}</SelectItem>
-                <SelectItem value="DIVISIONAL">{t('বিভাগীয় (Divisional)', 'Divisional')}</SelectItem>
-                <SelectItem value="DISTRICT">{t('জেলা (District)', 'District')}</SelectItem>
-                <SelectItem value="UPAZILA">{t('উপজেলা (Upazila)', 'Upazila')}</SelectItem>
-                <SelectItem value="CITIZEN">{t('নাগরিক (Citizen)', 'Citizen')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2 w-full lg:w-auto shrink-0 justify-end flex-wrap">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => window.open(`/${lang}/notices`, '_blank')}
-              className="h-8 px-2.5 rounded-lg text-xs font-bold gap-1 border-border shrink-0 cursor-pointer"
-            >
-              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
-              <span className="hidden sm:inline">{t('নোটিশ পেজ', 'Notice Page')}</span>
-            </Button>
-
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleOpenCreate}
-              className="h-8 px-3 rounded-lg bg-[#006A4E] hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs gap-1 shrink-0 cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[3]" />
-              <span>{t('নতুন নোটিশ', 'New Notice')}</span>
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={loadNotices}
-              className="h-8 px-2.5 rounded-lg text-xs font-semibold border-border shrink-0 cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Status Chips */}
-        <div className="flex items-center gap-1.5 flex-wrap pt-1.5 border-t border-border/50">
-          <span className="text-xs font-semibold text-muted-foreground mr-1">{t('স্ট্যাটাস:', 'Status:')}</span>
-          {(['ALL', 'PUBLISHED', 'SUBMITTED', 'DRAFT', 'DELETED'] as const).map((st) => (
-            <button
-              key={st}
-              type="button"
-              onClick={() => setStatusFilter(st)}
-              className={`px-2.5 py-0.5 rounded-md text-xs font-semibold transition cursor-pointer ${
-                statusFilter === st
-                  ? 'bg-blue-900 text-white dark:bg-blue-600 dark:text-white shadow-2xs'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
-              }`}
-            >
-              {st === 'ALL'
-                ? t('সকল', 'All')
-                : st === 'PUBLISHED'
-                ? t('প্রকাশিত', 'Published')
-                : st === 'SUBMITTED'
-                ? t('অপেক্ষমাণ', 'Pending')
-                : st === 'DRAFT'
-                ? t('খসড়া', 'Draft')
-                : t('মুছে ফেলা', 'Deleted')}
-            </button>
-          ))}
-        </div>
-      </Card>
-
-      {/* 3. Notice Data Table (Single-screen scrollable) */}
-      <Card className="rounded-xl border border-border/80 shadow-2xs overflow-hidden bg-card flex flex-col flex-1 min-h-0">
-        <div className="flex-1 min-h-0 overflow-auto scrollbar-thin">
-          <Table>
-            <TableHeader className="sticky top-0 bg-muted/95 backdrop-blur-xs z-20 border-b border-border shadow-xs">
-              <TableRow>
-              <TableHead className="font-bold text-xs w-12 bg-muted/95">#</TableHead>
-              <TableHead className="font-bold text-xs bg-muted/95">{t('শিরোনাম', 'Title')}</TableHead>
-              <TableHead className="font-bold text-xs bg-muted/95">{t('ধরন ও পরিধি', 'Category & Scope')}</TableHead>
-              <TableHead className="font-bold text-xs bg-muted/95">{t('অগ্রাধিকার', 'Priority')}</TableHead>
-              <TableHead className="font-bold text-xs bg-muted/95">{t('স্ট্যাটাস', 'Status')}</TableHead>
-              <TableHead className="font-bold text-xs bg-muted/95">{t('জারিকারী ও তারিখ', 'Authority & Date')}</TableHead>
-              <TableHead className="text-right font-bold text-xs bg-muted/95">{t('অ্যাকশন', 'Actions')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center text-muted-foreground text-xs">
-                  <div className="flex items-center justify-center gap-2">
-                    <RotateCcw className="w-4 h-4 animate-spin text-blue-600" />
-                    <span>{t('নোটিশ লোড হচ্ছে...', 'Loading notices...')}</span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : filteredItems.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center text-muted-foreground text-xs">
-                  {t('কোনো সরকারি নোটিশ পাওয়া যায়নি। নতুন নোটিশ জারি করতে উপরের বাটনে ক্লিক করুন।', 'No notices found. Click New Notice to issue one.')}
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredItems.map((item, idx) => {
-                const isPublished = item.status === 'PUBLISHED';
-                const isSubmitted = item.status === 'SUBMITTED';
-                const isDraft = item.status === 'DRAFT';
-                const isDeleted = item.status === 'DELETED';
-                const isRejected = item.status === 'REJECTED';
-
-                return (
-                  <TableRow key={item.id || idx} className="hover:bg-muted/40 transition">
-                    <TableCell className="font-mono text-xs font-bold text-muted-foreground">
-                      {toBanglaDigits(String(item.id || idx + 1), lang)}
-                    </TableCell>
-                    <TableCell className="max-w-md">
-                      <div className="font-bold text-xs text-foreground line-clamp-1">{item.title_bn}</div>
-                      <div className="text-[11px] text-muted-foreground line-clamp-1 font-sans">{item.title_en}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <Badge variant="outline" className="text-[10px] font-mono bg-muted/30">
-                          {item.category || 'COMMUNITY'}
-                        </Badge>
-                        <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-800 border-blue-200">
-                          {item.scope || 'NATIONAL'}
-                        </Badge>
-                      </div>
-                      <div className="text-[10px] text-muted-foreground font-mono mt-0.5 line-clamp-1">
-                        /{item.notice_slug || `notice-${item.id}`}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 flex-wrap">
-                        {Boolean(item.is_urgent) && (
-                          <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-300 text-[10px] font-bold">
-                            <Flame className="w-3 h-3 mr-0.5" />
-                            {t('জরুরি', 'Urgent')}
-                          </Badge>
-                        )}
-                        {Boolean(item.is_pinned) && (
-                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 text-[10px] font-bold">
-                            <Pin className="w-3 h-3 mr-0.5" />
-                            {t('পিন', 'Pinned')}
-                          </Badge>
-                        )}
-                        {!item.is_urgent && !item.is_pinned && (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {isDeleted ? (
-                        <Badge variant="outline" className="bg-rose-50 text-rose-800 border-rose-300 text-[10px] font-bold">
-                          🗑 {t('মুছে ফেলা', 'Soft Deleted')}
-                        </Badge>
-                      ) : isPublished ? (
-                        <Badge variant="outline" className="bg-emerald-50 text-emerald-800 border-emerald-300 text-[10px] font-bold">
-                          ✓ {t('প্রকাশিত', 'Published')}
-                        </Badge>
-                      ) : isSubmitted ? (
-                        <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-300 text-[10px] font-bold">
-                          ⏳ {t('অপেক্ষমাণ', 'Pending')}
-                        </Badge>
-                      ) : isRejected ? (
-                        <Badge variant="outline" className="bg-rose-50 text-rose-800 border-rose-300 text-[10px] font-bold">
-                          ✕ {t('বাতিল', 'Rejected')}
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300 text-[10px] font-bold">
-                          ✎ {t('খসড়া', 'Draft')}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1 text-[11px]">
-                        <Calendar className="w-3 h-3 text-muted-foreground" />
-                        <span>{new Date(item.created_at || Date.now()).toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US')}</span>
-                      </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                        <Building2 className="w-3 h-3" />
-                        <span>{item.published_by || t('ভূমি মন্ত্রণালয়', 'Ministry of Land')}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setPreviewItem(item)}
-                          className="h-8 px-2 text-muted-foreground hover:text-foreground cursor-pointer"
-                          title={t('প্রিভিউ', 'Preview')}
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                        </Button>
-
-                        {!isDeleted && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenEdit(item)}
-                            className="h-8 px-2 text-indigo-600 hover:bg-indigo-50 cursor-pointer"
-                            title={t('এডিট', 'Edit')}
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </Button>
-                        )}
-
-                        {isSubmitted && !isDeleted && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => handleStatusTransition(item, 'PUBLISHED')}
-                            className="h-7 px-2.5 bg-blue-700 hover:bg-blue-800 text-white text-[10px] font-bold rounded-lg cursor-pointer"
-                          >
-                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                            <span>{t('অনুমোদন', 'Approve')}</span>
-                          </Button>
-                        )}
-
-                        {isDraft && !isDeleted && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => handleStatusTransition(item, 'SUBMITTED')}
-                            className="h-7 px-2.5 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold rounded-lg cursor-pointer"
-                          >
-                            <Send className="w-3 h-3 mr-1" />
-                            <span>{t('জমা দিন', 'Submit')}</span>
-                          </Button>
-                        )}
-
-                        {/* Soft Delete Option */}
-                        {!isDeleted ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setDeleteTarget(item)}
-                            className="h-8 px-2 text-rose-600 hover:bg-rose-50 cursor-pointer"
-                            title={t('সফট ডিলিট', 'Soft Delete')}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        ) : (
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => handleStatusTransition(item, 'DRAFT')}
-                            className="h-7 px-2 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg cursor-pointer"
-                            title={t('পুনরুদ্ধার করুন', 'Restore')}
-                          >
-                            <ArchiveRestore className="w-3 h-3 mr-1" />
-                            <span>{t('পুনরুদ্ধার', 'Restore')}</span>
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
+    <AdminPage fill>
+      <PageToolbar
+        search={search}
+        onSearch={setSearch}
+        placeholder={t('শিরোনাম খুঁজুন…', 'Search title…')}
+        filters={
+          <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
+            <TabsList className="h-9">
+              {tabs.map(([k, label]) => (
+                <TabsTrigger key={k} value={k} className="gap-1.5 px-2.5 text-xs sm:text-sm">
+                  {label}
+                  {!loading && <span className="text-xs text-slate-400">{n(counts[k])}</span>}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        }
+        actions={
+          <>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="size-9"
+                    aria-label={t('সাইটে দেখুন', 'View site')}
+                    onClick={() => window.open(publicPath, '_blank', 'noopener')}
+                  >
+                    <ExternalLink className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('সাইটে দেখুন', 'View site')}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            {canEdit && (
+              <Button size="sm" className="h-9 gap-1.5" onClick={openCreate}>
+                <Plus className="size-4" />
+                {newLabel}
+              </Button>
             )}
-          </TableBody>
-        </Table>
+          </>
+        }
+      />
+
+      <Section fill>
+        <DataTable
+          headers={[
+            t('শিরোনাম', 'Title'),
+            isNotice ? t('এলাকা', 'Scope') : t('লেখক', 'Author'),
+            t('অবস্থা', 'Status'),
+            '',
+          ]}
+          alignRight={[3]}
+        >
+          {loading ? (
+            <LoadingRows cols={cols} />
+          ) : visible.length === 0 ? (
+            <EmptyRow
+              cols={cols}
+              text={search ? t('কিছু পাওয়া যায়নি', 'Nothing found') : t(`কোনো ${noun} নেই`, `No ${noun}s`)}
+              action={
+                !search && tab === 'ALL' && canEdit ? (
+                  <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={openCreate}>
+                    <Plus className="size-3.5" />
+                    {newLabel}
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : (
+            visible.map((item) => {
+              const deleted = String(item.status).toUpperCase() === 'DELETED';
+              const flow = workflowActions(item);
+              return (
+                <tr key={item.id} className="cursor-pointer" onClick={() => setPreview(item)}>
+                  <td className="max-w-0 w-full">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      {isNotice && Boolean(Number(item.is_pinned)) && <Pin className="size-3.5 shrink-0 text-sky-600" />}
+                      {isNotice && Boolean(Number(item.is_urgent)) && <Flame className="size-3.5 shrink-0 text-rose-600" />}
+                      <span className="truncate font-medium text-slate-800">{title(item)}</span>
+                    </div>
+                    <div className="truncate text-xs text-slate-500">
+                      {catLabel(item)} · {fmtDate(item.published_at && item.status === 'PUBLISHED' ? item.published_at : item.created_at)}
+                    </div>
+                  </td>
+                  <td className="max-w-56 truncate whitespace-nowrap text-slate-600">
+                    {isNotice ? scopeLabel(item.scope) : (lang === 'bn' ? item.author_name_bn : item.author_name_en) || '—'}
+                  </td>
+                  <td>{statusBadge(item.status)}</td>
+                  <td className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="size-8" aria-label={t('কাজ', 'Actions')}>
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem onSelect={() => setPreview(item)}>
+                          <Eye className="size-4" />
+                          {t('দেখুন', 'View')}
+                        </DropdownMenuItem>
+                        {!deleted && canEdit && (
+                          <DropdownMenuItem onSelect={() => openEdit(item)}>
+                            <Pencil className="size-4" />
+                            {t('সম্পাদনা', 'Edit')}
+                          </DropdownMenuItem>
+                        )}
+                        {flow.map((a) => {
+                          const Icon = a.icon;
+                          return (
+                            <DropdownMenuItem key={a.key} onSelect={a.run}>
+                              <Icon className="size-4" />
+                              {a.label}
+                            </DropdownMenuItem>
+                          );
+                        })}
+                        {!deleted && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-rose-600 focus:text-rose-700" onSelect={() => setDeleteTarget(item)}>
+                              <Trash2 className="size-4" />
+                              {t('মুছুন', 'Delete')}
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              );
+            })
+          )}
+        </DataTable>
+      </Section>
+
+      {/* Create / edit */}
+      <FormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        size="lg"
+        title={editing ? t('সম্পাদনা', 'Edit') : newLabel}
+        description={editingNonDraft ? t('সংরক্ষণে খসড়া হবে', 'Saving makes it a draft') : undefined}
+        submitLabel={t('সংরক্ষণ', 'Save')}
+        cancelLabel={t('বাতিল', 'Cancel')}
+        busy={saving}
+        disabled={!valid}
+        onSubmit={save}
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label={t('শিরোনাম বাংলা', 'Title Bangla')}>
+            <input
+              className={inputCls}
+              value={form.title_bn}
+              onChange={(e) => setForm({ ...form, title_bn: e.target.value })}
+              autoFocus
+            />
+          </Field>
+          <Field label={t('শিরোনাম ইংরেজি', 'Title English')}>
+            <input className={inputCls} value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} />
+          </Field>
         </div>
-      </Card>
 
-      {/* 5. Create / Edit Notice Dedicated Modal */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-base font-black text-foreground flex items-center gap-2">
-              <Bell className="w-5 h-5 text-blue-700" />
-              <span>
-                {editingItem ? t('নোটিশ সম্পাদনা করুন', 'Edit Official Notice') : t('নতুন সরকারি নোটিশ জারি', 'Issue New Official Notice')}
-              </span>
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              {t('সরকারি আদেশ ও জরুরি বিজ্ঞপ্তির বিবরণ বাংলা এবং ইংরেজিতে লিখুন।', 'Issue official public notice and government order.')}
-            </DialogDescription>
-          </DialogHeader>
+        <Field label={t('ধরন', 'Category')}>
+          <select
+            className={inputCls}
+            value={form.category}
+            disabled={!!editing}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+          >
+            {!categories.some((c) => c.value === form.category) && <option value={form.category}>{form.category}</option>}
+            {categories.map((c) => (
+              <option key={c.value} value={c.value}>
+                {lang === 'bn' ? c.bn : c.en}
+              </option>
+            ))}
+          </select>
+        </Field>
 
-          <div className="space-y-4 py-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs font-bold">{t('নোটিশের ধরন', 'Notice Category')}</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(val) => setFormData({ ...formData, category: val })}
-                >
-                  <SelectTrigger className="mt-1 h-9 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="COMMUNITY">{t('গণবিজ্ঞপ্তি (Public Notice)', 'Public Notice')}</SelectItem>
-                    <SelectItem value="OFFICIAL">{t('প্রশাসনিক আদেশ (Official Order)', 'Official Order')}</SelectItem>
-                    <SelectItem value="GAZETTE">{t('গেজেট ও পরিপত্র (Gazette/Circular)', 'Gazette/Circular')}</SelectItem>
-                    <SelectItem value="TENDER">{t('টেন্ডার ও নিলাম (Tender/Auction)', 'Tender/Auction')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-xs font-bold">{t('কার্যকর এলাকা / পরিধি', 'Scope of Notice')}</Label>
-                <Select
-                  value={formData.scope}
-                  onValueChange={(val) => setFormData({ ...formData, scope: val })}
-                >
-                  <SelectTrigger className="mt-1 h-9 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NATIONAL">{t('জাতীয় (National)', 'National')}</SelectItem>
-                    <SelectItem value="DIVISIONAL">{t('বিভাগীয় (Divisional)', 'Divisional')}</SelectItem>
-                    <SelectItem value="DISTRICT">{t('জেলা (District)', 'District')}</SelectItem>
-                    <SelectItem value="UPAZILA">{t('উপজেলা (Upazila)', 'Upazila')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Urgent & Pinned Flags */}
-            <div className="flex items-center gap-6 p-3 rounded-xl bg-muted/40 border border-border/80">
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={formData.is_urgent}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_urgent: checked })}
-                  id="urgent-switch"
-                />
-                <Label htmlFor="urgent-switch" className="text-xs font-bold cursor-pointer">
-                  {t('জরুরি নোটিশ হিসেবে চিহ্নিত করুন', 'Mark as Urgent Notice')}
-                </Label>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={formData.is_pinned}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_pinned: checked })}
-                  id="pinned-switch"
-                />
-                <Label htmlFor="pinned-switch" className="text-xs font-bold cursor-pointer">
-                  {t('নোটিশবোর্ডের শীর্ষে পিন রাখুন', 'Pin to Top of Noticeboard')}
-                </Label>
-              </div>
-            </div>
-
-            {/* Issuing Authority */}
-            <div>
-              <Label className="text-xs font-bold">{t('জারিকারী কার্যালয় / কর্তৃপক্ষ', 'Issuing Authority')}</Label>
-              <Input
-                disabled
-                value={user?.office_bn || t('ভূমি মন্ত্রণালয় • জাতীয় প্রশাসন', 'Ministry of Land')}
-                className="mt-1 h-9 text-xs bg-muted font-medium"
-              />
-            </div>
-
-            {/* Title BN */}
-            <div>
-              <Label className="text-xs font-bold">{t('নোটিশের শিরোনাম (বাংলা) *', 'Notice Title (Bangla) *')}</Label>
-              <Input
-                value={formData.title_bn}
-                onChange={(e) => setFormData({ ...formData, title_bn: e.target.value })}
-                placeholder={t('যেমন: সাভার উপজেলার নামজারি ফি পরিশোধের নতুন সরকারি প্রজ্ঞাপন', 'e.g. Official circular on mutation fee payment')}
-                className="mt-1 text-xs"
-              />
-            </div>
-
-            {/* Title EN */}
-            <div>
-              <Label className="text-xs font-bold">{t('নোটিশের শিরোনাম (ইংরেজি) *', 'Notice Title (English) *')}</Label>
-              <Input
-                value={formData.title_en}
-                onChange={(e) => setFormData({ ...formData, title_en: e.target.value })}
-                placeholder="e.g. Official Government Notice Regarding Digital Land Mutation Fees"
-                className="mt-1 text-xs"
-              />
-            </div>
-
-            {/* Body BN */}
-            <div>
-              <Label className="text-xs font-bold">{t('নোটিশের পূর্ণাঙ্গ বিবরণ ও আদেশ (বাংলা) *', 'Notice Order Body (Bangla) *')}</Label>
-              <Textarea
-                rows={6}
-                value={formData.body_bn}
-                onChange={(e) => setFormData({ ...formData, body_bn: e.target.value })}
-                placeholder={t('সরকারি নোটিশ বা আদেশের বিস্তারিত টেক্সট লিখুন...', 'Write notice text in Bangla...')}
-                className="mt-1 text-xs"
-              />
-            </div>
-
-            {/* Body EN */}
-            <div>
-              <Label className="text-xs font-bold">{t('নোটিশের পূর্ণাঙ্গ বিবরণ ও আদেশ (ইংরেজি) *', 'Notice Order Body (English) *')}</Label>
-              <Textarea
-                rows={6}
-                value={formData.body_en}
-                onChange={(e) => setFormData({ ...formData, body_en: e.target.value })}
-                placeholder="Write notice text in English..."
-                className="mt-1 text-xs"
-              />
-            </div>
+        <Tabs value={bodyLang} onValueChange={(v) => setBodyLang(v as 'bn' | 'en')}>
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-600">{t('বিবরণ', 'Body')}</span>
+            <TabsList className="h-8">
+              <TabsTrigger value="bn" className="gap-1.5 px-2.5 text-xs">
+                {t('বাংলা', 'Bangla')}
+                {!ok(form.body_bn) && <span className="size-1.5 rounded-full bg-amber-500" />}
+              </TabsTrigger>
+              <TabsTrigger value="en" className="gap-1.5 px-2.5 text-xs">
+                {t('ইংরেজি', 'English')}
+                {!ok(form.body_en) && <span className="size-1.5 rounded-full bg-amber-500" />}
+              </TabsTrigger>
+            </TabsList>
           </div>
+          <TabsContent value="bn" className="mt-1.5">
+            <Textarea
+              rows={8}
+              value={form.body_bn}
+              onChange={(e) => setForm({ ...form, body_bn: e.target.value })}
+              className="min-h-40 rounded-lg text-sm"
+              aria-label={t('বিবরণ বাংলা', 'Body Bangla')}
+            />
+          </TabsContent>
+          <TabsContent value="en" className="mt-1.5">
+            <Textarea
+              rows={8}
+              value={form.body_en}
+              onChange={(e) => setForm({ ...form, body_en: e.target.value })}
+              className="min-h-40 rounded-lg text-sm"
+              aria-label={t('বিবরণ ইংরেজি', 'Body English')}
+            />
+          </TabsContent>
+        </Tabs>
 
-          <DialogFooter className="flex items-center justify-between sm:justify-between gap-2 border-t border-border/50 pt-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsDialogOpen(false)}
-              className="text-xs font-bold cursor-pointer"
-            >
-              {t('বাতিল', 'Cancel')}
-            </Button>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={saving}
-                onClick={() => handleSave(false)}
-                className="text-xs font-bold cursor-pointer"
-              >
-                {saving ? t('সংরক্ষণ হচ্ছে...', 'Saving...') : t('খসড়া সংরক্ষণ', 'Save Draft')}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                disabled={saving}
-                onClick={() => handleSave(true)}
-                className="bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold cursor-pointer"
-              >
-                {t('সংরক্ষণ ও জারি করুন', 'Save & Publish')}
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        <Accordion type="single" collapsible>
+          <AccordionItem value="more" className="border-b-0">
+            <AccordionTrigger className="py-2 text-xs font-medium text-slate-600 hover:no-underline">
+              {t('আরও তথ্য', 'More details')}
+            </AccordionTrigger>
+            <AccordionContent className="space-y-3 pb-1">
+              {editing && (
+                <DetailList
+                  items={[[t('স্লাগ', 'Slug'), <span className="font-mono text-xs">{editing.notice_slug || editing.post_slug || '—'}</span>]]}
+                />
+              )}
+              {isNotice ? (
+                <>
+                  <Field label={t('এলাকা', 'Scope')}>
+                    <select
+                      className={inputCls}
+                      value={form.scope}
+                      disabled={!!editing}
+                      onChange={(e) => setForm({ ...form, scope: e.target.value })}
+                    >
+                      {!NOTICE_SCOPES.some((s) => s.value === form.scope) && <option value={form.scope}>{form.scope}</option>}
+                      {NOTICE_SCOPES.map((s) => (
+                        <option key={s.value} value={s.value}>
+                          {lang === 'bn' ? s.bn : s.en}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <div className="flex flex-wrap gap-x-6 gap-y-2">
+                    <label className="flex items-center gap-2 text-sm text-slate-700">
+                      <Switch
+                        checked={form.is_pinned}
+                        disabled={!!editing}
+                        onCheckedChange={(v) => setForm({ ...form, is_pinned: v })}
+                      />
+                      {t('উপরে রাখুন', 'Pin to top')}
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-slate-700">
+                      <Switch
+                        checked={form.is_urgent}
+                        disabled={!!editing}
+                        onCheckedChange={(v) => setForm({ ...form, is_urgent: v })}
+                      />
+                      {t('জরুরি', 'Urgent')}
+                    </label>
+                  </div>
+                </>
+              ) : (
+                <Field label={t('পড়ার সময় মিনিট', 'Reading minutes')}>
+                  <input
+                    type="number"
+                    min={1}
+                    className={inputCls}
+                    value={form.reading_time_minutes}
+                    disabled={!!editing}
+                    placeholder={t('স্বয়ংক্রিয়', 'Auto')}
+                    onChange={(e) => setForm({ ...form, reading_time_minutes: e.target.value })}
+                  />
+                </Field>
+              )}
+              {editing && <p className="text-xs text-slate-400">{t('এগুলো পরে বদলানো যায় না', 'Fixed after creation')}</p>}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </FormDialog>
 
-      {/* 6. Soft Delete Confirmation Modal */}
-      {deleteTarget && (
-        <Dialog open={Boolean(deleteTarget)} onOpenChange={() => setDeleteTarget(null)}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <div className="flex items-center gap-2 text-rose-600">
-                <Trash2 className="w-5 h-5" />
-                <DialogTitle className="text-base font-black">
-                  {t('নোটিশ মুছে ফেলা নিশ্চিত করুন', 'Confirm Delete')}
-                </DialogTitle>
-              </div>
-              <DialogDescription className="text-xs text-muted-foreground pt-2 leading-relaxed">
-                {t(
-                  'আপনি কি নিশ্চিত যে এই নোটিশটি মুছে ফেলতে চান? এটি নোটিশবোর্ড থেকে প্রত্যাহার করা হবে এবং অডিটে সংরক্ষিত থাকবে।',
-                  'Are you sure you want to delete this notice? It will be removed from the public board and preserved in audit records.'
-                )}
-              </DialogDescription>
-            </DialogHeader>
+      {/* Preview */}
+      <DetailSheet
+        open={!!preview}
+        onOpenChange={(o) => !o && setPreview(null)}
+        title={preview ? title(preview) : ''}
+        subtitle={preview ? catLabel(preview) : undefined}
+        footer={
+          preview && (
+            <>
+              {String(preview.status).toUpperCase() !== 'DELETED' && canEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5"
+                  onClick={() => {
+                    const p = preview;
+                    setPreview(null);
+                    openEdit(p);
+                  }}
+                >
+                  <Pencil className="size-4" />
+                  {t('সম্পাদনা', 'Edit')}
+                </Button>
+              )}
+              {workflowActions(preview).map((a) => {
+                const Icon = a.icon;
+                return (
+                  <Button
+                    key={a.key}
+                    size="sm"
+                    variant={a.primary ? 'default' : 'outline'}
+                    className="h-9 gap-1.5"
+                    onClick={a.run}
+                  >
+                    <Icon className="size-4" />
+                    {a.label}
+                  </Button>
+                );
+              })}
+            </>
+          )
+        }
+      >
+        {preview && (
+          <>
+            <DetailList
+              items={[
+                [t('অবস্থা', 'Status'), statusBadge(preview.status)],
+                [t('ধরন', 'Category'), catLabel(preview)],
+                isNotice && [t('এলাকা', 'Scope'), scopeLabel(preview.scope)],
+                isNotice &&
+                  (Boolean(Number(preview.is_pinned)) || Boolean(Number(preview.is_urgent))) && [
+                    t('চিহ্ন', 'Flags'),
+                    <span className="inline-flex gap-1.5">
+                      {Boolean(Number(preview.is_pinned)) && <StatusBadge tone="blue">{t('উপরে', 'Pinned')}</StatusBadge>}
+                      {Boolean(Number(preview.is_urgent)) && <StatusBadge tone="red">{t('জরুরি', 'Urgent')}</StatusBadge>}
+                    </span>,
+                  ],
+                !isNotice && [t('লেখক', 'Author'), (lang === 'bn' ? preview.author_name_bn : preview.author_name_en) || '—'],
+                !isNotice &&
+                  preview.reading_time_minutes && [t('পড়ার সময়', 'Reading time'), t(`${n(preview.reading_time_minutes)} মিনিট`, `${preview.reading_time_minutes} min`)],
+                [t('তৈরি', 'Created'), fmtDate(preview.created_at)],
+                String(preview.status).toUpperCase() === 'PUBLISHED' && [t('প্রকাশ', 'Published'), fmtDate(preview.published_at)],
+              ]}
+            />
+            <Tabs defaultValue={lang}>
+              <TabsList className="h-8">
+                <TabsTrigger value="bn" className="px-2.5 text-xs">
+                  {t('বাংলা', 'Bangla')}
+                </TabsTrigger>
+                <TabsTrigger value="en" className="px-2.5 text-xs">
+                  {t('ইংরেজি', 'English')}
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="bn" className="mt-2 space-y-1.5">
+                <p className="text-sm font-medium text-slate-800">{preview.title_bn || '—'}</p>
+                <p className="whitespace-pre-line text-sm leading-relaxed text-slate-600">{preview.body_bn || '—'}</p>
+              </TabsContent>
+              <TabsContent value="en" className="mt-2 space-y-1.5">
+                <p className="text-sm font-medium text-slate-800">{preview.title_en || '—'}</p>
+                <p className="whitespace-pre-line text-sm leading-relaxed text-slate-600">{preview.body_en || '—'}</p>
+              </TabsContent>
+            </Tabs>
+          </>
+        )}
+      </DetailSheet>
 
-            <div className="p-3 my-2 rounded-xl bg-muted/50 border border-border/80 text-xs">
-              <div className="font-bold text-foreground line-clamp-1">{deleteTarget.title_bn}</div>
-              <div className="text-[11px] text-muted-foreground line-clamp-1">{deleteTarget.title_en}</div>
-            </div>
-
-            <DialogFooter className="flex items-center justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setDeleteTarget(null)}
-                className="text-xs font-bold cursor-pointer"
-              >
-                {t('বাতিল', 'Cancel')}
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                disabled={isDeleting}
-                onClick={handleConfirmSoftDelete}
-                className="text-xs font-bold cursor-pointer"
-              >
-                {isDeleting ? t('মুছে ফেলা হচ্ছে...', 'Deleting...') : t('হ্যাঁ, মুছে ফেলুন', 'Yes, Delete')}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* 7. Notice Preview Modal */}
-      {previewItem && (
-        <Dialog open={Boolean(previewItem)} onOpenChange={() => setPreviewItem(null)}>
-          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200 text-[10px] font-bold">
-                  {previewItem.category || 'COMMUNITY'}
-                </Badge>
-                <Badge variant="outline" className="text-[10px] font-mono">
-                  {previewItem.scope || 'NATIONAL'}
-                </Badge>
-                <Badge variant="outline" className="text-[10px] font-mono">
-                  {previewItem.status}
-                </Badge>
-              </div>
-              <DialogTitle className="text-lg font-black text-foreground mt-2">
-                {previewItem.title_bn}
-              </DialogTitle>
-              <p className="text-xs text-muted-foreground font-sans italic">{previewItem.title_en}</p>
-            </DialogHeader>
-
-            <div className="space-y-4 py-3 text-xs leading-relaxed text-foreground border-t border-border/60">
-              <div className="p-3.5 rounded-xl bg-muted/40 border border-border/80">
-                <div className="font-bold text-foreground mb-1.5">{t('বাংলা বিবরণ ও আদেশ:', 'Bangla Notice Text:')}</div>
-                <p className="whitespace-pre-line text-foreground/90">{previewItem.body_bn}</p>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-muted/40 border border-border/80">
-                <div className="font-bold text-foreground mb-1.5">{t('ইংরেজি বিবরণ ও আদেশ:', 'English Notice Text:')}</div>
-                <p className="whitespace-pre-line text-muted-foreground">{previewItem.body_en}</p>
-              </div>
-            </div>
-
-            <DialogFooter className="flex items-center justify-between sm:justify-between border-t border-border/60 pt-3">
-              <span className="text-[11px] text-muted-foreground font-mono">
-                /{previewItem.notice_slug}
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setPreviewItem(null)}
-                className="text-xs font-bold cursor-pointer"
-              >
-                {t('বন্ধ করুন', 'Close')}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-    </div>
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+        title={t('মুছে ফেলবেন?', 'Delete?')}
+        description={deleteTarget ? title(deleteTarget) : undefined}
+        confirmLabel={t('মুছুন', 'Delete')}
+        cancelLabel={t('বাতিল', 'Cancel')}
+        destructive
+        onConfirm={remove}
+      />
+    </AdminPage>
   );
 };
+
+function emptyForm(kind: ContentKind): FormState {
+  return {
+    title_bn: '',
+    title_en: '',
+    body_bn: '',
+    body_en: '',
+    category: kind === 'notice' ? NOTICE_CATEGORIES[0].value : BLOG_CATEGORIES[0].value,
+    scope: 'NATIONAL',
+    is_pinned: false,
+    is_urgent: false,
+    reading_time_minutes: '',
+  };
+}
+
+export const AdminNoticePage: React.FC = () => <ContentManager kind="notice" />;

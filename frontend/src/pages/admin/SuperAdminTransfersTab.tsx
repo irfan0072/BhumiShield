@@ -1,52 +1,34 @@
-import React, { useState } from 'react';
-import {
-  Layers,
-  Search,
-  Filter,
-  Eye,
-  UserCheck,
-  Building2,
-  RefreshCw,
-  AlertTriangle,
-  CheckCircle2,
-  Clock,
-  ArrowRight,
-  FileText,
-  X,
-  Edit2,
-  HelpCircle,
-} from 'lucide-react';
-import { BhumiApi } from '../../api/client';
-import { toBanglaDigits } from '../../theme/tokens';
-import { useAppUI } from '../../i18n';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import React, { useEffect, useMemo, useState } from 'react';
+import { CheckCircle2, Circle, Clock, Eye, FilePen, MoreHorizontal, RotateCcw, UserCheck } from 'lucide-react';
+import { BhumiApi } from '@/api/client';
+import { toBanglaDigits } from '@/theme/tokens';
+import { useAppUI } from '@/i18n';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from '@/components/ui/table';
+  AdminPage,
+  DataTable,
+  DetailList,
+  DetailSheet,
+  EmptyRow,
+  Field,
+  FormDialog,
+  LoadingRows,
+  PageToolbar,
+  Section,
+  StatusBadge,
+  Tone,
+  notify,
+} from '@/components/admin/kit';
 
 interface SuperAdminTransfersTabProps {
   transfers: any[];
@@ -56,612 +38,471 @@ interface SuperAdminTransfersTabProps {
   onOpenOverride?: (type: string, id: string | number, extra?: any) => void;
 }
 
+const TOTAL_STEPS = 13;
+
+/** Public stages used by the backend transfer state machine. */
+const STAGES: Record<string, { tone: Tone; bn: string; en: string }> = {
+  START: { tone: 'slate', bn: 'শুরু', en: 'Started' },
+  VERIFY: { tone: 'amber', bn: 'যাচাই', en: 'Verifying' },
+  REGISTER: { tone: 'blue', bn: 'নিবন্ধন', en: 'Registry' },
+  REVIEW: { tone: 'violet', bn: 'নামজারি', en: 'Mutation' },
+  DONE: { tone: 'green', bn: 'সম্পন্ন', en: 'Done' },
+};
+
+/** Step names, same as backend TransferStateMachine::STAGES. */
+const STEP_NAMES: Array<[string, string]> = [
+  ['আবেদনের খসড়া সংরক্ষিত', 'Application draft saved'],
+  ['বিক্রেতা আবেদন নিশ্চিত করেছেন', 'Seller confirmed application'],
+  ['পক্ষগুলোর তথ্য নিশ্চিত', 'Parties information confirmed'],
+  ['ক্রেতা পরিমাণ ও শর্ত নিশ্চিত করেছেন', 'Buyer confirmed area and terms'],
+  ['রেকর্ড পর্যালোচনার ধাপ', 'Record review recorded'],
+  ['নিবন্ধনের প্রস্তুতি পর্যালোচিত', 'Registration requirements reviewed'],
+  ['নিবন্ধনের জন্য প্রস্তুত', 'Ready for registry review'],
+  ['রেজিস্ট্রি অফিসে পাঠানো হয়েছে', 'Sent to registry office'],
+  ['কাউন্টারে পরিচয় যাচাই সম্পন্ন', 'Counter identity check recorded'],
+  ['দলিল নিবন্ধিত ও নামজারি অপেক্ষমাণ', 'Deed registered; mutation pending'],
+  ['নামজারি পর্যালোচনায় পাঠানো হয়েছে', 'Sent for mutation review'],
+  ['শুনানির পর্যালোচনা সংরক্ষিত', 'Hearing review recorded'],
+  ['স্থানীয় মালিকানা রেকর্ড হালনাগাদ', 'Local ownership record updated'],
+];
+
+const OFFICER_ROLES: Record<string, [string, string]> = {
+  ac_land: ['এসি ল্যান্ড', 'AC Land'],
+  sub_registrar: ['সাব-রেজিস্ট্রার', 'Sub-registrar'],
+  land_office_assistant: ['ভূমি সহকারী', 'Land assistant'],
+  field_verification_officer: ['মাঠ যাচাই', 'Field officer'],
+  service_point_operator: ['সেবা কেন্দ্র', 'Service point'],
+};
+
+const DEED_TYPES: Record<string, [string, string]> = {
+  SALE: ['বিক্রয়', 'Sale'],
+  HIBA: ['হেবা', 'Gift'],
+  GIFT: ['হেবা', 'Gift'],
+  INHERITANCE: ['উত্তরাধিকার', 'Inheritance'],
+  EXCHANGE: ['বিনিময়', 'Exchange'],
+};
+
+const MIN_CORRECTION = 10;
+
 export const SuperAdminTransfersTab: React.FC<SuperAdminTransfersTabProps> = ({
   transfers,
   usersList = [],
   officesList = [],
   onRefresh,
-  onOpenOverride,
 }) => {
   const { t, lang } = useAppUI();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [stageFilter, setStageFilter] = useState('ALL');
-  const [selectedTransfer, setSelectedTransfer] = useState<any | null>(null);
+  const n = (v: any) => toBanglaDigits(v ?? '', lang);
+  const pick = (bn?: string, en?: string) => (lang === 'bn' ? bn || en : en || bn) || '';
 
-  // Reassign Modal State
-  const [reassignModalOpen, setReassignModalOpen] = useState(false);
+  const [local, setLocal] = useState<any[]>(transfers || []);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
+  const [stage, setStage] = useState('ALL');
+  const [selected, setSelected] = useState<any | null>(null);
+
+  // Reassign dialog
   const [reassignTarget, setReassignTarget] = useState<any | null>(null);
-  const [targetUserId, setTargetUserId] = useState<string>('');
-  const [targetOfficeId, setTargetOfficeId] = useState<string>('');
-  const [reassignReason, setReassignReason] = useState<string>('');
-  const [reassignLoading, setReassignLoading] = useState(false);
+  const [userId, setUserId] = useState('');
+  const [officeId, setOfficeId] = useState('');
+  const [reassignReason, setReassignReason] = useState('');
+  const [reassignBusy, setReassignBusy] = useState(false);
 
-  // Correction Request Modal State
-  const [correctionModalOpen, setCorrectionModalOpen] = useState(false);
+  // Correction dialog
   const [correctionTarget, setCorrectionTarget] = useState<any | null>(null);
-  const [correctionReason, setCorrectionReason] = useState<string>('');
-  const [correctionLoading, setCorrectionLoading] = useState(false);
+  const [correctionReason, setCorrectionReason] = useState('');
+  const [correctionBusy, setCorrectionBusy] = useState(false);
 
-  // Notification Toast
-  const [toastMsg, setToastMsg] = useState<{ msg: string; err?: boolean } | null>(null);
-
-  const filteredTransfers = transfers.filter((tItem) => {
-    if (stageFilter !== 'ALL' && tItem.public_stage !== stageFilter && tItem.status !== stageFilter) {
-      return false;
+  const fetchOwn = async () => {
+    setLoading(true);
+    try {
+      const res: any = await BhumiApi.listTransfers();
+      setLocal(res?.items || (Array.isArray(res) ? res : []));
+    } catch (e) {
+      notify.err(e, lang);
+    } finally {
+      setLoading(false);
     }
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      String(tItem.transfer_code || '').toLowerCase().includes(q) ||
-      String(tItem.created_by_nid || '').includes(q) ||
-      String(tItem.assigned_to_name || '').toLowerCase().includes(q) ||
-      String(tItem.assigned_office_bn || '').toLowerCase().includes(q) ||
-      String(tItem.plot_id || '').includes(q)
-    );
-  });
+  };
 
-  const handleOpenReassign = (tItem: any) => {
-    setReassignTarget(tItem);
-    setTargetUserId(tItem.assigned_to_user_id ? String(tItem.assigned_to_user_id) : '');
-    setTargetOfficeId(tItem.assigned_office_id ? String(tItem.assigned_office_id) : '');
+  useEffect(() => {
+    if (transfers && transfers.length > 0) setLocal(transfers);
+  }, [transfers]);
+
+  useEffect(() => {
+    if (!transfers || transfers.length === 0) fetchOwn();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const refreshAll = () => {
+    onRefresh();
+    fetchOwn();
+  };
+
+  const list = local.length > 0 ? local : transfers || [];
+
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return list.filter((x) => {
+      if (stage !== 'ALL' && String(x.public_stage || '').toUpperCase() !== stage) return false;
+      if (!q) return true;
+      return [x.transfer_code, x.created_by_nid, x.assigned_to_name, x.assigned_office_bn, x.plot_id, x.dag_no_bn, x.dag_no, x.mouza_bn]
+        .some((v) => String(v ?? '').toLowerCase().includes(q));
+    });
+  }, [list, search, stage]);
+
+  // Keep the open detail panel in sync with refreshed data.
+  useEffect(() => {
+    if (!selected) return;
+    const fresh = list.find((x) => x.id === selected.id);
+    if (fresh && fresh !== selected) setSelected(fresh);
+  }, [list]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const officers = useMemo(() => usersList.filter((u) => OFFICER_ROLES[u.role]), [usersList]);
+  const roleLabel = (r: string) => {
+    const hit = OFFICER_ROLES[r];
+    return hit ? (lang === 'bn' ? hit[0] : hit[1]) : r;
+  };
+  const deedType = (v?: string) => {
+    const hit = DEED_TYPES[String(v || '').toUpperCase()];
+    return hit ? (lang === 'bn' ? hit[0] : hit[1]) : v || '—';
+  };
+  const stageBadge = (code?: string) => {
+    const s = STAGES[String(code || '').toUpperCase()];
+    return <StatusBadge tone={s?.tone || 'slate'}>{s ? (lang === 'bn' ? s.bn : s.en) : code || '—'}</StatusBadge>;
+  };
+  const stepName = (x: any) => {
+    const step = Number(x?.current_step) || 0;
+    return pick(x?.step_name_bn, x?.step_name_en) || (STEP_NAMES[step - 1] ? pick(...STEP_NAMES[step - 1]) : '—');
+  };
+  const money = (v: any) => `৳ ${n(Number(v || 0).toLocaleString('en-IN'))}`;
+
+  const openReassign = (x: any) => {
+    setReassignTarget(x);
+    setUserId(x.assigned_to_user_id ? String(x.assigned_to_user_id) : '');
+    setOfficeId(x.assigned_office_id ? String(x.assigned_office_id) : '');
     setReassignReason('');
-    setReassignModalOpen(true);
   };
 
-  const handleOpenCorrection = (tItem: any) => {
-    setCorrectionTarget(tItem);
-    setCorrectionReason(tItem.correction_notes_bn || '');
-    setCorrectionModalOpen(true);
+  const openCorrection = (x: any) => {
+    setCorrectionTarget(x);
+    setCorrectionReason(x.correction_notes_bn || '');
   };
 
-  const handleReassignSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitReassign = async () => {
     if (!reassignTarget) return;
-
-    const selectedOfficer = usersList.find((u) => String(u.id) === targetUserId);
-    const selectedOffice = officesList.find((o) => String(o.id) === targetOfficeId);
-
-    setReassignLoading(true);
+    const officer = usersList.find((u) => String(u.id) === userId);
+    const office = officesList.find((o) => String(o.id) === officeId);
+    setReassignBusy(true);
     try {
       const res = await BhumiApi.reassignTransfer(reassignTarget.id, {
-        assigned_to_user_id: targetUserId ? Number(targetUserId) : undefined,
-        assigned_to_name: selectedOfficer ? (selectedOfficer.full_name_bn || selectedOfficer.username) : undefined,
-        assigned_office_id: targetOfficeId ? Number(targetOfficeId) : undefined,
-        assigned_office_bn: selectedOffice ? selectedOffice.name_bn : undefined,
-        reason_bn: reassignReason.trim() || 'প্রশাসনিক প্রয়োজনে কর্মকর্তা পুনর্বণ্টন',
+        assigned_to_user_id: userId ? Number(userId) : undefined,
+        assigned_to_name: officer ? officer.full_name_bn || officer.username : undefined,
+        assigned_office_id: officeId ? Number(officeId) : undefined,
+        assigned_office_bn: office ? office.name_bn : undefined,
+        reason_bn: reassignReason.trim(),
       });
-      setToastMsg({ msg: res.message_bn || t('সফলভাবে দায়িত্ব পুনর্বণ্টন সম্পন্ন হয়েছে।', 'Successfully reassigned officer.') });
-      setReassignModalOpen(false);
-      onRefresh();
-    } catch (err: any) {
-      const resp = err.response?.data;
-      setToastMsg({ msg: resp?.message_bn || err.message, err: true });
+      notify.ok(pick(res?.message_bn, res?.message_en) || t('দায়িত্ব বদলানো হয়েছে', 'Reassigned'));
+      setReassignTarget(null);
+      refreshAll();
+    } catch (e) {
+      notify.err(e, lang);
     } finally {
-      setReassignLoading(false);
+      setReassignBusy(false);
     }
   };
 
-  const handleCorrectionSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitCorrection = async () => {
     if (!correctionTarget) return;
-    if (correctionReason.trim().length < 10) {
-      setToastMsg({ msg: t('সংশোধন অনুরোধের সুনির্দিষ্ট কারণ কমপক্ষে ১০ অক্ষরে উল্লেখ করুন।', 'Correction notes require minimum 10 characters.'), err: true });
+    if (correctionReason.trim().length < MIN_CORRECTION) {
+      notify.err(null, lang, t('কমপক্ষে ১০ অক্ষর লিখুন', 'Write at least 10 characters'));
       return;
     }
-
-    setCorrectionLoading(true);
+    setCorrectionBusy(true);
     try {
-      const res = await BhumiApi.requestTransferCorrection(correctionTarget.id, {
-        reason_bn: correctionReason.trim(),
-      });
-      setToastMsg({ msg: res.message_bn || t('সংশোধন অনুরোধ পাঠানো হয়েছে।', 'Correction request submitted.') });
-      setCorrectionModalOpen(false);
-      onRefresh();
-    } catch (err: any) {
-      const resp = err.response?.data;
-      setToastMsg({ msg: resp?.message_bn || err.message, err: true });
+      const res = await BhumiApi.requestTransferCorrection(correctionTarget.id, { reason_bn: correctionReason.trim() });
+      notify.ok(pick(res?.message_bn, res?.message_en) || t('সংশোধন চাওয়া হয়েছে', 'Correction requested'));
+      setCorrectionTarget(null);
+      refreshAll();
+    } catch (e) {
+      notify.err(e, lang);
     } finally {
-      setCorrectionLoading(false);
+      setCorrectionBusy(false);
     }
   };
 
-  const stagesList = [
-    { key: 'ALL', label_bn: 'সকল আবেদন', label_en: 'All Applications' },
-    { key: 'START', label_bn: '১. প্রস্তাবনা শুরু', label_en: '1. Proposal' },
-    { key: 'CONSENT', label_bn: '২. ওয়ারিশ সম্মতি', label_en: '2. Heir Consent' },
-    { key: 'STAGE_PAYMENT', label_bn: '৩. প্রাক-ফি পরিশোধ', label_en: '3. Pre-Fee' },
-    { key: 'SUBMITTED', label_bn: '৪. দাখিলকৃত কেস', label_en: '4. Submitted' },
-    { key: 'REGISTERED', label_bn: '৫. রেজিস্ট্রিকৃত দলিল', label_en: '5. Registered' },
-    { key: 'APPROVED', label_bn: '৬. নামজারি অনুমোদিত', label_en: '6. Mutated' },
-    { key: 'COMPLETED', label_bn: '৭. সম্পন্নকৃত হস্তান্তর', label_en: '7. Completed' },
-  ];
-
-  const getStageBadge = (stage: string, step: number) => {
-    if (stage === 'COMPLETED' || step === 13) {
-      return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-[#006A4E]">ধাপ ১৩/১৩ (সম্পন্ন)</span>;
-    }
-    if (stage === 'APPROVED' || step >= 11) {
-      return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-100 text-teal-800">ধাপ {toBanglaDigits(step, lang)}/১৩ (নামজারি সম্পন্ন)</span>;
-    }
-    if (stage === 'REGISTERED' || step >= 8) {
-      return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800">ধাপ {toBanglaDigits(step, lang)}/১৩ (দলিল রেজিস্ট্রিকৃত)</span>;
-    }
-    if (stage === 'SUBMITTED' || step >= 4) {
-      return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">ধাপ {toBanglaDigits(step, lang)}/১৩ (যাচাইাধীন)</span>;
-    }
-    return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">ধাপ {toBanglaDigits(step, lang)}/১৩ ({stage})</span>;
-  };
+  const correctionLen = correctionReason.trim().length;
+  const curStep = Number(selected?.current_step) || 0;
 
   return (
-    <div className="space-y-5 animate-fadeIn">
-      {/* Toast Notice */}
-      {toastMsg && (
-        <div
-          className={`p-3.5 rounded-xl border flex items-center justify-between text-xs font-bold ${
-            toastMsg.err ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-emerald-50 border-emerald-200 text-emerald-900'
-          }`}
+    <AdminPage fill>
+      <PageToolbar
+        search={search}
+        onSearch={setSearch}
+        placeholder={t('কোড, দাগ, এনআইডি বা কর্মকর্তা…', 'Code, plot, NID or officer…')}
+        filters={
+          <Select value={stage} onValueChange={setStage}>
+            <SelectTrigger className="h-9 w-36 rounded-lg text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">{t('সব ধাপ', 'All stages')}</SelectItem>
+              {Object.entries(STAGES).map(([k, s]) => (
+                <SelectItem key={k} value={k}>
+                  {lang === 'bn' ? s.bn : s.en}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        }
+        actions={
+          <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={refreshAll} disabled={loading}>
+            <RotateCcw className={cn('size-3.5', loading && 'animate-spin')} />
+            {t('রিফ্রেশ', 'Refresh')}
+          </Button>
+        }
+      />
+
+      <Section fill>
+        <DataTable
+          headers={[t('আবেদন', 'Application'), t('জমি', 'Land'), t('অগ্রগতি', 'Progress'), t('কর্মকর্তা', 'Officer'), '']}
+          alignRight={[4]}
         >
-          <div className="flex items-center gap-2">
-            {toastMsg.err ? <AlertTriangle className="w-4 h-4 text-rose-600" /> : <CheckCircle2 className="w-4 h-4 text-[#006A4E]" />}
-            <span>{toastMsg.msg}</span>
-          </div>
-          <button onClick={() => setToastMsg(null)} className="text-slate-400 hover:text-slate-700">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+          {loading && list.length === 0 ? (
+            <LoadingRows cols={5} />
+          ) : rows.length === 0 ? (
+            <EmptyRow cols={5} text={t('কোনো আবেদন নেই', 'No applications')} />
+          ) : (
+            rows.map((x) => (
+              <tr key={x.id} className="cursor-pointer" onClick={() => setSelected(x)}>
+                <td>
+                  <div className="font-mono text-sm font-medium text-slate-900">{x.transfer_code}</div>
+                  <div className="text-xs text-slate-500">
+                    {deedType(x.deed_type)} · {n(String(x.created_at || '').slice(0, 10)) || '—'}
+                  </div>
+                </td>
+                <td>
+                  <div className="text-slate-800">
+                    {pick(x.mouza_bn, x.mouza_en) || '—'} · {t('দাগ', 'Plot')} {n(x.dag_no_bn || x.dag_no || x.plot_id)}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    {n(x.transfer_area_decimal || 0)} {t('শতক', 'dec')} · {money(x.proposed_price_bdt)}
+                  </div>
+                </td>
+                <td>
+                  <div className="flex items-center gap-2">
+                    {stageBadge(x.public_stage)}
+                    <span className="text-xs text-slate-500">
+                      {n(x.current_step || 0)}/{n(TOTAL_STEPS)}
+                    </span>
+                    {x.correction_notes_bn && <StatusBadge tone="amber">{t('সংশোধন', 'Correction')}</StatusBadge>}
+                  </div>
+                  <div className="mt-0.5 max-w-56 truncate text-xs text-slate-500">{stepName(x)}</div>
+                </td>
+                <td>
+                  {x.assigned_to_name ? (
+                    <>
+                      <div className="text-slate-800">{x.assigned_to_name}</div>
+                      <div className="max-w-48 truncate text-xs text-slate-500">{x.assigned_office_bn || '—'}</div>
+                    </>
+                  ) : (
+                    <StatusBadge tone="amber">{t('দেওয়া হয়নি', 'Unassigned')}</StatusBadge>
+                  )}
+                </td>
+                <td className="text-right" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="size-8" aria-label={t('কাজ', 'Actions')}>
+                        <MoreHorizontal className="size-4 text-slate-500" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-44">
+                      <DropdownMenuItem onClick={() => setSelected(x)}>
+                        <Eye className="size-4" />
+                        {t('বিস্তারিত', 'Details')}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => openReassign(x)}>
+                        <UserCheck className="size-4" />
+                        {t('দায়িত্ব বদল', 'Reassign')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openCorrection(x)}>
+                        <FilePen className="size-4" />
+                        {t('সংশোধন চান', 'Ask correction')}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </td>
+              </tr>
+            ))
+          )}
+        </DataTable>
+      </Section>
 
-      {/* Intro Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-white border border-slate-200/80 rounded-2xl shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 text-[#006A4E] flex items-center justify-center shadow-2xs">
-            <Layers className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <span>{t('নাগরিক সেবা আবেদন ও ১৩-ধাপ হস্তান্তর ট্র্যাকিং', 'Citizen Service Applications & 13-Step Transfer Tracking')}</span>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black bg-emerald-100 text-[#006A4E]">
-                {toBanglaDigits(filteredTransfers.length, lang)} {t('টি কেস', 'Cases')}
-              </span>
-            </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {t(
-                '১৩-ধাপের একক ডিজিটাল সেবা উইজার্ডের প্রতিটি আবেদনের গতিবিধি, মেকার-চেকার স্টেজ, দায়িত্বপ্রাপ্ত কর্মকর্তা ও কার্যালয় তদারকি।',
-                'End-to-end monitoring of 13-step transfer wizard, stage progress, assigned officers and office jurisdiction.'
-              )}
-            </p>
-          </div>
-        </div>
+      {/* Details */}
+      <DetailSheet
+        open={!!selected}
+        onOpenChange={(o) => !o && setSelected(null)}
+        title={<span className="font-mono">{selected?.transfer_code}</span>}
+        subtitle={selected ? `${t('ধাপ', 'Step')} ${n(curStep)}/${n(TOTAL_STEPS)} · ${stepName(selected)}` : undefined}
+        footer={
+          selected && (
+            <>
+              <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={() => openCorrection(selected)}>
+                <FilePen className="size-4" />
+                {t('সংশোধন চান', 'Ask correction')}
+              </Button>
+              <Button size="sm" className="h-9 gap-1.5" onClick={() => openReassign(selected)}>
+                <UserCheck className="size-4" />
+                {t('দায়িত্ব বদল', 'Reassign')}
+              </Button>
+            </>
+          )
+        }
+      >
+        {selected && (
+          <>
+            <DetailList
+              items={[
+                [t('ধাপ', 'Stage'), stageBadge(selected.public_stage)],
+                [t('দলিলের ধরন', 'Deed type'), deedType(selected.deed_type)],
+                [t('মৌজা', 'Mouza'), pick(selected.mouza_bn, selected.mouza_en) || '—'],
+                [t('দাগ', 'Plot'), n(selected.dag_no_bn || selected.dag_no || selected.plot_id)],
+                [t('জমি', 'Land'), `${n(selected.transfer_area_decimal || 0)} ${t('শতক', 'dec')}`],
+                [t('মূল্য', 'Price'), money(selected.proposed_price_bdt)],
+                [t('আবেদনকারী', 'Applicant'), selected.created_by_nid ? n(selected.created_by_nid) : '—'],
+                [t('কর্মকর্তা', 'Officer'), selected.assigned_to_name || t('দেওয়া হয়নি', 'Unassigned')],
+                [t('অফিস', 'Office'), selected.assigned_office_bn || '—'],
+              ]}
+            />
 
-        <button
-          onClick={onRefresh}
-          className="px-3.5 py-1.5 rounded-xl text-xs font-bold border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 transition self-start md:self-auto cursor-pointer"
-        >
-          <RefreshCw className="w-3.5 h-3.5 text-[#006A4E]" />
-          <span>{t('রিফ্রেশ', 'Refresh')}</span>
-        </button>
-      </div>
+            {selected.correction_notes_bn && (
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-slate-500">{t('সংশোধনের অনুরোধ', 'Correction request')}</div>
+                <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">{selected.correction_notes_bn}</p>
+              </div>
+            )}
 
-      {/* Filter and Search Bar */}
-      <div className="p-4 bg-white border border-slate-200/80 rounded-2xl shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
-        {/* Search */}
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 z-10" />
-          <Input
-            type="text"
-            placeholder={t('কেস কোড, এনআইডি, দাগ বা কর্মকর্তা দিয়ে খুঁজুন...', 'Search by transfer code, NID, dag, or officer...')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9 text-xs"
-          />
-        </div>
-
-        {/* Stage Filter Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-1">
-          {stagesList.map((st) => (
-            <Button
-              key={st.key}
-              type="button"
-              size="sm"
-              variant={stageFilter === st.key ? 'default' : 'outline'}
-              onClick={() => setStageFilter(st.key)}
-              className={`h-7 px-3 text-xs font-bold transition whitespace-nowrap cursor-pointer ${
-                stageFilter === st.key
-                  ? 'bg-[#006A4E] text-white hover:bg-[#00553e]'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border-transparent'
-              }`}
-            >
-              {lang === 'bn' ? st.label_bn : st.label_en}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {/* Main Table */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
-        <div className="overflow-auto max-h-[calc(100vh-280px)] min-h-[300px] scrollbar-thin">
-          <Table>
-            <TableHeader className="bg-slate-50 border-b border-slate-200/80">
-              <TableRow>
-                <TableHead className="px-4 py-3 text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('আবেদন কোড', 'Transfer Code')}</TableHead>
-                <TableHead className="px-4 py-3 text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('দাগ ও বিবরণ', 'Plot & Details')}</TableHead>
-                <TableHead className="px-4 py-3 text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('জমির পরিমাণ ও মূল্য', 'Area & Price')}</TableHead>
-                <TableHead className="px-4 py-3 text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('১৩-ধাপ অগ্রগতি', '13-Step Progress')}</TableHead>
-                <TableHead className="px-4 py-3 text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('দায়িত্বপ্রাপ্ত কর্মকর্তা ও কার্যালয়', 'Assigned Officer & Office')}</TableHead>
-                <TableHead className="px-4 py-3 text-right text-slate-600 font-bold uppercase tracking-wider text-[10px]">{t('অ্যাকশন', 'Actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-slate-100">
-              {filteredTransfers.length > 0 ? (
-                filteredTransfers.map((tItem) => (
-                  <TableRow key={tItem.id} className="hover:bg-slate-50/70 transition">
-                    <TableCell className="px-4 py-3 font-mono font-bold text-slate-900">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[#006A4E]">{tItem.transfer_code}</span>
-                      </div>
-                      <div className="text-[10px] text-slate-400 font-sans mt-0.5">
-                        {t('দাখিলকারী এনআইডি: ', 'Applicant NID: ')}{toBanglaDigits(tItem.created_by_nid || 'N/A', lang)}
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-4 py-3">
-                      <div className="font-bold text-slate-900">
-                        {t('দাগ নং #', 'Plot Dag #')}{toBanglaDigits(tItem.plot_id, lang)}
-                      </div>
-                      <div className="text-[10px] text-slate-500">
-                        {t('দলিল ধরন: ', 'Deed Type: ')}{tItem.deed_type || 'SALE'}
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-4 py-3">
-                      <div className="font-bold text-slate-900">
-                        {toBanglaDigits(tItem.transfer_area_decimal || 0, lang)} {t('শতাংশ', 'Decimal')}
-                      </div>
-                      <div className="text-[10px] text-slate-500">
-                        ৳ {toBanglaDigits((tItem.proposed_price_bdt || 0).toLocaleString(), lang)}
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-4 py-3">
-                      {getStageBadge(tItem.public_stage, tItem.current_step)}
-                      {tItem.correction_notes_bn && (
-                        <div className="mt-1 text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                          {t('সংশোধন চাওয়া হয়েছে: ', 'Correction: ')}{tItem.correction_notes_bn}
-                        </div>
+            <div className="space-y-1.5">
+              <div className="text-xs font-medium text-slate-500">{t('ধাপসমূহ', 'Steps')}</div>
+              <ol className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+                {STEP_NAMES.map((s, i) => {
+                  const num = i + 1;
+                  const done = curStep > num || (String(selected.public_stage).toUpperCase() === 'DONE' && curStep >= num);
+                  const current = !done && curStep === num;
+                  return (
+                    <li
+                      key={num}
+                      className={cn(
+                        'flex items-center gap-2.5 px-3 py-1.5 text-sm',
+                        done ? 'text-slate-700' : current ? 'bg-amber-50/60 font-medium text-amber-900' : 'text-slate-400'
                       )}
-                    </TableCell>
-                    <TableCell className="px-4 py-3">
-                      {tItem.assigned_to_name ? (
-                        <div>
-                          <div className="font-bold text-slate-900 flex items-center gap-1">
-                            <UserCheck className="w-3.5 h-3.5 text-[#006A4E]" />
-                            <span>{tItem.assigned_to_name}</span>
-                          </div>
-                          <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
-                            <Building2 className="w-3 h-3 text-slate-400" />
-                            <span>{tItem.assigned_office_bn || 'উপজেলা ভূমি কার্যালয়'}</span>
-                          </div>
-                        </div>
+                    >
+                      {done ? (
+                        <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
+                      ) : current ? (
+                        <Clock className="size-4 shrink-0 text-amber-600" />
                       ) : (
-                        <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200 text-[10px] font-extrabold">
-                          {t('অ্যাসাইন করা হয়নি', 'Unassigned')}
-                        </Badge>
+                        <Circle className="size-4 shrink-0 text-slate-300" />
                       )}
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedTransfer(tItem)}
-                          className="h-7 text-xs font-bold gap-1 shadow-2xs"
-                        >
-                          <Eye className="w-3.5 h-3.5 text-slate-500" />
-                          <span>{t('বিস্তারিত', 'View')}</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => handleOpenReassign(tItem)}
-                          className="h-7 text-xs font-bold bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-[#006A4E] gap-1 shadow-2xs"
-                        >
-                          <UserCheck className="w-3.5 h-3.5 text-[#006A4E]" />
-                          <span>{t('পুনর্বণ্টন', 'Reassign')}</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => handleOpenCorrection(tItem)}
-                          className="h-7 text-xs font-bold bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 gap-1 shadow-2xs"
-                        >
-                          <Edit2 className="w-3.5 h-3.5 text-amber-700" />
-                          <span>{t('সংশোধন', 'Correction')}</span>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                      <span className="w-5 shrink-0 text-xs text-slate-400">{n(num)}</span>
+                      <span className="min-w-0 truncate">{pick(s[0], s[1])}</span>
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+          </>
+        )}
+      </DetailSheet>
+
+      {/* Reassign */}
+      <FormDialog
+        open={!!reassignTarget}
+        onOpenChange={(o) => !o && setReassignTarget(null)}
+        title={t('দায়িত্ব বদল', 'Reassign')}
+        description={reassignTarget?.transfer_code}
+        submitLabel={t('সংরক্ষণ', 'Save')}
+        cancelLabel={t('বাতিল', 'Cancel')}
+        busy={reassignBusy}
+        disabled={(!userId && !officeId) || !reassignReason.trim()}
+        onSubmit={submitReassign}
+      >
+        <Field label={t('কর্মকর্তা', 'Officer')}>
+          <Select value={userId} onValueChange={setUserId}>
+            <SelectTrigger className="h-9 w-full rounded-lg text-sm">
+              <SelectValue placeholder={t('বাছাই করুন', 'Choose')} />
+            </SelectTrigger>
+            <SelectContent>
+              {officers.length === 0 ? (
+                <div className="px-2 py-1.5 text-sm text-slate-500">{t('কোনো কর্মকর্তা নেই', 'No officers')}</div>
               ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="px-4 py-12 text-center text-slate-400">
-                    <Layers className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                    <p className="font-bold">{t('কোনো সেবা আবেদন পাওয়া যায়নি।', 'No transfer applications found.')}</p>
-                  </TableCell>
-                </TableRow>
+                officers.map((u) => (
+                  <SelectItem key={u.id} value={String(u.id)}>
+                    {pick(u.full_name_bn, u.full_name_en) || u.username} · {roleLabel(u.role)}
+                  </SelectItem>
+                ))
               )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label={t('অফিস', 'Office')}>
+          <Select value={officeId} onValueChange={setOfficeId}>
+            <SelectTrigger className="h-9 w-full rounded-lg text-sm">
+              <SelectValue placeholder={t('বাছাই করুন', 'Choose')} />
+            </SelectTrigger>
+            <SelectContent>
+              {officesList.length === 0 ? (
+                <div className="px-2 py-1.5 text-sm text-slate-500">{t('কোনো অফিস নেই', 'No offices')}</div>
+              ) : (
+                officesList.map((o) => (
+                  <SelectItem key={o.id} value={String(o.id)}>
+                    {pick(o.name_bn, o.name_en)}
+                    {o.district_bn ? ` · ${pick(o.district_bn, o.district_en)}` : ''}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label={t('কারণ', 'Reason')}>
+          <Textarea
+            rows={2}
+            value={reassignReason}
+            onChange={(e) => setReassignReason(e.target.value)}
+            placeholder={t('যেমন: কাজের চাপ', 'e.g. workload')}
+            className="min-h-0 rounded-lg text-sm"
+          />
+        </Field>
+      </FormDialog>
 
-      {/* Case Details Drawer / Modal */}
-      <Dialog open={!!selectedTransfer} onOpenChange={(open) => !open && setSelectedTransfer(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 border-slate-200 shadow-2xl">
-          <DialogHeader className="bg-slate-900 px-6 py-4 flex flex-row items-center justify-between text-white border-b border-slate-800 space-y-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                <Layers className="w-5 h-5" />
-              </div>
-              <div>
-                <DialogTitle className="text-base font-black tracking-tight text-white">{selectedTransfer?.transfer_code}</DialogTitle>
-                <DialogDescription className="text-xs text-slate-400 mt-0.5">{t('১৩-ধাপের সম্পূর্ণ রূপরেখা ও স্থিতি', '13-Step Comprehensive Case Profile')}</DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-
-          {selectedTransfer && (
-            <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-700">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 rounded-xl border border-slate-200">
-                <div>
-                  <div className="text-[10px] text-slate-500 font-bold uppercase">{t('বর্তমান ধাপ', 'Current Step')}</div>
-                  <div className="font-extrabold text-sm text-slate-900 mt-0.5">ধাপ {toBanglaDigits(selectedTransfer.current_step, lang)}/১৩</div>
-                </div>
-                <div>
-                  <div className="text-[10px] text-slate-500 font-bold uppercase">{t('পাবলিক স্টেজ', 'Public Stage')}</div>
-                  <div className="font-extrabold text-sm text-[#006A4E] mt-0.5">{selectedTransfer.public_stage}</div>
-                </div>
-                <div>
-                  <div className="text-[10px] text-slate-500 font-bold uppercase">{t('জমির পরিমাণ', 'Land Area')}</div>
-                  <div className="font-extrabold text-sm text-slate-900 mt-0.5">{toBanglaDigits(selectedTransfer.transfer_area_decimal, lang)} শতাংশ</div>
-                </div>
-                <div>
-                  <div className="text-[10px] text-slate-500 font-bold uppercase">{t('ঘোষিত মূল্য', 'Price')}</div>
-                  <div className="font-extrabold text-sm text-slate-900 mt-0.5">৳ {toBanglaDigits((selectedTransfer.proposed_price_bdt || 0).toLocaleString(), lang)}</div>
-                </div>
-              </div>
-
-              {/* 13 Steps Visual Progress */}
-              <div>
-                <h4 className="font-extrabold text-slate-900 mb-2">{t('১৩-ধাপ ওয়ার্কফ্লো অগ্রগতি:', '13-Step Workflow Progress:')}</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {[
-                    '১. ক্রেতা-বিক্রেতা প্রাথমিক প্রস্তাবনা ও স্বত্ব পরীক্ষা',
-                    '২. ওয়ারিশ ও সহ-মালিক সম্মতি যাচাই',
-                    '৩. সরকারি ফি ও প্রাক-নিবন্ধন চালান পরিশোধ',
-                    '৪. খসড়া দলিল প্রস্তুতকরণ ও ডাটা এন্ট্রি',
-                    '৫. সাব-রেজিস্ট্রি অফিসে কাউন্টার উপস্থিতি নির্ধারণ',
-                    '৬. বিক্রেতার বায়োমেট্রিক ও আঙুলের ছাপ যাচাই',
-                    '৭. ক্রেতার বায়োমেট্রিক ও ছবি ক্যাপচার',
-                    '৮. সাব-রেজিস্ট্রার কর্তৃক ক্রিপ্টোগ্রাফিক ডিজিটাল স্বাক্ষর',
-                    '৯. দলিলের হ্যাশ চেইনিং ও কিউআর সিল সমন্বয়',
-                    '১০. সহকারী কমিশনার (ভূমি) বরাবরে স্বয়ংক্রিয় ই-নামজারি প্রেরণ',
-                    '১১. রেকর্ডরুম খতিয়ান পরীক্ষা ও শুনানি বিজ্ঞপ্তি',
-                    '১২. সহকারী কমিশনার (ভূমি) কর্তৃক নামজারি ডিক্রি অনুমোদন',
-                    '১৩. চূড়ান্ত রেকর্ড সমন্বয় ও নাগরিকের ভল্টে নতুন খতিয়ান জমা',
-                  ].map((stepLabel, idx) => {
-                    const stepNum = idx + 1;
-                    const isDone = selectedTransfer.current_step > stepNum;
-                    const isCurrent = selectedTransfer.current_step === stepNum;
-                    return (
-                      <div
-                        key={stepNum}
-                        className={`p-2.5 rounded-lg border flex items-center gap-2 text-[11px] ${
-                          isDone
-                            ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900 font-semibold'
-                            : isCurrent
-                            ? 'bg-amber-50 border-amber-300 text-amber-900 font-bold shadow-2xs'
-                            : 'bg-slate-50/50 border-slate-200 text-slate-400'
-                        }`}
-                      >
-                        {isDone ? (
-                          <CheckCircle2 className="w-4 h-4 text-[#006A4E] shrink-0" />
-                        ) : isCurrent ? (
-                          <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-                        ) : (
-                          <div className="w-4 h-4 rounded-full border border-slate-300 shrink-0" />
-                        )}
-                        <span>{stepLabel}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Assignment Box */}
-              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-                <div className="font-extrabold text-slate-900">{t('বর্তমান দায়িত্বপ্রাপ্ত কর্মকর্তা ও অফিস:', 'Current Assigned Officer & Office:')}</div>
-                <div className="flex items-center justify-between text-xs pt-1">
-                  <span>{selectedTransfer.assigned_to_name ? `@${selectedTransfer.assigned_to_name}` : t('অ্যাসাইন করা হয়নি', 'Unassigned')}</span>
-                  <span className="text-slate-500">{selectedTransfer.assigned_office_bn || t('অফিস নির্দিষ্ট নয়', 'Office unmapped')}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setSelectedTransfer(null)}
-              className="font-bold text-xs"
-            >
-              {t('বন্ধ করুন', 'Close')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Reassign Modal */}
-      <Dialog open={reassignModalOpen && !!reassignTarget} onOpenChange={(open) => !open && setReassignModalOpen(false)}>
-        <DialogContent className="max-w-lg overflow-hidden flex flex-col p-0 gap-0 border-slate-200 shadow-2xl">
-          <DialogHeader className="bg-slate-900 px-6 py-4 flex flex-row items-center justify-between text-white border-b border-slate-800 space-y-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                <UserCheck className="w-5 h-5" />
-              </div>
-              <div>
-                <DialogTitle className="text-base font-black tracking-tight text-white">{t('কর্মকর্তা ও অফিস পুনর্বণ্টন', 'Reassign Officer & Office')}</DialogTitle>
-                <DialogDescription className="text-xs text-slate-400 mt-0.5">{reassignTarget?.transfer_code}</DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-
-          {reassignTarget && (
-            <form onSubmit={handleReassignSubmit} className="p-6 space-y-4 text-xs text-slate-700">
-              <div>
-                <Label className="block text-[11px] font-bold text-slate-700 mb-1">
-                  {t('কর্মকর্তা নির্বাচন করুন (Assignee Officer)', 'Select Officer')} *
-                </Label>
-                <Select value={targetUserId} onValueChange={setTargetUserId}>
-                  <SelectTrigger className="w-full text-xs font-semibold h-9">
-                    <SelectValue placeholder={`-- ${t('কর্মকর্তা নির্বাচন করুন', 'Select Officer')} --`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {usersList
-                      ?.filter((u) => ['ac_land', 'sub_registrar', 'land_office_assistant', 'field_verification_officer', 'service_point_operator'].includes(u.role))
-                      .map((u) => (
-                        <SelectItem key={u.id} value={String(u.id)} className="text-xs">
-                          {u.full_name_bn || u.username} ({u.role}) - {u.office_bn || 'উপজেলা ভূমি কার্যালয়'}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="block text-[11px] font-bold text-slate-700 mb-1">
-                  {t('কার্যকারিতা অফিস (Office)', 'Office')}
-                </Label>
-                <Select value={targetOfficeId} onValueChange={setTargetOfficeId}>
-                  <SelectTrigger className="w-full text-xs font-semibold h-9">
-                    <SelectValue placeholder={`-- ${t('অফিস নির্বাচন করুন', 'Select Office')} --`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {officesList?.map((o) => (
-                      <SelectItem key={o.id} value={String(o.id)} className="text-xs">
-                        {o.name_bn} ({o.office_type}) - {o.district_bn || ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="block text-[11px] font-bold text-slate-700 mb-1">
-                  {t('পুনর্বণ্টনের কারণ (Reason for Reassignment)', 'Reason for Reassignment')} *
-                </Label>
-                <Textarea
-                  rows={2}
-                  value={reassignReason}
-                  onChange={(e) => setReassignReason(e.target.value)}
-                  placeholder={t('কাজের চাপ সুষম বণ্টন বা বিশেষ প্রশাসনিক আদেশের কারণ উল্লেখ করুন...', 'Enter reason for reassignment...')}
-                  className="text-xs"
-                  required
-                />
-              </div>
-
-              <DialogFooter className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setReassignModalOpen(false)}
-                  disabled={reassignLoading}
-                  className="text-xs font-bold"
-                >
-                  {t('বাতিল', 'Cancel')}
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={reassignLoading}
-                  className="bg-[#006A4E] hover:bg-[#005a42] text-white text-xs font-bold gap-1.5 shadow-xs"
-                >
-                  {reassignLoading ? (
-                    <span>{t('সংরক্ষণ হচ্ছে...', 'Saving...')}</span>
-                  ) : (
-                    <>
-                      <UserCheck className="w-4 h-4" />
-                      <span>{t('পুনর্বণ্টন সম্পন্ন করুন', 'Confirm Reassign')}</span>
-                    </>
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Correction Request Modal */}
-      <Dialog open={correctionModalOpen && !!correctionTarget} onOpenChange={(open) => !open && setCorrectionModalOpen(false)}>
-        <DialogContent className="max-w-lg overflow-hidden flex flex-col p-0 gap-0 border-slate-200 shadow-2xl">
-          <DialogHeader className="bg-slate-900 px-6 py-4 flex flex-row items-center justify-between text-white border-b border-slate-800 space-y-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
-                <Edit2 className="w-5 h-5" />
-              </div>
-              <div>
-                <DialogTitle className="text-base font-black tracking-tight text-white">{t('সংশোধন অনুরোধ প্রেরণ', 'Request Transfer Correction')}</DialogTitle>
-                <DialogDescription className="text-xs text-slate-400 mt-0.5">{correctionTarget?.transfer_code}</DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-
-          {correctionTarget && (
-            <form onSubmit={handleCorrectionSubmit} className="p-6 space-y-4 text-xs text-slate-700">
-              <div>
-                <Label className="block text-[11px] font-bold text-slate-700 mb-1">
-                  {t('সংশোধন অনুরোধের সুনির্দিষ্ট কারণ ও বিবরণ (Correction Notes)', 'Correction Details & Required Actions')} *
-                </Label>
-                <Textarea
-                  rows={4}
-                  value={correctionReason}
-                  onChange={(e) => setCorrectionReason(e.target.value)}
-                  placeholder={t('যেমন: খতিয়ানের দ্বিতীয় পাতার স্পষ্ট স্ক্যান কপি দাখিল করুন অথবা ওয়ারিশ সনদের মূল কপি সংযুক্তি আবশ্যক (কমপক্ষে ১০ অক্ষর)...', 'Explain clearly what documents or corrections are needed (min 10 chars)...')}
-                  className="text-xs"
-                  required
-                />
-                <div className="text-[10px] text-slate-400 mt-1 flex justify-between">
-                  <span>{t('ন্যূনতম ১০ অক্ষর আবশ্যক', 'Min 10 characters required')}</span>
-                  <span>{correctionReason.length}/10+</span>
-                </div>
-              </div>
-
-              <DialogFooter className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCorrectionModalOpen(false)}
-                  disabled={correctionLoading}
-                  className="text-xs font-bold"
-                >
-                  {t('বাতিল', 'Cancel')}
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={correctionLoading}
-                  className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold gap-1.5 shadow-xs"
-                >
-                  {correctionLoading ? (
-                    <span>{t('প্রেরণ হচ্ছে...', 'Sending...')}</span>
-                  ) : (
-                    <>
-                      <Edit2 className="w-4 h-4" />
-                      <span>{t('সংশোধন অনুরোধ পাঠান', 'Send Request')}</span>
-                    </>
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+      {/* Correction request */}
+      <FormDialog
+        open={!!correctionTarget}
+        onOpenChange={(o) => !o && setCorrectionTarget(null)}
+        title={t('সংশোধন চান', 'Ask correction')}
+        description={correctionTarget?.transfer_code}
+        submitLabel={t('পাঠান', 'Send')}
+        cancelLabel={t('বাতিল', 'Cancel')}
+        busy={correctionBusy}
+        disabled={correctionLen < MIN_CORRECTION}
+        onSubmit={submitCorrection}
+      >
+        <Field
+          label={t('কী ঠিক করতে হবে', 'What to fix')}
+          hint={
+            correctionLen < MIN_CORRECTION
+              ? t(`কমপক্ষে ${n(MIN_CORRECTION)} অক্ষর · ${n(correctionLen)}`, `At least ${MIN_CORRECTION} characters · ${correctionLen}`)
+              : undefined
+          }
+        >
+          <Textarea
+            rows={4}
+            value={correctionReason}
+            onChange={(e) => setCorrectionReason(e.target.value)}
+            placeholder={t('যেমন: খতিয়ানের স্পষ্ট কপি দিন', 'e.g. upload a clear khatian copy')}
+            className="min-h-0 rounded-lg text-sm"
+          />
+        </Field>
+      </FormDialog>
+    </AdminPage>
   );
 };

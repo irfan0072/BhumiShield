@@ -1,51 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
+import { Banknote, Building2, Eye, FileText, LandPlot, Plus, RotateCcw } from 'lucide-react';
+import { useAppUI } from '@/i18n';
+import { BhumiApi } from '@/api/client';
+import { toBanglaDigits } from '@/theme/tokens';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import {
-  Building2,
-  Search,
-  Filter,
-  Plus,
-  Eye,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  FileText,
-  MapPin,
-  RefreshCw,
-  X,
-  Send,
-  ExternalLink,
-} from 'lucide-react';
-import { toBanglaDigits } from '../../theme/tokens';
-import { useAppUI } from '../../i18n';
-import { BhumiApi } from '../../api/client';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '../../components/ui/dialog';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-} from '../../components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../components/ui/select';
-import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { Badge } from '../../components/ui/badge';
-import { Alert, AlertDescription } from '../../components/ui/alert';
+  AdminPage,
+  DataTable,
+  DetailList,
+  DetailSheet,
+  EmptyRow,
+  Field,
+  FormDialog,
+  PageToolbar,
+  Section,
+  StatCard,
+  StatGrid,
+  StatusBadge,
+  StatusCode,
+  Tone,
+  inputCls,
+  notify,
+  useCreateIntent,
+} from '@/components/admin/kit';
 
 interface SuperAdminAcquisitionsTabProps {
   acquisitionCases: any[];
@@ -53,507 +34,423 @@ interface SuperAdminAcquisitionsTabProps {
   onOpenOverride?: (type: string, id: string | number, extra?: any) => void;
 }
 
-export const SuperAdminAcquisitionsTab: React.FC<SuperAdminAcquisitionsTabProps> = ({
-  acquisitionCases,
-  onRefresh,
-  onOpenOverride,
-}) => {
+type Lang = 'bn' | 'en';
+
+const CASE_STATUS: Record<string, { tone: Tone; bn: string; en: string }> = {
+  PRELIMINARY_NOTICE: { tone: 'blue', bn: 'প্রাথমিক নোটিশ', en: 'Notice' },
+  NOTICE_ISSUED: { tone: 'blue', bn: 'নোটিশ জারি', en: 'Notice issued' },
+  JOINT_VERIFICATION: { tone: 'amber', bn: 'যৌথ তদন্ত', en: 'Joint survey' },
+  OBJECTIONS_HEARING: { tone: 'amber', bn: 'আপত্তি শুনানি', en: 'Hearing' },
+  AWARD_DECREED: { tone: 'violet', bn: 'রোয়েদাদ', en: 'Award' },
+  GAZETTE_PUBLISHED: { tone: 'green', bn: 'গেজেট প্রকাশিত', en: 'Gazetted' },
+  COMPENSATION_PAID: { tone: 'green', bn: 'ক্ষতিপূরণ প্রদান', en: 'Paid' },
+};
+const CREATE_STATUSES = ['PRELIMINARY_NOTICE', 'NOTICE_ISSUED', 'JOINT_VERIFICATION', 'OBJECTIONS_HEARING', 'AWARD_DECREED', 'GAZETTE_PUBLISHED'];
+
+const SECTIONS: Record<string, [string, string]> = {
+  SECTION_4: ['ধারা ৪', 'Section 4'],
+  SECTION_7: ['ধারা ৭', 'Section 7'],
+  SECTION_8: ['ধারা ৮', 'Section 8'],
+  SECTION_11: ['ধারা ১১', 'Section 11'],
+};
+
+const CaseStatus: React.FC<{ code?: string; lang: Lang }> = ({ code, lang }) => {
+  const s = CASE_STATUS[String(code || '').toUpperCase()];
+  if (!s) return <StatusCode code={code} lang={lang} />;
+  return <StatusBadge tone={s.tone}>{lang === 'bn' ? s.bn : s.en}</StatusBadge>;
+};
+
+const fmtDate = (v: any, lang: Lang) => {
+  if (!v) return '—';
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? String(v) : d.toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-GB');
+};
+
+const emptyForm = {
+  project_name_bn: '',
+  project_name_en: '',
+  acquiring_agency_bn: '',
+  district_bn: '',
+  upazila_bn: '',
+  mouza_bn: '',
+  total_land_decimal: '',
+  estimated_compensation_bdt: '',
+  case_no: '',
+  section_type: 'SECTION_4',
+  status: 'PRELIMINARY_NOTICE',
+  plot_ids: '',
+  gazette_no: '',
+  gazette_published_at: '',
+};
+
+/** "12, 15 ১৮" -> [12, 15, 18] (accepts Bangla digits, commas or spaces). */
+const parsePlotIds = (raw: string): number[] => {
+  const ascii = raw.replace(/[০-৯]/g, (d) => String('০১২৩৪৫৬৭৮৯'.indexOf(d)));
+  return Array.from(
+    new Set(
+      ascii
+        .split(/[\s,،;]+/)
+        .map((s) => Number(s))
+        .filter((v) => Number.isInteger(v) && v > 0)
+    )
+  );
+};
+
+export const SuperAdminAcquisitionsTab: React.FC<SuperAdminAcquisitionsTabProps> = ({ acquisitionCases, onRefresh }) => {
   const { t, lang } = useAppUI();
-  const [searchQuery, setSearchQuery] = useState('');
+  const n = (v: any) => toBanglaDigits(v, lang);
+  const money = (v: any) => {
+    const num = Number(v);
+    return Number.isFinite(num) && num > 0 ? `৳ ${n(num.toLocaleString('en-IN'))}` : '—';
+  };
+  const land = (v: any) => {
+    const num = Number(v);
+    return Number.isFinite(num) && num > 0 ? `${n(Number(num.toFixed(2)))} ${t('শতাংশ', 'dec')}` : '—';
+  };
+  const sectionLabel = (code: any) => {
+    const hit = SECTIONS[String(code || '').toUpperCase()];
+    return hit ? (lang === 'bn' ? hit[0] : hit[1]) : code || '—';
+  };
+
+  const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [selectedCase, setSelectedCase] = useState<any | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selected, setSelected] = useState<any | null>(null);
 
-  // Create Modal State
-  const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [caseNo, setCaseNo] = useState('');
-  const [projectNameBn, setProjectNameBn] = useState('');
-  const [projectNameEn, setProjectNameEn] = useState('');
-  const [agencyBn, setAgencyBn] = useState('');
-  const [sectionType, setSectionType] = useState('SECTION_4');
-  const [districtBn, setDistrictBn] = useState('ঢাকা');
-  const [upazilaBn, setUpazilaBn] = useState('সাভার');
-  const [mouzaBn, setMouzaBn] = useState('বিরুলিয়া');
-  const [totalLand, setTotalLand] = useState('25.5');
-  const [compensationBdt, setCompensationBdt] = useState('35000000');
-  const [status, setStatus] = useState('PRELIMINARY_NOTICE');
-  const [createLoading, setCreateLoading] = useState(false);
-  const [toastMsg, setToastMsg] = useState<{ msg: string; err?: boolean } | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (!createModalOpen && !selectedCase) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (createModalOpen) setCreateModalOpen(false);
-        if (selectedCase) setSelectedCase(null);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [createModalOpen, selectedCase]);
+  const openCreate = () => {
+    setForm(emptyForm);
+    setCreateOpen(true);
+  };
+  useCreateIntent(openCreate);
 
-  const filteredCases = acquisitionCases.filter((c) => {
-    if (statusFilter !== 'ALL' && c.status !== statusFilter) return false;
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      String(c.case_no || '').toLowerCase().includes(q) ||
-      String(c.project_name_bn || '').toLowerCase().includes(q) ||
-      String(c.project_name_en || '').toLowerCase().includes(q) ||
-      String(c.acquiring_agency_bn || '').toLowerCase().includes(q) ||
-      String(c.mouza_bn || '').toLowerCase().includes(q)
-    );
-  });
-
-  const handleCreateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!projectNameBn.trim()) {
-      setToastMsg({ msg: t('প্রকল্পের নাম (বাংলায়) আবশ্যক।', 'Project name (BN) is required.'), err: true });
-      return;
-    }
-
-    setCreateLoading(true);
+  const refresh = async () => {
+    setRefreshing(true);
     try {
-      const res = await BhumiApi.createAcquisitionCase({
-        case_no: caseNo.trim() || undefined,
-        project_name_bn: projectNameBn.trim(),
-        project_name_en: projectNameEn.trim() || projectNameBn.trim(),
-        acquiring_agency_bn: agencyBn.trim() || 'জেলা প্রশাসন ভূমি অধিগ্রহণ শাখা',
-        section_type: sectionType,
-        district_bn: districtBn,
-        upazila_bn: upazilaBn,
-        mouza_bn: mouzaBn,
-        total_land_decimal: Number(totalLand) || 10,
-        estimated_compensation_bdt: Number(compensationBdt) || 10000000,
-        status: status,
-      });
-      setToastMsg({ msg: res.message_bn || t('ভূমি অধিগ্রহণ কেস সফলভাবে নথিভুক্ত হয়েছে।', 'Acquisition case registered.') });
-      setCreateModalOpen(false);
-      // Reset form
-      setProjectNameBn('');
-      setProjectNameEn('');
-      setCaseNo('');
-      onRefresh();
-    } catch (err: any) {
-      const resp = err.response?.data;
-      setToastMsg({ msg: resp?.message_bn || err.message, err: true });
+      await Promise.resolve(onRefresh());
     } finally {
-      setCreateLoading(false);
+      setRefreshing(false);
     }
   };
 
-  const getSectionBadge = (type: string) => {
-    if (type === 'SECTION_4') {
-      return <Badge variant="outline" className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-900 border-amber-200">ধারা ৪ (প্রাথমিক নোটিশ)</Badge>;
+  const q = search.trim().toLowerCase();
+  const filtered = useMemo(
+    () =>
+      acquisitionCases.filter((c) => {
+        if (statusFilter !== 'ALL' && c.status !== statusFilter) return false;
+        if (!q) return true;
+        return [c.case_no, c.project_name_bn, c.project_name_en, c.acquiring_agency_bn, c.mouza_bn, c.upazila_bn, c.district_bn]
+          .filter((v) => v != null)
+          .some((v) => String(v).toLowerCase().includes(q));
+      }),
+    [acquisitionCases, statusFilter, q]
+  );
+
+  const statusesInData = useMemo(
+    () => Array.from(new Set(acquisitionCases.map((c) => String(c.status || '')).filter(Boolean))),
+    [acquisitionCases]
+  );
+
+  const totalLand = acquisitionCases.reduce((s, c) => s + (Number(c.total_land_decimal) || 0), 0);
+  const totalComp = acquisitionCases.reduce((s, c) => s + (Number(c.estimated_compensation_bdt) || 0), 0);
+  const gazetted = acquisitionCases.filter((c) => c.status === 'GAZETTE_PUBLISHED' || c.gazette_no).length;
+
+  const set = (k: keyof typeof emptyForm) => (e: React.ChangeEvent<HTMLInputElement>) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const submit = async () => {
+    const name = form.project_name_bn.trim();
+    if (!name) return;
+    setBusy(true);
+    try {
+      // Field names match SystemAdminController::createAcquisitionCase exactly.
+      // Empty values are sent as '' / 0 / [] so the backend does not fill in its demo defaults.
+      const res = await BhumiApi.createAcquisitionCase({
+        project_name_bn: name,
+        project_name_en: form.project_name_en.trim() || name,
+        acquiring_agency_bn: form.acquiring_agency_bn.trim(),
+        section_type: form.section_type,
+        district_bn: form.district_bn.trim(),
+        upazila_bn: form.upazila_bn.trim(),
+        mouza_bn: form.mouza_bn.trim(),
+        plot_ids: parsePlotIds(form.plot_ids),
+        total_land_decimal: Number(form.total_land_decimal) || 0,
+        estimated_compensation_bdt: Number(form.estimated_compensation_bdt) || 0,
+        gazette_no: form.gazette_no.trim(),
+        gazette_published_at: form.gazette_published_at || '',
+        status: form.status,
+        case_no: form.case_no.trim(),
+      });
+      notify.ok(res?.case_no ? t(`মামলা ${res.case_no} তৈরি হয়েছে`, `Case ${res.case_no} created`) : t('মামলা তৈরি হয়েছে', 'Case created'));
+      setCreateOpen(false);
+      await refresh();
+    } catch (e) {
+      notify.err(e, lang);
+    } finally {
+      setBusy(false);
     }
-    if (type === 'SECTION_7') {
-      return <Badge variant="outline" className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-900 border-blue-200">ধারা ৭ (যৌথ তদন্ত)</Badge>;
-    }
-    if (type === 'SECTION_8') {
-      return <Badge variant="outline" className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-[#006A4E] border-emerald-200">ধারা ৮ (রোয়েদাদ ও গেজেট)</Badge>;
-    }
-    return <Badge variant="secondary" className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-800">{type}</Badge>;
   };
+
+  const plotIds: any[] = Array.isArray(selected?.plot_ids) ? selected.plot_ids : [];
 
   return (
-    <div className="space-y-5 animate-fadeIn">
-      {/* Toast Notice */}
-      {toastMsg && (
-        <Alert
-          className={`flex items-center justify-between text-xs font-bold rounded-xl border ${
-            toastMsg.err ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-emerald-50 border-emerald-200 text-emerald-900'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {toastMsg.err ? <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" /> : <CheckCircle2 className="w-4 h-4 text-[#006A4E] shrink-0" />}
-            <AlertDescription className="text-xs font-bold">{toastMsg.msg}</AlertDescription>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => setToastMsg(null)} className="h-6 w-6 p-0 text-slate-400 hover:text-slate-700">
-            <X className="w-4 h-4" />
-          </Button>
-        </Alert>
-      )}
+    <AdminPage fill>
+      <StatGrid>
+        <StatCard label={t('মোট মামলা', 'Cases')} value={n(acquisitionCases.length)} icon={Building2} tone="green" />
+        <StatCard label={t('গেজেট', 'Gazetted')} value={n(gazetted)} icon={FileText} tone="blue" />
+        <StatCard label={t('মোট জমি', 'Total land')} value={land(totalLand)} icon={LandPlot} tone="amber" />
+        <StatCard label={t('ক্ষতিপূরণ', 'Compensation')} value={money(totalComp)} icon={Banknote} tone="violet" />
+      </StatGrid>
 
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-white border border-slate-200/80 rounded-2xl shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 text-[#006A4E] flex items-center justify-center shadow-2xs">
-            <Building2 className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <span>{t('জেলা প্রশাসক কার্যালয় — ভূমি অধিগ্রহণ (LA) কেস তদারকি', 'DC Office — Land Acquisition (LA) Division')}</span>
-              <Badge variant="outline" className="bg-emerald-50 border-emerald-200 text-[#006A4E] font-black text-[11px]">
-                {toBanglaDigits(filteredCases.length, lang)} {t('টি কেস', 'Cases')}
-              </Badge>
-            </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {t(
-                'সরকারি উন্নয়ন প্রকল্প ও জাতীয় অবকাঠামোতে ভূমি অধিগ্রহণ, ধারা ৪/৭/৮ গেজেট ট্র্যাকিং ও ক্ষতিপূরণ বাজেট তদারকি।',
-                'Public infrastructure acquisition projects, Section 4/7/8 gazette decrees, and compensation budgets.'
-              )}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={() => setCreateModalOpen(true)}
-            className="rounded-xl text-xs font-bold text-white bg-[#006A4E] hover:bg-[#005a42] flex items-center gap-1.5 shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            <span>{t('নতুন এলএ কেস', 'New LA Case')}</span>
-          </Button>
-          <Button
-            variant="outline"
-            onClick={onRefresh}
-            className="rounded-xl text-xs font-bold border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-1.5 shadow-2xs"
-          >
-            <RefreshCw className="w-3.5 h-3.5 text-[#006A4E]" />
-            <span>{t('রিফ্রেশ', 'Refresh')}</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Filter and Search Bar */}
-      <div className="p-4 bg-white border border-slate-200/80 rounded-2xl shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 z-10" />
-          <Input
-            type="text"
-            placeholder={t('কেস নং, প্রকল্প, সংস্থা বা মৌজা দিয়ে খুঁজুন...', 'Search by case no, project, agency, or mouza...')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-1.5 h-9 rounded-xl border border-slate-300 text-xs focus-visible:ring-2 focus-visible:ring-[#006A4E]"
-          />
-        </div>
-
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {[
-            { key: 'ALL', label_bn: 'সকল কেস', label_en: 'All' },
-            { key: 'PRELIMINARY_NOTICE', label_bn: 'প্রাথমিক নোটিশ', label_en: 'Preliminary' },
-            { key: 'JOINT_VERIFICATION', label_bn: 'যৌথ তদন্তাধীন', label_en: 'Joint Verification' },
-            { key: 'OBJECTIONS_HEARING', label_bn: 'আপত্তি শুনানি', label_en: 'Hearings' },
-            { key: 'AWARD_DECREED', label_bn: 'রোয়েদাদ ডিক্রি', label_en: 'Award Decreed' },
-          ].map((st) => (
-            <Button
-              key={st.key}
-              type="button"
-              variant={statusFilter === st.key ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setStatusFilter(st.key)}
-              className={`px-3 py-1 h-8 rounded-lg text-xs font-bold transition whitespace-nowrap ${
-                statusFilter === st.key
-                  ? 'bg-[#006A4E] hover:bg-[#005a42] text-white shadow-xs'
-                  : 'bg-slate-100 hover:bg-slate-200 border-transparent text-slate-600'
-              }`}
-            >
-              {lang === 'bn' ? st.label_bn : st.label_en}
+      <PageToolbar
+        search={search}
+        onSearch={setSearch}
+        placeholder={t('মামলা, প্রকল্প বা মৌজা…', 'Case, project or mouza…')}
+        filters={
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="h-9 w-40 rounded-lg text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">{t('সব অবস্থা', 'All statuses')}</SelectItem>
+              {statusesInData.map((code) => {
+                const s = CASE_STATUS[code];
+                return (
+                  <SelectItem key={code} value={code}>
+                    {s ? (lang === 'bn' ? s.bn : s.en) : code.replace(/_/g, ' ').toLowerCase()}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        }
+        actions={
+          <>
+            <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={refresh} disabled={refreshing}>
+              <RotateCcw className={cn('size-3.5', refreshing && 'animate-spin')} />
+              {t('রিফ্রেশ', 'Refresh')}
             </Button>
-          ))}
-        </div>
-      </div>
+            <Button size="sm" className="h-9 gap-1.5" onClick={openCreate}>
+              <Plus className="size-4" />
+              {t('নতুন মামলা', 'New case')}
+            </Button>
+          </>
+        }
+      />
 
-      {/* Main Table */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl shadow-xs overflow-hidden">
-        <div className="overflow-auto max-h-[calc(100vh-280px)] min-h-[300px] scrollbar-thin">
-          <Table>
-            <TableHeader className="bg-slate-50 border-b border-slate-200/80">
-              <TableRow>
-                <TableHead className="px-4 py-3 font-bold uppercase tracking-wider text-[10px] text-slate-600">{t('এলএ কেস নং ও গেজেট', 'LA Case No & Gazette')}</TableHead>
-                <TableHead className="px-4 py-3 font-bold uppercase tracking-wider text-[10px] text-slate-600">{t('প্রকল্পের নাম ও সংস্থা', 'Project & Agency')}</TableHead>
-                <TableHead className="px-4 py-3 font-bold uppercase tracking-wider text-[10px] text-slate-600">{t('এলাকা ও অধিক্ষেত্র', 'Location')}</TableHead>
-                <TableHead className="px-4 py-3 font-bold uppercase tracking-wider text-[10px] text-slate-600">{t('জমির পরিমাণ ও বাজেট', 'Land & Budget')}</TableHead>
-                <TableHead className="px-4 py-3 font-bold uppercase tracking-wider text-[10px] text-slate-600">{t('আইনি ধারা ও অবস্থা', 'Section & Status')}</TableHead>
-                <TableHead className="px-4 py-3 text-right font-bold uppercase tracking-wider text-[10px] text-slate-600">{t('অ্যাকশন', 'Actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-slate-100">
-              {filteredCases.length > 0 ? (
-                filteredCases.map((c) => (
-                  <TableRow key={c.id} className="hover:bg-slate-50/70 transition">
-                    <TableCell className="px-4 py-3 font-mono font-bold text-slate-900">
-                      <span className="text-[#006A4E]">{c.case_no}</span>
-                      <div className="text-[10px] text-slate-400 font-sans mt-0.5">
-                        গেজেট: {c.gazette_no || 'বিজি-২০২৬/' + c.id} ({c.gazette_published_at || '২০২৬'})
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-4 py-3">
-                      <div className="font-extrabold text-slate-900 line-clamp-1">{c.project_name_bn}</div>
-                      <div className="text-[10px] text-slate-500">{c.acquiring_agency_bn}</div>
-                    </TableCell>
-                    <TableCell className="px-4 py-3">
-                      <div className="font-bold text-slate-900">{c.mouza_bn}, {c.upazila_bn}</div>
-                      <div className="text-[10px] text-slate-500">{c.district_bn} জেলা</div>
-                    </TableCell>
-                    <TableCell className="px-4 py-3">
-                      <div className="font-bold text-slate-900">
-                        {toBanglaDigits(c.total_land_decimal, lang)} {t('শতাংশ', 'Decimal')}
-                      </div>
-                      <div className="text-[10px] text-slate-500">
-                        ৳ {toBanglaDigits((c.estimated_compensation_bdt || 0).toLocaleString(), lang)}
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-4 py-3">
-                      <div className="space-y-1">
-                        <div>{getSectionBadge(c.section_type)}</div>
-                        <Badge variant="secondary" className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 inline-block">
-                          {c.status}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell className="px-4 py-3 text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedCase(c)}
-                        className="px-2.5 py-1 h-7 rounded-lg text-xs font-bold border-slate-200 bg-white hover:bg-slate-100 text-slate-700 inline-flex items-center gap-1 shadow-2xs"
-                      >
-                        <Eye className="w-3.5 h-3.5 text-slate-500" />
-                        <span>{t('বিস্তারিত', 'View')}</span>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+      <Section fill>
+        <TooltipProvider delayDuration={200}>
+          <DataTable
+            headers={[t('প্রকল্প', 'Project'), t('এলাকা', 'Area'), t('জমি ও ক্ষতিপূরণ', 'Land & cost'), t('অবস্থা', 'Status'), '']}
+            alignRight={[4]}
+          >
+            {filtered.length === 0 ? (
+              <EmptyRow
+                cols={5}
+                text={t('কোনো অধিগ্রহণ মামলা নেই', 'No acquisition cases')}
+                action={
+                  acquisitionCases.length === 0 && (
+                    <Button size="sm" variant="outline" className="h-8 gap-1.5" onClick={openCreate}>
+                      <Plus className="size-3.5" />
+                      {t('নতুন মামলা', 'New case')}
+                    </Button>
+                  )
+                }
+              />
+            ) : (
+              filtered.map((c) => (
+                <tr key={c.id} className="cursor-pointer" onClick={() => setSelected(c)}>
+                  <td className="max-w-xs">
+                    <span className="block truncate font-medium text-slate-900">
+                      {(lang === 'bn' ? c.project_name_bn : c.project_name_en) || c.project_name_bn || c.project_name || '—'}
+                    </span>
+                    <span className="block truncate text-xs text-slate-500">
+                      {[c.case_no, c.acquiring_agency_bn].filter(Boolean).join(' · ')}
+                    </span>
+                  </td>
+                  <td>
+                    <span className="block text-slate-800">{c.mouza_bn || '—'}</span>
+                    <span className="block text-xs text-slate-500">{[c.upazila_bn, c.district_bn].filter(Boolean).join(', ')}</span>
+                  </td>
+                  <td>
+                    <span className="block text-slate-800">{land(c.total_land_decimal)}</span>
+                    <span className="block text-xs text-slate-500">{money(c.estimated_compensation_bdt)}</span>
+                  </td>
+                  <td>
+                    <span className="flex flex-col items-start gap-1">
+                      <CaseStatus code={c.status} lang={lang} />
+                      <span className="text-xs text-slate-500">{sectionLabel(c.section_type)}</span>
+                    </span>
+                  </td>
+                  <td className="text-right">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 text-slate-500 hover:text-slate-900"
+                          aria-label={t('বিস্তারিত', 'Details')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelected(c);
+                          }}
+                        >
+                          <Eye className="size-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{t('বিস্তারিত', 'Details')}</TooltipContent>
+                    </Tooltip>
+                  </td>
+                </tr>
+              ))
+            )}
+          </DataTable>
+        </TooltipProvider>
+      </Section>
+
+      {/* Case details */}
+      <DetailSheet
+        open={!!selected}
+        onOpenChange={(o) => !o && setSelected(null)}
+        title={selected ? (lang === 'bn' ? selected.project_name_bn : selected.project_name_en) || selected.project_name_bn : ''}
+        subtitle={selected?.case_no}
+      >
+        {selected && (
+          <>
+            <DetailList
+              items={[
+                [t('অবস্থা', 'Status'), <CaseStatus code={selected.status} lang={lang} />],
+                [t('আইনি ধারা', 'Section'), sectionLabel(selected.section_type)],
+                [t('সংস্থা', 'Agency'), selected.acquiring_agency_bn || '—'],
+                [t('জেলা', 'District'), selected.district_bn || '—'],
+                [t('উপজেলা', 'Upazila'), selected.upazila_bn || '—'],
+                [t('মৌজা', 'Mouza'), selected.mouza_bn || '—'],
+                [t('মোট জমি', 'Total land'), land(selected.total_land_decimal)],
+                [t('ক্ষতিপূরণ', 'Compensation'), money(selected.estimated_compensation_bdt)],
+                [t('গেজেট নং', 'Gazette no'), selected.gazette_no || '—'],
+                [t('গেজেটের তারিখ', 'Gazette date'), fmtDate(selected.gazette_published_at, lang)],
+                [t('তৈরি করেছেন', 'Created by'), selected.created_by_officer || '—'],
+                [t('তৈরির তারিখ', 'Created'), fmtDate(selected.created_at, lang)],
+              ]}
+            />
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-slate-500">
+                {t('দাগ আইডি', 'Plot IDs')} {plotIds.length > 0 && `· ${n(plotIds.length)}`}
+              </p>
+              {plotIds.length === 0 ? (
+                <p className="text-sm text-slate-400">—</p>
               ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="px-4 py-12 text-center text-slate-400">
-                    <Building2 className="w-8 h-8 mx-auto mb-2 text-slate-300" />
-                    <p className="font-bold">{t('কোনো ভূমি অধিগ্রহণ কেস পাওয়া যায়নি।', 'No acquisition cases found.')}</p>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-
-      {/* Case Details Dialog */}
-      <Dialog open={!!selectedCase} onOpenChange={(open) => !open && setSelectedCase(null)}>
-        {selectedCase && (
-          <DialogContent className="sm:max-w-xl p-0 overflow-hidden border border-slate-200 rounded-2xl shadow-2xl">
-            <DialogHeader className="bg-slate-900 px-6 py-4 text-white border-b border-slate-800">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                  <Building2 className="w-5 h-5" />
-                </div>
-                <div>
-                  <DialogTitle className="text-base font-black tracking-tight text-white">{selectedCase.case_no}</DialogTitle>
-                  <DialogDescription className="text-xs text-slate-400">{selectedCase.project_name_bn}</DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-            <div className="p-6 space-y-4 text-xs text-slate-700 max-h-[70vh] overflow-y-auto">
-              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-                <div className="text-[10px] uppercase font-bold text-slate-400">{t('প্রকল্প ও সংস্থা', 'Project & Agency')}</div>
-                <div className="text-sm font-extrabold text-slate-900">{selectedCase.project_name_bn}</div>
-                <div className="text-slate-500">{selectedCase.project_name_en}</div>
-                <div className="text-[11px] font-bold text-[#006A4E] mt-1">{selectedCase.acquiring_agency_bn}</div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <div>
-                  <span className="text-slate-500">{t('আইনি ধারা: ', 'Section: ')}</span>
-                  <span className="font-bold text-slate-900">{selectedCase.section_type}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500">{t('মোট জমি: ', 'Total Land: ')}</span>
-                  <span className="font-bold text-slate-900">{toBanglaDigits(selectedCase.total_land_decimal, lang)} শতাংশ</span>
-                </div>
-                <div>
-                  <span className="text-slate-500">{t('ক্ষতিপূরণ প্রাক্কলন: ', 'Compensation Budget: ')}</span>
-                  <span className="font-bold text-slate-900">৳ {toBanglaDigits((selectedCase.estimated_compensation_bdt || 0).toLocaleString(), lang)}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500">{t('গেজেট নম্বর: ', 'Gazette Ref: ')}</span>
-                  <span className="font-bold text-slate-900">{selectedCase.gazette_no || 'বিজি-২০২৬/০৮৮১'}</span>
-                </div>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
-                <div className="font-bold text-slate-900">{t('অধিগ্রহণকৃত দাগসমূহ (Affected Plots):', 'Affected Plots:')}</div>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {(selectedCase.plot_ids || [1, 2]).map((pid: number) => (
-                    <Badge key={pid} variant="secondary" className="px-2.5 py-0.5 rounded-md bg-emerald-50 text-[#006A4E] border border-emerald-200 font-bold text-[11px]">
-                      দাগ #{toBanglaDigits(pid, lang)}
-                    </Badge>
+                <div className="flex flex-wrap gap-1.5">
+                  {plotIds.map((pid) => (
+                    <span key={String(pid)} className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                      {n(pid)}
+                    </span>
                   ))}
                 </div>
-              </div>
+              )}
             </div>
-            <DialogFooter className="p-4 bg-slate-50 border-t border-slate-200">
-              <Button
-                variant="outline"
-                onClick={() => setSelectedCase(null)}
-                className="font-bold border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
-              >
-                {t('বন্ধ করুন', 'Close')}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
+          </>
         )}
-      </Dialog>
+      </DetailSheet>
 
-      {/* Create Dialog */}
-      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-        <DialogContent className="sm:max-w-lg p-0 overflow-hidden border border-slate-200 rounded-2xl shadow-2xl">
-          <DialogHeader className="bg-slate-900 px-6 py-4 text-white border-b border-slate-800">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                <Plus className="w-5 h-5" />
-              </div>
-              <div>
-                <DialogTitle className="text-base font-black tracking-tight text-white">{t('নতুন ভূমি অধিগ্রহণ কেস এন্ট্রি', 'Register New LA Case')}</DialogTitle>
-                <DialogDescription className="text-xs text-slate-400">{t('ডিসি কার্যালয় এলএ শাখা', 'DC Office LA Branch')}</DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
+      {/* Create case */}
+      <FormDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        title={t('নতুন অধিগ্রহণ মামলা', 'New acquisition case')}
+        submitLabel={t('সংরক্ষণ', 'Save')}
+        cancelLabel={t('বাতিল', 'Cancel')}
+        busy={busy}
+        disabled={!form.project_name_bn.trim()}
+        onSubmit={submit}
+      >
+        <div className="-mx-5 -my-1 max-h-[65vh] space-y-3 overflow-y-auto px-5 py-1">
+        <Field label={t('প্রকল্পের নাম *', 'Project name *')}>
+          <input className={inputCls} value={form.project_name_bn} onChange={set('project_name_bn')} autoFocus />
+        </Field>
+        <Field label={t('প্রত্যাশী সংস্থা', 'Agency')}>
+          <input className={inputCls} value={form.acquiring_agency_bn} onChange={set('acquiring_agency_bn')} />
+        </Field>
+        <div className="grid grid-cols-3 gap-2">
+          <Field label={t('জেলা', 'District')}>
+            <input className={inputCls} value={form.district_bn} onChange={set('district_bn')} />
+          </Field>
+          <Field label={t('উপজেলা', 'Upazila')}>
+            <input className={inputCls} value={form.upazila_bn} onChange={set('upazila_bn')} />
+          </Field>
+          <Field label={t('মৌজা', 'Mouza')}>
+            <input className={inputCls} value={form.mouza_bn} onChange={set('mouza_bn')} />
+          </Field>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label={t('জমি (শতাংশ)', 'Land (decimal)')}>
+            <input type="number" min={0} step="0.01" inputMode="decimal" className={inputCls} value={form.total_land_decimal} onChange={set('total_land_decimal')} />
+          </Field>
+          <Field label={t('ক্ষতিপূরণ (৳)', 'Compensation (৳)')}>
+            <input type="number" min={0} inputMode="numeric" className={inputCls} value={form.estimated_compensation_bdt} onChange={set('estimated_compensation_bdt')} />
+          </Field>
+        </div>
 
-          <form onSubmit={handleCreateSubmit} className="p-6 space-y-3.5 text-xs text-slate-700 max-h-[75vh] overflow-y-auto">
-            <div>
-              <Label htmlFor="la-case-no" className="block text-[11px] font-bold text-slate-700 mb-1">{t('কেস নম্বর (Case No)', 'Case No')}</Label>
-              <Input
-                id="la-case-no"
-                type="text"
-                placeholder={t('LA-2026-XXXX (ফাঁকা রাখলে স্বয়ংক্রিয় জেনারেট হবে)', 'LA-2026-XXXX (Auto-generated if left blank)')}
-                value={caseNo}
-                onChange={(e) => setCaseNo(e.target.value)}
-                className="w-full text-xs rounded-lg border-slate-300 focus-visible:ring-2 focus-visible:ring-[#006A4E]"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="la-project-name-bn" className="block text-[11px] font-bold text-slate-700 mb-1">{t('প্রকল্পের নাম (বাংলায়)', 'Project Name (BN)')} *</Label>
-              <Input
-                id="la-project-name-bn"
-                type="text"
-                placeholder={t('যেমন: ঢাকা-আশুলিয়া এলিভেটেড এক্সপ্রেসওয়ে প্রকল্প', 'e.g. Dhaka-Ashulia Elevated Expressway Project')}
-                value={projectNameBn}
-                onChange={(e) => setProjectNameBn(e.target.value)}
-                className="w-full text-xs rounded-lg border-slate-300 focus-visible:ring-2 focus-visible:ring-[#006A4E]"
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="la-project-name-en" className="block text-[11px] font-bold text-slate-700 mb-1">{t('প্রকল্পের নাম (ইংরেজিতে)', 'Project Name (EN)')}</Label>
-              <Input
-                id="la-project-name-en"
-                type="text"
-                placeholder={t('e.g. Dhaka-Ashulia Elevated Expressway', 'e.g. Dhaka-Ashulia Elevated Expressway')}
-                value={projectNameEn}
-                onChange={(e) => setProjectNameEn(e.target.value)}
-                className="w-full text-xs rounded-lg border-slate-300 focus-visible:ring-2 focus-visible:ring-[#006A4E]"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="la-agency-bn" className="block text-[11px] font-bold text-slate-700 mb-1">{t('প্রত্যাশী সংস্থা', 'Acquiring Agency')}</Label>
-                <Input
-                  id="la-agency-bn"
-                  type="text"
-                  value={agencyBn}
-                  onChange={(e) => setAgencyBn(e.target.value)}
-                  placeholder={t('যেমন: বাংলাদেশ সেতু কর্তৃপক্ষ', 'e.g. Bangladesh Bridge Authority')}
-                  className="w-full text-xs rounded-lg border-slate-300 focus-visible:ring-2 focus-visible:ring-[#006A4E]"
-                />
+        <Accordion type="single" collapsible className="rounded-lg border border-slate-200 px-3">
+          <AccordionItem value="more" className="border-b-0">
+            <AccordionTrigger className="min-h-0 py-2.5 text-sm font-medium text-slate-700 hover:no-underline hover:text-slate-900">
+              {t('আরও তথ্য', 'More details')}
+            </AccordionTrigger>
+            <AccordionContent className="space-y-3 pb-3 pt-1 text-slate-700">
+              <Field label={t('ইংরেজি নাম', 'English name')}>
+                <input className={inputCls} value={form.project_name_en} onChange={set('project_name_en')} />
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label={t('আইনি ধারা', 'Section')}>
+                  <Select value={form.section_type} onValueChange={(v) => setForm((f) => ({ ...f, section_type: v }))}>
+                    <SelectTrigger className="h-9 w-full rounded-lg text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(SECTIONS).map(([code, l]) => (
+                        <SelectItem key={code} value={code}>
+                          {lang === 'bn' ? l[0] : l[1]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field label={t('অবস্থা', 'Status')}>
+                  <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>
+                    <SelectTrigger className="h-9 w-full rounded-lg text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CREATE_STATUSES.map((code) => (
+                        <SelectItem key={code} value={code}>
+                          {lang === 'bn' ? CASE_STATUS[code].bn : CASE_STATUS[code].en}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
               </div>
-              <div>
-                <Label className="block text-[11px] font-bold text-slate-700 mb-1">{t('আইনি ধারা', 'Section Type')}</Label>
-                <Select value={sectionType} onValueChange={setSectionType}>
-                  <SelectTrigger className="w-full text-xs font-semibold rounded-lg border-slate-300 focus:ring-2 focus:ring-[#006A4E]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="SECTION_4">{t('ধারা ৪ (প্রাথমিক নোটিশ)', 'Section 4 (Preliminary Notice)')}</SelectItem>
-                    <SelectItem value="SECTION_7">{t('ধারা ৭ (যৌথ তদন্ত)', 'Section 7 (Joint Survey)')}</SelectItem>
-                    <SelectItem value="SECTION_8">{t('ধারা ৮ (রোয়েদাদ ও গেজেট)', 'Section 8 (Award & Gazette)')}</SelectItem>
-                  </SelectContent>
-                </Select>
+              <Field label={t('দাগ আইডি', 'Plot IDs')} hint={t('কমা দিয়ে আলাদা করুন', 'Separate with commas')}>
+                <input className={inputCls} value={form.plot_ids} onChange={set('plot_ids')} placeholder="12, 15, 18" />
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label={t('গেজেট নং', 'Gazette no')}>
+                  <input className={inputCls} value={form.gazette_no} onChange={set('gazette_no')} />
+                </Field>
+                <Field label={t('গেজেটের তারিখ', 'Gazette date')}>
+                  <input type="date" className={inputCls} value={form.gazette_published_at} onChange={set('gazette_published_at')} />
+                </Field>
               </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <Label htmlFor="la-district-bn" className="block text-[11px] font-bold text-slate-700 mb-1">{t('জেলা', 'District')}</Label>
-                <Input
-                  id="la-district-bn"
-                  type="text"
-                  value={districtBn}
-                  onChange={(e) => setDistrictBn(e.target.value)}
-                  placeholder={t('যেমন: ঢাকা', 'e.g. Dhaka')}
-                  className="w-full text-xs rounded-lg border-slate-300"
-                />
-              </div>
-              <div>
-                <Label htmlFor="la-upazila-bn" className="block text-[11px] font-bold text-slate-700 mb-1">{t('উপজেলা', 'Upazila')}</Label>
-                <Input
-                  id="la-upazila-bn"
-                  type="text"
-                  value={upazilaBn}
-                  onChange={(e) => setUpazilaBn(e.target.value)}
-                  placeholder={t('যেমন: সাভার', 'e.g. Savar')}
-                  className="w-full text-xs rounded-lg border-slate-300"
-                />
-              </div>
-              <div>
-                <Label htmlFor="la-mouza-bn" className="block text-[11px] font-bold text-slate-700 mb-1">{t('মৌজা', 'Mouza')}</Label>
-                <Input
-                  id="la-mouza-bn"
-                  type="text"
-                  value={mouzaBn}
-                  onChange={(e) => setMouzaBn(e.target.value)}
-                  placeholder={t('যেমন: বিরুলিয়া', 'e.g. Birulia')}
-                  className="w-full text-xs rounded-lg border-slate-300"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="la-total-land" className="block text-[11px] font-bold text-slate-700 mb-1">{t('মোট জমি (শতাংশ)', 'Total Land (Decimals)')}</Label>
-                <Input
-                  id="la-total-land"
-                  type="number"
-                  step="0.1"
-                  value={totalLand}
-                  onChange={(e) => setTotalLand(e.target.value)}
-                  className="w-full text-xs rounded-lg border-slate-300"
-                />
-              </div>
-              <div>
-                <Label htmlFor="la-compensation-bdt" className="block text-[11px] font-bold text-slate-700 mb-1">{t('প্রাক্কলিত বাজেট (৳)', 'Estimated Budget (BDT)')}</Label>
-                <Input
-                  id="la-compensation-bdt"
-                  type="number"
-                  value={compensationBdt}
-                  onChange={(e) => setCompensationBdt(e.target.value)}
-                  className="w-full text-xs rounded-lg border-slate-300"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setCreateModalOpen(false)}
-                disabled={createLoading}
-                className="font-bold border-slate-300 text-slate-700 hover:bg-slate-100"
-              >
-                {t('বাতিল', 'Cancel')}
-              </Button>
-              <Button
-                type="submit"
-                disabled={createLoading}
-                className="font-bold text-white bg-[#006A4E] hover:bg-[#005a42] flex items-center gap-1.5 shadow-xs"
-              >
-                {createLoading ? <span>{t('দাখিল হচ্ছে...', 'Saving...')}</span> : <span>{t('কেস নথিভুক্ত করুন', 'Register Case')}</span>}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </div>
+              <Field label={t('মামলা নং', 'Case no')} hint={t('খালি রাখলে নিজে তৈরি হবে', 'Auto if empty')}>
+                <input className={inputCls} value={form.case_no} onChange={set('case_no')} placeholder="LA-2026-0001" />
+              </Field>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+        </div>
+      </FormDialog>
+    </AdminPage>
   );
 };

@@ -297,6 +297,8 @@ export const CadastralMapPage: React.FC<{ onNavigate?: (tab: string) => void }> 
     refreshTasksCount();
   }, [user]);
 
+  const autoFocusedRef = useRef(false);
+
   // Fetch Map Workspace Data (Locations, Plots, Offices)
   useEffect(() => {
     const controller = new AbortController();
@@ -307,6 +309,29 @@ export const CadastralMapPage: React.FC<{ onNavigate?: (tab: string) => void }> 
         setData(res);
         setLoading(false);
         setError('');
+        if (!autoFocusedRef.current && initial.get('focus') === '1' && Array.isArray(res.plots) && res.plots.length > 0) {
+          autoFocusedRef.current = true;
+          const qNorm = normalizeBnDigits(search.trim());
+          const match =
+            res.plots.find((p) => normalizeBnDigits(String(p.dag_no)) === qNorm) ||
+            res.plots[0];
+          if (match) {
+            setSelected(match);
+            const cadList = ALL_MOUZA_CADASTRAL_PLOTS[Number(match.location_id)] || [];
+            const cad = cadList.find((c) => String(c.dag_no) === String(match.dag_no));
+            if (cad && map.current) {
+              const polyBounds = L.polygon(cad.coordinates).getBounds();
+              if (polyBounds.isValid()) {
+                map.current.flyToBounds(polyBounds, { padding: [48, 48], maxZoom: 18, duration: 0.9 });
+              }
+            } else {
+              const matchLoc = res.locations?.find((l) => Number(l.id) === Number(match.location_id));
+              if (matchLoc && Number(matchLoc.latitude) && Number(matchLoc.longitude) && map.current) {
+                map.current.flyTo([Number(matchLoc.latitude), Number(matchLoc.longitude)], 17, { duration: 0.9 });
+              }
+            }
+          }
+        }
       })
       .catch((e) => {
         if (!controller.signal.aborted) {

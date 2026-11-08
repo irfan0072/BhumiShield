@@ -562,3 +562,52 @@ html.high-contrast .card-surface {
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ------------------------------------------------------------------
+   Super admin panel density.
+   AdminWorkspaceShell puts `admin-mode` on <body>. The public site uses an
+   18px root for citizens; the admin panel uses a calmer 16px root
+   (the user's text-size setting still adds +2px per step).
+   Unlayered on purpose so these win over Tailwind utilities.
+   ------------------------------------------------------------------ */
+html:has(body.admin-mode) {
+  font-size: calc(var(--base-font-size) - 2px);
+}
+
+/* Lift unreadably tiny pixel text to a minimum of 11px */
+body.admin-mode .text-\[8px\],
+body.admin-mode .text-\[9px\],
+body.admin-mode .text-\[10px\] {
+  font-size: 11px;
+}
+
+/* Shared primitives are tuned for citizens (44px targets); tighten them in admin */
+body.admin-mode [role='option'] {
+  min-height: 2.25rem;
+}
+body.admin-mode [role='dialog'] > button.absolute.right-4.top-4 {
+  min-height: 2rem;
+  min-width: 2rem;
+  padding: 0.375rem;
+  top: 0.75rem;
+  right: 0.75rem;
+}
+
+/* Rows fade in softly as they are added (initial load and infinite scroll) */
+@keyframes admin-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.admin-rows > tr {
+  animation: admin-row-in 0.22s ease-out both;
+}
+
+/* Ensure Leaflet containers never escape their local stacking context */
+.leaflet-container {
+  isolation: isolate;
+}

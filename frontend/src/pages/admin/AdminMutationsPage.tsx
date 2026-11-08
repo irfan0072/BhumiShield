@@ -1,189 +1,254 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Flame,
-  Search,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  RotateCcw,
-  Calendar,
-  FileCheck2,
-  Scale,
-} from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Eye, RotateCcw } from 'lucide-react';
 import { useAppUI } from '@/i18n';
 import { BhumiApi } from '@/api/client';
 import { toBanglaDigits } from '@/theme/tokens';
-import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+  AdminPage,
+  DataTable,
+  DetailList,
+  DetailSheet,
+  EmptyRow,
+  LoadingRows,
+  PageToolbar,
+  Section,
+  StatusBadge,
+  StatusCode,
+  Tone,
+  notify,
+} from '@/components/admin/kit';
 
+type Filter = 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED';
+
+const verdictTone = (v?: string): Tone => (v === 'SAFE' ? 'green' : v === 'HIGH_RISK' ? 'red' : v ? 'amber' : 'slate');
+
+/** Read-only list of mutation cases. Deciding a case is done by AC Land only. */
 export const AdminMutationsPage: React.FC = () => {
   const { lang, t } = useAppUI();
-  const [mutations, setMutations] = useState<any[]>([]);
+  const n = (v: any) => toBanglaDigits(v ?? '', lang);
+  const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('ALL');
   const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<Filter>('ALL');
+  const [selected, setSelected] = useState<any | null>(null);
 
-  const fetchMutations = async () => {
+  const load = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const res = await BhumiApi.getMutations();
-      setMutations(Array.isArray(res) ? res : []);
+      const res: any = await BhumiApi.getMutations();
+      setItems(Array.isArray(res) ? res : res?.items || []);
     } catch (e) {
-      console.error(e);
+      notify.err(e, lang);
+      setItems([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchMutations();
-  }, []);
+    load();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const filtered = mutations.filter((m) => {
-    const matchesStatus = statusFilter === 'ALL' || m.status === statusFilter;
-    const q = search.toLowerCase();
-    const matchesQuery =
-      !search ||
-      String(m.case_no || '').toLowerCase().includes(q) ||
-      String(m.applicant_name_bn || '').toLowerCase().includes(q) ||
-      String(m.mouza_bn || '').toLowerCase().includes(q);
-    return matchesStatus && matchesQuery;
-  });
+  const counts = useMemo(() => {
+    const c: Record<Filter, number> = { ALL: items.length, PENDING: 0, APPROVED: 0, REJECTED: 0 };
+    items.forEach((m) => {
+      const s = String(m.status || '').toUpperCase() as Filter;
+      if (s in c && s !== 'ALL') c[s] += 1;
+    });
+    return c;
+  }, [items]);
+
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return items.filter((m) => {
+      if (filter !== 'ALL' && String(m.status || '').toUpperCase() !== filter) return false;
+      if (!q) return true;
+      return [m.case_no, m.deed_no, m.applicant_name_bn, m.applicant_name_en, m.seller_name_bn, m.mouza_bn, m.mouza_en, m.dag_no, m.dag_no_bn]
+        .some((v) => String(v || '').toLowerCase().includes(q));
+    });
+  }, [items, search, filter]);
+
+  const tabs: Array<[Filter, string]> = [
+    ['ALL', t('সব', 'All')],
+    ['PENDING', t('অপেক্ষমাণ', 'Pending')],
+    ['APPROVED', t('অনুমোদিত', 'Approved')],
+    ['REJECTED', t('বাতিল', 'Rejected')],
+  ];
+
+  const name = (bn?: string, en?: string) => (lang === 'bn' ? bn || en : en || bn) || '—';
+  const risk = selected?.risk_report;
+  const ver = selected?.deed_verification;
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-2.5 p-3 sm:p-4 max-w-7xl mx-auto w-full overflow-hidden">
-      {/* Search & Filter toolbar */}
-      <Card className="shrink-0 border border-border/80 shadow-2xs bg-card p-2 sm:p-2.5 rounded-xl">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div className="relative flex-1 w-full sm:max-w-md">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-            <Input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t('কেস নম্বর, নাম বা মৌজা দিয়ে খুঁজুন...', 'Search by case, name or mouza...')}
-              className="pl-8 h-8 text-xs rounded-lg border-border"
-            />
-          </div>
+    <AdminPage fill>
+      <PageToolbar
+        search={search}
+        onSearch={setSearch}
+        placeholder={t('কেস, নাম বা মৌজা…', 'Case, name or mouza…')}
+        filters={
+          <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
+            <TabsList className="h-9">
+              {tabs.map(([key, label]) => (
+                <TabsTrigger key={key} value={key} className="gap-1.5 px-3 text-xs">
+                  {label}
+                  <span className="text-slate-400">{n(counts[key])}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        }
+        actions={
+          <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={load} disabled={loading}>
+            <RotateCcw className={cn('size-3.5', loading && 'animate-spin')} />
+            {t('রিফ্রেশ', 'Refresh')}
+          </Button>
+        }
+      />
 
-          <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-            <Badge variant="outline" className="text-xs font-semibold px-2.5 py-1 text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800 shrink-0">
-              {t('মোট:', 'Total:')} {toBanglaDigits(filtered.length, lang)} {t('টি কেস', 'Cases')}
-            </Badge>
-
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[170px] h-8 text-xs rounded-lg border-border">
-                <SelectValue placeholder={t('সকল স্ট্যাটাস', 'All Statuses')} />
-              </SelectTrigger>
-              <SelectContent className="text-xs">
-                <SelectItem value="ALL">{t('সকল আবেদন (All)', 'All Applications')}</SelectItem>
-                <SelectItem value="PENDING">{t('বিচারাধীন (Pending)', 'Pending')}</SelectItem>
-                <SelectItem value="APPROVED">{t('অনুমোদিত (Approved)', 'Approved')}</SelectItem>
-                <SelectItem value="REJECTED">{t('খারিজ (Rejected)', 'Rejected')}</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button variant="outline" size="sm" onClick={fetchMutations} className="h-8 px-2.5 gap-1 text-xs font-semibold cursor-pointer rounded-lg border-border">
-              <RotateCcw className="size-3.5" />
-              <span>{t('রিফ্রেশ', 'Refresh')}</span>
-            </Button>
-          </div>
-        </div>
-      </Card>
-
-      {/* 3. Mutations 100% Fixed Header & Single-Screen Table */}
-      <Card className="flex-1 min-h-0 border border-border/80 shadow-2xs bg-card rounded-xl overflow-hidden flex flex-col">
-        {/* 100% Guaranteed Fixed Table Header Row */}
-        <div className="shrink-0 bg-muted/95 border-b border-border z-20">
-          <table className="w-full text-xs font-bold text-foreground table-fixed">
-            <thead>
-              <tr className="h-9">
-                <th className="py-2 px-3 text-left w-[18%] font-bold text-foreground">{t('কেস ও তারিখ', 'Case & Date')}</th>
-                <th className="py-2 px-3 text-left w-[20%] font-bold text-foreground">{t('আবেদনকারী', 'Applicant')}</th>
-                <th className="py-2 px-3 text-left w-[18%] font-bold text-foreground">{t('মৌজা ও দাগ', 'Mouza & Plot')}</th>
-                <th className="py-2 px-3 text-left w-[14%] font-bold text-foreground">{t('জমির পরিমাণ', 'Area')}</th>
-                <th className="py-2 px-3 text-left w-[12%] font-bold text-foreground">{t('স্ট্যাটাস', 'Status')}</th>
-                <th className="py-2 px-3 text-left w-[18%] font-bold text-foreground">{t('সিদ্ধান্ত', 'Decision')}</th>
+      <Section fill>
+        <DataTable
+          headers={[t('কেস', 'Case'), t('আবেদনকারী', 'Applicant'), t('জমি', 'Land'), t('অবস্থা', 'Status'), '']}
+          alignRight={[4]}
+        >
+          {loading ? (
+            <LoadingRows cols={5} />
+          ) : rows.length === 0 ? (
+            <EmptyRow cols={5} text={t('কোনো আবেদন নেই', 'No cases')} />
+          ) : (
+            rows.map((m) => (
+              <tr key={m.id} className="cursor-pointer" onClick={() => setSelected(m)}>
+                <td>
+                  <div className="font-medium text-slate-900">{m.case_no}</div>
+                  <div className="text-xs text-slate-500">{m.created_at ? n(String(m.created_at).slice(0, 10)) : '—'}</div>
+                </td>
+                <td>
+                  <div className="text-slate-800">{name(m.applicant_name_bn, m.applicant_name_en)}</div>
+                  <div className="text-xs text-slate-500">
+                    {t('বিক্রেতা', 'Seller')}: {name(m.seller_name_bn, m.seller_name_en)}
+                  </div>
+                </td>
+                <td>
+                  <div className="text-slate-800">{name(m.mouza_bn, m.mouza_en)}</div>
+                  <div className="text-xs text-slate-500">
+                    {t('দাগ', 'Plot')} {n(m.dag_no_bn || m.dag_no)} · {n(m.area_decimal)} {t('শতক', 'dec')}
+                  </div>
+                </td>
+                <td>
+                  <StatusCode code={m.status} lang={lang} />
+                </td>
+                <td className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8"
+                    aria-label={t('বিস্তারিত', 'Details')}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelected(m);
+                    }}
+                  >
+                    <Eye className="size-4 text-slate-500" />
+                  </Button>
+                </td>
               </tr>
-            </thead>
-          </table>
-        </div>
+            ))
+          )}
+        </DataTable>
+      </Section>
 
-        {/* Scrollable Table Items Body */}
-        <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
-          <table className="w-full text-xs table-fixed">
-            <tbody className="divide-y divide-border/60">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-10 text-xs text-muted-foreground">
-                    {t('নামজারি তথ্য লোড হচ্ছে...', 'Loading mutations database...')}
-                  </td>
-                </tr>
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-10 text-xs text-muted-foreground">
-                    {t('কোনো আবেদন পাওয়া যায়নি।', 'No applications found.')}
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((m) => (
-                  <tr key={m.id} className="text-xs hover:bg-muted/50 transition">
-                    <td className="py-2 px-3 font-medium w-[18%] align-middle">
-                      <div className="font-bold text-foreground font-mono">{m.case_no}</div>
-                      <div className="text-[10px] text-muted-foreground">{m.created_at?.substring(0, 10)}</div>
-                    </td>
+      <DetailSheet
+        open={!!selected}
+        onOpenChange={(o) => !o && setSelected(null)}
+        title={selected?.case_no || t('নামজারি', 'Mutation')}
+        subtitle={selected ? <StatusCode code={selected.status} lang={lang} /> : undefined}
+      >
+        {selected && (
+          <>
+            <DetailList
+              items={[
+                [t('দলিল নং', 'Deed no'), selected.deed_no],
+                [t('আবেদনের তারিখ', 'Applied'), selected.created_at ? n(String(selected.created_at).slice(0, 10)) : '—'],
+                [t('মৌজা', 'Mouza'), name(selected.mouza_bn, selected.mouza_en)],
+                [t('উপজেলা', 'Upazila'), name(selected.upazila_bn, selected.upazila_en)],
+                [t('দাগ', 'Plot'), n(selected.dag_no_bn || selected.dag_no)],
+                [t('জমি', 'Area'), `${n(selected.area_decimal)} ${t('শতক', 'dec')}`],
+                !!selected.share_fraction && [t('অংশ', 'Share'), n(selected.share_fraction)],
+              ]}
+            />
 
-                    <td className="py-2 px-3 w-[20%] align-middle">
-                      <div className="font-semibold text-foreground">{m.applicant_name_bn}</div>
-                      <div className="text-[10px] text-muted-foreground font-mono">{m.applicant_phone || m.applicant_nid}</div>
-                    </td>
+            <DetailList
+              items={[
+                [
+                  t('ক্রেতা', 'Buyer'),
+                  <span key="b">
+                    {name(selected.buyer_name_bn, selected.buyer_name_en)}
+                    {selected.buyer_nid && <span className="block text-xs font-normal text-slate-500">{n(selected.buyer_nid)}</span>}
+                  </span>,
+                ],
+                [
+                  t('বিক্রেতা', 'Seller'),
+                  <span key="s">
+                    {name(selected.seller_name_bn, selected.seller_name_en)}
+                    {selected.seller_nid && <span className="block text-xs font-normal text-slate-500">{n(selected.seller_nid)}</span>}
+                  </span>,
+                ],
+              ]}
+            />
 
-                    <td className="py-2 px-3 w-[18%] align-middle">
-                      <div className="font-medium">{m.mouza_bn}</div>
-                      <div className="text-[10px] text-muted-foreground font-mono">{t('দাগ:', 'Dag:')} {toBanglaDigits(m.dag_no, lang)}</div>
-                    </td>
+            {(ver || risk) && (
+              <DetailList
+                items={[
+                  !!ver && [
+                    t('দলিল যাচাই', 'Deed check'),
+                    <StatusBadge key="v" tone={ver.is_valid ? 'green' : 'red'}>
+                      {ver.is_valid ? t('সঠিক', 'Valid') : t('পরিবর্তিত', 'Tampered')}
+                    </StatusBadge>,
+                  ],
+                  !!risk && [
+                    t('ঝুঁকি', 'Risk'),
+                    <StatusBadge key="r" tone={verdictTone(risk.verdict)}>
+                      {risk.risk_score !== undefined ? n(risk.risk_score) : '—'}
+                      {' / '}
+                      {n(100)}
+                    </StatusBadge>,
+                  ],
+                ]}
+              />
+            )}
 
-                    <td className="py-2 px-3 font-mono font-bold text-foreground w-[14%] align-middle">
-                      {toBanglaDigits(m.area_decimal, lang)} {t('শতক', 'dec')}
-                    </td>
+            {Array.isArray(risk?.flags) && risk.flags.length > 0 && (
+              <div className="space-y-1.5">
+                <div className="text-xs font-medium text-slate-500">{t('সতর্কতা', 'Warnings')}</div>
+                <ul className="space-y-1.5">
+                  {risk.flags.map((f: any, i: number) => (
+                    <li key={f.rule_id || i} className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
+                      {lang === 'bn' ? f.title_bn || f.title_en : f.title_en || f.title_bn}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
-                    <td className="py-2 px-3 w-[12%] align-middle">
-                      {m.status === 'APPROVED' ? (
-                        <Badge variant="outline" className="text-[10px] font-mono border-emerald-300 text-emerald-700 bg-emerald-50 px-1.5 py-0.5">
-                          <CheckCircle2 className="size-3 mr-1 text-emerald-600" />
-                          {t('অনুমোদিত', 'APPROVED')}
-                        </Badge>
-                      ) : m.status === 'REJECTED' ? (
-                        <Badge variant="danger" className="text-[10px] font-mono px-1.5 py-0.5">
-                          <XCircle className="size-3 mr-1" />
-                          {t('খারিজ', 'REJECTED')}
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-[10px] font-mono border-amber-300 text-amber-800 bg-amber-50 px-1.5 py-0.5">
-                          <Clock className="size-3 mr-1 text-amber-600" />
-                          {t('বিচারাধীন', 'PENDING')}
-                        </Badge>
-                      )}
-                    </td>
+            {(selected.decided_by || selected.decision_reason_bn || selected.decision_reason_en) && (
+              <DetailList
+                items={[
+                  [t('সিদ্ধান্ত দিয়েছেন', 'Decided by'), selected.decided_by || '—'],
+                  !!selected.decided_at && [t('সিদ্ধান্তের তারিখ', 'Decided on'), n(String(selected.decided_at).slice(0, 10))],
+                  [
+                    t('কারণ', 'Reason'),
+                    (lang === 'bn' ? selected.decision_reason_bn || selected.decision_reason_en : selected.decision_reason_en || selected.decision_reason_bn) || '—',
+                  ],
+                ]}
+              />
+            )}
 
-                    <td className="py-2 px-3 text-muted-foreground w-[18%] align-middle">
-                      {m.order_notes_bn || t('তদন্ত ও শুনানি প্রক্রিয়াধীন', 'Under hearing')}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-    </div>
+            <p className="text-xs text-slate-500">{t('সিদ্ধান্ত শুধু এসি ল্যান্ড দিতে পারেন', 'Only AC Land can decide')}</p>
+          </>
+        )}
+      </DetailSheet>
+    </AdminPage>
   );
 };

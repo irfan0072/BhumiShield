@@ -325,7 +325,7 @@ export const VerifyDeedQrPage: React.FC = () => {
   // Auto-verify on mount or query param
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const paramDeed = urlParams.get('deed_no');
+    const paramDeed = urlParams.get('code') || urlParams.get('deed_no');
     const paramNoc = urlParams.get('noc_no');
     const code = paramDeed || paramNoc || 'DL-2026-1001';
     setDeedCode(code);

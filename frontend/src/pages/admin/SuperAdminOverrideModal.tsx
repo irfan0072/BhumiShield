@@ -1,37 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import {
-  ShieldAlert,
-  AlertTriangle,
-  X,
-  CheckCircle2,
-  Lock,
-  FileText,
-  Building2,
-  HelpCircle,
-  ArrowRight,
-  ShieldCheck,
-} from 'lucide-react';
-import { BhumiApi } from '../../api/client';
-import { useAppUI } from '../../i18n';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import React, { useEffect, useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
+import { BhumiApi } from '@/api/client';
+import { useAppUI } from '@/i18n';
+import { toBanglaDigits } from '@/theme/tokens';
+import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Field, FormDialog, inputCls, notify } from '@/components/admin/kit';
 
 interface SuperAdminOverrideModalProps {
   isOpen: boolean;
@@ -44,64 +20,54 @@ interface SuperAdminOverrideModalProps {
   defaultTargetId?: string;
 }
 
+const ACTION_TYPES: Array<{ id: string; bn: string; en: string }> = [
+  { id: 'TRANSFER_STAGE_ADVANCE', bn: 'আবেদন এগিয়ে নিন', en: 'Advance application' },
+  { id: 'TICKET_ESCALATE', bn: 'টিকিট জরুরি করুন', en: 'Escalate ticket' },
+  { id: 'PLOT_UNFREEZE_ADMIN', bn: 'জমি খুলে দিন', en: 'Unfreeze plot' },
+  { id: 'GENERAL_ADMIN_NOTE', bn: 'সাধারণ আদেশ', en: 'General order' },
+];
+
+const MIN_REASON = 15;
+const MIN_EVIDENCE = 5;
+
 export const SuperAdminOverrideModal: React.FC<SuperAdminOverrideModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
   actionType,
   targetId: propTargetId,
-  extraContext,
   defaultTargetType = 'TRANSFER_STAGE_ADVANCE',
   defaultTargetId = '',
 }) => {
-  const { t, lang, user } = useAppUI();
+  const { t, lang } = useAppUI();
   const [targetType, setTargetType] = useState<string>(actionType || defaultTargetType);
   const [targetId, setTargetId] = useState<string>(propTargetId !== undefined ? String(propTargetId) : defaultTargetId);
+  const [reasonBn, setReasonBn] = useState('');
+  const [evidenceRef, setEvidenceRef] = useState('');
+  const [confirmed, setConfirmed] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (actionType) setTargetType(actionType);
-    if (propTargetId !== undefined) setTargetId(String(propTargetId));
-  }, [actionType, propTargetId]);
-  const [reasonBn, setReasonBn] = useState<string>('');
-  const [evidenceRef, setEvidenceRef] = useState<string>('');
-  const [confirmed, setConfirmed] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
+  // Fresh form every time the dialog opens, prefilled from the caller.
   useEffect(() => {
     if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+    setTargetType(actionType || defaultTargetType);
+    setTargetId(propTargetId !== undefined && propTargetId !== null ? String(propTargetId) : defaultTargetId);
+    setReasonBn('');
+    setEvidenceRef('');
+    setConfirmed(false);
+  }, [isOpen, actionType, propTargetId, defaultTargetType, defaultTargetId]);
 
-  if (!isOpen) return null;
+  const reasonLen = reasonBn.trim().length;
+  const evidenceLen = evidenceRef.trim().length;
+  const valid = !!targetType && targetId.trim().length > 0 && reasonLen >= MIN_REASON && evidenceLen >= MIN_EVIDENCE && confirmed;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg(null);
+  // Keep unknown action types (passed by callers) selectable.
+  const options = ACTION_TYPES.some((a) => a.id === targetType)
+    ? ACTION_TYPES
+    : [...ACTION_TYPES, { id: targetType, bn: targetType.replace(/_/g, ' ').toLowerCase(), en: targetType.replace(/_/g, ' ').toLowerCase() }];
 
-    if (!targetId.trim()) {
-      setErrorMsg(t('লক্ষ্যবস্তুর কোড বা আইডি প্রদান করুন।', 'Please provide a Target Code or ID.'));
-      return;
-    }
-    if (reasonBn.trim().length < 15) {
-      setErrorMsg(t('ওভাররাইডের জন্য বিস্তারিত কারণ উল্লেখ আবশ্যক (কমপক্ষে ১৫ অক্ষর)।', 'Detailed reason required (minimum 15 characters).'));
-      return;
-    }
-    if (evidenceRef.trim().length < 5) {
-      setErrorMsg(t('আইনগত নথি বা সরকারি আদেশ নম্বর (Evidence) উল্লেখ আবশ্যক (কমপক্ষে ৫ অক্ষর)।', 'Official order reference or legal evidence required (minimum 5 characters).'));
-      return;
-    }
-    if (!confirmed) {
-      setErrorMsg(t('সংবেদনশীল প্রশাসনিক ওভাররাইডের জন্য সুস্পষ্ট সম্মতি বক্সে টিক দিন।', 'Please check the confirmation box to proceed with sensitive override.'));
-      return;
-    }
-
+  const submit = async () => {
+    if (!valid) return;
     setLoading(true);
     try {
       const res = await BhumiApi.performAdminOverride({
@@ -111,189 +77,95 @@ export const SuperAdminOverrideModal: React.FC<SuperAdminOverrideModalProps> = (
         evidence_reference: evidenceRef.trim(),
         confirmation: confirmed,
       });
+      notify.ok(
+        (lang === 'bn' ? res?.message_bn : res?.message_en || res?.message_bn) || t('আদেশ কার্যকর হয়েছে', 'Order applied')
+      );
       onSuccess(res);
       onClose();
-    } catch (err: any) {
-      const resp = err.response?.data;
-      setErrorMsg(resp?.message_bn || resp?.message_en || err.message || t('ওভাররাইড কার্যকর করতে ব্যর্থ হয়েছে।', 'Failed to execute administrative override.'));
+    } catch (err) {
+      notify.err(err, lang, t('আদেশ কার্যকর করা যায়নি', 'Could not apply order'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0 border-slate-200/90 shadow-2xl">
-        {/* Header */}
-        <DialogHeader className="bg-gradient-to-r from-slate-900 to-[#0A1F1C] px-6 py-4 flex flex-row items-center justify-between text-white border-b border-slate-800 space-y-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-400 shrink-0">
-              <ShieldAlert className="w-5 h-5" />
-            </div>
-            <div>
-              <DialogTitle className="text-base font-black tracking-tight text-white flex items-center gap-2">
-                <span>{t('প্রশাসনিক ওভাররাইড কনসোল', 'Administrative Override Console')}</span>
-                <Badge className="text-[10px] font-black bg-amber-400 text-slate-900 hover:bg-amber-300">
-                  SUPER ADMIN
-                </Badge>
-              </DialogTitle>
-              <DialogDescription className="text-xs text-slate-400 mt-0.5">
-                {t('অডিট ট্রেইলে স্থায়ীভাবে নথিভুক্ত নিয়ন্ত্রিত প্রশাসনিক হস্তক্ষেপ', 'Audit-chained controlled administrative intervention')}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
+    <FormDialog
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title={t('বিশেষ আদেশ', 'Special order')}
+      description={t('সব পদক্ষেপ অডিটে সংরক্ষিত হয়', 'Every step is audited')}
+      submitLabel={t('কার্যকর করুন', 'Apply')}
+      cancelLabel={t('বাতিল', 'Cancel')}
+      onSubmit={submit}
+      busy={loading}
+      disabled={!valid}
+      destructive
+    >
+      <div className="flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+        <AlertTriangle className="size-4 shrink-0" />
+        {t('আইনি সিদ্ধান্ত বদলানো যাবে না', 'Cannot override legal decisions')}
+      </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1 text-slate-800 text-xs">
-          {/* Statutory Guardrail Alert */}
-          <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-            <div>
-              <h3 className="font-extrabold text-[12px]">
-                {t('আইনি ও সাংবিধানিক সীমাবদ্ধতা (Rule M3/T3)', 'Statutory Governance Boundary (Rule M3/T3)')}
-              </h3>
-              <p className="text-[11px] text-rose-700 mt-0.5 leading-relaxed">
-                {t(
-                  'প্রশাসনিক ওভাররাইড দ্বারা সহকারী কমিশনার (ভূমি)-এর সাংবিধানিক নামজারি ডিক্রি বা সাব-রেজিস্ট্রারের বায়োমেট্রিক দলিল নিবন্ধন প্রতিস্থাপন আইনত নিষিদ্ধ। ওভাররাইড কোনো অনুপস্থিত প্রমাণপত্র তৈরি করতে পারে না। প্রতিটি পদক্ষেপের পূর্বাপর অবস্থা এবং আপনার প্রকৃত পরিচয় অপরিবর্তনীয় অডিট লেজারে রেকর্ড হবে।',
-                  'Administrative overrides cannot supersede AC Land statutory mutation decrees or Sub-Registrar biometric registration. It cannot fabricate absent evidence. Before/after states and your true identity will be logged in the immutable audit ledger.'
-                )}
-              </p>
-            </div>
-          </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label={t('কাজের ধরন', 'Action type')}>
+          <Select value={targetType} onValueChange={setTargetType}>
+            <SelectTrigger className="h-9 w-full rounded-lg text-sm">
+              <SelectValue placeholder={t('বেছে নিন', 'Choose')} />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((a) => (
+                <SelectItem key={a.id} value={a.id} className="text-sm">
+                  {t(a.bn, a.en)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label={t('কেস নম্বর', 'Case ID')}>
+          <input
+            className={inputCls}
+            value={targetId}
+            onChange={(e) => setTargetId(e.target.value)}
+            placeholder="TR-2026-000101"
+          />
+        </Field>
+      </div>
 
-          {errorMsg && (
-            <div className="p-3 rounded-lg bg-rose-100 border border-rose-300 text-rose-900 text-xs font-bold">
-              {errorMsg}
-            </div>
+      <Field label={t('কারণ', 'Reason')}>
+        <Textarea
+          rows={3}
+          value={reasonBn}
+          onChange={(e) => setReasonBn(e.target.value)}
+          placeholder={t('কেন প্রয়োজন লিখুন', 'Why is this needed')}
+          className="min-h-0 rounded-lg text-sm"
+        />
+        <span
+          className={cn(
+            'block text-right text-xs',
+            reasonLen >= MIN_REASON ? 'text-emerald-600' : 'text-slate-400'
           )}
+        >
+          {toBanglaDigits(reasonLen, lang)}/{toBanglaDigits(MIN_REASON, lang)}
+        </span>
+      </Field>
 
-          {/* Target Type & Target ID */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <Label className="block text-[11px] font-bold text-slate-700 mb-1">
-                {t('ওভাররাইডের ক্ষেত্র (Target Type)', 'Override Target Type')} *
-              </Label>
-              <Select value={targetType} onValueChange={setTargetType}>
-                <SelectTrigger className="w-full text-xs font-semibold h-9">
-                  <SelectValue placeholder={t('ক্ষেত্র নির্বাচন করুন', 'Select Target Type')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="TRANSFER_STAGE_ADVANCE" className="text-xs">সেবা আবেদন ধাপ অগ্রগতি (Transfer Advance)</SelectItem>
-                  <SelectItem value="TICKET_ESCALATE" className="text-xs">জরুরি সাপোর্ট টিকিট এসকেলেশন (Ticket Escalate)</SelectItem>
-                  <SelectItem value="PLOT_UNFREEZE_ADMIN" className="text-xs">প্রশাসনিক স্থগিতাদেশ অবমুক্ত (Plot Unfreeze)</SelectItem>
-                  <SelectItem value="GENERAL_ADMIN_NOTE" className="text-xs">সার্বভৌম প্রশাসনিক নোট (General Override)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="block text-[11px] font-bold text-slate-700 mb-1">
-                {t('কেস কোড বা আইডি (Target ID)', 'Case Code / Target ID')} *
-              </Label>
-              <Input
-                type="text"
-                placeholder={t('যেমন: TR-2026-000101 বা টিকিট নং', 'e.g. TR-2026-000101 or Ticket ID')}
-                value={targetId}
-                onChange={(e) => setTargetId(e.target.value)}
-                className="h-9 text-xs font-semibold"
-                required
-              />
-            </div>
-          </div>
+      <Field
+        label={t('আদেশ নম্বর', 'Order reference')}
+        hint={evidenceLen > 0 && evidenceLen < MIN_EVIDENCE ? t('কমপক্ষে ৫ অক্ষর', 'At least 5 characters') : undefined}
+      >
+        <input
+          className={inputCls}
+          value={evidenceRef}
+          onChange={(e) => setEvidenceRef(e.target.value)}
+          placeholder={t('স্মারক বা আদালতের আদেশ', 'Memo or court order')}
+        />
+      </Field>
 
-          {/* Reason BN (Mandatory min 15 chars) */}
-          <div>
-            <Label className="block text-[11px] font-bold text-slate-700 mb-1">
-              {t('প্রশাসনিক ওভাররাইডের সুনির্দিষ্ট কারণ (Reason BN)', 'Administrative Reason (BN)')} *
-            </Label>
-            <Textarea
-              rows={3}
-              placeholder={t('ওভাররাইড কেন প্রয়োজন তা আইনগত ও পরিচালনাগত প্রেক্ষাপটসহ বিস্তারিত লিখুন (কমপক্ষে ১৫ অক্ষর)...', 'Explain why this override is necessary with operational and legal context (min 15 chars)...')}
-              value={reasonBn}
-              onChange={(e) => setReasonBn(e.target.value)}
-              className="text-xs"
-              required
-            />
-            <div className="flex justify-between items-center text-[10px] text-slate-400 mt-0.5">
-              <span>{t('ন্যূনতম ১৫ অক্ষর আবশ্যক', 'Min 15 chars required')}</span>
-              <span>{reasonBn.length}/15+</span>
-            </div>
-          </div>
-
-          {/* Evidence Reference (Mandatory min 5 chars) */}
-          <div>
-            <Label className="block text-[11px] font-bold text-slate-700 mb-1">
-              {t('সংশ্লিষ্ট নথি / সরকারি স্মারক নম্বর (Evidence Reference)', 'Official Order / Evidence Reference')} *
-            </Label>
-            <Input
-              type="text"
-              placeholder={t('যেমন: স্মারক নং-ভুমিসেবা/প্রশাসন/২০২৬-০৮৯ বা আদালতের আদেশ নং', 'e.g. Order Memo No. / Court Decree Ref')}
-              value={evidenceRef}
-              onChange={(e) => setEvidenceRef(e.target.value)}
-              className="h-9 text-xs"
-              required
-            />
-          </div>
-
-          {/* Audit Identity Notice */}
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-[11px] flex items-center justify-between">
-            <span className="font-semibold">
-              {t('অ্যাক্টর পরিচয় (Actor Identity):', 'Actor Identity:')}{' '}
-              <span className="font-bold text-slate-900">@{user?.username || 'admin'}</span> ({user?.role || 'system_admin'})
-            </span>
-            <Badge className="bg-emerald-100 text-[#006A4E] text-[10px] font-extrabold hover:bg-emerald-200">
-              Ed25519 CHAINED
-            </Badge>
-          </div>
-
-          {/* Confirmation Checkbox */}
-          <label className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50/70 border border-amber-200 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={confirmed}
-              onChange={(e) => setConfirmed(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded-sm border-slate-300 text-[#006A4E] focus:ring-[#006A4E]"
-            />
-            <span className="text-[11px] text-slate-800 font-medium leading-relaxed">
-              {t(
-                'আমি নিশ্চিত করছি যে এই প্রশাসনিক পদক্ষেপটি যথাযথ তদন্ত ও অনুমোদিত সরকারি আদেশের ভিত্তিতে নেওয়া হচ্ছে এবং এর সম্পূর্ণ দায়ভার ও ফলাফল ক্রিপ্টোগ্রাফিক অডিট লগে আমার পরিচয়ে স্থায়ীভাবে নথিভুক্ত থাকবে।',
-                'I confirm this administrative action is taken based on approved official orders, and full accountability is permanently recorded under my identity in the cryptographic audit ledger.'
-              )}
-            </span>
-          </label>
-
-          {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={loading}
-              className="text-xs font-bold"
-            >
-              {t('বাতিল', 'Cancel')}
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading || !confirmed}
-              className={`text-xs font-bold text-white transition flex items-center gap-1.5 shadow-xs ${
-                confirmed && !loading
-                  ? 'bg-rose-700 hover:bg-rose-800'
-                  : 'bg-slate-400 opacity-60'
-              }`}
-            >
-              {loading ? (
-                <span>{t('কার্যকর হচ্ছে...', 'Executing...')}</span>
-              ) : (
-                <>
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>{t('ওভাররাইড কার্যকর করুন', 'Execute Override')}</span>
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-slate-200 px-3 py-2.5">
+        <Checkbox checked={confirmed} onCheckedChange={(v) => setConfirmed(v === true)} />
+        <span className="text-sm text-slate-700">{t('আমি দায়িত্ব নিচ্ছি', 'I take responsibility')}</span>
+      </label>
+    </FormDialog>
   );
 };

@@ -1,39 +1,43 @@
 import React from 'react';
 import {
-  FileCheck2,
-  Building2,
-  Landmark,
-  Scale,
-  ShieldAlert,
-  Shield,
-  Gavel,
-  FileText,
-  BookOpen,
-  Layers,
-  QrCode,
-  Calculator,
-  ListChecks,
-  Flame,
-  FileSearch,
-  Compass,
-  LayoutDashboard,
-  Search,
-  ShieldCheck,
-  CheckCircle2,
-  FileSpreadsheet,
-  PlusCircle,
-  UserCheck,
   AlertTriangle,
+  BookOpen,
+  Building2,
+  Calculator,
+  CheckCircle2,
+  ChevronRight,
+  ChevronsUpDown,
+  Compass,
+  FileCheck2,
+  FileSearch,
+  FileSpreadsheet,
+  FileText,
+  Gavel,
   Globe,
-  ExternalLink,
+  Landmark,
+  Layers,
+  LayoutDashboard,
+  ListChecks,
   LogOut,
-  ArrowRight,
-  Briefcase,
-  KeyRound,
+  Menu,
+  Minus,
+  Plus,
+  PlusCircle,
+  QrCode,
+  RefreshCcw,
+  Scale,
+  Search,
+  ShieldAlert,
+  ShieldCheck,
+  Timer,
+  Type,
   User,
+  UserCheck,
+  Undo2,
 } from 'lucide-react';
-import { useAppUI, UserRole } from '@/i18n';
-import { toBanglaDigits } from '@/theme/tokens';
+import { Toaster } from 'sonner';
+import { useAppUI } from '@/i18n';
+import { cn } from '@/lib/utils';
 import {
   Sidebar,
   SidebarContent,
@@ -48,143 +52,524 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from '@/components/ui/command';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { AdminProfileModal } from '@/components/admin/AdminProfileModal';
 
 export type OfficialWorkspaceType = 'registrar' | 'acland' | 'bank' | 'lawyer' | 'specialist';
 
-interface NavItemConfig {
+/* ------------------------------------------------------------------ */
+/* Menu configuration                                                  */
+/* ------------------------------------------------------------------ */
+
+interface NavItem {
   id: string;
-  titleBn: string;
-  titleEn: string;
-  icon: React.ComponentType<{ className?: string }>;
+  bn: string;
+  en: string;
+  icon: React.ElementType;
+  /** Roles that see this item in the menu. Omit = everyone in this workspace. Admins always see all. */
+  roles?: string[];
 }
-
+interface NavGroup {
+  id: string;
+  bn: string;
+  en: string;
+  items: NavItem[];
+}
 interface WorkspaceConfig {
-  titleBn: string;
-  titleEn: string;
-  deptBn: string;
-  deptEn: string;
-  groupBn: string;
-  groupEn: string;
-  icon: React.ComponentType<{ className?: string }>;
+  bn: string;
+  en: string;
+  icon: React.ElementType;
   defaultTab: string;
-  navItems: NavItemConfig[];
+  groups: NavGroup[];
 }
 
-const WORKSPACE_CONFIGS: Record<OfficialWorkspaceType, WorkspaceConfig> = {
+const CHECKER_REG = ['sub_registrar'];
+const LAND_CORE = ['ac_land', 'land_office_assistant'];
+
+const WORKSPACES: Record<OfficialWorkspaceType, WorkspaceConfig> = {
   registrar: {
-    titleBn: 'সাব-রেজিস্ট্রি',
-    titleEn: 'Sub-Registry',
-    deptBn: 'আইন ও বিচার বিভাগ',
-    deptEn: 'Ministry of Law',
-    groupBn: 'কার্যক্রম ও সেবা',
-    groupEn: 'Services & Modules',
+    bn: 'সাব-রেজিস্ট্রি অফিস',
+    en: 'Sub-Registry Office',
     icon: FileCheck2,
     defaultTab: 'overview',
-    navItems: [
-      { id: 'overview', titleBn: 'ড্যাশবোর্ড', titleEn: 'Dashboard', icon: LayoutDashboard },
-      { id: 'held', titleBn: 'এজলাস শুনানি', titleEn: 'Hearings', icon: Gavel },
-      { id: 'wizard', titleBn: 'নতুন দলিল', titleEn: 'New Deed', icon: FileText },
-      { id: 'deeds', titleBn: 'দলিলপত্র', titleEn: 'Deeds', icon: BookOpen },
-      { id: 'khatian', titleBn: 'খতিয়ান ও দাগ', titleEn: 'Khatian & Dag', icon: Layers },
-      { id: 'verifier', titleBn: 'দলিল যাচাই', titleEn: 'Verify Deed', icon: QrCode },
-      { id: 'fees', titleBn: 'ফি ক্যালকুলেটর', titleEn: 'Fee Calculator', icon: Calculator },
-      { id: 'onboarding', titleBn: 'অনবোর্ডিং', titleEn: 'Onboarding', icon: ListChecks },
+    groups: [
+      {
+        id: 'work',
+        bn: 'দৈনিক কাজ',
+        en: 'Daily work',
+        items: [
+          { id: 'overview', bn: 'ড্যাশবোর্ড', en: 'Dashboard', icon: LayoutDashboard },
+          { id: 'wizard', bn: 'নতুন দলিল', en: 'New deed', icon: FileText },
+          { id: 'held', bn: 'শুনানি', en: 'Hearings', icon: Gavel, roles: CHECKER_REG },
+          { id: 'deeds', bn: 'দলিল তালিকা', en: 'Deeds', icon: BookOpen },
+        ],
+      },
+      {
+        id: 'tools',
+        bn: 'সরঞ্জাম',
+        en: 'Tools',
+        items: [
+          { id: 'khatian', bn: 'খতিয়ান খুঁজুন', en: 'Find khatian', icon: Layers },
+          { id: 'verifier', bn: 'দলিল যাচাই', en: 'Verify deed', icon: QrCode },
+          { id: 'fees', bn: 'ফি হিসাব', en: 'Fee calculator', icon: Calculator },
+          { id: 'onboarding', bn: 'রেকর্ড অনুমোদন', en: 'Record approval', icon: ListChecks, roles: CHECKER_REG },
+        ],
+      },
     ],
   },
   acland: {
-    titleBn: 'সহকারী কমিশনার (ভূমি)',
-    titleEn: 'AC Land Court',
-    deptBn: 'ভূমি মন্ত্রণালয়',
-    deptEn: 'Ministry of Land',
-    groupBn: 'কার্যক্রম ও সেবা',
-    groupEn: 'Services & Modules',
+    bn: 'উপজেলা ভূমি অফিস',
+    en: 'Upazila Land Office',
     icon: Building2,
     defaultTab: 'overview',
-    navItems: [
-      { id: 'overview', titleBn: 'ড্যাশবোর্ড', titleEn: 'Dashboard', icon: LayoutDashboard },
-      { id: 'mutations', titleBn: 'নামজারি কেস', titleEn: 'Mutations', icon: Flame },
-      { id: 'khatians', titleBn: 'খতিয়ান ও দাগ', titleEn: 'Khatian & Dag', icon: Layers },
-      { id: 'disputes', titleBn: 'বিরোধ ও শুনানি', titleEn: 'Disputes & Hearings', icon: Gavel },
-      { id: 'field_reports', titleBn: 'ফিল্ড রিপোর্ট', titleEn: 'Field Reports', icon: FileSearch },
-      { id: 'survey_batches', titleBn: 'জরিপ গেজেট', titleEn: 'Survey Batches', icon: Compass },
-      { id: 'sla_overview', titleBn: 'এসএলএ মনিটর', titleEn: 'SLA Monitor', icon: LayoutDashboard },
-      { id: 'appeals', titleBn: 'মিস কেস ও আপিল', titleEn: 'Appeals', icon: Scale },
-      { id: 'explorer', titleBn: 'খতিয়ান তল্লাশি', titleEn: 'Search Khatian', icon: Search },
-      { id: 'verifier', titleBn: 'দলিল নিরাপত্তা', titleEn: 'Deed Security', icon: ShieldCheck },
-      { id: 'onboarding', titleBn: 'অনবোর্ডিং', titleEn: 'Onboarding', icon: CheckCircle2 },
+    groups: [
+      {
+        id: 'cases',
+        bn: 'মামলা ও আবেদন',
+        en: 'Cases',
+        items: [
+          { id: 'overview', bn: 'ড্যাশবোর্ড', en: 'Dashboard', icon: LayoutDashboard },
+          {
+            id: 'mutations',
+            bn: 'নামজারি',
+            en: 'Mutations',
+            icon: RefreshCcw,
+            roles: [...LAND_CORE, 'field_verification_officer', 'uno_supervisor', 'appellate_reviewer'],
+          },
+          { id: 'disputes', bn: 'বিরোধ ও শুনানি', en: 'Disputes', icon: Gavel, roles: [...LAND_CORE, 'uno_supervisor', 'appellate_reviewer'] },
+          { id: 'appeals', bn: 'আপিল', en: 'Appeals', icon: Scale, roles: ['ac_land', 'uno_supervisor', 'appellate_reviewer'] },
+          { id: 'khatians', bn: 'সমস্যাযুক্ত খতিয়ান', en: 'Flagged khatians', icon: AlertTriangle, roles: LAND_CORE },
+        ],
+      },
+      {
+        id: 'field',
+        bn: 'মাঠ ও সময়সীমা',
+        en: 'Field & deadlines',
+        items: [
+          {
+            id: 'field_reports',
+            bn: 'মাঠ প্রতিবেদন',
+            en: 'Field reports',
+            icon: FileSearch,
+            roles: [...LAND_CORE, 'field_verification_officer', 'uno_supervisor'],
+          },
+          { id: 'sla_overview', bn: 'সময়সীমা তাগিদ', en: 'Deadlines', icon: Timer, roles: [...LAND_CORE, 'uno_supervisor'] },
+        ],
+      },
+      {
+        id: 'survey',
+        bn: 'জরিপ রেকর্ড',
+        en: 'Survey records',
+        items: [
+          {
+            id: 'survey_batches',
+            bn: 'জরিপ ব্যাচ',
+            en: 'Survey batches',
+            icon: Compass,
+            roles: ['ac_land', 'settlement_records_officer', 'settlement_checker'],
+          },
+          { id: 'onboarding', bn: 'রেকর্ড অনুমোদন', en: 'Record approval', icon: CheckCircle2, roles: ['ac_land', 'settlement_checker'] },
+        ],
+      },
+      {
+        id: 'tools',
+        bn: 'সরঞ্জাম',
+        en: 'Tools',
+        items: [
+          { id: 'explorer', bn: 'খতিয়ান খুঁজুন', en: 'Find khatian', icon: Search },
+          { id: 'verifier', bn: 'দলিল যাচাই', en: 'Verify deed', icon: ShieldCheck },
+        ],
+      },
     ],
   },
   bank: {
-    titleBn: 'ব্যাংক জামানত ডেস্ক',
-    titleEn: 'Bank Mortgage Desk',
-    deptBn: 'জামানত ও ঋণ শাখা',
-    deptEn: 'Credit & Collateral',
-    groupBn: 'কার্যক্রম ও সেবা',
-    groupEn: 'Services & Modules',
+    bn: 'ব্যাংক ঋণ ডেস্ক',
+    en: 'Bank Loan Desk',
     icon: Landmark,
     defaultTab: 'overview',
-    navItems: [
-      { id: 'overview', titleBn: 'ড্যাশবোর্ড', titleEn: 'Dashboard', icon: LayoutDashboard },
-      { id: 'mortgages', titleBn: 'বন্ধকী জমি', titleEn: 'Mortgages', icon: FileSpreadsheet },
-      { id: 'new_lien', titleBn: 'নতুন বন্ধক', titleEn: 'New Lien', icon: PlusCircle },
-      { id: 'noc', titleBn: 'অনাপত্তি সনদ (NOC)', titleEn: 'NOC Releases', icon: ShieldCheck },
-      { id: 'khatian', titleBn: 'খতিয়ান তল্লাশি', titleEn: 'Title Search', icon: Layers },
+    groups: [
+      {
+        id: 'work',
+        bn: 'বন্ধক',
+        en: 'Mortgages',
+        items: [
+          { id: 'overview', bn: 'ড্যাশবোর্ড', en: 'Dashboard', icon: LayoutDashboard },
+          { id: 'new_lien', bn: 'নতুন বন্ধক', en: 'New mortgage', icon: PlusCircle },
+          { id: 'mortgages', bn: 'বন্ধক তালিকা', en: 'Mortgages', icon: FileSpreadsheet },
+          { id: 'noc', bn: 'ছাড়পত্র (NOC)', en: 'Release (NOC)', icon: ShieldCheck },
+        ],
+      },
+      {
+        id: 'tools',
+        bn: 'সরঞ্জাম',
+        en: 'Tools',
+        items: [{ id: 'khatian', bn: 'খতিয়ান খুঁজুন', en: 'Find khatian', icon: Layers }],
+      },
     ],
   },
   lawyer: {
-    titleBn: 'আইনজীবী পোর্টাল',
-    titleEn: 'Legal Counsel Portal',
-    deptBn: 'দেওয়ানি আদালত ডেস্ক',
-    deptEn: 'Civil Court Desk',
-    groupBn: 'কার্যক্রম ও সেবা',
-    groupEn: 'Services & Modules',
+    bn: 'আইনজীবী পোর্টাল',
+    en: 'Lawyer Portal',
     icon: Scale,
     defaultTab: 'overview',
-    navItems: [
-      { id: 'overview', titleBn: 'ড্যাশবোর্ড', titleEn: 'Dashboard', icon: LayoutDashboard },
-      { id: 'step1', titleBn: 'বার সনদ যাচাই', titleEn: 'Bar License', icon: UserCheck },
-      { id: 'step2', titleBn: 'মামলার তথ্য', titleEn: 'Suit Details', icon: AlertTriangle },
-      { id: 'step3', titleBn: 'নিষেধাজ্ঞা আরজি', titleEn: 'Injunction Petition', icon: Gavel },
+    groups: [
+      {
+        id: 'work',
+        bn: 'মামলা দাখিল',
+        en: 'File a case',
+        items: [
+          { id: 'overview', bn: 'ড্যাশবোর্ড', en: 'Dashboard', icon: LayoutDashboard },
+          { id: 'step1', bn: '১. সনদ যাচাই', en: '1. Licence check', icon: UserCheck },
+          { id: 'step2', bn: '২. মামলার তথ্য', en: '2. Case details', icon: FileText },
+          { id: 'step3', bn: '৩. নিষেধাজ্ঞা আবেদন', en: '3. Injunction', icon: Gavel },
+        ],
+      },
     ],
   },
   specialist: {
-    titleBn: 'ভূমি অধিগ্রহণ শাখা',
-    titleEn: 'Land Acquisition Wing',
-    deptBn: 'জেলা প্রশাসন',
-    deptEn: 'DC Office',
-    groupBn: 'কার্যক্রম ও সেবা',
-    groupEn: 'Services & Modules',
+    bn: 'ভূমি অধিগ্রহণ শাখা',
+    en: 'Land Acquisition',
     icon: ShieldAlert,
     defaultTab: 'overview',
-    navItems: [
-      { id: 'overview', titleBn: 'ড্যাশবোর্ড', titleEn: 'Dashboard', icon: LayoutDashboard },
-      { id: 'la_cases', titleBn: 'অধিগ্রহণ কেস', titleEn: 'LA Cases', icon: Building2 },
-      { id: 'title_scrutiny', titleBn: 'টাইটেল যাচাই', titleEn: 'Title Scrutiny', icon: FileCheck2 },
+    groups: [
+      {
+        id: 'work',
+        bn: 'অধিগ্রহণ',
+        en: 'Acquisition',
+        items: [
+          { id: 'overview', bn: 'ড্যাশবোর্ড', en: 'Dashboard', icon: LayoutDashboard },
+          { id: 'la_cases', bn: 'অধিগ্রহণ মামলা', en: 'Cases', icon: Building2 },
+          { id: 'title_scrutiny', bn: 'মালিকানা যাচাই', en: 'Title check', icon: FileCheck2 },
+        ],
+      },
     ],
   },
 };
+
+/** Short role names shown under the office name. */
+const ROLE_LABELS: Record<string, [string, string]> = {
+  sub_registrar: ['সাব-রেজিস্ট্রার', 'Sub-Registrar'],
+  registry_data_officer: ['দলিল এন্ট্রি কর্মকর্তা', 'Deed entry officer'],
+  ac_land: ['সহকারী কমিশনার (ভূমি)', 'AC Land'],
+  land_office_assistant: ['ভূমি অফিস সহকারী', 'Land office assistant'],
+  field_verification_officer: ['মাঠ কর্মকর্তা', 'Field officer'],
+  settlement_records_officer: ['জরিপ রেকর্ড কর্মকর্তা', 'Survey records officer'],
+  settlement_checker: ['জরিপ অনুমোদনকারী', 'Survey checker'],
+  uno_supervisor: ['ইউএনও', 'UNO'],
+  appellate_reviewer: ['আপিল কর্মকর্তা', 'Appeals officer'],
+  bank_officer: ['ব্যাংক কর্মকর্তা', 'Bank officer'],
+  bank_manager: ['শাখা ব্যবস্থাপক', 'Branch manager'],
+  lawyer_court_user: ['আইনজীবী', 'Lawyer'],
+  dc_acquisition_officer: ['অধিগ্রহণ কর্মকর্তা', 'Acquisition officer'],
+  admin: ['অ্যাডমিন', 'Admin'],
+  system_admin: ['অ্যাডমিন', 'Admin'],
+};
+
+const ADMIN_ROLES = ['admin', 'system_admin'];
+
+/** Menu groups filtered for the signed-in role. */
+export const visibleOfficialNav = (workspace: OfficialWorkspaceType, role: string): NavGroup[] =>
+  WORKSPACES[workspace].groups
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((i) => !i.roles || ADMIN_ROLES.includes(role) || i.roles.includes(role)),
+    }))
+    .filter((g) => g.items.length > 0);
+
+/* URL slugs per sub-page (kept from the previous shell so old links keep working). */
+const SLUGS: Record<string, string> = {
+  field_reports: 'field-reports',
+  survey_batches: 'survey',
+  sla_overview: 'sla',
+  new_lien: 'new-lien',
+  la_cases: 'la-cases',
+  title_scrutiny: 'scrutiny',
+  step1: 'license',
+  step2: 'suit',
+  step3: 'injunction',
+};
+
+const resolveFromUrl = (workspaceType: OfficialWorkspaceType): string => {
+  const config = WORKSPACES[workspaceType];
+  if (typeof window === 'undefined') return config.defaultTab;
+  const path = window.location.pathname.toLowerCase();
+  const search = new URLSearchParams(window.location.search);
+  // `section` is written by useAppUI().setActiveSubTab during in-app navigation.
+  const tabParam = search.get('tab') || search.get('sub') || search.get('section');
+  const allIds = config.groups.flatMap((g) => g.items.map((i) => i.id));
+  if (tabParam && allIds.includes(tabParam)) return tabParam;
+
+  const has = (...parts: string[]) => parts.some((p) => path.includes(p));
+  switch (workspaceType) {
+    case 'registrar':
+      if (has('/wizard', '/new-deed')) return 'wizard';
+      if (has('/deeds', '/balam')) return 'deeds';
+      if (has('/fees', '/calculator')) return 'fees';
+      if (has('/khatian')) return 'khatian';
+      if (has('/verifier')) return 'verifier';
+      if (has('/onboarding', '/batch')) return 'onboarding';
+      if (has('/held', '/hearing')) return 'held';
+      break;
+    case 'acland':
+      if (has('/mutations')) return 'mutations';
+      if (has('/khatian', '/plot')) return 'khatians';
+      if (has('/dispute', '/tribunal')) return 'disputes';
+      if (has('/field', '/surveyor')) return 'field_reports';
+      if (has('/survey', '/batch')) return 'survey_batches';
+      if (has('/sla', '/metric')) return 'sla_overview';
+      if (has('/appeal', '/miss')) return 'appeals';
+      if (has('/explorer', '/search')) return 'explorer';
+      if (has('/verifier', '/security')) return 'verifier';
+      if (has('/onboarding')) return 'onboarding';
+      break;
+    case 'bank':
+      if (has('/new', '/lien', '/create')) return 'new_lien';
+      if (has('/noc', '/release')) return 'noc';
+      if (has('/khatian', '/title')) return 'khatian';
+      if (has('/mortgage')) return 'mortgages';
+      break;
+    case 'lawyer':
+      if (has('/suit', '/dispute', '/step2')) return 'step2';
+      if (has('/injunction', '/petition', '/docket', '/step3')) return 'step3';
+      if (has('/license', '/bar', '/step1')) return 'step1';
+      break;
+    case 'specialist':
+      if (has('/scrutiny', '/title')) return 'title_scrutiny';
+      if (has('/la-cases', '/cases')) return 'la_cases';
+      break;
+  }
+  return config.defaultTab;
+};
+
+/* ------------------------------------------------------------------ */
+/* Pieces                                                              */
+/* ------------------------------------------------------------------ */
+
+const useDisplayName = () => {
+  const { user, lang } = useAppUI();
+  const name = lang === 'bn' ? user?.full_name_bn || user?.full_name_en : user?.full_name_en || user?.full_name_bn;
+  return (name || user?.username || '—').replace(/\s*\(.*\)\s*$/, '');
+};
+
+const AccountMenu: React.FC<{ onOpenProfile: () => void; onNavigateMainTab: (tab: string) => void }> = ({
+  onOpenProfile,
+  onNavigateMainTab,
+}) => {
+  const { t, logout, fontStep, increaseFont, decreaseFont } = useAppUI();
+  return (
+    <>
+      <DropdownMenuItem onClick={onOpenProfile} className="cursor-pointer gap-2">
+        <User className="size-4" />
+        {t('আমার প্রোফাইল', 'My profile')}
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={() => onNavigateMainTab('landing')} className="cursor-pointer gap-2">
+        <Globe className="size-4" />
+        {t('ওয়েবসাইট দেখুন', 'Open website')}
+      </DropdownMenuItem>
+      <div className="flex items-center gap-2 px-2 py-1.5 text-sm">
+        <Type className="size-4 text-slate-500" />
+        <span className="flex-1 text-slate-700">{t('লেখার আকার', 'Text size')}</span>
+        <button
+          type="button"
+          onClick={decreaseFont}
+          disabled={fontStep === 0}
+          aria-label={t('ছোট', 'Smaller')}
+          className="flex size-7 items-center justify-center rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40 cursor-pointer"
+        >
+          <Minus className="size-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={increaseFont}
+          disabled={fontStep === 2}
+          aria-label={t('বড়', 'Larger')}
+          className="flex size-7 items-center justify-center rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-40 cursor-pointer"
+        >
+          <Plus className="size-3.5" />
+        </button>
+      </div>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem
+        onClick={() => {
+          logout();
+          onNavigateMainTab('auth');
+        }}
+        className="cursor-pointer gap-2 text-rose-600 focus:bg-rose-50 focus:text-rose-700"
+      >
+        <LogOut className="size-4" />
+        {t('লগআউট', 'Sign out')}
+      </DropdownMenuItem>
+    </>
+  );
+};
+
+const OfficialSidebar: React.FC<{
+  workspaceType: OfficialWorkspaceType;
+  groups: NavGroup[];
+  current: string;
+  onSelect: (id: string) => void;
+  onOpenSearch: () => void;
+  onOpenProfile: () => void;
+  onNavigateMainTab: (tab: string) => void;
+}> = ({ workspaceType, groups, current, onSelect, onOpenSearch, onOpenProfile, onNavigateMainTab }) => {
+  const { lang, t, role } = useAppUI();
+  const { isMobile, setOpenMobile } = useSidebar();
+  const config = WORKSPACES[workspaceType];
+  const OrgIcon = config.icon;
+  const displayName = useDisplayName();
+  const roleLabel = ROLE_LABELS[role]?.[lang === 'bn' ? 0 : 1] || role;
+
+  const go = (id: string) => {
+    onSelect(id);
+    if (isMobile) setOpenMobile(false);
+  };
+
+  return (
+    <Sidebar collapsible="icon" className="border-r border-slate-200">
+      <SidebarHeader className="gap-2 p-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" onClick={() => go(config.defaultTab)} className="cursor-pointer">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#006A4E] text-white">
+                <OrgIcon className="size-4" />
+              </span>
+              <span className="grid min-w-0 flex-1 text-left leading-tight">
+                <span className="truncate text-sm font-semibold text-slate-900">{lang === 'bn' ? config.bn : config.en}</span>
+                <span className="truncate text-xs text-slate-500">{roleLabel}</span>
+              </span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={onOpenSearch}
+              tooltip={t('খুঁজুন', 'Search')}
+              className="h-8 cursor-pointer border border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+            >
+              <Search className="size-4" />
+              <span className="flex-1">{t('খুঁজুন…', 'Search…')}</span>
+              <kbd className="rounded border border-slate-200 bg-slate-50 px-1 text-[10px] text-slate-400 group-data-[collapsible=icon]:hidden">
+                Ctrl K
+              </kbd>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+
+      <SidebarContent className="gap-0 scrollbar-thin">
+        {groups.map((group, gi) => (
+          <SidebarGroup key={group.id} className="py-1">
+            {(gi > 0 || groups.length > 1) && (
+              <SidebarGroupLabel className="text-xs text-slate-500">{lang === 'bn' ? group.bn : group.en}</SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const title = lang === 'bn' ? item.bn : item.en;
+                  return (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        isActive={current === item.id}
+                        tooltip={title}
+                        onClick={() => go(item.id)}
+                        className="cursor-pointer text-slate-700 data-[active=true]:bg-emerald-50 data-[active=true]:font-medium data-[active=true]:text-[#006A4E]"
+                      >
+                        <Icon className="size-4" />
+                        <span>{title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
+
+      <SidebarFooter className="border-t border-slate-100 p-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton size="lg" className="cursor-pointer data-[state=open]:bg-slate-100">
+                  <Avatar className="size-8 rounded-lg">
+                    <AvatarFallback className="rounded-lg bg-[#006A4E] text-xs font-semibold text-white">
+                      {displayName.substring(0, 1).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="grid min-w-0 flex-1 text-left leading-tight">
+                    <span className="truncate text-sm font-medium text-slate-800">{displayName}</span>
+                    <span className="truncate text-xs text-slate-500">{roleLabel}</span>
+                  </span>
+                  <ChevronsUpDown className="size-4 text-slate-400" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side={isMobile ? 'top' : 'right'} align="end" sideOffset={8} className="w-60">
+                <DropdownMenuLabel className="truncate text-sm font-medium">{displayName}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <AccountMenu onOpenProfile={onOpenProfile} onNavigateMainTab={onNavigateMainTab} />
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
+  );
+};
+
+const MobileDock: React.FC<{ groups: NavGroup[]; current: string; onSelect: (id: string) => void }> = ({
+  groups,
+  current,
+  onSelect,
+}) => {
+  const { lang } = useAppUI();
+  const { setOpenMobile, openMobile } = useSidebar();
+  const items = groups.flatMap((g) => g.items).slice(0, 4);
+  const inDock = items.some((i) => i.id === current);
+  const btn = (active: boolean) =>
+    cn('flex flex-col items-center justify-center gap-0.5 px-1 text-[11px] cursor-pointer', active ? 'font-medium text-[#006A4E]' : 'text-slate-500');
+  return (
+    <nav className="grid h-14 shrink-0 grid-cols-5 border-t border-slate-200 bg-white md:hidden">
+      {items.map((item) => {
+        const Icon = item.icon;
+        return (
+          <button key={item.id} type="button" onClick={() => onSelect(item.id)} className={btn(current === item.id)}>
+            <Icon className="size-5" />
+            <span className="max-w-full truncate">{(lang === 'bn' ? item.bn : item.en).replace(/^\S+\.\s/, '')}</span>
+          </button>
+        );
+      })}
+      <button type="button" onClick={() => setOpenMobile(!openMobile)} className={btn(!inDock)}>
+        <Menu className="size-5" />
+        {lang === 'bn' ? 'মেনু' : 'Menu'}
+      </button>
+    </nav>
+  );
+};
+
+/* ------------------------------------------------------------------ */
+/* Shell                                                               */
+/* ------------------------------------------------------------------ */
 
 interface OfficialWorkspaceShellProps {
   workspaceType: OfficialWorkspaceType;
@@ -201,123 +586,77 @@ export const OfficialWorkspaceShell: React.FC<OfficialWorkspaceShellProps> = ({
   onNavigateMainTab,
   children,
 }) => {
-  const { lang, setLang, role, user, logout, activeSubTab, setActiveSubTab, t } = useAppUI();
-  const config = WORKSPACE_CONFIGS[workspaceType];
+  const { lang, setLang, role, user, setActiveSubTab, t } = useAppUI();
+  const config = WORKSPACES[workspaceType];
+  const groups = React.useMemo(() => visibleOfficialNav(workspaceType, role), [workspaceType, role]);
+  const allItems = React.useMemo(() => config.groups.flatMap((g) => g.items), [config]);
 
-  // Resolve initial sub-page from URL if not explicitly provided
-  const getInitialSubPage = (): string => {
-    if (typeof window === 'undefined') return config.defaultTab;
-    const path = window.location.pathname.toLowerCase();
-    const search = new URLSearchParams(window.location.search);
-    const tabParam = search.get('tab') || search.get('sub');
-
-    // 1. Check if explicit tabParam matches any configured nav item (including 'overview')
-    if (tabParam && config.navItems.some((item) => item.id === tabParam)) {
-      return tabParam;
-    }
-
-    if (workspaceType === 'registrar') {
-      if (path.includes('/wizard') || path.includes('/new-deed')) return 'wizard';
-      if (path.includes('/deeds') || path.includes('/balam')) return 'deeds';
-      if (path.includes('/fees') || path.includes('/calculator')) return 'fees';
-      if (path.includes('/khatian')) return 'khatian';
-      if (path.includes('/verifier')) return 'verifier';
-      if (path.includes('/onboarding') || path.includes('/batch')) return 'onboarding';
-      if (path.includes('/held') || path.includes('/hearing')) return 'held';
-      return config.defaultTab;
-    }
-
-    if (workspaceType === 'acland') {
-      if (path.includes('/mutations')) return 'mutations';
-      if (path.includes('/khatian') || path.includes('/plot')) return 'khatians';
-      if (path.includes('/dispute') || path.includes('/tribunal')) return 'disputes';
-      if (path.includes('/field') || path.includes('/surveyor')) return 'field_reports';
-      if (path.includes('/survey') || path.includes('/batch')) return 'survey_batches';
-      if (path.includes('/sla') || path.includes('/metric')) return 'sla_overview';
-      if (path.includes('/appeal') || path.includes('/miss')) return 'appeals';
-      if (path.includes('/explorer') || path.includes('/search')) return 'explorer';
-      if (path.includes('/verifier') || path.includes('/security')) return 'verifier';
-      if (path.includes('/onboarding')) return 'onboarding';
-      return config.defaultTab;
-    }
-
-    if (workspaceType === 'bank') {
-      if (path.includes('/new') || path.includes('/lien') || path.includes('/create')) return 'new_lien';
-      if (path.includes('/noc') || path.includes('/release')) return 'noc';
-      if (path.includes('/khatian') || path.includes('/title')) return 'khatian';
-      if (path.includes('/mortgage')) return 'mortgages';
-      return config.defaultTab;
-    }
-
-    if (workspaceType === 'lawyer') {
-      if (path.includes('/suit') || path.includes('/dispute') || path.includes('/step2')) return 'step2';
-      if (path.includes('/injunction') || path.includes('/petition') || path.includes('/docket') || path.includes('/step3')) return 'step3';
-      if (path.includes('/license') || path.includes('/bar') || path.includes('/step1')) return 'step1';
-      return config.defaultTab;
-    }
-
-    if (workspaceType === 'specialist') {
-      if (path.includes('/scrutiny') || path.includes('/title')) return 'title_scrutiny';
-      if (path.includes('/la') || path.includes('/cases')) return 'la_cases';
-      return config.defaultTab;
-    }
-
-    return config.defaultTab;
-  };
-
-  const [subPage, setSubPage] = React.useState<string>(() => currentSubPage || getInitialSubPage());
+  const [subPage, setSubPage] = React.useState<string>(() => currentSubPage || resolveFromUrl(workspaceType));
+  const [searchOpen, setSearchOpen] = React.useState(false);
+  const [profileOpen, setProfileOpen] = React.useState(false);
+  const navigatingRef = React.useRef(false);
 
   React.useEffect(() => {
-    if (currentSubPage && currentSubPage !== subPage) {
-      setSubPage(currentSubPage);
-    }
-  }, [currentSubPage]);
+    if (currentSubPage && currentSubPage !== subPage) setSubPage(currentSubPage);
+  }, [currentSubPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Keep subPage in sync with browser back/forward buttons
+  // Browser back/forward.
   React.useEffect(() => {
-    const handlePop = () => {
-      const initial = getInitialSubPage();
-      setSubPage(initial);
-      setActiveSubTab(initial);
+    const onPop = () => {
+      const next = resolveFromUrl(workspaceType);
+      setSubPage(next);
+      setActiveSubTab(next);
+      // Drop the helper "?section=" param left by setActiveSubTab so the address bar stays clean
+      // (skipped while select() is mid-navigation; it replaces the URL itself).
+      const url = new URL(window.location.href);
+      if (!navigatingRef.current && url.searchParams.has('section')) {
+        url.searchParams.delete('section');
+        window.history.replaceState(window.history.state, '', url.pathname + url.search);
+      }
     };
-    window.addEventListener('popstate', handlePop);
-    return () => window.removeEventListener('popstate', handlePop);
-  }, [workspaceType]);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [workspaceType]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const currentTab = subPage;
-  const currentItem = config.navItems.find((item) => item.id === currentTab) || config.navItems[0];
-  const OrgIcon = config.icon;
+  // Compact admin-style density (index.css `body.admin-mode`), also for dialogs in portals.
+  React.useEffect(() => {
+    document.body.classList.add('admin-mode');
+    return () => document.body.classList.remove('admin-mode');
+  }, []);
 
-  const handleSubTabClick = (tabId: string) => {
+  // Ctrl/⌘ + K opens search.
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setSearchOpen((o) => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const select = (tabId: string) => {
     setSubPage(tabId);
+    navigatingRef.current = true;
+    // setActiveSubTab pushes "?section=<id>" and fires popstate; resolveFromUrl reads that param,
+    // so the shell stays on the new page. We then replace that entry with the clean URL (one history step).
     setActiveSubTab(tabId);
-
-    // Push new subpage URL into browser history for genuine multi-page experience
-    const baseSegment = workspaceType === 'lawyer' ? 'lawyer-case' : workspaceType;
-    let slug = tabId;
-    if (tabId === 'field_reports') slug = 'field-reports';
-    if (tabId === 'survey_batches') slug = 'survey';
-    if (tabId === 'sla_overview') slug = 'sla';
-    if (tabId === 'new_lien') slug = 'new-lien';
-    if (tabId === 'la_cases') slug = 'la-cases';
-    if (tabId === 'title_scrutiny') slug = 'scrutiny';
-    if (tabId === 'step1') slug = 'license';
-    if (tabId === 'step2') slug = 'suit';
-    if (tabId === 'step3') slug = 'injunction';
-
-    const newUrl = tabId === config.defaultTab ? `/${lang}/${baseSegment}` : `/${lang}/${baseSegment}/${slug}`;
-    if (window.location.pathname !== newUrl) {
-      window.history.pushState({ officialSubPage: tabId }, '', newUrl);
-    }
-
-    if (onNavigateSubPage) {
-      onNavigateSubPage(tabId);
-    }
+    const base = workspaceType === 'lawyer' ? 'lawyer-case' : workspaceType;
+    const url = tabId === config.defaultTab ? `/${lang}/${base}` : `/${lang}/${base}/${SLUGS[tabId] || tabId}`;
+    const pushedSection = new URLSearchParams(window.location.search).get('section') === tabId;
+    if (pushedSection) window.history.replaceState({ officialSubPage: tabId }, '', url);
+    else if (window.location.pathname !== url) window.history.pushState({ officialSubPage: tabId }, '', url);
+    navigatingRef.current = false;
+    onNavigateSubPage?.(tabId);
   };
 
-  const isSuperAdminMode = typeof window !== 'undefined' && localStorage.getItem('bs_superadmin_mode') === '1';
+  const current = allItems.find((i) => i.id === subPage) || allItems[0];
+  const currentGroup = config.groups.find((g) => g.items.some((i) => i.id === current.id));
+  const isHome = current.id === config.defaultTab;
 
-  const handleReturnToAdmin = () => {
+  const isImpersonating = typeof window !== 'undefined' && localStorage.getItem('bs_superadmin_mode') === '1';
+  const returnToAdmin = () => {
     const origToken = localStorage.getItem('bs_admin_original_token');
     const origUser = localStorage.getItem('bs_admin_original_user');
     if (origToken) {
@@ -330,242 +669,132 @@ export const OfficialWorkspaceShell: React.FC<OfficialWorkspaceShellProps> = ({
   };
 
   return (
-    <SidebarProvider defaultOpen={true} className="min-h-screen w-full bg-background text-foreground antialiased font-sans">
-      {/* Official Enterprise Sidebar */}
-      <Sidebar collapsible="icon" className="border-r border-border/80 bg-card">
-        {/* Header with Institutional Branding */}
-        <SidebarHeader className="border-b border-border/60 pb-3">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                size="lg"
-                className="data-[slot=sidebar-menu-button]:!p-2 hover:bg-muted/60"
-                onClick={() => handleSubTabClick(config.defaultTab)}
-              >
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-[#006A4E] text-white shrink-0">
-                  <OrgIcon className="size-5" />
-                </div>
-                <div className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
-                  <span className="truncate font-black text-sm text-[#006A4E] dark:text-emerald-400">
-                    {lang === 'bn' ? config.titleBn : config.titleEn}
-                  </span>
-                  <span className="truncate text-[10px] font-semibold text-muted-foreground">
-                    {lang === 'bn' ? config.deptBn : config.deptEn}
-                  </span>
-                </div>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarHeader>
+    <SidebarProvider
+      defaultOpen
+      className="admin-ui h-screen max-h-screen w-full overflow-hidden bg-slate-50 font-sans text-slate-900 antialiased"
+    >
+      <OfficialSidebar
+        workspaceType={workspaceType}
+        groups={groups}
+        current={current.id}
+        onSelect={select}
+        onOpenSearch={() => setSearchOpen(true)}
+        onOpenProfile={() => setProfileOpen(true)}
+        onNavigateMainTab={onNavigateMainTab}
+      />
 
-        {/* Content with Grouped Statutory Modules */}
-        <SidebarContent className="px-2 py-3">
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground px-2">
-              {lang === 'bn' ? config.groupBn : config.groupEn}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {config.navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = currentTab === item.id;
-                  return (
-                    <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton
-                        isActive={isActive}
-                        tooltip={lang === 'bn' ? item.titleBn : item.titleEn}
-                        onClick={() => handleSubTabClick(item.id)}
-                        className={isActive ? 'bg-[#006A4E] text-white font-bold hover:bg-[#00553e] hover:text-white' : 'font-medium'}
-                      >
-                        <Icon className="size-4" />
-                        <span>{lang === 'bn' ? item.titleBn : item.titleEn}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+      <SidebarInset className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-slate-50">
+        <header className="sticky top-0 z-30 flex h-12 shrink-0 items-center gap-2 border-b border-slate-200 bg-white px-3 sm:px-4">
+          <SidebarTrigger className="-ml-1 size-8 text-slate-500" />
+          <Separator orientation="vertical" className="mr-1 h-4" />
+          <nav aria-label="breadcrumb" className="flex min-w-0 flex-1 items-center gap-1.5 text-sm">
+            {!isHome && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => select(config.defaultTab)}
+                  className="hidden shrink-0 text-slate-500 hover:text-slate-900 sm:block cursor-pointer"
+                >
+                  {t('ড্যাশবোর্ড', 'Dashboard')}
+                </button>
+                <ChevronRight className="hidden size-3.5 shrink-0 text-slate-300 sm:block" />
+                {currentGroup && config.groups.length > 1 && (
+                  <>
+                    <span className="hidden shrink-0 text-slate-500 md:block">{lang === 'bn' ? currentGroup.bn : currentGroup.en}</span>
+                    <ChevronRight className="hidden size-3.5 shrink-0 text-slate-300 md:block" />
+                  </>
+                )}
+              </>
+            )}
+            <span className="truncate font-medium text-slate-900">{lang === 'bn' ? current.bn : current.en}</span>
+          </nav>
 
-          {/* Quick Exit to Citizen Portal */}
-          <SidebarGroup className="mt-auto">
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    tooltip={t('নাগরিক পোর্টালে যান', 'Exit to Citizen Portal')}
-                    onClick={() => onNavigateMainTab('landing')}
-                    className="font-semibold text-xs border border-border/60 hover:bg-muted"
-                  >
-                    <Globe className="size-4 text-emerald-600" />
-                    <span>{t('নাগরিক পোর্টাল', 'Citizen Portal')}</span>
-                    <ExternalLink className="size-3 ml-auto text-muted-foreground" />
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-
-        {/* Footer Official Profile */}
-        <SidebarFooter className="border-t border-border/60 p-2">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton
-                    size="lg"
-                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                  >
-                    <Avatar className="h-8 w-8 rounded-lg bg-emerald-700 text-white font-bold text-xs flex items-center justify-center">
-                      <AvatarFallback>
-                        <User className="size-4 text-white" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="grid flex-1 text-left text-xs leading-tight">
-                      <span className="truncate font-bold text-foreground">
-                        {t('প্রোফাইল', 'Profile')}
-                      </span>
-                    </div>
-                  </SidebarMenuButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" side="right" sideOffset={8}>
-                  <DropdownMenuLabel className="text-xs font-bold">
-                    {lang === 'bn' ? config.titleBn : config.titleEn}
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    {config.navItems.map((item) => (
-                      <DropdownMenuItem key={item.id} onClick={() => handleSubTabClick(item.id)}>
-                        <item.icon className="size-4 mr-2 text-muted-foreground" />
-                        <span>{lang === 'bn' ? item.titleBn : item.titleEn}</span>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => onNavigateMainTab('landing')}>
-                    <Globe className="size-4 mr-2 text-emerald-600" />
-                    <span>{t('নাগরিক পোর্টালে যান', 'Exit to Citizen Portal')}</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      logout();
-                      onNavigateMainTab('auth');
-                    }}
-                    className="text-rose-600 focus:text-rose-700"
-                  >
-                    <LogOut className="size-4 mr-2" />
-                    <span>{t('লগআউট', 'Sign Out')}</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      </Sidebar>
-
-      {/* Main Content Inset */}
-      <SidebarInset className="flex flex-col flex-1 min-w-0 bg-background">
-        {/* Top Site Header */}
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4 sm:px-6 shadow-xs">
-          <div className="flex items-center gap-2 min-w-0">
-            <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground shrink-0" />
-            <Separator orientation="vertical" className="h-4 mx-1 shrink-0" />
-            <Breadcrumb className="truncate min-w-0">
-              <BreadcrumbList className="text-xs flex-nowrap truncate">
-                <BreadcrumbItem className="shrink-0">
-                  <BreadcrumbLink
-                    onClick={() => onNavigateMainTab('landing')}
-                    className="cursor-pointer text-muted-foreground hover:text-foreground"
-                  >
-                    {t('হোম', 'Home')}
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="shrink-0" />
-                <BreadcrumbItem className="shrink-0">
-                  <BreadcrumbLink
-                    onClick={() => handleSubTabClick(config.defaultTab)}
-                    className="cursor-pointer text-muted-foreground hover:text-foreground"
-                  >
-                    {lang === 'bn' ? config.titleBn : config.titleEn}
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="shrink-0" />
-                <BreadcrumbItem className="truncate min-w-0">
-                  <BreadcrumbPage className="font-bold text-foreground truncate">
-                    {lang === 'bn' ? currentItem?.titleBn : currentItem?.titleEn}
-                  </BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-
-          {/* Header Right Actions */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Live Operational Status */}
-            <Badge variant="outline" className="hidden sm:inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 text-xs font-mono border-emerald-300 text-emerald-800 bg-emerald-50">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{t('সক্রিয় সেশন', 'Active')}</span>
-            </Badge>
-
-            {/* Language Switcher */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
-              className="h-8 px-2.5 text-xs font-bold shrink-0"
-            >
-              {lang === 'bn' ? 'English' : 'বাংলা'}
-            </Button>
-
-            {/* Exit to Citizen Portal Button */}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onNavigateMainTab('landing')}
-              className="h-8 gap-1 text-xs font-bold text-emerald-800 hover:text-emerald-950 hover:bg-emerald-50 shrink-0"
-            >
-              <span>{t('নাগরিক পোর্টাল', 'Citizen View')}</span>
-              <ArrowRight className="size-3" />
-            </Button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className="flex h-8 items-center gap-2 rounded-lg border border-slate-200 px-2 text-sm text-slate-500 hover:bg-slate-50 md:w-52 cursor-pointer"
+            aria-label={t('খুঁজুন', 'Search')}
+          >
+            <Search className="size-4" />
+            <span className="hidden flex-1 text-left md:block">{t('পাতা খুঁজুন…', 'Find a page…')}</span>
+            <kbd className="hidden rounded border border-slate-200 bg-slate-50 px-1 text-[10px] text-slate-400 md:block">Ctrl K</kbd>
+          </button>
+          <button
+            type="button"
+            onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
+            className="h-8 rounded-lg border border-slate-200 px-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer"
+            title={t('ভাষা বদলান', 'Change language')}
+          >
+            {lang === 'bn' ? 'EN' : 'বাং'}
+          </button>
         </header>
 
-        {/* Super Admin Impersonation Notice Bar */}
-        {isSuperAdminMode && (
-          <div className="bg-gradient-to-r from-purple-950 via-purple-900 to-indigo-950 text-white px-4 py-2.5 border-b border-purple-700/60 flex flex-wrap items-center justify-between gap-3 text-xs shadow-md shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping shrink-0" />
-              <span className="font-bold text-purple-200">
-                {t('সুপার অ্যাডমিন ইমপার্সোনেশন মোড:', 'Super Admin Impersonation Mode:')}
-              </span>
-              <span className="text-white font-medium">
-                {t(
-                  `আপনি বর্তমানে "${user?.full_name_bn || user?.username}" (${lang === 'bn' ? config.titleBn : config.titleEn})-এর দাপ্তরিক ডেস্কে কর্মরত আছেন।`,
-                  `You are currently working in the official workspace of "${user?.full_name_en || user?.username}" (${config.titleEn}).`
-                )}
-              </span>
-            </div>
+        {isImpersonating && (
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-violet-200 bg-violet-50 px-4 py-1.5 text-xs text-violet-900">
+            <span className="truncate">
+              {t('অ্যাডমিন হিসেবে দেখছেন:', 'Viewing as admin:')} <b className="font-medium">{user?.full_name_bn || user?.username}</b>
+            </span>
             <button
               type="button"
-              onClick={handleReturnToAdmin}
-              className="bg-white text-purple-950 hover:bg-purple-50 font-bold text-xs px-3.5 py-1.5 rounded-lg transition shadow-sm flex items-center gap-1.5 cursor-pointer shrink-0"
+              onClick={returnToAdmin}
+              className="flex shrink-0 items-center gap-1 rounded-md bg-white px-2 py-1 font-medium text-violet-800 ring-1 ring-violet-200 hover:bg-violet-100 cursor-pointer"
             >
-              <span>{t('অ্যাডমিন কনসোলে ফিরে যান →', 'Return to Admin Console →')}</span>
+              <Undo2 className="size-3.5" />
+              {t('অ্যাডমিনে ফিরুন', 'Back to admin')}
             </button>
           </div>
         )}
 
-        {/* Subpage Content Area - Streamlined Single-Screen Viewport */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden min-w-0 p-3 sm:p-4 lg:p-5 max-w-7xl w-full mx-auto pb-6">
+        {/* Pages that use <AdminPage fill> fit one screen; older content still scrolls here. */}
+        <main className="admin-content min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
           {React.isValidElement(children)
-            ? React.cloneElement(children as React.ReactElement<any>, {
-                currentSubPage: subPage,
-                onNavigateSubPage: handleSubTabClick,
-              })
+            ? React.cloneElement(children as React.ReactElement<any>, { currentSubPage: subPage, onNavigateSubPage: select })
             : children}
-        </div>
+        </main>
+
+        <MobileDock groups={groups} current={current.id} onSelect={select} />
       </SidebarInset>
+
+      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen} title={t('খুঁজুন', 'Search')}>
+        <CommandInput placeholder={t('কী খুঁজছেন?', 'What are you looking for?')} />
+        <CommandList>
+          <CommandEmpty>{t('কিছু পাওয়া যায়নি', 'Nothing found')}</CommandEmpty>
+          {groups.map((g) => (
+            <CommandGroup key={g.id} heading={lang === 'bn' ? g.bn : g.en}>
+              {g.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <CommandItem
+                    key={item.id}
+                    value={`${item.bn} ${item.en} ${item.id}`}
+                    onSelect={() => {
+                      setSearchOpen(false);
+                      select(item.id);
+                    }}
+                  >
+                    <Icon />
+                    {lang === 'bn' ? item.bn : item.en}
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          ))}
+          <CommandSeparator />
+          <CommandGroup heading={t('অন্যান্য', 'Other')}>
+            <CommandItem value="profile প্রোফাইল" onSelect={() => (setSearchOpen(false), setProfileOpen(true))}>
+              <User />
+              {t('আমার প্রোফাইল', 'My profile')}
+            </CommandItem>
+            <CommandItem value="website ওয়েবসাইট" onSelect={() => (setSearchOpen(false), onNavigateMainTab('landing'))}>
+              <Globe />
+              {t('ওয়েবসাইট দেখুন', 'Open website')}
+            </CommandItem>
+          </CommandGroup>
+        </CommandList>
+      </CommandDialog>
+
+      <AdminProfileModal isOpen={profileOpen} onClose={() => setProfileOpen(false)} />
+      <Toaster position="top-center" richColors closeButton theme="light" />
     </SidebarProvider>
   );
 };

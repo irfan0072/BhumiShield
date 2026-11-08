@@ -1,369 +1,292 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import {
-  ShieldAlert,
-  Download,
-  Radio,
-  FileCheck2,
   AlertTriangle,
-  RotateCcw,
   CheckCircle2,
-  ExternalLink,
   ChevronRight,
-  Database,
-  Flame,
-  ArrowRight,
-  Building2,
+  FileCheck2,
+  RefreshCcw,
+  RotateCcw,
+  Scale,
+  ShieldAlert,
+  ShieldCheck,
   Users,
-  MapPin,
 } from 'lucide-react';
 import { useAppUI } from '@/i18n';
-import { BhumiApi, AdminAnomalyItem, DatabaseBackupResponse } from '@/api/client';
+import { BhumiApi, AdminAnomalyItem } from '@/api/client';
 import { toBanglaDigits } from '@/theme/tokens';
-import { AdminSectionCards } from './AdminSectionCards';
-import { AdminAreaChart } from './AdminAreaChart';
+import { cn } from '@/lib/utils';
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { adminActions, useAdminShell } from '@/components/admin/AdminWorkspaceShell';
+import { AdminPage, EmptyState, Section, StatCard, StatGrid, StatusBadge } from '@/components/admin/kit';
 
 interface AdminOverviewPageProps {
   stats: any;
   onNavigateSubPage: (subPage: string) => void;
-  onRefreshStats: () => void;
+  onNavigateMainTab?: (tab: string) => void;
+  onRefreshStats: () => void | Promise<void>;
+  onOpenOverride?: (actionType: string, targetId?: string | number) => void;
 }
 
-export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = ({
-  stats,
-  onNavigateSubPage,
-  onRefreshStats,
-}) => {
+const num = (...vals: any[]): number | null => {
+  for (const v of vals) if (v !== undefined && v !== null && v !== '' && !Number.isNaN(Number(v))) return Number(v);
+  return null;
+};
+
+/** Short human labels for the audit actions shown in "recent activity". */
+const ACTION_LABELS: Record<string, [string, string]> = {
+  SITE_SETTINGS_UPDATED: ['সেটিংস বদলানো হয়েছে', 'Settings updated'],
+  PLOT_SALE_UNLOCKED_BY_OWNER: ['মালিক জমি খুলে দিয়েছেন', 'Owner unlocked plot'],
+  PLOT_SALE_LOCKED_BY_OWNER: ['মালিক জমি লক করেছেন', 'Owner locked plot'],
+  ADMIN_PLOT_FREEZE: ['জমি আটকানো হয়েছে', 'Plot frozen'],
+  ADMIN_PLOT_UNFREEZE: ['জমি খুলে দেওয়া হয়েছে', 'Plot unfrozen'],
+  USER_REGISTERED: ['নতুন ব্যবহারকারী', 'New user'],
+  DEED_REGISTERED: ['দলিল নিবন্ধন', 'Deed registered'],
+  MUTATION_APPLIED: ['নামজারি আবেদন', 'Mutation applied'],
+  TRANSFER_REASSIGNED: ['হস্তান্তর পুনর্বণ্টন', 'Transfer reassigned'],
+  ACQUISITION_CASE_CREATED: ['অধিগ্রহণ মামলা', 'Acquisition case'],
+};
+
+const actionLabel = (a: any, lang: 'bn' | 'en') => {
+  const hit = ACTION_LABELS[a?.action];
+  if (hit) return lang === 'bn' ? hit[0] : hit[1];
+  try {
+    const d = JSON.parse(a?.details_json || '{}');
+    if (lang === 'bn' && d.note_bn) return String(d.note_bn);
+  } catch {
+    /* ignore */
+  }
+  return String(a?.action || '').replace(/_/g, ' ').toLowerCase();
+};
+
+const timeAgo = (iso: string, lang: 'bn' | 'en') => {
+  const diff = Math.max(0, Date.now() - new Date(iso).getTime());
+  const m = Math.floor(diff / 60000);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+  const n = (v: number) => toBanglaDigits(v, lang);
+  if (lang === 'bn') return d > 0 ? `${n(d)} দিন আগে` : h > 0 ? `${n(h)} ঘণ্টা আগে` : m > 0 ? `${n(m)} মিনিট আগে` : 'এইমাত্র';
+  return d > 0 ? `${d}d ago` : h > 0 ? `${h}h ago` : m > 0 ? `${m}m ago` : 'just now';
+};
+
+export const AdminOverviewPage: React.FC<AdminOverviewPageProps> = ({ stats, onNavigateSubPage, onRefreshStats, onOpenOverride }) => {
   const { lang, t } = useAppUI();
+  const { runAction } = useAdminShell();
   const [anomalies, setAnomalies] = useState<AdminAnomalyItem[]>([]);
-  const [loadingAnomalies, setLoadingAnomalies] = useState(true);
-  const [backupLoading, setBackupLoading] = useState(false);
-  const [backupSuccess, setBackupSuccess] = useState<DatabaseBackupResponse | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const n = (v: number) => toBanglaDigits(v, lang);
+
+  const loadAnomalies = () =>
+    BhumiApi.getLiveAnomalies()
+      .then((res) => setAnomalies(res?.items || []))
+      .catch(() => setAnomalies([]))
+      .finally(() => setLoaded(true));
 
   useEffect(() => {
-    let mounted = true;
-    BhumiApi.getLiveAnomalies()
-      .then((res) => {
-        if (mounted && res?.items) {
-          setAnomalies(res.items);
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (mounted) setLoadingAnomalies(false);
-      });
-    return () => {
-      mounted = false;
-    };
+    loadAnomalies();
   }, []);
 
-  const handleExportBackup = async () => {
-    try {
-      setBackupLoading(true);
-      const res = await BhumiApi.exportDatabaseBackup();
-      setBackupSuccess(res);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setBackupLoading(false);
-    }
+  const refresh = async () => {
+    setRefreshing(true);
+    await Promise.all([Promise.resolve(onRefreshStats()), loadAnomalies()]);
+    setRefreshing(false);
   };
 
-  const recentActivity = stats?.recent_activity || [];
+  const k = stats?.kpis || {};
+  const deeds = num(stats?.total_deeds, k.total_deeds);
+  const pendingMut = num(stats?.pending_mutations, k.pending_mutations) ?? 0;
+  const openDisputes = num(stats?.open_disputes_count, k.open_disputes_count) ?? 0;
+  const citizens = num(stats?.total_citizens, k.total_citizens);
+  const ledgerOk = stats?.ledger_is_valid;
+
+  const todos = [
+    ...anomalies.slice(0, 4).map((a) => ({
+      key: String(a.id),
+      icon: ShieldAlert,
+      tone: 'text-rose-600 bg-rose-50',
+      text: lang === 'bn' ? a.title_bn : a.title_en,
+      go: 'khatians',
+    })),
+    pendingMut > 0 && {
+      key: 'mut',
+      icon: RefreshCcw,
+      tone: 'text-amber-600 bg-amber-50',
+      text: t(`${n(pendingMut)}টি নামজারি অপেক্ষায়`, `${pendingMut} mutations waiting`),
+      go: 'mutations',
+    },
+    openDisputes > 0 && {
+      key: 'disp',
+      icon: AlertTriangle,
+      tone: 'text-orange-600 bg-orange-50',
+      text: t(`${n(openDisputes)}টি বিরোধ খোলা`, `${openDisputes} open disputes`),
+      go: 'appeals',
+    },
+  ].filter(Boolean) as Array<{ key: string; icon: React.ElementType; tone: string; text: string; go: string }>;
+
+  const series = useMemo(() => {
+    const raw: any[] = Array.isArray(stats?.monthly_series) ? stats.monthly_series.slice(-6) : [];
+    return raw.map((r) => {
+      const d = new Date(`${r.period}-01T00:00:00`);
+      return {
+        label: isNaN(d.getTime()) ? r.period : d.toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-GB', { month: 'short' }),
+        deeds: Number(r.deeds) || 0,
+        mutations: Number(r.mutations) || 0,
+      };
+    });
+  }, [stats, lang]);
+
+  const chartConfig = {
+    deeds: { label: t('দলিল', 'Deeds'), color: '#006A4E' },
+    mutations: { label: t('নামজারি', 'Mutations'), color: '#7dd3c0' },
+  } satisfies ChartConfig;
+
+  const activity: any[] = Array.isArray(stats?.recent_activity) ? stats.recent_activity.slice(0, 6) : [];
+  const actions = adminActions.filter((a) => a.id !== 'override' || onOpenOverride);
 
   return (
-    <div className="flex flex-col gap-2.5 p-3 sm:p-4 max-w-7xl mx-auto w-full">
-      {backupSuccess && (
-        <Alert className="border-emerald-300 bg-emerald-50 text-emerald-900 py-2">
-          <CheckCircle2 className="size-4 text-emerald-700" />
-          <AlertDescription className="text-xs flex items-center justify-between w-full">
-            <span>
-              {lang === 'bn' ? backupSuccess.message_bn : backupSuccess.message_en} ({toBanglaDigits(backupSuccess.file_size_kb, lang)} KB)
-            </span>
-            <Button
-              variant="link"
-              size="sm"
-              className="h-auto p-0 text-emerald-800 font-bold text-xs"
-              onClick={() => setBackupSuccess(null)}
-            >
-              {t('বন্ধ করুন', 'Dismiss')}
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* 1. Top-tier KPI Section Cards: 5 columns per row, compact height, distinct background shade */}
-      <AdminSectionCards stats={stats} onNavigateSubPage={onNavigateSubPage} />
-
-      {/* 3. Main Chart & Live Anomaly Queue */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-3">
-        {/* Left 8 Cols: Interactive Area Chart */}
-        <div className="xl:col-span-8 space-y-6">
-          <AdminAreaChart monthlySeries={stats?.monthly_series} />
-
-          {/* Recent Ledger Audit Activity Table */}
-          <Card className="border border-border/80 shadow-xs">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <div>
-                <CardTitle className="text-base font-bold">
-                  {t('সাম্প্রতিক লেনদেন', 'Recent Transactions')}
-                </CardTitle>
-                <CardDescription className="text-xs text-muted-foreground">
-                  {t('ডিজিটাল অডিট লগ ও হ্যাশ', 'Audit logs and signatures')}
-                </CardDescription>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onNavigateSubPage('ledger')}
-                className="text-xs font-semibold text-[#006A4E] hover:text-[#00553e] gap-1 cursor-pointer"
-              >
-                <span>{t('লেজার দেখুন', 'View Ledger')}</span>
-                <ChevronRight className="size-3.5" />
-              </Button>
-            </CardHeader>
-            <CardContent className="p-0 overflow-auto max-h-[300px] scrollbar-thin">
-              <Table>
-                <TableHeader>
-                  <TableRow className="text-xs">
-                    <TableHead className="w-[100px]">{t('ব্লক নং', 'Block #')}</TableHead>
-                    <TableHead>{t('কার্যক্রম', 'Action')}</TableHead>
-                    <TableHead>{t('কর্মকর্তা', 'Officer')}</TableHead>
-                    <TableHead>{t('হ্যাশ', 'Hash')}</TableHead>
-                    <TableHead className="text-right">{t('স্ট্যাটাস', 'Status')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentActivity.length > 0 ? (
-                    recentActivity.slice(0, 6).map((log: any, idx: number) => (
-                      <TableRow key={log.id || idx} className="text-xs">
-                        <TableCell className="font-mono font-bold text-muted-foreground">
-                          #{toBanglaDigits(log.chain_index ?? idx + 1, lang)}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {log.action_bn || log.action || t('দলিল নিবব্ধন ব্লক ভেরিফিকেশন', 'Deed registration block')}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {log.actor_name || log.actor || t('সাব-রেজিস্ট্রার', 'Sub-Registrar')}
-                        </TableCell>
-                        <TableCell className="font-mono text-[11px] text-muted-foreground">
-                          {String(log.content_hash || log.block_hash || 'e3b0c44298fc1c14...').substring(0, 16)}...
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant="outline" className="text-[10px] font-mono border-emerald-300 text-emerald-700 bg-emerald-50">
-                            <CheckCircle2 className="size-3 mr-1 text-emerald-600" />
-                            {t('নিরাপদ', 'VERIFIED')}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-6 text-xs text-muted-foreground">
-                        {t('কোনো রেকর্ড পাওয়া যায়নি।', 'No records found.')}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+    <AdminPage>
+      {/* Title row */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h1 className="text-base font-semibold text-slate-900">{t('আজকের সারসংক্ষেপ', "Today's summary")}</h1>
+          {ledgerOk !== undefined && (
+            <StatusBadge tone={ledgerOk ? 'green' : 'red'}>
+              {ledgerOk ? t('তথ্য নিরাপদ', 'Records safe') : t('তথ্যে সমস্যা', 'Records issue')}
+            </StatusBadge>
+          )}
         </div>
-
-        {/* Right 4 Cols: Live Anomaly Alerts & Quick Navigation */}
-        <div className="xl:col-span-4 space-y-6">
-          {/* Critical Anomaly Sentinel */}
-          <Card className="border border-border/80 shadow-xs">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-bold flex items-center gap-2">
-                  <ShieldAlert className="size-4 text-rose-600" />
-                  <span>{t('ঝুঁকি ও অসঙ্গতি', 'Risk Alerts')}</span>
-                </CardTitle>
-                <Badge variant="danger" className="text-[10px] font-mono">
-                  {toBanglaDigits(anomalies.length, lang)} {t('টি ঝুঁকি', 'active')}
-                </Badge>
-              </div>
-              <CardDescription className="text-xs text-muted-foreground">
-                {t('মালিকানা ও দাগের ঝুঁকি', 'Ownership alerts')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {loadingAnomalies ? (
-                <div className="py-8 text-center text-xs text-muted-foreground">
-                  {t('অসঙ্গতি ডাটা লোড হচ্ছে...', 'Loading anomalies...')}
-                </div>
-              ) : anomalies.length === 0 ? (
-                <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 text-emerald-800 text-xs text-center space-y-1">
-                  <CheckCircle2 className="size-5 text-emerald-600 mx-auto" />
-                  <p className="font-bold">{t('কোনো ঝুঁকি নেই', 'No Risks')}</p>
-                  <p className="text-[11px] text-emerald-700">{t('সব রেকর্ড সুরক্ষিত।', 'All records safe.')}</p>
-                </div>
-              ) : (
-                anomalies.slice(0, 4).map((anom) => (
-                  <div
-                    key={anom.id}
-                    className="p-3 rounded-xl border border-rose-200 bg-rose-50/60 hover:bg-rose-50 transition space-y-1.5"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="text-xs font-bold text-rose-900 leading-snug">
-                        {lang === 'bn' ? anom.title_bn : anom.title_en}
-                      </span>
-                      <Badge
-                        variant="outline"
-                        className={`text-[9px] font-bold px-1.5 py-0 shrink-0 ${
-                          anom.severity === 'CRITICAL'
-                            ? 'bg-rose-600 text-white border-rose-700'
-                            : 'bg-amber-100 text-amber-800 border-amber-300'
-                        }`}
-                      >
-                        {anom.severity}
-                      </Badge>
-                    </div>
-                    <p className="text-[11px] text-rose-800/90 leading-tight">
-                      {lang === 'bn' ? anom.description_bn : anom.description_bn}
-                    </p>
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-[10px] text-muted-foreground font-mono">
-                        {anom.plot_id ? `${t('দাগ নং', 'Plot')}: ${anom.plot_id}` : ''}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onNavigateSubPage('khatians')}
-                        className="h-6 px-2 text-[10px] font-bold text-rose-900 hover:text-rose-950 hover:bg-rose-200/50"
-                      >
-                        <span>{t('দেখুন', 'View')}</span>
-                        <ArrowRight className="size-2.5 ml-1" />
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </CardContent>
-            {anomalies.length > 4 && (
-              <CardFooter className="pt-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onNavigateSubPage('khatians')}
-                  className="w-full text-xs font-semibold"
-                >
-                  {t('সকল ঝুঁকি দেখুন', 'View All Risks')} ({toBanglaDigits(anomalies.length, lang)})
-                </Button>
-              </CardFooter>
-            )}
-          </Card>
-
-          {/* Dedicated Sub-Pages Direct Access Grid */}
-          <Card className="border border-border/80 shadow-xs">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-bold">
-                {t('দ্রুত লিঙ্ক', 'Quick Links')}
-              </CardTitle>
-              <CardDescription className="text-xs text-muted-foreground">
-                {t('অন্যান্য পেজে প্রবেশ', 'Jump to sections')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-2 text-xs">
-              <Button
-                variant="outline"
-                className="justify-start h-auto py-2.5 px-3 flex flex-col items-start gap-1 text-left hover:border-primary/50 cursor-pointer"
-                onClick={() => onNavigateSubPage('deeds')}
-              >
-                <span className="font-bold text-foreground flex items-center gap-1.5">
-                  <FileCheck2 className="size-3.5 text-emerald-600" />
-                  {t('দলিলপত্র', 'Deeds')}
-                </span>
-                <span className="text-[10px] text-muted-foreground">{t('বালাম ও দলিল', 'Volumes & Deeds')}</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                className="justify-start h-auto py-2.5 px-3 flex flex-col items-start gap-1 text-left hover:border-primary/50 cursor-pointer"
-                onClick={() => onNavigateSubPage('khatians')}
-              >
-                <span className="font-bold text-foreground flex items-center gap-1.5">
-                  <Database className="size-3.5 text-blue-600" />
-                  {t('খতিয়ান ও দাগ', 'Khatians & Plots')}
-                </span>
-                <span className="text-[10px] text-muted-foreground">{t('সিএস-বিএস জরিপ', 'Survey Lineage')}</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                className="justify-start h-auto py-2.5 px-3 flex flex-col items-start gap-1 text-left hover:border-primary/50 cursor-pointer"
-                onClick={() => onNavigateSubPage('mutations')}
-              >
-                <span className="font-bold text-foreground flex items-center gap-1.5">
-                  <Flame className="size-3.5 text-amber-600" />
-                  {t('নামজারি', 'Mutations')}
-                </span>
-                <span className="text-[10px] text-muted-foreground">{t('আবেদন ও অনুমোদন', 'Cases & Approval')}</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                className="justify-start h-auto py-2.5 px-3 flex flex-col items-start gap-1 text-left hover:border-primary/50 cursor-pointer"
-                onClick={() => onNavigateSubPage('offices')}
-              >
-                <span className="font-bold text-foreground flex items-center gap-1.5">
-                  <Building2 className="size-3.5 text-teal-600" />
-                  {t('ভূমি অফিস', 'Land Offices')}
-                </span>
-                <span className="text-[10px] text-muted-foreground">{t('সারাদেশীয় কার্যালয়', 'Nationwide Offices')}</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                className="justify-start h-auto py-2.5 px-3 flex flex-col items-start gap-1 text-left hover:border-primary/50 cursor-pointer"
-                onClick={() => onNavigateSubPage('locations')}
-              >
-                <span className="font-bold text-foreground flex items-center gap-1.5">
-                  <MapPin className="size-3.5 text-emerald-600" />
-                  {t('ভৌগোলিক এলাকা', 'Locations')}
-                </span>
-                <span className="text-[10px] text-muted-foreground">{t('বিভাগ, জেলা, উপজেলা, মৌজা', 'Division, District, Upazila')}</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                className="justify-start h-auto py-2.5 px-3 flex flex-col items-start gap-1 text-left hover:border-primary/50 cursor-pointer"
-                onClick={() => onNavigateSubPage('officials')}
-              >
-                <span className="font-bold text-foreground flex items-center gap-1.5">
-                  <Users className="size-3.5 text-blue-600" />
-                  {t('কর্মকর্তাবৃন্দ', 'Officials')}
-                </span>
-                <span className="text-[10px] text-muted-foreground">{t('পদায়ন ও অ্যাকাউন্ট', 'Postings & Accounts')}</span>
-              </Button>
-
-              <Button
-                variant="outline"
-                className="justify-start h-auto py-2.5 px-3 flex flex-col items-start gap-1 text-left hover:border-primary/50 cursor-pointer"
-                onClick={() => onNavigateSubPage('system')}
-              >
-                <span className="font-bold text-foreground flex items-center gap-1.5">
-                  <Radio className="size-3.5 text-purple-600" />
-                  {t('সিস্টেম ব্রডকাস্ট', 'Broadcast')}
-                </span>
-                <span className="text-[10px] text-muted-foreground">{t('জরুরি বার্তা', 'Alerts')}</span>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        <Button variant="outline" size="sm" className="h-8 gap-1.5" onClick={refresh} disabled={refreshing}>
+          <RotateCcw className={cn('size-3.5', refreshing && 'animate-spin')} />
+          {t('রিফ্রেশ', 'Refresh')}
+        </Button>
       </div>
-    </div>
+
+      {/* Key numbers */}
+      <StatGrid>
+        <StatCard label={t('মোট দলিল', 'Deeds')} value={deeds !== null ? n(deeds) : '—'} icon={FileCheck2} tone="green" onClick={() => onNavigateSubPage('deeds')} />
+        <StatCard label={t('নামজারি অপেক্ষায়', 'Mutations waiting')} value={n(pendingMut)} icon={RefreshCcw} tone="amber" onClick={() => onNavigateSubPage('mutations')} />
+        <StatCard label={t('খোলা বিরোধ', 'Open disputes')} value={n(openDisputes)} icon={Scale} tone="red" onClick={() => onNavigateSubPage('appeals')} />
+        <StatCard label={t('নাগরিক', 'Citizens')} value={citizens !== null ? n(citizens) : '—'} icon={Users} tone="blue" onClick={() => onNavigateSubPage('citizens')} />
+      </StatGrid>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Needs attention */}
+        <Section
+          className="lg:col-span-2"
+          title={
+            <span className="flex items-center gap-2">
+              {t('জরুরি কাজ', 'Needs attention')}
+              {todos.length > 0 && <StatusBadge tone="red">{n(todos.length)}</StatusBadge>}
+            </span>
+          }
+        >
+          {!loaded ? (
+            <div className="space-y-2 p-4">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-9 animate-pulse rounded-lg bg-slate-100" />
+              ))}
+            </div>
+          ) : todos.length === 0 ? (
+            <EmptyState icon={CheckCircle2} text={t('সব ঠিক আছে', 'All clear')} />
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {todos.map((todo) => {
+                const Icon = todo.icon;
+                return (
+                  <li key={todo.key}>
+                    <button
+                      type="button"
+                      onClick={() => onNavigateSubPage(todo.go)}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 cursor-pointer"
+                    >
+                      <span className={cn('flex size-7 shrink-0 items-center justify-center rounded-md', todo.tone)}>
+                        <Icon className="size-3.5" />
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm text-slate-700">{todo.text}</span>
+                      <ChevronRight className="size-4 shrink-0 text-slate-300" />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Section>
+
+        {/* Quick actions */}
+        <Section title={t('দ্রুত কাজ', 'Quick actions')} bodyClassName="grid grid-cols-2 gap-2 p-3">
+          {actions.map((a) => {
+            const Icon = a.icon;
+            return (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => runAction(a.id)}
+                className="flex flex-col items-start gap-2 rounded-lg border border-slate-200 p-2.5 text-left transition hover:border-slate-300 hover:bg-slate-50 cursor-pointer"
+              >
+                <span className={cn('flex size-7 items-center justify-center rounded-md', a.tone)}>
+                  <Icon className="size-3.5" />
+                </span>
+                <span className="text-xs font-medium text-slate-800">{lang === 'bn' ? a.bn : a.en}</span>
+              </button>
+            );
+          })}
+        </Section>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Monthly work */}
+        <Section className="lg:col-span-2" title={t('মাসিক কাজ', 'Monthly work')}>
+          {series.length === 0 ? (
+            <EmptyState text={t('এখনো কোনো তথ্য নেই', 'No data yet')} />
+          ) : (
+            <ChartContainer config={chartConfig} className="aspect-auto h-52 w-full px-2 pt-3">
+              <BarChart data={series} margin={{ left: -16, right: 8, top: 4, bottom: 0 }} barGap={2}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.4} />
+                <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={6} fontSize={11} />
+                <YAxis tickLine={false} axisLine={false} allowDecimals={false} fontSize={11} />
+                <ChartTooltip cursor={{ fill: '#f1f5f9' }} content={<ChartTooltipContent indicator="dot" />} />
+                <Bar dataKey="deeds" fill="var(--color-deeds)" radius={[4, 4, 0, 0]} maxBarSize={22} />
+                <Bar dataKey="mutations" fill="var(--color-mutations)" radius={[4, 4, 0, 0]} maxBarSize={22} />
+              </BarChart>
+            </ChartContainer>
+          )}
+        </Section>
+
+        {/* Recent activity */}
+        <Section title={t('সাম্প্রতিক', 'Recent')}>
+          {activity.length === 0 ? (
+            <EmptyState text={t('কোনো কার্যকলাপ নেই', 'No activity')} />
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {activity.map((a) => (
+                <li key={a.id} className="flex items-start gap-2.5 px-4 py-2.5">
+                  <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-[#006A4E]" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm text-slate-700">{actionLabel(a, lang)}</span>
+                    <span className="block text-xs text-slate-400">
+                      {a.actor_username} · {a.created_at ? timeAgo(a.created_at, lang) : ''}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+      </div>
+
+      {ledgerOk === false && (
+        <button
+          type="button"
+          onClick={() => onNavigateSubPage('ledger')}
+          className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm text-rose-800 cursor-pointer"
+        >
+          <ShieldCheck className="size-4" />
+          {t('নিরাপত্তা যাচাই করুন', 'Run security check')}
+          <ChevronRight className="ml-auto size-4" />
+        </button>
+      )}
+    </AdminPage>
   );
 };

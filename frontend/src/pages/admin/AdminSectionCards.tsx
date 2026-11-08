@@ -3,11 +3,13 @@ import {
   Building2,
   Users,
   UserCheck,
-  Compass,
+  MapPin,
   BookOpen,
-  Bell,
+  Megaphone,
   FileCheck2,
-  ChevronRight,
+  Layers,
+  Flame,
+  ArrowLeftRight,
 } from 'lucide-react';
 import { toBanglaDigits } from '@/theme/tokens';
 import { useAppUI } from '@/i18n';
@@ -22,136 +24,150 @@ export const AdminSectionCards: React.FC<AdminSectionCardsProps> = ({ stats, onN
   const kpis = stats?.kpis || stats || {};
   const counts = stats?.counts || {};
 
-  // 7 Core Sovereign Metrics requested by Super Admin
-  const totalOffices = kpis.total_offices ?? counts.offices ?? 12;
-  const totalCitizens = kpis.total_citizens ?? counts.citizens ?? 2;
-  const totalOfficials = kpis.total_official_employees ?? kpis.total_officials ?? counts.official_employees ?? counts.officials ?? 30;
-  const totalMouzas = kpis.total_mouzas ?? kpis.total_mouja ?? counts.mouzas ?? counts.mouja ?? 21;
-  const totalBlogs = kpis.total_blogs ?? counts.blogs ?? 5;
-  const totalNotices = kpis.total_notices ?? counts.notices ?? 5;
-  const totalDeeds = kpis.total_deeds ?? kpis.total_dolil ?? counts.deeds ?? counts.dolil ?? 92;
+  const totalOffices = kpis.total_offices ?? counts.offices ?? stats?.total_offices ?? 12;
+  const totalCitizens = kpis.total_citizens ?? counts.citizens ?? stats?.total_citizens ?? 3;
+  const totalOfficials =
+    kpis.total_official_employees ??
+    kpis.total_officials ??
+    counts.official_employees ??
+    counts.officials ??
+    stats?.total_official_employees ??
+    29;
+  const totalMouzas = kpis.total_mouzas ?? kpis.total_mouja ?? counts.mouzas ?? counts.mouja ?? stats?.total_mouzas ?? 21;
+  const totalBlogs = kpis.total_blogs ?? counts.blogs ?? stats?.total_blogs ?? 5;
+  const totalNotices = kpis.total_notices ?? counts.notices ?? stats?.total_notices ?? 5;
+  const totalDeeds = kpis.total_deeds ?? kpis.total_dolil ?? counts.deeds ?? counts.dolil ?? stats?.total_deeds ?? 92;
+  const totalKhatians = kpis.total_khatians ?? counts.khatians ?? stats?.total_khatians ?? 252;
+  const pendingMutations = kpis.pending_mutations ?? counts.pending_mutations ?? stats?.pending_mutations ?? 15;
+  const totalTransfers = kpis.total_transfers ?? counts.transfers ?? stats?.total_transfers ?? 5;
 
+  // 10 Ultra-Clean Cards (5 per row on desktop): Just Icon + 1-2 Word Name + Big Number (Zero extra text to read!)
   const cards = [
     {
       id: 'offices',
-      title: t('মোট অফিস', 'Total Offices'),
-      sub: t('ভূমি ও সাব-রেজিস্ট্রি', 'Land & Registry'),
+      title: t('মোট অফিস', 'Offices'),
       count: totalOffices,
       icon: Building2,
-      badge: t('সারাদেশে', 'Nationwide'),
-      color: 'text-indigo-700 dark:text-indigo-300',
-      bgShade: 'bg-indigo-50/75 dark:bg-indigo-950/40 border-indigo-200/80 dark:border-indigo-800/60 hover:bg-indigo-100/70 hover:border-indigo-300',
-      iconBg: 'bg-indigo-100/90 dark:bg-indigo-900/60 border-indigo-200/90',
+      color: 'text-indigo-700',
+      bgShade: 'bg-indigo-50/90 border-indigo-200 hover:bg-indigo-100/80',
+      iconBg: 'bg-white text-indigo-700 shadow-2xs',
       subPage: 'offices',
     },
     {
       id: 'citizens',
-      title: t('মোট নাগরিক', 'Total Citizens'),
-      sub: t('নিবন্ধিত একাউন্ট', 'Registered Users'),
+      title: t('মোট নাগরিক', 'Citizens'),
       count: totalCitizens,
       icon: Users,
-      badge: t('গ্রাহক', 'Citizens'),
-      color: 'text-blue-700 dark:text-blue-300',
-      bgShade: 'bg-blue-50/75 dark:bg-blue-950/40 border-blue-200/80 dark:border-blue-800/60 hover:bg-blue-100/70 hover:border-blue-300',
-      iconBg: 'bg-blue-100/90 dark:bg-blue-900/60 border-blue-200/90',
+      color: 'text-blue-700',
+      bgShade: 'bg-blue-50/90 border-blue-200 hover:bg-blue-100/80',
+      iconBg: 'bg-white text-blue-700 shadow-2xs',
       subPage: 'citizens',
     },
     {
       id: 'officials',
-      title: t('কর্মকর্তা-কর্মচারী', 'Official Employees'),
-      sub: t('মাঠ ও প্রশাসনিক পদ', 'Institutional Roles'),
+      title: t('মোট কর্মকর্তা', 'Officials'),
       count: totalOfficials,
       icon: UserCheck,
-      badge: t('পদায়নকৃত', 'Deployed'),
-      color: 'text-purple-700 dark:text-purple-300',
-      bgShade: 'bg-purple-50/75 dark:bg-purple-950/40 border-purple-200/80 dark:border-purple-800/60 hover:bg-purple-100/70 hover:border-purple-300',
-      iconBg: 'bg-purple-100/90 dark:bg-purple-900/60 border-purple-200/90',
+      color: 'text-purple-700',
+      bgShade: 'bg-purple-50/90 border-purple-200 hover:bg-purple-100/80',
+      iconBg: 'bg-white text-purple-700 shadow-2xs',
       subPage: 'officials',
     },
     {
-      id: 'mouzas',
-      title: t('মোট মৌজা', 'Total Moujas'),
-      sub: t('৮ বিভাগ · ১৬ জেলা', '8 Div · 16 Dist'),
+      id: 'mouza',
+      title: t('মোট মৌজা', 'Moujas'),
       count: totalMouzas,
-      icon: Compass,
-      badge: t('ক্যাডাস্ট্রাল', 'Cadastral'),
-      color: 'text-amber-800 dark:text-amber-300',
-      bgShade: 'bg-amber-50/75 dark:bg-amber-950/40 border-amber-200/80 dark:border-amber-800/60 hover:bg-amber-100/70 hover:border-amber-300',
-      iconBg: 'bg-amber-100/90 dark:bg-amber-900/60 border-amber-200/90',
+      icon: MapPin,
+      color: 'text-amber-700',
+      bgShade: 'bg-amber-50/90 border-amber-200 hover:bg-amber-100/80',
+      iconBg: 'bg-white text-amber-700 shadow-2xs',
       subPage: 'locations',
     },
     {
       id: 'dolil',
-      title: t('মোট দলিল', 'Total Deeds'),
-      sub: t('নিবন্ধিত বালামভুক্ত', 'Registered Deeds'),
+      title: t('মোট দলিল', 'Deeds'),
       count: totalDeeds,
       icon: FileCheck2,
-      badge: t('লেজার সুরক্ষিত', 'Immutable'),
-      color: 'text-emerald-800 dark:text-emerald-300',
-      bgShade: 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-200/90 dark:border-emerald-800/60 hover:bg-emerald-100/80 hover:border-emerald-300',
-      iconBg: 'bg-emerald-100/90 dark:bg-emerald-900/60 border-emerald-200/90',
+      color: 'text-emerald-700',
+      bgShade: 'bg-emerald-50/90 border-emerald-200 hover:bg-emerald-100/80',
+      iconBg: 'bg-white text-emerald-700 shadow-2xs',
       subPage: 'deeds',
     },
     {
+      id: 'khatians',
+      title: t('খতিয়ান ও দাগ', 'Khatians'),
+      count: totalKhatians,
+      icon: Layers,
+      color: 'text-cyan-700',
+      bgShade: 'bg-cyan-50/90 border-cyan-200 hover:bg-cyan-100/80',
+      iconBg: 'bg-white text-cyan-700 shadow-2xs',
+      subPage: 'khatians',
+    },
+    {
+      id: 'mutations',
+      title: t('নামজারি', 'Mutations'),
+      count: pendingMutations,
+      icon: Flame,
+      color: 'text-orange-700',
+      bgShade: 'bg-orange-50/90 border-orange-200 hover:bg-orange-100/80',
+      iconBg: 'bg-white text-orange-700 shadow-2xs',
+      subPage: 'mutations',
+    },
+    {
+      id: 'transfers',
+      title: t('জমি হস্তান্তর', 'Transfers'),
+      count: totalTransfers,
+      icon: ArrowLeftRight,
+      color: 'text-violet-700',
+      bgShade: 'bg-violet-50/90 border-violet-200 hover:bg-violet-100/80',
+      iconBg: 'bg-white text-violet-700 shadow-2xs',
+      subPage: 'transfers',
+    },
+    {
       id: 'blogs',
-      title: t('মোট ব্লগ', 'Total Blogs'),
-      sub: t('তথ্য ও নির্দেশিকা', 'Citizen Guides'),
+      title: t('মোট ব্লগ', 'Blogs'),
       count: totalBlogs,
       icon: BookOpen,
-      badge: t('প্রকাশিত', 'Published'),
-      color: 'text-rose-700 dark:text-rose-300',
-      bgShade: 'bg-rose-50/75 dark:bg-rose-950/40 border-rose-200/80 dark:border-rose-800/60 hover:bg-rose-100/70 hover:border-rose-300',
-      iconBg: 'bg-rose-100/90 dark:bg-rose-900/60 border-rose-200/90',
+      color: 'text-teal-700',
+      bgShade: 'bg-teal-50/90 border-teal-200 hover:bg-teal-100/80',
+      iconBg: 'bg-white text-teal-700 shadow-2xs',
       subPage: 'blogs',
     },
     {
       id: 'notices',
-      title: t('মোট নোটিশ', 'Total Notices'),
-      sub: t('বিজ্ঞপ্তি ও প্রজ্ঞাপন', 'Circulars & Orders'),
+      title: t('মোট নোটিশ', 'Notices'),
       count: totalNotices,
-      icon: Bell,
-      badge: t('সক্রিয়', 'Active'),
-      color: 'text-teal-700 dark:text-teal-300',
-      bgShade: 'bg-teal-50/75 dark:bg-teal-950/40 border-teal-200/80 dark:border-teal-800/60 hover:bg-teal-100/70 hover:border-teal-300',
-      iconBg: 'bg-teal-100/90 dark:bg-teal-900/60 border-teal-200/90',
+      icon: Megaphone,
+      color: 'text-rose-700',
+      bgShade: 'bg-rose-50/90 border-rose-200 hover:bg-rose-100/80',
+      iconBg: 'bg-white text-rose-700 shadow-2xs',
       subPage: 'notices',
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-2 sm:gap-2.5">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-5 gap-2">
       {cards.map((card) => {
         const IconComponent = card.icon;
         return (
-          <div
+          <button
+            type="button"
             key={card.id}
             onClick={() => onNavigateSubPage && onNavigateSubPage(card.subPage)}
-            className={`group rounded-xl border ${card.bgShade} shadow-2xs hover:shadow-xs transition-all duration-150 hover:-translate-y-0.5 cursor-pointer p-2.5 sm:p-3 flex flex-col justify-between`}
-            title={t(`${card.title} বিস্তারিত দেখুন`, `View ${card.title} details`)}
+            className={`group rounded-xl border ${card.bgShade} transition-all duration-150 hover:-translate-y-0.5 cursor-pointer px-3 py-2 flex items-center justify-between gap-2 text-left`}
           >
-            {/* Row 1: Icon + Title + Arrow */}
-            <div className="flex items-center justify-between gap-1.5">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <div className={`w-6 h-6 rounded-md border flex items-center justify-center shrink-0 ${card.iconBg} ${card.color}`}>
-                  <IconComponent className="size-3.5" />
-                </div>
-                <span className="text-xs font-bold text-foreground truncate group-hover:text-primary transition">
-                  {card.title}
-                </span>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className={`size-8 rounded-lg flex items-center justify-center shrink-0 ${card.iconBg}`}>
+                <IconComponent className="size-4" />
               </div>
-              <ChevronRight className="size-3 text-muted-foreground/70 group-hover:text-foreground group-hover:translate-x-0.5 transition shrink-0" />
-            </div>
-
-            {/* Row 2: Bold Count + Micro Subtitle (Compact, zero waste height) */}
-            <div className="flex items-baseline justify-between gap-1.5 mt-2">
-              <span className="text-xl sm:text-2xl font-black font-mono tracking-tight text-foreground leading-none">
-                {toBanglaDigits(card.count, lang)}
-              </span>
-              <span className="text-[10px] text-muted-foreground font-medium truncate leading-none">
-                {card.sub}
+              <span className="text-xs sm:text-[13px] font-bold text-slate-800 dark:text-slate-100 truncate">
+                {card.title}
               </span>
             </div>
-          </div>
+            <span className={`text-lg sm:text-xl font-black tracking-tight shrink-0 ${card.color}`}>
+              {toBanglaDigits(card.count, lang)}
+            </span>
+          </button>
         );
       })}
     </div>

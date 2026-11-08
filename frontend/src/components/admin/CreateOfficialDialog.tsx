@@ -1,38 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { RotateCcw, Sparkles } from 'lucide-react';
 import { useAppUI } from '@/i18n';
 import { BhumiApi } from '@/api/client';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Briefcase,
-  Building2,
-  CheckCircle2,
-  AlertCircle,
-  CreditCard,
-  Phone,
-  Mail,
-  Lock,
-  User,
-  ShieldCheck,
-  UserPlus,
-  Sparkles,
-} from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Field, FormDialog, inputCls, notify } from '@/components/admin/kit';
 
 interface CreateOfficialDialogProps {
   isOpen: boolean;
@@ -41,29 +13,25 @@ interface CreateOfficialDialogProps {
 }
 
 const OFFICIAL_ROLE_OPTIONS = [
-  { value: 'sub_registrar', label_bn: 'সাব-রেজিস্ট্রার (Sub-Registrar)', label_en: 'Sub-Registrar' },
-  { value: 'registry_data_officer', label_bn: 'রেজিস্ট্রি ডেটা অফিসার (RDO)', label_en: 'Registry Data Officer' },
-  { value: 'ac_land', label_bn: 'সহকারী কমিশনার - ভূমি (AC Land)', label_en: 'AC Land (Magistrate)' },
-  { value: 'land_office_assistant', label_bn: 'ভূমি উপ-সহকারী কর্মকর্তা (LOA)', label_en: 'Land Office Assistant' },
-  { value: 'field_verification_officer', label_bn: 'মাঠ যাচাই কর্মকর্তা / সার্ভেয়ার (FVO)', label_en: 'Field Verification Officer' },
-  { value: 'settlement_records_officer', label_bn: 'সেটেলমেন্ট রেকর্ডস অফিসার (SRO)', label_en: 'Settlement Records Officer' },
-  { value: 'settlement_checker', label_bn: 'সহকারী সেটেলমেন্ট অফিসার (ASO)', label_en: 'Settlement Checker / ASO' },
-  { value: 'kanungo', label_bn: 'কানুনগো (Kanungo)', label_en: 'Kanungo' },
-  { value: 'uno', label_bn: 'উপজেলা নির্বাহী কর্মকর্তা (UNO)', label_en: 'Upazila Nirbahi Officer' },
-  { value: 'adc_revenue', label_bn: 'অতিরিক্ত জেলা প্রশাসক - রাজস্ব (ADC Rev)', label_en: 'ADC (Revenue)' },
-  { value: 'bank_officer', label_bn: 'ব্যাংক লিয়েন কর্মকর্তা (Bank Officer)', label_en: 'Bank Mortgage Officer' },
-  { value: 'bank_manager', label_bn: 'ব্যাংক শাখা ব্যবস্থাপক (Bank Manager)', label_en: 'Bank Branch Manager' },
-  { value: 'lawyer_court_user', label_bn: 'তালিকাভুক্ত আইনজীবী (Advocate)', label_en: 'Empaneled Advocate' },
-  { value: 'dc_acquisition_officer', label_bn: 'এলএ অধিগ্রহণ কর্মকর্তা (DC LA Officer)', label_en: 'DC Land Acquisition Officer' },
-  { value: 'auditor', label_bn: 'জাতীয় সিস্টেম অডিটর (System Auditor)', label_en: 'National System Auditor' },
-  { value: 'admin', label_bn: 'সিস্টেম অ্যাডমিনিস্ট্রেটর (System Admin)', label_en: 'System Administrator' },
+  { value: 'sub_registrar', label_bn: 'সাব-রেজিস্ট্রার', label_en: 'Sub-Registrar' },
+  { value: 'registry_data_officer', label_bn: 'রেজিস্ট্রি ডেটা অফিসার', label_en: 'Registry Data Officer' },
+  { value: 'ac_land', label_bn: 'এসি ল্যান্ড', label_en: 'AC Land' },
+  { value: 'land_office_assistant', label_bn: 'ভূমি সহকারী', label_en: 'Land Office Assistant' },
+  { value: 'field_verification_officer', label_bn: 'মাঠ যাচাই কর্মকর্তা', label_en: 'Field Verification Officer' },
+  { value: 'settlement_records_officer', label_bn: 'সেটেলমেন্ট রেকর্ডস অফিসার', label_en: 'Settlement Records Officer' },
+  { value: 'settlement_checker', label_bn: 'সহকারী সেটেলমেন্ট অফিসার', label_en: 'Settlement Checker' },
+  { value: 'kanungo', label_bn: 'কানুনগো', label_en: 'Kanungo' },
+  { value: 'uno', label_bn: 'ইউএনও', label_en: 'UNO' },
+  { value: 'adc_revenue', label_bn: 'এডিসি রাজস্ব', label_en: 'ADC Revenue' },
+  { value: 'bank_officer', label_bn: 'ব্যাংক কর্মকর্তা', label_en: 'Bank Officer' },
+  { value: 'bank_manager', label_bn: 'ব্যাংক ম্যানেজার', label_en: 'Bank Manager' },
+  { value: 'lawyer_court_user', label_bn: 'আইনজীবী', label_en: 'Advocate' },
+  { value: 'dc_acquisition_officer', label_bn: 'অধিগ্রহণ কর্মকর্তা', label_en: 'Acquisition Officer' },
+  { value: 'auditor', label_bn: 'অডিটর', label_en: 'Auditor' },
+  { value: 'admin', label_bn: 'সিস্টেম অ্যাডমিন', label_en: 'System Admin' },
 ];
 
-export const CreateOfficialDialog: React.FC<CreateOfficialDialogProps> = ({
-  isOpen,
-  onClose,
-  onSuccess,
-}) => {
+export const CreateOfficialDialog: React.FC<CreateOfficialDialogProps> = ({ isOpen, onClose, onSuccess }) => {
   const { t, lang } = useAppUI();
 
   const [role, setRole] = useState('sub_registrar');
@@ -79,25 +47,33 @@ export const CreateOfficialDialog: React.FC<CreateOfficialDialogProps> = ({
   const [offices, setOffices] = useState<any[]>([]);
   const [officeId, setOfficeId] = useState<number>(1);
   const [customOfficeBn, setCustomOfficeBn] = useState('');
+  const [officesFailed, setOfficesFailed] = useState(false);
+  const [officesLoading, setOfficesLoading] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
 
-  // Load available offices
+  const loadOffices = () => {
+    setOfficesLoading(true);
+    setOfficesFailed(false);
+    BhumiApi.listOffices()
+      .then((res: any) => {
+        const items = Array.isArray(res) ? res : res.items || [];
+        setOffices(items);
+        if (items.length > 0 && !items.some((o: any) => o.id === officeId)) {
+          setOfficeId(items[0].id);
+        }
+      })
+      .catch(() => setOfficesFailed(true))
+      .finally(() => setOfficesLoading(false));
+  };
+
   useEffect(() => {
     if (isOpen) {
-      BhumiApi.listOffices()
-        .then((res: any) => {
-          const items = Array.isArray(res) ? res : res.items || [];
-          setOffices(items);
-          if (items.length > 0 && !officeId) {
-            setOfficeId(items[0].id);
-          }
-        })
-        .catch(() => {});
+      setErrorMsg('');
+      loadOffices();
     }
-  }, [isOpen]);
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const resetForm = () => {
     setRole('sub_registrar');
@@ -110,7 +86,6 @@ export const CreateOfficialDialog: React.FC<CreateOfficialDialogProps> = ({
     setPassword('Official@2026');
     setCustomOfficeBn('');
     setErrorMsg('');
-    setSuccessMsg('');
   };
 
   const handleGenerateOfficialUsername = () => {
@@ -119,18 +94,15 @@ export const CreateOfficialDialog: React.FC<CreateOfficialDialogProps> = ({
     setUsername(`${rolePrefix}_${randomSuffix}`);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setErrorMsg('');
-    setSuccessMsg('');
 
     if (!fullNameBn.trim() && !fullNameEn.trim()) {
-      setErrorMsg(t('কর্মকর্তার পূর্ণ নাম লিখুন।', 'Please provide the official’s name.'));
+      setErrorMsg(t('নাম লিখুন', 'Enter a name'));
       return;
     }
-
     if (phone.trim() && !/^(?:\+?8801|01)[3-9]\d{8}$/.test(phone.trim())) {
-      setErrorMsg(t('সঠিক ১১ ডিজিট বাংলাদেশি মোবাইল নম্বর দিন।', 'Enter a valid 11-digit mobile number.'));
+      setErrorMsg(t('মোবাইল নম্বর সঠিক নয়', 'Invalid mobile number'));
       return;
     }
 
@@ -161,278 +133,153 @@ export const CreateOfficialDialog: React.FC<CreateOfficialDialogProps> = ({
         registration_channel: 'official_appointment',
       };
 
-      const res = await BhumiApi.createUser(payload);
-
-      setSuccessMsg(
-        lang === 'bn'
-          ? `কর্মকর্তা অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে! পদবী: ${role}, আইডি: ${uname}`
-          : `Official account provisioned successfully! Role: ${role}, ID: ${uname}`
-      );
-
-      setTimeout(() => {
-        resetForm();
-        onSuccess();
-        onClose();
-      }, 1200);
+      await BhumiApi.createUser(payload);
+      resetForm();
+      onSuccess();
+      onClose();
     } catch (err: any) {
-      console.error('Create official failed:', err);
-      let msg = err.response?.data?.message_bn || err.response?.data?.message_en || err.message || 'Error provisioning account';
-      if (err.response?.data?.code === 'USERNAME_EXISTS') {
-        msg = t('এই ইউজারনেম ইতিমধ্যে ব্যবহৃত হয়েছে। ভিন্ন ইউজারনেম দিন।', 'This username is already taken. Please choose another.');
+      if (err?.response?.data?.code === 'USERNAME_EXISTS') {
+        notify.err({ message_bn: 'এই ইউজারনেম আগেই আছে', message_en: 'Username already taken' }, lang);
+      } else {
+        notify.err(err, lang);
       }
-      setErrorMsg(msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl p-6">
-        <DialogHeader>
-          <div className="flex items-center gap-2">
-            <div className="size-9 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold">
-              <Briefcase className="size-5" />
+    <FormDialog
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title={t('নতুন কর্মকর্তা', 'New official')}
+      submitLabel={t('তৈরি করুন', 'Create')}
+      cancelLabel={t('বাতিল', 'Cancel')}
+      onSubmit={handleSubmit}
+      busy={loading}
+    >
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label={t('নাম', 'Name')}>
+          <input
+            value={fullNameBn}
+            onChange={(e) => setFullNameBn(e.target.value)}
+            placeholder={t('পূর্ণ নাম', 'Full name')}
+            className={inputCls}
+            autoFocus
+          />
+        </Field>
+        <Field label={t('পদবী', 'Role')}>
+          <Select value={role} onValueChange={(val) => setRole(val)}>
+            <SelectTrigger className="h-9 w-full rounded-lg text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-64">
+              {OFFICIAL_ROLE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {lang === 'bn' ? opt.label_bn : opt.label_en}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label={t('অফিস', 'Office')} className="sm:col-span-2">
+          {officesFailed ? (
+            <div className="flex h-9 items-center justify-between gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 text-xs text-rose-700">
+              <span>{t('অফিস তালিকা আসেনি', 'Could not load offices')}</span>
+              <button
+                type="button"
+                onClick={loadOffices}
+                className="inline-flex items-center gap-1 font-medium hover:underline cursor-pointer"
+              >
+                <RotateCcw className="size-3" />
+                {t('আবার চেষ্টা', 'Retry')}
+              </button>
             </div>
-            <div>
-              <DialogTitle className="text-lg font-black text-slate-900">
-                {t('সুপার অ্যাডমিন • নতুন কর্মকর্তা পদায়ন ও অ্যাকাউন্ট', 'Super Admin • Provision Official Account')}
-              </DialogTitle>
-              <DialogDescription className="text-xs text-slate-500 mt-0.5">
-                {t(
-                  'সাব-রেজিস্ট্রি, এসি ল্যান্ড, ব্যাংক বা বিচারিক কর্মকর্তাদের ডিজিটাল কর্মকর্তা অ্যাকাউন্ট ও কর্মস্থল নির্ধারণ করুন।',
-                  'Provision authoritative accounts for sub-registry, land revenue, banks, or courts with assigned jurisdiction.'
-                )}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
-
-        {errorMsg && (
-          <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-800 flex items-start gap-2">
-            <AlertCircle className="size-4 text-rose-600 shrink-0 mt-0.5" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
-
-        {successMsg && (
-          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-900 flex items-center gap-2">
-            <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
-            <span>{successMsg}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 py-2">
-          {/* Official Role Selector */}
-          <div className="flex flex-col gap-1.5 p-3.5 rounded-xl bg-purple-50/60 border border-purple-200">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-purple-950 flex items-center gap-1.5">
-                <ShieldCheck className="size-4 text-purple-700" />
-                <span>{t('কর্মকর্তার প্রাতিষ্ঠানিক ভূমিকা (Official RBAC Role):', 'Official RBAC Role:')} *</span>
-              </label>
-              <Badge className="bg-purple-700 text-white text-[10px]">
-                Statutory Authority
-              </Badge>
-            </div>
-            <Select value={role} onValueChange={(val) => setRole(val)}>
-              <SelectTrigger className="h-10 text-xs bg-white font-semibold border-purple-300">
-                <SelectValue />
+          ) : (
+            <Select value={String(officeId)} onValueChange={(val) => setOfficeId(Number(val))} disabled={officesLoading && offices.length === 0}>
+              <SelectTrigger className="h-9 w-full rounded-lg text-sm">
+                <SelectValue placeholder={officesLoading ? t('লোড হচ্ছে…', 'Loading…') : t('অফিস বাছুন', 'Choose office')} />
               </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {OFFICIAL_ROLE_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {lang === 'bn' ? opt.label_bn : opt.label_en}
+              <SelectContent className="max-h-64">
+                {offices.map((off) => (
+                  <SelectItem key={off.id} value={String(off.id)}>
+                    {lang === 'bn' ? off.name_bn || off.name_en : off.name_en || off.name_bn}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          {/* Assigned Office */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-800 flex items-center gap-1">
-                <Building2 className="size-3.5 text-slate-500" />
-                <span>{t('দায়িত্বপ্রাপ্ত কার্যালয় (Posting Office):', 'Posting Office:')}</span>
-              </label>
-              <Select
-                value={String(officeId)}
-                onValueChange={(val) => setOfficeId(Number(val))}
-              >
-                <SelectTrigger className="h-9 text-xs bg-white">
-                  <SelectValue placeholder="কার্যালয় নির্বাচন করুন" />
-                </SelectTrigger>
-                <SelectContent className="max-h-56">
-                  {offices.map((off) => (
-                    <SelectItem key={off.id} value={String(off.id)}>
-                      {off.name_bn || off.name_en} ({off.upazila_en || off.district_en})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-800 flex items-center gap-1">
-                <Building2 className="size-3.5 text-slate-500" />
-                <span>{t('কাস্টম অফিসের নাম (যদি তালিকায় না থাকে):', 'Custom Office Name (Optional):')}</span>
-              </label>
-              <Input
-                value={customOfficeBn}
-                onChange={(e) => setCustomOfficeBn(e.target.value)}
-                placeholder="যেমন: সাব-রেজিস্ট্রি অফিস, ধামরাই"
-                className="h-9 text-xs"
-              />
-            </div>
-          </div>
-
-          {/* Officer Names */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-800 flex items-center gap-1">
-                <User className="size-3 text-slate-500" />
-                <span>{t('কর্মকর্তার নাম (বাংলা):', 'Officer Name (Bangla):')} *</span>
-              </label>
-              <Input
-                value={fullNameBn}
-                onChange={(e) => setFullNameBn(e.target.value)}
-                placeholder="যেমন: কাজী মাহফুজুর রহমান"
-                className="h-9 text-xs"
-                required
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-800 flex items-center gap-1">
-                <User className="size-3 text-slate-500" />
-                <span>{t('কর্মকর্তার নাম (ইংরেজি):', 'Officer Name (English):')}</span>
-              </label>
-              <Input
-                value={fullNameEn}
-                onChange={(e) => setFullNameEn(e.target.value)}
-                placeholder="e.g. Kazi Mahfuzur Rahman"
-                className="h-9 text-xs"
-              />
-            </div>
-          </div>
-
-          {/* Username & Contact Phone */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-800">
-                  {t('ইউজারনেম (লগইন আইডি):', 'Username (Officer ID):')} *
-                </label>
-                <button
-                  type="button"
-                  onClick={handleGenerateOfficialUsername}
-                  className="text-[10px] font-bold text-purple-700 hover:underline flex items-center gap-0.5"
-                >
-                  <Sparkles className="size-2.5" />
-                  {t('স্বয়ংক্রিয় তৈরি', 'Auto-Generate')}
-                </button>
-              </div>
-              <Input
-                value={username}
-                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                placeholder="e.g. sub_reg_savar"
-                className="h-9 text-xs font-mono"
-                required
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-800 flex items-center gap-1">
-                <Phone className="size-3 text-slate-500" />
-                <span>{t('সরকারি মোবাইল নম্বর:', 'Official Mobile Phone:')}</span>
-              </label>
-              <Input
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="017xxxxxxxx"
-                maxLength={14}
-                className="h-9 text-xs font-mono"
-              />
-            </div>
-          </div>
-
-          {/* Email & Initial Password */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-800 flex items-center gap-1">
-                <Mail className="size-3 text-slate-500" />
-                <span>{t('দাপ্তরিক ইমেইল:', 'Official Email:')}</span>
-              </label>
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="officer@land.gov.bd"
-                className="h-9 text-xs"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-800 flex items-center gap-1">
-                <Lock className="size-3 text-slate-500" />
-                <span>{t('ডিফল্ট পাসওয়ার্ড:', 'Initial Password:')} *</span>
-              </label>
-              <Input
-                type="text"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Official@2026"
-                className="h-9 text-xs font-mono"
-                required
-              />
-            </div>
-          </div>
-
-          {/* National ID */}
-          <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-800 flex items-center gap-1">
-              <CreditCard className="size-3 text-slate-500" />
-              <span>{t('জাতীয় পরিচয়পত্র (NID - ঐচ্ছিক):', 'National ID (NID - Optional):')}</span>
-            </label>
-            <Input
-              value={nid}
-              onChange={(e) => setNid(e.target.value.replace(/\D/g, ''))}
-              placeholder="১০, ১৩ বা ১৭ সংখ্যার এনআইডি"
-              maxLength={17}
-              className="h-9 text-xs font-mono"
+          )}
+        </Field>
+        <Field label={t('ইউজারনেম', 'Username')} className="sm:col-span-2">
+          <div className="relative">
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+              placeholder={t('স্বয়ংক্রিয়', 'Automatic')}
+              className={`${inputCls} pr-9 font-mono`}
             />
-          </div>
-
-          <DialogFooter className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-            <Button
+            <button
               type="button"
-              variant="outline"
-              size="sm"
-              onClick={onClose}
-              disabled={loading}
-              className="text-xs"
+              onClick={handleGenerateOfficialUsername}
+              title={t('তৈরি করুন', 'Generate')}
+              aria-label={t('তৈরি করুন', 'Generate')}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:text-[#006A4E] cursor-pointer"
             >
-              {t('বাতিল', 'Cancel')}
-            </Button>
+              <Sparkles className="size-3.5" />
+            </button>
+          </div>
+        </Field>
+      </div>
 
-            <Button
-              type="submit"
-              size="sm"
-              disabled={loading}
-              className="bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs gap-1.5 cursor-pointer shadow-sm"
-            >
-              {loading ? (
-                <span>{t('পদায়ন হচ্ছে...', 'Provisioning...')}</span>
-              ) : (
-                <>
-                  <UserPlus className="size-3.5" />
-                  <span>{t('কর্মকর্তা পদায়ন নিশ্চিত করুন', 'Confirm Officer Provision')}</span>
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      <Accordion type="single" collapsible className="rounded-lg border border-slate-200 px-3">
+        <AccordionItem value="more" className="border-b-0">
+          <AccordionTrigger className="min-h-0 py-2.5 text-sm font-medium text-slate-700 hover:text-slate-900 hover:no-underline">
+            {t('আরও তথ্য', 'More details')}
+          </AccordionTrigger>
+          <AccordionContent className="pb-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label={t('ইংরেজি নাম', 'English name')}>
+                <input value={fullNameEn} onChange={(e) => setFullNameEn(e.target.value)} placeholder="Kazi Mahfuzur Rahman" className={inputCls} />
+              </Field>
+              <Field label={t('পাসওয়ার্ড', 'Password')}>
+                <input value={password} onChange={(e) => setPassword(e.target.value)} className={`${inputCls} font-mono`} />
+              </Field>
+              <Field label={t('মোবাইল', 'Mobile')}>
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="017xxxxxxxx"
+                  maxLength={14}
+                  inputMode="tel"
+                  className={`${inputCls} font-mono`}
+                />
+              </Field>
+              <Field label={t('ইমেইল', 'Email')}>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="officer@land.gov.bd" className={inputCls} />
+              </Field>
+              <Field label={t('এনআইডি', 'NID')}>
+                <input
+                  value={nid}
+                  onChange={(e) => setNid(e.target.value.replace(/\D/g, ''))}
+                  maxLength={17}
+                  inputMode="numeric"
+                  className={`${inputCls} font-mono`}
+                />
+              </Field>
+              <Field label={t('অন্য অফিসের নাম', 'Other office name')}>
+                <input
+                  value={customOfficeBn}
+                  onChange={(e) => setCustomOfficeBn(e.target.value)}
+                  placeholder={t('তালিকায় না থাকলে', 'If not listed')}
+                  className={inputCls}
+                />
+              </Field>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
+      {errorMsg && <p className="text-xs text-rose-600">{errorMsg}</p>}
+    </FormDialog>
   );
 };

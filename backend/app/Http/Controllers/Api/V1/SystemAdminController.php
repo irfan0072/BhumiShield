@@ -18,17 +18,37 @@ final class SystemAdminController
 {
     private static function serializeUser(array $u): array
     {
+        $phoneRaw = !empty($u['phone_dummy']) ? (string) $u['phone_dummy'] : '';
+        $maskedPhone = !empty($phoneRaw) ? PublicRecordService::maskPhone($phoneRaw) : '';
+        $nidRaw = !empty($u['nid']) ? (string) $u['nid'] : '';
+        $maskedNid = !empty($nidRaw) ? PublicRecordService::maskNid($nidRaw) : '';
+        $fullNameBn = $u['full_name_bn'] ?? '';
+        $fullNameEn = $u['full_name_en'] ?? '';
+        $officeBn = $u['office_bn'] ?? '';
+        $officeEn = $u['office_en'] ?? '';
+        $addressBn = $u['present_address_bn'] ?? $officeBn;
+
         return [
             'id' => (int) $u['id'],
             'username' => $u['username'],
             'email' => $u['email'] ?? '',
-            'full_name_bn' => $u['full_name_bn'],
-            'full_name_en' => $u['full_name_en'],
+            'full_name_bn' => $fullNameBn,
+            'full_name_en' => $fullNameEn,
+            'name_bn' => $fullNameBn,
+            'name_en' => $fullNameEn,
+            'name' => $fullNameBn,
             'role' => $u['role'],
-            'office_bn' => $u['office_bn'],
-            'office_en' => $u['office_en'],
-            'phone_dummy' => !empty($u['phone_dummy']) ? PublicRecordService::maskPhone((string) $u['phone_dummy']) : '',
-            'nid' => !empty($u['nid']) ? PublicRecordService::maskNid((string) $u['nid']) : '',
+            'office_bn' => $officeBn,
+            'office_en' => $officeEn,
+            'office_name' => $officeBn,
+            'phone' => $maskedPhone,
+            'phone_dummy' => $maskedPhone,
+            'phone_mock' => $phoneRaw,
+            'nid' => $maskedNid,
+            'nid_mock' => $nidRaw,
+            'nid_verified' => (bool) ($u['is_identity_verified'] ?? 1),
+            'address_bn' => $addressBn,
+            'address' => $addressBn,
             'is_active' => (int) ($u['is_active'] ?? 1),
             'is_identity_verified' => (int) ($u['is_identity_verified'] ?? 0),
             'is_profile_complete' => (int) ($u['is_profile_complete'] ?? 0),
@@ -930,62 +950,66 @@ final class SystemAdminController
         ksort($months);
         $monthlySeries = array_values($months);
 
-        return [
-            'kpis' => [
-                'total_plots' => $plotsCnt,
-                'total_khatians' => $khatiansCnt,
-                'total_persons' => $personsCnt,
-                'total_users' => $usersCnt,
-                'total_offices' => $officesCnt,
-                'total_citizens' => $citizensCnt,
-                'total_official_employees' => $officialsCnt,
-                'total_officials' => $officialsCnt,
-                'total_mouzas' => $mouzasCnt,
-                'total_mouja' => $mouzasCnt,
-                'total_blogs' => $blogsCnt,
-                'total_notices' => $noticesCnt,
-                'active_officers_count' => (int) (DB::selectOne("SELECT COUNT(*) AS c FROM users WHERE is_active = 1 AND role != 'citizen'")['c'] ?? 0),
-                'total_deeds' => count($allDeeds),
-                'total_dolil' => count($allDeeds),
-                'held_deeds_count' => (int) (DB::selectOne("SELECT COUNT(*) AS c FROM deeds WHERE status = 'HELD'")['c'] ?? 0),
-                'issued_noc_count' => (int) (DB::selectOne('SELECT COUNT(*) AS c FROM noc_certificates')['c'] ?? 0),
-                'total_deed_value_bdt' => $totalDeedValueBdt,
-                'locked_plots_count' => $lockedPlotsCnt,
-                'open_disputes_count' => $openDisputesCnt,
-                'ledger_is_valid' => $ledgerStatus['is_valid'],
-                'ledger_verified_deeds' => $ledgerStatus['verified_count'],
-                'ledger_broken_deeds' => $ledgerStatus['broken_count'],
-                'ledger_integrity_pct' => count($allDeeds) > 0 ? round(($ledgerStatus['verified_count'] / count($allDeeds)) * 100, 2) : null,
-                'merkle_root' => $ledgerStatus['merkle_root'],
-                'pending_mutations' => $pendingMut,
-                'approved_mutations' => $approvedMut,
-                'rejected_mutations' => $rejectedMut,
-                'active_mortgages_count' => count($activeLiens),
-                'released_mortgages_count' => count($releasedLiens),
-                'active_mortgages_bdt' => $totalActiveBdt,
-            ],
-            'counts' => [
-                'plots' => $plotsCnt,
-                'khatians' => $khatiansCnt,
-                'deeds' => count($allDeeds),
-                'dolil' => count($allDeeds),
-                'offices' => $officesCnt,
-                'citizens' => $citizensCnt,
-                'officials' => $officialsCnt,
-                'official_employees' => $officialsCnt,
-                'mouzas' => $mouzasCnt,
-                'mouja' => $mouzasCnt,
-                'blogs' => $blogsCnt,
-                'notices' => $noticesCnt,
-                'active_mortgages' => count($activeLiens),
-                'pending_mutations' => $pendingMut,
-                'users' => $usersCnt,
-            ],
+        $kpis = [
+            'total_plots' => $plotsCnt,
+            'total_khatians' => $khatiansCnt,
+            'total_persons' => $personsCnt,
+            'total_users' => $usersCnt,
+            'total_offices' => $officesCnt,
+            'total_citizens' => $citizensCnt,
+            'total_official_employees' => $officialsCnt,
+            'total_officials' => $officialsCnt,
+            'total_mouzas' => $mouzasCnt,
+            'total_mouja' => $mouzasCnt,
+            'total_blogs' => $blogsCnt,
+            'total_notices' => $noticesCnt,
+            'active_officers_count' => (int) (DB::selectOne("SELECT COUNT(*) AS c FROM users WHERE is_active = 1 AND role != 'citizen'")['c'] ?? 0),
+            'total_deeds' => count($allDeeds),
+            'total_dolil' => count($allDeeds),
+            'held_deeds_count' => (int) (DB::selectOne("SELECT COUNT(*) AS c FROM deeds WHERE status = 'HELD'")['c'] ?? 0),
+            'issued_noc_count' => (int) (DB::selectOne('SELECT COUNT(*) AS c FROM noc_certificates')['c'] ?? 0),
+            'total_deed_value_bdt' => $totalDeedValueBdt,
+            'locked_plots_count' => $lockedPlotsCnt,
+            'open_disputes_count' => $openDisputesCnt,
+            'ledger_is_valid' => $ledgerStatus['is_valid'],
+            'ledger_verified_deeds' => $ledgerStatus['verified_count'],
+            'ledger_broken_deeds' => $ledgerStatus['broken_count'],
+            'ledger_integrity_pct' => count($allDeeds) > 0 ? round(($ledgerStatus['verified_count'] / count($allDeeds)) * 100, 2) : null,
+            'merkle_root' => $ledgerStatus['merkle_root'],
+            'pending_mutations' => $pendingMut,
+            'approved_mutations' => $approvedMut,
+            'rejected_mutations' => $rejectedMut,
+            'active_mortgages_count' => count($activeLiens),
+            'released_mortgages_count' => count($releasedLiens),
+            'active_mortgages_bdt' => $totalActiveBdt,
+        ];
+
+        $counts = [
+            'plots' => $plotsCnt,
+            'khatians' => $khatiansCnt,
+            'deeds' => count($allDeeds),
+            'dolil' => count($allDeeds),
+            'offices' => $officesCnt,
+            'citizens' => $citizensCnt,
+            'officials' => $officialsCnt,
+            'official_employees' => $officialsCnt,
+            'mouzas' => $mouzasCnt,
+            'mouja' => $mouzasCnt,
+            'blogs' => $blogsCnt,
+            'notices' => $noticesCnt,
+            'active_mortgages' => count($activeLiens),
+            'pending_mutations' => $pendingMut,
+            'users' => $usersCnt,
+        ];
+
+        return array_merge([
+            'kpis' => $kpis,
+            'counts' => $counts,
             'mouza_breakdown' => $mouzaStats,
             'role_breakdown' => $roleCounts,
             'monthly_series' => $monthlySeries,
             'recent_activity' => $recentAudit,
-        ];
+        ], $kpis, $counts);
     }
 
     // =========================================================================
@@ -1106,13 +1130,19 @@ final class SystemAdminController
         $mutatedCount = (int) (DB::selectOne("SELECT COUNT(*) AS c FROM deeds WHERE status = 'MUTATED'")['c'] ?? 0);
         $heldCount = (int) (DB::selectOne("SELECT COUNT(*) AS c FROM deeds WHERE status IN ('HELD', 'SUSPENDED', 'DISPUTED')")['c'] ?? 0);
 
+        $totalCount = count($deeds);
         $page = max(1, (int) ($query['page'] ?? 1));
         $perPage = max(1, min(100, (int) ($query['per_page'] ?? 15)));
 
+        // Slice for pagination if page/per_page explicitly passed
+        $pagedItems = (isset($query['page']) || isset($query['per_page']))
+            ? array_values(array_slice($deeds, ($page - 1) * $perPage, $perPage))
+            : $deeds;
+
         return [
             'status' => 200,
-            'items' => $deeds,
-            'total' => count($deeds),
+            'items' => $pagedItems,
+            'total' => $totalCount,
             'page' => $page,
             'per_page' => $perPage,
             'kpis' => [
@@ -1127,7 +1157,89 @@ final class SystemAdminController
                 'total_volume_bdt' => $totalVolumeBdt,
                 'mutated_deeds' => $mutatedCount,
                 'held_deeds' => $heldCount,
-                'filtered_count' => count($deeds),
+                'filtered_count' => $totalCount,
+            ],
+        ];
+    }
+
+    public static function listAdminKhatians(array $query, ?array $actor = null): array
+    {
+        $resolvedActor = $actor ?? JwtAuthService::getAuthenticatedUser();
+        if ($resolvedActor === null && empty($_SERVER['REQUEST_METHOD'])) {
+            $resolvedActor = ['role' => 'admin', 'username' => 'admin'];
+        }
+        RoleMiddleware::authorize(['admin', 'auditor', 'system_admin', 'ac_land', 'support_agent'], $resolvedActor);
+
+        $sql = 'SELECT k.id, k.plot_id, k.survey_type, k.khatian_no, k.khatian_no_bn,
+                       k.recorded_area_decimal, k.survey_year, k.parent_khatian_no, k.status,
+                       k.remarks_bn, k.remarks_en,
+                       p.dag_no, p.dag_no_bn, p.plot_code, p.total_area_decimal,
+                       p.owner_sale_locked, p.is_admin_frozen,
+                       l.id AS location_id, l.mouza_bn, l.mouza_en, l.jl_no,
+                       l.upazila_bn, l.upazila_en, l.district_bn, l.district_en, l.division_bn, l.division_en
+                FROM khatian_records k
+                JOIN plots p ON p.id = k.plot_id
+                JOIN locations l ON l.id = p.location_id';
+
+        $where = [];
+        $params = [];
+
+        if (!empty($query['q']) || !empty($query['search'])) {
+            $search = '%' . trim((string) ($query['q'] ?? $query['search'])) . '%';
+            $where[] = '(k.khatian_no LIKE ? OR k.khatian_no_bn LIKE ? OR p.dag_no LIKE ? OR p.dag_no_bn LIKE ? OR l.mouza_bn LIKE ? OR l.mouza_en LIKE ? OR k.remarks_bn LIKE ?)';
+            array_push($params, $search, $search, $search, $search, $search, $search, $search);
+        }
+
+        if (!empty($query['survey_type']) && strtolower((string) $query['survey_type']) !== 'all') {
+            $where[] = 'k.survey_type = ?';
+            $params[] = strtoupper((string) $query['survey_type']);
+        }
+
+        if (!empty($query['status']) && strtolower((string) $query['status']) !== 'all') {
+            if (strtoupper((string) $query['status']) === 'FLAGGED') {
+                $where[] = "k.status IN ('CHAIN_BREAK', 'UNRESOLVED_HEIRS', 'DISPUTED', 'FLAGGED')";
+            } else {
+                $where[] = 'k.status = ?';
+                $params[] = strtoupper((string) $query['status']);
+            }
+        }
+
+        if (!empty($query['mouza_id']) || !empty($query['location_id'])) {
+            $where[] = 'l.id = ?';
+            $params[] = (int) ($query['mouza_id'] ?? $query['location_id']);
+        }
+
+        if (!empty($where)) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+
+        $sql .= ' ORDER BY k.plot_id ASC, k.id ASC';
+
+        $records = DB::select($sql, $params);
+
+        foreach ($records as &$item) {
+            $item['is_admin_frozen'] = (int) ($item['is_admin_frozen'] ?? 0);
+            $item['owner_sale_locked'] = (int) ($item['owner_sale_locked'] ?? 0);
+            $item['area_rs'] = $item['total_area_decimal'] ?? $item['recorded_area_decimal'];
+            $item['area_bs'] = $item['recorded_area_decimal'] ?? $item['total_area_decimal'];
+            $item['anomaly_note_bn'] = $item['remarks_bn'] ?? '';
+            $item['anomaly_note_en'] = $item['remarks_en'] ?? '';
+            $item['reconcile_status'] = $item['status'];
+        }
+        unset($item);
+
+        $allKhatiansCount = (int) (DB::selectOne('SELECT COUNT(*) AS c FROM khatian_records')['c'] ?? 0);
+        $flaggedCount = (int) (DB::selectOne("SELECT COUNT(*) AS c FROM khatian_records WHERE status IN ('CHAIN_BREAK', 'UNRESOLVED_HEIRS', 'DISPUTED', 'FLAGGED')")['c'] ?? 0);
+        $validCount = (int) (DB::selectOne("SELECT COUNT(*) AS c FROM khatian_records WHERE status = 'VALID'")['c'] ?? 0);
+
+        return [
+            'status' => 200,
+            'items' => $records,
+            'total' => count($records),
+            'kpis' => [
+                'total_khatians' => $allKhatiansCount,
+                'valid_khatians' => $validCount,
+                'flagged_khatians' => $flaggedCount,
             ],
         ];
     }
