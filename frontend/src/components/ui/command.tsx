@@ -24,8 +24,8 @@ interface CommandDialogProps extends React.ComponentPropsWithoutRef<typeof Dialo
 const CommandDialog = ({ children, title = 'Search', ...props }: CommandDialogProps) => (
   <DialogPrimitive.Root {...props}>
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=open]:fade-in-0" />
-      <DialogPrimitive.Content className="fixed left-1/2 top-[15vh] z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95">
+      <DialogPrimitive.Overlay className="fixed inset-0 z-[1050] bg-slate-900/40 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=open]:fade-in-0" />
+      <DialogPrimitive.Content className="fixed left-1/2 top-[15vh] z-[1050] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95">
         <DialogPrimitive.Title className="sr-only">{title}</DialogPrimitive.Title>
         <DialogPrimitive.Description className="sr-only">{title}</DialogPrimitive.Description>
         <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-slate-500 [&_[cmdk-group]]:px-1.5 [&_[cmdk-item]_svg]:size-4">

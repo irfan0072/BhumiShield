@@ -122,6 +122,16 @@ export const AppContent: React.FC = () => {
       } else {
         window.history.pushState({ tab }, '', fullPath);
       }
+      // Public pages read their ?params on popstate. Tell them when only the query changed
+      // (e.g. help -> help?tab=fees), since pushState itself fires no event.
+      const PUBLIC_QUERY_TABS = ['help', 'blog', 'notices', 'map', 'check', 'qr', 'offices', 'sale'];
+      const prevTab = (() => {
+        const p = currentUrl.pathname.split('/').filter(Boolean);
+        return p[0] === 'bn' || p[0] === 'en' ? p[1] : p[0];
+      })();
+      if (query && prevTab === tab && PUBLIC_QUERY_TABS.includes(tab)) {
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
     }
   };
 

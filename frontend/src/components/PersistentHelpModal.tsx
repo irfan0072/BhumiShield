@@ -145,7 +145,7 @@ export const PersistentHelpModal: React.FC<PersistentHelpModalProps> = ({
       {/* Floating Speed Dial on Bottom Right */}
       <aside
         aria-label={lang === 'bn' ? 'সাহায্য ও কুইক অ্যাকশন' : 'Help & Quick Actions'}
-        className="fixed bottom-6 right-4 sm:bottom-6 sm:right-6 z-40 print:hidden flex flex-col items-end"
+        className="fixed bottom-20 right-4 lg:bottom-6 sm:right-6 z-[990] print:hidden flex flex-col items-end"
       >
         {/* Expanded child action buttons (expand upward on click) */}
         {isExpanded && (

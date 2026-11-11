@@ -7,6 +7,7 @@ import { FaraizCalculatorModal } from './FaraizCalculatorModal';
 import { BengaliPorchaOcrModal } from './BengaliPorchaOcrModal';
 import { CitizenProblemTriageModal } from './CitizenProblemTriageModal';
 import { CitizenProductTour } from './CitizenProductTour';
+import { PublicShell } from './public/PublicShell';
 import {
   ShieldCheck,
   QrCode,
@@ -39,6 +40,7 @@ import {
   Settings,
   ChevronsUpDown,
   BookOpen,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -57,6 +59,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import {
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from '@/components/ui/command';
+import { MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSiteSettingsQuery } from './publicHooks';
 
@@ -582,248 +593,24 @@ export const NavbarAndLayout: React.FC<LayoutProps> = ({
   const isCitizenPortalTab = ['home', 'applications', 'profile', 'settings'].includes(activeTab);
   const isFixedCitizenPortal = isCitizenUser || isCitizenPortalTab;
 
-  // 1. PUBLIC VIEW LAYOUT: Clean Top Navigation Bar (Split Hybrid Model)
+  const [cmdOpen, setCmdOpen] = useState(false);
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setCmdOpen((open) => !open);
+      }
+    };
+    document.addEventListener('keydown', down);
+    return () => document.removeEventListener('keydown', down);
+  }, []);
+
+  // 1. PUBLIC VIEW LAYOUT: government-style public shell (components/public/PublicShell.tsx)
   if (isPublic) {
     return (
-      <div className={cn(
-        "min-h-screen flex flex-col bg-[#FAFAFA] text-slate-900 font-sans selection:bg-emerald-500 selection:text-white",
-        (activeTab === 'map' || activeTab === 'cadastral') && "h-screen overflow-hidden"
-      )}>
-        {/* Top Government Strip */}
-        <div className="bg-[#006A4E] text-white text-xs py-1.5 px-4 sm:px-6">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-medium text-emerald-100">
-                {t('গণপ্রজাতন্ত্রী বাংলাদেশ সরকার • ভূমি মন্ত্রণালয়', 'Government of the People\'s Republic of Bangladesh • Ministry of Land')}
-              </span>
-            </div>
-            <div className="flex items-center gap-4 text-[11px] font-mono text-emerald-200">
-              <span className="flex items-center gap-1 font-sans">
-                <PhoneCall className="w-3.5 h-3.5 text-emerald-400" />
-                {t('টোল-ফ্রি হেল্পলাইন: ১৬১২২', 'Toll-Free: 16122')}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Floating / Sticky Modern Top Navbar */}
-        <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
-          <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-4">
-            {/* Brand Logo */}
-            <button
-              onClick={() => setActiveTab('landing')}
-              className="flex items-center gap-2 sm:gap-3 text-left cursor-pointer group shrink-0"
-            >
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-[#006A4E] to-emerald-600 flex items-center justify-center text-white font-black text-base sm:text-lg shadow-sm shadow-emerald-900/20 group-hover:scale-105 transition-transform">
-                ভূ
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-base sm:text-lg font-black tracking-tight text-slate-900">ভূমি সুরক্ষা</span>
-                  <Badge variant="outline" className="hidden sm:inline-flex text-[10px] font-bold py-0 h-4 border-emerald-300 text-emerald-800 bg-emerald-50">
-                    BhumiShield
-                  </Badge>
-                </div>
-                <p className="text-[10px] font-medium text-slate-500 hidden sm:block">
-                  {t('স্মার্ট ও নিরাপদ ভূমি ব্যবস্থাপনা প্ল্যাটফর্ম', 'Smart & Fraud-Proof Land Registry Platform')}
-                </p>
-              </div>
-            </button>
-
-            {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex items-center gap-1 text-sm font-medium">
-              <button
-                onClick={() => setActiveTab('landing')}
-                className={`px-3 py-2 rounded-lg transition-colors cursor-pointer ${
-                  activeTab === 'landing'
-                    ? 'text-[#006A4E] bg-emerald-50 font-bold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {t('হোম', 'Home')}
-              </button>
-              <button
-                onClick={() => setActiveTab('check')}
-                className={`px-3 py-2 rounded-lg transition-colors cursor-pointer ${
-                  activeTab === 'check'
-                    ? 'text-[#006A4E] bg-emerald-50 font-bold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {t('জমি যাচাই', 'Check Land')}
-              </button>
-              <button
-                onClick={() => setActiveTab('qr')}
-                className={`px-3 py-2 rounded-lg transition-colors cursor-pointer ${
-                  activeTab === 'qr'
-                    ? 'text-[#006A4E] bg-emerald-50 font-bold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {t('দলিল যাচাই', 'Verify Deed')}
-              </button>
-              <button
-                onClick={() => setActiveTab('map')}
-                className={`px-3 py-2 rounded-lg transition-colors cursor-pointer ${
-                  activeTab === 'map' || activeTab === 'cadastral'
-                    ? 'text-[#006A4E] bg-emerald-50 font-bold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {t('মৌজা ম্যাপ', 'Mouza Map')}
-              </button>
-              <button
-                onClick={() => setActiveTab('notices')}
-                className={`px-3 py-2 rounded-lg transition-colors cursor-pointer ${
-                  activeTab === 'notices'
-                    ? 'text-[#006A4E] bg-emerald-50 font-bold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {t('বিজ্ঞপ্তি', 'Notices')}
-              </button>
-              <button
-                onClick={() => setActiveTab('help')}
-                className={`px-3 py-2 rounded-lg transition-colors cursor-pointer ${
-                  activeTab === 'help'
-                    ? 'text-[#006A4E] bg-emerald-50 font-bold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {t('সহায়তা', 'Help')}
-              </button>
-            </nav>
-
-            {/* Quick Action Tools & Auth */}
-            <div className="flex items-center gap-1 sm:gap-2">
-              {/* Language Switcher */}
-              <button
-                onClick={() => setLang(lang === 'bn' ? 'en' : 'bn')}
-                className="px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer flex items-center gap-1 h-8 sm:h-9"
-              >
-                <Globe className="w-3.5 h-3.5 text-slate-500" />
-                <span className="hidden sm:inline">{lang === 'bn' ? 'English' : 'বাংলা'}</span>
-                <span className="sm:hidden">{lang === 'bn' ? 'EN' : 'বাং'}</span>
-              </button>
-
-              {/* Login or User Dashboard Portal Pill */}
-              {user ? (
-                <Button
-                  onClick={() => setActiveTab(ROLE_DASHBOARD_MAP[role] || 'home')}
-                  className="bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold shadow-sm h-8 sm:h-9 px-2.5 sm:px-3.5 flex items-center gap-1.5"
-                >
-                  <LayoutDashboard className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">{t('ড্যাশবোর্ডে প্রবেশ', 'My Dashboard')}</span>
-                  <span className="sm:hidden">{t('ড্যাশবোর্ড', 'Dashboard')}</span>
-                </Button>
-              ) : (
-                <Button
-                  onClick={() => setActiveTab('auth')}
-                  className="bg-[#006A4E] hover:bg-[#00553e] text-white text-xs font-bold shadow-sm h-8 sm:h-9 px-2.5 sm:px-3.5 flex items-center gap-1.5"
-                >
-                  <LogIn className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">{t('নাগরিক লগইন', 'Citizen Login')}</span>
-                  <span className="sm:hidden">{t('লগইন', 'Login')}</span>
-                </Button>
-              )}
-
-              {/* Mobile Menu Toggle */}
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-1.5 sm:p-2 rounded-lg text-slate-600 hover:bg-slate-100 cursor-pointer"
-                aria-label="Toggle menu"
-              >
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Mobile Drawer Menu */}
-          {mobileMenuOpen && (
-            <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-5 space-y-2">
-              <button
-                onClick={() => setActiveTab('landing')}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold hover:bg-slate-100"
-              >
-                {t('হোম', 'Home')}
-              </button>
-              <button
-                onClick={() => setActiveTab('check')}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold hover:bg-slate-100"
-              >
-                {t('জমি কেনার আগে যাচাই', 'Check Before You Buy')}
-              </button>
-              <button
-                onClick={() => setActiveTab('qr')}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold hover:bg-slate-100"
-              >
-                {t('দলিল যাচাই (QR)', 'Verify Deed (QR)')}
-              </button>
-              <button
-                onClick={() => setActiveTab('map')}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold hover:bg-slate-100"
-              >
-                {t('মৌজা ম্যাপ', 'Cadastral Mouza Map')}
-              </button>
-              <button
-                onClick={() => setActiveTab('notices')}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold hover:bg-slate-100"
-              >
-                {t('সরকারি নোটিশ ও গেজেট', 'Gazettes & Notices')}
-              </button>
-              <button
-                onClick={() => setActiveTab('help')}
-                className="w-full text-left px-3 py-2 rounded-lg text-sm font-semibold hover:bg-slate-100"
-              >
-                {t('সহায়তা ও প্রশ্নোত্তর', 'Help & FAQ')}
-              </button>
-            </div>
-          )}
-        </header>
-
-        {/* Main Content Area (Full Width, No Sidebar constraint) */}
-        <main className={cn("flex-1", (activeTab === 'map' || activeTab === 'cadastral') && "h-full min-h-0 overflow-hidden relative")}>
-          {children}
-        </main>
-
-        {/* Modern Clean Gov Footer */}
-        {activeTab !== 'map' && activeTab !== 'cadastral' && (
-          <footer className="border-t border-slate-200 bg-white text-slate-600 text-xs pt-8 pb-24 sm:pb-20 px-4 sm:px-6">
-            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-lg bg-[#006A4E] text-white flex items-center justify-center font-bold text-xs">
-                  ভূ
-                </div>
-                <div>
-                  <p className="font-bold text-slate-800">ভূমি সুরক্ষা (BhumiShield) • LandTech 2026</p>
-                  <p className="text-[11px] text-slate-500">
-                    {t('গণপ্রজাতন্ত্রী বাংলাদেশ সরকার • ভূমি মন্ত্রণালয় কর্তৃক উদ্ভাবিত', 'Ministry of Land • Government of Bangladesh')}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-6 text-[11px]">
-                <button onClick={() => setActiveTab('check')} className="hover:text-emerald-700 cursor-pointer">
-                  {t('জমি যাচাই', 'Check Land')}
-                </button>
-                <button onClick={() => setActiveTab('qr')} className="hover:text-emerald-700 cursor-pointer">
-                  {t('দলিল যাচাই', 'Verify Deed')}
-                </button>
-                <button onClick={() => setActiveTab('map')} className="hover:text-emerald-700 cursor-pointer">
-                  {t('মৌজা ম্যাপ', 'Mouza Map')}
-                </button>
-                <button onClick={() => setActiveTab('help')} className="hover:text-emerald-700 cursor-pointer">
-                  {t('সহায়তা', 'Help')}
-                </button>
-              </div>
-            </div>
-          </footer>
-        )}
-
-        {/* Global Modals */}
-        <FaraizCalculatorModal isOpen={faraizOpen} onClose={() => setFaraizOpen(false)} />
-        <BengaliPorchaOcrModal isOpen={ocrOpen} onClose={() => setOcrOpen(false)} onNavigate={(r) => setActiveTab(r)} />
-      </div>
+      <PublicShell activeTab={activeTab} setActiveTab={setActiveTab}>
+        {children}
+      </PublicShell>
     );
   }
 
